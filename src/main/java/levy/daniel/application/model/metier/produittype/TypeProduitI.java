@@ -101,7 +101,7 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	 * <li>Créer une copie thread-safe de la liste des éventuels enfants 
 	 * pour éviter les modifications concurrentes.</li>
 	 * <li>Cloner chaque enfant de manière thread-safe 
-	 * via {@code enfant.deepClone(ctx)} 
+	 * via {@code enfant.deepClone(CloneContext ctx)} 
 	 * en le verrouillant individuellement pendant son clonage.</li>
 	 * <li>Rattacher le clone profond de l'enfant au 
 	 * clone parent via la méthode Thread-Safe 
