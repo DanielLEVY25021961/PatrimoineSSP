@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Log4j2-test.xml situé dans src/test/resources/ -->
+<!-- status="WARN" : Niveau de log interne de Log4j2 
+(pour ses propres messages). 
+WARN est un bon compromis pour éviter le bruit 
+tout en capturant les problèmes. -->
+<!-- includeLocation="true" permet de faire apparaitre 
+la méthode (%M)dans le pattern du LOG -->
+<Configuration status="WARN" includeLocation="true">
+	<Properties>
+	
+		<!-- %d : Date/heure (format yyyy-MM-dd HH:mm:ss.SSS). -->
+		<!-- %-5level : Niveau de log (aligné à gauche sur 5 caractères). -->
+		<!-- %t : Nom du thread. -->
+		<!-- %c{1} : Nom de la classe (raccourci à 1 segment). -->
+		<!-- %msg%n : Message + saut de ligne. -->
+		<Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level 
+		[%t] %c{1} %M - %msg%n</Property>
+		
+		<!-- LOG_DIR : Dossier logs/ pour stocker les logs 
+		(relatif au répertoire de travail).  -->
+<!-- 		<Property name="LOG_DIR">logs</Property> -->
+		<!-- Chemin absolu : Pour éviter les problèmes de permissions, 
+		utiliser un chemin absolu (ex : ${sys:user.dir}/logs). -->
+		<Property name="LOG_DIR">${sys:user.dir}/logs</Property>
+		
+		<!-- Overridable via -DLOG_LEVEL=INFO -->
+		<Property name="LOG_LEVEL">DEBUG</Property>
+		
+	</Properties>
+
+	<!-- Appenders (Destinations des Logs) -->
+	<Appenders>
+	
+		<!-- SYSTEM_OUT : Affiche les logs dans la console standard. -->
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${LOG_PATTERN}" />
+		</Console>
+
+		<!-- RollingFile (Fichiers Tournants) -->
+		<!-- Fichier principal : application.log 
+			(écrasé à chaque redémarrage 
+			si TimeBasedTriggeringPolicy est seul). -->
+		<RollingFile name="RollingFile"			
+			fileName="${LOG_DIR}/application.log"
+			filePattern="${LOG_DIR}/application-%d{yyyy-MM-dd:HH-mm-ss}-%i.log.gz">
+			
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			
+			<Policies>
+				<!-- TimeBasedTriggeringPolicy : 
+				Nouveau fichier chaque jour 
+				(application-YYYY-MM-DD.log.gz). -->
+				<!-- Compression : Les fichiers archivés 
+				sont compressés en .gz. -->
+<!-- 				<TimeBasedTriggeringPolicy interval="1" modulate="true" /> -->
+				<TimeBasedTriggeringPolicy />
+				
+				<!-- SizeBasedTriggeringPolicy : 
+				Rotation si le fichier dépasse 10 Mo. -->
+				<SizeBasedTriggeringPolicy size="10MB" />
+				
+			</Policies>
+			<!-- max="20" : Garde jusqu’à 20 fichiers archivés. -->
+			<DefaultRolloverStrategy max="20" />
+			
+		</RollingFile>
+		
+	</Appenders>
+
+	<!-- Loggers (Configuration des Niveaux de Log) -->
+	<Loggers>
+	
+		<!-- name="levy.daniel" : Cible tous les logs du package 
+		levy.daniel et ses sous-packages. -->
+		<!-- level="DEBUG" : Niveau détaillé pour le débogage. -->
+		<!-- additivity="false" : Empêche la propagation des logs 
+		au Root Logger (évite la duplication). -->
+<!-- 		<Logger name="levy.daniel" level="${sys:LOG_LEVEL}" additivity="false"> -->
+		<Logger name="levy.daniel" level="DEBUG" additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="RollingFile" />
+		</Logger>
+		
+		<!-- Débogage JPA (optionnel) -->
+        <Logger name="org.hibernate.SQL" level="DEBUG" />
+        <Logger name="org.hibernate.type.descriptor.sql" level="TRACE" />
+
+		<!-- Réduire le bruit Hibernate si tu veux -->
+		<Logger name="org.hibernate" level="WARN" />
+		<Logger name="org.springframework" level="INFO" />
+
+		<Root level="INFO">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="RollingFile" />
+		</Root>
+		
+	</Loggers>
+	
+</Configuration>

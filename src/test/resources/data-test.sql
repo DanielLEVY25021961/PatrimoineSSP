@@ -1,0 +1,117 @@
+/* DATA.sql à utiliser pour les TESTS d'INTEGRATION. */
+/* data-test.sql à utiliser pour les TESTS d'INTEGRATION situé dans src/test/resources/.
+   Version robuste : aucune FK codée “en dur” (pas de '1', '2', '3').
+*/
+
+-- =========================
+-- TYPES_PRODUIT
+-- =========================
+-- Exemples pour TypeProduit
+INSERT INTO TYPES_PRODUIT (TYPE_PRODUIT) VALUES ('vêtement');
+INSERT INTO TYPES_PRODUIT (TYPE_PRODUIT) VALUES ('bazar');
+INSERT INTO TYPES_PRODUIT (TYPE_PRODUIT) VALUES ('outillage');
+INSERT INTO TYPES_PRODUIT (TYPE_PRODUIT) VALUES ('tourisme');
+INSERT INTO TYPES_PRODUIT (TYPE_PRODUIT) VALUES ('vestons');
+
+-- =========================
+-- SOUS_TYPES_PRODUIT (FK -> TYPES_PRODUIT)
+-- =========================
+-- Exemples pour SousTypeProduit avec FK dynamique
+INSERT INTO SOUS_TYPES_PRODUIT (SOUS_TYPE_PRODUIT, TYPE_PRODUIT)
+VALUES (
+  'vêtement pour homme',
+  (SELECT ID_TYPE_PRODUIT FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = 'vêtement')
+);
+
+INSERT INTO SOUS_TYPES_PRODUIT (SOUS_TYPE_PRODUIT, TYPE_PRODUIT)
+VALUES (
+  'vêtement pour femme',
+  (SELECT ID_TYPE_PRODUIT FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = 'vêtement')
+);
+
+INSERT INTO SOUS_TYPES_PRODUIT (SOUS_TYPE_PRODUIT, TYPE_PRODUIT)
+VALUES (
+  'vêtement pour enfant',
+  (SELECT ID_TYPE_PRODUIT FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = 'vêtement')
+);
+
+-- =========================
+-- PRODUITS (FK -> SOUS_TYPES_PRODUIT)
+-- =========================
+-- Exemples pour Produit avec FK dynamique
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'chemise à manches longues pour homme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour homme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'chemise à manches courtes pour homme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour homme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'sweatshirt pour homme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour homme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'teeshirt pour homme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour homme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'chemise à manches longues pour femme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour femme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'chemise à manches courtes pour femme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour femme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'sweatshirt pour femme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour femme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'teeshirt pour femme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour femme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'soutien-gorge pour femme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour femme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'culotte pour femme',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour femme')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'chemise à manches longues pour enfant',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour enfant')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'chemise à manches courtes pour enfant',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour enfant')
+);
+
+INSERT INTO PRODUITS (PRODUIT, SOUS_TYPE_PRODUIT)
+VALUES (
+  'babouches pour enfant',
+  (SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = 'vêtement pour enfant'));

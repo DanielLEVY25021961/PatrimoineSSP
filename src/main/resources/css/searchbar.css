@@ -1,0 +1,78 @@
+.md-searchbar {
+    -fx-background-color: white;
+	/*-fx-background-color: green;*/
+    -fx-padding: 8;
+    -fx-background-radius: 28;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 8, 0.2, 0, 2);
+    -fx-alignment: center-left;
+}
+
+.md-search-icon {
+    -fx-font-size: 18px;
+    -fx-text-fill: #757575;
+}
+
+.md-search-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px;
+    -fx-prompt-text-fill: #9E9E9E;
+    -fx-text-fill: #212121;
+}
+
+.md-searchbar:focused-within {
+    -fx-effect: dropshadow(gaussian, rgba(33,150,243,0.35), 10, 0.3, 0, 3);
+}
+
+.search-container {
+    -fx-padding: 10;
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0.2, 0, 2);
+}
+
+.simple-search {
+    -fx-prompt-text-fill: #999;
+    -fx-background-radius: 6;
+    -fx-border-color: #ccc;
+}
+
+.search-button {
+    -fx-background-color: white;
+    -fx-border-color: #ccc;
+    -fx-font-weight: bold;
+}
+
+.flat-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
+}
+
+.raised-button {
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0.3, 0, 2);
+}
+
+.outlined-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #2196F3;
+    -fx-text-fill: #2196F3;
+    -fx-border-radius: 6;
+    -fx-padding: 6 12;
+}
+
+.danger-button {
+    -fx-background-color: #F44336;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+}
+
+.success-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+}
