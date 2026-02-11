@@ -375,14 +375,18 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	
 	/**
 	 * {@inheritDoc}
-	 * Compare deux TypeProduit de manière thread-safe.
 	 * <div>
-	 * <p>
-	 * Cette méthode utilise une double synchronisation 
-	 * avec un ordre de verrouillage
-	 * basé sur {@code System.identityHashCode()} pour éviter les deadlocks.
-	 * </p>
+	 * <p style="font-weight:bold;">
+	 * Teste l'<span style="font-style: italic;">égalité métier</span> de 
+	 * deux TypeProduit de manière thread-safe.</p>
+	 * <ul>
+	 * <li>Lit directement les champs 
+	 * (pas les getters pas toujours Thread-Safe).</li>
+	 * <li>Verrouille sur {@code this} lors de la lecture 
+	 * des champs pour comparaison.</li>
+	 * </ul>
 	 * </div>
+	 * 
 	 * <div>
 	 * <p style="font-weight:bold;">equals() sur :</p>
 	 * <ol>
@@ -728,12 +732,34 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	}
 
 
-	
+		
 	/**
-	* {@inheritDoc}
-	*/
-	@Override
-	public final TypeProduit cloneDeep() {	
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Instancie un {@link CloneContext} et appelle 
+	 * {@code deepClone(ctxt)} en lui passant le CloneContext.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Appeler {@code deepClone(ctxt)} 
+	 * en lui passant un nouveau {@link CloneContext}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>méthode appelée par {@code clone()}.</li>
+	 * <li>méthode private interne invisible.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return TypeProduit : clone profond.
+	 */
+	private TypeProduit cloneDeep() {	
 		return deepClone(new CloneContext());	
 	}
 
@@ -741,13 +767,6 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	
 	/**
 	 * {@inheritDoc}
-	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Effectue un clonage profond thread-safe.</p>
-	 * <p>Utilise un CloneContext pour gérer les cycles 
-	 * et éviter les duplications.</p>
-	 * <p>Clône récursivement les enfants (SousTypeProduitI).</p>
-	 * </div>
 	 */
 	@Override
 	public final TypeProduit deepClone(final CloneContext ctx) {
