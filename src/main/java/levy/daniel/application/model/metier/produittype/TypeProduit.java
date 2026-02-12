@@ -6,6 +6,7 @@ package levy.daniel.application.model.metier.produittype;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -358,7 +359,8 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 * <div>
-	 * <p style="font-weight:bold;">hashCode() sur :</p>
+	 * <p style="font-weight:bold;">
+	 * hashCode() insensible à la casse sur :</p>
 	 * <ol>
 	 * <li style="font-weight:bold;">typeProduit</li>
 	 * </ol>
@@ -366,9 +368,16 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	 */
 	@Override
 	public final int hashCode() {
+		
 		synchronized (this) {
-			return Objects.hash(this.typeProduit);
-		}	    
+
+			if (this.typeProduit == null) {
+				return Objects.hash((Object) null);
+			}
+
+			return Objects.hash(this.typeProduit
+					.toLowerCase(Locale.getDefault()));
+		}
 	}
 
 
@@ -377,16 +386,17 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	 * {@inheritDoc}
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Teste l'<span style="font-style: italic;">égalité métier</span> de 
+	 * Teste l'<span style="font-style: italic;">égalité métier</span> de
 	 * deux TypeProduit de manière thread-safe.</p>
 	 * <ul>
-	 * <li>Lit directement les champs 
+	 * <li>Lit directement les champs
 	 * (pas les getters pas toujours Thread-Safe).</li>
-	 * <li>Verrouille sur {@code this} lors de la lecture 
+	 * <li>Verrouille dans un ordre déterminé par les Hashcode 
+	 * sur {@code this} et {@code other} lors de la lecture
 	 * des champs pour comparaison.</li>
 	 * </ul>
 	 * </div>
-	 * 
+	 *
 	 * <div>
 	 * <p style="font-weight:bold;">equals() sur :</p>
 	 * <ol>
@@ -422,11 +432,73 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 		/*
 		 * equals sur [TypeProduit].
 		 */
-		synchronized (this) {
-			return Objects.equals(
-					this.typeProduit, other.typeProduit);
+		final int thisHash = System.identityHashCode(this);
+		final int otherHash = System.identityHashCode(other);
+
+		if (thisHash < otherHash) {
+
+			synchronized (this) {
+				synchronized (other) {
+					final String a = this.typeProduit;
+					final String b = other.typeProduit;
+
+					if (a == null) {
+						return b == null;
+					}
+
+					if (b == null) {
+						return false;
+					}
+
+					return a.equalsIgnoreCase(b);
+				}
+			}
+
+		} else if (thisHash > otherHash) {
+
+			synchronized (other) {
+				synchronized (this) {
+					final String a = this.typeProduit;
+					final String b = other.typeProduit;
+
+					if (a == null) {
+						return b == null;
+					}
+
+					if (b == null) {
+						return false;
+					}
+
+					return a.equalsIgnoreCase(b);
+				}
+			}
+
 		}
-	}	
+
+		/*
+		 * Cas rarissime : collision de System.identityHashCode(...)
+		 * -> verrou de départ unique pour imposer un ordre stable
+		 * et éviter tout deadlock.
+		 */
+		synchronized (TypeProduit.class) {
+			synchronized (this) {
+				synchronized (other) {
+					final String a = this.typeProduit;
+					final String b = other.typeProduit;
+
+					if (a == null) {
+						return b == null;
+					}
+
+					if (b == null) {
+						return false;
+					}
+
+					return a.equalsIgnoreCase(b);
+				}
+			}
+		}
+	}
 	
 
 	
