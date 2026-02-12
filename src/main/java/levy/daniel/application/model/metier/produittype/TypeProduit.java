@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -368,19 +367,21 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	 */
 	@Override
 	public final int hashCode() {
-		
-		synchronized (this) {
 
-			if (this.typeProduit == null) {
-				return Objects.hash((Object) null);
-			}
+	    final String typeSnapshot;
 
-			return Objects.hash(this.typeProduit
-					.toLowerCase(Locale.getDefault()));
-		}
+	    synchronized (this) {
+	        typeSnapshot = this.typeProduit;
+	    }
+
+	    if (typeSnapshot == null) {
+	        return 0;
+	    }
+
+	    return typeSnapshot.toLowerCase(Locale.ROOT).hashCode();
 	}
 
-
+	
 	
 	/**
 	 * {@inheritDoc}

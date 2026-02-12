@@ -556,6 +556,41 @@ public class TypeProduitTest {
     } //___________________________________________________________________
     
     
+    
+    /**
+     * <div>
+	 * <p>vérifie que l'égalité métier est insensible à la casse.</p>
+	 * </div>
+     *
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testEqualsIgnoreCase() : vérifie que l'égalité métier est insensible à la casse")
+    @Tag("equals")
+    @Test
+    public final void testEqualsIgnoreCase() {
+
+        /*
+         * ARRANGE - GIVEN
+         */
+        final TypeProduitI objet1 = new TypeProduit(1L, "Vêtement", null);
+        final TypeProduitI objet2 = new TypeProduit(2L, "vêtement", null);
+
+        /*
+         * ACT - WHEN
+         */
+        final boolean isEquals = objet1.equals(objet2);
+        final boolean isEqualsSym = objet2.equals(objet1);
+
+        /*
+         * ASSERT - THEN
+         */
+        assertTrue(isEquals, "Deux TypeProduit doivent être égaux même si la casse diffère.");
+        assertTrue(isEqualsSym, "L'égalité doit être symétrique même si la casse diffère.");
+        assertEquals(objet1.hashCode(), objet2.hashCode()
+                , "Si equals() est true malgré une casse différente, hashCode() doit être identique.");
+    } //___________________________________________________________________
+    
+    
 
     /**
 	 * <div>
