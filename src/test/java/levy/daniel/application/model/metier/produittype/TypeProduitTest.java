@@ -593,90 +593,111 @@ public class TypeProduitTest {
     
 
     /**
-	 * <div>
-	 * <p>Teste les méthodes <b>equals()</b> et <b>hashCode()</b> :</p>
-	 * <ul>
-	 * <li>garantit le contrat Java reflexif x.equals(x).</li>
-	 * <li>garantit le contrat Java symétrique x.equals(y) ----> y.equals(x).</li>
-	 * <li>garantit le contrat Java transitif x.equals(y) et y.equals(z) ----> x.equals(z).</li>
-	 * <li>garantit le contrat Java sur les hashcode x.equals(y) ----> x.hashcode() == y.hashcode().</li>
-	 * <li>garantit que les null sont bien gérés dans equals(Object pObj).</li>
-	 * <li>garantit que x.equals(null) retourne false (avec x non null).</li>
-	 * <li>garantit le bon fonctionnement de equals() en cas d'égalité métier.</li>
-	 * <li>garantit le bon fonctionnement de equals() en cas d'inégalité métier.</li>
-	 * <li>garantit la thread-safety des méthodes equals() et hashCode().</li>
-	 * </ul>
-	 * </div>
-	 */
-	@SuppressWarnings({ RESOURCE, UNUSED })
-	@DisplayName("testEqualsHashCodeThreadSafe() : vérifie le respect du contrat Java pour equals() et hashCode() en environnement multi-thread")
-	@Tag("equals")
-	@Test
-	public final void testEqualsHashCodeThreadSafe() 
-			throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création des objets nécessaires.
-	     */
-	    final TypeProduit type1 = new TypeProduit(VETEMENT);
-	    final TypeProduit type2 = new TypeProduit(VETEMENT);
-	    final TypeProduit type3 = new TypeProduit("photographie");
-	
-	    /*
-	     * ACT - WHEN : Vérification des contrats Java.
-	     */
-	    /* garantit le contrat Java reflexif x.equals(x). */
-	    assertTrue(type1.equals(type1), "x.equals(x) doit retourner true : ");
-	
-	    /* garantit le contrat Java symétrique x.equals(y) ----> y.equals(x). */
-	    assertTrue(type1.equals(type2) && type2.equals(type1), "x.equals(y) doit être symétrique : ");
-	
-	    /* garantit le contrat Java transitif x.equals(y) et y.equals(z) ----> x.equals(z). */
-	    assertTrue(type1.equals(type2) && type2.equals(type1) && type1.equals(type2), "x.equals(y) et y.equals(z) doit impliquer x.equals(z) : ");
-	
-	    /* garantit que les null sont bien gérés dans equals(Object pObj). */
-	    assertFalse(type1.equals(type3), "x.equals(y) doit retourner false si x != y : ");
-	
-	    /* garantit que x.equals(null) retourne false (avec x non null). */
-	    assertFalse(type1.equals(null), "x.equals(null) doit retourner false : "); // NOPMD by danyl on 08/02/2026 13:24
-	
-	    /* garantit le contrat Java sur les hashcode x.equals(y) ----> x.hashcode() == y.hashcode(). */
-	    assertEquals(type1.hashCode(), type2.hashCode(), "x.equals(y) doit impliquer x.hashCode() == y.hashCode() : ");
-	
-	    /*
-	     * ACT - WHEN : Test multi-thread pour vérifier la thread-safety.
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<Boolean>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> type1.equals(type2));
-	    }
-	
-	    final List<Future<Boolean>> results = executor.invokeAll(tasks);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des résultats.
-	     */
-	    for (final Future<Boolean> result : results) {
-	        assertTrue(result.get(), "equals() doit toujours retourner le même résultat en environnement multi-thread : ");
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test equals() et hashCode() en multi-thread réussi *****");
-	        System.out.println("Résultat de type1.equals(type2) : " + type1.equals(type2));
-	        System.out.println("Hashcode de type1 : " + type1.hashCode());
-	        System.out.println("Hashcode de type2 : " + type2.hashCode());
-	    }
-	} //___________________________________________________________________
+     * <div>
+     * <p>Teste les méthodes <b>equals()</b> et <b>hashCode()</b> :</p>
+     * <ul>
+     * <li>garantit le contrat Java reflexif x.equals(x).</li>
+     * <li>garantit le contrat Java symétrique x.equals(y) ----> y.equals(x).</li>
+     * <li>garantit le contrat Java transitif x.equals(y) et y.equals(z) ----> x.equals(z).</li>
+     * <li>garantit le contrat Java sur les hashcode x.equals(y) ----> x.hashcode() == y.hashcode().</li>
+     * <li>garantit que les null sont bien gérés dans equals(Object pObj).</li>
+     * <li>garantit que x.equals(null) retourne false (avec x non null).</li>
+     * <li>garantit le bon fonctionnement de equals() en cas d'égalité métier.</li>
+     * <li>garantit le bon fonctionnement de equals() en cas d'inégalité métier.</li>
+     * <li>garantit la thread-safety des méthodes equals() et hashCode().</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testEqualsHashCodeThreadSafe() : vérifie le respect du contrat Java pour equals() et hashCode() en environnement multi-thread")
+    @Tag("equals")
+    @Test
+    public final void testEqualsHashCodeThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /*
+         * AFFICHAGE DANS LE TEST ou NON
+         */
+        final boolean affichage = false;
+
+        /*
+         * ARRANGE - GIVEN : Création des objets nécessaires.
+         */
+        final TypeProduit type1 = new TypeProduit(VETEMENT);
+        final TypeProduit type2 = new TypeProduit(VETEMENT);
+        final TypeProduit type3 = new TypeProduit("photographie");
+
+        /*
+         * ACT - WHEN : Vérification des contrats Java.
+         */
+
+        /* garantit le contrat Java reflexif x.equals(x). */
+        assertTrue(type1.equals(type1)
+                , "x.equals(x) doit retourner true : ");
+
+        /* garantit le contrat Java symétrique x.equals(y) ----> y.equals(x). */
+        assertTrue(type1.equals(type2) && type2.equals(type1)
+                , "x.equals(y) doit être symétrique : ");
+
+        /* garantit le contrat Java transitif x.equals(y) et y.equals(z) ----> x.equals(z). */
+        assertTrue(type1.equals(type2) && type2.equals(type1) && type1.equals(type2)
+                , "x.equals(y) et y.equals(z) doit impliquer x.equals(z) : ");
+
+        /* garantit que les null sont bien gérés dans equals(Object pObj). */
+        assertFalse(type1.equals(type3)
+                , "x.equals(y) doit retourner false si x != y : ");
+
+        /* garantit que x.equals(null) retourne false (avec x non null). */
+        assertFalse(type1.equals(null) // NOPMD by danyl on 13/02/2026 00:22
+                , "x.equals(null) doit retourner false : "); // NOPMD by danyl on 08/02/2026 13:24
+
+        /* garantit le contrat Java sur les hashcode x.equals(y) ----> x.hashcode() == y.hashcode(). */
+        assertEquals(type1.hashCode(), type2.hashCode()
+                , "x.equals(y) doit impliquer x.hashCode() == y.hashCode() : ");
+
+        /*
+         * ACT - WHEN : Test multi-thread pour vérifier la thread-safety.
+         */
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+        for (int i = 0; i < 100; i++) {
+            tasks.add(() -> type1.equals(type2));
+        }
+
+        /*
+         * IMPORTANT : timeout pour éviter tout blocage infini
+         * si une régression introduit un deadlock.
+         */
+        final List<Future<Boolean>> results = executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        /*
+         * ASSERT - THEN : Vérification des résultats.
+         */
+        for (final Future<Boolean> result : results) {
+
+            assertFalse(result.isCancelled()
+                    , "Une tâche equals() ne doit pas être annulée (timeout) : ");
+
+            assertTrue(result.get()
+                    , "equals() doit toujours retourner le même résultat en environnement multi-thread : ");
+        }
+
+        /*
+         * AFFICHAGE A LA CONSOLE.
+         */
+        if (AFFICHAGE_GENERAL && affichage) {
+
+            System.out.println();
+            System.out.println("***** Test equals() et hashCode() en multi-thread réussi *****");
+            System.out.println("Résultat de type1.equals(type2) : " + type1.equals(type2));
+            System.out.println("Hashcode de type1 : " + type1.hashCode());
+            System.out.println("Hashcode de type2 : " + type2.hashCode());
+        }
+
+    } //___________________________________________________________________
 
 
 
