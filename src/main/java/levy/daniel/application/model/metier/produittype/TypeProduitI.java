@@ -165,25 +165,51 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	 * <p>Utilise le SETTER CANONIQUE INTELLIGENT 
 	 * {@code setTypeProduit(this)}  de l'enfant 
 	 * {@code SousTypeProduitI} pEnfant pour le rattachement.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Traite le cas d'une mauvaise instance en paramètre 
+	 * <li>Traiter le cas d'une mauvaise instance en paramètre 
 	 * via une méthode private des classes concrètes.</li>
-	 * <li>Retourne et ne fait rien si pEnfant == null 
+	 * <li>Retourner et ne rien faire si pEnfant == null 
 	 * ou si le libellé de pEnfant est blank (null ou espaces).</li>
-	 * <li>Détermine l'ordre de verrouillage pour éviter les deadlocks.</li>
-	 * <li>Synchronize sur this et pEnfant avec un ordre systématique 
+	 * <li>Déterminer un ordre de verrouillage unique 
+	 * pour éviter les deadlocks .</li>
+	 * <li>Synchronize sur this puis pEnfant avec cet ordre systématique 
 	 * pour être Thread-Safe.</li>
-	 * <li>Rattache pEnfant au parent this si ce n'est pas déjà fait. 
-	 * Sinon, ne fait rien.</li>
-	 * <li><code>pSousTypeProduit.setTypeProduit(this)</code> pour rattacher 
-	 * l'enfant <code>pSousTypeProduit</code> au parent <code>this</code> 
+	 * <li>Rattacher pEnfant au parent this si ce n'est pas déjà fait. 
+	 * Sinon, ne rien faire.</li>
+	 * <li><code>pEnfant.setTypeProduit(this)</code> pour rattacher 
+	 * l'enfant <code>pEnfant</code> au parent <code>this</code> 
 	 * via le <strong>SETTER CANONIQUE INTELLIGENT</strong> de 
-	 * <code>SousTypeProduit</code>, qui :
+	 * {@code SousTypeProduit}, qui :
 	 * <ul><li>met à jour <code>pSousTypeProduit.typeProduit</code>,</li>
 	 * <li>ajoute automatiquement <code>pSousTypeProduit</code>
 	 * à <code>this.sousTypeProduits</code> (bidirectionnalité).</li>
 	 * </ul>
 	 * </li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Synchronize toujours dans l'ordre 1-Parent, 2-Enfant 
+	 * pour éviter les deadlocks.</li>
+	 * <li>Garantit la stabilité de la bidirectionnalité.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Ne fait rien si pEnfant est déjà rattaché au parent this.</li>
+	 * <li>Fail-Fast si l'instance pEnfant ne convient pas.</li>
+	 * <li>Délègue à une méthode private interne dans les 
+	 * classes concrètes le rattachement de pEnfant au parent this.</li>
 	 * </ul>
 	 * </div>
 	 *
