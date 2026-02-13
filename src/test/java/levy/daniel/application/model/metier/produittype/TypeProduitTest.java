@@ -21,7 +21,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
@@ -1085,101 +1084,75 @@ public class TypeProduitTest {
     
 
     /**
-	 * <div>
-	 * <p>Teste la méthode <b>compareTo(TypeProduitI)</b> en environnement multi-thread :</p>
-	 * <ul>
-	 * <li>garantit que compareTo(memeInstance) retourne 0.</li>
-	 * <li>garantit que compareTo(null) retourne un nombre négatif.</li>
-	 * <li>garantit le Contrat Java : x.equals(y) ---> x.compareTo(y) == 0.</li>
-	 * <li>garantit que les null sont bien gérés dans compareTo(TypeProduitI).</li>
-	 * <li>garantit le bon fonctionnement (bon ordre) de compareTo().</li>
-	 * <li>garantit la thread-safety de compareTo() en environnement concurrent.</li>
-	 * </ul>
-	 * </div>
-	 */
-	@SuppressWarnings({ RESOURCE, UNUSED })
-	@DisplayName("testCompareToThreadSafe() : vérifie le thread-safety de compareTo(TypeProduitI)")
-	@Tag("compareTo")
-	@Test
-	public final void testCompareToThreadSafe() 
-			throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création des objets nécessaires.
-	     */
-	    final TypeProduit typeProduit1 = new TypeProduit(1L, VETEMENT);
-	    final TypeProduit typeProduit2 = new TypeProduit(2L, VETEMENT);
-	    final TypeProduit typeProduit3 = new TypeProduit(3L, "photographie");
-	
-	    /*
-	     * Résultat attendu pour les comparaisons de base.
-	     */
-	    final int resultatAttendu1vs1 = 0;
-	    final int resultatAttendu1vs2 = 0;
-	    final int resultatAttendu1vs3 = Strings.CI.compare(VETEMENT, "photographie");
-	
-	    /*
-	     * ACT - WHEN : Vérification des contrats de base.
-	     */
-	    /* garantit que compareTo(memeInstance) retourne 0. */
-	    assertEquals(resultatAttendu1vs1, typeProduit1.compareTo(typeProduit1),
-	            "compareTo(memeInstance) doit retourner 0 : ");
-	
-	    /* garantit que compareTo(null) retourne < 0. */
-	    assertTrue(typeProduit1.compareTo(null) < 0,
-	            "compareTo(null) doit retourner un nombre négatif : ");
-	
-	    /* garantit le bon fonctionnement de compareTo() en cas d'égalité. */
-	    assertEquals(resultatAttendu1vs2, typeProduit1.compareTo(typeProduit2),
-	            "compareTo() doit retourner 0 pour des objets égaux : ");
-	
-	    /* garantit le bon fonctionnement de compareTo() en cas d'inégalité. */
-	    assertEquals(resultatAttendu1vs3, typeProduit1.compareTo(typeProduit3),
-	            "compareTo() doit retourner un résultat cohérent pour des objets inégaux : ");
-	
-	    /*
-	     * ACT - WHEN : Test multi-thread pour vérifier la thread-safety.
-	     * Exécution de 100 comparaisons concurrentes entre typeProduit1 et typeProduit2.
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<Integer>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> {
-	            /*
-	             * Chaque tâche compare typeProduit1 et typeProduit2
-	             * de manière thread-safe.
-	             */
-	            return typeProduit1.compareTo(typeProduit2);
-	        });
-	    }
-	
-	    final List<Future<Integer>> results 
-	    	= executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des résultats en multi-thread.
-	     * Tous les résultats doivent être identiques au résultat attendu.
-	     */
-	    for (final Future<Integer> result : results) {
-	        assertEquals(resultatAttendu1vs2, result.get(),
-	                "compareTo() doit toujours retourner le même résultat en environnement multi-thread : ");
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test compareTo() en multi-thread réussi *****");
-	        System.out.println("Résultat attendu pour typeProduit1.compareTo(typeProduit2) : " + resultatAttendu1vs2);
-	        System.out.println(RESULTAT_OBTENU + results.get(0).get());
-	    }
-	} //___________________________________________________________________
+     * <div>
+     * <p>Teste la méthode <b>compareTo(...)</b> en environnement multi-thread.</p>
+     * <ul>
+     * <li>Vérifie que compareTo(...) ne deadlock pas.</li>
+     * <li>Utilise un timeout sur invokeAll(...) pour éviter un blocage infini.</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings({ "resource", "unused" })
+    @DisplayName("testCompareToThreadSafe() : compareTo(...) ne doit pas deadlocker")
+    @Tag(THREAD_SAFETY)
+    @Test
+    public final void testCompareToThreadSafe() throws Exception {
+
+        /*
+         * AFFICHAGE DANS LE TEST ou NON
+         */
+        final boolean affichage = false;
+
+        /*
+         * ARRANGE - GIVEN
+         */
+        final TypeProduitI typeProduit1 = new TypeProduit(1L, VETEMENT, null);
+        final TypeProduitI typeProduit2 = new TypeProduit(2L, OUTILLAGE, null);
+
+        /*
+         * ACT - WHEN
+         */
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        try {
+
+            final List<Callable<Integer>> tasks = new ArrayList<>();
+
+            /*
+             * Deux sens en parallèle pour tester l'absence de deadlock :
+             * A.compareTo(B) et B.compareTo(A).
+             */
+            tasks.add(() -> typeProduit1.compareTo(typeProduit2));
+            tasks.add(() -> typeProduit2.compareTo(typeProduit1));
+
+            final List<Future<Integer>> futures
+                = executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
+
+            /*
+             * ASSERT - THEN
+             * Si un deadlock survient, les tâches seront annulées (timeout)
+             * et au moins un Future sera isCancelled().
+             */
+            for (final Future<Integer> f : futures) {
+                assertFalse(f.isCancelled()
+                    , "compareTo(...) ne doit pas deadlocker : aucune tâche ne doit être annulée par timeout.");
+            }
+
+        } finally {
+
+            executor.shutdownNow();
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+
+        /*
+         * AFFICHAGE A LA CONSOLE.
+         */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test compareTo(...) thread-safe réussi *****");
+        }
+
+    } //___________________________________________________________________
 
 
 

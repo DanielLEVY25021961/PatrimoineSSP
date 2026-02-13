@@ -732,13 +732,42 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	    }
 
 	    /*
-	     * Verrouillage systématique et cohérent :
-	     * toujours this puis pObject.
-	     * Convention globale du projet pour éviter les deadlocks.
+	     * Détermine l'ordre de verrouillage pour éviter les deadlocks.
+	     * L'ordre est basé sur System.identityHashCode() pour garantir
+	     * un verrouillage systématique et reproductible.
 	     */
-	    synchronized (this) {
+	    final int thisHash = System.identityHashCode(this);
+	    final int otherHash = System.identityHashCode(pObject);
+
+	    if (thisHash < otherHash) {
+
+	        synchronized (this) {
+	            synchronized (pObject) {
+	                return compareFields(pObject);
+	            }
+	        }
+
+	    } else if (thisHash > otherHash) {
+
 	        synchronized (pObject) {
-	            return compareFields(pObject);
+	            synchronized (this) {
+	                return compareFields(pObject);
+	            }
+	        }
+
+	    } else {
+
+	        /*
+	         * Cas rarissime : collision sur identityHashCode.
+	         * On impose un verrou de départ unique au niveau classe
+	         * pour garantir un ordre total et éviter tout deadlock.
+	         */
+	        synchronized (TypeProduit.class) {
+	            synchronized (this) {
+	                synchronized (pObject) {
+	                    return compareFields(pObject);
+	                }
+	            }
 	        }
 	    }
 	}
