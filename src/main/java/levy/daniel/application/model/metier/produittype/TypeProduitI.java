@@ -412,22 +412,41 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 
 
 
-	/**
-	 * <div>
-	 *<p style="font-weight:bold;">
-	 *Getter de la Liste des enfants sous-types de produit 
-	 * du présent type de produit</p>
-	 * <p>par exemple, pour le type de produit "vêtement" :</p>
-	 * <ul>
-	 * <li>vêtement pour homme</li>
-	 * <li>vêtement pour femme</li>
-	 * <li>vêtement pour enfant</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @return <code>this.sousTypeProduits</code> : 
-	 * List&lt;SousTypeProduit&gt;
-	 */
+    /**
+     * <div>
+     * <p><b>Getter de la liste des enfants SousTypeProduit 
+     * associés au présent TypeProduit.</b></p>
+     * <p>Par exemple, pour le type de produit "vêtement" :</p>
+     * <ul>
+     * <li>vêtement pour homme</li>
+     * <li>vêtement pour femme</li>
+     * <li>vêtement pour enfant</li>
+     * </ul>
+     * </div>
+     *
+     * <div>
+     * <p><b>CONTRAT TECHNIQUE :</b></p>
+     * <ul>
+     * <li>retourne une <b>copie défensive immuable (snapshot)</b>
+     * de la liste interne des SousTypeProduit associés à ce TypeProduit.</li>
+     * <li>la liste retournée reflète l'état exact des sous-types
+     * au moment de l'appel.</li>
+     * </ul>
+     * </div>
+     *
+     * <div>
+     * <p><b>GARANTIES TECHNIQUES et METIER :</b></p>
+     * <ul>
+     * <li>méthode Thread-Safe.</li>
+     * <li>aucune modification externe ne peut altérer l'état interne.</li>
+     * <li>aucune incohérence concurrente ne peut survenir pendant la lecture.</li>
+     * </ul>
+     * </div>
+     *
+     * @return List&lt;? extends SousTypeProduitI&gt; :
+     * copie immuable de la liste des SousTypeProduit,
+     * pouvant être vide mais jamais null.
+     */
 	List<? extends SousTypeProduitI> getSousTypeProduits();
 	
 	
