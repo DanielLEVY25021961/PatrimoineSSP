@@ -104,7 +104,17 @@ public class TypeProduitTest {
      * "null"
      */
     public static final String NULL = "null";
+    
+    /**
+     * "invalide"
+     */
+    public static final String INVALIDE = "invalide";
 
+    /**
+     * "csv"
+     */
+    public static final String CSV = "csv";
+    
     /**
      * "objet1.equals(objet2EqualsObjet1) : "
      */
@@ -2340,7 +2350,7 @@ public class TypeProduitTest {
      */
     @SuppressWarnings(UNUSED)
     @DisplayName("testGetEnTeteCsv() : vérifie le comportement de la méthode getEnTeteCsv()")
-    @Tag("csv")
+    @Tag(CSV)
     @Test
     public final void testGetEnTeteCsv() {
         // **********************************
@@ -2390,7 +2400,7 @@ public class TypeProduitTest {
      */
     @SuppressWarnings(UNUSED)
     @DisplayName("testToStringCsv() : vérifie le comportement de la méthode toStringCsv()")
-    @Tag("csv")
+    @Tag(CSV)
     @Test
     public final void testToStringCsv() {
         // **********************************
@@ -2463,7 +2473,7 @@ public class TypeProduitTest {
     */ 
     @SuppressWarnings(UNUSED) 
     @DisplayName("testToStringCsvCasMixtes() : vérifie le comportement de la méthode toStringCsv() sur les cas mixtes") 
-    @Tag("csv") 
+    @Tag(CSV) 
     @Test 
     public final void testToStringCsvCasMixtes() {
 
@@ -2663,9 +2673,60 @@ public class TypeProduitTest {
         // ASSERT - THEN
         assertEquals("idTypeProduit", enTete0, "enTete0 doit retourner \"idTypeProduit\" :  ");
         assertEquals("type de produit", enTete1, "enTete1 doit retourner \"type de produit\" :  ");
-        assertEquals("invalide", enTete7, "enTete7 doit retourner \"invalide\" :  ");
+        assertEquals(INVALIDE, enTete7, "enTete7 doit retourner \"invalide\" :  ");
         
     } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>teste la méthode getEnTeteColonne(int) avec un index négatif.</p>
+     * <ul>
+     * <li>garantit que tout index négatif retourne "invalide".</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testGetEnTeteColonneIndexNegatif() : vérifie que getEnTeteColonne(-1) retourne \"invalide\"")
+    @Tag(CSV)
+    @Test
+    public final void testGetEnTeteColonneIndexNegatif() {
+
+       // **********************************
+       // AFFICHAGE DANS LE TEST ou NON
+       final boolean affichage = false;
+       // **********************************
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println();
+           System.out.println("********** CLASSE TypeProduitTest - méthode testGetEnTeteColonneIndexNegatif() ********** ");
+           System.out.println("CE TEST VERIFIE LE BON FONCTIONNEMENT de la méthode getEnTeteColonne(int) avec un index négatif.");
+           System.out.println();
+       }
+
+       // *** ARRANGE - GIVEN
+       final TypeProduit objet = new TypeProduit(VETEMENT);
+
+       // ACT - WHEN
+       final String enTete = objet.getEnTeteColonne(-1);
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println("getEnTeteColonne(-1) : " + enTete);
+           System.out.println();
+       }
+
+       final String enTetePrevu = INVALIDE;
+
+       // ASSERT - THEN
+       assertEquals(
+               enTetePrevu
+               , enTete
+               , "getEnTeteColonne(-1) doit retourner \"invalide\" : ");
+
+   } //___________________________________________________________________
     
     
 
@@ -2720,7 +2781,7 @@ public class TypeProduitTest {
         // ASSERT - THEN
         assertNull(valeur0Null, "valeur0Null doit retourner \"null\" :  ");
         assertNull(valeur1Null, "valeur1Null doit retourner \"null\" :  ");
-        assertEquals("invalide", valeur7Null, "valeur7Null doit retourner \"invalide\" :  ");
+        assertEquals(INVALIDE, valeur7Null, "valeur7Null doit retourner \"invalide\" :  ");
 
         // *** ARRANGE - GIVEN
         final TypeProduit objet1 = new TypeProduit(1L, PECHE);
@@ -2743,7 +2804,7 @@ public class TypeProduitTest {
         // ASSERT - THEN
         assertEquals("1", valeur0, "valeur0 doit retourner \"1\" :  ");
         assertEquals("Pêche", valeur1, "valeur1 doit retourner \"Pêche\" :  ");
-        assertEquals("invalide", valeur7, "valeur7 doit retourner \"invalide\" :  ");
+        assertEquals(INVALIDE, valeur7, "valeur7 doit retourner \"invalide\" :  ");
         
     } //___________________________________________________________________
     

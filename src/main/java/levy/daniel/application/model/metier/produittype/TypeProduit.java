@@ -1298,7 +1298,7 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	* {@inheritDoc}
 	* <div>
 	 * <p style="font-weight:bold;">en-tête Jtable 
-	 * pour un SousTypeProduit</b> :</p>
+	 * pour un TypeProduit :</p>
 	 * <p>"idTypeProduit;type de produit;".</p>
 	 * </div>
 	*/
