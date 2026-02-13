@@ -1558,6 +1558,106 @@ public class TypeProduitTest {
 	    assertNull(sousTypeProduit.getTypeProduit(), "Le TypeProduit du SousTypeProduit doit être null après le retrait.");
 	    
 	} //___________________________________________________________________
+	
+	
+	
+    /**
+     * <div>
+     * <p>Teste la méthode <b>rattacherEnfantSTP(...)</b> en environnement mono-thread
+     * sur des cas limites et des scénarios métier.</p>
+     * <ul>
+     * <li>pEnfant == null : ne fait rien (pas d'exception, liste inchangée).</li>
+     * <li>libellé blank (null/espaces) : ne fait rien.</li>
+     * <li>appel répété avec le même enfant : pas de doublon.</li>
+     * <li>enfant déjà rattaché à un autre parent : bascule proprement vers le nouveau parent.</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testRattacherEnfantSTP() : cas limites (null/blank/doublon/bascule parent)")
+    @Tag(RELATIONS)
+    @Test
+    public final void testRattacherEnfantSTPCasLimitesMonoThread() {
+
+        /*
+         * AFFICHAGE DANS LE TEST ou NON
+         */
+        final boolean affichage = false;
+
+        /*
+         * ARRANGE - GIVEN
+         */
+        final TypeProduitI parent1 = new TypeProduit(VETEMENT);
+        final TypeProduitI parent2 = new TypeProduit(OUTILLAGE);
+
+        /*
+         * ACT - WHEN : pEnfant == null.
+         */
+        parent1.rattacherEnfantSTP(null);
+
+        /*
+         * ASSERT - THEN : ne fait rien.
+         */
+        assertTrue(parent1.getSousTypeProduits().isEmpty()
+                , "rattacherEnfantSTP(null) ne doit pas modifier la liste.");
+
+        /*
+         * ACT - WHEN : libellé blank.
+         */
+        final SousTypeProduitI enfantBlank = new SousTypeProduit("   ");
+        parent1.rattacherEnfantSTP(enfantBlank);
+
+        /*
+         * ASSERT - THEN : ne fait rien.
+         */
+        assertTrue(parent1.getSousTypeProduits().isEmpty()
+                , "rattacherEnfantSTP(enfantBlank) ne doit pas modifier la liste.");
+        assertNull(enfantBlank.getTypeProduit()
+                , "Un enfant blank ne doit pas être rattaché à un parent.");
+
+        /*
+         * ACT - WHEN : appel répété avec le même enfant.
+         */
+        final SousTypeProduitI enfant = new SousTypeProduit(VETEMENT_HOMME);
+
+        parent1.rattacherEnfantSTP(enfant);
+        parent1.rattacherEnfantSTP(enfant);
+
+        /*
+         * ASSERT - THEN : pas de doublon et cohérence bidirectionnelle.
+         */
+        assertEquals(1, parent1.getSousTypeProduits().size()
+                , "Un même enfant rattaché plusieurs fois ne doit pas créer de doublon.");
+        assertTrue(parent1.getSousTypeProduits().contains(enfant)
+                , "La liste doit contenir l'enfant rattaché.");
+        assertEquals(parent1, enfant.getTypeProduit()
+                , "L'enfant doit avoir parent1 comme parent après rattachement.");
+
+        /*
+         * ACT - WHEN : bascule de parent (enfant déjà rattaché à parent1).
+         */
+        parent2.rattacherEnfantSTP(enfant);
+
+        /*
+         * ASSERT - THEN : l'enfant est détaché de parent1 et rattaché à parent2.
+         */
+        assertFalse(parent1.getSousTypeProduits().contains(enfant)
+                , "Après bascule, parent1 ne doit plus contenir l'enfant.");
+        assertTrue(parent2.getSousTypeProduits().contains(enfant)
+                , "Après bascule, parent2 doit contenir l'enfant.");
+        assertEquals(parent2, enfant.getTypeProduit()
+                , "Après bascule, l'enfant doit avoir parent2 comme parent.");
+
+        /*
+         * AFFICHAGE A LA CONSOLE.
+         */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test rattacherEnfantSTP() cas limites mono-thread réussi *****");
+            System.out.println(NOMBRE_STP + parent2.getSousTypeProduits().size());
+        }
+
+    } //___________________________________________________________________
 
 
 
