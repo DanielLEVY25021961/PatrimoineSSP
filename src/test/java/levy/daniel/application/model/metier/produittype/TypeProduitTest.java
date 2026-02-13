@@ -1728,6 +1728,126 @@ public class TypeProduitTest {
         }
 
     } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>Teste la méthode <b>detacherEnfantSTP(...)</b> en environnement mono-thread
+     * sur des cas limites (robustesse).</p>
+     * <ul>
+     * <li>pEnfant == null : ne fait rien, pas d'exception, liste inchangée.</li>
+     * <li>libellé blank : ne fait rien, pas d'exception, liste inchangée.</li>
+     * <li>appel répété avec le même enfant : idempotent (pas d'effet de bord).</li>
+     * <li>enfant rattaché à un autre parent : ne détache pas cet autre parent.</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testDetacherEnfantSTPCasLimitesMonoThread() : vérifie robustesse mono-thread de detacherEnfantSTP()")
+    @Tag(RELATIONS)
+    @Test
+    public final void testDetacherEnfantSTPCasLimitesMonoThread() {
+
+        /*
+         * AFFICHAGE DANS LE TEST ou NON
+         */
+        final boolean affichage = false;
+
+        /*
+         * ARRANGE - GIVEN : parent avec 1 enfant.
+         */
+        final TypeProduitI parent = new TypeProduit(1L, VETEMENT, null);
+        final SousTypeProduitI enfant = new SousTypeProduit(10L, VETEMENT_HOMME, null);
+
+        parent.rattacherEnfantSTP(enfant);
+
+        assertEquals(1, parent.getSousTypeProduits().size(),
+                "Le parent doit contenir 1 sous-type après rattachement initial.");
+
+        /*
+         * ACT - WHEN : pEnfant == null.
+         */
+        parent.detacherEnfantSTP(null);
+
+        /*
+         * ASSERT - THEN : inchangé.
+         */
+        assertEquals(1, parent.getSousTypeProduits().size(),
+                "detacherEnfantSTP(null) ne doit pas modifier la liste.");
+
+        /*
+         * ACT - WHEN : libellé blank.
+         * L'enfant blank ne peut pas être rattaché (contrat),
+         * mais detacherEnfantSTP(...) doit rester robuste.
+         */
+        final SousTypeProduitI enfantBlank = new SousTypeProduit(20L, "   ", null);
+        parent.detacherEnfantSTP(enfantBlank);
+
+        /*
+         * ASSERT - THEN : inchangé.
+         */
+        assertEquals(1, parent.getSousTypeProduits().size(),
+                "detacherEnfantSTP(enfant blank) ne doit pas modifier la liste.");
+
+        /*
+         * ACT - WHEN : détachement nominal.
+         */
+        parent.detacherEnfantSTP(enfant);
+
+        /*
+         * ASSERT - THEN : l'enfant est détaché.
+         */
+        assertTrue(parent.getSousTypeProduits().isEmpty(),
+                "Le parent doit être vide après détachement nominal.");
+
+        assertNull(enfant.getTypeProduit(),
+                "L'enfant doit avoir un parent null après détachement nominal.");
+
+        /*
+         * ACT - WHEN : appel répété (idempotence).
+         */
+        parent.detacherEnfantSTP(enfant);
+
+        /*
+         * ASSERT - THEN : toujours vide, pas d'effet de bord.
+         */
+        assertTrue(parent.getSousTypeProduits().isEmpty(),
+                "Un second détachement du même enfant ne doit pas modifier l'état (idempotent).");
+
+        /*
+         * ARRANGE - GIVEN : enfant rattaché à un autre parent.
+         */
+        final TypeProduitI autreParent = new TypeProduit(2L, VETEMENT, null);
+        autreParent.rattacherEnfantSTP(enfant);
+
+        assertEquals(1, autreParent.getSousTypeProduits().size(),
+                "L'autre parent doit contenir l'enfant après rattachement.");
+
+        /*
+         * ACT - WHEN : on tente de détacher l'enfant depuis le mauvais parent.
+         */
+        parent.detacherEnfantSTP(enfant);
+
+        /*
+         * ASSERT - THEN : l'autre parent n'est pas impacté.
+         */
+        assertEquals(1, autreParent.getSousTypeProduits().size(),
+                "Détacher depuis un parent qui n'est pas le parent courant ne doit rien changer.");
+
+        assertEquals(autreParent, enfant.getTypeProduit(),
+                "L'enfant doit rester rattaché à l'autre parent.");
+
+        /*
+         * AFFICHAGE A LA CONSOLE.
+         */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test detacherEnfantSTP() cas limites mono-thread réussi *****");
+            System.out.println(NOMBRE_STP + parent.getSousTypeProduits().size());
+        }
+
+    } //___________________________________________________________________
 
 
 
