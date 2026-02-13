@@ -90,6 +90,11 @@ public class TypeProduitTest {
     public static final String SOUSTYPEPRODUIT = "SousTypeProduit ";
     
     /**
+     * "getEnTeteCsv : "
+     */
+    public static final String GETENTETECSV = "getEnTeteCsv : ";
+    
+    /**
      * System.getProperty("line.separator")
      */
     public static final String SAUT_DE_LIGNE 
@@ -2411,7 +2416,7 @@ public class TypeProduitTest {
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
             System.out.println("*** APRES TypeProduit objetConstructeurNull = new TypeProduit(); ***");
-            System.out.println("getEnTeteCsv : " + objetConstructeurNull.getEnTeteCsv());
+            System.out.println(GETENTETECSV + objetConstructeurNull.getEnTeteCsv());
             System.out.println("toStringCsvNull : " + toStringCsvNull);
             System.out.println();
         }
@@ -2431,7 +2436,7 @@ public class TypeProduitTest {
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
             System.out.println("*** APRES TypeProduit objet1 = new TypeProduit(1L, PECHE, null); ***");
-            System.out.println("getEnTeteCsv : " + objet1.getEnTeteCsv());
+            System.out.println(GETENTETECSV + objet1.getEnTeteCsv());
             System.out.println("toStringCsv : " + toStringCsv);
             System.out.println();
         }
@@ -2442,6 +2447,86 @@ public class TypeProduitTest {
         assertEquals(toStringCsvPrevue, toStringCsv, "toStringCsv doit retourner \"1;Pêche;\" : ");
         
     } //___________________________________________________________________
+    
+    
+    
+    /**
+    * <div>
+    * <p>teste la méthode toStringCsv() sur les CAS MIXTES.</p>
+    * <ul>
+    * <li>garantit que idTypeProduit non null / typeProduit null 
+    * est bien géré.</li>
+    * <li>garantit que idTypeProduit null / typeProduit non null 
+    * est bien géré.</li>
+    * </ul>
+    * </div>
+    */ 
+    @SuppressWarnings(UNUSED) 
+    @DisplayName("testToStringCsvCasMixtes() : vérifie le comportement de la méthode toStringCsv() sur les cas mixtes") 
+    @Tag("csv") 
+    @Test 
+    public final void testToStringCsvCasMixtes() {
+
+       // **********************************
+       // AFFICHAGE DANS LE TEST ou NON
+       final boolean affichage = false;
+       // **********************************
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println();
+           System.out.println("********** CLASSE TypeProduitTest - méthode testToStringCsvCasMixtes() ********** ");
+           System.out.println("CE TEST VERIFIE LE BON FONCTIONNEMENT de la méthode toStringCsv() sur les cas mixtes.");
+           System.out.println();
+       }
+
+       // *** ARRANGE - GIVEN : idTypeProduit non null / typeProduit null
+       final TypeProduit objetIdNonNullTypeNull = new TypeProduit(1L, null);
+
+       // ACT - WHEN
+       final String toStringCsvIdNonNullTypeNull = objetIdNonNullTypeNull.toStringCsv();
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println();
+           System.out.println("*** APRES TypeProduit objetIdNonNullTypeNull = new TypeProduit(1L, null); ***");
+           System.out.println(GETENTETECSV + objetIdNonNullTypeNull.getEnTeteCsv());
+           System.out.println("toStringCsvIdNonNullTypeNull : " + toStringCsvIdNonNullTypeNull);
+           System.out.println();
+       }
+
+       final String toStringCsvPrevueIdNonNullTypeNull = "1;null;";
+
+       // ASSERT - THEN
+       assertEquals(
+               toStringCsvPrevueIdNonNullTypeNull
+               , toStringCsvIdNonNullTypeNull
+               , "toStringCsv doit retourner \"1;null;\" : ");
+
+       // *** ARRANGE - GIVEN : idTypeProduit null / typeProduit non null
+       final TypeProduit objetIdNullTypeNonNull = new TypeProduit(null, PECHE);
+
+       // ACT - WHEN
+       final String toStringCsvIdNullTypeNonNull = objetIdNullTypeNonNull.toStringCsv();
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println();
+           System.out.println("*** APRES TypeProduit objetIdNullTypeNonNull = new TypeProduit(null, PECHE); ***");
+           System.out.println(GETENTETECSV + objetIdNullTypeNonNull.getEnTeteCsv());
+           System.out.println("toStringCsvIdNullTypeNonNull : " + toStringCsvIdNullTypeNonNull);
+           System.out.println();
+       }
+
+       final String toStringCsvPrevueIdNullTypeNonNull = "null;Pêche;";
+
+       // ASSERT - THEN
+       assertEquals(
+               toStringCsvPrevueIdNullTypeNonNull
+               , toStringCsvIdNullTypeNonNull
+               , "toStringCsv doit retourner \"null;Pêche;\" : ");
+
+   } //___________________________________________________________________
     
     
     
