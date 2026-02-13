@@ -1504,7 +1504,7 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	 * <li>return si pSousTypeProduits == null.</li>
 	 * <li>LOG.fatal et throw IllegalStateException 
 	 * si un SousTypeProduitI est une mauvaise instance 
-	 * (pas TypeProduit).</li>
+	 * (pas SousTypeProduit objet métier).</li>
 	 * </ul>
 	 * </div>
 	 *

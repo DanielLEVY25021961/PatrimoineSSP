@@ -3241,6 +3241,97 @@ public class TypeProduitTest {
     
     
     /**
+    * <div>
+    * <p>teste la méthode setSousTypeProduits(...) en présence
+    * d'éléments null dans la liste passée en paramètre.</p>
+    * <ul>
+    * <li>garantit que les éléments null dans pSousTypeProduits
+    * sont ignorés.</li>
+    * <li>garantit que seuls les enfants non null sont rattachés
+    * et que la bidirectionnalité est préservée.</li>
+    * </ul>
+    * </div>
+    */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testSetSousTypeProduitsIgnoreNullElements() : vérifie que setSousTypeProduits(...) ignore les éléments null")
+    @Tag(RELATIONS)
+    @Test
+    public final void testSetSousTypeProduitsIgnoreNullElements() {
+
+        // **********************************
+        // AFFICHAGE DANS LE TEST ou NON
+        final boolean affichage = false;
+        // **********************************
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("********** CLASSE TypeProduitTest - méthode testSetSousTypeProduitsIgnoreNullElements() ********** ");
+            System.out.println("CE TEST VERIFIE QUE setSousTypeProduits(...) IGNORE LES ELEMENTS NULL DANS LA LISTE PASSEE EN PARAMETRE.");
+            System.out.println();
+        }
+
+        // *** ARRANGE - GIVEN
+        final TypeProduit parent = new TypeProduit(VETEMENT);
+
+        final SousTypeProduit enfant1 = new SousTypeProduit("vêtement pour homme");
+        final SousTypeProduit enfant2 = new SousTypeProduit("vêtement pour femme");
+
+        final List<SousTypeProduitI> nouvelleListe = new ArrayList<>();
+        nouvelleListe.add(enfant1);
+        nouvelleListe.add(null);
+        nouvelleListe.add(enfant2);
+        nouvelleListe.add(null);
+
+        // ACT - WHEN
+        parent.setSousTypeProduits(nouvelleListe);
+
+        final List<? extends SousTypeProduitI> snapshot = parent.getSousTypeProduits();
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("*** APRES parent.setSousTypeProduits(nouvelleListe) ***");
+            System.out.println("snapshot : " + snapshot);
+            System.out.println("snapshot.size() : " + snapshot.size());
+            System.out.println("enfant1.getTypeProduit() : " + enfant1.getTypeProduit());
+            System.out.println("enfant2.getTypeProduit() : " + enfant2.getTypeProduit());
+            System.out.println();
+        }
+
+        // ASSERT - THEN
+        assertEquals(
+                2
+                , snapshot.size()
+                , "setSousTypeProduits(...) doit ignorer les éléments null et ne rattacher que 2 enfants : ");
+
+        assertTrue(
+                snapshot.contains(enfant1)
+                , "snapshot doit contenir enfant1 : ");
+
+        assertTrue(
+                snapshot.contains(enfant2)
+                , "snapshot doit contenir enfant2 : ");
+
+        assertEquals(
+                parent
+                , enfant1.getTypeProduit()
+                , "enfant1 doit être rattaché au parent après setSousTypeProduits(...) : ");
+
+        assertEquals(
+                parent
+                , enfant2.getTypeProduit()
+                , "enfant2 doit être rattaché au parent après setSousTypeProduits(...) : ");
+
+        assertFalse(
+                snapshot.contains(null)
+                , "snapshot ne doit jamais contenir null : ");
+
+    } //___________________________________________________________________
+    
+    
+    
+    /**
      * <div>
      * <p>Teste la méthode <b>setSousTypeProduits()</b> en environnement multi-thread.</p>
      * <ul>
