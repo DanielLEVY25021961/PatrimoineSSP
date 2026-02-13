@@ -2803,10 +2803,98 @@ public class TypeProduitTest {
 
         // ASSERT - THEN
         assertEquals("1", valeur0, "valeur0 doit retourner \"1\" :  ");
-        assertEquals("Pêche", valeur1, "valeur1 doit retourner \"Pêche\" :  ");
+        assertEquals(PECHE, valeur1, "valeur1 doit retourner \"Pêche\" :  ");
         assertEquals(INVALIDE, valeur7, "valeur7 doit retourner \"invalide\" :  ");
         
     } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>teste la méthode getValeurColonne(int) sur les CAS MIXTES.</p>
+     * <ul>
+     * <li>garantit que idTypeProduit non null / typeProduit null est bien géré.</li>
+     * <li>garantit que idTypeProduit null / typeProduit non null est bien géré.</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testGetValeurColonneCasMixtes() : vérifie le comportement de la méthode getValeurColonne(int) sur les cas mixtes")
+    @Tag("csv")
+    @Test
+    public final void testGetValeurColonneCasMixtes() {
+
+       // **********************************
+       // AFFICHAGE DANS LE TEST ou NON
+       final boolean affichage = false;
+       // **********************************
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println();
+           System.out.println("********** CLASSE TypeProduitTest - méthode testGetValeurColonneCasMixtes() ********** ");
+           System.out.println("CE TEST VERIFIE LE BON FONCTIONNEMENT de la méthode getValeurColonne(int) sur les cas mixtes.");
+           System.out.println();
+       }
+
+       /* *** ARRANGE - GIVEN : idTypeProduit non null / typeProduit null. */
+       final TypeProduit objetIdNonNullTypeNull = new TypeProduit(1L, null);
+
+       /* ACT - WHEN */
+       final String valeurColonne0IdNonNullTypeNull = (String) objetIdNonNullTypeNull.getValeurColonne(0);
+       final String valeurColonne1IdNonNullTypeNull = (String) objetIdNonNullTypeNull.getValeurColonne(1);
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println();
+           System.out.println("*** APRES TypeProduit objetIdNonNullTypeNull = new TypeProduit(1L, null); ***");
+           System.out.println("valeurColonne0IdNonNullTypeNull : " + valeurColonne0IdNonNullTypeNull);
+           System.out.println("valeurColonne1IdNonNullTypeNull : " + valeurColonne1IdNonNullTypeNull);
+           System.out.println();
+       }
+
+       final String valeurColonne0PrevueIdNonNullTypeNull = "1";
+
+       /* ASSERT - THEN */
+       assertEquals(
+               valeurColonne0PrevueIdNonNullTypeNull
+               , valeurColonne0IdNonNullTypeNull
+               , "getValeurColonne(0) doit retourner \"1\" : ");
+
+       assertNull(
+               valeurColonne1IdNonNullTypeNull
+               , "getValeurColonne(1) doit retourner null lorsque typeProduit est null.");
+
+       /* *** ARRANGE - GIVEN : idTypeProduit null / typeProduit non null. */
+       final TypeProduit objetIdNullTypeNonNull = new TypeProduit(null, PECHE);
+
+       /* ACT - WHEN */
+       final String valeurColonne0IdNullTypeNonNull = (String) objetIdNullTypeNonNull.getValeurColonne(0);
+       final String valeurColonne1IdNullTypeNonNull = (String) objetIdNullTypeNonNull.getValeurColonne(1);
+
+       /* AFFICHAGE A LA CONSOLE. */
+       if (AFFICHAGE_GENERAL && affichage) {
+           System.out.println();
+           System.out.println("*** APRES TypeProduit objetIdNullTypeNonNull = new TypeProduit(null, PECHE); ***");
+           System.out.println("valeurColonne0IdNullTypeNonNull : " + valeurColonne0IdNullTypeNonNull);
+           System.out.println("valeurColonne1IdNullTypeNonNull : " + valeurColonne1IdNullTypeNonNull);
+           System.out.println();
+       }
+
+       final String valeurColonne1PrevueIdNullTypeNonNull = PECHE;
+
+       /* ASSERT - THEN */
+       assertNull(
+               valeurColonne0IdNullTypeNonNull
+               , "getValeurColonne(0) doit retourner null lorsque idTypeProduit est null.");
+
+       assertEquals(
+               valeurColonne1PrevueIdNullTypeNonNull
+               , valeurColonne1IdNullTypeNonNull
+               , "getValeurColonne(1) doit retourner \"Pêche\" : ");
+
+   } //___________________________________________________________________
     
     
     
@@ -2838,7 +2926,7 @@ public class TypeProduitTest {
         final TypeProduit objet1 = new TypeProduit(1L, PECHE);
 
         final String attendu0 = "1";
-        final String attendu1 = "Pêche";
+        final String attendu1 = PECHE;
 
         /*
          * ACT - WHEN : appels concurrents.
