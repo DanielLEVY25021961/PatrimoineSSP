@@ -205,7 +205,18 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 				+ " - sousTypeProduit dans le produit : "
 				+ "%-20s]";
 
-
+	// ================================================================= //
+	
+	 /**
+     * <div>
+     * <p>Verrou de départ unique en cas rarissime de collision
+     * sur {@code System.identityHashCode(...)} lors du verrouillage
+     * déterministe multi-objets.</p>
+     * </div>
+     */
+    private static final Object VERROU_COLLISION_IDENTITY_HASHCODE
+        = new Object();
+    
 	// ************************ATTRIBUTS**********************************/
 	
 	/**
@@ -1435,19 +1446,19 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	
 	
 		  
-	/**
-	 * {@inheritDoc}
-	 */
-	 @Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public final void setSousTypeProduits(
 			final List<? extends SousTypeProduitI> pSousTypeProduits) {
 
 		/*
-		 * * Snapshot défensif du paramètre pour : 
-		 * - éviter toute ConcurrentModificationException 
-		 * si l'appelant modifie la liste, 
-		 * - figer un état d'entrée déterministe pendant tout le
-		 * traitement.
+		 * Snapshot défensif du paramètre pour : 
+		 * - éviter une ConcurrentModificationException (CME) 
+		 * si l'appelant modifie la liste pendant le traitement, 
+		 * - figer un état d'entrée déterministe 
+		 * pendant tout le traitement.
 		 */
 		final List<? extends SousTypeProduitI> snapshotParam;
 
@@ -1458,40 +1469,247 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 		}
 
 		/*
-		 * * Traite le cas d'une mauvaise instance dans snapshotParam.
+		 * Traite le cas d'une mauvaise instance dans snapshotParam.
 		 */
 		this.traiterMauvaiseInstanceDansListe(snapshotParam);
 
+		/*
+		 * Snapshot des enfants actuels sous verrou du parent, 
+		 * puis traitement hors du synchronized(this) global 
+		 * pour réduire les risques de deadlocks lors des 
+		 * re-parentings (enfant déjà rattaché à un autre parent).
+		 */
+		final List<SousTypeProduitI> enfantsActuels;
+
 		synchronized (this) {
+			enfantsActuels = new ArrayList<>(this.sousTypeProduits);
+		}
 
-			/* * 1) Détache tous les enfants actuels */
-			final List<? extends SousTypeProduitI> snapshot 
-				= new ArrayList<>(this.sousTypeProduits);
+		/*
+		 * 1) Détache tous les enfants actuels via le setter canonique de
+		 * l'enfant. Verrouillage déterministe (parent/enfant) par
+		 * opération.
+		 */
+		for (final SousTypeProduitI stp : enfantsActuels) {
 
-			for (final SousTypeProduitI stp : snapshot) {
-				if (stp != null) {
-					stp.setTypeProduit(null);
-				}
+			if (stp == null) {
+				continue;
+			}
 
+			executerSousVerrousDeterministes(
+					this, null, stp, new Runnable() {
+
+						@Override
+						public void run() {
+							stp.setTypeProduit(null);
+						}
+					});
+		}
+
+		/*
+		 * 2) Si nouvelle liste null -> terminé (vide et détache).
+		 */
+		if (snapshotParam == null) {
+			return;
+		}
+
+		/*
+		 * 3) Rattache les nouveaux enfants via le setter canonique de
+		 * l'enfant. 
+		 * Gestion du re-parenting : verrouillage déterministe
+		 * (ancien parent, nouveau parent, enfant) pour éviter deadlocks
+		 * inter-parents.
+		 */
+		for (final SousTypeProduitI stp : snapshotParam) {
+
+			if (stp == null) {
+				continue;
 			}
 
 			/*
-			 * * 2) Si nouvelle liste null → terminé
-			 * (setSousTypeProduits(null) vide et détache).
+			 * Récupère le parent actuel de l'enfant (peut être null).
 			 */
-			if (snapshotParam == null) {
-				return;
+			final TypeProduitI ancienParent = stp.getTypeProduit();
+
+			final Object lockAncienParent;
+
+			if (ancienParent instanceof TypeProduit) {
+				lockAncienParent = ancienParent;
+			} else {
+				lockAncienParent = null;
 			}
 
-			/* * 3) Rattache via le setter canonique UNIQUEMENT */
-			for (final SousTypeProduitI stp : snapshotParam) {
+			/*
+			 * Verrouille dans un ordre déterministe : (ancien parent,
+			 * nouveau parent=this, enfant) puis rattache via le setter
+			 * canonique.
+			 */
+			executerSousVerrousDeterministes(
+					lockAncienParent, this, stp, new Runnable() {
 
-				if (stp != null) {
-					stp.setTypeProduit(this);
-				}
-			}
+						@Override
+						public void run() {
+							stp.setTypeProduit(TypeProduit.this);
+						}
+					});
+
 		}
-	}
+	}	 
+	 
+
+    
+	 /**
+     * <div>
+     * <p>Exécute {@code pAction} sous des verrous acquis dans un ordre
+     * déterministe (pour réduire les risques de deadlocks).</p>
+     * <ul>
+     * <li>Trie les objets non null par 
+     * {@code System.identityHashCode(...)}.</li>
+     * <li>En cas rarissime de collision d'identityHashCode 
+     * entre objets distincts,
+     * prend d'abord {@link #VERROU_COLLISION_IDENTITY_HASHCODE}.</li>
+     * </ul>
+     * </div>
+     *
+     * @param pLock1 : Object : premier verrou (peut être null).
+     * @param pLock2 : Object : second verrou (peut être null).
+     * @param pLock3 : Object : troisième verrou (peut être null).
+     * @param pAction : Runnable : action à exécuter sous verrous.
+     */
+    private static void executerSousVerrousDeterministes(
+            final Object pLock1
+            , final Object pLock2
+            , final Object pLock3
+            , final Runnable pAction) {
+
+        /*
+         * Construit un tableau des verrous non null.
+         */
+        final Object[] locksTemp = new Object[] {pLock1, pLock2, pLock3};
+
+        int count = 0;
+        for (final Object o : locksTemp) {
+            if (o != null) {
+                count++;
+            }
+        }
+
+        if (count == 0) {
+            pAction.run();
+            return;
+        }
+
+        final Object[] locks = new Object[count];
+        int idx = 0;
+        for (final Object o : locksTemp) {
+            if (o != null) {
+                locks[idx++] = o;
+            }
+        }
+
+        /*
+         * Détecte une collision d'identityHashCode entre objets distincts.
+         */
+        boolean collision = false;
+
+        for (int i = 0; i < locks.length; i++) {
+
+            for (int j = i + 1; j < locks.length; j++) {
+
+                if (locks[i] != locks[j]) {
+
+                    final int hi = System.identityHashCode(locks[i]);
+                    final int hj = System.identityHashCode(locks[j]);
+
+                    if (hi == hj) {
+                        collision = true;
+                        break;
+                    }
+                }
+            }
+
+            if (collision) {
+                break;
+            }
+        }
+
+        /*
+         * Trie les verrous par identityHashCode (ordre strict croissant).
+         */
+        for (int i = 0; i < locks.length - 1; i++) {
+
+            int min = i;
+
+            for (int j = i + 1; j < locks.length; j++) {
+
+                final int hj = System.identityHashCode(locks[j]);
+                final int hmin = System.identityHashCode(locks[min]);
+
+                if (hj < hmin) {
+                    min = j;
+                }
+            }
+
+            if (min != i) {
+                final Object tmp = locks[i];
+                locks[i] = locks[min];
+                locks[min] = tmp;
+            }
+        }
+
+        /*
+         * Exécute l'action sous verrous, avec verrou de départ unique
+         * si collision rarissime.
+         */
+        if (collision) {
+
+            synchronized (VERROU_COLLISION_IDENTITY_HASHCODE) {
+                synchronized (locks[0]) {
+
+                    if (locks.length == 1) {
+                        pAction.run();
+                        return;
+                    }
+
+                    synchronized (locks[1]) {
+
+                        if (locks.length == 2) {
+                            pAction.run();
+                            return;
+                        }
+
+                        synchronized (locks[2]) {
+                            pAction.run();
+                            return;
+                        }
+                    }
+                }
+            }
+
+        } else {
+
+            synchronized (locks[0]) {
+
+                if (locks.length == 1) {
+                    pAction.run();
+                    return;
+                }
+
+                synchronized (locks[1]) {
+
+                    if (locks.length == 2) {
+                        pAction.run();
+                        return;
+                    }
+
+                    synchronized (locks[2]) {
+                        pAction.run();
+                        return;
+                    }
+                }
+            }
+        }
+    }
 	
 
 	 
