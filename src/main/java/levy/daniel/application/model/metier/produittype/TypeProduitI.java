@@ -453,7 +453,8 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	 
     /**
      * <div>
-     * <p style="font-weight:bold;">SETTER CANONIQUE INTELLIGENT</p>
+     * <p style="font-weight:bold;">
+     * SETTER CANONIQUE INTELLIGENT</p>
      * <p>Setter de la Liste des sous-types de produit 
 	 * du présent type de produit</p>
 	 * <p>par exemple, pour le type de produit "vêtement" :</p>
@@ -462,19 +463,21 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	 * <li>vêtement pour femme</li>
 	 * <li>vêtement pour enfant</li>
 	 * </ul>
-	 * <p>Techniquement : </p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Détache (en mettant leur TypeProduitI à null) 
-	 * tous les SousTypeProduitI enfants de la présente liste 
-	 * <code style="font-weight:bold;">this.sousTypeProduits</code> 
-	 * en utilisant le Setter canonique de l'enfant SousTypeProduitI.</li>
-	 * <li>vide la liste <code style="font-weight:bold;">
-	 * this.sousTypeProduits</code> avec clear() 
-	 * si pSousTypeProduits == null. 
-	 * Ne jamais faire new ArrayList() pour être Hibernate-safe.</li>
-	 * <li>attache les nouveaux SousTypeProduitI enfants contenus 
+	 * <li>Traiter le cas d'une mauvaise instance en paramètre 
+	 * via une méthode private implémentée dans les classes concrètes.</li>
+	 * <li>Synchronize sur le parent (this).</li>
+	 * <li>Détacher tous les enfants actuels avec le 
+	 * SETTER CANONIQUE INTELLIGENT de l'enfant.</li>
+	 * <li>Attacher les nouveaux SousTypeProduitI enfants contenus 
 	 * dans pSousTypeProduits au présent parent TypeProduitI 
-	 * en utilisant le Setter canonique de l'enfant SousTypeProduitI.</li>
+	 * en utilisant le SETTER CANONIQUE INTELLIGENT 
+	 * de l'enfant SousTypeProduitI.</li>
 	 * </ul>
 	 * </div>
 	 *
