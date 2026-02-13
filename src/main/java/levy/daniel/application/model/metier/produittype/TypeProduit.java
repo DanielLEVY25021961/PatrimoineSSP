@@ -1087,7 +1087,8 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	 /**
 	  * <div>
 	  * <p>Ajoute pSousTypeProduit directement (add)
-	  * <span style="font-weight:bold;">sans synchronisation</span>
+	  * <span style="font-weight:bold;">
+	  * sans synchronisation au sens bidirectionnalité</span>
 	  * dans la liste
 	  * <code style="font-weight:bold;">this.sousTypeProduits</code>
 	  * du présent parent TypeProduitI</p>
@@ -1142,7 +1143,8 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	 /**
 	  * <div>
 	  * <p>Retire pSousTypeProduit directement (remove)
-	  * <span style="font-weight:bold;">sans synchronisation</span>
+	  * <span style="font-weight:bold;">
+	  * sans synchronisation au sens bidirectionnalité</span>
 	  * dans la liste
 	  * <code style="font-weight:bold;">this.sousTypeProduits</code>
 	  * du présent parent TypeProduitI</p>

@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -1919,6 +1921,85 @@ public class TypeProduitTest {
 	        System.out.println(NOMBRE_STP + typeProduit.getSousTypeProduits().size());
 	    }
 	} //___________________________________________________________________
+	
+	
+	
+    /**
+     * <div>
+     * <p>Teste la méthode <b>internalAddSousTypeProduit(...)</b> en environnement mono-thread.</p>
+     * <ul>
+     * <li>Vérifie que <code>null</code> n'altère pas l'état du parent (ne fait rien).</li>
+     * <li>Vérifie qu'un ajout répété du même enfant ne crée pas de doublon.</li>
+     * <li>Vérifie qu'une mauvaise instance (SousTypeProduitI non Objet métier) déclenche une IllegalStateException.</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testInternalAddSousTypeProduitMonoThread() : null / pas de doublon / mauvaise instance")
+    @Tag(RELATIONS)
+    @Test
+    public final void testInternalAddSousTypeProduitMonoThread() {
+
+        /*
+         * AFFICHAGE DANS LE TEST ou NON
+         */
+        final boolean affichage = false;
+
+        /*
+         * ARRANGE - GIVEN
+         */
+        final TypeProduit typeProduit = new TypeProduit(1L, VETEMENT, null);
+
+        final SousTypeProduitI enfant = new SousTypeProduit(10L, VETEMENT_HOMME, null);
+
+        /*
+         * ACT - WHEN : null.
+         */
+        typeProduit.internalAddSousTypeProduit(null);
+
+        /*
+         * ASSERT - THEN : null ne modifie pas la liste.
+         */
+        assertEquals(0, typeProduit.getSousTypeProduits().size()
+                , "internalAddSousTypeProduit(null) ne doit pas modifier la liste.");
+
+        /*
+         * ACT - WHEN : ajout du même enfant deux fois.
+         */
+        typeProduit.internalAddSousTypeProduit(enfant);
+        typeProduit.internalAddSousTypeProduit(enfant);
+
+        /*
+         * ASSERT - THEN : pas de doublon.
+         */
+        assertEquals(1, typeProduit.getSousTypeProduits().size()
+                , "internalAddSousTypeProduit(...) ne doit jamais créer de doublon.");
+
+        /*
+         * ARRANGE - GIVEN : mauvaise instance (proxy) de SousTypeProduitI.
+         */
+        final SousTypeProduitI mauvaiseInstance = (SousTypeProduitI) java.lang.reflect.Proxy.newProxyInstance(
+                SousTypeProduitI.class.getClassLoader() // NOPMD by danyl on 13/02/2026 17:03
+                , new Class<?>[] { SousTypeProduitI.class }
+                , (proxy, method, args) -> null
+        );
+
+        /*
+         * ASSERT - THEN : mauvaise instance -> IllegalStateException.
+         */
+        assertThrows(IllegalStateException.class
+                , () -> typeProduit.internalAddSousTypeProduit(mauvaiseInstance)
+                , "internalAddSousTypeProduit(...) doit refuser une mauvaise instance de SousTypeProduitI.");
+
+        /*
+         * AFFICHAGE A LA CONSOLE.
+         */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test internalAddSousTypeProduit(...) mono-thread réussi *****");
+        }
+
+    } //___________________________________________________________________
 
 
 
@@ -2047,96 +2128,200 @@ public class TypeProduitTest {
         }
 
     } //___________________________________________________________________
+    
+    
+    
+    /**
+     * Teste la méthode internalRemoveSousTypeProduit(null).
+     * <ul>
+     * <li>Vérifie que internalRemoveSousTypeProduit(null) ne lève pas d'exception.</li>
+     * <li>Vérifie que internalRemoveSousTypeProduit(null) ne modifie pas la liste des sous-types.</li>
+     * </ul>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testInternalRemoveSousTypeProduitNull() : vérifie internalRemoveSousTypeProduit(null)")
+    @Tag(RELATIONS)
+    @Test
+    public final void testInternalRemoveSousTypeProduitNull() {
+
+        final boolean affichage = false;
+
+        final TypeProduit typeProduit = new TypeProduit(VETEMENT);
+        final SousTypeProduit sousTypeProduit = new SousTypeProduit(VETEMENT_HOMME);
+
+        typeProduit.internalAddSousTypeProduit(sousTypeProduit);
+
+        final int tailleAvant = typeProduit.getSousTypeProduits().size();
+
+        typeProduit.internalRemoveSousTypeProduit(null);
+
+        assertEquals(tailleAvant
+                , typeProduit.getSousTypeProduits().size()
+                , "internalRemoveSousTypeProduit(null) ne doit pas modifier la taille de la liste.");
+
+        assertTrue(typeProduit.getSousTypeProduits().contains(sousTypeProduit)
+                , "internalRemoveSousTypeProduit(null) ne doit pas retirer un enfant existant.");
+
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test internalRemoveSousTypeProduit(null) réussi *****");
+            System.out.println(NOMBRE_STP + typeProduit.getSousTypeProduits().size());
+        }
+    } //___________________________________________________________________
+
+
+    
+    /**
+     * Teste la méthode internalRemoveSousTypeProduit(...) avec un enfant absent.
+     * <ul>
+     * <li>Vérifie que retirer un SousTypeProduit absent ne modifie pas la liste.</li>
+     * <li>Vérifie que l'opération est idempotente.</li>
+     * </ul>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testInternalRemoveSousTypeProduitAbsent() : vérifie internalRemoveSousTypeProduit(enfantAbsent)")
+    @Tag(RELATIONS)
+    @Test
+    public final void testInternalRemoveSousTypeProduitAbsent() {
+
+        final boolean affichage = false;
+
+        final TypeProduit typeProduit = new TypeProduit(VETEMENT);
+        final SousTypeProduit sousTypeProduitPresent = new SousTypeProduit(VETEMENT_HOMME);
+        final SousTypeProduit sousTypeProduitAbsent = new SousTypeProduit(VETEMENT_FEMME);
+
+        typeProduit.internalAddSousTypeProduit(sousTypeProduitPresent);
+
+        final int tailleAvant = typeProduit.getSousTypeProduits().size();
+
+        typeProduit.internalRemoveSousTypeProduit(sousTypeProduitAbsent);
+
+        assertEquals(tailleAvant
+                , typeProduit.getSousTypeProduits().size()
+                , "Retirer un enfant absent ne doit pas modifier la taille de la liste.");
+
+        assertTrue(typeProduit.getSousTypeProduits().contains(sousTypeProduitPresent)
+                , "Retirer un enfant absent ne doit pas retirer un enfant présent.");
+
+        typeProduit.internalRemoveSousTypeProduit(sousTypeProduitAbsent);
+
+        assertEquals(tailleAvant
+                , typeProduit.getSousTypeProduits().size()
+                , "Retirer 2 fois un enfant absent ne doit pas modifier la taille de la liste.");
+
+        assertTrue(typeProduit.getSousTypeProduits().contains(sousTypeProduitPresent)
+                , "Retirer 2 fois un enfant absent ne doit pas retirer un enfant présent.");
+
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test internalRemoveSousTypeProduit(enfantAbsent) réussi *****");
+            System.out.println(NOMBRE_STP + typeProduit.getSousTypeProduits().size());
+        }
+    } //___________________________________________________________________
+    
+
+
+    /**
+     * Teste la méthode internalRemoveSousTypeProduit(...) avec une mauvaise instance.
+     * <ul>
+     * <li>Vérifie que internalRemoveSousTypeProduit(...) lève IllegalStateException si</li>
+     * <li>l'instance passée en paramètre n'est pas un Objet métier SousTypeProduit.</li>
+     * </ul>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testInternalRemoveSousTypeProduitMauvaiseInstance() : vérifie IllegalStateException")
+    @Tag(RELATIONS)
+    @Test
+    public final void testInternalRemoveSousTypeProduitMauvaiseInstance() {
+
+        final boolean affichage = false;
+
+        final TypeProduit typeProduit = new TypeProduit(VETEMENT);
+
+        final InvocationHandler handler = (proxy, method, args) -> null;
+
+        final SousTypeProduitI mauvaiseInstance = (SousTypeProduitI) Proxy.newProxyInstance(
+                SousTypeProduitI.class.getClassLoader() // NOPMD by danyl on 13/02/2026 18:07
+                , new Class<?>[] {SousTypeProduitI.class}
+                , handler);
+
+        final IllegalStateException exception = assertThrows(
+                IllegalStateException.class
+                , () -> typeProduit.internalRemoveSousTypeProduit(mauvaiseInstance)
+                , "internalRemoveSousTypeProduit(mauvaiseInstance) doit lever IllegalStateException.");
+
+        assertNotNull(exception.getMessage()
+                , "Le message d'exception ne doit pas être null.");
+
+        assertTrue(exception.getMessage().startsWith(TypeProduit.MAUVAISE_INSTANCE_ENFANT_METIER)
+                , "Le message d'exception doit commencer par MAUVAISE_INSTANCE_ENFANT_METIER.");
+
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test internalRemoveSousTypeProduit(mauvaiseInstance) réussi *****");
+            System.out.println(exception.getMessage());
+        }
+    } //___________________________________________________________________
 
 
 
     /**
      * Teste la méthode internalRemoveSousTypeProduit() en environnement multi-thread.
-     *
-     *
      * <ul>
      * <li>Vérifie que les retraits internes concurrents ne corrompent pas la liste des sous-types.</li>
-     * <li>Utilise un ExecutorService pour simuler des modifications concurrentes.</li>
      * </ul>
      *
+     * @throws InterruptedException : possible.
+     * @throws ExecutionException : possible.
+     * @throws TimeoutException : possible.
      */
-    @SuppressWarnings({ RESOURCE, UNUSED })
-    @DisplayName("testInternalRemoveSousTypeProduitThreadSafe() : vérifie le thread-safety de internalRemoveSousTypeProduit()")
+    @SuppressWarnings({ "resource", "unused" })
+    @DisplayName("testInternalRemoveSousTypeProduitThreadSafe() : vérifie internalRemoveSousTypeProduit en multi-thread")
     @Tag(THREAD_SAFETY)
     @Test
-    public final void testInternalRemoveSousTypeProduitThreadSafe()
-            throws InterruptedException, ExecutionException {
+    public final void testInternalRemoveSousTypeProduitThreadSafe() 
+    		throws InterruptedException, ExecutionException, TimeoutException {
 
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
         final boolean affichage = false;
 
-        /*
-         * ARRANGE - GIVEN : Création d'un TypeProduit avec des SousTypeProduit.
-         */
-        final TypeProduit typeProduit = new TypeProduit(1L, VETEMENT, null);
+        final TypeProduit typeProduit = new TypeProduit(VETEMENT);
 
-        final List<SousTypeProduit> sousTypeProduits = new ArrayList<>();
+        final int nombreSousTypes = 50;
 
-        for (int i = 0; i < 50; i++) {
+        final List<SousTypeProduit> sousTypes = new ArrayList<>();
 
-            final SousTypeProduit sousTypeProduit
-                = new SousTypeProduit((long) i, SOUSTYPEPRODUIT + i, null);
-
-            sousTypeProduits.add(sousTypeProduit);
-
-            typeProduit.internalAddSousTypeProduit(sousTypeProduit);
+        for (int i = 0; i < nombreSousTypes; i++) {
+            sousTypes.add(new SousTypeProduit(SOUSTYPEPRODUIT + i));
         }
 
-        /*
-         * ACT - WHEN : Exécution concurrente de retraits internes.
-         */
+        for (final SousTypeProduit stp : sousTypes) {
+            typeProduit.internalAddSousTypeProduit(stp);
+        }
+
         final ExecutorService executor = Executors.newFixedThreadPool(10);
 
-        final List<Callable<Void>> tasks = new ArrayList<>();
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
 
-        for (final SousTypeProduit sousTypeProduit : sousTypeProduits) {
-
+        for (final SousTypeProduit stp : sousTypes) {
             tasks.add(() -> {
-
-                typeProduit.internalRemoveSousTypeProduit(sousTypeProduit);
-
-                return null;
+                typeProduit.internalRemoveSousTypeProduit(stp);
+                return true;
             });
         }
 
-        final List<Future<Void>> futures = executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
+        executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
 
         executor.shutdown();
+        executor.awaitTermination(5, TimeUnit.SECONDS);
 
-        /*
-         * ASSERT - THEN : Vérification qu'aucune tâche n'a été annulée (timeout).
-         */
-        for (final Future<Void> f : futures) {
+        assertTrue(typeProduit.getSousTypeProduits().isEmpty(),
+                "Après retraits concurrents, la liste doit être vide.");
 
-            assertFalse(f.isCancelled()
-                    , "Une tâche de retrait interne a été annulée (timeout) : risque de blocage/délockage.");
-
-            f.get();
-        }
-
-        /*
-         * ASSERT - THEN : Vérification de la cohérence de la liste.
-         */
-        assertTrue(typeProduit.getSousTypeProduits().isEmpty()
-                , "La liste des sous-types doit être vide après des retraits internes concurrents.");
-
-        /*
-         * AFFICHAGE A LA CONSOLE.
-         */
         if (AFFICHAGE_GENERAL && affichage) {
-
             System.out.println();
-            System.out.println("***** Test internalRemoveSousTypeProduit() en multi-thread réussi *****");
+            System.out.println("***** Test internalRemoveSousTypeProduitThreadSafe réussi *****");
             System.out.println(NOMBRE_STP + typeProduit.getSousTypeProduits().size());
         }
-
     } //___________________________________________________________________
 
 
