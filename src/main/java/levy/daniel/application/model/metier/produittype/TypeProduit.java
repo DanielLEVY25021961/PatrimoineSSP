@@ -1438,49 +1438,63 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public final void setSousTypeProduits(
-	        final List<? extends SousTypeProduitI> pSousTypeProduits) {
+	 @Override
+    public final void setSousTypeProduits(
+			final List<? extends SousTypeProduitI> pSousTypeProduits) {
 
-	    /*
-	     * Traite le cas d'une mauvaise instance dans pSousTypeProduits.
-	     */
-	    this.traiterMauvaiseInstanceDansListe(pSousTypeProduits);
+		/*
+		 * * Snapshot défensif du paramètre pour : 
+		 * - éviter toute ConcurrentModificationException 
+		 * si l'appelant modifie la liste, 
+		 * - figer un état d'entrée déterministe pendant tout le
+		 * traitement.
+		 */
+		final List<? extends SousTypeProduitI> snapshotParam;
 
-	    synchronized (this) {
+		if (pSousTypeProduits != null) {
+			snapshotParam = new ArrayList<>(pSousTypeProduits);
+		} else {
+			snapshotParam = null;
+		}
 
-	        /*
-	         * 1) Détache tous les enfants actuels
-	         */
-	        final List<SousTypeProduitI> snapshot =
-	                new ArrayList<>(this.sousTypeProduits);
+		/*
+		 * * Traite le cas d'une mauvaise instance dans snapshotParam.
+		 */
+		this.traiterMauvaiseInstanceDansListe(snapshotParam);
 
-	        for (final SousTypeProduitI stp : snapshot) {
-	            if (stp != null) {
-	                stp.setTypeProduit(null);
-	            }
-	        }
+		synchronized (this) {
 
-	        /*
-	         * 2) Si nouvelle liste null → terminé
-	         */
-	        if (pSousTypeProduits == null) {
-	            return;
-	        }
+			/* * 1) Détache tous les enfants actuels */
+			final List<? extends SousTypeProduitI> snapshot 
+				= new ArrayList<>(this.sousTypeProduits);
 
-	        /*
-	         * 3) Rattache via le setter canonique UNIQUEMENT
-	         */
-	        for (final SousTypeProduitI stp : pSousTypeProduits) {
-	            if (stp != null) {
-	                stp.setTypeProduit(this);
-	            }
-	        }
-	    }
+			for (final SousTypeProduitI stp : snapshot) {
+				if (stp != null) {
+					stp.setTypeProduit(null);
+				}
+
+			}
+
+			/*
+			 * * 2) Si nouvelle liste null → terminé
+			 * (setSousTypeProduits(null) vide et détache).
+			 */
+			if (snapshotParam == null) {
+				return;
+			}
+
+			/* * 3) Rattache via le setter canonique UNIQUEMENT */
+			for (final SousTypeProduitI stp : snapshotParam) {
+
+				if (stp != null) {
+					stp.setTypeProduit(this);
+				}
+			}
+		}
 	}
+	
 
-	
-	
+	 
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">traite le cas où une 
@@ -1496,38 +1510,56 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	 *
 	 * @param pSousTypeProduits : List&lt;? extends SousTypeProduitI&gt;
 	 */
-	private void traiterMauvaiseInstanceDansListe(
-			final List<? extends SousTypeProduitI> pSousTypeProduits) {
-		
-		if (pSousTypeProduits != null) {
-			for (final SousTypeProduitI stp : pSousTypeProduits) {
-				
-				if (stp == null) {
-					continue;
-				}
-				
-				/* LOG.fatal et throw IllegalStateException 
-				 * si un SousTypeProduitI est une mauvaise instance. */
-				if (!(stp instanceof SousTypeProduit)) {
-					
-					final String messageKo 
-						= MAUVAISE_INSTANCE_METIER + stp.getClass();
-					
-					if (LOG.isFatalEnabled()) {
-						LOG.fatal(messageKo);
-					}
-					
-					throw new IllegalStateException(messageKo);
-				}
-			}
-		}
-		
-		/* return si pSousTypeProduits == null. */
-		return;		
-	}
+    private void traiterMauvaiseInstanceDansListe(
+            final List<? extends SousTypeProduitI> pSousTypeProduits) {
+
+        if (pSousTypeProduits != null) {
+
+            for (final Object objet : pSousTypeProduits) {
+
+                if (objet == null) {
+                    continue;
+                }
+
+                /* LOG.fatal et throw IllegalStateException
+                 * si un élément n'est pas un SousTypeProduitI.
+                 */
+                if (!(objet instanceof SousTypeProduitI)) {
+
+                    final String messageKo = MAUVAISE_INSTANCE_METIER
+                            + objet.getClass();
+
+                    if (LOG.isFatalEnabled()) {
+                        LOG.fatal(messageKo);
+                    }
+
+                    throw new IllegalStateException(messageKo);
+                }
+
+                /* LOG.fatal et throw IllegalStateException
+                 * si un SousTypeProduitI est une mauvaise instance 
+                 * (pas un objet métier).
+                 */
+                if (!(objet instanceof SousTypeProduit)) {
+
+                    final String messageKo = MAUVAISE_INSTANCE_METIER
+                            + objet.getClass();
+
+                    if (LOG.isFatalEnabled()) {
+                        LOG.fatal(messageKo);
+                    }
+
+                    throw new IllegalStateException(messageKo);
+                }
+            }
+        }
+
+        /* return si pSousTypeProduits == null. */
+        return;
+    }
 
 
-
+    
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">traite le cas où une 

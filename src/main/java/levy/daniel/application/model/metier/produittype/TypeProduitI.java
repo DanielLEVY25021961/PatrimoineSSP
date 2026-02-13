@@ -453,37 +453,39 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	 
     /**
      * <div>
-     * <p style="font-weight:bold;">
-     * SETTER CANONIQUE INTELLIGENT</p>
-     * <p>Setter de la Liste des sous-types de produit 
-	 * du présent type de produit</p>
-	 * <p>par exemple, pour le type de produit "vêtement" :</p>
-	 * <ul>
-	 * <li>vêtement pour homme</li>
-	 * <li>vêtement pour femme</li>
-	 * <li>vêtement pour enfant</li>
-	 * </ul>
-	 * </div>
-	 * 
-	 * <div>
-	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
-	 * (scénario nominal) :</p>
-	 * <ul>
-	 * <li>Traiter le cas d'une mauvaise instance en paramètre 
-	 * via une méthode private implémentée dans les classes concrètes.</li>
-	 * <li>Synchronize sur le parent (this).</li>
-	 * <li>Détacher tous les enfants actuels avec le 
-	 * SETTER CANONIQUE INTELLIGENT de l'enfant.</li>
-	 * <li>Attacher les nouveaux SousTypeProduitI enfants contenus 
-	 * dans pSousTypeProduits au présent parent TypeProduitI 
-	 * en utilisant le SETTER CANONIQUE INTELLIGENT 
-	 * de l'enfant SousTypeProduitI.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @param pSousTypeProduits : List&lt;SousTypeProduit&gt; :
-	 * valeur à passer à <code>this.sousTypeProduits</code>.
+     * <p><b>SETTER CANONIQUE INTELLIGENT</b></p>
+     * <p>met à jour la liste des SousTypeProduit enfants 
+     * du présent TypeProduit.</p>
+     * </div>
+     *
+     * <div>
+     * <p><b>INTENTION TECHNIQUE (scénario nominal) :</b></p>
+     * <ul>
+     * <li>traite le cas d'une mauvaise instance en paramètre 
+     * via une méthode private implémentée dans les classes concrètes.</li>
+     * <li>synchronise sur le parent (this).</li>
+     * <li>détache tous les enfants actuels via le setter 
+     * canonique de l'enfant.</li>
+     * <li>rattache les nouveaux enfants via le setter 
+     * canonique de l'enfant.</li>
+     * </ul>
+     * </div>
+     *
+     * <div>
+     * <p><b>CONTRAT TECHNIQUE :</b></p>
+     * <ul>
+     * <li>si pSousTypeProduits == null : 
+     * vide la liste et détache tous les enfants.</li>
+     * <li>ignore les éléments null dans pSousTypeProduits.</li>
+     * <li>doit être thread-safe et 
+     * préserver la bidirectionnalité parent/enfant.</li>
+     * </ul>
+     * </div>
+     *
+     * @param pSousTypeProduits : List&lt;? extends SousTypeProduitI&gt; :
+     * nouvelle liste d'enfants à rattacher, ou null pour vider/détacher.
      */
+
     void setSousTypeProduits(
     		List<? extends SousTypeProduitI> pSousTypeProduits);
 
