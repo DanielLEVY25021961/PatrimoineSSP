@@ -616,10 +616,32 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 
 
 	/**
-	* {@inheritDoc}
-	*/
-	@Override
-	public final SousTypeProduit cloneDeep() {	
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Instancie un {@link CloneContext} et appelle 
+	 * {@code deepClone(ctxt)} en lui passant le CloneContext.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Appeler {@code deepClone(ctxt)} 
+	 * en lui passant un nouveau {@link CloneContext}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>méthode appelée par {@code clone()}.</li>
+	 * <li>méthode private interne invisible.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return SousTypeProduit : clone profond.
+	 */
+	private SousTypeProduit cloneDeep() {	
 		return deepClone(new CloneContext());	
 	}
 	

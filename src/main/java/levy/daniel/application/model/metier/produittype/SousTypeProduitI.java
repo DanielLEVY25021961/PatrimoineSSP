@@ -34,18 +34,64 @@ import levy.daniel.application.model.metier.IExportateurJTable;
 public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 								, IExportateurCsv, IExportateurJTable {
 	
-	
 
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">clone profond de manière Thread-Safe un 
 	 * <code>SousTypeProduitI</code> en utilisant 
-	 * un {@link CloneContext} pour garantir la cohérence des données</p>
+	 * un {@link CloneContext} pour garantir la cohérence des données.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>fournir un clone profond du présent SousTypeProduitI.</li>
+	 * <li>Créer un clone "nu" (sans parent ni enfants) 
+	 * de manière thread-safe.</li>
+	 * <li>Cloner le parent TypeProduit (si présent) et recoller
+	 * le clone parent au clone via le Setter canonique.</li>
+	 * <li>Créer une copie thread-safe de la liste des éventuels enfants 
+	 * pour éviter les modifications concurrentes.</li>
+	 * <li>Cloner chaque enfant de manière thread-safe 
+	 * via {@code enfant.deepClone(ctx)} 
+	 * en le verrouillant individuellement pendant son clonage.</li>
+	 * <li>Rattacher le clone profond de l'enfant au 
+	 * clone parent via la méthode Thread-Safe 
+	 * {@code rattacherEnfantSTP(cloneEnfant)}.</li>
+	 * <li>Retourner le clone profond.</li>
+	 * <li>Ne retourne jamais {@code null}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Si le clone est déjà stocke dans le CloneContext : 
+	 * retourne le clone existant.</li>
+	 * <li>délègue la création d'un {@link CloneContext} 
+	 * à une méthode private interne dans chaque implémentation.</li>
+	 * <li>S'appuie sur {@link #deepClone(ctxt)} 
+	 * pour générer le clone profond.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Interdit les cycles et les duplications durant le clonage 
+	 * grâce à l'utilisation d'un {@link CloneContext} encapsulant 
+	 * une {@code IdentityHashMap} (cache).</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @return SousTypeProduitI : clone profond.
+	 * @throws CloneNotSupportedException 
+	 * si le clonage n'est pas supporté.
 	 */
-	SousTypeProduitI cloneDeep();
+	SousTypeProduitI clone() throws CloneNotSupportedException;
 	
 	
 	
