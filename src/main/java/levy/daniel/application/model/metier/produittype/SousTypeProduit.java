@@ -1335,42 +1335,160 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 */
 	@Override
 	public final void setTypeProduit(final TypeProduitI pTypeProduit) {
-		
+
 	    /* traite le cas d'une mauvaise instance. */
 	    this.traiterMauvaiseInstanceTypeProduit(pTypeProduit);
 
-	    /*
-	     * Stocke l'ancien TypeProduit pour le détacher si nécessaire.
-	     * IMPORTANT : cette méthode n'est volontairement pas synchronisée
-	     * pour éviter les deadlocks. La synchronisation doit être réalisée
-	     * par la méthode canonique Thread-Safe côté parent :
-	     * TypeProduit.rattacherEnfantSTP(...) / TypeProduit.detacherEnfantSTP(...).
-	     */
-        final TypeProduitI old = this.typeProduit;
+	    /* Snapshot thread-safe de l'ancien parent. */
+	    final TypeProduitI oldSnapshot;
+	    synchronized (this) {
+	        oldSnapshot = this.typeProduit;
+	        if (oldSnapshot == pTypeProduit) {
+	            return;
+	        }
+	    }
 
-        /* ne fait rien et return si 
-         * pTypeProduit == this.typeProduit. */
-        if (old == pTypeProduit) {
-            return;
-        }
+	    /* Casts sécurisés (peuvent donner null). */
+	    final TypeProduit oldImpl =
+	            (oldSnapshot instanceof TypeProduit) ? (TypeProduit) oldSnapshot : null;
 
-        /* détache le présent SousTypeProduit de l’ancien parent. */
-        if (old instanceof TypeProduit oldImplTP) {
-            oldImplTP.internalRemoveSousTypeProduit(this);
-        }
+	    final TypeProduit newImplMaybe =
+	            (pTypeProduit instanceof TypeProduit) ? (TypeProduit) pTypeProduit : null;
 
-        /* passe la nouvelle valeur pTypeProduit à this.typeProduit. */
-        this.typeProduit = pTypeProduit;
+	    /* Cas 1 : aucun parent TypeProduit (implémentation métier) impliqué. */
+	    if (oldImpl == null && newImplMaybe == null) {
 
-        /* rattache le présent SousTypeProduit au nouveau parent
-         * et l'ajoute dans la liste sousTypeProduits du parent. */
-        if (pTypeProduit instanceof TypeProduit newImplTP) {
-            newImplTP.internalAddSousTypeProduit(this);
-        }
+	        synchronized (this) {
+	            this.typeProduit = pTypeProduit;
+	            this.recalculerValide();
+	        }
 
-        /* recalcule this.valide. */
-        this.recalculerValide();
-	}
+	        return;
+	    }
+
+	    /* Cas 2 : rattachement à un parent TypeProduit. */
+	    if (oldImpl == null) {
+
+	        /* Ici, newImplMaybe est forcément non null
+	         * car (oldImpl == null && newImplMaybe == null) est déjà traité.
+	         */
+	        final TypeProduit newImpl = newImplMaybe;
+
+	        synchronized (newImpl) {
+
+	            synchronized (this) {
+
+	                if (this.typeProduit == pTypeProduit) {
+	                    return;
+	                }
+
+	                this.typeProduit = pTypeProduit;
+
+	                /* rattache l'enfant au nouveau parent sans equals() sous verrou parent. */
+	                newImpl.internalAddSousTypeProduit(this);
+
+	                this.recalculerValide();
+
+	            }
+
+	        }
+
+	        return;
+	    }
+
+	    /* Cas 3 : détachement d'un parent TypeProduit. */
+	    if (newImplMaybe == null) {
+
+	        /* Ici, oldImpl est forcément non null car le cas oldImpl == null est déjà traité. */
+	        synchronized (oldImpl) {
+
+	            synchronized (this) {
+
+	                if (this.typeProduit == pTypeProduit) {
+	                    return;
+	                }
+
+	                /* détache l'enfant de l'ancien parent sans equals() sous verrou parent. */
+	                oldImpl.internalRemoveSousTypeProduit(this);
+
+	                this.typeProduit = pTypeProduit;
+
+	                this.recalculerValide();
+
+	            }
+
+	        }
+
+	        return;
+	    }
+
+	    /* Cas 4 : ancien parent et nouveau parent sont des TypeProduit non null. */
+	    final TypeProduit newImpl = newImplMaybe;
+
+	    final int hashOld = System.identityHashCode(oldImpl);
+	    final int hashNew = System.identityHashCode(newImpl);
+
+	    if (hashOld == hashNew) {
+
+	        synchronized (SousTypeProduit.class) {
+
+	            synchronized (oldImpl) {
+
+	                synchronized (newImpl) {
+
+	                    synchronized (this) {
+
+	                        if (this.typeProduit == pTypeProduit) {
+	                            return;
+	                        }
+
+	                        oldImpl.internalRemoveSousTypeProduit(this);
+
+	                        this.typeProduit = pTypeProduit;
+
+	                        newImpl.internalAddSousTypeProduit(this);
+
+	                        this.recalculerValide();
+
+	                    }
+
+	                }
+
+	            }
+
+	        }
+
+	        return;
+	    }
+
+	    final TypeProduit firstParent = (hashOld < hashNew) ? oldImpl : newImpl;
+	    final TypeProduit secondParent = (hashOld < hashNew) ? newImpl : oldImpl;
+
+	    synchronized (firstParent) {
+
+	        synchronized (secondParent) {
+
+	            synchronized (this) {
+
+	                if (this.typeProduit == pTypeProduit) {
+	                    return;
+	                }
+
+	                oldImpl.internalRemoveSousTypeProduit(this);
+
+	                this.typeProduit = pTypeProduit;
+
+	                newImpl.internalAddSousTypeProduit(this);
+
+	                this.recalculerValide();
+
+	            }
+
+	        }
+
+	    }
+
+	} // Fin de setTypeProduit(...).________________________________________
 
 	
 	
