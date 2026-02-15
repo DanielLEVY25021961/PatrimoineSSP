@@ -1500,6 +1500,76 @@ public class SousTypeProduitTest {
 	} //___________________________________________________________________
 	
 	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode deepClone() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que le clonage profond est thread-safe.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testDeepCloneThreadSafe() : vérifie le thread-safety de deepClone()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testDeepCloneThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création d'un SousTypeProduit avec des Produits. */
+	    final TypeProduit typeProduit = new TypeProduit(1L, PECHE, null);
+	    final SousTypeProduit sousTypeProduit = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+	    final Produit produit = new Produit(100L, CANNE_TELESCOPIQUE, sousTypeProduit);
+	    sousTypeProduit.ajouterSTPauProduit(produit);
+
+	    /* ACT - WHEN : Exécution concurrente de deepClone(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<SousTypeProduit>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> sousTypeProduit.deepClone(new CloneContext()));
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<SousTypeProduit>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des clones. */
+	    for (final Future<SousTypeProduit> result : results) {
+
+	        assertFalse(result.isCancelled(),
+	                "Une tâche deepClone() ne doit pas être annulée (timeout) : ");
+
+	        final SousTypeProduit clone = result.get();
+
+	        assertEquals(sousTypeProduit, clone,
+	                "Le clone doit être equals() à l'original.");
+
+	        assertNotSame(sousTypeProduit, clone,
+	                "Le clone ne doit pas être la même instance que l'original.");
+
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test deepClone() en multi-thread réussi *****");
+	        System.out.println("Nombre de clones créés : " + results.size());
+	    }
+
+	} //___________________________________________________________________
+	
+	
 
     /**
      * <div>
@@ -2366,67 +2436,7 @@ public class SousTypeProduitTest {
     }
     
     
-    
-    /**
-     * <div>
-     * <p>Teste la méthode <b>deepClone()</b> en environnement multi-thread.</p>
-     * <ul>
-     * <li>Vérifie que le clonage profond est thread-safe.</li>
-     * <li>Utilise un ExecutorService pour simuler des clonages concurrents.</li>
-     * </ul>
-     * </div>
-     */
-    @SuppressWarnings({ "unchecked", RESOURCE, UNUSED})
-    @DisplayName("testDeepCloneThreadSafe() : vérifie le thread-safety de deepClone()")
-    @Tag(THREAD_SAFETY)
-    @Test
-    public final void testDeepCloneThreadSafe() throws InterruptedException, ExecutionException {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
-        final boolean affichage = false;
-
-        /*
-         * ARRANGE - GIVEN : Création d'un SousTypeProduit avec des Produits.
-         */
-        final TypeProduit typeProduit = new TypeProduit(1L, PECHE, null);
-        final SousTypeProduit sousTypeProduit = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
-        final Produit produit = new Produit(100L, CANNE_TELESCOPIQUE, sousTypeProduit);
-        sousTypeProduit.ajouterSTPauProduit(produit);
-
-        /*
-         * ACT - WHEN : Exécution concurrente de deepClone().
-         */
-        final ExecutorService executor = Executors.newFixedThreadPool(10);
-        final List<Callable<SousTypeProduit>> tasks = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            tasks.add((Callable<SousTypeProduit>) () -> sousTypeProduit.deepClone(new CloneContext()));
-        }
-
-        final List<Future<SousTypeProduit>> results = executor.invokeAll(tasks);
-        executor.shutdown();
-
-        /*
-         * ASSERT - THEN : Vérification des clones.
-         */
-        for (final Future<SousTypeProduit> result : results) {
-            final SousTypeProduit clone = result.get();
-            assertEquals(sousTypeProduit, clone, "Le clone doit être equals() à l'original.");
-            assertNotSame(sousTypeProduit, clone, "Le clone ne doit pas être la même instance que l'original.");
-        }
-
-        /*
-         * AFFICHAGE A LA CONSOLE.
-         */
-        if (AFFICHAGE_GENERAL && affichage) {
-            System.out.println();
-            System.out.println("***** Test deepClone() en multi-thread réussi *****");
-            System.out.println("Nombre de clones créés : " + results.size());
-        }
-    }
-    
-	
-	
+    	
 	/**
 	 * <div>
 	 * <p>affiche à la console un SousTypeProduit.</p>
