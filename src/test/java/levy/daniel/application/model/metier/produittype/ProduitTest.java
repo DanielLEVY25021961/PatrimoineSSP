@@ -926,58 +926,115 @@ public class ProduitTest {
 	
 	/**
 	 * <div>
-	 * <p>Teste la méthode <b>toString()</b> en environnement multi-thread.</p>
+	 * <p>
+	 * Teste la robustesse thread-safe de toString() en environnement multi-thread.
+	 * </p>
 	 * <ul>
-	 * <li>Vérifie que l'appel concurrent à toString() ne provoque pas d'erreurs.</li>
-	 * <li>Utilise un ExecutorService pour simuler des accès concurrents.</li>
+	 * <li>Lance des appels concurrents à toString() pendant des modifications via setProduit(...) et setSousTypeProduit(...).</li>
+	 * <li>Vérifie qu'aucune tâche n'est annulée (timeout) et qu'aucune tâche ne lève d'exception.</li>
 	 * </ul>
 	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
 	 */
 	@SuppressWarnings({ RESOURCE, UNUSED })
-	@DisplayName("testToStringThreadSafe() : vérifie le thread-safety de toString()")
+	@DisplayName("testToStringThreadSafe() : vérifie toString() en environnement multi-thread")
 	@Tag(THREAD_SAFETY)
 	@Test
-	public final void testToStringThreadSafe() throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
+	public final void testToStringThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
 	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de toString().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<String>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.toString());
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduit typeProduit = new TypeProduit(1L, PHOTOGRAPHIE, null);
+	    final SousTypeProduit sousTypeProduit =
+	            new SousTypeProduit(1L, CAMERAS, typeProduit, null);
+
+	    final Produit produit = new Produit(1L, APPAREIL_PHOTO, sousTypeProduit);
+
+	    final ExecutorService executor = Executors.newFixedThreadPool(8);
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+	    /* Tâches toString(). */
+	    for (int i = 0; i < 500; i++) {
+
+	        tasks.add(() -> {
+
+	            final String s = produit.toString();
+
+	            return Boolean.valueOf(s != null);
+
+	        });
+
 	    }
-	
-	    final List<Future<String>> results = executor.invokeAll(tasks);
+
+	    /* Tâches de modifications concurrentes. */
+	    for (int i = 0; i < 250; i++) {
+
+	        tasks.add(() -> {
+
+	            produit.setProduit(PRODUIT_MODIFIE);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	        tasks.add(() -> {
+
+	            produit.setProduit(APPAREIL_PHOTO);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	        tasks.add(() -> {
+
+	            produit.setSousTypeProduit(null);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	        tasks.add(() -> {
+
+	            produit.setSousTypeProduit(sousTypeProduit);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	    }
+
+	    /* ACT - WHEN */
+	    final List<Future<Boolean>> futures =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
 	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des résultats.
-	     */
-	    for (final Future<String> result : results) {
-	        assertNotNull(result.get(), 
-	        		"toString() ne doit jamais retourner null en environnement multi-thread.");
+
+	    /* ASSERT - THEN : aucune tâche annulée (timeout) et aucune exception. */
+	    for (final Future<Boolean> future : futures) {
+
+	        assertFalse(future.isCancelled(),
+	                "Une tâche toString/setProduit/setSousTypeProduit ne doit pas être annulée (timeout) : ");
+
+	        assertTrue(future.get(),
+	                "Une tâche toString/setProduit/setSousTypeProduit doit se terminer normalement : ");
+
 	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
+
+	    /* ASSERT - THEN : toString reste appelable. */
+	    assertNotNull(produit.toString(),
+	            "toString() doit rester appelable après concurrence : ");
+
+	    /* AFFICHAGE A LA CONSOLE. */
 	    if (AFFICHAGE_GENERAL && affichage) {
 	        System.out.println();
-	        System.out.println("***** Test toString() en multi-thread réussi *****");
-	        System.out.println("Résultat de toString() : " + produit.toString());
+	        System.out.println("***** Test toString thread-safe réussi *****");
+	        System.out.println(produit.toString());
 	    }
+
 	} //___________________________________________________________________
 
 

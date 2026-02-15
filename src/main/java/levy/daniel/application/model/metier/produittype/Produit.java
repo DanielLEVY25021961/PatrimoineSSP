@@ -466,44 +466,56 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final String toString() {
-	    /*
-	     * Génère une représentation textuelle thread-safe.
-	     */
-	    final StringBuilder builder = new StringBuilder();
-	    
+
+	    /* Snapshot thread-safe des champs nécessaires. */
+	    final Long idProduitSnapshot;
+	    final String produitSnapshot;
+	    final SousTypeProduitI sousTypeProduitSnapshot;
+
 	    synchronized (this) {
-	    	
-	        builder.append("Produit [");
 
-	        builder.append("idProduit=");
-	        if (this.getIdProduit() != null) {
-	            builder.append(this.getIdProduit());
-	        } else {
-	            builder.append(NULL);
-	        }
+	        /* Accès direct aux attributs pour éviter 
+	         * tout appel transitif pendant le verrou. */
+	        idProduitSnapshot = this.idProduit;
+	        produitSnapshot = this.produit;
+	        sousTypeProduitSnapshot = this.sousTypeProduit;
 
-	        builder.append(VIRGULE_ESPACE);
-
-	        builder.append("produit=");
-	        if (this.getProduit() != null) {
-	            builder.append(this.getProduit());
-	        } else {
-	            builder.append(NULL);
-	        }
-
-	        builder.append(VIRGULE_ESPACE);
-
-	        builder.append("sousTypeProduit=");
-	        if (this.getSousTypeProduit() != null) {
-	            builder.append(this.getSousTypeProduit().toString());
-	        } else {
-	            builder.append(NULL);
-	        }
-
-	        builder.append(CROCHET_FERMANT);
 	    }
-	    
+
+	    /* Construction hors verrou pour minimiser la section critique. */
+	    final StringBuilder builder = new StringBuilder();
+
+	    builder.append("Produit [");
+	    builder.append("idProduit=");
+	    if (idProduitSnapshot != null) {
+	        builder.append(idProduitSnapshot);
+	    } else {
+	        builder.append(NULL);
+	    }
+
+	    builder.append(VIRGULE_ESPACE);
+	    builder.append("produit=");
+	    if (produitSnapshot != null) {
+	        builder.append(produitSnapshot);
+	    } else {
+	        builder.append(NULL);
+	    }
+
+	    builder.append(VIRGULE_ESPACE);
+	    builder.append("sousTypeProduit=");
+	    if (sousTypeProduitSnapshot != null) {
+
+	        /* Appel éventuel au toString() du parent hors verrou Produit. */
+	        builder.append(sousTypeProduitSnapshot.toString());
+
+	    } else {
+	        builder.append(NULL);
+	    }
+
+	    builder.append(CROCHET_FERMANT);
+
 	    return builder.toString();
+
 	}
 
 
