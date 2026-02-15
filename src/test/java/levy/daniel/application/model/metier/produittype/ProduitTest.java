@@ -3247,6 +3247,172 @@ public class ProduitTest {
 	
 	/**
 	 * <div>
+	 * <p>Teste l'absence de deadlock dans la gestion bidirectionnelle
+	 * <code>Produit</code> &lt;-&gt; <code>SousTypeProduit</code>.</p>
+	 * <ul>
+	 * <li>Exécute en concurrence des appels à <code>produit.setSousTypeProduit(...)</code>.</li>
+	 * <li>Exécute en concurrence des appels à <code>sousTypeProduit.ajouterSTPauProduit(...)</code>
+	 * et <code>sousTypeProduit.retirerSTPauProduit(...)</code>.</li>
+	 * <li>Détecte un deadlock par timeout via <code>invokeAll(..., timeout)</code>
+	 * et <code>Future.isCancelled()</code>.</li>
+	 * <li>Vérifie la cohérence finale minimale des liens (si parent non null).</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testSousTypeProduitProduitAntiDeadlockThreadSafe() : détecte deadlocks STP<->Produit (timeout)")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testSousTypeProduitProduitAntiDeadlockThreadSafe()
+			throws InterruptedException, ExecutionException {
+
+		/* AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* ARRANGE - GIVEN */
+		final TypeProduit typeProduit = new TypeProduit(1L, ANATOMIE, null);
+
+		final SousTypeProduit sousTypeProduit1
+			= new SousTypeProduit(1L, ANATOMIE_MAIN, typeProduit, null);
+
+		final SousTypeProduit sousTypeProduit2
+			= new SousTypeProduit(2L, CAMERAS, typeProduit, null);
+
+		final Produit produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, null);
+
+		final ExecutorService executor = Executors.newFixedThreadPool(12);
+		final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 300; i++) {
+
+			tasks.add(() -> {
+
+				produit.setSousTypeProduit(sousTypeProduit1);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				produit.setSousTypeProduit(sousTypeProduit2);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				produit.setSousTypeProduit(null);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit1.ajouterSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit1.retirerSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit2.ajouterSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit2.retirerSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+		}
+
+		/* ACT - WHEN */
+		final List<Future<Boolean>> futures
+			= executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* ASSERT - THEN : aucune tâche annulée (timeout) et aucune exception. */
+		for (final Future<Boolean> future : futures) {
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche STP<->Produit ne doit pas être annulée (timeout) : ");
+
+			assertTrue(
+				future.get(),
+				"Une tâche STP<->Produit doit se terminer normalement : ");
+
+		}
+
+		/* ASSERT - THEN : cohérence finale minimale (selon l'état final). */
+		final SousTypeProduitI parentFinal = produit.getSousTypeProduit();
+
+		if (parentFinal == null) {
+
+			assertFalse(
+				sousTypeProduit1.getProduits().contains(produit),
+				"Si le parent final est null, sousTypeProduit1 ne doit pas contenir le produit : ");
+
+			assertFalse(
+				sousTypeProduit2.getProduits().contains(produit),
+				"Si le parent final est null, sousTypeProduit2 ne doit pas contenir le produit : ");
+
+		} else if (parentFinal == sousTypeProduit1) {
+
+			assertTrue(
+				sousTypeProduit1.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit1, il doit contenir le produit : ");
+
+			assertFalse(
+				sousTypeProduit2.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit1, sousTypeProduit2 ne doit pas contenir le produit : ");
+
+		} else if (parentFinal == sousTypeProduit2) {
+
+			assertTrue(
+				sousTypeProduit2.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit2, il doit contenir le produit : ");
+
+			assertFalse(
+				sousTypeProduit1.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit2, sousTypeProduit1 ne doit pas contenir le produit : ");
+
+		}
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test anti-deadlock STP<->Produit réussi *****");
+			System.out.println("Parent final : " + parentFinal);
+		}
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
 	 * <p>affiche à la console un ProduitI.</p>
 	 * </div>
 	 *

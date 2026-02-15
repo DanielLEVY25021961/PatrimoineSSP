@@ -1304,42 +1304,46 @@ public class Produit implements ProduitI, Cloneable {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">traite le cas où une
-	 * mauvaise instance de SousTypeProduitI non Objet métier
-	 * est passée en paramètre d'une méthode.</p>
+	 * <p>Traite le cas où une mauvaise instance de 
+	 * <code>SousTypeProduitI</code>
+	 * non Objet métier est passée en paramètre.</p>
 	 * <ul>
-	 * <li>return si pSousTypeProduit == null.</li>
-	 * <li>LOG.fatal et throw IllegalStateException
-	 * si pSousTypeProduit est une mauvaise instance.</li>
+	 * <li>retourne sans effet si 
+	 * <code>pSousTypeProduit</code> est null.</li>
+	 * <li>journalise en <code>fatal</code> et lève une 
+	 * <code>IllegalStateException</code>
+	 * si l'instance n'est pas de type <code>SousTypeProduit</code>.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pSousTypeProduit : SousTypeProduitI
 	 */
 	private void traiterMauvaiseInstanceSousTypeProduit(
-	        final SousTypeProduitI pSousTypeProduit) {
-	    /*
-	     * Traite les mauvaises instances de manière thread-safe.
-	     */
-	    synchronized (this) {
-	    	
-	        if (pSousTypeProduit != null) {
-	        	
-	            if (!(pSousTypeProduit instanceof SousTypeProduit)) {
-	            	
-	                final String messageKo 
-	                	= MAUVAISE_INSTANCE_ENFANT_METIER
-	                        + pSousTypeProduit.getClass();
-	                
-	                if (LOG.isFatalEnabled()) {
-	                    LOG.fatal(messageKo);
-	                }
-	                
-	                throw new IllegalStateException(messageKo);
-	            }
-	        }
-	    }
-	}
+			final SousTypeProduitI pSousTypeProduit) {
+
+		/*
+		 * Méthode pure : ne lit ni ne modifie l'état interne.
+		 * Aucun synchronized nécessaire.
+		 */
+		if (pSousTypeProduit != null) {
+
+			if (!(pSousTypeProduit instanceof SousTypeProduit)) {
+
+				final String messageKo
+					= MAUVAISE_INSTANCE_ENFANT_METIER
+						+ pSousTypeProduit.getClass();
+
+				if (LOG.isFatalEnabled()) {
+					LOG.fatal(messageKo);
+				}
+
+				throw new IllegalStateException(messageKo);
+
+			}
+
+		}
+
+	} // Fin de traiterMauvaiseInstanceSousTypeProduit(...)._______________
 		
 	
 }
