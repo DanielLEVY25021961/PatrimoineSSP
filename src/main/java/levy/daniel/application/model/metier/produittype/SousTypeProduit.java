@@ -1060,13 +1060,12 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	        return;
 	    }
 
-	    /* IMPORTANT : cette méthode n'est volontairement pas synchronisée
-	     * pour éviter les deadlocks STP <-> Produit.
+	    /* IMPORTANT :
+	     * on évite toute synchronisation sur this pendant l'appel au Setter
+	     * de l'enfant pour supprimer les risques de deadlock STP <-> Produit.
 	     *
-	     * Canonique : on passe uniquement par le Setter 
-	     * d'association de l'enfant,
-	     * qui assure la cohérence bidirectionnelle 
-	     * et met à jour la liste produits
+	     * Canonique : on passe uniquement par le Setter d'association de l'enfant,
+	     * qui assure la cohérence bidirectionnelle et met à jour la liste produits
 	     * via internalAddProduit(...) côté parent.
 	     */
 	    pProduit.setSousTypeProduit(this);
@@ -1088,26 +1087,23 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	        return;
 	    }
 
-	    /* IMPORTANT : cette méthode n'est volontairement pas synchronisée
-	     * pendant l'appel au Setter de l'enfant pour éviter les deadlocks.
-	     *
-	     * On vérifie sous verrou local uniquement si pProduit est bien
-	     * contenu dans la liste, puis on relâche le verrou avant de
-	     * déclencher la bidirectionnalité 
-	     * via le Setter canonique de l'enfant.
+	    /* IMPORTANT :
+	     * ne pas utiliser contains() ici 
+	     * (peut appeler equals() et provoquer
+	     * des inversions de verrous Produit/STP). On vérifie par identité.
 	     */
-	    final boolean contient;
+	    final boolean contientParIdentite;
 
 	    synchronized (this) {
-	        contient = this.produits.contains(pProduit);
+	        contientParIdentite = this.containsProduitByReference(pProduit);
 	    }
 
-	    if (!contient) {
+	    if (!contientParIdentite) {
 	        return;
 	    }
 
-	    /* Canonique : on passe uniquement 
-	     * par le Setter d'association de l'enfant,
+	    /* Canonique : on passe uniquement par 
+	     * le Setter d'association de l'enfant,
 	     * qui assure la cohérence bidirectionnelle 
 	     * et met à jour la liste produits
 	     * via internalRemoveProduit(...) côté parent.
@@ -1115,9 +1111,9 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	    pProduit.setSousTypeProduit(null);
 
 	} // Fin de retirerSTPauProduit(...).__________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>ajoute pProduit à la <code>List&lt;ProduitI&gt;</code>
@@ -1131,7 +1127,7 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 * @param pProduit : ProduitI
 	 */
 	protected final void internalAddProduit(final ProduitI pProduit) {
-		
+
 	    /* traite le cas d'une mauvaise instance passée en paramètre. */
 	    this.traiterMauvaiseInstanceProduit(pProduit);
 
@@ -1139,15 +1135,20 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	        return;
 	    }
 
-	    /*
-	     * Ajout thread-safe à la liste.
+	    /* IMPORTANT :
+	     * ne pas utiliser contains() ici (peut appeler equals() 
+	     * et provoquer des inversions de verrous Produit/STP).
+	     * On vérifie l'existence par identité (==) uniquement.
 	     */
 	    synchronized (this) {
-	        if (!this.produits.contains(pProduit)) {
+
+	        if (!this.containsProduitByReference(pProduit)) {
 	            this.produits.add(pProduit);
 	        }
+
 	    }
-	}
+
+	} // Fin de internalAddProduit(...).____________________________________
 
 
 
@@ -1162,7 +1163,18 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 *
 	 * @param pProduit : ProduitI
 	 */
+	/**
+	 * retire pProduit de la `List<ProduitI>` `this.produits`
+	 *
+	 * traite le cas d'une mauvaise instance passée en paramètre.
+	 *
+	 * Méthode interne au Package (protected)
+	 * utilisée par l'enfant Produit pour éviter les boucles.
+	 *
+	 * @param pProduit : ProduitI
+	 */
 	protected final void internalRemoveProduit(final ProduitI pProduit) {
+
 	    /* traite le cas d'une mauvaise instance passée en paramètre. */
 	    this.traiterMauvaiseInstanceProduit(pProduit);
 
@@ -1170,13 +1182,64 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	        return;
 	    }
 
-	    /*
-	     * Retrait thread-safe de la liste.
+	    /* IMPORTANT :
+	     * ne pas utiliser remove(Object) ici (peut appeler equals()).
+	     * On retire par identité (==) uniquement.
 	     */
 	    synchronized (this) {
-	        this.produits.remove(pProduit);
+	        this.removeProduitByReference(pProduit);
 	    }
-	}
+
+	} // Fin de internalRemoveProduit(...)._________________________________
+	
+	
+	
+	/**
+	 * Retire pProduit de this.produits par identité (==).
+	 * Cette méthode doit être appelée sous synchronized(this).
+	 *
+	 * @param pProduit : ProduitI
+	 */
+	private void removeProduitByReference(final ProduitI pProduit) {
+	
+	    if (pProduit == null) {
+	        return;
+	    }
+	
+	    for (int i = 0; i < this.produits.size(); i++) {
+	        final Object objet = this.produits.get(i);
+	        if (objet == pProduit) {
+	            this.produits.remove(i);
+	            return;
+	        }
+	    }
+	
+	} // Fin de removeProduitByReference(...)._______________________________
+
+
+
+	/**
+	 * Vérifie si this.produits contient pProduit par identité (==).
+	 * Cette méthode doit être appelée sous synchronized(this).
+	 *
+	 * @param pProduit : ProduitI
+	 * @return boolean : true si pProduit est présent par identité.
+	 */
+	private boolean containsProduitByReference(final ProduitI pProduit) {
+
+	    if (pProduit == null) {
+	        return false;
+	    }
+
+	    for (final Object objet : this.produits) {
+	        if (objet == pProduit) {
+	            return true;
+	        }
+	    }
+
+	    return false;
+
+	} // Fin de containsProduitByReference(...)._____________________________
 
 	
 	
