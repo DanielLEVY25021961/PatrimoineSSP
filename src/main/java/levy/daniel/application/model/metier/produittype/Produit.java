@@ -292,19 +292,37 @@ public class Produit implements ProduitI, Cloneable {
 	        produitSnapshot = this.produit;
 	    }
 
-	    /* HashCode cohérent avec equals() :
-	     * - SousTypeProduit comparé par identité (==) 
-	     * donc hash par identityHashCode.
-	     * - Produit comparé insensible à la casse 
-	     * donc hash sur produit en minuscules.
-	     */
-	    final int hashSousTypeProduit =
-	            (sousTypeProduitSnapshot == null) ? 0 
-	            		: System.identityHashCode(sousTypeProduitSnapshot);
-
 	    final int hashProduit =
-	            (produitSnapshot == null) ? 0 
-	            		: produitSnapshot.toLowerCase(Locale.ROOT).hashCode();
+	            (produitSnapshot == null) 
+	            ? 0 : produitSnapshot.toLowerCase(Locale.ROOT).hashCode();
+
+	    int hashSousTypeProduit = 0;
+
+	    if (sousTypeProduitSnapshot != null) {
+
+	        final String sousTypeLibelle 
+	        	= sousTypeProduitSnapshot.getSousTypeProduit();
+	        final TypeProduitI typeProduitSnapshot 
+	        	= sousTypeProduitSnapshot.getTypeProduit();
+	        final String typeProduitLibelle =
+	                (typeProduitSnapshot == null) 
+	                ? null : typeProduitSnapshot.getTypeProduit();
+
+	        final int hashSousTypeLibelle =
+	                (sousTypeLibelle == null) 
+	                ? 0 : sousTypeLibelle.toLowerCase(Locale.ROOT).hashCode();
+
+	        final int hashTypeProduitLibelle =
+	                (typeProduitLibelle == null) 
+	                ? 0 : typeProduitLibelle.toLowerCase(Locale.ROOT).hashCode();
+
+	        int resultStp = 1;
+	        resultStp = 31 * resultStp + hashSousTypeLibelle;
+	        resultStp = 31 * resultStp + hashTypeProduitLibelle;
+
+	        hashSousTypeProduit = resultStp;
+
+	    }
 
 	    int result = 1;
 
@@ -341,9 +359,11 @@ public class Produit implements ProduitI, Cloneable {
 	    }
 
 	    /* retourne false si pObject n'est pas une bonne instance. */
-	    if (!(pObject instanceof Produit other)) {
+	    if (!(pObject instanceof Produit)) {
 	        return false;
 	    }
+
+	    final Produit other = (Produit) pObject;
 
 	    final SousTypeProduitI thisSousTypeProduitSnapshot;
 	    final String thisProduitSnapshot;
@@ -361,24 +381,81 @@ public class Produit implements ProduitI, Cloneable {
 	        otherProduitSnapshot = other.produit;
 	    }
 
-	    /* equals sur [SousTypeProduit - Produit] :
-	     * - SousTypeProduit comparé par identité (==) 
-	     * pour éviter les deadlocks/cascades.
-	     * - produit comparé insensible à la casse.
-	     */
-	    if (thisSousTypeProduitSnapshot != otherSousTypeProduitSnapshot) {
-	        return false;
-	    }
-
+	    /* produit comparé insensible à la casse. */
 	    if (thisProduitSnapshot == null) {
-	        return otherProduitSnapshot == null;
+	        if (otherProduitSnapshot != null) {
+	            return false;
+	        }
+	    } else {
+	        if (otherProduitSnapshot == null) {
+	            return false;
+	        }
+	        if (!thisProduitSnapshot.equalsIgnoreCase(
+	        		otherProduitSnapshot)) {
+	            return false;
+	        }
 	    }
 
-	    if (otherProduitSnapshot == null) {
+	    /* sousTypeProduit comparé métier (sans equals() transitif).
+	     * - compare getSousTypeProduit() insensible à la casse.
+	     * - compare le typeProduit associé via 
+	     * son libellé insensible à la casse.
+	     */
+	    if (thisSousTypeProduitSnapshot == null) {
+	        return otherSousTypeProduitSnapshot == null;
+	    }
+
+	    if (otherSousTypeProduitSnapshot == null) {
 	        return false;
 	    }
 
-	    return thisProduitSnapshot.equalsIgnoreCase(otherProduitSnapshot);
+	    final String thisSousTypeLibelle 
+	    	= thisSousTypeProduitSnapshot.getSousTypeProduit();
+	    final String otherSousTypeLibelle 
+	    	= otherSousTypeProduitSnapshot.getSousTypeProduit();
+
+	    if (thisSousTypeLibelle == null) {
+	        if (otherSousTypeLibelle != null) {
+	            return false;
+	        }
+	    } else {
+	        if (otherSousTypeLibelle == null) {
+	            return false;
+	        }
+	        if (!thisSousTypeLibelle.equalsIgnoreCase(
+	        		otherSousTypeLibelle)) {
+	            return false;
+	        }
+	    }
+
+	    final TypeProduitI thisTypeProduitSnapshot 
+	    	= thisSousTypeProduitSnapshot.getTypeProduit();
+	    final TypeProduitI otherTypeProduitSnapshot 
+	    	= otherSousTypeProduitSnapshot.getTypeProduit();
+
+	    if (thisTypeProduitSnapshot == null) {
+	        return otherTypeProduitSnapshot == null;
+	    }
+
+	    if (otherTypeProduitSnapshot == null) {
+	        return false;
+	    }
+
+	    final String thisTypeProduitLibelle 
+	    	= thisTypeProduitSnapshot.getTypeProduit();
+	    final String otherTypeProduitLibelle 
+	    	= otherTypeProduitSnapshot.getTypeProduit();
+
+	    if (thisTypeProduitLibelle == null) {
+	        return otherTypeProduitLibelle == null;
+	    }
+
+	    if (otherTypeProduitLibelle == null) {
+	        return false;
+	    }
+
+	    return thisTypeProduitLibelle
+	    		.equalsIgnoreCase(otherTypeProduitLibelle);
 
 	}
 
