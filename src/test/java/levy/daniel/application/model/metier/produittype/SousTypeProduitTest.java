@@ -119,6 +119,11 @@ public class SousTypeProduitTest {
      * "canne à pêche"
      */
     public static final String CANNE_A_PECHE = "canne à pêche";
+    
+    /**
+     * "CANNE À PÊCHE"
+     */
+    public static final String CANNE_A_PECHE_MAJ = "CANNE À PÊCHE";
 
     /**
      * "moulinet"
@@ -851,7 +856,7 @@ public class SousTypeProduitTest {
 
         /* ARRANGE - GIVEN : Création des SousTypeProduit (égaux, insensibles à la casse). */
         final SousTypeProduitI objet1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
-        final SousTypeProduitI objet2 = new SousTypeProduit(20L, "CANNE À PÊCHE", typeProduit2, null);
+        final SousTypeProduitI objet2 = new SousTypeProduit(20L, CANNE_A_PECHE_MAJ, typeProduit2, null);
 
         /* ACT - WHEN */
         final boolean isEquals = objet1.equals(objet2);
@@ -907,7 +912,7 @@ public class SousTypeProduitTest {
         final TypeProduit typeProduitDifferent = new TypeProduit(3L, OUTILLAGE, null);
 
         final SousTypeProduit stp1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
-        final SousTypeProduit stp2 = new SousTypeProduit(20L, "CANNE À PÊCHE", typeProduit2, null);
+        final SousTypeProduit stp2 = new SousTypeProduit(20L, CANNE_A_PECHE_MAJ, typeProduit2, null);
         final SousTypeProduit stp3 = new SousTypeProduit(30L, MOULINET, typeProduitDifferent, null);
 
         /* ACT - WHEN : Vérification des contrats Java (mono-thread). */
@@ -1271,6 +1276,106 @@ public class SousTypeProduitTest {
 		assertTrue(objet1.compareTo(objet2ApresObjet1) < 0, "objet1.compareTo(objet2ApresObjet1) doit retourner < 0 : ");
 		
  	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Vérifie que compareTo() est insensible à la casse sur getSousTypeProduit().
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie le contrat x.equals(y) implique x.compareTo(y) == 0.</li>
+	 * <li>Vérifie que deux libellés identiques avec casse différente sont classés égaux.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToIgnoreCase() : vérifie compareTo() insensible à la casse sur getSousTypeProduit()")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToIgnoreCase() {
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduitI typeProduit1 = new TypeProduit(PECHE);
+	    final TypeProduitI typeProduit2 = new TypeProduit("pêche");
+
+	    final SousTypeProduitI objet1 =
+	            new SousTypeProduit(1L, "canne à pêche", typeProduit1, null);
+	    final SousTypeProduitI objet2 =
+	            new SousTypeProduit(2L, CANNE_A_PECHE_MAJ, typeProduit2, null);
+
+	    /* ACT - WHEN */
+	    final int compare12 = objet1.compareTo(objet2);
+	    final int compare21 = objet2.compareTo(objet1);
+
+	    /* ASSERT - THEN */
+	    assertEquals(0, compare12,
+	            "Deux SousTypeProduit doivent être classés égaux même si la casse diffère sur getSousTypeProduit().");
+	    assertEquals(0, compare21,
+	            "compareTo() doit être cohérent dans les deux sens pour des libellés identiques à casse différente.");
+	    assertTrue(objet1.equals(objet2),
+	            "x.equals(y) doit être true lorsque x.compareTo(y) == 0 pour ce cas métier.");
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste compareTo() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie la cohérence des résultats en exécution concurrente.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testCompareToThreadSafe() : vérifie le thread-safety de compareTo()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testCompareToThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduit typeProduit1 = new TypeProduit(1L, PECHE, null);
+	    final TypeProduit typeProduit2 = new TypeProduit(2L, PECHE, null);
+	    final TypeProduit typeProduitDifferent = new TypeProduit(3L, OUTILLAGE, null);
+
+	    final SousTypeProduit stp1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
+	    final SousTypeProduit stp2 = new SousTypeProduit(20L, CANNE_A_PECHE_MAJ, typeProduit2, null);
+	    final SousTypeProduit stp3 = new SousTypeProduit(30L, MOULINET, typeProduitDifferent, null);
+
+	    /* ACT - WHEN : Test multi-thread pour vérifier la thread-safety. */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> stp1.compareTo(stp2) == 0
+	                && stp2.compareTo(stp1) == 0
+	                && stp1.compareTo(stp3) != 0
+	                && stp3.compareTo(stp1) != 0);
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche compareTo() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "compareTo() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	} //___________________________________________________________________
 	
 
 	

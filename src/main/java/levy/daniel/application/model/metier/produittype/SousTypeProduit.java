@@ -564,126 +564,118 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	@Override
 	public final int compareTo(final SousTypeProduitI pObject) {
 
-		/* Comparaison de la même instance retourne toujours 0. */
-		if (this == pObject) {
-			return 0;
-		}
+	    /* Comparaison de la même instance retourne toujours 0. */
+	    if (this == pObject) {
+	        return 0;
+	    }
 
-		/* Comparaison avec null retourne toujours < 0. */
-		if (pObject == null) {
-			return -1;
-		}
-		
-		 /*
-	     * Détermine l'ordre de verrouillage pour éviter les deadlocks.
-	     * L'ordre est basé sur System.identityHashCode() pour garantir
-	     * un verrouillage systématique et reproductible.
-	     */
-	    final int thisHash = System.identityHashCode(this);
-	    final int otherHash = System.identityHashCode(pObject);
-	    final boolean lockThisFirst = thisHash <= otherHash;
-	    
-	    /*
-	     * Verrouillage dans un ordre systématique pour éviter les deadlocks.
-	     * Deux cas possibles :
-	     * 1. Verrouiller this en premier si thisHash <= otherHash.
-	     * 2. Verrouiller pObject en premier sinon.
-	     */
-	    if (lockThisFirst) {
-	    	/*
-		     * Synchronisation sur this ET pObject pour 
-		     * garantir la cohérence.
-		     * Utilisation d'un ordre de verrouillage systématique basé sur
-		     * System.identityHashCode() pour éviter les deadlocks.
-		     */
-	        synchronized (this) {
-	        	
-	            synchronized (pObject) {
-	            	/*
-	                 * comparaison sur [TypeProduit - SousTypeProduit].
-	                 */
-	                return compareFields(pObject);
-	            }
-	        }	    	
-	    } else {
-	    		    	
-	        synchronized (pObject) {
-	        	
-	            synchronized (this) {
-	            	/*
-	                 * comparaison sur [TypeProduit - SousTypeProduit].
-	                 */
-	                return compareFields(pObject);
-	            }
-	        }
-	    }	    	
+	    /* Comparaison avec null retourne toujours < 0. */
+	    if (pObject == null) {
+	        return -1;
+	    }
+
+	    /* Comparaison sur [TypeProduit - SousTypeProduit]. */
+	    return this.compareFields(pObject);
+
 	}
 	    
 	
 	
 	/**
-	 * <p style="font-weight:bold;">
-	 * Compare les champs de manière thread-safe en accédant 
-	 * directement aux champs et pas aux getters 
-	 * (pas toujours Thread-Safe).</p>
-	 *
-	 * @param pObject : SousTypeProduitI : 
+	 * Compare les champs de manière thread-safe en accédant
+	 * directement aux champs et pas aux getters
+	 * (pas toujours Thread-Safe).
+	 * @param pObject : SousTypeProduitI :
 	 * L'objet à comparer avec this.
 	 * @return Le résultat de la comparaison.
 	 */
 	private int compareFields(final SousTypeProduitI pObject) {
-		
-		/* Parent TypeProduit. */
-	    /*
-	     * Accès directs aux champs pour éviter les appels aux getters
-	     * non synchronisés. Le cast est safe 
-	     * car SousTypeProduitI est implémenté
-	     * uniquement par SousTypeProduit.
-	     */
-	    final TypeProduitI a = this.typeProduit;
-	    final TypeProduitI b = ((SousTypeProduit) pObject).typeProduit;
 
-	    /*
-	     * Gestion des cas null :
-	     * - Si a est null et b est null, les objets sont égaux (retourne 0).
-	     * - Si a est null et b n'est pas null, 
-	     * a est considéré comme "après" b (retourne +1).
-	     * - Si a n'est pas null et b est null, 
-	     * a est considéré comme "avant" b (retourne -1).
+	    /* L'implémentation de SousTypeProduitI est SousTypeProduit. */
+	    final SousTypeProduit other = (SousTypeProduit) pObject;
+
+	    /* Snapshots des champs nécessaires pour comparer hors verrous. */
+	    final TypeProduitI typeA;
+	    final String sousA;
+	    final TypeProduitI typeB;
+	    final String sousB;
+
+	    /* Détermine l'ordre de verrouillage pour éviter les deadlocks.
+	     * L'ordre est basé sur System.identityHashCode() pour garantir
+	     * un verrouillage systématique et reproductible.
 	     */
-	    if (a == null) {
-	        return (b == null) ? 0 : +1; /* null "après". */
+	    final int thisHash = System.identityHashCode(this);
+	    final int otherHash = System.identityHashCode(other);
+
+	    if (thisHash < otherHash) {
+
+	        /* Verrouillage ordonné : this puis other. */
+	        synchronized (this) {
+	            synchronized (other) {
+	                typeA = this.typeProduit;
+	                sousA = this.sousTypeProduit;
+	                typeB = other.typeProduit;
+	                sousB = other.sousTypeProduit;
+	            }
+	        }
+
+	    } else if (thisHash > otherHash) {
+
+	        /* Verrouillage ordonné : other puis this. */
+	        synchronized (other) {
+	            synchronized (this) {
+	                typeA = this.typeProduit;
+	                sousA = this.sousTypeProduit;
+	                typeB = other.typeProduit;
+	                sousB = other.sousTypeProduit;
+	            }
+	        }
+
+	    } else {
+
+	        /* Cas rarissime : collision de System.identityHashCode(...)
+	         * -> verrou de départ unique pour imposer un ordre stable
+	         * et éviter tout deadlock.
+	         */
+	        synchronized (SousTypeProduit.class) {
+	            synchronized (this) {
+	                synchronized (other) {
+	                    typeA = this.typeProduit;
+	                    sousA = this.sousTypeProduit;
+	                    typeB = other.typeProduit;
+	                    sousB = other.sousTypeProduit;
+	                }
+	            }
+	        }
+
 	    }
 
-	    if (b == null) {
+	    /* Comparaison hors verrous pour réduire la contention. */
+	    if (typeA == null) {
+	        return (typeB == null) ? 0 : +1;
+	    }
+
+	    if (typeB == null) {
 	        return -1;
 	    }
-	    
-	    final int compareTP = a.compareTo(b);
-	    
+
+	    final int compareTP = typeA.compareTo(typeB);
 	    if (compareTP != 0) {
-	    	return compareTP;
+	        return compareTP;
 	    }
 
-	    /* SousTypeProduit. */
-	    final String s1 = this.sousTypeProduit;
-		final String s2 
-			= ((SousTypeProduit) pObject).sousTypeProduit;
-		
-		if (s1 == null) {
-			return (s2 == null) ? 0 : +1; /* null "après". */
-		}
-		
-		if (s2 == null) {
-			return -1;
-		}
+	    if (sousA == null) {
+	        return (sousB == null) ? 0 : +1;
+	    }
 
-		/*
-	     * Comparaison case-insensitive des chaînes de caractères.
-	     * Strings.CI.compare() place les chaînes vides avant les autres.
-	     */
-		return Strings.CI.compare(s1, s2);	 	    
-	}	
+	    if (sousB == null) {
+	        return -1;
+	    }
+
+	    /* Comparaison case-insensitive des chaînes de caractères. */
+	    return Strings.CI.compare(sousA, sousB);
+
+	}
 
 	
 	
