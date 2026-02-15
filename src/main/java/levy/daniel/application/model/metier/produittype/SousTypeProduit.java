@@ -1539,54 +1539,54 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public final void setProduits(
-			final List<? extends ProduitI> pProduits) {
-		
-	    /* traite le cas d'une mauvaise instance dans pProduits. */
+	public final void setProduits(final List<? extends ProduitI> pProduits) {
+
+	    /* Traite le cas de mauvaise instance dans la liste. */
 	    this.traiterMauvaiseInstanceDansListeProduits(pProduits);
 
-	    /*
-	     * Détache tous les ProduitI enfants 
-	     * de la présente liste this.produits
-	     * en utilisant le Setter canonique de l'enfant ProduitI.
-	     * Utilisation d'une copie pour éviter 
-	     * ConcurrentModificationException.
+	    /* Snapshot thread-safe des produits actuellement rattachés. */
+	    final List<ProduitI> produitsActuelsSnapshot;
+
+	    synchronized (this) {
+	        produitsActuelsSnapshot = new ArrayList<>(this.produits);
+	    }
+
+	    /* Détache tous les produits actuels 
+	     * via le Setter canonique de l'enfant.
+	     * IMPORTANT : hors verrou STP pour 
+	     * éviter les deadlocks Produit <-> STP.
 	     */
-	    final List<ProduitI> safeCopyDetach 
-	    	= new ArrayList<>(this.produits);
-	    
-	    for (final ProduitI produit : safeCopyDetach) {
+	    for (final ProduitI produit : produitsActuelsSnapshot) {
 	        if (produit != null) {
 	            produit.setSousTypeProduit(null);
 	        }
 	    }
 
-	    /*
-	     * Vide la liste avec clear() si pProduits == null.
-	     * Ne jamais créer une nouvelle liste avec new ArrayList()
-	     * pour être Hibernate-safe.
-	     */
+	    /* Si la liste fournie est null, on termine après nettoyage.
+	     * Clear(), ne jamais faire new ArrayList() pour être Proxy-safe. */
 	    if (pProduits == null) {
-	    	
+
 	        synchronized (this) {
 	            this.produits.clear();
-	            
 	        }
-	    } else {
-	        /*
-	         * Attache les nouveaux ProduitI enfants contenus dans pProduits
-	         * en utilisant le Setter canonique de l'enfant ProduitI.
-	         * Utilisation d'une copie immuable pour éviter
-	         * ConcurrentModificationException.
-	         */
-	        final List<? extends ProduitI> safeCopyAttach =
-	            Collections.unmodifiableList(new ArrayList<>(pProduits));
-	        
-	        for (final ProduitI produit : safeCopyAttach) {
-	            this.ajouterSTPauProduit(produit);
+
+	        return;
+	    }
+
+	    /* Copie typée et robuste de la liste fournie. */
+	    final List<ProduitI> produitsNouveauxSnapshot = new ArrayList<>();
+	    for (final ProduitI produit : pProduits) {
+	        if (produit != null) {
+	            produitsNouveauxSnapshot.add(produit);
 	        }
 	    }
-	}
+
+	    /* Attache les nouveaux produits via le chemin canonique. */
+	    for (final ProduitI produit : produitsNouveauxSnapshot) {
+	        this.ajouterSTPauProduit(produit);
+	    }
+
+	} // Fin de setProduits(...).___________________________________________
 
 
 

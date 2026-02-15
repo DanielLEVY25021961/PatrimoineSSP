@@ -2837,7 +2837,154 @@ public class SousTypeProduitTest {
             System.out.println("***** Test getProduits() en multi-thread réussi *****");
             System.out.println("Nombre de produits : " + sousTypeProduit.getProduits().size());
         }
-    }
+    } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Teste setProduits(final List&lt;? extends ProduitI&gt;) en nominal.
+     * </p>
+     * <ul>
+     * <li>Vérifie le détachement des anciens produits.</li>
+     * <li>Vérifie le rattachement des nouveaux produits.</li>
+     * <li>Vérifie la cohérence bidirectionnelle Produit &lt;-&gt; SousTypeProduit.</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings({ "unchecked", UNUSED })
+    @DisplayName("testSetProduits() : vérifie setProduits() en nominal")
+    @Tag("setProduits")
+    @Test
+    public final void testSetProduits() {
+
+        /* ARRANGE - GIVEN */
+        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+        final SousTypeProduit sousTypeProduit =
+                new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+        final Produit produit1 = new Produit(1L, CANNE_TELESCOPIQUE, null);
+        final Produit produit2 = new Produit(2L, MOULINET, null);
+        final Produit produit3 = new Produit(3L, "Hameçon", null);
+
+        sousTypeProduit.ajouterSTPauProduit(produit1);
+        sousTypeProduit.ajouterSTPauProduit(produit2);
+
+        final List<ProduitI> nouveauxProduits = new ArrayList<>();
+        nouveauxProduits.add(produit3);
+
+        /* ACT - WHEN */
+        sousTypeProduit.setProduits(nouveauxProduits);
+
+        /* ASSERT - THEN : anciens produits détachés. */
+        assertNull(produit1.getSousTypeProduit(),
+                "L'ancien produit1 doit être détaché après setProduits().");
+        assertNull(produit2.getSousTypeProduit(),
+                "L'ancien produit2 doit être détaché après setProduits().");
+
+        /* ASSERT - THEN : nouveau produit rattaché. */
+        assertEquals(sousTypeProduit, produit3.getSousTypeProduit(),
+                "Le nouveau produit3 doit être rattaché au SousTypeProduit après setProduits().");
+
+        assertEquals(1, sousTypeProduit.getProduits().size(),
+                "La liste des produits du SousTypeProduit doit contenir exactement 1 élément.");
+
+        assertTrue(sousTypeProduit.getProduits().contains(produit3),
+                "La liste des produits doit contenir produit3.");
+
+    } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Teste setProduits(final List&lt;? extends ProduitI&gt;) en environnement multi-thread.
+     * </p>
+     * <ul>
+     * <li>Vérifie qu'un appel concurrent à setProduits() ne provoque pas de deadlock.</li>
+     * <li>Utilise un timeout pour détecter une régression introduisant un blocage.</li>
+     * </ul>
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testSetProduitsThreadSafe() : vérifie le thread-safety de setProduits()")
+    @Tag(THREAD_SAFETY)
+    @Test
+    public final void testSetProduitsThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* ARRANGE - GIVEN */
+        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+        final SousTypeProduit sousTypeProduit =
+                new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+        for (int i = 0; i < 50; i++) {
+
+            final Produit produitA = new Produit((long) i, "Produit-A-" + i, null);
+            final Produit produitB = new Produit((long) (1000 + i), "Produit-B-" + i, null);
+
+            tasks.add(() -> {
+
+                final List<ProduitI> liste = new ArrayList<>();
+                liste.add(produitA);
+                liste.add(produitB);
+
+                sousTypeProduit.setProduits(liste);
+
+                /* Vérifie cohérence bidirectionnelle minimale. */
+                if (produitA.getSousTypeProduit() != sousTypeProduit) {
+                    return false;
+                }
+                if (produitB.getSousTypeProduit() != sousTypeProduit) {
+                    return false;
+                }
+
+                return true;
+
+            });
+
+            tasks.add(() -> {
+
+                sousTypeProduit.setProduits(null);
+
+                return true;
+
+            });
+
+        }
+
+        /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+        final List<Future<Boolean>> results =
+                executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        /* ASSERT - THEN */
+        for (final Future<Boolean> result : results) {
+            assertFalse(result.isCancelled(),
+                    "Une tâche setProduits() ne doit pas être annulée (timeout) : ");
+            assertTrue(result.get(),
+                    "setProduits() doit rester cohérent en environnement multi-thread : ");
+        }
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test setProduits() en multi-thread réussi *****");
+            System.out.println("Taille finale : " + sousTypeProduit.getProduits().size());
+        }
+
+    } //___________________________________________________________________
     
     
     	
