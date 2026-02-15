@@ -25,7 +25,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -3350,7 +3349,7 @@ public class TypeProduitTest {
     @SuppressWarnings({ RESOURCE, UNUSED })
     @DisplayName("testSetSousTypeProduitsThreadSafe() : test multi-thread désactivé provisoirement (dépend de SousTypeProduit.setTypeProduit(...))")
     @Tag(THREAD_SAFETY)
-    @Disabled("Dépend de SousTypeProduit.setTypeProduit(...) (ordre de verrous). A réactiver après finalisation de feature/sous-type-produit.")
+//    @Disabled("Dépend de SousTypeProduit.setTypeProduit(...) (ordre de verrous). A réactiver après finalisation de feature/sous-type-produit.")
     @Test
     public final void testSetSousTypeProduitsThreadSafe()
             throws InterruptedException, ExecutionException {
