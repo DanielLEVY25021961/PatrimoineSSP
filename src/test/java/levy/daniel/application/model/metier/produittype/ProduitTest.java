@@ -1653,6 +1653,67 @@ public class ProduitTest {
 	
 	/**
 	 * <div>
+	 * <p>Teste la méthode <b>clone()</b> en environnement multi-thread.</p>
+	 * <ul>
+	 * <li>Vérifie que le clonage est thread-safe.</li>
+	 * <li>Utilise un ExecutorService pour simuler des clonages concurrents.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings({ "unchecked", UNUSED, RESOURCE })
+	@DisplayName("testCloneThreadSafe() : vérifie le thread-safety de clone()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testCloneThreadSafe() 
+			throws InterruptedException, ExecutionException, CloneNotSupportedException {
+	
+		/* * AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+	
+		/* * ARRANGE - GIVEN : Création d'un Produit. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+		final Produit produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+	
+		/* * ACT - WHEN : Exécution concurrente de clone(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(10);
+		final List<Callable<ProduitI>> tasks = new ArrayList<>();
+	
+		for (int i = 0; i < 100; i++) {
+			tasks.add(() -> produit.clone());
+		}
+	
+		final List<Future<ProduitI>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+	
+		executor.shutdown();
+	
+		/* * ASSERT - THEN : aucune tâche ne doit être annulée (timeout)
+		 * et toutes doivent réussir. */
+		for (final Future<ProduitI> future : futures) {
+	
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche clone ne doit pas être annulée (timeout) : ");
+	
+			final ProduitI clone = future.get();
+	
+			assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
+			assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
+		}
+	
+		/* * AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test clone() en multi-thread réussi *****");
+			System.out.println("Nombre de clones créés : " + futures.size());
+		}
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
 	 * <p>Teste la méthode <code>deepClone(CloneContext)</code>.</p>
 	 * <ul>
 	 * <li>Vérifie le clonage profond avec gestion des cycles.</li>
@@ -1732,47 +1793,48 @@ public class ProduitTest {
 	@Tag(THREAD_SAFETY)
 	@Test
 	public final void testDeepCloneThreadSafe() throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de deepClone().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<ProduitI>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.deepClone(new CloneContext()));
-	    }
-	
-	    final List<Future<ProduitI>> results = executor.invokeAll(tasks);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des clones.
-	     */
-	    for (final Future<ProduitI> result : results) {
-	        final ProduitI clone = result.get();
-	        assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
-	        assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test deepClone() en multi-thread réussi *****");
-	        System.out.println("Nombre de clones créés : " + results.size());
-	    }
+
+		/* * AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+		final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+
+		/* * ACT - WHEN : Exécution concurrente de deepClone(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(10);
+		final List<Callable<ProduitI>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 100; i++) {
+			tasks.add(() -> produit.deepClone(new CloneContext()));
+		}
+
+		final List<Future<ProduitI>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* * ASSERT - THEN : aucune tâche ne doit être annulée (timeout)
+		 * et toutes doivent réussir. */
+		for (final Future<ProduitI> future : futures) {
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche deepClone ne doit pas être annulée (timeout) : ");
+
+			final ProduitI clone = future.get();
+
+			assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
+			assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
+		}
+
+		/* * AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test deepClone() en multi-thread réussi *****");
+			System.out.println("Nombre de clones créés : " + futures.size());
+		}
 	} //___________________________________________________________________
 
 
@@ -1832,66 +1894,6 @@ public class ProduitTest {
 	
 	/**
 	 * <div>
-	 * <p>Teste la méthode <b>clone()</b> en environnement multi-thread.</p>
-	 * <ul>
-	 * <li>Vérifie que le clonage est thread-safe.</li>
-	 * <li>Utilise un ExecutorService pour simuler des clonages concurrents.</li>
-	 * </ul>
-	 * </div>
-	 */
-	@SuppressWarnings({ "unchecked", UNUSED, RESOURCE })
-	@DisplayName("testCloneThreadSafe() : vérifie le thread-safety de clone()")
-	@Tag(THREAD_SAFETY)
-	@Test
-	public final void testCloneThreadSafe() 
-			throws InterruptedException, ExecutionException, CloneNotSupportedException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final Produit produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de clone().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<Produit>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.clone());
-	    }
-	
-	    final List<Future<Produit>> results = executor.invokeAll(tasks);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des clones.
-	     */
-	    for (final Future<Produit> result : results) {
-	        final ProduitI clone = result.get();
-	        assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
-	        assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test clone() en multi-thread réussi *****");
-	        System.out.println("Nombre de clones créés : " + results.size());
-	    }
-	} //___________________________________________________________________
-
-
-
-	/**
-	 * <div>
 	 * <p>Teste la méthode <b>cloneWithoutParent()</b> en environnement multi-thread.</p>
 	 * <ul>
 	 * <li>Vérifie que le clonage sans parent est thread-safe.</li>
@@ -1903,51 +1905,51 @@ public class ProduitTest {
 	@DisplayName("testCloneWithoutParentThreadSafe() : vérifie le thread-safety de cloneWithoutParent()")
 	@Tag(THREAD_SAFETY)
 	@Test
-	public final void testCloneWithoutParentThreadSafe() 
-			throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de cloneWithoutParent().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<ProduitI>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.cloneWithoutParent());
-	    }
-	
-	    final List<Future<ProduitI>> results = executor.invokeAll(tasks);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des clones.
-	     */
-	    for (final Future<ProduitI> result : results) {
-	        final ProduitI clone = result.get();
-	        assertEquals(produit.getIdProduit(), clone.getIdProduit(), "L'ID doit être identique.");
-	        assertEquals(produit.getProduit(), clone.getProduit(), "Le produit doit être identique.");
-	        assertNull(clone.getSousTypeProduit(), "Le sousTypeProduit du clone doit être null.");
-	        assertFalse(clone.isValide(), "Le clone ne doit pas être valide (sans parent).");
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test cloneWithoutParent() en multi-thread réussi *****");
-	        System.out.println("Nombre de clones créés : " + results.size());
-	    }
+	public final void testCloneWithoutParentThreadSafe() throws InterruptedException, ExecutionException {
+
+		/* * AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+		final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+
+		/* * ACT - WHEN : Exécution concurrente de cloneWithoutParent(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(10);
+		final List<Callable<ProduitI>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 100; i++) {
+			tasks.add(() -> produit.cloneWithoutParent());
+		}
+
+		final List<Future<ProduitI>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* * ASSERT - THEN : aucune tâche ne doit être annulée (timeout)
+		 * et toutes doivent réussir. */
+		for (final Future<ProduitI> future : futures) {
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche cloneWithoutParent ne doit pas être annulée (timeout) : ");
+
+			final ProduitI clone = future.get();
+
+			assertEquals(produit.getIdProduit(), clone.getIdProduit(), "L'ID doit être identique.");
+			assertEquals(produit.getProduit(), clone.getProduit(), "Le produit doit être identique.");
+			assertNull(clone.getSousTypeProduit(), "Le sousTypeProduit du clone doit être null.");
+			assertFalse(clone.isValide(), "Le clone ne doit pas être valide (sans parent).");
+		}
+
+		/* * AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test cloneWithoutParent() en multi-thread réussi *****");
+			System.out.println("Nombre de clones créés : " + futures.size());
+		}
 	} //___________________________________________________________________
 
 
