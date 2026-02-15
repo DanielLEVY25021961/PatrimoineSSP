@@ -862,52 +862,84 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final String toStringCsv() {
-	    /*
-	     * Génère une représentation CSV thread-safe.
-	     */
-	    final StringBuilder builder = new StringBuilder();
-	    synchronized (this) {
-	        /* idProduit */
-	        if (this.getIdProduit() != null) {
-	            builder.append(this.getIdProduit());
-	        } else {
-	            builder.append(NULL);
-	        }
-	        builder.append(POINT_VIRGULE);
 
-	        /* type de produit */
-	        if (this.getTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else if (this.getTypeProduit().getTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else {
-	            builder.append(this.getTypeProduit().getTypeProduit());
-	        }
-	        builder.append(POINT_VIRGULE);
+		/*
+		 * Génère une représentation CSV thread-safe
+		 * en limitant au maximum la section critique.
+		 */
 
-	        /* sous-type de produit */
-	        if (this.getSousTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else if (
-	        		this.getSousTypeProduit()
-	        		.getSousTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else {
-	            builder.append(
-	            		this.getSousTypeProduit().getSousTypeProduit());
-	        }
-	        builder.append(POINT_VIRGULE);
+		/* Snapshots sous verrou court. */
+		final Long idProduitSnapshot;
+		final String produitSnapshot;
+		final SousTypeProduitI sousTypeProduitSnapshot;
 
-	        /* produit */
-	        if (this.getProduit() == null) {
-	            builder.append(NULL);
-	        } else {
-	            builder.append(this.getProduit());
-	        }
-	        builder.append(POINT_VIRGULE);
-	    }
-	    return builder.toString();
-	}
+		synchronized (this) {
+
+			idProduitSnapshot = this.idProduit;
+			produitSnapshot = this.produit;
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+
+		}
+
+		/* Récupération des informations "parent" hors verrou Produit. */
+		String typeProduitString = NULL;
+		String sousTypeProduitString = NULL;
+
+		if (sousTypeProduitSnapshot != null) {
+
+			final String sousTypeProduitInterne
+				= sousTypeProduitSnapshot.getSousTypeProduit();
+
+			if (sousTypeProduitInterne != null) {
+				sousTypeProduitString = sousTypeProduitInterne;
+			}
+
+			final TypeProduitI typeProduitSnapshot
+				= sousTypeProduitSnapshot.getTypeProduit();
+
+			if (typeProduitSnapshot != null) {
+
+				final String typeProduitInterne
+					= typeProduitSnapshot.getTypeProduit();
+
+				if (typeProduitInterne != null) {
+					typeProduitString = typeProduitInterne;
+				}
+
+			}
+
+		}
+
+		/* Construction hors verrou. */
+		final StringBuilder builder = new StringBuilder();
+
+		/* idProduit */
+		if (idProduitSnapshot != null) {
+			builder.append(idProduitSnapshot);
+		} else {
+			builder.append(NULL);
+		}
+		builder.append(POINT_VIRGULE);
+
+		/* type de produit */
+		builder.append(typeProduitString);
+		builder.append(POINT_VIRGULE);
+
+		/* sous-type de produit */
+		builder.append(sousTypeProduitString);
+		builder.append(POINT_VIRGULE);
+
+		/* produit */
+		if (produitSnapshot != null) {
+			builder.append(produitSnapshot);
+		} else {
+			builder.append(NULL);
+		}
+		builder.append(POINT_VIRGULE);
+
+		return builder.toString();
+
+	} //___________________________________________________________________
 
 
 
@@ -920,39 +952,35 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final String getEnTeteColonne(final int pI) {
-	    /*
-	     * Retourne l'en-tête de colonne de manière thread-safe.
-	     */
-	    String entete = null;
-	    
-	    synchronized (this) {
-	    	
-	        switch (pI) {
-	        
-	        case 0:
-	            entete = "idproduit";
-	            break;
-	        case 1:
-	            entete = "type de produit";
-	            break;
-	        case 2:
-	            entete = "sous-type de produit";
-	            break;
-	        case 3:
-	            entete = "produit";
-	            break;
-	        default:
-	            entete = "invalide";
-	            break;
-	        }
-	    }
-	    
-	    return entete;
-	    
+
+		/*
+		 * Méthode pure : ne dépend d'aucun champ de l'instance.
+		 * Pas de synchronized 
+		 * (aucun accès à l'état, aucun risque de concurrence).
+		 */
+		switch (pI) {
+
+			case 0:
+				return "idproduit";
+
+			case 1:
+				return "type de produit";
+
+			case 2:
+				return "sous-type de produit";
+
+			case 3:
+				return "produit";
+
+			default:
+				return "invalide";
+
+		}
+
 	} // Fin de getEnTeteColonne(...)._____________________________________
 
 
-
+	
 	/**
 	 * {@inheritDoc}
 	 * <div>
@@ -962,50 +990,82 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final Object getValeurColonne(final int pI) {
-	    /*
-	     * Retourne la valeur de colonne de manière thread-safe.
-	     */
-	    Object valeur = null;
-	    synchronized (this) {
-	        switch (pI) {
-	        case 0:
-	            if (this.getIdProduit() != null) {
-	                valeur = String.valueOf(this.getIdProduit());
-	            }
-	            break;
-	        case 1:
-	            if (this.getTypeProduit() != null) {
-	                if (this.getTypeProduit().getTypeProduit() != null) {
-	                    valeur 
-	                    	= this.getTypeProduit().getTypeProduit();
-	                }
-	            }
-	            break;
-	        case 2:
-	            if (this.getSousTypeProduit() != null) {
-	                if (this.getSousTypeProduit()
-	                		.getSousTypeProduit() != null) {
-	                    valeur 
-	                    	= this.getSousTypeProduit().getSousTypeProduit();
-	                }
-	            }
-	            break;
-	        case 3:
-	            if (this.getProduit() != null) {
-	                valeur = this.getProduit();
-	            }
-	            break;
-	        default:
-	            valeur = "invalide";
-	            break;
-	        }
-	    }
-	    
-	    return valeur;
-	    
-	} // Fin de getValeurColonne(...)._____________________________________
 
+		/* Snapshot court sous verrou, calcul hors verrou. */
+		final Long idProduitSnapshot;
+		final String produitSnapshot;
+		final SousTypeProduitI sousTypeProduitSnapshot;
+
+		synchronized (this) {
+			idProduitSnapshot = this.idProduit;
+			produitSnapshot = this.produit;
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+		}
+
+		switch (pI) {
+
+			case 0:
+
+				if (idProduitSnapshot != null) {
+					return String.valueOf(idProduitSnapshot);
+				}
+
+				return null;
+
+			case 1:
+
+				if (sousTypeProduitSnapshot != null) {
+
+					final TypeProduitI typeProduitSnapshot
+						= sousTypeProduitSnapshot.getTypeProduit();
+
+					if (typeProduitSnapshot != null) {
+
+						final String typeProduitString
+							= typeProduitSnapshot.getTypeProduit();
+
+						if (typeProduitString != null) {
+							return typeProduitString;
+						}
+
+					}
+
+				}
+
+				return null;
+
+			case 2:
+
+				if (sousTypeProduitSnapshot != null) {
+
+					final String sousTypeProduitString
+						= sousTypeProduitSnapshot.getSousTypeProduit();
+
+					if (sousTypeProduitString != null) {
+						return sousTypeProduitString;
+					}
+
+				}
+
+				return null;
+
+			case 3:
+
+				if (produitSnapshot != null) {
+					return produitSnapshot;
+				}
+
+				return null;
+
+			default:
+
+				return "invalide";
+
+		}
+
+	} // Fin de getValeurColonne(...)._____________________________________
 		
+
 	
 	/**
 	 * {@inheritDoc}
