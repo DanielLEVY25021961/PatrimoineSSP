@@ -9,7 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -119,6 +121,11 @@ public class SousTypeProduitTest {
      * "canne à pêche"
      */
     public static final String CANNE_A_PECHE = "canne à pêche";
+    
+    /**
+     * "CANNE À PÊCHE"
+     */
+    public static final String CANNE_A_PECHE_MAJ = "CANNE À PÊCHE";
 
     /**
      * "moulinet"
@@ -814,6 +821,144 @@ public class SousTypeProduitTest {
         assertNotEquals(objet1, objetPasEqualsObjetDeep1, "objet1 n'est pas equals() avec objetPasEqualsObjetDeep1.");
         assertNotEquals(objet1, objetPasEqualsObjetDeep2, "objet1 n'est pas equals() avec objetPasEqualsObjetDeep2.");
     } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie que l'égalité métier est insensible à la casse sur getSousTypeProduit().
+     * </p>
+     * <ul>
+     * <li>Vérifie la symétrie.</li>
+     * <li>Vérifie la cohérence equals() / hashCode().</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testEqualsIgnoreCase() : vérifie que l'égalité métier est insensible à la casse sur getSousTypeProduit()")
+    @Tag("equals")
+    @Test
+    public final void testEqualsIgnoreCase() {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("********** CLASSE SousTypeProduitTest - méthode testEqualsIgnoreCase() ********** ");
+            System.out.println("CE TEST VERIFIE L'EGALITE INSENSIBLE A LA CASSE SUR getSousTypeProduit().");
+            System.out.println();
+        }
+
+        /* ARRANGE - GIVEN : Création des TypeProduit (égaux, insensibles à la casse). */
+        final TypeProduitI typeProduit1 = new TypeProduit(1L, PECHE, null);
+        final TypeProduitI typeProduit2 = new TypeProduit(2L, "pêche", null);
+
+        /* ARRANGE - GIVEN : Création des SousTypeProduit (égaux, insensibles à la casse). */
+        final SousTypeProduitI objet1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
+        final SousTypeProduitI objet2 = new SousTypeProduit(20L, CANNE_A_PECHE_MAJ, typeProduit2, null);
+
+        /* ACT - WHEN */
+        final boolean isEquals = objet1.equals(objet2);
+        final boolean isEqualsSym = objet2.equals(objet1);
+
+        /* ASSERT - THEN */
+        assertTrue(isEquals,
+                "Deux SousTypeProduit doivent être égaux même si la casse diffère sur getSousTypeProduit().");
+        assertTrue(isEqualsSym,
+                "L'égalité doit être symétrique même si la casse diffère sur getSousTypeProduit().");
+        assertEquals(objet1.hashCode(), objet2.hashCode(),
+                "Si equals() est true malgré une casse différente, hashCode() doit être identique.");
+
+    } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie equals() et hashCode() en environnement multi-thread.
+     * </p>
+     * <ul>
+     * <li>Vérifie la cohérence equals() / hashCode().</li>
+     * <li>Vérifie l'absence d'annulation des tâches sous timeout.</li>
+     * <li>Vérifie la stabilité des résultats en exécution concurrente.</li>
+     * </ul>
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testEqualsHashCodeThreadSafe() : vérifie equals() et hashCode() en environnement multi-thread")
+    @Tag(THREAD_SAFETY)
+    @Test
+    public final void testEqualsHashCodeThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("********** CLASSE SousTypeProduitTest - méthode testEqualsHashCodeThreadSafe() ********** ");
+            System.out.println("CE TEST VERIFIE equals() ET hashCode() EN MULTI-THREAD.");
+            System.out.println();
+        }
+
+        /* ARRANGE - GIVEN : Création des objets nécessaires. */
+        final TypeProduit typeProduit1 = new TypeProduit(1L, PECHE, null);
+        final TypeProduit typeProduit2 = new TypeProduit(2L, PECHE, null);
+        final TypeProduit typeProduitDifferent = new TypeProduit(3L, OUTILLAGE, null);
+
+        final SousTypeProduit stp1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
+        final SousTypeProduit stp2 = new SousTypeProduit(20L, CANNE_A_PECHE_MAJ, typeProduit2, null);
+        final SousTypeProduit stp3 = new SousTypeProduit(30L, MOULINET, typeProduitDifferent, null);
+
+        /* ACT - WHEN : Vérification des contrats Java (mono-thread). */
+        assertTrue(stp1.equals(stp1),
+                "x.equals(x) doit retourner true : ");
+
+        assertTrue(stp1.equals(stp2) && stp2.equals(stp1),
+                "x.equals(y) doit être symétrique : ");
+
+        assertEquals(stp1.hashCode(), stp2.hashCode(),
+                "x.equals(y) doit impliquer x.hashCode() == y.hashCode() : ");
+
+        assertFalse(stp1.equals(null), // NOPMD by danyl on 15/02/2026 11:00
+                "x.equals(null) doit retourner false : ");
+
+        assertFalse(stp1.equals(stp3),
+                "x.equals(y) doit retourner false si x != y : ");
+
+        /* ACT - WHEN : Test multi-thread pour vérifier la thread-safety. */
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            tasks.add(() -> stp1.equals(stp2)
+                    && stp2.equals(stp1)
+                    && stp1.hashCode() == stp2.hashCode()
+                    && !stp1.equals(stp3));
+        }
+
+        /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+        final List<Future<Boolean>> results =
+                executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        /* ASSERT - THEN : Vérification des résultats. */
+        for (final Future<Boolean> result : results) {
+            assertFalse(result.isCancelled(),
+                    "Une tâche equals()/hashCode() ne doit pas être annulée (timeout) : ");
+            assertTrue(result.get(),
+                    "equals()/hashCode() doivent rester cohérents en environnement multi-thread : ");
+        }
+
+    } //___________________________________________________________________
 
 
 		
@@ -891,6 +1036,68 @@ public class SousTypeProduitTest {
 		// ASSERT - THEN
 		/* garantit le bon fonctionnement de toString() */
 		assertEquals(resultat, objet1.toString(), "doit afficher toString() : ");
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode toString() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que l'appel concurrent à toString() ne provoque pas d'erreurs.</li>
+	 * <li>Vérifie que toString() ne retourne jamais null.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testToStringThreadSafe() : vérifie le thread-safety de toString()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testToStringThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création d'un SousTypeProduit. */
+	    final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+	    final SousTypeProduitI sousTypeProduit =
+	            new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+	    /* ACT - WHEN : Exécution concurrente de toString(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<String>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> sousTypeProduit.toString());
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<String>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<String> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche toString() ne doit pas être annulée (timeout) : ");
+	        assertNotNull(result.get(),
+	                "toString() ne doit jamais retourner null en environnement multi-thread.");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test toString() en multi-thread réussi *****");
+	        System.out.println("Résultat de toString() : " + sousTypeProduit.toString());
+	    }
 
 	} //___________________________________________________________________
 
@@ -1072,6 +1279,106 @@ public class SousTypeProduitTest {
 		
  	} //___________________________________________________________________
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Vérifie que compareTo() est insensible à la casse sur getSousTypeProduit().
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie le contrat x.equals(y) implique x.compareTo(y) == 0.</li>
+	 * <li>Vérifie que deux libellés identiques avec casse différente sont classés égaux.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToIgnoreCase() : vérifie compareTo() insensible à la casse sur getSousTypeProduit()")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToIgnoreCase() {
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduitI typeProduit1 = new TypeProduit(PECHE);
+	    final TypeProduitI typeProduit2 = new TypeProduit("pêche");
+
+	    final SousTypeProduitI objet1 =
+	            new SousTypeProduit(1L, "canne à pêche", typeProduit1, null);
+	    final SousTypeProduitI objet2 =
+	            new SousTypeProduit(2L, CANNE_A_PECHE_MAJ, typeProduit2, null);
+
+	    /* ACT - WHEN */
+	    final int compare12 = objet1.compareTo(objet2);
+	    final int compare21 = objet2.compareTo(objet1);
+
+	    /* ASSERT - THEN */
+	    assertEquals(0, compare12,
+	            "Deux SousTypeProduit doivent être classés égaux même si la casse diffère sur getSousTypeProduit().");
+	    assertEquals(0, compare21,
+	            "compareTo() doit être cohérent dans les deux sens pour des libellés identiques à casse différente.");
+	    assertTrue(objet1.equals(objet2),
+	            "x.equals(y) doit être true lorsque x.compareTo(y) == 0 pour ce cas métier.");
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste compareTo() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie la cohérence des résultats en exécution concurrente.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testCompareToThreadSafe() : vérifie le thread-safety de compareTo()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testCompareToThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduit typeProduit1 = new TypeProduit(1L, PECHE, null);
+	    final TypeProduit typeProduit2 = new TypeProduit(2L, PECHE, null);
+	    final TypeProduit typeProduitDifferent = new TypeProduit(3L, OUTILLAGE, null);
+
+	    final SousTypeProduit stp1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
+	    final SousTypeProduit stp2 = new SousTypeProduit(20L, CANNE_A_PECHE_MAJ, typeProduit2, null);
+	    final SousTypeProduit stp3 = new SousTypeProduit(30L, MOULINET, typeProduitDifferent, null);
+
+	    /* ACT - WHEN : Test multi-thread pour vérifier la thread-safety. */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> stp1.compareTo(stp2) == 0
+	                && stp2.compareTo(stp1) == 0
+	                && stp1.compareTo(stp3) != 0
+	                && stp3.compareTo(stp1) != 0);
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche compareTo() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "compareTo() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	} //___________________________________________________________________
+	
 
 	
 	/**
@@ -1192,6 +1499,76 @@ public class SousTypeProduitTest {
 		assertFalse(objet1.getTypeProduit().equals(objet1Clone.getTypeProduit()), "la modification du TypeProduit dans le clone ne doit pas modifier le TypeProduit dans l'objet cloné : ");
 		assertFalse(objet1.getSousTypeProduit().equals(objet1Clone.getSousTypeProduit()), "la modification du sousTypeProduit dans le clone ne doit pas modifier le sousTypeProduit dans l'objet cloné : ");
 		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode deepClone() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que le clonage profond est thread-safe.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testDeepCloneThreadSafe() : vérifie le thread-safety de deepClone()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testDeepCloneThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création d'un SousTypeProduit avec des Produits. */
+	    final TypeProduit typeProduit = new TypeProduit(1L, PECHE, null);
+	    final SousTypeProduit sousTypeProduit = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+	    final Produit produit = new Produit(100L, CANNE_TELESCOPIQUE, sousTypeProduit);
+	    sousTypeProduit.ajouterSTPauProduit(produit);
+
+	    /* ACT - WHEN : Exécution concurrente de deepClone(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<SousTypeProduit>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> sousTypeProduit.deepClone(new CloneContext()));
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<SousTypeProduit>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des clones. */
+	    for (final Future<SousTypeProduit> result : results) {
+
+	        assertFalse(result.isCancelled(),
+	                "Une tâche deepClone() ne doit pas être annulée (timeout) : ");
+
+	        final SousTypeProduit clone = result.get();
+
+	        assertEquals(sousTypeProduit, clone,
+	                "Le clone doit être equals() à l'original.");
+
+	        assertNotSame(sousTypeProduit, clone,
+	                "Le clone ne doit pas être la même instance que l'original.");
+
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test deepClone() en multi-thread réussi *****");
+	        System.out.println("Nombre de clones créés : " + results.size());
+	    }
+
 	} //___________________________________________________________________
 	
 	
@@ -1510,6 +1887,87 @@ public class SousTypeProduitTest {
 		assertEquals(toStringCsvPrevue, toStringCsv, "toStringCsv doit retourner \"1;Pêche;moulinet;\" : ");
 
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode toStringCsv() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que toStringCsv() ne provoque pas d'erreur en concurrence.</li>
+	 * <li>Vérifie la stabilité du résultat pour une instance nominale.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testToStringCsvThreadSafe() : vérifie le thread-safety de toStringCsv()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testToStringCsvThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création des objets nécessaires. */
+	    final SousTypeProduitI objetConstructeurNull = new SousTypeProduit();
+
+	    final TypeProduitI typeProduit1 = new TypeProduit(PECHE);
+	    final SousTypeProduitI objet1 = new SousTypeProduit(1L, MOULINET, typeProduit1, null);
+
+	    final String toStringCsvPrevueNull = "null;null;null;";
+	    final String toStringCsvPrevue = "1;Pêche;moulinet;";
+
+	    /* ACT - WHEN : Exécution concurrente de toStringCsv(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> {
+
+	            final String resultNull = objetConstructeurNull.toStringCsv();
+	            if (!toStringCsvPrevueNull.equals(resultNull)) {
+	                return false;
+	            }
+
+	            final String result = objet1.toStringCsv();
+	            if (!toStringCsvPrevue.equals(result)) {
+	                return false;
+	            }
+
+	            return true;
+
+	        });
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche toStringCsv() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "toStringCsv() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test toStringCsv() en multi-thread réussi *****");
+	        System.out.println("toStringCsvNull : " + objetConstructeurNull.toStringCsv());
+	        System.out.println("toStringCsv : " + objet1.toStringCsv());
+	    }
+
+	} //___________________________________________________________________
 
 
 
@@ -1568,6 +2026,80 @@ public class SousTypeProduitTest {
 		assertEquals("sous-type de produit", enTete2, "enTete2 doit retourner \"sous-type de produit\" :  ");
 		assertEquals(INVALIDE, enTete7, "enTete7 doit retourner \"invalide\" :  ");
 		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode getEnTeteColonne(int pI) en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie la stabilité des en-têtes de colonnes en concurrence.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testGetEnTeteColonneThreadSafe() : vérifie le thread-safety de getEnTeteColonne()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testGetEnTeteColonneThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Instance avec constructeur d'arité nulle. */
+	    final SousTypeProduitI objetConstructeurNull = new SousTypeProduit();
+
+	    /* ACT - WHEN : Exécution concurrente de getEnTeteColonne(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> {
+
+	            final String enTete0 = objetConstructeurNull.getEnTeteColonne(0);
+	            final String enTete1 = objetConstructeurNull.getEnTeteColonne(1);
+	            final String enTete2 = objetConstructeurNull.getEnTeteColonne(2);
+	            final String enTete7 = objetConstructeurNull.getEnTeteColonne(7);
+
+	            return "idSousTypeProduit".equals(enTete0)
+	                    && "type de produit".equals(enTete1)
+	                    && "sous-type de produit".equals(enTete2)
+	                    && INVALIDE.equals(enTete7);
+
+	        });
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche getEnTeteColonne() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "getEnTeteColonne() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test getEnTeteColonne() en multi-thread réussi *****");
+	        System.out.println("enTete0 : " + objetConstructeurNull.getEnTeteColonne(0));
+	        System.out.println("enTete1 : " + objetConstructeurNull.getEnTeteColonne(1));
+	        System.out.println("enTete2 : " + objetConstructeurNull.getEnTeteColonne(2));
+	        System.out.println("enTete7 : " + objetConstructeurNull.getEnTeteColonne(7));
+	    }
+
 	} //___________________________________________________________________
 
 
@@ -1658,7 +2190,215 @@ public class SousTypeProduitTest {
 	
 	
 	
-	   /**
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode getValeurColonne(int pI) en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie la stabilité des valeurs de colonnes en concurrence.</li>
+	 * <li>Vérifie la gestion des null et des indices invalides.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testGetValeurColonneThreadSafe() : vérifie le thread-safety de getValeurColonne()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testGetValeurColonneThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Instance avec constructeur d'arité nulle. */
+	    final SousTypeProduitI objetConstructeurNull = new SousTypeProduit();
+
+	    /* ARRANGE - GIVEN : Instance nominale. */
+	    final TypeProduitI typeProduit1 = new TypeProduit(PECHE);
+	    final SousTypeProduitI objet1 = new SousTypeProduit(1L, MOULINET, typeProduit1, null);
+
+	    /* ACT - WHEN : Exécution concurrente de getValeurColonne(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> {
+
+	            final Object valeur0Null = objetConstructeurNull.getValeurColonne(0);
+	            final Object valeur1Null = objetConstructeurNull.getValeurColonne(1);
+	            final Object valeur2Null = objetConstructeurNull.getValeurColonne(2);
+	            final Object valeur7Null = objetConstructeurNull.getValeurColonne(7);
+
+	            if (valeur0Null != null) {
+	                return false;
+	            }
+	            if (valeur1Null != null) {
+	                return false;
+	            }
+	            if (valeur2Null != null) {
+	                return false;
+	            }
+	            if (!INVALIDE.equals(valeur7Null)) {
+	                return false;
+	            }
+
+	            final Object valeur0 = objet1.getValeurColonne(0);
+	            final Object valeur1 = objet1.getValeurColonne(1);
+	            final Object valeur2 = objet1.getValeurColonne(2);
+	            final Object valeur7 = objet1.getValeurColonne(7);
+
+	            if (!"1".equals(valeur0)) {
+	                return false;
+	            }
+	            if (!PECHE.equals(valeur1)) {
+	                return false;
+	            }
+	            if (!MOULINET.equals(valeur2)) {
+	                return false;
+	            }
+	            if (!INVALIDE.equals(valeur7)) {
+	                return false;
+	            }
+
+	            return true;
+
+	        });
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche getValeurColonne() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "getValeurColonne() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test getValeurColonne() en multi-thread réussi *****");
+	        System.out.println("valeur0Null : " + objetConstructeurNull.getValeurColonne(0));
+	        System.out.println("valeur1Null : " + objetConstructeurNull.getValeurColonne(1));
+	        System.out.println("valeur2Null : " + objetConstructeurNull.getValeurColonne(2));
+	        System.out.println("valeur7Null : " + objetConstructeurNull.getValeurColonne(7));
+	        System.out.println();
+	        System.out.println("valeur0 : " + objet1.getValeurColonne(0));
+	        System.out.println("valeur1 : " + objet1.getValeurColonne(1));
+	        System.out.println("valeur2 : " + objet1.getValeurColonne(2));
+	        System.out.println("valeur7 : " + objet1.getValeurColonne(7));
+	    }
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste les méthodes ajouterSTPauProduit() et retirerSTPauProduit() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que les appels concurrents ne provoquent pas de deadlock.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un blocage.</li>
+	 * <li>Vérifie que les tâches ne sont pas annulées sous timeout.</li>
+	 * <li>Vérifie la cohérence finale de la liste des produits.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testAjouterRetirerProduitThreadSafe() : vérifie le thread-safety de ajouterSTPauProduit() et retirerSTPauProduit()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testAjouterRetirerProduitThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création d'un SousTypeProduit. */
+	    final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+	    final SousTypeProduitI sousTypeProduit =
+	            new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+	    /* ACT - WHEN : Exécution concurrente d'ajouts et retraits.
+	     * IMPORTANT : chaque tâche doit manipuler SON produit propre.
+	     * Il ne faut pas partager le même Produit entre 2 tâches concurrentes,
+	     * sinon on teste surtout la contention sur le lock du Produit.
+	     */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Void>> tasks = new ArrayList<>();
+
+	    for (int i = 0; i < 50; i++) {
+
+	        /* Chemin 1 : appels via SousTypeProduit (STP -> Produit). */
+	        final ProduitI produitViaStp =
+	                new Produit((long) i, "Produit-STP-" + i, null);
+
+	        tasks.add(() -> {
+	            sousTypeProduit.ajouterSTPauProduit(produitViaStp);
+	            sousTypeProduit.retirerSTPauProduit(produitViaStp);
+	            return null;
+	        });
+
+	        /* Chemin 2 : appels via Produit (Produit -> STP). */
+	        final ProduitI produitViaProduit =
+	                new Produit((long) (1000 + i), "Produit-PRODUIT-" + i, null);
+
+	        tasks.add(() -> {
+	            produitViaProduit.setSousTypeProduit(sousTypeProduit);
+	            produitViaProduit.setSousTypeProduit(null);
+	            return null;
+	        });
+
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini
+	     * si une régression introduit un deadlock.
+	     */
+	    final List<Future<Void>> results =
+	            executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats.
+	     * IMPORTANT : si une tâche est annulée, on est dans un cas
+	     * de blocage, de contention excessive, ou de deadlock.
+	     */
+	    for (final Future<Void> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche ajouter/retirer ne doit pas être annulée (timeout) : ");
+	        result.get();
+	    }
+
+	    /* ASSERT - THEN : Cohérence finale. */
+	    assertTrue(sousTypeProduit.getProduits().isEmpty(),
+	            "La liste des produits doit être vide après des ajouts/retraits concurrents.");
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test ajouterSTPauProduit() et retirerSTPauProduit() en multi-thread réussi *****");
+	        System.out.println("Nombre de produits : " + sousTypeProduit.getProduits().size());
+	    }
+
+	} //___________________________________________________________________
+
+
+	
+	 /**
      * <div>
      * <p>Teste les méthodes ajouterSTPauProduit() et retirerSTPauProduit().</p>
      * <ul>
@@ -1744,6 +2484,113 @@ public class SousTypeProduitTest {
          */
         assertTrue(sousTypeProduitAvecType.isValide(), "isValide() doit retourner true si le TypeProduit est non null.");
         
+    } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Teste le thread-safety de isValide() et du recalcul de valide.
+     * </p>
+     * <ul>
+     * <li>Un thread modifie le TypeProduit (setTypeProduit).</li>
+     * <li>Un thread vérifie sous verrou que isValide() est cohérent avec getTypeProduit().</li>
+     * <li>Le test échoue si une tâche est annulée (timeout) ou si une incohérence est détectée.</li>
+     * </ul>
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testIsValideThreadSafe() : vérifie la cohérence concurrente de valide")
+    @Tag(THREAD_SAFETY)
+    @Test
+    public final void testIsValideThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* ARRANGE - GIVEN */
+        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+        final SousTypeProduit sousTypeProduit =
+                new SousTypeProduit(10L, CANNE_A_PECHE, null, null);
+
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+        /* Writer : alterne rattachement et détachement. */
+        for (int i = 0; i < 200; i++) {
+
+            tasks.add(() -> {
+
+                sousTypeProduit.setTypeProduit(typeProduit);
+
+                return Boolean.TRUE;
+
+            });
+
+            tasks.add(() -> {
+
+                sousTypeProduit.setTypeProduit(null);
+
+                return Boolean.TRUE;
+
+            });
+
+        }
+
+        /* Reader : vérifie sous verrou que isValide() est cohérent avec getTypeProduit(). */
+        for (int i = 0; i < 500; i++) {
+
+            tasks.add(() -> {
+
+                synchronized (sousTypeProduit) {
+
+                    final boolean attendu = sousTypeProduit.getTypeProduit() != null;
+                    final boolean obtenu = sousTypeProduit.isValide();
+
+                    return Boolean.valueOf(attendu == obtenu);
+
+                }
+
+            });
+
+        }
+
+        final List<Future<Boolean>> results =
+                executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        /* ASSERT - THEN */
+        for (final Future<Boolean> result : results) {
+
+            assertFalse(result.isCancelled(),
+                    "Une tâche isValide()/setTypeProduit ne doit pas être annulée (timeout) : ");
+
+            assertTrue(result.get(),
+                    "valide doit rester cohérent avec getTypeProduit() sous verrou : ");
+
+        }
+
+        /* ASSERT - THEN : cohérence finale déterministe. */
+        synchronized (sousTypeProduit) {
+
+            assertEquals(sousTypeProduit.getTypeProduit() != null, sousTypeProduit.isValide(),
+                    "En fin de test, isValide() doit être cohérent avec getTypeProduit() : ");
+
+        }
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test isValide() thread-safe réussi *****");
+            System.out.println("typeProduit final : " + sousTypeProduit.getTypeProduit());
+            System.out.println("valide final : " + sousTypeProduit.isValide());
+        }
+
     } //___________________________________________________________________
     
     
@@ -1936,65 +2783,109 @@ public class SousTypeProduitTest {
     
     /**
      * <div>
-     * <p>Teste la méthode <b>toString()</b> 
-     * en environnement multi-thread.</p>
+     * <p>
+     * Teste getProduits() en environnement multi-thread.
+     * </p>
      * <ul>
-     * <li>Vérifie que l'appel concurrent à toString() 
-     * ne provoque pas d'erreurs.</li>
-     * <li>Utilise un ExecutorService pour simuler 
-     * des accès concurrents.</li>
+     * <li>Vérifie que getProduits() retourne une copie immuable stable.</li>
+     * <li>Vérifie que l'itération sur la copie ne lève pas de ConcurrentModificationException.</li>
+     * <li>Utilise un timeout pour détecter une régression introduisant un blocage.</li>
      * </ul>
      * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
      */
-    @SuppressWarnings(UNUSED)
-    @DisplayName("testToStringThreadSafe() : vérifie le thread-safety de toString()")
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testGetProduitsIterationThreadSafe() : vérifie getProduits() et l'itération en multi-thread")
     @Tag(THREAD_SAFETY)
     @Test
-    public final void testToStringThreadSafe() 
-    		throws InterruptedException, ExecutionException {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
+    public final void testGetProduitsIterationThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
         final boolean affichage = false;
 
-        /*
-         * ARRANGE - GIVEN : Création d'un SousTypeProduit.
-         */
+        /* ARRANGE - GIVEN : Création d'un SousTypeProduit et de Produits. */
         final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
-        final SousTypeProduitI sousTypeProduit 
-        	= new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+        final SousTypeProduit sousTypeProduit = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
 
-        /*
-         * ACT - WHEN : Exécution concurrente de toString().
+        final Produit produit1 = new Produit(1L, CANNE_TELESCOPIQUE, null);
+        final Produit produit2 = new Produit(2L, MOULINET, null);
+        final Produit produit3 = new Produit(3L, "Hameçon", null);
+
+        /* ACT - WHEN : Exécution concurrente.
+         * Un ensemble de tâches fait des ajouts/retraits,
+         * tandis qu'un autre ensemble itère sur les snapshots retournés par getProduits().
          */
-        @SuppressWarnings(RESOURCE)
-		final ExecutorService executor = Executors.newFixedThreadPool(10);
-        final List<Callable<String>> tasks = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            tasks.add(() -> sousTypeProduit.toString());
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+        for (int i = 0; i < 50; i++) {
+
+            tasks.add(() -> {
+                sousTypeProduit.ajouterSTPauProduit(produit1);
+                sousTypeProduit.retirerSTPauProduit(produit1);
+                return true;
+            });
+
+            tasks.add(() -> {
+                sousTypeProduit.ajouterSTPauProduit(produit2);
+                sousTypeProduit.retirerSTPauProduit(produit2);
+                return true;
+            });
+
+            tasks.add(() -> {
+                sousTypeProduit.ajouterSTPauProduit(produit3);
+                sousTypeProduit.retirerSTPauProduit(produit3);
+                return true;
+            });
+
+            tasks.add(() -> {
+
+                final List<ProduitI> snapshot = sousTypeProduit.getProduits();
+
+                /* Vérifie la stabilité d'itération : pas de ConcurrentModificationException. */
+                for (final ProduitI produit : snapshot) {
+                    if (produit == null) {
+                        return false;
+                    }
+                }
+
+                /* Vérifie l'immuabilité de la copie. */
+                try {
+                    snapshot.add(produit1);
+                    return false;
+                } catch (final UnsupportedOperationException e) { // NOPMD by danyl on 15/02/2026 11:00
+                    return true;
+                }
+
+            });
+
         }
 
-        final List<Future<String>> results = executor.invokeAll(tasks);
+        /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+        final List<Future<Boolean>> results =
+                executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
         executor.shutdown();
 
-        /*
-         * ASSERT - THEN : Vérification des résultats.
-         */
-        for (final Future<String> result : results) {
-            assertNotNull(result.get()
-            		, "toString() ne doit jamais retourner null en environnement multi-thread.");
+        /* ASSERT - THEN */
+        for (final Future<Boolean> result : results) {
+            assertFalse(result.isCancelled(),
+                    "Une tâche getProduits()/itération ne doit pas être annulée (timeout) : ");
+            assertTrue(result.get(),
+                    "getProduits() doit retourner une copie stable et immuable en environnement multi-thread : ");
         }
 
-        /*
-         * AFFICHAGE A LA CONSOLE.
-         */
+        /* AFFICHAGE A LA CONSOLE. */
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
-            System.out.println("***** Test toString() en multi-thread réussi *****");
-            System.out.println("Résultat de toString() : " + sousTypeProduit.toString());
+            System.out.println("***** Test getProduits() et itération en multi-thread réussi *****");
+            System.out.println("Taille finale : " + sousTypeProduit.getProduits().size());
         }
-    }
-    
+
+    } //___________________________________________________________________
+        
     
     
     /**
@@ -2055,136 +2946,183 @@ public class SousTypeProduitTest {
             System.out.println("***** Test getProduits() en multi-thread réussi *****");
             System.out.println("Nombre de produits : " + sousTypeProduit.getProduits().size());
         }
-    }
+    } //___________________________________________________________________
     
     
     
     /**
      * <div>
-     * <p>Teste les méthodes <b>ajouterSTPauProduit()</b> et <b>retirerSTPauProduit()</b> en environnement multi-thread.</p>
+     * <p>
+     * Teste setProduits(final List&lt;? extends ProduitI&gt;) en nominal.
+     * </p>
      * <ul>
-     * <li>Vérifie que les ajouts/retraits concurrents ne corrompent pas la liste des produits.</li>
-     * <li>Utilise un ExecutorService pour simuler des modifications concurrentes.</li>
+     * <li>Vérifie le détachement des anciens produits.</li>
+     * <li>Vérifie le rattachement des nouveaux produits.</li>
+     * <li>Vérifie la cohérence bidirectionnelle Produit &lt;-&gt; SousTypeProduit.</li>
      * </ul>
      * </div>
      */
-    @SuppressWarnings({ RESOURCE, UNUSED})
-    @DisplayName("testAjouterRetirerProduitThreadSafe() : vérifie le thread-safety de ajouterSTPauProduit() et retirerSTPauProduit()")
+    @SuppressWarnings({ "unchecked", UNUSED })
+    @DisplayName("testSetProduits() : vérifie setProduits() en nominal")
+    @Tag("setProduits")
+    @Test
+    public final void testSetProduits() {
+
+        /* ARRANGE - GIVEN */
+        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+        final SousTypeProduit sousTypeProduit =
+                new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+        final Produit produit1 = new Produit(1L, CANNE_TELESCOPIQUE, null);
+        final Produit produit2 = new Produit(2L, MOULINET, null);
+        final Produit produit3 = new Produit(3L, "Hameçon", null);
+
+        sousTypeProduit.ajouterSTPauProduit(produit1);
+        sousTypeProduit.ajouterSTPauProduit(produit2);
+
+        final List<ProduitI> nouveauxProduits = new ArrayList<>();
+        nouveauxProduits.add(produit3);
+
+        /* ACT - WHEN */
+        sousTypeProduit.setProduits(nouveauxProduits);
+
+        /* ASSERT - THEN : anciens produits détachés. */
+        assertNull(produit1.getSousTypeProduit(),
+                "L'ancien produit1 doit être détaché après setProduits().");
+        assertNull(produit2.getSousTypeProduit(),
+                "L'ancien produit2 doit être détaché après setProduits().");
+
+        /* ASSERT - THEN : nouveau produit rattaché. */
+        assertEquals(sousTypeProduit, produit3.getSousTypeProduit(),
+                "Le nouveau produit3 doit être rattaché au SousTypeProduit après setProduits().");
+
+        final List<ProduitI> snapshot = sousTypeProduit.getProduits();
+
+        assertEquals(1, snapshot.size(),
+                "La liste des produits du SousTypeProduit doit contenir exactement 1 élément.");
+
+        /* Vérifie par identité (pas de equals()). */
+        boolean trouve = false;
+        for (final ProduitI produit : snapshot) {
+            if (produit == produit3) {
+                trouve = true;
+            }
+        }
+
+        assertTrue(trouve,
+                "La liste des produits doit contenir produit3 (comparaison par identité).");
+
+    } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Teste setProduits(final List&lt;? extends ProduitI&gt;) en environnement multi-thread.
+     * </p>
+     * <ul>
+     * <li>Vérifie l'absence de deadlock (timeout).</li>
+     * <li>Vérifie l'absence d'exception dans les tâches.</li>
+     * <li>Vérifie des invariants finaux de cohérence (produits &lt;-&gt; STP).</li>
+     * </ul>
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testSetProduitsThreadSafe() : vérifie le thread-safety de setProduits()")
     @Tag(THREAD_SAFETY)
     @Test
-    public final void testAjouterRetirerProduitThreadSafe() 
-    		throws InterruptedException, ExecutionException {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
+    public final void testSetProduitsThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
         final boolean affichage = false;
 
-        /*
-         * ARRANGE - GIVEN : Création d'un SousTypeProduit.
-         */
+        /* ARRANGE - GIVEN */
         final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
-        final SousTypeProduitI sousTypeProduit 
-        	= new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+        final SousTypeProduit sousTypeProduit =
+                new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
 
-        /*
-         * ACT - WHEN : Exécution concurrente d'ajouts et retraits.
-         */
         final ExecutorService executor = Executors.newFixedThreadPool(10);
         final List<Callable<Void>> tasks = new ArrayList<>();
-        
+
         for (int i = 0; i < 50; i++) {
-        	
-            final ProduitI produit 
-            	= new Produit((long) i, "Produit " + i, null);
-            
+
+            final Produit produitA = new Produit((long) i, "Produit-A-" + i, null);
+            final Produit produitB = new Produit((long) (1000 + i), "Produit-B-" + i, null);
+
             tasks.add(() -> {
-                sousTypeProduit.ajouterSTPauProduit(produit);
-                sousTypeProduit.retirerSTPauProduit(produit);
+
+                final List<ProduitI> liste = new ArrayList<>();
+                liste.add(produitA);
+                liste.add(produitB);
+
+                sousTypeProduit.setProduits(liste);
+
                 return null;
+
             });
+
+            tasks.add(() -> {
+
+                sousTypeProduit.setProduits(null);
+
+                return null;
+
+            });
+
         }
 
-        executor.invokeAll(tasks);
+        /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+        final List<Future<Void>> results =
+                executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
         executor.shutdown();
 
-        /*
-         * ASSERT - THEN : Vérification de la cohérence de la liste.
-         */
-        assertTrue(sousTypeProduit.getProduits().isEmpty()
-        		, "La liste des produits doit être vide après des ajouts/retraits concurrents.");
+        /* ASSERT - THEN : aucune tâche ne doit être annulée (timeout). */
+        for (final Future<Void> result : results) {
+            assertFalse(result.isCancelled(),
+                    "Une tâche setProduits() ne doit pas être annulée (timeout) : ");
+            result.get();
+        }
 
-        /*
-         * AFFICHAGE A LA CONSOLE.
+        /* ASSERT - THEN : invariants finaux.
+         * - Tous les produits présents dans la liste finale doivent pointer vers le STP.
+         * - La liste finale ne doit pas contenir de doublons par identité.
          */
+        final List<ProduitI> snapshotFinal = sousTypeProduit.getProduits();
+
+        final Map<ProduitI, Boolean> seen 
+        	= new IdentityHashMap<ProduitI, Boolean>();
+
+        for (final ProduitI produit : snapshotFinal) {
+
+            assertNotNull(produit,
+                    "La liste finale de produits ne doit pas contenir de null : ");
+
+            assertTrue(produit.getSousTypeProduit() == sousTypeProduit,
+                    "Tout produit présent dans la liste finale doit pointer vers le SousTypeProduit (identité) : ");
+
+            assertFalse(seen.containsKey(produit),
+                    "La liste finale ne doit pas contenir de doublons par identité : ");
+
+            seen.put(produit, Boolean.TRUE);
+
+        }
+
+        /* AFFICHAGE A LA CONSOLE. */
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
-            System.out.println("***** Test ajouterSTPauProduit() et retirerSTPauProduit() en multi-thread réussi *****");
-            System.out.println("Nombre de produits : " + sousTypeProduit.getProduits().size());
-        }
-    }
-    
-    
-    
-    /**
-     * <div>
-     * <p>Teste la méthode <b>deepClone()</b> en environnement multi-thread.</p>
-     * <ul>
-     * <li>Vérifie que le clonage profond est thread-safe.</li>
-     * <li>Utilise un ExecutorService pour simuler des clonages concurrents.</li>
-     * </ul>
-     * </div>
-     */
-    @SuppressWarnings({ "unchecked", RESOURCE, UNUSED})
-    @DisplayName("testDeepCloneThreadSafe() : vérifie le thread-safety de deepClone()")
-    @Tag(THREAD_SAFETY)
-    @Test
-    public final void testDeepCloneThreadSafe() throws InterruptedException, ExecutionException {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
-        final boolean affichage = false;
-
-        /*
-         * ARRANGE - GIVEN : Création d'un SousTypeProduit avec des Produits.
-         */
-        final TypeProduit typeProduit = new TypeProduit(1L, PECHE, null);
-        final SousTypeProduit sousTypeProduit = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
-        final Produit produit = new Produit(100L, CANNE_TELESCOPIQUE, sousTypeProduit);
-        sousTypeProduit.ajouterSTPauProduit(produit);
-
-        /*
-         * ACT - WHEN : Exécution concurrente de deepClone().
-         */
-        final ExecutorService executor = Executors.newFixedThreadPool(10);
-        final List<Callable<SousTypeProduit>> tasks = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            tasks.add((Callable<SousTypeProduit>) () -> sousTypeProduit.deepClone(new CloneContext()));
+            System.out.println("***** Test setProduits() en multi-thread réussi *****");
+            System.out.println("Taille finale : " + snapshotFinal.size());
         }
 
-        final List<Future<SousTypeProduit>> results = executor.invokeAll(tasks);
-        executor.shutdown();
-
-        /*
-         * ASSERT - THEN : Vérification des clones.
-         */
-        for (final Future<SousTypeProduit> result : results) {
-            final SousTypeProduit clone = result.get();
-            assertEquals(sousTypeProduit, clone, "Le clone doit être equals() à l'original.");
-            assertNotSame(sousTypeProduit, clone, "Le clone ne doit pas être la même instance que l'original.");
-        }
-
-        /*
-         * AFFICHAGE A LA CONSOLE.
-         */
-        if (AFFICHAGE_GENERAL && affichage) {
-            System.out.println();
-            System.out.println("***** Test deepClone() en multi-thread réussi *****");
-            System.out.println("Nombre de clones créés : " + results.size());
-        }
-    }
+    } //___________________________________________________________________
     
-	
-	
+    
+    	
 	/**
 	 * <div>
 	 * <p>affiche à la console un SousTypeProduit.</p>

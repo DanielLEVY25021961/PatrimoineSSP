@@ -34,44 +34,125 @@ import levy.daniel.application.model.metier.IExportateurJTable;
 public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 								, IExportateurCsv, IExportateurJTable {
 	
-	
 
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">clone profond de manière Thread-Safe un 
 	 * <code>SousTypeProduitI</code> en utilisant 
-	 * un {@link CloneContext} pour garantir la cohérence des données</p>
+	 * un {@link CloneContext} pour garantir la cohérence des données.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Fournir un clone profond du présent SousTypeProduitI.</li>
+	 * <li>Sécuriser le couple get/put dans le CloneContext 
+	 * dans le même verrou pour garantir l'unicité du clone 
+	 * même si le même CloneContext est partagé entre threads.</li>
+	 * <li>Vérifier que le clone n'existe pas déjà dans le contexte. 
+	 * Le cas échéant, retourner le clone déjà existant.</li>
+	 * <li>Créer un clone "nu" (sans parent ni enfants) 
+	 * de manière thread-safe.</li>
+	 * <li>Cloner le parent TypeProduit (si présent) et recoller
+	 * le clone parent au clone via le Setter canonique.</li>
+	 * <li>Créer une copie thread-safe de la liste des éventuels enfants 
+	 * pour éviter les modifications concurrentes.</li>
+	 * <li>Cloner chaque enfant de manière thread-safe 
+	 * via {@code enfant.deepClone(ctx)} 
+	 * en le verrouillant individuellement pendant son clonage.</li>
+	 * <li>Rattacher le clone profond de l'enfant au 
+	 * clone parent via la méthode Thread-Safe 
+	 * {@code rattacherEnfantSTP(cloneEnfant)}.</li>
+	 * <li>Retourner le clone profond.</li>
+	 * <li>Ne retourne jamais {@code null}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Si le clone est déjà stocke dans le CloneContext : 
+	 * retourne le clone existant.</li>
+	 * <li>délègue la création d'un {@link CloneContext} 
+	 * à une méthode private interne dans chaque implémentation.</li>
+	 * <li>S'appuie sur {@link #deepClone(ctxt)} 
+	 * pour générer le clone profond.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Interdit les cycles et les duplications durant le clonage 
+	 * grâce à l'utilisation d'un {@link CloneContext} encapsulant 
+	 * une {@code IdentityHashMap} (cache).</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @return SousTypeProduitI : clone profond.
+	 * @throws CloneNotSupportedException 
+	 * si le clonage n'est pas supporté.
 	 */
-	SousTypeProduitI cloneDeep();
+	SousTypeProduitI clone() throws CloneNotSupportedException;
 	
 	
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">retourne un Clone PROFOND 
-	 * du présent SousTypeProduitI</p>
+	 * <p style="font-weight:bold;">clone profond de manière Thread-Safe un 
+	 * <code>SousTypeProduitI</code> en utilisant 
+	 * un {@link CloneContext} pour garantir la cohérence des données.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>vérifie que le clone n'existe pas déjà dans l'IdentityHashMap 
-	 * (cache)
-	 * du {@link CloneContext}. Le cas échéant, 
-	 * retourne le clone déjà existant.</li>
-	 * <li>instancie un clone "nu" sans parent ni enfants.</li>
-	 * <li>Clone profond éventuellement ensuite le parent.</li>
-	 * <li>Rattache le clone "nu" au clone parent 
-	 * via le setter canonique de la présente.</li>
-	 * <li>Clone éventuellement les enfants de la liste produits 
-	 * si elle n'est pas null.</li>
-	 * <li>clone profond chaque enfant de la liste.</li>
-	 * <li>rattache chaque clone enfant au présent 
-	 * clone via le Setter canonique 
-	 * côté enfant.</li>
+	 * <li>Fournir un clone profond du présent SousTypeProduitI.</li>
+	 * <li>Sécuriser le couple get/put dans le CloneContext 
+	 * dans le même verrou pour garantir l'unicité du clone 
+	 * même si le même CloneContext est partagé entre threads.</li>
+	 * <li>Vérifier que le clone n'existe pas déjà dans le contexte. 
+	 * Le cas échéant, retourner le clone déjà existant.</li>
+	 * <li>Créer un clone "nu" (sans parent ni enfants) 
+	 * de manière thread-safe.</li>
+	 * <li>Cloner le parent TypeProduit (si présent) et recoller
+	 * le clone parent au clone via le Setter canonique.</li>
+	 * <li>Créer une copie thread-safe de la liste des éventuels enfants 
+	 * pour éviter les modifications concurrentes.</li>
+	 * <li>Cloner chaque enfant de manière thread-safe 
+	 * via {@code enfant.deepClone(ctx)} 
+	 * en le verrouillant individuellement pendant son clonage.</li>
+	 * <li>Rattacher le clone profond de l'enfant au 
+	 * clone parent via la méthode Thread-Safe 
+	 * {@code rattacherEnfantSTP(cloneEnfant)}.</li>
+	 * <li>Retourner le clone profond.</li>
+	 * <li>Ne retourne jamais {@code null}.</li>
 	 * </ul>
 	 * </div>
-	 *
-	 * @param ctx : CloneContext.
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Si le clone est déjà stocke dans le CloneContext : 
+	 * retourne le clone existant.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Interdit les cycles et les duplications durant le clonage 
+	 * grâce à l'utilisation d'un {@link CloneContext} encapsulant 
+	 * une {@code IdentityHashMap} (cache).</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * @param ctx : CloneContext
 	 * @return SousTypeProduitI : clone profond.
 	 */
 	SousTypeProduitI deepClone(CloneContext ctx);
