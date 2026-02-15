@@ -1052,33 +1052,26 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 */
 	@Override
 	public final void ajouterSTPauProduit(final ProduitI pProduit) {
-		
-	    /*
-	     * Ajoute le produit à la liste locale (si non déjà présent).
-	     * Utilisation d'un bloc synchronisé pour éviter
-	     * ConcurrentModificationException.
-	     */
-	    synchronized (this) {
-	    	
-		    /* traite le cas d'une mauvaise instance passée en paramètre. */
-		    this.traiterMauvaiseInstanceProduit(pProduit);
 
-		    if (pProduit == null) {
-		        return;
-		    }
+	    /* traite le cas d'une mauvaise instance passée en paramètre. */
+	    this.traiterMauvaiseInstanceProduit(pProduit);
 
-		    /*
-		     * Passe le présent SousTypeProduitI comme SousProduit parent
-		     * du produit pProduit en utilisant son Setter canonique
-		     * qui maintient la cohérence des données.
-		     */
-		    pProduit.setSousTypeProduit(this);
-
-	        if (!this.produits.contains(pProduit)) {
-	            this.produits.add(pProduit);
-	        }
+	    if (pProduit == null) {
+	        return;
 	    }
-	}
+
+	    /* IMPORTANT : cette méthode n'est volontairement pas synchronisée
+	     * pour éviter les deadlocks STP <-> Produit.
+	     *
+	     * Canonique : on passe uniquement par le Setter 
+	     * d'association de l'enfant,
+	     * qui assure la cohérence bidirectionnelle 
+	     * et met à jour la liste produits
+	     * via internalAddProduit(...) côté parent.
+	     */
+	    pProduit.setSousTypeProduit(this);
+
+	} // Fin de ajouterSTPauProduit(...).__________________________________
 
 
 
@@ -1088,34 +1081,40 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	@Override
 	public final void retirerSTPauProduit(final ProduitI pProduit) {
 
-	    /*
-	     * Retire le produit de la liste locale.
-	     * Utilisation d'un bloc synchronisé pour éviter
-	     * ConcurrentModificationException.
-	     */
-	    synchronized (this) {
-	    	
-		    /* traite le cas d'une mauvaise instance passée en paramètre. */
-		    this.traiterMauvaiseInstanceProduit(pProduit);
+	    /* traite le cas d'une mauvaise instance passée en paramètre. */
+	    this.traiterMauvaiseInstanceProduit(pProduit);
 
-		    if (pProduit == null) {
-		        return;
-		    }
-
-		    if (!this.produits.contains(pProduit)) {
-		        return;
-		    }
-
-		    /*
-		     * Retire le présent SousTypeProduitI comme SousProduit parent
-		     * du produit pProduit en utilisant son Setter canonique
-		     * qui maintient la cohérence des données.
-		     */
-		    pProduit.setSousTypeProduit(null);
-
-	        this.produits.remove(pProduit);
+	    if (pProduit == null) {
+	        return;
 	    }
-	}
+
+	    /* IMPORTANT : cette méthode n'est volontairement pas synchronisée
+	     * pendant l'appel au Setter de l'enfant pour éviter les deadlocks.
+	     *
+	     * On vérifie sous verrou local uniquement si pProduit est bien
+	     * contenu dans la liste, puis on relâche le verrou avant de
+	     * déclencher la bidirectionnalité 
+	     * via le Setter canonique de l'enfant.
+	     */
+	    final boolean contient;
+
+	    synchronized (this) {
+	        contient = this.produits.contains(pProduit);
+	    }
+
+	    if (!contient) {
+	        return;
+	    }
+
+	    /* Canonique : on passe uniquement 
+	     * par le Setter d'association de l'enfant,
+	     * qui assure la cohérence bidirectionnelle 
+	     * et met à jour la liste produits
+	     * via internalRemoveProduit(...) côté parent.
+	     */
+	    pProduit.setSousTypeProduit(null);
+
+	} // Fin de retirerSTPauProduit(...).__________________________________
 
 
 

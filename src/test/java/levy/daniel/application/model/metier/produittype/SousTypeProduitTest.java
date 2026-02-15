@@ -2300,7 +2300,103 @@ public class SousTypeProduitTest {
 	
 	
 	
-	   /**
+	/**
+	 * <div>
+	 * <p>
+	 * Teste les méthodes ajouterSTPauProduit() et retirerSTPauProduit() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que les appels concurrents ne provoquent pas de deadlock.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un blocage.</li>
+	 * <li>Vérifie que les tâches ne sont pas annulées sous timeout.</li>
+	 * <li>Vérifie la cohérence finale de la liste des produits.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testAjouterRetirerProduitThreadSafe() : vérifie le thread-safety de ajouterSTPauProduit() et retirerSTPauProduit()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testAjouterRetirerProduitThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création d'un SousTypeProduit. */
+	    final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+	    final SousTypeProduitI sousTypeProduit =
+	            new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+	    /* ACT - WHEN : Exécution concurrente d'ajouts et retraits.
+	     * IMPORTANT : chaque tâche doit manipuler SON produit propre.
+	     * Il ne faut pas partager le même Produit entre 2 tâches concurrentes,
+	     * sinon on teste surtout la contention sur le lock du Produit.
+	     */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Void>> tasks = new ArrayList<>();
+
+	    for (int i = 0; i < 50; i++) {
+
+	        /* Chemin 1 : appels via SousTypeProduit (STP -> Produit). */
+	        final ProduitI produitViaStp =
+	                new Produit((long) i, "Produit-STP-" + i, null);
+
+	        tasks.add(() -> {
+	            sousTypeProduit.ajouterSTPauProduit(produitViaStp);
+	            sousTypeProduit.retirerSTPauProduit(produitViaStp);
+	            return null;
+	        });
+
+	        /* Chemin 2 : appels via Produit (Produit -> STP). */
+	        final ProduitI produitViaProduit =
+	                new Produit((long) (1000 + i), "Produit-PRODUIT-" + i, null);
+
+	        tasks.add(() -> {
+	            produitViaProduit.setSousTypeProduit(sousTypeProduit);
+	            produitViaProduit.setSousTypeProduit(null);
+	            return null;
+	        });
+
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini
+	     * si une régression introduit un deadlock.
+	     */
+	    final List<Future<Void>> results =
+	            executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats.
+	     * IMPORTANT : si une tâche est annulée, on est dans un cas
+	     * de blocage, de contention excessive, ou de deadlock.
+	     */
+	    for (final Future<Void> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche ajouter/retirer ne doit pas être annulée (timeout) : ");
+	        result.get();
+	    }
+
+	    /* ASSERT - THEN : Cohérence finale. */
+	    assertTrue(sousTypeProduit.getProduits().isEmpty(),
+	            "La liste des produits doit être vide après des ajouts/retraits concurrents.");
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test ajouterSTPauProduit() et retirerSTPauProduit() en multi-thread réussi *****");
+	        System.out.println("Nombre de produits : " + sousTypeProduit.getProduits().size());
+	    }
+
+	} //___________________________________________________________________
+
+
+	
+	 /**
      * <div>
      * <p>Teste les méthodes ajouterSTPauProduit() et retirerSTPauProduit().</p>
      * <ul>
@@ -2632,72 +2728,6 @@ public class SousTypeProduitTest {
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
             System.out.println("***** Test getProduits() en multi-thread réussi *****");
-            System.out.println("Nombre de produits : " + sousTypeProduit.getProduits().size());
-        }
-    }
-    
-    
-    
-    /**
-     * <div>
-     * <p>Teste les méthodes <b>ajouterSTPauProduit()</b> et <b>retirerSTPauProduit()</b> en environnement multi-thread.</p>
-     * <ul>
-     * <li>Vérifie que les ajouts/retraits concurrents ne corrompent pas la liste des produits.</li>
-     * <li>Utilise un ExecutorService pour simuler des modifications concurrentes.</li>
-     * </ul>
-     * </div>
-     */
-    @SuppressWarnings({ RESOURCE, UNUSED})
-    @DisplayName("testAjouterRetirerProduitThreadSafe() : vérifie le thread-safety de ajouterSTPauProduit() et retirerSTPauProduit()")
-    @Tag(THREAD_SAFETY)
-    @Test
-    public final void testAjouterRetirerProduitThreadSafe() 
-    		throws InterruptedException, ExecutionException {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
-        final boolean affichage = false;
-
-        /*
-         * ARRANGE - GIVEN : Création d'un SousTypeProduit.
-         */
-        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
-        final SousTypeProduitI sousTypeProduit 
-        	= new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
-
-        /*
-         * ACT - WHEN : Exécution concurrente d'ajouts et retraits.
-         */
-        final ExecutorService executor = Executors.newFixedThreadPool(10);
-        final List<Callable<Void>> tasks = new ArrayList<>();
-        
-        for (int i = 0; i < 50; i++) {
-        	
-            final ProduitI produit 
-            	= new Produit((long) i, "Produit " + i, null);
-            
-            tasks.add(() -> {
-                sousTypeProduit.ajouterSTPauProduit(produit);
-                sousTypeProduit.retirerSTPauProduit(produit);
-                return null;
-            });
-        }
-
-        executor.invokeAll(tasks);
-        executor.shutdown();
-
-        /*
-         * ASSERT - THEN : Vérification de la cohérence de la liste.
-         */
-        assertTrue(sousTypeProduit.getProduits().isEmpty()
-        		, "La liste des produits doit être vide après des ajouts/retraits concurrents.");
-
-        /*
-         * AFFICHAGE A LA CONSOLE.
-         */
-        if (AFFICHAGE_GENERAL && affichage) {
-            System.out.println();
-            System.out.println("***** Test ajouterSTPauProduit() et retirerSTPauProduit() en multi-thread réussi *****");
             System.out.println("Nombre de produits : " + sousTypeProduit.getProduits().size());
         }
     }
