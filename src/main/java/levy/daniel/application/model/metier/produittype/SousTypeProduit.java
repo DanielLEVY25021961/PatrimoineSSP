@@ -956,33 +956,32 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 * </div>
 	 */
 	@Override
-	public final String getEnTeteColonne(
-			final int pI) {
-	
-		String entete = null;
-	
-		switch (pI) {
-	
-		case 0:
-			entete = "idSousTypeProduit";
-			break;
-			
-		case 1:
-			entete = "type de produit";
-			break;
-			
-		case 2:
-			entete = "sous-type de produit";
-			break;
-			
-		default:
-			entete = "invalide";
-			break;
-	
-		} // Fin du Switch._________________________________
-	
-		return entete;
-	
+	public final String getEnTeteColonne(final int pI) {
+
+	    String entete = null;
+
+	    switch (pI) {
+
+	        case 0:
+	            entete = "idSousTypeProduit";
+	            break;
+
+	        case 1:
+	            entete = "type de produit";
+	            break;
+
+	        case 2:
+	            entete = "sous-type de produit";
+	            break;
+
+	        default:
+	            entete = "invalide";
+	            break;
+
+	    } // Fin du Switch._________________________________
+
+	    return entete;
+
 	} // Fin de getEnTeteColonne(...)._____________________________________
 
 
@@ -997,25 +996,54 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 */
 	@Override
 	public final Object getValeurColonne(final int pI) {
-		
+
+	    final Long idSnapshot;
+	    final String sousTypeSnapshot;
+	    final TypeProduitI typeProduitSnapshot;
+
+	    /* Snapshots thread-safe pour construire le résultat hors verrou
+	     * et réduire la contention.
+	     */
 	    synchronized (this) {
-	    	
-	        switch (pI) {
-	            case 0:
-	                return this.idSousTypeProduit != null
-	                    ? String.valueOf(this.idSousTypeProduit) : null;
-	            case 1:
-	                return this.typeProduit != null 
-	                && this.typeProduit.getTypeProduit() != null
-	                    ? this.typeProduit.getTypeProduit() : null;
-	            case 2:
-	                return this.sousTypeProduit != null
-	                    ? this.sousTypeProduit : null;
-	            default:
-	                return "invalide";
-	        }
+	        idSnapshot = this.idSousTypeProduit;
+	        sousTypeSnapshot = this.sousTypeProduit;
+	        typeProduitSnapshot = this.typeProduit;
 	    }
-	}
+
+	    Object valeur = null;
+
+	    switch (pI) {
+
+	        case 0:
+	            if (idSnapshot != null) {
+	                valeur = String.valueOf(idSnapshot);
+	            }
+	            break;
+
+	        case 1:
+	            if (typeProduitSnapshot != null) {
+	                /* Délègue au parent via une méthode snapshotée
+	                 * pour éviter une lecture non déterministe du parent.
+	                 */
+	                valeur = typeProduitSnapshot.getValeurColonne(1);
+	            }
+	            break;
+
+	        case 2:
+	            if (sousTypeSnapshot != null) {
+	                valeur = sousTypeSnapshot;
+	            }
+	            break;
+
+	        default:
+	            valeur = "invalide";
+	            break;
+
+	    } // Fin du Switch._________________________________
+
+	    return valeur;
+
+	} // Fin de getValeurColonne(...)._____________________________________
 
 
 

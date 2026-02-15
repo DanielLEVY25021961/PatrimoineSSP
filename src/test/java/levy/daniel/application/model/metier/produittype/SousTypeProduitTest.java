@@ -2025,6 +2025,80 @@ public class SousTypeProduitTest {
 		assertEquals(INVALIDE, enTete7, "enTete7 doit retourner \"invalide\" :  ");
 		
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode getEnTeteColonne(int pI) en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie la stabilité des en-têtes de colonnes en concurrence.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testGetEnTeteColonneThreadSafe() : vérifie le thread-safety de getEnTeteColonne()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testGetEnTeteColonneThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Instance avec constructeur d'arité nulle. */
+	    final SousTypeProduitI objetConstructeurNull = new SousTypeProduit();
+
+	    /* ACT - WHEN : Exécution concurrente de getEnTeteColonne(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> {
+
+	            final String enTete0 = objetConstructeurNull.getEnTeteColonne(0);
+	            final String enTete1 = objetConstructeurNull.getEnTeteColonne(1);
+	            final String enTete2 = objetConstructeurNull.getEnTeteColonne(2);
+	            final String enTete7 = objetConstructeurNull.getEnTeteColonne(7);
+
+	            return "idSousTypeProduit".equals(enTete0)
+	                    && "type de produit".equals(enTete1)
+	                    && "sous-type de produit".equals(enTete2)
+	                    && INVALIDE.equals(enTete7);
+
+	        });
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche getEnTeteColonne() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "getEnTeteColonne() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test getEnTeteColonne() en multi-thread réussi *****");
+	        System.out.println("enTete0 : " + objetConstructeurNull.getEnTeteColonne(0));
+	        System.out.println("enTete1 : " + objetConstructeurNull.getEnTeteColonne(1));
+	        System.out.println("enTete2 : " + objetConstructeurNull.getEnTeteColonne(2));
+	        System.out.println("enTete7 : " + objetConstructeurNull.getEnTeteColonne(7));
+	    }
+
+	} //___________________________________________________________________
 
 
 
@@ -2110,6 +2184,118 @@ public class SousTypeProduitTest {
 		assertEquals("moulinet", valeur2, "valeur2 doit retourner \"moulinet\" :  ");
 		assertEquals(INVALIDE, valeur7Null, "valeur7Null doit retourner \"invalide\" :  ");
 		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode getValeurColonne(int pI) en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie la stabilité des valeurs de colonnes en concurrence.</li>
+	 * <li>Vérifie la gestion des null et des indices invalides.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testGetValeurColonneThreadSafe() : vérifie le thread-safety de getValeurColonne()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testGetValeurColonneThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Instance avec constructeur d'arité nulle. */
+	    final SousTypeProduitI objetConstructeurNull = new SousTypeProduit();
+
+	    /* ARRANGE - GIVEN : Instance nominale. */
+	    final TypeProduitI typeProduit1 = new TypeProduit(PECHE);
+	    final SousTypeProduitI objet1 = new SousTypeProduit(1L, MOULINET, typeProduit1, null);
+
+	    /* ACT - WHEN : Exécution concurrente de getValeurColonne(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> {
+
+	            final Object valeur0Null = objetConstructeurNull.getValeurColonne(0);
+	            final Object valeur1Null = objetConstructeurNull.getValeurColonne(1);
+	            final Object valeur2Null = objetConstructeurNull.getValeurColonne(2);
+	            final Object valeur7Null = objetConstructeurNull.getValeurColonne(7);
+
+	            if (valeur0Null != null) {
+	                return false;
+	            }
+	            if (valeur1Null != null) {
+	                return false;
+	            }
+	            if (valeur2Null != null) {
+	                return false;
+	            }
+	            if (!INVALIDE.equals(valeur7Null)) {
+	                return false;
+	            }
+
+	            final Object valeur0 = objet1.getValeurColonne(0);
+	            final Object valeur1 = objet1.getValeurColonne(1);
+	            final Object valeur2 = objet1.getValeurColonne(2);
+	            final Object valeur7 = objet1.getValeurColonne(7);
+
+	            if (!"1".equals(valeur0)) {
+	                return false;
+	            }
+	            if (!PECHE.equals(valeur1)) {
+	                return false;
+	            }
+	            if (!MOULINET.equals(valeur2)) {
+	                return false;
+	            }
+	            if (!INVALIDE.equals(valeur7)) {
+	                return false;
+	            }
+
+	            return true;
+
+	        });
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche getValeurColonne() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "getValeurColonne() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test getValeurColonne() en multi-thread réussi *****");
+	        System.out.println("valeur0Null : " + objetConstructeurNull.getValeurColonne(0));
+	        System.out.println("valeur1Null : " + objetConstructeurNull.getValeurColonne(1));
+	        System.out.println("valeur2Null : " + objetConstructeurNull.getValeurColonne(2));
+	        System.out.println("valeur7Null : " + objetConstructeurNull.getValeurColonne(7));
+	        System.out.println();
+	        System.out.println("valeur0 : " + objet1.getValeurColonne(0));
+	        System.out.println("valeur1 : " + objet1.getValeurColonne(1));
+	        System.out.println("valeur2 : " + objet1.getValeurColonne(2));
+	        System.out.println("valeur7 : " + objet1.getValeurColonne(7));
+	    }
+
 	} //___________________________________________________________________
 	
 	
