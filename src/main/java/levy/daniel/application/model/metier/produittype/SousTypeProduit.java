@@ -6,6 +6,7 @@ package levy.daniel.application.model.metier.produittype;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import org.apache.commons.lang3.Strings;
@@ -365,10 +366,22 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	*/
 	@Override
 	public final int hashCode() {
-		synchronized (this) {
-			return Objects.hash(this.typeProduit
-					, this.sousTypeProduit);			
-		}		
+		
+	    final TypeProduitI typeSnapshot;
+	    final String sousSnapshot;
+	    
+	    synchronized (this) {
+	        typeSnapshot = this.typeProduit;
+	        sousSnapshot = this.sousTypeProduit;
+	    }
+
+	    final int typeHash 
+	    	= (typeSnapshot == null) ? 0 : typeSnapshot.hashCode();
+	    final int sousHash 
+	    	= (sousSnapshot == null) 
+	    		? 0 : sousSnapshot.toLowerCase(Locale.ROOT).hashCode();
+
+	    return 31 * typeHash + sousHash;
 	}
 
 
@@ -385,22 +398,92 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	*/
 	@Override
 	public final boolean equals(final Object pObject) {
+	    /* retourne true si les références sont identiques. */
+	    if (this == pObject) {
+	        return true;
+	    }
 
-		synchronized (this) {
-			
-			if (this == pObject) {
-				return true;
-			}
+	    /* return false si pObject == null. */
+	    if (pObject == null) {
+	        return false;
+	    }
 
-			if (!(pObject instanceof SousTypeProduit other)) {
-				return false;
-			}
+	    /* retourne false si pObject n'est pas une bonne instance. */
+	    if (!(pObject instanceof SousTypeProduit other)) {
+	        return false;
+	    }
 
-			return Objects.equals(
-					this.getSousTypeProduit(), other.getSousTypeProduit())
-					&& Objects.equals(
-							this.getTypeProduit(), other.getTypeProduit());
-		}
+	    /* equals sur [SousTypeProduit]. */
+	    final int thisHash = System.identityHashCode(this);
+	    final int otherHash = System.identityHashCode(other);
+
+	    if (thisHash < otherHash) {
+	        synchronized (this) {
+	            synchronized (other) {
+	                final TypeProduitI typeA = this.typeProduit;
+	                final TypeProduitI typeB = other.typeProduit;
+	                if (!Objects.equals(typeA, typeB)) {
+	                    return false;
+	                }
+
+	                final String a = this.sousTypeProduit;
+	                final String b = other.sousTypeProduit;
+	                if (a == null) {
+	                    return b == null;
+	                }
+	                if (b == null) {
+	                    return false;
+	                }
+	                return a.equalsIgnoreCase(b);
+	            }
+	        }
+	    } else if (thisHash > otherHash) {
+	        synchronized (other) {
+	            synchronized (this) {
+	                final TypeProduitI typeA = this.typeProduit;
+	                final TypeProduitI typeB = other.typeProduit;
+	                if (!Objects.equals(typeA, typeB)) {
+	                    return false;
+	                }
+
+	                final String a = this.sousTypeProduit;
+	                final String b = other.sousTypeProduit;
+	                if (a == null) {
+	                    return b == null;
+	                }
+	                if (b == null) {
+	                    return false;
+	                }
+	                return a.equalsIgnoreCase(b);
+	            }
+	        }
+	    }
+
+	    /* Cas rarissime : collision de System.identityHashCode(...)
+	     * -> verrou de départ unique pour imposer un ordre stable
+	     * et éviter tout deadlock.
+	     */
+	    synchronized (SousTypeProduit.class) {
+	        synchronized (this) {
+	            synchronized (other) {
+	                final TypeProduitI typeA = this.typeProduit;
+	                final TypeProduitI typeB = other.typeProduit;
+	                if (!Objects.equals(typeA, typeB)) {
+	                    return false;
+	                }
+
+	                final String a = this.sousTypeProduit;
+	                final String b = other.sousTypeProduit;
+	                if (a == null) {
+	                    return b == null;
+	                }
+	                if (b == null) {
+	                    return false;
+	                }
+	                return a.equalsIgnoreCase(b);
+	            }
+	        }
+	    }
 	}
 
 
