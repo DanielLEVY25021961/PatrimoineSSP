@@ -1341,38 +1341,52 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 
 	    /* Snapshot thread-safe de l'ancien parent. */
 	    final TypeProduitI oldSnapshot;
+
 	    synchronized (this) {
+
 	        oldSnapshot = this.typeProduit;
+
 	        if (oldSnapshot == pTypeProduit) {
 	            return;
 	        }
+
 	    }
 
 	    /* Casts sécurisés (peuvent donner null). */
-	    final TypeProduit oldImpl =
-	            (oldSnapshot instanceof TypeProduit) ? (TypeProduit) oldSnapshot : null;
+	    final TypeProduit oldImplMaybe =
+	            (oldSnapshot instanceof TypeProduit)
+	                    ? (TypeProduit) oldSnapshot
+	                    : null;
 
 	    final TypeProduit newImplMaybe =
-	            (pTypeProduit instanceof TypeProduit) ? (TypeProduit) pTypeProduit : null;
+	            (pTypeProduit instanceof TypeProduit)
+	                    ? (TypeProduit) pTypeProduit
+	                    : null;
 
-	    /* Cas 1 : aucun parent TypeProduit (implémentation métier) impliqué. */
-	    if (oldImpl == null && newImplMaybe == null) {
+	    /* Cas 1 : aucun parent TypeProduit 
+	     * (implémentation métier) impliqué. */
+	    if (oldImplMaybe == null && newImplMaybe == null) {
 
 	        synchronized (this) {
+
 	            this.typeProduit = pTypeProduit;
 	            this.recalculerValide();
+
 	        }
 
 	        return;
+
 	    }
 
 	    /* Cas 2 : rattachement à un parent TypeProduit. */
-	    if (oldImpl == null) {
+	    if (oldImplMaybe == null) {
 
 	        /* Ici, newImplMaybe est forcément non null
-	         * car (oldImpl == null && newImplMaybe == null) est déjà traité.
+	         * car (oldImplMaybe == null && newImplMaybe == null) 
+	         * est déjà traité.
 	         */
-	        final TypeProduit newImpl = newImplMaybe;
+	        final TypeProduit newImpl 
+	        	= Objects.requireNonNull(newImplMaybe);
 
 	        synchronized (newImpl) {
 
@@ -1384,7 +1398,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 
 	                this.typeProduit = pTypeProduit;
 
-	                /* rattache l'enfant au nouveau parent sans equals() sous verrou parent. */
+	                /* rattache l'enfant au nouveau parent 
+	                 * sans equals() sous verrou parent. */
 	                newImpl.internalAddSousTypeProduit(this);
 
 	                this.recalculerValide();
@@ -1394,12 +1409,17 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	        }
 
 	        return;
+
 	    }
 
 	    /* Cas 3 : détachement d'un parent TypeProduit. */
 	    if (newImplMaybe == null) {
 
-	        /* Ici, oldImpl est forcément non null car le cas oldImpl == null est déjà traité. */
+	        /* Ici, oldImplMaybe est forcément non null 
+	         * car oldImplMaybe == null est déjà traité. */
+	        final TypeProduit oldImpl 
+	        	= Objects.requireNonNull(oldImplMaybe);
+
 	        synchronized (oldImpl) {
 
 	            synchronized (this) {
@@ -1408,7 +1428,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	                    return;
 	                }
 
-	                /* détache l'enfant de l'ancien parent sans equals() sous verrou parent. */
+	                /* détache l'enfant de l'ancien parent 
+	                 * sans equals() sous verrou parent. */
 	                oldImpl.internalRemoveSousTypeProduit(this);
 
 	                this.typeProduit = pTypeProduit;
@@ -1420,10 +1441,13 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	        }
 
 	        return;
+
 	    }
 
-	    /* Cas 4 : ancien parent et nouveau parent sont des TypeProduit non null. */
-	    final TypeProduit newImpl = newImplMaybe;
+	    /* Cas 4 : ancien parent et nouveau parent 
+	     * sont des TypeProduit non null. */
+	    final TypeProduit oldImpl = Objects.requireNonNull(oldImplMaybe);
+	    final TypeProduit newImpl = Objects.requireNonNull(newImplMaybe);
 
 	    final int hashOld = System.identityHashCode(oldImpl);
 	    final int hashNew = System.identityHashCode(newImpl);
@@ -1451,18 +1475,18 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	                        this.recalculerValide();
 
 	                    }
-
 	                }
-
 	            }
-
 	        }
 
 	        return;
+
 	    }
 
-	    final TypeProduit firstParent = (hashOld < hashNew) ? oldImpl : newImpl;
-	    final TypeProduit secondParent = (hashOld < hashNew) ? newImpl : oldImpl;
+	    final TypeProduit firstParent 
+	    	= (hashOld < hashNew) ? oldImpl : newImpl;
+	    final TypeProduit secondParent 
+	    	= (hashOld < hashNew) ? newImpl : oldImpl;
 
 	    synchronized (firstParent) {
 
@@ -1483,9 +1507,7 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	                this.recalculerValide();
 
 	            }
-
 	        }
-
 	    }
 
 	} // Fin de setTypeProduit(...).________________________________________
