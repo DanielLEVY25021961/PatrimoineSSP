@@ -2487,6 +2487,113 @@ public class SousTypeProduitTest {
     } //___________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>
+     * Teste le thread-safety de isValide() et du recalcul de valide.
+     * </p>
+     * <ul>
+     * <li>Un thread modifie le TypeProduit (setTypeProduit).</li>
+     * <li>Un thread vérifie sous verrou que isValide() est cohérent avec getTypeProduit().</li>
+     * <li>Le test échoue si une tâche est annulée (timeout) ou si une incohérence est détectée.</li>
+     * </ul>
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testIsValideThreadSafe() : vérifie la cohérence concurrente de valide")
+    @Tag(THREAD_SAFETY)
+    @Test
+    public final void testIsValideThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* ARRANGE - GIVEN */
+        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+        final SousTypeProduit sousTypeProduit =
+                new SousTypeProduit(10L, CANNE_A_PECHE, null, null);
+
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+        /* Writer : alterne rattachement et détachement. */
+        for (int i = 0; i < 200; i++) {
+
+            tasks.add(() -> {
+
+                sousTypeProduit.setTypeProduit(typeProduit);
+
+                return Boolean.TRUE;
+
+            });
+
+            tasks.add(() -> {
+
+                sousTypeProduit.setTypeProduit(null);
+
+                return Boolean.TRUE;
+
+            });
+
+        }
+
+        /* Reader : vérifie sous verrou que isValide() est cohérent avec getTypeProduit(). */
+        for (int i = 0; i < 500; i++) {
+
+            tasks.add(() -> {
+
+                synchronized (sousTypeProduit) {
+
+                    final boolean attendu = sousTypeProduit.getTypeProduit() != null;
+                    final boolean obtenu = sousTypeProduit.isValide();
+
+                    return Boolean.valueOf(attendu == obtenu);
+
+                }
+
+            });
+
+        }
+
+        final List<Future<Boolean>> results =
+                executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        /* ASSERT - THEN */
+        for (final Future<Boolean> result : results) {
+
+            assertFalse(result.isCancelled(),
+                    "Une tâche isValide()/setTypeProduit ne doit pas être annulée (timeout) : ");
+
+            assertTrue(result.get(),
+                    "valide doit rester cohérent avec getTypeProduit() sous verrou : ");
+
+        }
+
+        /* ASSERT - THEN : cohérence finale déterministe. */
+        synchronized (sousTypeProduit) {
+
+            assertEquals(sousTypeProduit.getTypeProduit() != null, sousTypeProduit.isValide(),
+                    "En fin de test, isValide() doit être cohérent avec getTypeProduit() : ");
+
+        }
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test isValide() thread-safe réussi *****");
+            System.out.println("typeProduit final : " + sousTypeProduit.getTypeProduit());
+            System.out.println("valide final : " + sousTypeProduit.isValide());
+        }
+
+    } //___________________________________________________________________
+    
+    
 
     /**
      * <div>

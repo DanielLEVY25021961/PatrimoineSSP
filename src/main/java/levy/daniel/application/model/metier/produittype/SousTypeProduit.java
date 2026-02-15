@@ -845,8 +845,12 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 *</div>
 	 */
 	private void recalculerValide() {
-        this.valide = (this.typeProduit != null);
-    }	
+
+	    synchronized (this) {
+	        this.valide = (this.typeProduit != null);
+	    }
+
+	} // Fin de recalculerValide()._______________________________________
 
 	
 	
@@ -1195,6 +1199,31 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	
 	/**
+	 * Vérifie si this.produits contient pProduit par identité (==).
+	 * Cette méthode doit être appelée sous synchronized(this).
+	 *
+	 * @param pProduit : ProduitI
+	 * @return boolean : true si pProduit est présent par identité.
+	 */
+	private boolean containsProduitByReference(final ProduitI pProduit) {
+	
+	    if (pProduit == null) {
+	        return false;
+	    }
+	
+	    for (final Object objet : this.produits) {
+	        if (objet == pProduit) {
+	            return true;
+	        }
+	    }
+	
+	    return false;
+	
+	} // Fin de containsProduitByReference(...)._____________________________
+
+
+
+	/**
 	 * Retire pProduit de this.produits par identité (==).
 	 * Cette méthode doit être appelée sous synchronized(this).
 	 *
@@ -1216,40 +1245,19 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	} // Fin de removeProduitByReference(...)._______________________________
 
-
-
+	
+	
 	/**
-	 * Vérifie si this.produits contient pProduit par identité (==).
-	 * Cette méthode doit être appelée sous synchronized(this).
-	 *
-	 * @param pProduit : ProduitI
-	 * @return boolean : true si pProduit est présent par identité.
+	 * {@inheritDoc}
 	 */
-	private boolean containsProduitByReference(final ProduitI pProduit) {
-
-	    if (pProduit == null) {
-	        return false;
-	    }
-
-	    for (final Object objet : this.produits) {
-	        if (objet == pProduit) {
-	            return true;
-	        }
-	    }
-
-	    return false;
-
-	} // Fin de containsProduitByReference(...)._____________________________
-
-	
-	
-	/**
-	* {@inheritDoc}
-	*/
 	@Override
 	public final boolean isValide() {
-		return this.valide;
-	}
+
+	    synchronized (this) {
+	        return this.valide;
+	    }
+
+	} // Fin de isValide()._______________________________________________
 	
 	
 
