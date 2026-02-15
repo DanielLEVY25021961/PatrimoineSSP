@@ -488,54 +488,53 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 
 
 
-	/**
-	 * {@inheritDoc}
-	 */
+	/** * {@inheritDoc} */
 	@Override
 	public final String toString() {
-		/*
-	     * Génère une représentation textuelle thread-safe.
-	     */
-	    final StringBuilder builder = new StringBuilder();
+
+	    /* * Génère une représentation textuelle thread-safe. */
+	    final Long idSnapshot;
+	    final String sousTypeSnapshot;
+	    final TypeProduitI typeSnapshot;
 
 	    synchronized (this) {
-	    	
-	        builder.append("SousTypeProduit [");
-
-	        builder.append("idSousTypeProduit=");
-	        if (this.idSousTypeProduit != null) {
-	            builder.append(this.idSousTypeProduit);
-	        } else {
-	            builder.append(NULL);
-	        }
-
-	        builder.append(VIRGULE_ESPACE);
-
-	        builder.append("sousTypeProduit=");
-	        
-	        if (this.sousTypeProduit != null) {
-	            builder.append(this.sousTypeProduit);
-	        } else {
-	            builder.append(NULL);
-	        }
-
-	        builder.append(VIRGULE_ESPACE);
-
-	        builder.append("typeProduit=");
-	        
-	        if (this.typeProduit != null) {
-	            builder.append(this.typeProduit);
-	        } else {
-	            builder.append(NULL);
-	        }
-
-	        builder.append(CROCHET_FERMANT);
+	        idSnapshot = this.idSousTypeProduit;
+	        sousTypeSnapshot = this.sousTypeProduit;
+	        typeSnapshot = this.typeProduit;
 	    }
 
-	    return builder.toString();
-	}
-	
+	    final StringBuilder builder = new StringBuilder();
+	    
+	    builder.append("SousTypeProduit [");
+	    builder.append("idSousTypeProduit=");
+	    if (idSnapshot != null) {
+	        builder.append(idSnapshot);
+	    } else {
+	        builder.append(NULL);
+	    }
+	    builder.append(VIRGULE_ESPACE);
+	    
+	    builder.append("sousTypeProduit=");
+	    if (sousTypeSnapshot != null) {
+	        builder.append(sousTypeSnapshot);
+	    } else {
+	        builder.append(NULL);
+	    }
+	    builder.append(VIRGULE_ESPACE);
+	    
+	    builder.append("typeProduit=");
+	    if (typeSnapshot != null) {
+	        builder.append(typeSnapshot);
+	    } else {
+	        builder.append(NULL);
+	    }
+	    builder.append(CROCHET_FERMANT);
 
+	    return builder.toString();
+
+	}
+
+	
 	
 	/**
 	* {@inheritDoc}

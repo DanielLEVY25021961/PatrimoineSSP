@@ -1031,6 +1031,68 @@ public class SousTypeProduitTest {
 		assertEquals(resultat, objet1.toString(), "doit afficher toString() : ");
 
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode toString() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que l'appel concurrent à toString() ne provoque pas d'erreurs.</li>
+	 * <li>Vérifie que toString() ne retourne jamais null.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testToStringThreadSafe() : vérifie le thread-safety de toString()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testToStringThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création d'un SousTypeProduit. */
+	    final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+	    final SousTypeProduitI sousTypeProduit =
+	            new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+	    /* ACT - WHEN : Exécution concurrente de toString(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<String>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> sousTypeProduit.toString());
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<String>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<String> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche toString() ne doit pas être annulée (timeout) : ");
+	        assertNotNull(result.get(),
+	                "toString() ne doit jamais retourner null en environnement multi-thread.");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test toString() en multi-thread réussi *****");
+	        System.out.println("Résultat de toString() : " + sousTypeProduit.toString());
+	    }
+
+	} //___________________________________________________________________
 
 	
 	
@@ -2069,70 +2131,7 @@ public class SousTypeProduitTest {
         		"La liste des produits ne doit plus contenir produitCanneTelescopique.");
         
     } //___________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
-     * <p>Teste la méthode <b>toString()</b> 
-     * en environnement multi-thread.</p>
-     * <ul>
-     * <li>Vérifie que l'appel concurrent à toString() 
-     * ne provoque pas d'erreurs.</li>
-     * <li>Utilise un ExecutorService pour simuler 
-     * des accès concurrents.</li>
-     * </ul>
-     * </div>
-     */
-    @SuppressWarnings(UNUSED)
-    @DisplayName("testToStringThreadSafe() : vérifie le thread-safety de toString()")
-    @Tag(THREAD_SAFETY)
-    @Test
-    public final void testToStringThreadSafe() 
-    		throws InterruptedException, ExecutionException {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
-        final boolean affichage = false;
-
-        /*
-         * ARRANGE - GIVEN : Création d'un SousTypeProduit.
-         */
-        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
-        final SousTypeProduitI sousTypeProduit 
-        	= new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
-
-        /*
-         * ACT - WHEN : Exécution concurrente de toString().
-         */
-        @SuppressWarnings(RESOURCE)
-		final ExecutorService executor = Executors.newFixedThreadPool(10);
-        final List<Callable<String>> tasks = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            tasks.add(() -> sousTypeProduit.toString());
-        }
-
-        final List<Future<String>> results = executor.invokeAll(tasks);
-        executor.shutdown();
-
-        /*
-         * ASSERT - THEN : Vérification des résultats.
-         */
-        for (final Future<String> result : results) {
-            assertNotNull(result.get()
-            		, "toString() ne doit jamais retourner null en environnement multi-thread.");
-        }
-
-        /*
-         * AFFICHAGE A LA CONSOLE.
-         */
-        if (AFFICHAGE_GENERAL && affichage) {
-            System.out.println();
-            System.out.println("***** Test toString() en multi-thread réussi *****");
-            System.out.println("Résultat de toString() : " + sousTypeProduit.toString());
-        }
-    }
-    
+        
     
     
     /**
