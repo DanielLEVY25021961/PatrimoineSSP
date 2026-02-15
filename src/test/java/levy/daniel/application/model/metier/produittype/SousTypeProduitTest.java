@@ -1885,6 +1885,87 @@ public class SousTypeProduitTest {
 		assertEquals(toStringCsvPrevue, toStringCsv, "toStringCsv doit retourner \"1;Pêche;moulinet;\" : ");
 
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste la méthode toStringCsv() en environnement multi-thread.
+	 * </p>
+	 * <ul>
+	 * <li>Vérifie que toStringCsv() ne provoque pas d'erreur en concurrence.</li>
+	 * <li>Vérifie la stabilité du résultat pour une instance nominale.</li>
+	 * <li>Utilise un timeout pour détecter une régression introduisant un deadlock.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testToStringCsvThreadSafe() : vérifie le thread-safety de toStringCsv()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testToStringCsvThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN : Création des objets nécessaires. */
+	    final SousTypeProduitI objetConstructeurNull = new SousTypeProduit();
+
+	    final TypeProduitI typeProduit1 = new TypeProduit(PECHE);
+	    final SousTypeProduitI objet1 = new SousTypeProduit(1L, MOULINET, typeProduit1, null);
+
+	    final String toStringCsvPrevueNull = "null;null;null;";
+	    final String toStringCsvPrevue = "1;Pêche;moulinet;";
+
+	    /* ACT - WHEN : Exécution concurrente de toStringCsv(). */
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+	    for (int i = 0; i < 100; i++) {
+	        tasks.add(() -> {
+
+	            final String resultNull = objetConstructeurNull.toStringCsv();
+	            if (!toStringCsvPrevueNull.equals(resultNull)) {
+	                return false;
+	            }
+
+	            final String result = objet1.toStringCsv();
+	            if (!toStringCsvPrevue.equals(result)) {
+	                return false;
+	            }
+
+	            return true;
+
+	        });
+	    }
+
+	    /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+	    final List<Future<Boolean>> results =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : Vérification des résultats. */
+	    for (final Future<Boolean> result : results) {
+	        assertFalse(result.isCancelled(),
+	                "Une tâche toStringCsv() ne doit pas être annulée (timeout) : ");
+	        assertTrue(result.get(),
+	                "toStringCsv() doit rester cohérent en environnement multi-thread : ");
+	    }
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test toStringCsv() en multi-thread réussi *****");
+	        System.out.println("toStringCsvNull : " + objetConstructeurNull.toStringCsv());
+	        System.out.println("toStringCsv : " + objet1.toStringCsv());
+	    }
+
+	} //___________________________________________________________________
 
 
 

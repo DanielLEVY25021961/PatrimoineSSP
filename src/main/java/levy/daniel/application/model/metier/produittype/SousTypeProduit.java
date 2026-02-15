@@ -921,6 +921,7 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 */
 	@Override
 	public final String toStringCsv() {
+		
 	    final StringBuilder builder = new StringBuilder();
 
 	    synchronized (this) {
