@@ -60,6 +60,11 @@ public class TypeProduitTest {
     public static final String UNUSED = "unused";
     
     /**
+     * "unchecked"
+     */
+    public static final String UNCHECKED = "unchecked";
+    
+    /**
      * "resource"
      */
     public static final String RESOURCE = "resource";
@@ -2018,50 +2023,76 @@ public class TypeProduitTest {
 
 
 
-	/**
-	 * <div>
-	 * <p>Teste les méthodes <b>internalAddSousTypeProduit</b> et <b>internalRemoveSousTypeProduit</b>.</p>
-	 * <ul>
-	 * <li>garantit que l'ajout interne d'un SousTypeProduit fonctionne correctement.</li>
-	 * <li>garantit que le retrait interne d'un SousTypeProduit fonctionne correctement.</li>
-	 * </ul>
-	 * </div>
-	 */
-	@SuppressWarnings(UNUSED)
-	@DisplayName(TEST_INTERNAL_ADD_REMOVE_SOUS_TYPE_PRODUIT + "() : vérifie le bon fonctionnement des méthodes internalAddSousTypeProduit et internalRemoveSousTypeProduit")
-	@Tag(RELATIONS)
-	@Test
-	public final void testInternalAddEtRemoveSousTypeProduit() {
-	    // **********************************
-	    // AFFICHAGE DANS LE TEST ou NON
-	    final boolean affichage = false;
-	    // **********************************
-	
-	    /* AFFICHAGE A LA CONSOLE. */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("********** CLASSE TypeProduitTest - méthode " + TEST_INTERNAL_ADD_REMOVE_SOUS_TYPE_PRODUIT + "() ********** ");
-	        System.out.println("CE TEST VERIFIE LE BON FONCTIONNEMENT DES METHODES internalAddSousTypeProduit ET internalRemoveSousTypeProduit.");
-	        System.out.println();
-	    }
-	
-	    // ARRANGE - GIVEN
-	    final TypeProduit typeProduit = new TypeProduit(VETEMENT);
-	    final SousTypeProduit sousTypeProduit = new SousTypeProduit(VETEMENT_HOMME);
-	
-	    // ACT - WHEN
-	    typeProduit.internalAddSousTypeProduit(sousTypeProduit);
-	
-	    // ASSERT - THEN
-	    assertTrue(typeProduit.getSousTypeProduits().contains(sousTypeProduit), "Le SousTypeProduit doit être ajouté à la liste des sous-types du TypeProduit.");
-	
-	    // ACT - WHEN
-	    typeProduit.internalRemoveSousTypeProduit(sousTypeProduit);
-	
-	    // ASSERT - THEN
-	    assertFalse(typeProduit.getSousTypeProduits().contains(sousTypeProduit), "Le SousTypeProduit doit être retiré de la liste des sous-types du TypeProduit.");
-	    
-	} //___________________________________________________________________
+    /**
+     * <div>
+     * <p>
+     * Teste les méthodes internalAddSousTypeProduit(...) et internalRemoveSousTypeProduit(...).
+     * </p>
+     * <ul>
+     * <li>Vérifie que l'ajout interne ajoute l'enfant par identité (==).</li>
+     * <li>Vérifie que le retrait interne retire l'enfant par identité (==).</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings({ UNCHECKED, UNUSED })
+    @DisplayName(TEST_INTERNAL_ADD_REMOVE_SOUS_TYPE_PRODUIT + "() : vérifie internalAddSousTypeProduit et internalRemoveSousTypeProduit par identité")
+    @Tag(RELATIONS)
+    @Test
+    public final void testInternalAddEtRemoveSousTypeProduit() {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("********** CLASSE TypeProduitTest - méthode "
+                    + TEST_INTERNAL_ADD_REMOVE_SOUS_TYPE_PRODUIT + "() ********** ");
+            System.out.println("CE TEST VERIFIE internalAddSousTypeProduit ET internalRemoveSousTypeProduit PAR IDENTITE (==).");
+            System.out.println();
+        }
+
+        /* ARRANGE - GIVEN */
+        final TypeProduit typeProduit = new TypeProduit(VETEMENT);
+        final SousTypeProduit sousTypeProduit = new SousTypeProduit(VETEMENT_HOMME);
+
+        /* ACT - WHEN */
+        typeProduit.internalAddSousTypeProduit(sousTypeProduit);
+
+        /* ASSERT - THEN : présent par identité (==). */
+        final List<SousTypeProduitI> snapshotApresAjout =
+                (List<SousTypeProduitI>) typeProduit.getSousTypeProduits();
+
+        boolean present = false;
+
+        for (final SousTypeProduitI stp : snapshotApresAjout) {
+            if (stp == sousTypeProduit) {
+                present = true;
+            }
+        }
+
+        assertTrue(present,
+                "Le SousTypeProduit doit être ajouté à la liste des sous-types du TypeProduit (identité ==) : ");
+
+        /* ACT - WHEN */
+        typeProduit.internalRemoveSousTypeProduit(sousTypeProduit);
+
+        /* ASSERT - THEN : absent par identité (==). */
+        final List<SousTypeProduitI> snapshotApresRetrait =
+                (List<SousTypeProduitI>) typeProduit.getSousTypeProduits();
+
+        boolean encorePresent = false;
+
+        for (final SousTypeProduitI stp : snapshotApresRetrait) {
+            if (stp == sousTypeProduit) {
+                encorePresent = true;
+            }
+        }
+
+        assertFalse(encorePresent,
+                "Le SousTypeProduit doit être retiré de la liste des sous-types du TypeProduit (identité ==) : ");
+
+    } //___________________________________________________________________
 
 
 
@@ -2147,20 +2178,27 @@ public class TypeProduitTest {
     
     
     /**
-     * Teste la méthode internalRemoveSousTypeProduit(null).
+     * <div>
+     * <p>
+     * Teste internalRemoveSousTypeProduit(null).
+     * </p>
      * <ul>
-     * <li>Vérifie que internalRemoveSousTypeProduit(null) ne lève pas d'exception.</li>
-     * <li>Vérifie que internalRemoveSousTypeProduit(null) ne modifie pas la liste des sous-types.</li>
+     * <li>Vérifie que null ne lève pas d'exception.</li>
+     * <li>Vérifie que null ne modifie pas la liste.</li>
+     * <li>Vérifie que l'enfant présent reste présent par identité (==).</li>
      * </ul>
+     * </div>
      */
-    @SuppressWarnings(UNUSED)
+    @SuppressWarnings({ UNCHECKED, UNUSED })
     @DisplayName("testInternalRemoveSousTypeProduitNull() : vérifie internalRemoveSousTypeProduit(null)")
     @Tag(RELATIONS)
     @Test
     public final void testInternalRemoveSousTypeProduitNull() {
 
+        /* AFFICHAGE DANS LE TEST ou NON */
         final boolean affichage = false;
 
+        /* ARRANGE - GIVEN */
         final TypeProduit typeProduit = new TypeProduit(VETEMENT);
         final SousTypeProduit sousTypeProduit = new SousTypeProduit(VETEMENT_HOMME);
 
@@ -2168,39 +2206,60 @@ public class TypeProduitTest {
 
         final int tailleAvant = typeProduit.getSousTypeProduits().size();
 
+        /* ACT - WHEN */
         typeProduit.internalRemoveSousTypeProduit(null);
 
-        assertEquals(tailleAvant
-                , typeProduit.getSousTypeProduits().size()
-                , "internalRemoveSousTypeProduit(null) ne doit pas modifier la taille de la liste.");
+        /* ASSERT - THEN */
+        assertEquals(tailleAvant, typeProduit.getSousTypeProduits().size(),
+                "internalRemoveSousTypeProduit(null) ne doit pas modifier la taille de la liste : ");
 
-        assertTrue(typeProduit.getSousTypeProduits().contains(sousTypeProduit)
-                , "internalRemoveSousTypeProduit(null) ne doit pas retirer un enfant existant.");
+        final List<SousTypeProduitI> snapshot =
+                (List<SousTypeProduitI>) typeProduit.getSousTypeProduits();
 
+        boolean present = false;
+
+        for (final SousTypeProduitI stp : snapshot) {
+            if (stp == sousTypeProduit) {
+                present = true;
+            }
+        }
+
+        assertTrue(present,
+                "internalRemoveSousTypeProduit(null) ne doit pas retirer un enfant existant (identité ==) : ");
+
+        /* AFFICHAGE A LA CONSOLE. */
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
             System.out.println("***** Test internalRemoveSousTypeProduit(null) réussi *****");
             System.out.println(NOMBRE_STP + typeProduit.getSousTypeProduits().size());
         }
+
     } //___________________________________________________________________
 
 
     
     /**
-     * Teste la méthode internalRemoveSousTypeProduit(...) avec un enfant absent.
+     * <div>
+     * <p>
+     * Teste internalRemoveSousTypeProduit(...) avec un enfant absent.
+     * </p>
      * <ul>
-     * <li>Vérifie que retirer un SousTypeProduit absent ne modifie pas la liste.</li>
+     * <li>Vérifie que retirer un enfant absent ne modifie pas la liste.</li>
      * <li>Vérifie que l'opération est idempotente.</li>
+     * <li>Vérifie que l'enfant présent reste présent par identité (==).</li>
      * </ul>
+     * </div>
      */
-    @SuppressWarnings(UNUSED)
+    @SuppressWarnings({ UNCHECKED, UNUSED })
     @DisplayName("testInternalRemoveSousTypeProduitAbsent() : vérifie internalRemoveSousTypeProduit(enfantAbsent)")
     @Tag(RELATIONS)
     @Test
     public final void testInternalRemoveSousTypeProduitAbsent() {
 
+        /* AFFICHAGE DANS LE TEST ou NON */
         final boolean affichage = false;
 
+        /* ARRANGE - GIVEN */
         final TypeProduit typeProduit = new TypeProduit(VETEMENT);
         final SousTypeProduit sousTypeProduitPresent = new SousTypeProduit(VETEMENT_HOMME);
         final SousTypeProduit sousTypeProduitAbsent = new SousTypeProduit(VETEMENT_FEMME);
@@ -2209,29 +2268,55 @@ public class TypeProduitTest {
 
         final int tailleAvant = typeProduit.getSousTypeProduits().size();
 
+        /* ACT - WHEN */
         typeProduit.internalRemoveSousTypeProduit(sousTypeProduitAbsent);
 
-        assertEquals(tailleAvant
-                , typeProduit.getSousTypeProduits().size()
-                , "Retirer un enfant absent ne doit pas modifier la taille de la liste.");
+        /* ASSERT - THEN */
+        assertEquals(tailleAvant, typeProduit.getSousTypeProduits().size(),
+                "Retirer un enfant absent ne doit pas modifier la taille de la liste : ");
 
-        assertTrue(typeProduit.getSousTypeProduits().contains(sousTypeProduitPresent)
-                , "Retirer un enfant absent ne doit pas retirer un enfant présent.");
+        final List<SousTypeProduitI> snapshot1 =
+                (List<SousTypeProduitI>) typeProduit.getSousTypeProduits();
 
+        boolean present1 = false;
+
+        for (final SousTypeProduitI stp : snapshot1) {
+            if (stp == sousTypeProduitPresent) {
+                present1 = true;
+            }
+        }
+
+        assertTrue(present1,
+                "Retirer un enfant absent ne doit pas retirer un enfant présent (identité ==) : ");
+
+        /* ACT - WHEN : idempotence */
         typeProduit.internalRemoveSousTypeProduit(sousTypeProduitAbsent);
 
-        assertEquals(tailleAvant
-                , typeProduit.getSousTypeProduits().size()
-                , "Retirer 2 fois un enfant absent ne doit pas modifier la taille de la liste.");
+        /* ASSERT - THEN */
+        assertEquals(tailleAvant, typeProduit.getSousTypeProduits().size(),
+                "Retirer 2 fois un enfant absent ne doit pas modifier la taille de la liste : ");
 
-        assertTrue(typeProduit.getSousTypeProduits().contains(sousTypeProduitPresent)
-                , "Retirer 2 fois un enfant absent ne doit pas retirer un enfant présent.");
+        final List<SousTypeProduitI> snapshot2 =
+                (List<SousTypeProduitI>) typeProduit.getSousTypeProduits();
 
+        boolean present2 = false;
+
+        for (final SousTypeProduitI stp : snapshot2) {
+            if (stp == sousTypeProduitPresent) {
+                present2 = true;
+            }
+        }
+
+        assertTrue(present2,
+                "Retirer 2 fois un enfant absent ne doit pas retirer un enfant présent (identité ==) : ");
+
+        /* AFFICHAGE A LA CONSOLE. */
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
             System.out.println("***** Test internalRemoveSousTypeProduit(enfantAbsent) réussi *****");
             System.out.println(NOMBRE_STP + typeProduit.getSousTypeProduits().size());
         }
+
     } //___________________________________________________________________
     
 
@@ -2281,24 +2366,30 @@ public class TypeProduitTest {
 
 
     /**
-     * Teste la méthode internalRemoveSousTypeProduit() en environnement multi-thread.
+     * <div>
+     * <p>
+     * Teste internalRemoveSousTypeProduit(...) en environnement multi-thread.
+     * </p>
      * <ul>
-     * <li>Vérifie que les retraits internes concurrents ne corrompent pas la liste des sous-types.</li>
+     * <li>Vérifie qu'aucune tâche n'est annulée (timeout).</li>
+     * <li>Vérifie qu'aucune tâche ne lève d'exception.</li>
+     * <li>Vérifie qu'après retraits concurrents, la liste est vide.</li>
      * </ul>
-     *
-     * @throws InterruptedException : possible.
-     * @throws ExecutionException : possible.
-     * @throws TimeoutException : possible.
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
      */
-    @SuppressWarnings({ "resource", "unused" })
+    @SuppressWarnings({ RESOURCE, UNUSED })
     @DisplayName("testInternalRemoveSousTypeProduitThreadSafe() : vérifie internalRemoveSousTypeProduit en multi-thread")
     @Tag(THREAD_SAFETY)
     @Test
-    public final void testInternalRemoveSousTypeProduitThreadSafe() 
-    		throws InterruptedException, ExecutionException, TimeoutException {
+    public final void testInternalRemoveSousTypeProduitThreadSafe()
+            throws InterruptedException, ExecutionException {
 
+        /* AFFICHAGE DANS LE TEST ou NON */
         final boolean affichage = false;
 
+        /* ARRANGE - GIVEN */
         final TypeProduit typeProduit = new TypeProduit(VETEMENT);
 
         final int nombreSousTypes = 50;
@@ -2314,29 +2405,48 @@ public class TypeProduitTest {
         }
 
         final ExecutorService executor = Executors.newFixedThreadPool(10);
-
         final List<Callable<Boolean>> tasks = new ArrayList<>();
 
         for (final SousTypeProduit stp : sousTypes) {
+
             tasks.add(() -> {
+
                 typeProduit.internalRemoveSousTypeProduit(stp);
-                return true;
+
+                return Boolean.TRUE;
+
             });
+
         }
 
-        executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
+        /* ACT - WHEN */
+        final List<Future<Boolean>> futures =
+                executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
 
         executor.shutdown();
-        executor.awaitTermination(5, TimeUnit.SECONDS);
 
+        /* ASSERT - THEN : aucune tâche ne doit être annulée (timeout) et aucune exception. */
+        for (final Future<Boolean> future : futures) {
+
+            assertFalse(future.isCancelled(),
+                    "Une tâche internalRemoveSousTypeProduit(...) ne doit pas être annulée (timeout) : ");
+
+            assertTrue(future.get(),
+                    "Une tâche internalRemoveSousTypeProduit(...) doit se terminer normalement : ");
+
+        }
+
+        /* ASSERT - THEN : après retraits concurrents, la liste doit être vide. */
         assertTrue(typeProduit.getSousTypeProduits().isEmpty(),
-                "Après retraits concurrents, la liste doit être vide.");
+                "Après retraits concurrents, la liste des sous-types doit être vide : ");
 
+        /* AFFICHAGE A LA CONSOLE. */
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
             System.out.println("***** Test internalRemoveSousTypeProduitThreadSafe réussi *****");
             System.out.println(NOMBRE_STP + typeProduit.getSousTypeProduits().size());
         }
+
     } //___________________________________________________________________
 
 
@@ -3029,7 +3139,7 @@ public class TypeProduitTest {
          *  on peut appeler add(...) et 
          *  vérifier que la liste est bien non modifiable à l’exécution.
          */
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({ UNCHECKED, "rawtypes" })
         final List<Object> snapshotAsObjectList = (List) snapshot;
 
         assertThrows(UnsupportedOperationException.class
