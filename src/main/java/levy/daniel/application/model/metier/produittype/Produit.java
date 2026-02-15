@@ -3,7 +3,7 @@
 /* ********************************************************************* */
 package levy.daniel.application.model.metier.produittype;
 
-import java.util.Objects;
+import java.util.Locale;
 
 import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
@@ -283,12 +283,38 @@ public class Produit implements ProduitI, Cloneable {
 	*/
 	@Override
 	public final int hashCode() {
-	    synchronized (this) {
-	        return Objects.hash(this.sousTypeProduit,
-	        		this.produit);
-	    }
-	}
 
+	    final SousTypeProduitI sousTypeProduitSnapshot;
+	    final String produitSnapshot;
+
+	    synchronized (this) {
+	        sousTypeProduitSnapshot = this.sousTypeProduit;
+	        produitSnapshot = this.produit;
+	    }
+
+	    /* HashCode cohérent avec equals() :
+	     * - SousTypeProduit comparé par identité (==) 
+	     * donc hash par identityHashCode.
+	     * - Produit comparé insensible à la casse 
+	     * donc hash sur produit en minuscules.
+	     */
+	    final int hashSousTypeProduit =
+	            (sousTypeProduitSnapshot == null) ? 0 
+	            		: System.identityHashCode(sousTypeProduitSnapshot);
+
+	    final int hashProduit =
+	            (produitSnapshot == null) ? 0 
+	            		: produitSnapshot.toLowerCase(Locale.ROOT).hashCode();
+
+	    int result = 1;
+
+	    result = 31 * result + hashSousTypeProduit;
+	    result = 31 * result + hashProduit;
+
+	    return result;
+
+	}
+	
 
 	
 	/**
@@ -304,47 +330,56 @@ public class Produit implements ProduitI, Cloneable {
 	@Override
 	public final boolean equals(final Object pObject) {
 
-		/*
-	     * retourne true si les références sont identiques.
-	     */
-        if (this == pObject) {
-            return true;
-        }
-        
+	    /* retourne true si les références sont identiques. */
+	    if (this == pObject) {
+	        return true;
+	    }
+
 	    /* return false si pObject == null. */
 	    if (pObject == null) {
 	        return false;
 	    }
 
-	    /* Synchronisation sur this ET 
-	     * pObject pour garantir la cohérence. */
-		synchronized (this) {
+	    /* retourne false si pObject n'est pas une bonne instance. */
+	    if (!(pObject instanceof Produit other)) {
+	        return false;
+	    }
 
-			/*
-			 * Synchronisation sur this ET 
-			 * pObject pour garantir la cohérence.
-			 */
-			synchronized (pObject) {
+	    final SousTypeProduitI thisSousTypeProduitSnapshot;
+	    final String thisProduitSnapshot;
 
-				/*
-				 * retourne false si pObject 
-				 * n'est pas une bonne instance.
-				 */
-				if (!(pObject instanceof Produit other)) {
-					return false;
-				}
+	    synchronized (this) {
+	        thisSousTypeProduitSnapshot = this.sousTypeProduit;
+	        thisProduitSnapshot = this.produit;
+	    }
 
-				/*
-			     * equals sur [SousTypeProduit - Produit].
-			     */
-				return Objects.equals(
-						this.sousTypeProduit,
-						((Produit) other).sousTypeProduit)
-						&& Objects.equals(
-						this.produit, ((Produit) other).produit);
-			}
+	    final SousTypeProduitI otherSousTypeProduitSnapshot;
+	    final String otherProduitSnapshot;
 
-		}
+	    synchronized (other) {
+	        otherSousTypeProduitSnapshot = other.sousTypeProduit;
+	        otherProduitSnapshot = other.produit;
+	    }
+
+	    /* equals sur [SousTypeProduit - Produit] :
+	     * - SousTypeProduit comparé par identité (==) 
+	     * pour éviter les deadlocks/cascades.
+	     * - produit comparé insensible à la casse.
+	     */
+	    if (thisSousTypeProduitSnapshot != otherSousTypeProduitSnapshot) {
+	        return false;
+	    }
+
+	    if (thisProduitSnapshot == null) {
+	        return otherProduitSnapshot == null;
+	    }
+
+	    if (otherProduitSnapshot == null) {
+	        return false;
+	    }
+
+	    return thisProduitSnapshot.equalsIgnoreCase(otherProduitSnapshot);
+
 	}
 
 
