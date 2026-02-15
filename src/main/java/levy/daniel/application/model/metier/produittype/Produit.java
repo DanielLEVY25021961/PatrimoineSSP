@@ -548,68 +548,120 @@ public class Produit implements ProduitI, Cloneable {
 	@Override
 	public final int compareTo(final ProduitI pObject) {
 
-		/*
-	     * retourne true si les références sont identiques.
-	     */
+	    /* retourne true si les références sont identiques. */
 	    if (this == pObject) {
 	        return 0;
 	    }
-	    
+
 	    /* return false si pObject == null. */
 	    if (pObject == null) {
 	        return -1;
 	    }
 
-	    /* Synchronisation sur this ET 
-	     * pObject pour garantir la cohérence. */
-	    synchronized (this) {
-	    	
-	    	/* SousTypeProduit. */
-	    	/* Double synchronisation requise. */
-	        synchronized (pObject) {
-	        	
-	            final SousTypeProduitI a = this.sousTypeProduit;
-	            /* Accès direct 
-	             * (évite les getters non synchronisés sur pObject). */
-	            final SousTypeProduitI b 
-	            	= ((Produit) pObject).sousTypeProduit;  
-	            
-	            if (a == null) {
-	                if (b != null) {
-	                    return +1;
-	                }
-	            } else {
-	                if (b == null) {
-	                    return -1;
-	                }
-	                
-	                final int compareSousTypeProduit = a.compareTo(b);
-	                
-	                if (compareSousTypeProduit != 0) {
-	                    return compareSousTypeProduit;
-	                }
-	            }
-
-	            /* Produit. */
-	            final String s1 = this.produit;
-	            /* Accès direct au champ pour éviter 
-	             * tout accès à un getter non synchronisé. */
-	            final String s2 = ((Produit) pObject).produit;  
-
-	            if (s1 == null) {
-	                return (s2 == null) ? 0 : +1; /* null "après". */
-	            }
-	            
-	            if (s2 == null) {
-	                return -1;
-	            }
-	            
-	            return Strings.CI.compare(s1, s2);
-	        }
-	    }
+	    /* Comparaison sur [SousTypeProduit - Produit]. */
+	    return this.compareFields(pObject);
 	}
 	
 	
+	
+	/**
+	 * <div>
+	 * <p>Compare les champs de manière thread-safe en accédant
+	 * directement aux champs et pas aux getters
+	 * (pas toujours Thread-Safe).</p>
+	 *
+	 * @param pObject : ProduitI :
+	 * L'objet à comparer avec this.
+	 * @return Le résultat de la comparaison.
+	 */
+	private int compareFields(final ProduitI pObject) {
+
+	    /* L'implémentation de ProduitI est Produit. */
+	    final Produit other = (Produit) pObject;
+
+	    /* Snapshots des champs nécessaires pour comparer hors verrous. */
+	    final SousTypeProduitI sousTypeProduitA;
+	    final String produitA;
+	    final SousTypeProduitI sousTypeProduitB;
+	    final String produitB;
+
+	    /* Détermine l'ordre de verrouillage pour éviter les deadlocks.
+	     * L'ordre est basé sur System.identityHashCode() pour garantir
+	     * un verrouillage systématique et reproductible. */
+	    final int thisHash = System.identityHashCode(this);
+	    final int otherHash = System.identityHashCode(other);
+
+	    if (thisHash < otherHash) {
+
+	        /* Verrouillage ordonné : this puis other. */
+	        synchronized (this) {
+	            synchronized (other) {
+	                sousTypeProduitA = this.sousTypeProduit;
+	                produitA = this.produit;
+	                sousTypeProduitB = other.sousTypeProduit;
+	                produitB = other.produit;
+	            }
+	        }
+
+	    } else if (thisHash > otherHash) {
+
+	        /* Verrouillage ordonné : other puis this. */
+	        synchronized (other) {
+	            synchronized (this) {
+	                sousTypeProduitA = this.sousTypeProduit;
+	                produitA = this.produit;
+	                sousTypeProduitB = other.sousTypeProduit;
+	                produitB = other.produit;
+	            }
+	        }
+
+	    } else {
+
+	        /* Cas rarissime : collision de System.identityHashCode(...)
+	         * -> verrou de départ unique pour imposer un ordre stable
+	         * et éviter tout deadlock. */
+	        synchronized (Produit.class) {
+	            synchronized (this) {
+	                synchronized (other) {
+	                    sousTypeProduitA = this.sousTypeProduit;
+	                    produitA = this.produit;
+	                    sousTypeProduitB = other.sousTypeProduit;
+	                    produitB = other.produit;
+	                }
+	            }
+	        }
+	    }
+
+	    /* Comparaison hors verrous pour réduire la contention. */
+
+	    /* SousTypeProduit. */
+	    if (sousTypeProduitA == null) {
+	        if (sousTypeProduitB != null) {
+	            return +1;
+	        }
+	    } else {
+	        if (sousTypeProduitB == null) {
+	            return -1;
+	        }
+	        final int compareSousTypeProduit 
+	        = sousTypeProduitA.compareTo(sousTypeProduitB);
+	        if (compareSousTypeProduit != 0) {
+	            return compareSousTypeProduit;
+	        }
+	    }
+
+	    /* Produit. */
+	    if (produitA == null) {
+	        return (produitB == null) ? 0 : +1;
+	    }
+	    if (produitB == null) {
+	        return -1;
+	    }
+
+	    return Strings.CI.compare(produitA, produitB);
+	}	
+	
+
 	
 	/**
 	* {@inheritDoc}
