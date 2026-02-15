@@ -1095,109 +1095,163 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 
 
 
-	 /**
-	  * <div>
-	  * <p>Ajoute pSousTypeProduit directement (add)
-	  * <span style="font-weight:bold;">
-	  * sans synchronisation au sens bidirectionnalité</span>
-	  * dans la liste
-	  * <code style="font-weight:bold;">this.sousTypeProduits</code>
-	  * du présent parent TypeProduitI</p>
-	  * <p>Méthode protected interne au Package
-	  * (utilisée par SousTypeProduit pour éviter les boucles).</p>
-	  * <ul>
-	  * <li>Traite le cas d'une mauvaise instance en paramètre.</li>
-	  * <li>Ne fait rien et return si pSousTypeProduit == null.</li>
-	  * <li>Ne fait rien si 
-	  * this.sousTypeProduits.contains(pSousTypeProduit).
-	  * Donc jamais de doublons.</li>
-	  * <li>Fait un ajout direct sans synchronisation par add()
-	  * de pSousTypeProduit dans <code style="font-weight:bold;">
-	  * this.sousTypeProduits</code>.</li>
-	  * </ul>
-	  * </div>
-	  *
-	  * @param pSousTypeProduit : SousTypeProduitI
-	  */
-	 protected final void internalAddSousTypeProduit(
-	         final SousTypeProduitI pSousTypeProduit) {
-	     /*
-	      * Traite le cas d'une mauvaise instance en paramètre.
-	      */
-	     this.traiterMauvaiseInstanceSousTypeProduit(pSousTypeProduit);
+	/**
+	 * <div>
+	 * <p>
+	 * Ajoute pSousTypeProduit directement (add)
+	 * <span style="font-weight:bold;"> sans synchronisation au sens
+	 * bidirectionnalité</span> dans la liste
+	 * <code style="font-weight:bold;">this.sousTypeProduits</code> du
+	 * présent parent TypeProduitI
+	 * </p>
+	 * <p>
+	 * Méthode protected interne au Package (utilisée par SousTypeProduit
+	 * pour éviter les boucles).
+	 * </p>
+	 * <ul>
+	 * <li>Traite le cas d'une mauvaise instance en paramètre.</li>
+	 * <li>Ne fait rien et return si pSousTypeProduit == null.</li>
+	 * <li>Ne fait rien si pSousTypeProduit 
+	 * est déjà présent par identité (==). Donc jamais de doublons.</li>
+	 * <li>Fait un ajout direct sans synchronisation par add() de
+	 * pSousTypeProduit dans <code style="font-weight:bold;">
+	 * this.sousTypeProduits</code>.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pSousTypeProduit : SousTypeProduitI
+	 */
+	protected final void internalAddSousTypeProduit(
+			final SousTypeProduitI pSousTypeProduit) {
 
-	     /*
-	      * Ne fait rien et return si pSousTypeProduit == null.
-	      */
-	     if (pSousTypeProduit == null) {
-	         return;
-	     }
+		/* Traite le cas d'une mauvaise instance en paramètre. */
+		this.traiterMauvaiseInstanceSousTypeProduit(pSousTypeProduit);
 
-	     /*
-	      * Ne fait rien si 
-	      * this.sousTypeProduits.contains(pSousTypeProduit).
-	      * Donc jamais de doublons.
-	      */
-	     synchronized (this) {
-	         if (!this.sousTypeProduits.contains(pSousTypeProduit)) {
-	             /*
-	              * Fait un ajout direct sans synchronisation par add()
-	              * de pSousTypeProduit dans this.sousTypeProduits.
-	              */
-	             this.sousTypeProduits.add(pSousTypeProduit);
-	         }
-	     }
-	 }
+		/* Ne fait rien et return si pSousTypeProduit == null. */
+		if (pSousTypeProduit == null) {
+			return;
+		}
+
+		synchronized (this) {
+
+			if (!this
+					.containsSousTypeProduitByReference(pSousTypeProduit)) {
+
+				this.sousTypeProduits.add(pSousTypeProduit);
+
+			}
+		}
+
+	} // Fin de internalAddSousTypeProduit(...).____________________________
+
+	
+
+	/**
+	 * <div>
+	 * <p>
+	 * Retire pSousTypeProduit directement (remove)
+	 * <span style="font-weight:bold;"> sans synchronisation au sens
+	 * bidirectionnalité</span> dans la liste
+	 * <code style="font-weight:bold;">this.sousTypeProduits</code> du
+	 * présent parent TypeProduitI
+	 * </p>
+	 * <p>
+	 * Méthode protected interne au Package (utilisée par SousTypeProduit
+	 * pour éviter les boucles).
+	 * </p>
+	 * <ul>
+	 * <li>Traite le cas d'une mauvaise instance en paramètre.</li>
+	 * <li>Ne fait rien et return si pSousTypeProduit == null.</li>
+	 * <li>Ne fait rien si la liste ne contient pas pSousTypeProduit 
+	 * par identité (==).</li>
+	 * <li>Fait un retrait direct sans synchronisation par 
+	 * removeSousTypeProduitByReference() de
+	 * pSousTypeProduit dans <code style="font-weight:bold;">
+	 * this.sousTypeProduits</code>.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pSousTypeProduit : SousTypeProduitI
+	 */
+	protected final void internalRemoveSousTypeProduit(
+			final SousTypeProduitI pSousTypeProduit) {
+
+		/* Traite le cas d'une mauvaise instance en paramètre. */
+		this.traiterMauvaiseInstanceSousTypeProduit(pSousTypeProduit);
+
+		/* Ne fait rien et return si pSousTypeProduit == null. */
+		if (pSousTypeProduit == null) {
+			return;
+		}
+
+		synchronized (this) {
+			this.removeSousTypeProduitByReference(pSousTypeProduit);
+		}
+
+	} // Fin de internalRemoveSousTypeProduit(...)._________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>retourne true si `this.sousTypeProduits` contient 
+	 * pSousTypeProduit en comparaison par identité (==).</p>
+	 * </div>
+	 *
+	 * @param pSousTypeProduit : SousTypeProduitI : enfant à chercher.
+	 * @return boolean : true si l'enfant est déjà présent (par identité).
+	 */
+	private boolean containsSousTypeProduitByReference(
+	        final SousTypeProduitI pSousTypeProduit) {
+	
+	    if (pSousTypeProduit == null) {
+	        return false;
+	    }
+	
+	    for (final Object objet : this.sousTypeProduits) {
+	
+	        if (objet == pSousTypeProduit) {
+	            return true;
+	        }
+	
+	    }
+	
+	    return false;
+	
+	} // Fin de containsSousTypeProduitByReference(...).____________________
 
 
 
-	 /**
-	  * <div>
-	  * <p>Retire pSousTypeProduit directement (remove)
-	  * <span style="font-weight:bold;">
-	  * sans synchronisation au sens bidirectionnalité</span>
-	  * dans la liste
-	  * <code style="font-weight:bold;">this.sousTypeProduits</code>
-	  * du présent parent TypeProduitI</p>
-	  * <p>Méthode protected interne au Package
-	  * (utilisée par SousTypeProduit pour éviter les boucles).</p>
-	  * <ul>
-	  * <li>Traite le cas d'une mauvaise instance en paramètre.</li>
-	  * <li>Ne fait rien et return si pSousTypeProduit == null.</li>
-	  * <li>Ne fait rien si la liste ne contient pas pSousTypeProduit.</li>
-	  * <li>Fait un retrait direct sans synchronisation par remove()
-	  * de pSousTypeProduit dans <code style="font-weight:bold;">
-	  * this.sousTypeProduits</code>.</li>
-	  * </ul>
-	  * </div>
-	  *
-	  * @param pSousTypeProduit : SousTypeProduitI
-	  */
-	 protected final void internalRemoveSousTypeProduit(
-	         final SousTypeProduitI pSousTypeProduit) {
-	     /*
-	      * Traite le cas d'une mauvaise instance en paramètre.
-	      */
-	     this.traiterMauvaiseInstanceSousTypeProduit(pSousTypeProduit);
+	/**
+	 * <div>
+	 * <p>retire pSousTypeProduit de `this.sousTypeProduits 
+	 * en comparaison par identité (==).</p>
+	 * </div>
+	 *
+	 * @param pSousTypeProduit : SousTypeProduitI : enfant à retirer.
+	 */
+	private void removeSousTypeProduitByReference(
+	        final SousTypeProduitI pSousTypeProduit) {
 
-	     /*
-	      * Ne fait rien et return si pSousTypeProduit == null.
-	      */
-	     if (pSousTypeProduit == null) {
-	         return;
-	     }
+	    if (pSousTypeProduit == null) {
+	        return;
+	    }
 
-	     /*
-	      * Ne fait rien si la liste ne contient pas pSousTypeProduit.
-	      * Fait un retrait direct sans synchronisation par remove().
-	      */
-	     synchronized (this) {
-	         this.sousTypeProduits.remove(pSousTypeProduit);
-	     }
-	 }
+	    for (int i = 0; i < this.sousTypeProduits.size(); i++) {
 
+	        final Object objet = this.sousTypeProduits.get(i);
 
-	 
+	        if (objet == pSousTypeProduit) {
+	            this.sousTypeProduits.remove(i);
+	            return;
+	        }
+
+	    }
+
+	} // Fin de removeSousTypeProduitByReference(...).______________________	
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>retourne une chaine de caractères "nettoyée" 
