@@ -1069,110 +1069,184 @@ public class Produit implements ProduitI, Cloneable {
 	
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le <code>TypeProduit</code> du <code>Produit</code>
+	 * via son <code>SousTypeProduit</code>.</p>
+	 * <ul>
+	 * <li>retourne null si <code>sousTypeProduit</code> est null.</li>
+	 * <li>snapshot court sous verrou, appel hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final TypeProduitI getTypeProduit() {
-	    /*
-	     * Retourne le TypeProduitI via le parent SousTypeProduitI 
-	     * de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.sousTypeProduit != null
-	                ? this.sousTypeProduit.getTypeProduit() : null;
-	    }
-	}
+
+		/* Snapshot court sous verrou. */
+		final SousTypeProduitI sousTypeProduitSnapshot;
+
+		synchronized (this) {
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+		}
+
+		/* Appel hors verrou pour éviter tout verrouillage imbriqué. */
+		if (sousTypeProduitSnapshot == null) {
+			return null;
+		}
+
+		return sousTypeProduitSnapshot.getTypeProduit();
+
+	} // Fin de getTypeProduit().___________________________________________
 
 
 
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le statut de validité du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>retourne true si <code>sousTypeProduit</code> 
+	 * n'est pas null.</li>
+	 * <li>lecture thread-safe du champ <code>valide</code>.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final boolean isValide() {
-	    /*
-	     * Retourne le statut de validité de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.valide;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir 
+		 * la visibilité mémoire. */
+		final boolean valideSnapshot;
+
+		synchronized (this) {
+			valideSnapshot = this.valide;
+		}
+
+		return valideSnapshot;
+
+	} // Fin de isValide()._______________________________________________
 
 
 
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne l'identifiant du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>lecture thread-safe du champ <code>idProduit</code>.</li>
+	 * <li>snapshot court sous verrou, retour hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final Long getIdProduit() {
-	    /*
-	     * Retourne l'ID de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.idProduit;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir la visibilité mémoire. */
+		final Long idProduitSnapshot;
+
+		synchronized (this) {
+			idProduitSnapshot = this.idProduit;
+		}
+
+		return idProduitSnapshot;
+
+	} // Fin de getIdProduit().___________________________________________
 
 
 	
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Met à jour l'identifiant du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>écriture thread-safe du champ <code>idProduit</code>.</li>
+	 * <li>mise à jour atomique sous verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final void setIdProduit(final Long pIdProduit) {
-	    /*
-	     * Met à jour l'ID de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        this.idProduit = pIdProduit;
-	    }
-	}
+
+		/* Mise à jour sous verrou pour garantir la visibilité mémoire. */
+		synchronized (this) {
+			this.idProduit = pIdProduit;
+		}
+
+	} // Fin de setIdProduit(...).________________________________________
 
 
 
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le libellé du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>lecture thread-safe du champ <code>produit</code>.</li>
+	 * <li>snapshot court sous verrou, retour hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final String getProduit() {
-	    /*
-	     * Retourne le nom du produit de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.produit;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir 
+		 * la visibilité mémoire. */
+		final String produitSnapshot;
+
+		synchronized (this) {
+			produitSnapshot = this.produit;
+		}
+
+		return produitSnapshot;
+
+	} // Fin de getProduit()._____________________________________________
 
 
 		
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Met à jour le libellé du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>écriture thread-safe du champ <code>produit</code>.</li>
+	 * <li>aucune normalisation n'est appliquée au niveau métier.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final void setProduit(final String pProduit) {
-	    /*
-	     * Met à jour le nom du produit de manière thread-safe.
-	     * Aucun traitement de normalisation (trim/null) n'est appliqué
-	     * dans les objets métier.
-	     */
-	    synchronized (this) {
-	        this.produit = pProduit;
-	    }
-	}
+
+		/* Mise à jour sous verrou pour garantir la visibilité mémoire. */
+		synchronized (this) {
+			this.produit = pProduit;
+		}
+
+	} // Fin de setProduit(...).__________________________________________
 
 
 	
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le <code>SousTypeProduit</code> associé au <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>lecture thread-safe du champ <code>sousTypeProduit</code>.</li>
+	 * <li>snapshot court sous verrou, retour hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final SousTypeProduitI getSousTypeProduit() {
-	    /*
-	     * Retourne le parent SousTypeProduitI de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.sousTypeProduit;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir la visibilité mémoire. */
+		final SousTypeProduitI sousTypeProduitSnapshot;
+
+		synchronized (this) {
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+		}
+
+		return sousTypeProduitSnapshot;
+
+	} // Fin de getSousTypeProduit().______________________________________
 
 
 		
