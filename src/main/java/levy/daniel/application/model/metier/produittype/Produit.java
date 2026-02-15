@@ -785,12 +785,13 @@ public class Produit implements ProduitI, Cloneable {
 	 *</div>
 	 */
 	private void recalculerValide() {
-	    /*
-	     * Recalcule la validité de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        this.valide = (this.sousTypeProduit != null);
-	    }
+		/*
+		 * OPTIMISATION :
+		 * les appelants (cloneWithoutParent(), setSousTypeProduit(...))
+		 * sont déjà sous synchronized(this).
+		 * On évite donc le double-lock (ré-entrant mais redondant).
+		 */
+		this.valide = (this.sousTypeProduit != null);
 	}
 
 
