@@ -9,7 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -2887,11 +2889,21 @@ public class SousTypeProduitTest {
         assertEquals(sousTypeProduit, produit3.getSousTypeProduit(),
                 "Le nouveau produit3 doit être rattaché au SousTypeProduit après setProduits().");
 
-        assertEquals(1, sousTypeProduit.getProduits().size(),
+        final List<ProduitI> snapshot = sousTypeProduit.getProduits();
+
+        assertEquals(1, snapshot.size(),
                 "La liste des produits du SousTypeProduit doit contenir exactement 1 élément.");
 
-        assertTrue(sousTypeProduit.getProduits().contains(produit3),
-                "La liste des produits doit contenir produit3.");
+        /* Vérifie par identité (pas de equals()). */
+        boolean trouve = false;
+        for (final ProduitI produit : snapshot) {
+            if (produit == produit3) {
+                trouve = true;
+            }
+        }
+
+        assertTrue(trouve,
+                "La liste des produits doit contenir produit3 (comparaison par identité).");
 
     } //___________________________________________________________________
     
@@ -2903,8 +2915,9 @@ public class SousTypeProduitTest {
      * Teste setProduits(final List&lt;? extends ProduitI&gt;) en environnement multi-thread.
      * </p>
      * <ul>
-     * <li>Vérifie qu'un appel concurrent à setProduits() ne provoque pas de deadlock.</li>
-     * <li>Utilise un timeout pour détecter une régression introduisant un blocage.</li>
+     * <li>Vérifie l'absence de deadlock (timeout).</li>
+     * <li>Vérifie l'absence d'exception dans les tâches.</li>
+     * <li>Vérifie des invariants finaux de cohérence (produits &lt;-&gt; STP).</li>
      * </ul>
      * </div>
      * @throws InterruptedException si le thread courant est interrompu.
@@ -2926,7 +2939,7 @@ public class SousTypeProduitTest {
                 new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
 
         final ExecutorService executor = Executors.newFixedThreadPool(10);
-        final List<Callable<Boolean>> tasks = new ArrayList<>();
+        final List<Callable<Void>> tasks = new ArrayList<>();
 
         for (int i = 0; i < 50; i++) {
 
@@ -2941,15 +2954,7 @@ public class SousTypeProduitTest {
 
                 sousTypeProduit.setProduits(liste);
 
-                /* Vérifie cohérence bidirectionnelle minimale. */
-                if (produitA.getSousTypeProduit() != sousTypeProduit) {
-                    return false;
-                }
-                if (produitB.getSousTypeProduit() != sousTypeProduit) {
-                    return false;
-                }
-
-                return true;
+                return null;
 
             });
 
@@ -2957,31 +2962,54 @@ public class SousTypeProduitTest {
 
                 sousTypeProduit.setProduits(null);
 
-                return true;
+                return null;
 
             });
 
         }
 
         /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
-        final List<Future<Boolean>> results =
+        final List<Future<Void>> results =
                 executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
 
         executor.shutdown();
 
-        /* ASSERT - THEN */
-        for (final Future<Boolean> result : results) {
+        /* ASSERT - THEN : aucune tâche ne doit être annulée (timeout). */
+        for (final Future<Void> result : results) {
             assertFalse(result.isCancelled(),
                     "Une tâche setProduits() ne doit pas être annulée (timeout) : ");
-            assertTrue(result.get(),
-                    "setProduits() doit rester cohérent en environnement multi-thread : ");
+            result.get();
+        }
+
+        /* ASSERT - THEN : invariants finaux.
+         * - Tous les produits présents dans la liste finale doivent pointer vers le STP.
+         * - La liste finale ne doit pas contenir de doublons par identité.
+         */
+        final List<ProduitI> snapshotFinal = sousTypeProduit.getProduits();
+
+        final Map<ProduitI, Boolean> seen 
+        	= new IdentityHashMap<ProduitI, Boolean>();
+
+        for (final ProduitI produit : snapshotFinal) {
+
+            assertNotNull(produit,
+                    "La liste finale de produits ne doit pas contenir de null : ");
+
+            assertTrue(produit.getSousTypeProduit() == sousTypeProduit,
+                    "Tout produit présent dans la liste finale doit pointer vers le SousTypeProduit (identité) : ");
+
+            assertFalse(seen.containsKey(produit),
+                    "La liste finale ne doit pas contenir de doublons par identité : ");
+
+            seen.put(produit, Boolean.TRUE);
+
         }
 
         /* AFFICHAGE A LA CONSOLE. */
         if (AFFICHAGE_GENERAL && affichage) {
             System.out.println();
             System.out.println("***** Test setProduits() en multi-thread réussi *****");
-            System.out.println("Taille finale : " + sousTypeProduit.getProduits().size());
+            System.out.println("Taille finale : " + snapshotFinal.size());
         }
 
     } //___________________________________________________________________
