@@ -814,6 +814,144 @@ public class SousTypeProduitTest {
         assertNotEquals(objet1, objetPasEqualsObjetDeep1, "objet1 n'est pas equals() avec objetPasEqualsObjetDeep1.");
         assertNotEquals(objet1, objetPasEqualsObjetDeep2, "objet1 n'est pas equals() avec objetPasEqualsObjetDeep2.");
     } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie que l'égalité métier est insensible à la casse sur getSousTypeProduit().
+     * </p>
+     * <ul>
+     * <li>Vérifie la symétrie.</li>
+     * <li>Vérifie la cohérence equals() / hashCode().</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testEqualsIgnoreCase() : vérifie que l'égalité métier est insensible à la casse sur getSousTypeProduit()")
+    @Tag("equals")
+    @Test
+    public final void testEqualsIgnoreCase() {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("********** CLASSE SousTypeProduitTest - méthode testEqualsIgnoreCase() ********** ");
+            System.out.println("CE TEST VERIFIE L'EGALITE INSENSIBLE A LA CASSE SUR getSousTypeProduit().");
+            System.out.println();
+        }
+
+        /* ARRANGE - GIVEN : Création des TypeProduit (égaux, insensibles à la casse). */
+        final TypeProduitI typeProduit1 = new TypeProduit(1L, PECHE, null);
+        final TypeProduitI typeProduit2 = new TypeProduit(2L, "pêche", null);
+
+        /* ARRANGE - GIVEN : Création des SousTypeProduit (égaux, insensibles à la casse). */
+        final SousTypeProduitI objet1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
+        final SousTypeProduitI objet2 = new SousTypeProduit(20L, "CANNE À PÊCHE", typeProduit2, null);
+
+        /* ACT - WHEN */
+        final boolean isEquals = objet1.equals(objet2);
+        final boolean isEqualsSym = objet2.equals(objet1);
+
+        /* ASSERT - THEN */
+        assertTrue(isEquals,
+                "Deux SousTypeProduit doivent être égaux même si la casse diffère sur getSousTypeProduit().");
+        assertTrue(isEqualsSym,
+                "L'égalité doit être symétrique même si la casse diffère sur getSousTypeProduit().");
+        assertEquals(objet1.hashCode(), objet2.hashCode(),
+                "Si equals() est true malgré une casse différente, hashCode() doit être identique.");
+
+    } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie equals() et hashCode() en environnement multi-thread.
+     * </p>
+     * <ul>
+     * <li>Vérifie la cohérence equals() / hashCode().</li>
+     * <li>Vérifie l'absence d'annulation des tâches sous timeout.</li>
+     * <li>Vérifie la stabilité des résultats en exécution concurrente.</li>
+     * </ul>
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testEqualsHashCodeThreadSafe() : vérifie equals() et hashCode() en environnement multi-thread")
+    @Tag(THREAD_SAFETY)
+    @Test
+    public final void testEqualsHashCodeThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("********** CLASSE SousTypeProduitTest - méthode testEqualsHashCodeThreadSafe() ********** ");
+            System.out.println("CE TEST VERIFIE equals() ET hashCode() EN MULTI-THREAD.");
+            System.out.println();
+        }
+
+        /* ARRANGE - GIVEN : Création des objets nécessaires. */
+        final TypeProduit typeProduit1 = new TypeProduit(1L, PECHE, null);
+        final TypeProduit typeProduit2 = new TypeProduit(2L, PECHE, null);
+        final TypeProduit typeProduitDifferent = new TypeProduit(3L, OUTILLAGE, null);
+
+        final SousTypeProduit stp1 = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit1, null);
+        final SousTypeProduit stp2 = new SousTypeProduit(20L, "CANNE À PÊCHE", typeProduit2, null);
+        final SousTypeProduit stp3 = new SousTypeProduit(30L, MOULINET, typeProduitDifferent, null);
+
+        /* ACT - WHEN : Vérification des contrats Java (mono-thread). */
+        assertTrue(stp1.equals(stp1),
+                "x.equals(x) doit retourner true : ");
+
+        assertTrue(stp1.equals(stp2) && stp2.equals(stp1),
+                "x.equals(y) doit être symétrique : ");
+
+        assertEquals(stp1.hashCode(), stp2.hashCode(),
+                "x.equals(y) doit impliquer x.hashCode() == y.hashCode() : ");
+
+        assertFalse(stp1.equals(null), // NOPMD by danyl on 15/02/2026 11:00
+                "x.equals(null) doit retourner false : ");
+
+        assertFalse(stp1.equals(stp3),
+                "x.equals(y) doit retourner false si x != y : ");
+
+        /* ACT - WHEN : Test multi-thread pour vérifier la thread-safety. */
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            tasks.add(() -> stp1.equals(stp2)
+                    && stp2.equals(stp1)
+                    && stp1.hashCode() == stp2.hashCode()
+                    && !stp1.equals(stp3));
+        }
+
+        /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+        final List<Future<Boolean>> results =
+                executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        /* ASSERT - THEN : Vérification des résultats. */
+        for (final Future<Boolean> result : results) {
+            assertFalse(result.isCancelled(),
+                    "Une tâche equals()/hashCode() ne doit pas être annulée (timeout) : ");
+            assertTrue(result.get(),
+                    "equals()/hashCode() doivent rester cohérents en environnement multi-thread : ");
+        }
+
+    } //___________________________________________________________________
 
 
 		
