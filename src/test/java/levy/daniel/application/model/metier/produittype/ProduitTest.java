@@ -720,6 +720,126 @@ public class ProduitTest {
 		assertNotEquals(objet1, objetPasEqualsObjet2, "objet1 n'est pas equals() avec objetPasEqualsObjet2 : ");
 
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste le thread-safety de equals(Object) et hashCode() en concurrence.
+	 * </p>
+	 * <ul>
+	 * <li>Lance des appels concurrents a.equals(b) et b.equals(a) afin de détecter tout blocage.</li>
+	 * <li>Vérifie qu'aucune tâche n'est annulée par timeout.</li>
+	 * <li>Vérifie que equals reste cohérent et que hashCode reste cohérent avec equals.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testEqualsThreadSafe() : vérifie equals/hashCode en environnement multi-thread")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testEqualsThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduit typeProduit = new TypeProduit(1L, PHOTOGRAPHIE, null);
+
+	    final SousTypeProduit sousTypeProduit1 =
+	            new SousTypeProduit(1L, CAMERAS, typeProduit, null);
+
+	    final SousTypeProduit sousTypeProduit2 =
+	            new SousTypeProduit(2L, CAMERAS, typeProduit, null);
+
+	    final Produit produit1 =
+	            new Produit(1L, APPAREIL_PHOTO, sousTypeProduit1);
+
+	    final Produit produit2 =
+	            new Produit(2L, APPAREIL_PHOTO.toUpperCase(java.util.Locale.ROOT), sousTypeProduit2);
+
+	    /* Pré-assertions en mono-thread. */
+	    assertTrue(produit1.equals(produit2),
+	            "produit1 doit être equals à produit2 avant le test multi-thread : ");
+	    assertTrue(produit2.equals(produit1),
+	            "produit2 doit être equals à produit1 avant le test multi-thread : ");
+	    assertEquals(produit1.hashCode(), produit2.hashCode(),
+	            "produit1 et produit2 doivent avoir le même hashCode avant le test multi-thread : ");
+
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+	    /* Tâches equals dans les deux sens. */
+	    for (int i = 0; i < 500; i++) {
+
+	        tasks.add(() -> {
+
+	            final boolean ok = produit1.equals(produit2);
+
+	            return Boolean.valueOf(ok);
+
+	        });
+
+	        tasks.add(() -> {
+
+	            final boolean ok = produit2.equals(produit1);
+
+	            return Boolean.valueOf(ok);
+
+	        });
+
+	    }
+
+	    /* Tâches hashCode cohérentes avec equals. */
+	    for (int i = 0; i < 500; i++) {
+
+	        tasks.add(() -> {
+
+	            final int h1 = produit1.hashCode();
+	            final int h2 = produit2.hashCode();
+
+	            return Boolean.valueOf(h1 == h2);
+
+	        });
+
+	    }
+
+	    /* ACT - WHEN */
+	    final List<Future<Boolean>> futures =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : aucune tâche ne doit être annulée (timeout) et toutes doivent réussir. */
+	    for (final Future<Boolean> future : futures) {
+
+	        assertFalse(future.isCancelled(),
+	                "Une tâche equals/hashCode ne doit pas être annulée (timeout) : ");
+
+	        assertTrue(future.get(),
+	                "Une tâche equals/hashCode doit réussir et retourner true : ");
+
+	    }
+
+	    /* ASSERT - THEN : cohérence finale. */
+	    assertTrue(produit1.equals(produit2),
+	            "Après concurrence, produit1 doit rester equals à produit2 : ");
+	    assertTrue(produit2.equals(produit1),
+	            "Après concurrence, produit2 doit rester equals à produit1 : ");
+	    assertEquals(produit1.hashCode(), produit2.hashCode(),
+	            "Après concurrence, produit1 et produit2 doivent garder le même hashCode : ");
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test equals/hashCode thread-safe réussi *****");
+	    }
+
+	} //___________________________________________________________________
 
 	
 	
