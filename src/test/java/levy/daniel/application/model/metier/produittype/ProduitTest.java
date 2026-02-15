@@ -82,6 +82,12 @@ public class ProduitTest {
 	 */
 	public static final String NULL = "null";
 	
+	/**
+	 * "objet1.equals(objet2) : "
+	 */
+	public static final String OBJET1_EQUALS_OBJET2 
+		= "objet1.equals(objet2) : ";
+	
 	/* ------------------------------------------------------------------ */
 
 	/**
@@ -651,12 +657,12 @@ public class ProduitTest {
 		/* garantit le contrat Java symétrique 
 		 * x.equals(y) ----> y.equals(x). */
 		assertNotSame(objet1, objet2, "objet1 et objet2 ne sont pas la même instance : ");
-		assertEquals(objet1, objet2, "objet1.equals(objet2) : ");
+		assertEquals(objet1, objet2, OBJET1_EQUALS_OBJET2);
 		assertEquals(objet2, objet1, "objet2.equals(objet1) : ");
 		
 		/* garantit le contrat Java transitif 
 		 * x.equals(y) et y.equals(z) ----> x.equals(z). */
-		assertEquals(objet1, objet2, "objet1.equals(objet2) : ");
+		assertEquals(objet1, objet2, OBJET1_EQUALS_OBJET2);
 		assertEquals(objet2, objet3, "objet2.equals(objet3) : ");
 		assertEquals(objet1, objet3, "objet1.equals(objet3) : ");
 		
@@ -712,7 +718,7 @@ public class ProduitTest {
 		
 		/* garantit le bon fonctionnement de equals() 
 		 * en cas d'égalité métier. */
-		assertEquals(objet1, objet2, "objet1.equals(objet2) : ");
+		assertEquals(objet1, objet2, OBJET1_EQUALS_OBJET2);
 		
 		/* garantit le bon fonctionnement de equals() 
 		 * en cas d'inégalité métier. */
@@ -1298,6 +1304,229 @@ public class ProduitTest {
 	        System.out.println("Résultat attendu : " + expectedResult);
 	        System.out.println("Résultat obtenu : " + results.get(0).get());
 	    }
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste que compareTo() est insensible à la casse
+	 * (cohérence avec equals() : x.equals(y) ---> x.compareTo(y) == 0).</p>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToIgnoreCase() : vérifie compareTo() insensible à la casse")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToIgnoreCase() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ProduitTest - méthode testCompareToIgnoreCase() ********** ");
+			System.out.println("CE TEST VERIFIE compareTo() insensible à la casse.");
+			System.out.println();
+		}
+
+		//*** ARRANGE - GIVEN
+		/* TypeProduit */
+		final TypeProduitI typeProduit1 = new TypeProduit("ANATOMIE");
+		final TypeProduitI typeProduit2 = new TypeProduit("anatomie");
+
+		/* SousTypeProduit. */
+		final SousTypeProduitI sousTypeProduit1 = new SousTypeProduit("ANATOMIE DE LA MAIN", typeProduit1);
+		final SousTypeProduitI sousTypeProduit2 = new SousTypeProduit("anatomie de la main", typeProduit2);
+
+		/* ProduitI. */
+		final ProduitI objet1 = new Produit("ANATOMIE ARTHROSCOPIQUE DE LA MAIN", sousTypeProduit1);
+		final ProduitI objet2 = new Produit("anatomie arthroscopique de la main", sousTypeProduit2);
+
+		// ACT - WHEN
+		final boolean equals = objet1.equals(objet2);
+		final int compare12 = objet1.compareTo(objet2);
+		final int compare21 = objet2.compareTo(objet1);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("*** objet1 ***");
+			this.afficher(objet1);
+			System.out.println("*** objet2 ***");
+			this.afficher(objet2);
+			System.out.println();
+			System.out.println(OBJET1_EQUALS_OBJET2 + equals);
+			System.out.println("objet1.compareTo(objet2) : " + compare12);
+			System.out.println("objet2.compareTo(objet1) : " + compare21);
+			System.out.println();
+		}
+
+		// ASSERT - THEN
+		/* garantit le Contrat Java : x.equals(y) ---> x.compareTo(y) == 0. */
+		assertTrue(equals, "objet1 doit être equals() à objet2 (insensible à la casse) : ");
+		assertTrue(compare12 == 0, "objet1.equals(objet2) ---> objet1.compareTo(objet2) == 0 : ");
+		assertTrue(compare21 == 0, "objet2.equals(objet1) ---> objet2.compareTo(objet1) == 0 : ");
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste la symétrie du signe et la transitivité de compareTo().</p>
+	 * <ul>
+	 * <li>Symétrie : sign(a.compareTo(b)) == -sign(b.compareTo(a)).</li>
+	 * <li>Transitivité : si a < b et b < c alors a < c.</li>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToSymetrieEtTransitivite() : vérifie symétrie et transitivité")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToSymetrieEtTransitivite() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ProduitTest - méthode testCompareToSymetrieEtTransitivite() ********** ");
+			System.out.println("CE TEST VERIFIE symétrie et transitivité de compareTo().");
+			System.out.println();
+		}
+
+		//*** ARRANGE - GIVEN
+		/* TypeProduit */
+		final TypeProduitI typeProduitA = new TypeProduit(ANATOMIE);
+		final TypeProduitI typeProduitB = new TypeProduit(PHOTOGRAPHIE);
+
+		/* SousTypeProduit. */
+		final SousTypeProduitI sousTypeProduitA = new SousTypeProduit(ANATOMIE_MAIN, typeProduitA);
+		final SousTypeProduitI sousTypeProduitB = new SousTypeProduit(CAMERAS, typeProduitB);
+
+		/* ProduitI.
+		 * On construit a < b < c (ordre piloté par le SousTypeProduit puis produit). */
+		final ProduitI a = new Produit("AAA", sousTypeProduitA);
+		final ProduitI b = new Produit("BBB", sousTypeProduitB);
+		final ProduitI c = new Produit("CCC", sousTypeProduitB);
+
+		// ACT - WHEN
+		final int ab = a.compareTo(b);
+		final int ba = b.compareTo(a);
+		final int bc = b.compareTo(c);
+		final int cb = c.compareTo(b);
+		final int ac = a.compareTo(c);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("a.compareTo(b) : " + ab);
+			System.out.println("b.compareTo(a) : " + ba);
+			System.out.println("b.compareTo(c) : " + bc);
+			System.out.println("c.compareTo(b) : " + cb);
+			System.out.println("a.compareTo(c) : " + ac);
+			System.out.println();
+		}
+
+		// ASSERT - THEN
+
+		/* Symétrie du signe (hors égalité). */
+		assertTrue(ab != 0, "a et b doivent être ordonnables (ab != 0) : ");
+		assertTrue((ab < 0 && ba > 0) || (ab > 0 && ba < 0), "Symétrie : sign(ab) == -sign(ba) : ");
+
+		assertTrue(bc != 0, "b et c doivent être ordonnables (bc != 0) : ");
+		assertTrue((bc < 0 && cb > 0) || (bc > 0 && cb < 0), "Symétrie : sign(bc) == -sign(cb) : ");
+
+		/* Transitivité : si a < b et b < c alors a < c. */
+		assertTrue(ab < 0, "Pré-condition : a < b : ");
+		assertTrue(bc < 0, "Pré-condition : b < c : ");
+		assertTrue(ac < 0, "Transitivité : a < c : ");
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste compareTo() en multi-thread sans pré-synchronisation externe
+	 * (détection de deadlocks par timeout + Future.isCancelled()).</p>
+	 * </div>
+	 *
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testCompareToThreadSafeSansPreVerrouillage() : détecte deadlocks (timeout)")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testCompareToThreadSafeSansPreVerrouillage() 
+			throws InterruptedException, ExecutionException {
+
+		/* AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* ARRANGE - GIVEN : Création des objets nécessaires. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+
+		final ProduitI produit1 = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+		final ProduitI produit2 = new Produit(2L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+
+		/* Résultats attendus (calculés une fois avant le test). */
+		final int expected12 = produit1.compareTo(produit2);
+		final int expected21 = produit2.compareTo(produit1);
+
+		/* ACT - WHEN : Exécution concurrente de compareTo(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(12);
+		final List<Callable<Integer>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 200; i++) {
+			tasks.add(() -> produit1.compareTo(produit2));
+			tasks.add(() -> produit2.compareTo(produit1));
+		}
+
+		final List<Future<Integer>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* ASSERT - THEN : aucune tâche annulée (timeout) et aucune exception. */
+		for (int i = 0; i < futures.size(); i++) {
+
+			final Future<Integer> future = futures.get(i);
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche compareTo ne doit pas être annulée (timeout) : ");
+
+			final Integer value = future.get();
+
+			/* Les tâches alternent (p1->p2) puis (p2->p1). */
+			if (i % 2 == 0) {
+				assertEquals(
+					expected12,
+					value.intValue(),
+					"compareTo(produit1, produit2) doit rester cohérent en multi-thread : ");
+			} else {
+				assertEquals(
+					expected21,
+					value.intValue(),
+					"compareTo(produit2, produit1) doit rester cohérent en multi-thread : ");
+			}
+		}
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test compareTo() sans pré-verrouillage en multi-thread réussi *****");
+			System.out.println("Résultat attendu 1->2 : " + expected12);
+			System.out.println("Résultat attendu 2->1 : " + expected21);
+			System.out.println();
+		}
 	} //___________________________________________________________________
 
 
