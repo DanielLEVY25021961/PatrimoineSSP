@@ -1518,17 +1518,20 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public final List<? extends ProduitI> getProduits() {
-	    /*
-	     * Retourne une copie immuable de la liste des produits
-	     * pour éviter les modifications externes.
-	     * Le bloc synchronized garantit que l'accès à la liste
-	     * est sécurisé contre les modifications concurrentes.
+	public final List<ProduitI> getProduits() {
+
+	    /* Snapshot thread-safe de la liste interne afin de retourner
+	     * une copie immuable réellement stable pour l'appelant.
 	     */
+	    final List<ProduitI> snapshot;
+
 	    synchronized (this) {
-	        return Collections.unmodifiableList(this.produits);
+	        snapshot = new ArrayList<ProduitI>(this.produits);
 	    }
-	}
+
+	    return Collections.unmodifiableList(snapshot);
+
+	} // Fin de getProduits().________________________________________________
 
 	
 	

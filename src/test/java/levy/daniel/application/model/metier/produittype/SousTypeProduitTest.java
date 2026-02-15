@@ -2669,6 +2669,113 @@ public class SousTypeProduitTest {
         		"La liste des produits ne doit plus contenir produitCanneTelescopique.");
         
     } //___________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Teste getProduits() en environnement multi-thread.
+     * </p>
+     * <ul>
+     * <li>Vérifie que getProduits() retourne une copie immuable stable.</li>
+     * <li>Vérifie que l'itération sur la copie ne lève pas de ConcurrentModificationException.</li>
+     * <li>Utilise un timeout pour détecter une régression introduisant un blocage.</li>
+     * </ul>
+     * </div>
+     * @throws InterruptedException si le thread courant est interrompu.
+     * @throws ExecutionException si une tâche lève une exception.
+     */
+    @SuppressWarnings({ RESOURCE, UNUSED })
+    @DisplayName("testGetProduitsIterationThreadSafe() : vérifie getProduits() et l'itération en multi-thread")
+    @Tag(THREAD_SAFETY)
+    @Test
+    public final void testGetProduitsIterationThreadSafe()
+            throws InterruptedException, ExecutionException {
+
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+
+        /* ARRANGE - GIVEN : Création d'un SousTypeProduit et de Produits. */
+        final TypeProduitI typeProduit = new TypeProduit(1L, PECHE, null);
+        final SousTypeProduit sousTypeProduit = new SousTypeProduit(10L, CANNE_A_PECHE, typeProduit, null);
+
+        final Produit produit1 = new Produit(1L, CANNE_TELESCOPIQUE, null);
+        final Produit produit2 = new Produit(2L, MOULINET, null);
+        final Produit produit3 = new Produit(3L, "Hameçon", null);
+
+        /* ACT - WHEN : Exécution concurrente.
+         * Un ensemble de tâches fait des ajouts/retraits,
+         * tandis qu'un autre ensemble itère sur les snapshots retournés par getProduits().
+         */
+        final ExecutorService executor = Executors.newFixedThreadPool(10);
+        final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+        for (int i = 0; i < 50; i++) {
+
+            tasks.add(() -> {
+                sousTypeProduit.ajouterSTPauProduit(produit1);
+                sousTypeProduit.retirerSTPauProduit(produit1);
+                return true;
+            });
+
+            tasks.add(() -> {
+                sousTypeProduit.ajouterSTPauProduit(produit2);
+                sousTypeProduit.retirerSTPauProduit(produit2);
+                return true;
+            });
+
+            tasks.add(() -> {
+                sousTypeProduit.ajouterSTPauProduit(produit3);
+                sousTypeProduit.retirerSTPauProduit(produit3);
+                return true;
+            });
+
+            tasks.add(() -> {
+
+                final List<ProduitI> snapshot = sousTypeProduit.getProduits();
+
+                /* Vérifie la stabilité d'itération : pas de ConcurrentModificationException. */
+                for (final ProduitI produit : snapshot) {
+                    if (produit == null) {
+                        return false;
+                    }
+                }
+
+                /* Vérifie l'immuabilité de la copie. */
+                try {
+                    snapshot.add(produit1);
+                    return false;
+                } catch (final UnsupportedOperationException e) { // NOPMD by danyl on 15/02/2026 11:00
+                    return true;
+                }
+
+            });
+
+        }
+
+        /* IMPORTANT : timeout pour éviter tout blocage infini si une régression introduit un deadlock. */
+        final List<Future<Boolean>> results =
+                executor.invokeAll(tasks, 10, java.util.concurrent.TimeUnit.SECONDS);
+
+        executor.shutdown();
+
+        /* ASSERT - THEN */
+        for (final Future<Boolean> result : results) {
+            assertFalse(result.isCancelled(),
+                    "Une tâche getProduits()/itération ne doit pas être annulée (timeout) : ");
+            assertTrue(result.get(),
+                    "getProduits() doit retourner une copie stable et immuable en environnement multi-thread : ");
+        }
+
+        /* AFFICHAGE A LA CONSOLE. */
+        if (AFFICHAGE_GENERAL && affichage) {
+            System.out.println();
+            System.out.println("***** Test getProduits() et itération en multi-thread réussi *****");
+            System.out.println("Taille finale : " + sousTypeProduit.getProduits().size());
+        }
+
+    } //___________________________________________________________________
         
     
     
