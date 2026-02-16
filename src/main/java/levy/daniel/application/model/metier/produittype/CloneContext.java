@@ -141,4 +141,102 @@ public final class CloneContext {
     public void clear() {
         cache.clear();
     }
+    
+    /**
+     * <div>
+     * <p>Interface fonctionnelle permettant de calculer un clone
+     * de manière paresseuse (à la demande).</p>
+     * <p>Le calcul est exécuté sous verrou du cache pour garantir
+     * l'unicité inter-threads et la visibilité mémoire.</p>
+     * </div>
+     *
+     * @param <T> Type du clone calculé.
+     */
+    @FunctionalInterface
+    public interface CloneComputation<T> {
+
+        /**
+         * <div>
+         * <p>Calcule et retourne un clone.</p>
+         * </div>
+         *
+         * @return T Clone calculé.
+         */
+        T compute();
+    }
+
+    
+    
+    /**
+     * <div>
+     * <p>Retourne le clone déjà présent dans le cache,
+     * sinon exécute un calcul atomique (compute) pour créer
+     * et enregistrer le clone.</p>
+     * <p>Contrat fort :</p>
+     * <ul>
+     * <li>unicité inter-threads : un seul thread calcule le clone,</li>
+     * <li>les autres threads attendent et récupèrent le même clone,</li>
+     * <li>visibilité mémoire garantie par le verrou unique du cache.</li>
+     * </ul>
+     * <p>Important : la computation doit publier le clone dans le cache
+     * (via put) dès que possible pour casser les cycles.</p>
+     * </div>
+     *
+     * @param <T> Type générique du clone.
+     * @param key : Object Clé de l'objet original.
+     * @param computation : CloneComputation&lt;T&gt; Calcul atomique du clone.
+     * @return T Clone existant ou nouvellement créé.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T computeIfAbsent(
+            final Object key,
+            final CloneComputation<T> computation) {
+
+        synchronized (this.cache) {
+
+            final T existing = (T) this.cache.get(key);
+
+            if (existing != null) {
+                return existing;
+            }
+
+            return computation.compute();
+        }
+    }
+    
+
+    
+    /**
+     * <div>
+     * <p>Retourne le clone associé à <code>key</code> s'il existe déjà,
+     * sinon le crée via <code>pSupplier</code>, l'enregistre et le retourne.</p>
+     * <p>Contrat fort : opération atomique (get+put) pour garantir l'unicité,
+     * y compris en environnement multi-thread.</p>
+     * </div>
+     *
+     * @param <T> Type générique du clone.
+     * @param key : Object Clé de l'objet original.
+     * @param pSupplier : java.util.function.Supplier fournisseur du clone à créer si absent.
+     * @return T Clone existant ou nouvellement créé.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getOrCreate(
+            final Object key,
+            final java.util.function.Supplier<? extends T> pSupplier) {
+
+        synchronized (this.cache) {
+
+            final Object cached = this.cache.get(key);
+
+            if (cached != null) {
+                return (T) cached;
+            }
+
+            final T created = pSupplier.get();
+            this.cache.put(key, created);
+            return created;
+        }
+    }
+
+
 }

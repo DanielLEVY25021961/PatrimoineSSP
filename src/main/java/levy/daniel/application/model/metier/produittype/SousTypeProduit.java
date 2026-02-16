@@ -724,82 +724,77 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 */
+    /** {@inheritDoc} */
 	@Override
 	public final SousTypeProduit deepClone(final CloneContext ctx) {
 
-	    final SousTypeProduit clone;
-	    final TypeProduitI typeProduitProv;
-	    final List<ProduitI> produitsSafeCopy;
+		if (ctx == null) {
+			throw new IllegalArgumentException(
+					"ctx ne doit pas être null.");
+		}
 
-	    synchronized (this) {
+		/*
+		 * Contrat : unicité (anti-cycle) via le contexte. On commence par
+		 * retourner le clone s'il existe déjà.
+		 */
+		final SousTypeProduit dejaClone = ctx.get(this);
 
-	        /* Sécurise le couple get/put dans le même verrou.
-	         * Objectif : garantir l'unicité du clone 
-	         * même si le même CloneContext
-	         * est partagé entre threads.
-	         */
-	        synchronized (ctx) {
+		if (dejaClone != null) {
+			return dejaClone;
+		}
 
-	        	/* Vérifie que le clone n'existe pas déjà dans le contexte.
-	    	     * Le cas échéant, retourne le clone déjà existant.
-	    	     */
-	            final SousTypeProduit existing = ctx.get(this);
-	            if (existing != null) {
-	                return existing;
-	            }
+		/*
+		 * Crée un clone "nu" (sans parent ni enfants), puis l'enregistre
+		 * immédiatement pour casser les cycles (références croisées).
+		 */
+		final SousTypeProduit clone = this.cloneWithoutParentAndChildren();
+		ctx.put(this, clone);
 
-	            /* Crée un clone sans parent ni enfants 
-	             * de manière thread-safe. */
-	            clone = new SousTypeProduit(
-	                    this.idSousTypeProduit,
-	                    this.sousTypeProduit,
-	                    null,
-	                    null
-	            );
+		/*
+		 * Snapshot thread-safe des enfants.
+		 */
+		final java.util.List<ProduitI> produitsSafeCopy;
 
-	            /* Met le clone sans parent ni enfants dans le contexte. */
-	            ctx.put(this, clone);
+		synchronized (this) {
+			produitsSafeCopy = new java.util.ArrayList<>(this.produits);
+		}
 
-	        }
+		/*
+		 * Clone le parent TypeProduit si présent (et rattache le clone à ce
+		 * parent).
+		 */
+		final TypeProduitI typeProduitSafeCopy;
 
-	        /* Snapshots thread-safe des dépendances 
-	         * à cloner hors verrou. */
-	        typeProduitProv = this.typeProduit;
+		synchronized (this) {
 
-	        /* Copie thread-safe de la liste des enfants.
-	         * On évite tout Raw Type : 
-	         * on reconstruit une liste typée ProduitI.
-	         */
-	        produitsSafeCopy = new ArrayList<ProduitI>();
-	        
-	        for (final Object objet : this.produits) {
-	            if (objet instanceof final ProduitI produit) {
-	                produitsSafeCopy.add(produit);
-	            }
-	        }
+			typeProduitSafeCopy = this.typeProduit;
 
-	    }
+		}
 
-	    /* Clone le parent TypeProduit (si présent) 
-	     * et recolle le clone parent
-	     * au clone via le setter canonique.
-	     */
-	    if (typeProduitProv != null) {
-	        final TypeProduitI cloneTypeProduit 
-	        	= typeProduitProv.deepClone(ctx);
-	        clone.setTypeProduit(cloneTypeProduit);
-	    }
+		if (typeProduitSafeCopy != null) {
 
-	    /* Clone les enfants Produit hors verrous 
-	     * pour réduire la contention. */
-	    for (final ProduitI produit : produitsSafeCopy) {
-	        if (produit != null) {
-	            final ProduitI cloneProduit = produit.deepClone(ctx);
-	            cloneProduit.setSousTypeProduit(clone);
-	        }
-	    }
+			final TypeProduitI cloneTypeProduit = typeProduitSafeCopy
+					.deepClone(ctx);
+			clone.setTypeProduit(cloneTypeProduit);
 
-	    return clone;
+		}
+
+		/*
+		 * Clone les produits et rattache chaque clone au SousTypeProduit
+		 * clone.
+		 */
+		for (final ProduitI produit : produitsSafeCopy) {
+
+			if (produit != null) {
+
+				final ProduitI cloneProduit = produit.deepClone(ctx);
+				cloneProduit.setSousTypeProduit(clone);
+
+			}
+
+		}
+
+		return clone;
 
 	}
 

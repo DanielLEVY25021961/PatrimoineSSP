@@ -42,6 +42,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	 * <code>SousTypeProduitI</code> en utilisant 
 	 * un {@link CloneContext} pour garantir la cohérence des données.</p>
 	 * </div>
+	 * <p>Ne retourne jamais null.</p>
+	 * </div>
 	 * 
 	 * <div>
 	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
@@ -89,6 +91,10 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	 * <li>Interdit les cycles et les duplications durant le clonage 
 	 * grâce à l'utilisation d'un {@link CloneContext} encapsulant 
 	 * une {@code IdentityHashMap} (cache).</li>
+	 * <li>Le clone ne partage aucune collection mutable 
+	 * avec l’original.</li>
+	 * <li>Les relations parent ↔ enfants sont 
+	 * reconstruites proprement.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -149,6 +155,10 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	 * <li>Interdit les cycles et les duplications durant le clonage 
 	 * grâce à l'utilisation d'un {@link CloneContext} encapsulant 
 	 * une {@code IdentityHashMap} (cache).</li>
+	 * <li>Le clone ne partage aucune collection mutable 
+	 * avec l’original.</li>
+	 * <li>Les relations parent ↔ enfants 
+	 * sont reconstruites proprement.</li>
 	 * </ul>
 	 * </div>
 	 * 
@@ -161,14 +171,16 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	
 	/**
 	 * <div>
-	 * <p>Construit un clone de SousTypeProduitI sans parent 
+	 * <p style="font-weight:bold;">
+	 * Construit un clone de SousTypeProduitI sans parent 
 	 * <code>TypeProduitI</code> ni enfants 
 	 * <code>List&lt;ProduitI&gt;</code></p>
 	 * <ul>
 	 * <p>ne contient que :</p>
 	 * <li>this.idSousTypeProduit</li>
 	 * <li>this.sousTypeProduit</li>
-	 * <li>une nouvelle liste vide <code>List&lt;ProduitI&gt;</code></li>
+	 * <li>une nouvelle liste vide d'enfants 
+	 * <code>List&lt;ProduitI&gt;</code></li>
 	 * </ul>
 	 * </div>
 	 *
@@ -180,13 +192,23 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>traite le cas d'une mauvaise instance passée en paramètre.</p>
-	 * <p>Passe le présent SousTypeProduitI comme SousProduit parent 
-	 * du produit pProduit en utilisant son Setter canonique 
-	 * qui maintient la cohérence des données.</p>
+	 * <p style="font-weight:bold;">
+	 * Ajoute le parent this à un enfant {@code ProduitI}
+	 * </p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Traiter le cas d'une mauvaise instance passée en paramètre.</li>
+	 * <li>Passer le présent SousTypeProduitI comme SousProduit parent 
+	 * du produit enfant pProduit en utilisant son Setter canonique 
+	 * qui maintient la cohérence des données.</li>
 	 * </div>
 	 *
-	 * @param pProduit : ProduitI
+	 * @param pProduit : ProduitI : 
+	 * enfant à rattacher au parent this.
 	 */
 	void ajouterSTPauProduit(ProduitI pProduit);
 
@@ -194,13 +216,24 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>traite le cas d'une mauvaise instance passée en paramètre.</p>
-	 * <p>Retire le présent SousTypeProduitI comme SousProduit parent 
-	 * du produit pProduit en utilisant son Setter canonique 
-	 * qui maintient la cohérence des données.</p>
+	 * <p style="font-weight:bold;">
+	 * retire le parent this à un enfant {@code ProduitI}
+	 * </p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Traiter le cas d'une mauvaise instance passée en paramètre.</li>
+	 * <li>Retirer le présent SousTypeProduitI comme SousProduit parent 
+	 * du produit enfant pProduit en utilisant son Setter canonique 
+	 * qui maintient la cohérence des données.</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @param pProduit : ProduitI
+	 * @param pProduit : ProduitI : 
+	 * enfant à détacher du parent this.
 	 */
 	void retirerSTPauProduit(ProduitI pProduit);
 
@@ -208,7 +241,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	
 	/**
 	 * <div>
-	 * <p>retourne une String affichant <code>this.sousTypeProduit</code>
+	 * <p style="font-weight:bold;">
+	 * retourne une String affichant <code>this.sousTypeProduit</code>
 	 * (libellé)
 	 * ou "null" en cas de nullité.</p>
 	 * <p>(exemple : "vêtement pour homme", "vêtement pour femme").</p>
@@ -222,7 +256,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>Getter du Boolean qui indique si le présent SousTypeProduit 
+	 * <p style="font-weight:bold;">
+	 * Getter du Boolean qui indique si le présent SousTypeProduit 
 	 * possède un TypeProduit non null.</p>
 	 * <ul>
 	 * <li>true si le présent SousTypeProduit possède 
@@ -239,7 +274,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>Getter de l'ID en base du sous-type de produit.</p>
+	 * <p style="font-weight:bold;">
+	 * Getter de l'ID dans le stockage du sous-type de produit.</p>
 	 * </div>
 	 *
 	 * @return <code>this.idSousTypeProduit</code> : Long
@@ -250,7 +286,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>Setter de l'ID en base du sous-type de produit.</p>
+	 * <p style="font-weight:bold;">
+	 * Setter de l'ID dans le stockage du sous-type de produit.</p>
 	 * </div>
 	 *
 	 * @param pIdSousTypeProduit : Long :
@@ -262,7 +299,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>Getter du Nom du sous-type de produit comme :</p>
+	 * <p style="font-weight:bold;">
+	 * Getter du Nom (libellé) du sous-type de produit comme :</p>
 	 * <ul>
 	 * <li>"vêtement pour homme"</li>
 	 * <li>"vêtement pour femme"</li>
@@ -278,7 +316,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>Setter du Nom du sous-type de produit comme :</p>
+	 * <p style="font-weight:bold;">
+	 * Setter du Nom (libellé) du sous-type de produit comme :</p>
 	 * <ul>
 	 * <li>"vêtement pour homme"</li>
 	 * <li>"vêtement pour femme"</li>
@@ -295,7 +334,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>Getter du Type de produit auquel est rattaché le présent 
+	 * <p style="font-weight:bold;">
+	 * Getter du parent {@code TypeProduitI} auquel est rattaché le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple "vêtement" pour le sous-type de produit 
 	 * "vêtement pour homme".</p>
@@ -310,21 +350,55 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">SETTER CANONIQUE INTELLIGENT</p>
-	 * <p>Setter du TypeProduitI auquel est rattaché le présent 
-	 * SousTypeProduitI.</p>
+	 * <p>Setter du parent {@code TypeProduitI} auquel 
+	 * est rattaché le présent SousTypeProduitI.</p>
 	 * <p>par exemple "vêtement" pour le sous-type de produit 
 	 * "vêtement pour homme".</p>
+	 * <p>Établit ou modifie la relation bidirectionnelle
+	 * entre un <code>SousTypeProduit</code> 
+	 * et son <code>TypeProduit</code>.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>traite le cas d'une mauvaise instance passée en paramètre.</li>
-	 * <li>ne fait rien et return si pTypeProduit == this.typeProduit.</li>
-	 * <li>détache le présent SousTypeProduit de l’ancien parent 
+	 * <li>Traiter le cas d'une mauvaise instance passée en paramètre.</li>
+	 * <li>Si pTypeProduit == this.typeProduit : ne rien faire et return .</li>
+	 * <li>Détacher le présent SousTypeProduit de l’ancien parent 
 	 * et le <span style="font-weight:bold;">retire de sa liste</span> 
 	 * sousTypeProduits.</li>
-	 * <li>passe pTypeProduit à <code>this.typeProduit</code>.</li>
-	 * <li>rattache le présent SousTypeProduit au nouveau parent 
-	 * et <span style="font-weight:bold;">l'ajoute à la liste</span> 
+	 * <li>Passer pTypeProduit à <code>this.typeProduit</code>.</li>
+	 * <li>Rattacher le présent SousTypeProduit au nouveau parent 
+	 * et <span style="font-weight:bold;">l'ajouter à la liste</span> 
 	 * sousTypeProduits du parent TypeProduitI.</li>
-	 * <li>passe this.valide à true si pTypeProduit n'est pas null.</li>
+	 * <li>Passer this.valide à true si pTypeProduit n'est pas null.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>maintient la validité de this.</li>
+	 * <li>Relation strictement bidirectionnelle maintenue.</li>
+	 * <li>Si un ancien parent existe,
+	 * le présent SousTypeProduit est retiré de sa collection enfants.</li>
+	 * <li>Si un nouveau parent est fourni,
+	 * le présent SousTypeProduit est ajouté à sa collection enfants.</li>
+	 * <li>Aucun doublon par identité (==) n'est autorisé.</li>
+	 * <li>Méthode idempotente.</li>
+	 * <li>pTypeProduit peut être null (détachement).</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>Garantit la cohérence bidirectionnelle.</li>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Détache proprement de l’ancien parent.</li>
+	 * <li>Ordre de verrouillage déterministe pour éviter tout deadlock.</li>
+	 * <li>Garantie de cohérence même en concurrence.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -337,7 +411,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 
 	/**
 	 * <div>
-	 * <p>Getter de la Collection des produits qualifiés par le présent 
+	 * <p style="font-weight:bold;">
+	 * Getter de la Collection des produits qualifiés par le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple : </p>
 	 * <ul>
@@ -351,8 +426,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	 * <p>ATTENTION : visibilité interface.</p>
 	 * </div>
 	 *
-	 * @return List&lt;ProduitI&gt; : liste des produits 
-	 * (enfants) du présent SousTypeProduitI.
+	 * @return List&lt;? extends ProduitI&gt; : 
+	 * liste des produits (enfants) du présent SousTypeProduitI.
 	 */
 	List<? extends ProduitI> getProduits();
 
@@ -361,32 +436,37 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">SETTER CANONIQUE INTELLIGENT</p>
-	 * <p>Setter de la Collection des produits qualifiés 
+	 * <p>Setter de la Collection des produits (enfants) qualifiés 
 	 * par le présent sous-type de produit.</p>
 	 * <p>par exemple : </p>
 	 * <ul>
 	 * <li>"chemise à manches longues pour homme" pour le sous-produit "vêtement pour homme".</li>
 	 * <li>"chemise à manches courtes pour homme" pour le sous-produit "vêtement pour homme".</li>
 	 * <li>"sweat-shirt pour homme" pour le sous-produit "vêtement pour homme"</li>
-	 * <p>Techniquement : </p>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>traite le cas d'une mauvaise instance dans pProduits.</li>
-	 * <li>Détache (en mettant leur SousTypeProduitI à null) 
+	 * <li>Traiter le cas d'une mauvaise instance dans pProduits.</li>
+	 * <li>Détacher (en mettant leur SousTypeProduitI à null) 
 	 * tous les ProduitI enfants de la présente liste 
 	 * <code style="font-weight:bold;">this.produits</code> 
 	 * en utilisant le Setter canonique de l'enfant ProduitI.</li>
-	 * <li>vide la liste <code style="font-weight:bold;">
+	 * <li>Vider la liste <code style="font-weight:bold;">
 	 * this.produits</code> avec clear() si pProduits == null. 
 	 * Ne jamais créer une nouvelle liste avec new ArrayList() 
 	 * pour être Hibernate-safe.</li>
-	 * <li>attache les nouveaux ProduitI enfants contenus 
+	 * <li>Attacher les nouveaux ProduitI enfants contenus 
 	 * dans pProduits au présent parent SousTypeProduitI 
 	 * en utilisant le Setter canonique de l'enfant ProduitI.</li>
 	 * </ul>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pProduits : List<Produit> :
+	 * @param pProduits : List&lt;? extends ProduitI&gt; :
 	 * valeur à passer à <code>this.produits</code>.
 	 */
 	void setProduits(List<? extends ProduitI> pProduits);

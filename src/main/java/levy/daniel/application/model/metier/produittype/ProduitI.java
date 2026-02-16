@@ -17,38 +17,103 @@ import levy.daniel.application.model.metier.IExportateurJTable;
 public interface ProduitI extends Comparable<ProduitI>
 								, IExportateurCsv, IExportateurJTable {
 
-	
+
 	
 	/**
 	 * <div>
-	 * <p><span style="font-weight:bold;">clone profond</span> 
-	 * un <code>ProduitI</code> en utilisant 
-	 * un CloneContext pour garantir la cohérence des données</p>
+	 * <p style="font-weight:bold;">clone profond de manière Thread-Safe un 
+	 * <code>ProduitI</code> en utilisant 
+	 * un {@link CloneContext} pour garantir la cohérence des données.</p>
 	 * </div>
-	 *
-	 * @return ProduitI : clone profond
-	 */
-	ProduitI cloneDeep();
-
-
-
-	/**
+	 * 
 	 * <div>
-	 * <p style="font-weight:bold;">retourne un Clone PROFOND 
-	 * du présent ProduitI</p>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>vérifie que le clone n'existe pas déjà dans l'IdentityHashMap 
-	 * (cache)
-	 * du CloneContext. Le cas échéant, 
-	 * retourne le clone déjà existant.</li>
-	 * <li>instancie un clone "nu" cloneP sans parent.</li>
-	 * <li>rajoute le clone "nu" cloneP dans le cache du CloneContext.</li>
-	 * <li>Clone le parent SousTypeProduit (si présent) et recolle 
-	 * le clone parent au CloneP via le Setter canonique.</li>
+	 * <li>Fournir un clone profond du présent ProduitI.</li>
+	 * <li>Vérifier que le clone n'existe pas déjà dans le contexte. 
+	 * Le cas échéant, retourner le clone déjà existant.</li>
+	 * <li>Créer un clone "nu" (sans parent) de manière thread-safe.</li>
+	 * <li>Cloner le parent SousTypeProduit (si présent) et 
+	 * recoller le clone parent au présent clone via le 
+	 * Setter canonique de la présente classe.</li>
+	 * <li>Retourner le clone profond.</li>
+	 * <li>Ne retourne jamais {@code null}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Si le clone est déjà stocke dans le CloneContext : 
+	 * retourne le clone existant.</li>
+	 * <li>délègue la création d'un {@link CloneContext} 
+	 * à une méthode private interne dans chaque implémentation.</li>
+	 * <li>S'appuie sur {@link #deepClone(ctxt)} 
+	 * pour générer le clone profond.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Interdit les cycles et les duplications durant le clonage 
+	 * grâce à l'utilisation d'un {@link CloneContext} encapsulant 
+	 * une {@code IdentityHashMap} (cache).</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pCtx : CloneContext
+	 * @return ProduitI : clone profond.
+	 * @throws CloneNotSupportedException 
+	 * si le clonage n'est pas supporté.
+	 */
+	ProduitI clone() throws CloneNotSupportedException;
+
+
+
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">clone profond de manière Thread-Safe un 
+	 * <code>ProduitI</code> en utilisant 
+	 * un {@link CloneContext} pour garantir la cohérence des données.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Fournir un clone profond du présent ProduitI.</li>
+	 * <li>Vérifier que le clone n'existe pas déjà dans le contexte. 
+	 * Le cas échéant, retourner le clone déjà existant.</li>
+	 * <li>Créer un clone "nu" (sans parent) de manière thread-safe.</li>
+	 * <li>Cloner le parent SousTypeProduit (si présent) et 
+	 * recoller le clone parent au présent clone via le 
+	 * Setter canonique de la présente classe.</li>
+	 * <li>Retourner le clone profond.</li>
+	 * <li>Ne retourne jamais {@code null}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Si le clone est déjà stocke dans le CloneContext : 
+	 * retourne le clone existant.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Interdit les cycles et les duplications durant le clonage 
+	 * grâce à l'utilisation d'un {@link CloneContext} encapsulant 
+	 * une {@code IdentityHashMap} (cache).</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param ctx : CloneContext
 	 * @return ProduitI : clone profond
 	 */
 	ProduitI deepClone(CloneContext ctx);
@@ -57,17 +122,21 @@ public interface ProduitI extends Comparable<ProduitI>
 	
 	/**
 	 * <div>
-	 * <p>clone un ProduitI sans "parent" SousTypeProduitI.</p>
+	 * <p style="font-weight:bold;">
+	 * clone un {@code ProduitI} sans "parent" {@code SousTypeProduitI}.</p>
 	 * </div>
 	 *
-	 * @return ProduitI : clone sans parent.
+	 * @return ProduitI : 
+	 * clone sans parent.
 	 */
 	ProduitI cloneWithoutParent();
+
 
 	
 	/**
 	 * <div>
-	 * <p>retourne une String affichant <code>this.produit</code>
+	 * <p style="font-weight:bold;">
+	 * retourne une String affichant <code>this.produit</code>
 	 * (libellé) ou "null" en cas de nullité.</p>
 	 * <p>(exemple : "chemise à manches longues pour homme", ...).</p>
 	 * </div>
@@ -76,10 +145,12 @@ public interface ProduitI extends Comparable<ProduitI>
 	 */
 	String afficherProduit();
 
+
 	
 	/**
 	 * <div>
-	 * <p>Getter du Type de Produit du présent PRODUIT 
+	 * <p style="font-weight:bold;">
+	 * Getter du Type de Produit du présent PRODUIT 
 	 * stocké dans <code>this.sousTypeProduit</code>.</p>
 	 * <p>Doit être calculé et jamais serializé.</p>
 	 * </div>
@@ -92,7 +163,8 @@ public interface ProduitI extends Comparable<ProduitI>
 	
 	/**
 	 * <div>
-	 * <p>Getter du Boolean qui indique si le présent Produit 
+	 * <p style="font-weight:bold;">
+	 * Getter du Boolean qui indique si le présent Produit 
 	 * possède un SousTypeProduit non null.</p>
 	 * <ul>
 	 * <li>true si le présent Produit possède un SousTypeProduit non null.</li>
@@ -108,7 +180,8 @@ public interface ProduitI extends Comparable<ProduitI>
 
 	/**
 	 * <div>
-	 * <p>Getter de l'ID en base du produit.</p>
+	 * <p style="font-weight:bold;">
+	 * Getter de l'ID dans le stockage du produit.</p>
 	 * </div>
 	 *
 	 * @return <code>this.idProduit</code> : Long
@@ -119,7 +192,8 @@ public interface ProduitI extends Comparable<ProduitI>
 
 	/**
 	 * <div>
-	 * <p>Setter de l'ID en base du produit.</p>
+	 * <p style="font-weight:bold;">
+	 * Setter de l'ID en base du produit.</p>
 	 * </div>
 	 *
 	 * @param pIdProduit : Long :
@@ -131,7 +205,8 @@ public interface ProduitI extends Comparable<ProduitI>
 
 	/**
 	 * <div>
-	 *<p>Getter du Nom du produit comme par exemple :</p>
+	 *<p style="font-weight:bold;">
+	 *Getter du Nom (libellé) du produit comme par exemple :</p>
 	 * <ul>
 	 * <li>le produit "chemise à manches longues pour homme" 
 	 * pour le sous-produit "vêtement pour homme".</li>
@@ -150,7 +225,8 @@ public interface ProduitI extends Comparable<ProduitI>
 
 	/**
 	 * <div>
-	 * <p>Setter du Nom du produit comme par exemple :</p>
+	 * <p style="font-weight:bold;">
+	 * Setter du Nom (libellé) du produit comme par exemple :</p>
 	 * <ul>
 	 * <li>le produit "chemise à manches longues pour homme" 
 	 * pour le sous-produit "vêtement pour homme".</li>
@@ -170,7 +246,8 @@ public interface ProduitI extends Comparable<ProduitI>
 
 	/**
 	 * <div>
-	 * <p>Getter du sous-type de produit qui caractérise le présent produit.</p>
+	 * <p style="font-weight:bold;">
+	 * Getter du sous-type de produit qui caractérise le présent produit.</p>
 	 * <p>par exemple : "vêtement pour homme" pour un PRODUIT 
 	 * "tee-shirt pour homme".</p>
 	 * </div>
@@ -185,25 +262,64 @@ public interface ProduitI extends Comparable<ProduitI>
 	 * <div>
 	 * <p style="font-weight:bold;">SETTER CANONIQUE INTELLIGENT</p>
 	 * <p>Setter du sous-type de produit qui caractérise 
-	 * le présent produit.</p>
+	 * le présent produit (parent).</p>
 	 * <p>par exemple : "vêtement pour homme" pour un PRODUIT 
 	 * "tee-shirt pour homme".</p>
+	 * <p>Établit ou modifie la relation bidirectionnelle
+	 * entre un <code>Produit</code> et son parent 
+	 * <code>SousTypeProduit</code>.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>traite le cas d'une mauvaise instance de pSousTypeProduit.</li>
-	 * <li>mémorise l'ancienne valeur de this.sousTypeProduit.</li>
-	 * <li>ne fait rien et return si la valeur passée en paramètre 
-	 * vaut l'ancienne valeur.</li>
-	 * <li>détache le présent Produit de l’ancien parent SousTypeProduit 
+	 * <li>Traiter le cas d'une mauvaise instance de pSousTypeProduit.</li>
+	 * <li>Mémoriser l'ancienne valeur du parent this.sousTypeProduit.</li>
+	 * <li>Si la valeur passée en paramètre 
+	 * vaut l'ancienne valeur : ne rien faire et return.</li>
+	 * <li>Détacher le présent Produit de l’ancien parent SousTypeProduit 
 	 * et le <span style="font-weight:bold;">
-	 * retire de sa liste produits</span>.</li>
-	 * <li>passe  <code>pSousTypeProduit</code> à 
+	 * retirer de sa liste produits</span>.</li>
+	 * <li>Passer  <code>pSousTypeProduit</code> à 
 	 * <code style="font-weight:bold;">this.sousTypeProduit</code> 
-	 * (le SousTypeProduit du présent Produit).</li>
-	 * <li>rattache le présent produit au nouveau parent 
+	 * (le parent SousTypeProduit du présent Produit).</li>
+	 * <li>Rattacher le présent produit au nouveau parent 
 	 * et <span style="font-weight:bold;">
-	 * l'ajoute à sa liste produits</span>.</li>
-	 * <li>passe this.valide à true si this.sousTypeProduit 
+	 * l'ajouter à sa liste produits</span>.</li>
+	 * <li>Passer this.valide à true si le parent this.sousTypeProduit 
 	 * n'est pas null.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Maintient la validité de this.</li>
+	 * <li>Relation strictement bidirectionnelle maintenue.</li>
+	 * <li>Si un ancien parent existe, le présent Produit
+	 * est retiré de sa collection enfants.</li>
+	 * <li>Si un nouveau parent est fourni,
+	 * le présent Produit est ajouté à sa collection enfants.</li>
+	 * <li>Aucun doublon par identité (==) n'est autorisé.</li>
+	 * <li>Méthode idempotente :
+	 * si la valeur passée est identique à l'actuelle,
+	 * aucun traitement n'est effectué.</li>
+	 * <li>pSousTypeProduit peut être null (détachement).</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Garantit la cohérence bidirectionnelle.</li>
+	 * <li>Détache proprement de l’ancien parent.</li>
+	 * <li>Rattache proprement au nouveau parent.</li>
+	 * <li>Maintient la validité métier.</li>
+	 * <li>Maintient la cohérence parent/enfant même en contexte concurrent.</li>
+	 * <li>Ne provoque pas de deadlock si l’ordre de 
+	 * verrouillage canonique est respecté.</li>
 	 * </ul>
 	 * </div>
 	 *

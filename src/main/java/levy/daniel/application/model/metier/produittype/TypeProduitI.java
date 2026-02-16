@@ -390,7 +390,8 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Getter du type de produit comme "vêtement", "outillage".</p>
+	 * Getter du type de produit (libellé) 
+	 * comme "vêtement", "outillage".</p>
 	 * </div>
 	 *
 	 * @return <code>this.typeProduit</code> : String
@@ -402,7 +403,8 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Setter du type de produit comme "vêtement", "outillage".</p>
+	 * Setter du type de produit (libellé) 
+	 * comme "vêtement", "outillage".</p>
 	 * </div>
 	 *
 	 * @param pTypeProduit : String :
@@ -456,6 +458,8 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
      * <p><b>SETTER CANONIQUE INTELLIGENT</b></p>
      * <p>met à jour la liste des SousTypeProduit enfants 
      * du présent TypeProduit.</p>
+     * <p>Remplace la collection des SousTypeProduit
+     * tout en garantissant la cohérence bidirectionnelle.</p>
      * </div>
      *
      * <div>
@@ -479,6 +483,22 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
      * <li>ignore les éléments null dans pSousTypeProduits.</li>
      * <li>doit être thread-safe et 
      * préserver la bidirectionnalité parent/enfant.</li>
+     * <li>Les anciens enfants sont détachés proprement.</li>
+     * <li>Les nouveaux enfants sont rattachés via leur setter canonique.</li>
+     * <li>Aucun doublon par identité (==).</li>
+     * <li>La collection interne n’est jamais exposée directement.</li>
+     * <li>Méthode idempotente si la liste est identique.</li>
+     * <li>pSousTypeProduits peut être null (vide la collection).</li>
+     * </ul>
+     * </div>
+     * 
+     * <div>
+     * <p><b>GARANTIES TECHNIQUES et METIER :</b></p>
+     * <ul>
+     * <li>méthode Thread-Safe.</li>
+     * <li>Absence de deadlock grâce à un ordre de verrouillage 
+     * déterministe.</li>
+     * <li>Snapshot défensif interne.</li>
      * </ul>
      * </div>
      *

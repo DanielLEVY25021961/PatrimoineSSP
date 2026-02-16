@@ -3,7 +3,7 @@
 /* ********************************************************************* */
 package levy.daniel.application.model.metier.produittype;
 
-import java.util.Objects;
+import java.util.Locale;
 
 import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
@@ -283,12 +283,56 @@ public class Produit implements ProduitI, Cloneable {
 	*/
 	@Override
 	public final int hashCode() {
-	    synchronized (this) {
-	        return Objects.hash(this.sousTypeProduit,
-	        		this.produit);
-	    }
-	}
 
+	    final SousTypeProduitI sousTypeProduitSnapshot;
+	    final String produitSnapshot;
+
+	    synchronized (this) {
+	        sousTypeProduitSnapshot = this.sousTypeProduit;
+	        produitSnapshot = this.produit;
+	    }
+
+	    final int hashProduit =
+	            (produitSnapshot == null) 
+	            ? 0 : produitSnapshot.toLowerCase(Locale.ROOT).hashCode();
+
+	    int hashSousTypeProduit = 0;
+
+	    if (sousTypeProduitSnapshot != null) {
+
+	        final String sousTypeLibelle 
+	        	= sousTypeProduitSnapshot.getSousTypeProduit();
+	        final TypeProduitI typeProduitSnapshot 
+	        	= sousTypeProduitSnapshot.getTypeProduit();
+	        final String typeProduitLibelle =
+	                (typeProduitSnapshot == null) 
+	                ? null : typeProduitSnapshot.getTypeProduit();
+
+	        final int hashSousTypeLibelle =
+	                (sousTypeLibelle == null) 
+	                ? 0 : sousTypeLibelle.toLowerCase(Locale.ROOT).hashCode();
+
+	        final int hashTypeProduitLibelle =
+	                (typeProduitLibelle == null) 
+	                ? 0 : typeProduitLibelle.toLowerCase(Locale.ROOT).hashCode();
+
+	        int resultStp = 1;
+	        resultStp = 31 * resultStp + hashSousTypeLibelle;
+	        resultStp = 31 * resultStp + hashTypeProduitLibelle;
+
+	        hashSousTypeProduit = resultStp;
+
+	    }
+
+	    int result = 1;
+
+	    result = 31 * result + hashSousTypeProduit;
+	    result = 31 * result + hashProduit;
+
+	    return result;
+
+	}
+	
 
 	
 	/**
@@ -304,47 +348,115 @@ public class Produit implements ProduitI, Cloneable {
 	@Override
 	public final boolean equals(final Object pObject) {
 
-		/*
-	     * retourne true si les références sont identiques.
-	     */
-        if (this == pObject) {
-            return true;
-        }
-        
+	    /* retourne true si les références sont identiques. */
+	    if (this == pObject) {
+	        return true;
+	    }
+
 	    /* return false si pObject == null. */
 	    if (pObject == null) {
 	        return false;
 	    }
 
-	    /* Synchronisation sur this ET 
-	     * pObject pour garantir la cohérence. */
-		synchronized (this) {
+	    /* retourne false si pObject n'est pas une bonne instance. */
+	    if (!(pObject instanceof Produit)) {
+	        return false;
+	    }
 
-			/*
-			 * Synchronisation sur this ET 
-			 * pObject pour garantir la cohérence.
-			 */
-			synchronized (pObject) {
+	    final Produit other = (Produit) pObject;
 
-				/*
-				 * retourne false si pObject 
-				 * n'est pas une bonne instance.
-				 */
-				if (!(pObject instanceof Produit other)) {
-					return false;
-				}
+	    final SousTypeProduitI thisSousTypeProduitSnapshot;
+	    final String thisProduitSnapshot;
 
-				/*
-			     * equals sur [SousTypeProduit - Produit].
-			     */
-				return Objects.equals(
-						this.sousTypeProduit,
-						((Produit) other).sousTypeProduit)
-						&& Objects.equals(
-						this.produit, ((Produit) other).produit);
-			}
+	    synchronized (this) {
+	        thisSousTypeProduitSnapshot = this.sousTypeProduit;
+	        thisProduitSnapshot = this.produit;
+	    }
 
-		}
+	    final SousTypeProduitI otherSousTypeProduitSnapshot;
+	    final String otherProduitSnapshot;
+
+	    synchronized (other) {
+	        otherSousTypeProduitSnapshot = other.sousTypeProduit;
+	        otherProduitSnapshot = other.produit;
+	    }
+
+	    /* produit comparé insensible à la casse. */
+	    if (thisProduitSnapshot == null) {
+	        if (otherProduitSnapshot != null) {
+	            return false;
+	        }
+	    } else {
+	        if (otherProduitSnapshot == null) {
+	            return false;
+	        }
+	        if (!thisProduitSnapshot.equalsIgnoreCase(
+	        		otherProduitSnapshot)) {
+	            return false;
+	        }
+	    }
+
+	    /* sousTypeProduit comparé métier (sans equals() transitif).
+	     * - compare getSousTypeProduit() insensible à la casse.
+	     * - compare le typeProduit associé via 
+	     * son libellé insensible à la casse.
+	     */
+	    if (thisSousTypeProduitSnapshot == null) {
+	        return otherSousTypeProduitSnapshot == null;
+	    }
+
+	    if (otherSousTypeProduitSnapshot == null) {
+	        return false;
+	    }
+
+	    final String thisSousTypeLibelle 
+	    	= thisSousTypeProduitSnapshot.getSousTypeProduit();
+	    final String otherSousTypeLibelle 
+	    	= otherSousTypeProduitSnapshot.getSousTypeProduit();
+
+	    if (thisSousTypeLibelle == null) {
+	        if (otherSousTypeLibelle != null) {
+	            return false;
+	        }
+	    } else {
+	        if (otherSousTypeLibelle == null) {
+	            return false;
+	        }
+	        if (!thisSousTypeLibelle.equalsIgnoreCase(
+	        		otherSousTypeLibelle)) {
+	            return false;
+	        }
+	    }
+
+	    final TypeProduitI thisTypeProduitSnapshot 
+	    	= thisSousTypeProduitSnapshot.getTypeProduit();
+	    final TypeProduitI otherTypeProduitSnapshot 
+	    	= otherSousTypeProduitSnapshot.getTypeProduit();
+
+	    if (thisTypeProduitSnapshot == null) {
+	        return otherTypeProduitSnapshot == null;
+	    }
+
+	    if (otherTypeProduitSnapshot == null) {
+	        return false;
+	    }
+
+	    final String thisTypeProduitLibelle 
+	    	= thisTypeProduitSnapshot.getTypeProduit();
+	    final String otherTypeProduitLibelle 
+	    	= otherTypeProduitSnapshot.getTypeProduit();
+
+	    if (thisTypeProduitLibelle == null) {
+	        return otherTypeProduitLibelle == null;
+	    }
+
+	    if (otherTypeProduitLibelle == null) {
+	        return false;
+	    }
+
+	    return thisTypeProduitLibelle
+	    		.equalsIgnoreCase(otherTypeProduitLibelle);
+
 	}
 
 
@@ -354,44 +466,56 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final String toString() {
-	    /*
-	     * Génère une représentation textuelle thread-safe.
-	     */
-	    final StringBuilder builder = new StringBuilder();
-	    
+
+	    /* Snapshot thread-safe des champs nécessaires. */
+	    final Long idProduitSnapshot;
+	    final String produitSnapshot;
+	    final SousTypeProduitI sousTypeProduitSnapshot;
+
 	    synchronized (this) {
-	    	
-	        builder.append("Produit [");
 
-	        builder.append("idProduit=");
-	        if (this.getIdProduit() != null) {
-	            builder.append(this.getIdProduit());
-	        } else {
-	            builder.append(NULL);
-	        }
+	        /* Accès direct aux attributs pour éviter 
+	         * tout appel transitif pendant le verrou. */
+	        idProduitSnapshot = this.idProduit;
+	        produitSnapshot = this.produit;
+	        sousTypeProduitSnapshot = this.sousTypeProduit;
 
-	        builder.append(VIRGULE_ESPACE);
-
-	        builder.append("produit=");
-	        if (this.getProduit() != null) {
-	            builder.append(this.getProduit());
-	        } else {
-	            builder.append(NULL);
-	        }
-
-	        builder.append(VIRGULE_ESPACE);
-
-	        builder.append("sousTypeProduit=");
-	        if (this.getSousTypeProduit() != null) {
-	            builder.append(this.getSousTypeProduit().toString());
-	        } else {
-	            builder.append(NULL);
-	        }
-
-	        builder.append(CROCHET_FERMANT);
 	    }
-	    
+
+	    /* Construction hors verrou pour minimiser la section critique. */
+	    final StringBuilder builder = new StringBuilder();
+
+	    builder.append("Produit [");
+	    builder.append("idProduit=");
+	    if (idProduitSnapshot != null) {
+	        builder.append(idProduitSnapshot);
+	    } else {
+	        builder.append(NULL);
+	    }
+
+	    builder.append(VIRGULE_ESPACE);
+	    builder.append("produit=");
+	    if (produitSnapshot != null) {
+	        builder.append(produitSnapshot);
+	    } else {
+	        builder.append(NULL);
+	    }
+
+	    builder.append(VIRGULE_ESPACE);
+	    builder.append("sousTypeProduit=");
+	    if (sousTypeProduitSnapshot != null) {
+
+	        /* Appel éventuel au toString() du parent hors verrou Produit. */
+	        builder.append(sousTypeProduitSnapshot.toString());
+
+	    } else {
+	        builder.append(NULL);
+	    }
+
+	    builder.append(CROCHET_FERMANT);
+
 	    return builder.toString();
+
 	}
 
 
@@ -424,68 +548,120 @@ public class Produit implements ProduitI, Cloneable {
 	@Override
 	public final int compareTo(final ProduitI pObject) {
 
-		/*
-	     * retourne true si les références sont identiques.
-	     */
+	    /* retourne true si les références sont identiques. */
 	    if (this == pObject) {
 	        return 0;
 	    }
-	    
+
 	    /* return false si pObject == null. */
 	    if (pObject == null) {
 	        return -1;
 	    }
 
-	    /* Synchronisation sur this ET 
-	     * pObject pour garantir la cohérence. */
-	    synchronized (this) {
-	    	
-	    	/* SousTypeProduit. */
-	    	/* Double synchronisation requise. */
-	        synchronized (pObject) {
-	        	
-	            final SousTypeProduitI a = this.sousTypeProduit;
-	            /* Accès direct 
-	             * (évite les getters non synchronisés sur pObject). */
-	            final SousTypeProduitI b 
-	            	= ((Produit) pObject).sousTypeProduit;  
-	            
-	            if (a == null) {
-	                if (b != null) {
-	                    return +1;
-	                }
-	            } else {
-	                if (b == null) {
-	                    return -1;
-	                }
-	                
-	                final int compareSousTypeProduit = a.compareTo(b);
-	                
-	                if (compareSousTypeProduit != 0) {
-	                    return compareSousTypeProduit;
-	                }
-	            }
-
-	            /* Produit. */
-	            final String s1 = this.produit;
-	            /* Accès direct au champ pour éviter 
-	             * tout accès à un getter non synchronisé. */
-	            final String s2 = ((Produit) pObject).produit;  
-
-	            if (s1 == null) {
-	                return (s2 == null) ? 0 : +1; /* null "après". */
-	            }
-	            
-	            if (s2 == null) {
-	                return -1;
-	            }
-	            
-	            return Strings.CI.compare(s1, s2);
-	        }
-	    }
+	    /* Comparaison sur [SousTypeProduit - Produit]. */
+	    return this.compareFields(pObject);
 	}
 	
 	
+	
+	/**
+	 * <div>
+	 * <p>Compare les champs de manière thread-safe en accédant
+	 * directement aux champs et pas aux getters
+	 * (pas toujours Thread-Safe).</p>
+	 *
+	 * @param pObject : ProduitI :
+	 * L'objet à comparer avec this.
+	 * @return Le résultat de la comparaison.
+	 */
+	private int compareFields(final ProduitI pObject) {
+
+	    /* L'implémentation de ProduitI est Produit. */
+	    final Produit other = (Produit) pObject;
+
+	    /* Snapshots des champs nécessaires pour comparer hors verrous. */
+	    final SousTypeProduitI sousTypeProduitA;
+	    final String produitA;
+	    final SousTypeProduitI sousTypeProduitB;
+	    final String produitB;
+
+	    /* Détermine l'ordre de verrouillage pour éviter les deadlocks.
+	     * L'ordre est basé sur System.identityHashCode() pour garantir
+	     * un verrouillage systématique et reproductible. */
+	    final int thisHash = System.identityHashCode(this);
+	    final int otherHash = System.identityHashCode(other);
+
+	    if (thisHash < otherHash) {
+
+	        /* Verrouillage ordonné : this puis other. */
+	        synchronized (this) {
+	            synchronized (other) {
+	                sousTypeProduitA = this.sousTypeProduit;
+	                produitA = this.produit;
+	                sousTypeProduitB = other.sousTypeProduit;
+	                produitB = other.produit;
+	            }
+	        }
+
+	    } else if (thisHash > otherHash) {
+
+	        /* Verrouillage ordonné : other puis this. */
+	        synchronized (other) {
+	            synchronized (this) {
+	                sousTypeProduitA = this.sousTypeProduit;
+	                produitA = this.produit;
+	                sousTypeProduitB = other.sousTypeProduit;
+	                produitB = other.produit;
+	            }
+	        }
+
+	    } else {
+
+	        /* Cas rarissime : collision de System.identityHashCode(...)
+	         * -> verrou de départ unique pour imposer un ordre stable
+	         * et éviter tout deadlock. */
+	        synchronized (Produit.class) {
+	            synchronized (this) {
+	                synchronized (other) {
+	                    sousTypeProduitA = this.sousTypeProduit;
+	                    produitA = this.produit;
+	                    sousTypeProduitB = other.sousTypeProduit;
+	                    produitB = other.produit;
+	                }
+	            }
+	        }
+	    }
+
+	    /* Comparaison hors verrous pour réduire la contention. */
+
+	    /* SousTypeProduit. */
+	    if (sousTypeProduitA == null) {
+	        if (sousTypeProduitB != null) {
+	            return +1;
+	        }
+	    } else {
+	        if (sousTypeProduitB == null) {
+	            return -1;
+	        }
+	        final int compareSousTypeProduit 
+	        = sousTypeProduitA.compareTo(sousTypeProduitB);
+	        if (compareSousTypeProduit != 0) {
+	            return compareSousTypeProduit;
+	        }
+	    }
+
+	    /* Produit. */
+	    if (produitA == null) {
+	        return (produitB == null) ? 0 : +1;
+	    }
+	    if (produitB == null) {
+	        return -1;
+	    }
+
+	    return Strings.CI.compare(produitA, produitB);
+	}	
+	
+
 	
 	/**
 	* {@inheritDoc}
@@ -498,60 +674,86 @@ public class Produit implements ProduitI, Cloneable {
 	
 	
 	/**
-	* {@inheritDoc}
-	*/
-	@Override
-	public final Produit cloneDeep() {
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Instancie un {@link CloneContext} et appelle 
+	 * {@code deepClone(ctxt)} en lui passant le CloneContext.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Appeler {@code deepClone(ctxt)} 
+	 * en lui passant un nouveau {@link CloneContext}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>méthode appelée par {@code clone()}.</li>
+	 * <li>méthode private interne invisible.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return Produit : clone profond.
+	 */
+	private Produit cloneDeep() {
 		return deepClone(new CloneContext());	
 	}
 
 
 
 	/**
-	 * {@inheritDoc}
-	 */
-	@Override
+	* {@inheritDoc}
+	*/
+    /** {@inheritDoc} */
+    @Override
 	public final Produit deepClone(final CloneContext ctx) {
-		
-	    /*
-	     * Clone profond avec gestion du contexte de manière thread-safe.
-	     */
-	    synchronized (this) {
-	    	
-	    	/*
-		     * Vérifie que le clone n'existe pas déjà dans le contexte.
-		     * Le cas échéant, retourne le clone déjà existant.
-		     */
-	        final Produit existing = ctx.get(this);
-	        
-	        if (existing != null) {
-	            return existing;
-	        }
 
-	        /*
-		     * Crée le clone sans parent.
-		     */
-	        final Produit cloneP = this.cloneWithoutParent();
-	        
-	        /* met le clone sans parent dans le contexte. */
-	        ctx.put(this, cloneP);
+		if (ctx == null) {
 
-	        /* récupère le parent SousTypeProduit. */
-	        final SousTypeProduitI stpI = this.sousTypeProduit;
-	        
-	        /*
-		     * Clone le parent SousTypeProduit (si présent) et recolle
-		     * le clone parent au présent clone via le Setter canonique.
-		     */
-	        if (stpI != null) {
-	        	
-	            final SousTypeProduitI cloneParent = stpI.deepClone(ctx);
-	            cloneP.setSousTypeProduit(cloneParent);
-	        }
-	        
-	        return cloneP;
-	        
-	    }
+			throw new IllegalArgumentException(
+					"ctx ne doit pas être null.");
+
+		}
+
+		final Produit dejaClone = ctx.get(this);
+
+		if (dejaClone != null) {
+			return dejaClone;
+		}
+
+		/*
+		 * Crée le clone sans parent, puis enregistre immédiatement pour
+		 * casser les cycles.
+		 */
+		final Produit clone = this.cloneWithoutParent();
+		ctx.put(this, clone);
+
+		/*
+		 * Clone du parent SousTypeProduit si présent + rattachement.
+		 */
+		final SousTypeProduitI sousTypeProduitSafeCopy;
+
+		synchronized (this) {
+
+			sousTypeProduitSafeCopy = this.sousTypeProduit;
+
+		}
+
+		if (sousTypeProduitSafeCopy != null) {
+
+			final SousTypeProduitI cloneSousTypeProduit 
+				= sousTypeProduitSafeCopy.deepClone(ctx);
+			
+			clone.setSousTypeProduit(cloneSousTypeProduit);
+
+		}
+
+		return clone;
+
 	}
 
 
@@ -583,12 +785,13 @@ public class Produit implements ProduitI, Cloneable {
 	 *</div>
 	 */
 	private void recalculerValide() {
-	    /*
-	     * Recalcule la validité de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        this.valide = (this.sousTypeProduit != null);
-	    }
+		/*
+		 * OPTIMISATION :
+		 * les appelants (cloneWithoutParent(), setSousTypeProduit(...))
+		 * sont déjà sous synchronized(this).
+		 * On évite donc le double-lock (ré-entrant mais redondant).
+		 */
+		this.valide = (this.sousTypeProduit != null);
 	}
 
 
@@ -659,52 +862,84 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final String toStringCsv() {
-	    /*
-	     * Génère une représentation CSV thread-safe.
-	     */
-	    final StringBuilder builder = new StringBuilder();
-	    synchronized (this) {
-	        /* idProduit */
-	        if (this.getIdProduit() != null) {
-	            builder.append(this.getIdProduit());
-	        } else {
-	            builder.append(NULL);
-	        }
-	        builder.append(POINT_VIRGULE);
 
-	        /* type de produit */
-	        if (this.getTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else if (this.getTypeProduit().getTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else {
-	            builder.append(this.getTypeProduit().getTypeProduit());
-	        }
-	        builder.append(POINT_VIRGULE);
+		/*
+		 * Génère une représentation CSV thread-safe
+		 * en limitant au maximum la section critique.
+		 */
 
-	        /* sous-type de produit */
-	        if (this.getSousTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else if (
-	        		this.getSousTypeProduit()
-	        		.getSousTypeProduit() == null) {
-	            builder.append(NULL);
-	        } else {
-	            builder.append(
-	            		this.getSousTypeProduit().getSousTypeProduit());
-	        }
-	        builder.append(POINT_VIRGULE);
+		/* Snapshots sous verrou court. */
+		final Long idProduitSnapshot;
+		final String produitSnapshot;
+		final SousTypeProduitI sousTypeProduitSnapshot;
 
-	        /* produit */
-	        if (this.getProduit() == null) {
-	            builder.append(NULL);
-	        } else {
-	            builder.append(this.getProduit());
-	        }
-	        builder.append(POINT_VIRGULE);
-	    }
-	    return builder.toString();
-	}
+		synchronized (this) {
+
+			idProduitSnapshot = this.idProduit;
+			produitSnapshot = this.produit;
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+
+		}
+
+		/* Récupération des informations "parent" hors verrou Produit. */
+		String typeProduitString = NULL;
+		String sousTypeProduitString = NULL;
+
+		if (sousTypeProduitSnapshot != null) {
+
+			final String sousTypeProduitInterne
+				= sousTypeProduitSnapshot.getSousTypeProduit();
+
+			if (sousTypeProduitInterne != null) {
+				sousTypeProduitString = sousTypeProduitInterne;
+			}
+
+			final TypeProduitI typeProduitSnapshot
+				= sousTypeProduitSnapshot.getTypeProduit();
+
+			if (typeProduitSnapshot != null) {
+
+				final String typeProduitInterne
+					= typeProduitSnapshot.getTypeProduit();
+
+				if (typeProduitInterne != null) {
+					typeProduitString = typeProduitInterne;
+				}
+
+			}
+
+		}
+
+		/* Construction hors verrou. */
+		final StringBuilder builder = new StringBuilder();
+
+		/* idProduit */
+		if (idProduitSnapshot != null) {
+			builder.append(idProduitSnapshot);
+		} else {
+			builder.append(NULL);
+		}
+		builder.append(POINT_VIRGULE);
+
+		/* type de produit */
+		builder.append(typeProduitString);
+		builder.append(POINT_VIRGULE);
+
+		/* sous-type de produit */
+		builder.append(sousTypeProduitString);
+		builder.append(POINT_VIRGULE);
+
+		/* produit */
+		if (produitSnapshot != null) {
+			builder.append(produitSnapshot);
+		} else {
+			builder.append(NULL);
+		}
+		builder.append(POINT_VIRGULE);
+
+		return builder.toString();
+
+	} //___________________________________________________________________
 
 
 
@@ -717,39 +952,35 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final String getEnTeteColonne(final int pI) {
-	    /*
-	     * Retourne l'en-tête de colonne de manière thread-safe.
-	     */
-	    String entete = null;
-	    
-	    synchronized (this) {
-	    	
-	        switch (pI) {
-	        
-	        case 0:
-	            entete = "idproduit";
-	            break;
-	        case 1:
-	            entete = "type de produit";
-	            break;
-	        case 2:
-	            entete = "sous-type de produit";
-	            break;
-	        case 3:
-	            entete = "produit";
-	            break;
-	        default:
-	            entete = "invalide";
-	            break;
-	        }
-	    }
-	    
-	    return entete;
-	    
+
+		/*
+		 * Méthode pure : ne dépend d'aucun champ de l'instance.
+		 * Pas de synchronized 
+		 * (aucun accès à l'état, aucun risque de concurrence).
+		 */
+		switch (pI) {
+
+			case 0:
+				return "idproduit";
+
+			case 1:
+				return "type de produit";
+
+			case 2:
+				return "sous-type de produit";
+
+			case 3:
+				return "produit";
+
+			default:
+				return "invalide";
+
+		}
+
 	} // Fin de getEnTeteColonne(...)._____________________________________
 
 
-
+	
 	/**
 	 * {@inheritDoc}
 	 * <div>
@@ -759,157 +990,263 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final Object getValeurColonne(final int pI) {
-	    /*
-	     * Retourne la valeur de colonne de manière thread-safe.
-	     */
-	    Object valeur = null;
-	    synchronized (this) {
-	        switch (pI) {
-	        case 0:
-	            if (this.getIdProduit() != null) {
-	                valeur = String.valueOf(this.getIdProduit());
-	            }
-	            break;
-	        case 1:
-	            if (this.getTypeProduit() != null) {
-	                if (this.getTypeProduit().getTypeProduit() != null) {
-	                    valeur 
-	                    	= this.getTypeProduit().getTypeProduit();
-	                }
-	            }
-	            break;
-	        case 2:
-	            if (this.getSousTypeProduit() != null) {
-	                if (this.getSousTypeProduit()
-	                		.getSousTypeProduit() != null) {
-	                    valeur 
-	                    	= this.getSousTypeProduit().getSousTypeProduit();
-	                }
-	            }
-	            break;
-	        case 3:
-	            if (this.getProduit() != null) {
-	                valeur = this.getProduit();
-	            }
-	            break;
-	        default:
-	            valeur = "invalide";
-	            break;
-	        }
-	    }
-	    
-	    return valeur;
-	    
-	} // Fin de getValeurColonne(...)._____________________________________
 
+		/* Snapshot court sous verrou, calcul hors verrou. */
+		final Long idProduitSnapshot;
+		final String produitSnapshot;
+		final SousTypeProduitI sousTypeProduitSnapshot;
+
+		synchronized (this) {
+			idProduitSnapshot = this.idProduit;
+			produitSnapshot = this.produit;
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+		}
+
+		switch (pI) {
+
+			case 0:
+
+				if (idProduitSnapshot != null) {
+					return String.valueOf(idProduitSnapshot);
+				}
+
+				return null;
+
+			case 1:
+
+				if (sousTypeProduitSnapshot != null) {
+
+					final TypeProduitI typeProduitSnapshot
+						= sousTypeProduitSnapshot.getTypeProduit();
+
+					if (typeProduitSnapshot != null) {
+
+						final String typeProduitString
+							= typeProduitSnapshot.getTypeProduit();
+
+						if (typeProduitString != null) {
+							return typeProduitString;
+						}
+
+					}
+
+				}
+
+				return null;
+
+			case 2:
+
+				if (sousTypeProduitSnapshot != null) {
+
+					final String sousTypeProduitString
+						= sousTypeProduitSnapshot.getSousTypeProduit();
+
+					if (sousTypeProduitString != null) {
+						return sousTypeProduitString;
+					}
+
+				}
+
+				return null;
+
+			case 3:
+
+				if (produitSnapshot != null) {
+					return produitSnapshot;
+				}
+
+				return null;
+
+			default:
+
+				return "invalide";
+
+		}
+
+	} // Fin de getValeurColonne(...)._____________________________________
 		
+
 	
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le <code>TypeProduit</code> du <code>Produit</code>
+	 * via son <code>SousTypeProduit</code>.</p>
+	 * <ul>
+	 * <li>retourne null si <code>sousTypeProduit</code> est null.</li>
+	 * <li>snapshot court sous verrou, appel hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final TypeProduitI getTypeProduit() {
-	    /*
-	     * Retourne le TypeProduitI via le parent SousTypeProduitI 
-	     * de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.sousTypeProduit != null
-	                ? this.sousTypeProduit.getTypeProduit() : null;
-	    }
-	}
+
+		/* Snapshot court sous verrou. */
+		final SousTypeProduitI sousTypeProduitSnapshot;
+
+		synchronized (this) {
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+		}
+
+		/* Appel hors verrou pour éviter tout verrouillage imbriqué. */
+		if (sousTypeProduitSnapshot == null) {
+			return null;
+		}
+
+		return sousTypeProduitSnapshot.getTypeProduit();
+
+	} // Fin de getTypeProduit().___________________________________________
 
 
 
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le statut de validité du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>retourne true si <code>sousTypeProduit</code> 
+	 * n'est pas null.</li>
+	 * <li>lecture thread-safe du champ <code>valide</code>.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final boolean isValide() {
-	    /*
-	     * Retourne le statut de validité de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.valide;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir 
+		 * la visibilité mémoire. */
+		final boolean valideSnapshot;
+
+		synchronized (this) {
+			valideSnapshot = this.valide;
+		}
+
+		return valideSnapshot;
+
+	} // Fin de isValide()._______________________________________________
 
 
 
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne l'identifiant du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>lecture thread-safe du champ <code>idProduit</code>.</li>
+	 * <li>snapshot court sous verrou, retour hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final Long getIdProduit() {
-	    /*
-	     * Retourne l'ID de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.idProduit;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir la visibilité mémoire. */
+		final Long idProduitSnapshot;
+
+		synchronized (this) {
+			idProduitSnapshot = this.idProduit;
+		}
+
+		return idProduitSnapshot;
+
+	} // Fin de getIdProduit().___________________________________________
 
 
 	
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Met à jour l'identifiant du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>écriture thread-safe du champ <code>idProduit</code>.</li>
+	 * <li>mise à jour atomique sous verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final void setIdProduit(final Long pIdProduit) {
-	    /*
-	     * Met à jour l'ID de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        this.idProduit = pIdProduit;
-	    }
-	}
+
+		/* Mise à jour sous verrou pour garantir la visibilité mémoire. */
+		synchronized (this) {
+			this.idProduit = pIdProduit;
+		}
+
+	} // Fin de setIdProduit(...).________________________________________
 
 
 
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le libellé du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>lecture thread-safe du champ <code>produit</code>.</li>
+	 * <li>snapshot court sous verrou, retour hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final String getProduit() {
-	    /*
-	     * Retourne le nom du produit de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.produit;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir 
+		 * la visibilité mémoire. */
+		final String produitSnapshot;
+
+		synchronized (this) {
+			produitSnapshot = this.produit;
+		}
+
+		return produitSnapshot;
+
+	} // Fin de getProduit()._____________________________________________
 
 
 		
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Met à jour le libellé du <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>écriture thread-safe du champ <code>produit</code>.</li>
+	 * <li>aucune normalisation n'est appliquée au niveau métier.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final void setProduit(final String pProduit) {
-	    /*
-	     * Met à jour le nom du produit de manière thread-safe.
-	     * Aucun traitement de normalisation (trim/null) n'est appliqué
-	     * dans les objets métier.
-	     */
-	    synchronized (this) {
-	        this.produit = pProduit;
-	    }
-	}
+
+		/* Mise à jour sous verrou pour garantir la visibilité mémoire. */
+		synchronized (this) {
+			this.produit = pProduit;
+		}
+
+	} // Fin de setProduit(...).__________________________________________
 
 
 	
 	/**
 	 * {@inheritDoc}
+	 * <div>
+	 * <p>Retourne le <code>SousTypeProduit</code> associé au <code>Produit</code>.</p>
+	 * <ul>
+	 * <li>lecture thread-safe du champ <code>sousTypeProduit</code>.</li>
+	 * <li>snapshot court sous verrou, retour hors verrou.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Override
 	public final SousTypeProduitI getSousTypeProduit() {
-	    /*
-	     * Retourne le parent SousTypeProduitI de manière thread-safe.
-	     */
-	    synchronized (this) {
-	        return this.sousTypeProduit;
-	    }
-	}
+
+		/* Snapshot court sous verrou pour garantir la visibilité mémoire. */
+		final SousTypeProduitI sousTypeProduitSnapshot;
+
+		synchronized (this) {
+			sousTypeProduitSnapshot = this.sousTypeProduit;
+		}
+
+		return sousTypeProduitSnapshot;
+
+	} // Fin de getSousTypeProduit().______________________________________
 
 
 		
@@ -967,42 +1304,46 @@ public class Produit implements ProduitI, Cloneable {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">traite le cas où une
-	 * mauvaise instance de SousTypeProduitI non Objet métier
-	 * est passée en paramètre d'une méthode.</p>
+	 * <p>Traite le cas où une mauvaise instance de 
+	 * <code>SousTypeProduitI</code>
+	 * non Objet métier est passée en paramètre.</p>
 	 * <ul>
-	 * <li>return si pSousTypeProduit == null.</li>
-	 * <li>LOG.fatal et throw IllegalStateException
-	 * si pSousTypeProduit est une mauvaise instance.</li>
+	 * <li>retourne sans effet si 
+	 * <code>pSousTypeProduit</code> est null.</li>
+	 * <li>journalise en <code>fatal</code> et lève une 
+	 * <code>IllegalStateException</code>
+	 * si l'instance n'est pas de type <code>SousTypeProduit</code>.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pSousTypeProduit : SousTypeProduitI
 	 */
 	private void traiterMauvaiseInstanceSousTypeProduit(
-	        final SousTypeProduitI pSousTypeProduit) {
-	    /*
-	     * Traite les mauvaises instances de manière thread-safe.
-	     */
-	    synchronized (this) {
-	    	
-	        if (pSousTypeProduit != null) {
-	        	
-	            if (!(pSousTypeProduit instanceof SousTypeProduit)) {
-	            	
-	                final String messageKo 
-	                	= MAUVAISE_INSTANCE_ENFANT_METIER
-	                        + pSousTypeProduit.getClass();
-	                
-	                if (LOG.isFatalEnabled()) {
-	                    LOG.fatal(messageKo);
-	                }
-	                
-	                throw new IllegalStateException(messageKo);
-	            }
-	        }
-	    }
-	}
+			final SousTypeProduitI pSousTypeProduit) {
+
+		/*
+		 * Méthode pure : ne lit ni ne modifie l'état interne.
+		 * Aucun synchronized nécessaire.
+		 */
+		if (pSousTypeProduit != null) {
+
+			if (!(pSousTypeProduit instanceof SousTypeProduit)) {
+
+				final String messageKo
+					= MAUVAISE_INSTANCE_ENFANT_METIER
+						+ pSousTypeProduit.getClass();
+
+				if (LOG.isFatalEnabled()) {
+					LOG.fatal(messageKo);
+				}
+
+				throw new IllegalStateException(messageKo);
+
+			}
+
+		}
+
+	} // Fin de traiterMauvaiseInstanceSousTypeProduit(...)._______________
 		
 	
 }

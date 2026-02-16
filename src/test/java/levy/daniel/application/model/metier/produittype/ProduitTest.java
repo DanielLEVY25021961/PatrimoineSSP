@@ -82,6 +82,12 @@ public class ProduitTest {
 	 */
 	public static final String NULL = "null";
 	
+	/**
+	 * "objet1.equals(objet2) : "
+	 */
+	public static final String OBJET1_EQUALS_OBJET2 
+		= "objet1.equals(objet2) : ";
+	
 	/* ------------------------------------------------------------------ */
 
 	/**
@@ -651,12 +657,12 @@ public class ProduitTest {
 		/* garantit le contrat Java symétrique 
 		 * x.equals(y) ----> y.equals(x). */
 		assertNotSame(objet1, objet2, "objet1 et objet2 ne sont pas la même instance : ");
-		assertEquals(objet1, objet2, "objet1.equals(objet2) : ");
+		assertEquals(objet1, objet2, OBJET1_EQUALS_OBJET2);
 		assertEquals(objet2, objet1, "objet2.equals(objet1) : ");
 		
 		/* garantit le contrat Java transitif 
 		 * x.equals(y) et y.equals(z) ----> x.equals(z). */
-		assertEquals(objet1, objet2, "objet1.equals(objet2) : ");
+		assertEquals(objet1, objet2, OBJET1_EQUALS_OBJET2);
 		assertEquals(objet2, objet3, "objet2.equals(objet3) : ");
 		assertEquals(objet1, objet3, "objet1.equals(objet3) : ");
 		
@@ -712,12 +718,132 @@ public class ProduitTest {
 		
 		/* garantit le bon fonctionnement de equals() 
 		 * en cas d'égalité métier. */
-		assertEquals(objet1, objet2, "objet1.equals(objet2) : ");
+		assertEquals(objet1, objet2, OBJET1_EQUALS_OBJET2);
 		
 		/* garantit le bon fonctionnement de equals() 
 		 * en cas d'inégalité métier. */
 		assertNotEquals(objet1, objetPasEqualsObjet1, "objet1 n'est pas equals() avec objetPasEqualsObjet1 : ");
 		assertNotEquals(objet1, objetPasEqualsObjet2, "objet1 n'est pas equals() avec objetPasEqualsObjet2 : ");
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Teste le thread-safety de equals(Object) et hashCode() en concurrence.
+	 * </p>
+	 * <ul>
+	 * <li>Lance des appels concurrents a.equals(b) et b.equals(a) afin de détecter tout blocage.</li>
+	 * <li>Vérifie qu'aucune tâche n'est annulée par timeout.</li>
+	 * <li>Vérifie que equals reste cohérent et que hashCode reste cohérent avec equals.</li>
+	 * </ul>
+	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testEqualsThreadSafe() : vérifie equals/hashCode en environnement multi-thread")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testEqualsThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
+	    final boolean affichage = false;
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduit typeProduit = new TypeProduit(1L, PHOTOGRAPHIE, null);
+
+	    final SousTypeProduit sousTypeProduit1 =
+	            new SousTypeProduit(1L, CAMERAS, typeProduit, null);
+
+	    final SousTypeProduit sousTypeProduit2 =
+	            new SousTypeProduit(2L, CAMERAS, typeProduit, null);
+
+	    final Produit produit1 =
+	            new Produit(1L, APPAREIL_PHOTO, sousTypeProduit1);
+
+	    final Produit produit2 =
+	            new Produit(2L, APPAREIL_PHOTO.toUpperCase(java.util.Locale.ROOT), sousTypeProduit2);
+
+	    /* Pré-assertions en mono-thread. */
+	    assertTrue(produit1.equals(produit2),
+	            "produit1 doit être equals à produit2 avant le test multi-thread : ");
+	    assertTrue(produit2.equals(produit1),
+	            "produit2 doit être equals à produit1 avant le test multi-thread : ");
+	    assertEquals(produit1.hashCode(), produit2.hashCode(),
+	            "produit1 et produit2 doivent avoir le même hashCode avant le test multi-thread : ");
+
+	    final ExecutorService executor = Executors.newFixedThreadPool(10);
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+	    /* Tâches equals dans les deux sens. */
+	    for (int i = 0; i < 500; i++) {
+
+	        tasks.add(() -> {
+
+	            final boolean ok = produit1.equals(produit2);
+
+	            return Boolean.valueOf(ok);
+
+	        });
+
+	        tasks.add(() -> {
+
+	            final boolean ok = produit2.equals(produit1);
+
+	            return Boolean.valueOf(ok);
+
+	        });
+
+	    }
+
+	    /* Tâches hashCode cohérentes avec equals. */
+	    for (int i = 0; i < 500; i++) {
+
+	        tasks.add(() -> {
+
+	            final int h1 = produit1.hashCode();
+	            final int h2 = produit2.hashCode();
+
+	            return Boolean.valueOf(h1 == h2);
+
+	        });
+
+	    }
+
+	    /* ACT - WHEN */
+	    final List<Future<Boolean>> futures =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+	    executor.shutdown();
+
+	    /* ASSERT - THEN : aucune tâche ne doit être annulée (timeout) et toutes doivent réussir. */
+	    for (final Future<Boolean> future : futures) {
+
+	        assertFalse(future.isCancelled(),
+	                "Une tâche equals/hashCode ne doit pas être annulée (timeout) : ");
+
+	        assertTrue(future.get(),
+	                "Une tâche equals/hashCode doit réussir et retourner true : ");
+
+	    }
+
+	    /* ASSERT - THEN : cohérence finale. */
+	    assertTrue(produit1.equals(produit2),
+	            "Après concurrence, produit1 doit rester equals à produit2 : ");
+	    assertTrue(produit2.equals(produit1),
+	            "Après concurrence, produit2 doit rester equals à produit1 : ");
+	    assertEquals(produit1.hashCode(), produit2.hashCode(),
+	            "Après concurrence, produit1 et produit2 doivent garder le même hashCode : ");
+
+	    /* AFFICHAGE A LA CONSOLE. */
+	    if (AFFICHAGE_GENERAL && affichage) {
+	        System.out.println();
+	        System.out.println("***** Test equals/hashCode thread-safe réussi *****");
+	    }
 
 	} //___________________________________________________________________
 
@@ -806,58 +932,115 @@ public class ProduitTest {
 	
 	/**
 	 * <div>
-	 * <p>Teste la méthode <b>toString()</b> en environnement multi-thread.</p>
+	 * <p>
+	 * Teste la robustesse thread-safe de toString() en environnement multi-thread.
+	 * </p>
 	 * <ul>
-	 * <li>Vérifie que l'appel concurrent à toString() ne provoque pas d'erreurs.</li>
-	 * <li>Utilise un ExecutorService pour simuler des accès concurrents.</li>
+	 * <li>Lance des appels concurrents à toString() pendant des modifications via setProduit(...) et setSousTypeProduit(...).</li>
+	 * <li>Vérifie qu'aucune tâche n'est annulée (timeout) et qu'aucune tâche ne lève d'exception.</li>
 	 * </ul>
 	 * </div>
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
 	 */
 	@SuppressWarnings({ RESOURCE, UNUSED })
-	@DisplayName("testToStringThreadSafe() : vérifie le thread-safety de toString()")
+	@DisplayName("testToStringThreadSafe() : vérifie toString() en environnement multi-thread")
 	@Tag(THREAD_SAFETY)
 	@Test
-	public final void testToStringThreadSafe() throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
+	public final void testToStringThreadSafe()
+	        throws InterruptedException, ExecutionException {
+
+	    /* AFFICHAGE DANS LE TEST ou NON */
 	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de toString().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<String>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.toString());
+
+	    /* ARRANGE - GIVEN */
+	    final TypeProduit typeProduit = new TypeProduit(1L, PHOTOGRAPHIE, null);
+	    final SousTypeProduit sousTypeProduit =
+	            new SousTypeProduit(1L, CAMERAS, typeProduit, null);
+
+	    final Produit produit = new Produit(1L, APPAREIL_PHOTO, sousTypeProduit);
+
+	    final ExecutorService executor = Executors.newFixedThreadPool(8);
+	    final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+	    /* Tâches toString(). */
+	    for (int i = 0; i < 500; i++) {
+
+	        tasks.add(() -> {
+
+	            final String s = produit.toString();
+
+	            return Boolean.valueOf(s != null);
+
+	        });
+
 	    }
-	
-	    final List<Future<String>> results = executor.invokeAll(tasks);
+
+	    /* Tâches de modifications concurrentes. */
+	    for (int i = 0; i < 250; i++) {
+
+	        tasks.add(() -> {
+
+	            produit.setProduit(PRODUIT_MODIFIE);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	        tasks.add(() -> {
+
+	            produit.setProduit(APPAREIL_PHOTO);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	        tasks.add(() -> {
+
+	            produit.setSousTypeProduit(null);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	        tasks.add(() -> {
+
+	            produit.setSousTypeProduit(sousTypeProduit);
+
+	            return Boolean.TRUE;
+
+	        });
+
+	    }
+
+	    /* ACT - WHEN */
+	    final List<Future<Boolean>> futures =
+	            executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
 	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des résultats.
-	     */
-	    for (final Future<String> result : results) {
-	        assertNotNull(result.get(), 
-	        		"toString() ne doit jamais retourner null en environnement multi-thread.");
+
+	    /* ASSERT - THEN : aucune tâche annulée (timeout) et aucune exception. */
+	    for (final Future<Boolean> future : futures) {
+
+	        assertFalse(future.isCancelled(),
+	                "Une tâche toString/setProduit/setSousTypeProduit ne doit pas être annulée (timeout) : ");
+
+	        assertTrue(future.get(),
+	                "Une tâche toString/setProduit/setSousTypeProduit doit se terminer normalement : ");
+
 	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
+
+	    /* ASSERT - THEN : toString reste appelable. */
+	    assertNotNull(produit.toString(),
+	            "toString() doit rester appelable après concurrence : ");
+
+	    /* AFFICHAGE A LA CONSOLE. */
 	    if (AFFICHAGE_GENERAL && affichage) {
 	        System.out.println();
-	        System.out.println("***** Test toString() en multi-thread réussi *****");
-	        System.out.println("Résultat de toString() : " + produit.toString());
+	        System.out.println("***** Test toString thread-safe réussi *****");
+	        System.out.println(produit.toString());
 	    }
+
 	} //___________________________________________________________________
 
 
@@ -1122,6 +1305,229 @@ public class ProduitTest {
 	        System.out.println("Résultat obtenu : " + results.get(0).get());
 	    }
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste que compareTo() est insensible à la casse
+	 * (cohérence avec equals() : x.equals(y) ---> x.compareTo(y) == 0).</p>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToIgnoreCase() : vérifie compareTo() insensible à la casse")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToIgnoreCase() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ProduitTest - méthode testCompareToIgnoreCase() ********** ");
+			System.out.println("CE TEST VERIFIE compareTo() insensible à la casse.");
+			System.out.println();
+		}
+
+		//*** ARRANGE - GIVEN
+		/* TypeProduit */
+		final TypeProduitI typeProduit1 = new TypeProduit("ANATOMIE");
+		final TypeProduitI typeProduit2 = new TypeProduit("anatomie");
+
+		/* SousTypeProduit. */
+		final SousTypeProduitI sousTypeProduit1 = new SousTypeProduit("ANATOMIE DE LA MAIN", typeProduit1);
+		final SousTypeProduitI sousTypeProduit2 = new SousTypeProduit("anatomie de la main", typeProduit2);
+
+		/* ProduitI. */
+		final ProduitI objet1 = new Produit("ANATOMIE ARTHROSCOPIQUE DE LA MAIN", sousTypeProduit1);
+		final ProduitI objet2 = new Produit("anatomie arthroscopique de la main", sousTypeProduit2);
+
+		// ACT - WHEN
+		final boolean equals = objet1.equals(objet2);
+		final int compare12 = objet1.compareTo(objet2);
+		final int compare21 = objet2.compareTo(objet1);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("*** objet1 ***");
+			this.afficher(objet1);
+			System.out.println("*** objet2 ***");
+			this.afficher(objet2);
+			System.out.println();
+			System.out.println(OBJET1_EQUALS_OBJET2 + equals);
+			System.out.println("objet1.compareTo(objet2) : " + compare12);
+			System.out.println("objet2.compareTo(objet1) : " + compare21);
+			System.out.println();
+		}
+
+		// ASSERT - THEN
+		/* garantit le Contrat Java : x.equals(y) ---> x.compareTo(y) == 0. */
+		assertTrue(equals, "objet1 doit être equals() à objet2 (insensible à la casse) : ");
+		assertTrue(compare12 == 0, "objet1.equals(objet2) ---> objet1.compareTo(objet2) == 0 : ");
+		assertTrue(compare21 == 0, "objet2.equals(objet1) ---> objet2.compareTo(objet1) == 0 : ");
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste la symétrie du signe et la transitivité de compareTo().</p>
+	 * <ul>
+	 * <li>Symétrie : sign(a.compareTo(b)) == -sign(b.compareTo(a)).</li>
+	 * <li>Transitivité : si a < b et b < c alors a < c.</li>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToSymetrieEtTransitivite() : vérifie symétrie et transitivité")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToSymetrieEtTransitivite() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ProduitTest - méthode testCompareToSymetrieEtTransitivite() ********** ");
+			System.out.println("CE TEST VERIFIE symétrie et transitivité de compareTo().");
+			System.out.println();
+		}
+
+		//*** ARRANGE - GIVEN
+		/* TypeProduit */
+		final TypeProduitI typeProduitA = new TypeProduit(ANATOMIE);
+		final TypeProduitI typeProduitB = new TypeProduit(PHOTOGRAPHIE);
+
+		/* SousTypeProduit. */
+		final SousTypeProduitI sousTypeProduitA = new SousTypeProduit(ANATOMIE_MAIN, typeProduitA);
+		final SousTypeProduitI sousTypeProduitB = new SousTypeProduit(CAMERAS, typeProduitB);
+
+		/* ProduitI.
+		 * On construit a < b < c (ordre piloté par le SousTypeProduit puis produit). */
+		final ProduitI a = new Produit("AAA", sousTypeProduitA);
+		final ProduitI b = new Produit("BBB", sousTypeProduitB);
+		final ProduitI c = new Produit("CCC", sousTypeProduitB);
+
+		// ACT - WHEN
+		final int ab = a.compareTo(b);
+		final int ba = b.compareTo(a);
+		final int bc = b.compareTo(c);
+		final int cb = c.compareTo(b);
+		final int ac = a.compareTo(c);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("a.compareTo(b) : " + ab);
+			System.out.println("b.compareTo(a) : " + ba);
+			System.out.println("b.compareTo(c) : " + bc);
+			System.out.println("c.compareTo(b) : " + cb);
+			System.out.println("a.compareTo(c) : " + ac);
+			System.out.println();
+		}
+
+		// ASSERT - THEN
+
+		/* Symétrie du signe (hors égalité). */
+		assertTrue(ab != 0, "a et b doivent être ordonnables (ab != 0) : ");
+		assertTrue((ab < 0 && ba > 0) || (ab > 0 && ba < 0), "Symétrie : sign(ab) == -sign(ba) : ");
+
+		assertTrue(bc != 0, "b et c doivent être ordonnables (bc != 0) : ");
+		assertTrue((bc < 0 && cb > 0) || (bc > 0 && cb < 0), "Symétrie : sign(bc) == -sign(cb) : ");
+
+		/* Transitivité : si a < b et b < c alors a < c. */
+		assertTrue(ab < 0, "Pré-condition : a < b : ");
+		assertTrue(bc < 0, "Pré-condition : b < c : ");
+		assertTrue(ac < 0, "Transitivité : a < c : ");
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste compareTo() en multi-thread sans pré-synchronisation externe
+	 * (détection de deadlocks par timeout + Future.isCancelled()).</p>
+	 * </div>
+	 *
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testCompareToThreadSafeSansPreVerrouillage() : détecte deadlocks (timeout)")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testCompareToThreadSafeSansPreVerrouillage() 
+			throws InterruptedException, ExecutionException {
+
+		/* AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* ARRANGE - GIVEN : Création des objets nécessaires. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+
+		final ProduitI produit1 = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+		final ProduitI produit2 = new Produit(2L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+
+		/* Résultats attendus (calculés une fois avant le test). */
+		final int expected12 = produit1.compareTo(produit2);
+		final int expected21 = produit2.compareTo(produit1);
+
+		/* ACT - WHEN : Exécution concurrente de compareTo(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(12);
+		final List<Callable<Integer>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 200; i++) {
+			tasks.add(() -> produit1.compareTo(produit2));
+			tasks.add(() -> produit2.compareTo(produit1));
+		}
+
+		final List<Future<Integer>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* ASSERT - THEN : aucune tâche annulée (timeout) et aucune exception. */
+		for (int i = 0; i < futures.size(); i++) {
+
+			final Future<Integer> future = futures.get(i);
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche compareTo ne doit pas être annulée (timeout) : ");
+
+			final Integer value = future.get();
+
+			/* Les tâches alternent (p1->p2) puis (p2->p1). */
+			if (i % 2 == 0) {
+				assertEquals(
+					expected12,
+					value.intValue(),
+					"compareTo(produit1, produit2) doit rester cohérent en multi-thread : ");
+			} else {
+				assertEquals(
+					expected21,
+					value.intValue(),
+					"compareTo(produit2, produit1) doit rester cohérent en multi-thread : ");
+			}
+		}
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test compareTo() sans pré-verrouillage en multi-thread réussi *****");
+			System.out.println("Résultat attendu 1->2 : " + expected12);
+			System.out.println("Résultat attendu 2->1 : " + expected21);
+			System.out.println();
+		}
+	} //___________________________________________________________________
 
 
 
@@ -1247,6 +1653,67 @@ public class ProduitTest {
 	
 	/**
 	 * <div>
+	 * <p>Teste la méthode <b>clone()</b> en environnement multi-thread.</p>
+	 * <ul>
+	 * <li>Vérifie que le clonage est thread-safe.</li>
+	 * <li>Utilise un ExecutorService pour simuler des clonages concurrents.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings({ "unchecked", UNUSED, RESOURCE })
+	@DisplayName("testCloneThreadSafe() : vérifie le thread-safety de clone()")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testCloneThreadSafe() 
+			throws InterruptedException, ExecutionException, CloneNotSupportedException {
+	
+		/* * AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+	
+		/* * ARRANGE - GIVEN : Création d'un Produit. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+		final Produit produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+	
+		/* * ACT - WHEN : Exécution concurrente de clone(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(10);
+		final List<Callable<ProduitI>> tasks = new ArrayList<>();
+	
+		for (int i = 0; i < 100; i++) {
+			tasks.add(() -> produit.clone());
+		}
+	
+		final List<Future<ProduitI>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+	
+		executor.shutdown();
+	
+		/* * ASSERT - THEN : aucune tâche ne doit être annulée (timeout)
+		 * et toutes doivent réussir. */
+		for (final Future<ProduitI> future : futures) {
+	
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche clone ne doit pas être annulée (timeout) : ");
+	
+			final ProduitI clone = future.get();
+	
+			assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
+			assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
+		}
+	
+		/* * AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test clone() en multi-thread réussi *****");
+			System.out.println("Nombre de clones créés : " + futures.size());
+		}
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
 	 * <p>Teste la méthode <code>deepClone(CloneContext)</code>.</p>
 	 * <ul>
 	 * <li>Vérifie le clonage profond avec gestion des cycles.</li>
@@ -1326,47 +1793,48 @@ public class ProduitTest {
 	@Tag(THREAD_SAFETY)
 	@Test
 	public final void testDeepCloneThreadSafe() throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de deepClone().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<ProduitI>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.deepClone(new CloneContext()));
-	    }
-	
-	    final List<Future<ProduitI>> results = executor.invokeAll(tasks);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des clones.
-	     */
-	    for (final Future<ProduitI> result : results) {
-	        final ProduitI clone = result.get();
-	        assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
-	        assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test deepClone() en multi-thread réussi *****");
-	        System.out.println("Nombre de clones créés : " + results.size());
-	    }
+
+		/* * AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+		final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+
+		/* * ACT - WHEN : Exécution concurrente de deepClone(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(10);
+		final List<Callable<ProduitI>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 100; i++) {
+			tasks.add(() -> produit.deepClone(new CloneContext()));
+		}
+
+		final List<Future<ProduitI>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* * ASSERT - THEN : aucune tâche ne doit être annulée (timeout)
+		 * et toutes doivent réussir. */
+		for (final Future<ProduitI> future : futures) {
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche deepClone ne doit pas être annulée (timeout) : ");
+
+			final ProduitI clone = future.get();
+
+			assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
+			assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
+		}
+
+		/* * AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test deepClone() en multi-thread réussi *****");
+			System.out.println("Nombre de clones créés : " + futures.size());
+		}
 	} //___________________________________________________________________
 
 
@@ -1426,66 +1894,6 @@ public class ProduitTest {
 	
 	/**
 	 * <div>
-	 * <p>Teste la méthode <b>clone()</b> en environnement multi-thread.</p>
-	 * <ul>
-	 * <li>Vérifie que le clonage est thread-safe.</li>
-	 * <li>Utilise un ExecutorService pour simuler des clonages concurrents.</li>
-	 * </ul>
-	 * </div>
-	 */
-	@SuppressWarnings({ "unchecked", UNUSED, RESOURCE })
-	@DisplayName("testCloneThreadSafe() : vérifie le thread-safety de clone()")
-	@Tag(THREAD_SAFETY)
-	@Test
-	public final void testCloneThreadSafe() 
-			throws InterruptedException, ExecutionException, CloneNotSupportedException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final Produit produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de clone().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<Produit>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.clone());
-	    }
-	
-	    final List<Future<Produit>> results = executor.invokeAll(tasks);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des clones.
-	     */
-	    for (final Future<Produit> result : results) {
-	        final ProduitI clone = result.get();
-	        assertEquals(produit, clone, "Le clone doit être equals() à l'original.");
-	        assertNotSame(produit, clone, CLONE_PAS_MEME_INSTANCE);
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test clone() en multi-thread réussi *****");
-	        System.out.println("Nombre de clones créés : " + results.size());
-	    }
-	} //___________________________________________________________________
-
-
-
-	/**
-	 * <div>
 	 * <p>Teste la méthode <b>cloneWithoutParent()</b> en environnement multi-thread.</p>
 	 * <ul>
 	 * <li>Vérifie que le clonage sans parent est thread-safe.</li>
@@ -1497,51 +1905,51 @@ public class ProduitTest {
 	@DisplayName("testCloneWithoutParentThreadSafe() : vérifie le thread-safety de cloneWithoutParent()")
 	@Tag(THREAD_SAFETY)
 	@Test
-	public final void testCloneWithoutParentThreadSafe() 
-			throws InterruptedException, ExecutionException {
-	    /*
-	     * AFFICHAGE DANS LE TEST ou NON
-	     */
-	    final boolean affichage = false;
-	
-	    /*
-	     * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit.
-	     */
-	    final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
-	    final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
-	    final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
-	
-	    /*
-	     * ACT - WHEN : Exécution concurrente de cloneWithoutParent().
-	     */
-	    final ExecutorService executor = Executors.newFixedThreadPool(10);
-	    final List<Callable<ProduitI>> tasks = new ArrayList<>();
-	    for (int i = 0; i < 100; i++) {
-	        tasks.add(() -> produit.cloneWithoutParent());
-	    }
-	
-	    final List<Future<ProduitI>> results = executor.invokeAll(tasks);
-	    executor.shutdown();
-	
-	    /*
-	     * ASSERT - THEN : Vérification des clones.
-	     */
-	    for (final Future<ProduitI> result : results) {
-	        final ProduitI clone = result.get();
-	        assertEquals(produit.getIdProduit(), clone.getIdProduit(), "L'ID doit être identique.");
-	        assertEquals(produit.getProduit(), clone.getProduit(), "Le produit doit être identique.");
-	        assertNull(clone.getSousTypeProduit(), "Le sousTypeProduit du clone doit être null.");
-	        assertFalse(clone.isValide(), "Le clone ne doit pas être valide (sans parent).");
-	    }
-	
-	    /*
-	     * AFFICHAGE A LA CONSOLE.
-	     */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println();
-	        System.out.println("***** Test cloneWithoutParent() en multi-thread réussi *****");
-	        System.out.println("Nombre de clones créés : " + results.size());
-	    }
+	public final void testCloneWithoutParentThreadSafe() throws InterruptedException, ExecutionException {
+
+		/* * AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* * ARRANGE - GIVEN : Création d'un Produit avec un SousTypeProduit. */
+		final TypeProduitI typeProduit = new TypeProduit(ANATOMIE);
+		final SousTypeProduitI sousTypeProduit = new SousTypeProduit(ANATOMIE_MAIN, typeProduit);
+		final ProduitI produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, sousTypeProduit);
+
+		/* * ACT - WHEN : Exécution concurrente de cloneWithoutParent(). */
+		final ExecutorService executor = Executors.newFixedThreadPool(10);
+		final List<Callable<ProduitI>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 100; i++) {
+			tasks.add(() -> produit.cloneWithoutParent());
+		}
+
+		final List<Future<ProduitI>> futures = executor.invokeAll(
+			tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* * ASSERT - THEN : aucune tâche ne doit être annulée (timeout)
+		 * et toutes doivent réussir. */
+		for (final Future<ProduitI> future : futures) {
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche cloneWithoutParent ne doit pas être annulée (timeout) : ");
+
+			final ProduitI clone = future.get();
+
+			assertEquals(produit.getIdProduit(), clone.getIdProduit(), "L'ID doit être identique.");
+			assertEquals(produit.getProduit(), clone.getProduit(), "Le produit doit être identique.");
+			assertNull(clone.getSousTypeProduit(), "Le sousTypeProduit du clone doit être null.");
+			assertFalse(clone.isValide(), "Le clone ne doit pas être valide (sans parent).");
+		}
+
+		/* * AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test cloneWithoutParent() en multi-thread réussi *****");
+			System.out.println("Nombre de clones créés : " + futures.size());
+		}
 	} //___________________________________________________________________
 
 
@@ -2833,6 +3241,172 @@ public class ProduitTest {
 	        System.out.println("***** Test getTypeProduit() en multi-thread réussi *****");
 	        System.out.println("TypeProduit du produit : " + produit.getTypeProduit());
 	    }
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste l'absence de deadlock dans la gestion bidirectionnelle
+	 * <code>Produit</code> &lt;-&gt; <code>SousTypeProduit</code>.</p>
+	 * <ul>
+	 * <li>Exécute en concurrence des appels à <code>produit.setSousTypeProduit(...)</code>.</li>
+	 * <li>Exécute en concurrence des appels à <code>sousTypeProduit.ajouterSTPauProduit(...)</code>
+	 * et <code>sousTypeProduit.retirerSTPauProduit(...)</code>.</li>
+	 * <li>Détecte un deadlock par timeout via <code>invokeAll(..., timeout)</code>
+	 * et <code>Future.isCancelled()</code>.</li>
+	 * <li>Vérifie la cohérence finale minimale des liens (si parent non null).</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws InterruptedException si le thread courant est interrompu.
+	 * @throws ExecutionException si une tâche lève une exception.
+	 */
+	@SuppressWarnings({ RESOURCE, UNUSED })
+	@DisplayName("testSousTypeProduitProduitAntiDeadlockThreadSafe() : détecte deadlocks STP<->Produit (timeout)")
+	@Tag(THREAD_SAFETY)
+	@Test
+	public final void testSousTypeProduitProduitAntiDeadlockThreadSafe()
+			throws InterruptedException, ExecutionException {
+
+		/* AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+
+		/* ARRANGE - GIVEN */
+		final TypeProduit typeProduit = new TypeProduit(1L, ANATOMIE, null);
+
+		final SousTypeProduit sousTypeProduit1
+			= new SousTypeProduit(1L, ANATOMIE_MAIN, typeProduit, null);
+
+		final SousTypeProduit sousTypeProduit2
+			= new SousTypeProduit(2L, CAMERAS, typeProduit, null);
+
+		final Produit produit = new Produit(1L, ANATOMIE_ARTHRO_MAIN, null);
+
+		final ExecutorService executor = Executors.newFixedThreadPool(12);
+		final List<Callable<Boolean>> tasks = new ArrayList<>();
+
+		for (int i = 0; i < 300; i++) {
+
+			tasks.add(() -> {
+
+				produit.setSousTypeProduit(sousTypeProduit1);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				produit.setSousTypeProduit(sousTypeProduit2);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				produit.setSousTypeProduit(null);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit1.ajouterSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit1.retirerSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit2.ajouterSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+			tasks.add(() -> {
+
+				sousTypeProduit2.retirerSTPauProduit(produit);
+
+				return Boolean.TRUE;
+
+			});
+
+		}
+
+		/* ACT - WHEN */
+		final List<Future<Boolean>> futures
+			= executor.invokeAll(tasks, 5, java.util.concurrent.TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		/* ASSERT - THEN : aucune tâche annulée (timeout) et aucune exception. */
+		for (final Future<Boolean> future : futures) {
+
+			assertFalse(
+				future.isCancelled(),
+				"Une tâche STP<->Produit ne doit pas être annulée (timeout) : ");
+
+			assertTrue(
+				future.get(),
+				"Une tâche STP<->Produit doit se terminer normalement : ");
+
+		}
+
+		/* ASSERT - THEN : cohérence finale minimale (selon l'état final). */
+		final SousTypeProduitI parentFinal = produit.getSousTypeProduit();
+
+		if (parentFinal == null) {
+
+			assertFalse(
+				sousTypeProduit1.getProduits().contains(produit),
+				"Si le parent final est null, sousTypeProduit1 ne doit pas contenir le produit : ");
+
+			assertFalse(
+				sousTypeProduit2.getProduits().contains(produit),
+				"Si le parent final est null, sousTypeProduit2 ne doit pas contenir le produit : ");
+
+		} else if (parentFinal == sousTypeProduit1) {
+
+			assertTrue(
+				sousTypeProduit1.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit1, il doit contenir le produit : ");
+
+			assertFalse(
+				sousTypeProduit2.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit1, sousTypeProduit2 ne doit pas contenir le produit : ");
+
+		} else if (parentFinal == sousTypeProduit2) {
+
+			assertTrue(
+				sousTypeProduit2.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit2, il doit contenir le produit : ");
+
+			assertFalse(
+				sousTypeProduit1.getProduits().contains(produit),
+				"Si le parent final est sousTypeProduit2, sousTypeProduit1 ne doit pas contenir le produit : ");
+
+		}
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("***** Test anti-deadlock STP<->Produit réussi *****");
+			System.out.println("Parent final : " + parentFinal);
+		}
+
 	} //___________________________________________________________________
 	
 	
