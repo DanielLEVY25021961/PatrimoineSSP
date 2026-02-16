@@ -390,7 +390,8 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Getter du type de produit comme "vêtement", "outillage".</p>
+	 * Getter du type de produit (libellé) 
+	 * comme "vêtement", "outillage".</p>
 	 * </div>
 	 *
 	 * @return <code>this.typeProduit</code> : String
@@ -402,7 +403,8 @@ public interface TypeProduitI extends Comparable<TypeProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Setter du type de produit comme "vêtement", "outillage".</p>
+	 * Setter du type de produit (libellé) 
+	 * comme "vêtement", "outillage".</p>
 	 * </div>
 	 *
 	 * @param pTypeProduit : String :

@@ -123,12 +123,14 @@ public interface ProduitI extends Comparable<ProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * clone un ProduitI sans "parent" SousTypeProduitI.</p>
+	 * clone un {@code ProduitI} sans "parent" {@code SousTypeProduitI}.</p>
 	 * </div>
 	 *
-	 * @return ProduitI : clone sans parent.
+	 * @return ProduitI : 
+	 * clone sans parent.
 	 */
 	ProduitI cloneWithoutParent();
+
 
 	
 	/**
@@ -142,6 +144,7 @@ public interface ProduitI extends Comparable<ProduitI>
 	 * @return String : this.produit
 	 */
 	String afficherProduit();
+
 
 	
 	/**
@@ -203,7 +206,7 @@ public interface ProduitI extends Comparable<ProduitI>
 	/**
 	 * <div>
 	 *<p style="font-weight:bold;">
-	 *Getter du Nom du produit comme par exemple :</p>
+	 *Getter du Nom (libellé) du produit comme par exemple :</p>
 	 * <ul>
 	 * <li>le produit "chemise à manches longues pour homme" 
 	 * pour le sous-produit "vêtement pour homme".</li>
@@ -223,7 +226,7 @@ public interface ProduitI extends Comparable<ProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Setter du Nom du produit comme par exemple :</p>
+	 * Setter du Nom (libellé) du produit comme par exemple :</p>
 	 * <ul>
 	 * <li>le produit "chemise à manches longues pour homme" 
 	 * pour le sous-produit "vêtement pour homme".</li>
@@ -262,22 +265,45 @@ public interface ProduitI extends Comparable<ProduitI>
 	 * le présent produit (parent).</p>
 	 * <p>par exemple : "vêtement pour homme" pour un PRODUIT 
 	 * "tee-shirt pour homme".</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>traite le cas d'une mauvaise instance de pSousTypeProduit.</li>
-	 * <li>mémorise l'ancienne valeur de this.sousTypeProduit.</li>
-	 * <li>ne fait rien et return si la valeur passée en paramètre 
-	 * vaut l'ancienne valeur.</li>
-	 * <li>détache le présent Produit de l’ancien parent SousTypeProduit 
+	 * <li>Traiter le cas d'une mauvaise instance de pSousTypeProduit.</li>
+	 * <li>Mémoriser l'ancienne valeur du parent this.sousTypeProduit.</li>
+	 * <li>Si la valeur passée en paramètre 
+	 * vaut l'ancienne valeur : ne rien faire et return.</li>
+	 * <li>Détacher le présent Produit de l’ancien parent SousTypeProduit 
 	 * et le <span style="font-weight:bold;">
-	 * retire de sa liste produits</span>.</li>
-	 * <li>passe  <code>pSousTypeProduit</code> à 
+	 * retirer de sa liste produits</span>.</li>
+	 * <li>Passer  <code>pSousTypeProduit</code> à 
 	 * <code style="font-weight:bold;">this.sousTypeProduit</code> 
-	 * (le SousTypeProduit du présent Produit).</li>
-	 * <li>rattache le présent produit au nouveau parent 
+	 * (le parent SousTypeProduit du présent Produit).</li>
+	 * <li>Rattacher le présent produit au nouveau parent 
 	 * et <span style="font-weight:bold;">
-	 * l'ajoute à sa liste produits</span>.</li>
-	 * <li>passe this.valide à true si this.sousTypeProduit 
+	 * l'ajouter à sa liste produits</span>.</li>
+	 * <li>Passer this.valide à true si le parent this.sousTypeProduit 
 	 * n'est pas null.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Maintient la validité de this.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>méthode Thread-Safe.</li>
+	 * <li>Garantit la cohérence bidirectionnelle.</li>
+	 * <li>Détache proprement de l’ancien parent.</li>
+	 * <li>Rattache proprement au nouveau parent.</li>
+	 * <li>Maintient la validité métier.</li>
 	 * </ul>
 	 * </div>
 	 *
