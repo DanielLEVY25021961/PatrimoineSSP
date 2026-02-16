@@ -354,6 +354,9 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	 * est rattaché le présent SousTypeProduitI.</p>
 	 * <p>par exemple "vêtement" pour le sous-type de produit 
 	 * "vêtement pour homme".</p>
+	 * <p>Établit ou modifie la relation bidirectionnelle
+	 * entre un <code>SousTypeProduit</code> 
+	 * et son <code>TypeProduit</code>.</p>
 	 * </div>
 	 * 
 	 * <div>
@@ -377,6 +380,14 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
 	 * <ul>
 	 * <li>maintient la validité de this.</li>
+	 * <li>Relation strictement bidirectionnelle maintenue.</li>
+	 * <li>Si un ancien parent existe,
+	 * le présent SousTypeProduit est retiré de sa collection enfants.</li>
+	 * <li>Si un nouveau parent est fourni,
+	 * le présent SousTypeProduit est ajouté à sa collection enfants.</li>
+	 * <li>Aucun doublon par identité (==) n'est autorisé.</li>
+	 * <li>Méthode idempotente.</li>
+	 * <li>pTypeProduit peut être null (détachement).</li>
 	 * </ul>
 	 * </div>
 	 * 
@@ -386,7 +397,8 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	 * <li>Garantit la cohérence bidirectionnelle.</li>
 	 * <li>méthode Thread-Safe.</li>
 	 * <li>Détache proprement de l’ancien parent.</li>
-	 * <li>Ne laisse jamais l’objet dans un état incohérent.</li>
+	 * <li>Ordre de verrouillage déterministe pour éviter tout deadlock.</li>
+	 * <li>Garantie de cohérence même en concurrence.</li>
 	 * </ul>
 	 * </div>
 	 *

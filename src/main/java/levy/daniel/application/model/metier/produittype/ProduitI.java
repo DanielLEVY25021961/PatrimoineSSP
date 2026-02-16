@@ -265,6 +265,9 @@ public interface ProduitI extends Comparable<ProduitI>
 	 * le présent produit (parent).</p>
 	 * <p>par exemple : "vêtement pour homme" pour un PRODUIT 
 	 * "tee-shirt pour homme".</p>
+	 * <p>Établit ou modifie la relation bidirectionnelle
+	 * entre un <code>Produit</code> et son parent 
+	 * <code>SousTypeProduit</code>.</p>
 	 * </div>
 	 * 
 	 * <div>
@@ -293,6 +296,16 @@ public interface ProduitI extends Comparable<ProduitI>
 	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
 	 * <ul>
 	 * <li>Maintient la validité de this.</li>
+	 * <li>Relation strictement bidirectionnelle maintenue.</li>
+	 * <li>Si un ancien parent existe, le présent Produit
+	 * est retiré de sa collection enfants.</li>
+	 * <li>Si un nouveau parent est fourni,
+	 * le présent Produit est ajouté à sa collection enfants.</li>
+	 * <li>Aucun doublon par identité (==) n'est autorisé.</li>
+	 * <li>Méthode idempotente :
+	 * si la valeur passée est identique à l'actuelle,
+	 * aucun traitement n'est effectué.</li>
+	 * <li>pSousTypeProduit peut être null (détachement).</li>
 	 * </ul>
 	 * </div>
 	 * 
@@ -304,6 +317,9 @@ public interface ProduitI extends Comparable<ProduitI>
 	 * <li>Détache proprement de l’ancien parent.</li>
 	 * <li>Rattache proprement au nouveau parent.</li>
 	 * <li>Maintient la validité métier.</li>
+	 * <li>Maintient la cohérence parent/enfant même en contexte concurrent.</li>
+	 * <li>Ne provoque pas de deadlock si l’ordre de 
+	 * verrouillage canonique est respecté.</li>
 	 * </ul>
 	 * </div>
 	 *
