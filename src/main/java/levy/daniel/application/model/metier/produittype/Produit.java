@@ -710,50 +710,51 @@ public class Produit implements ProduitI, Cloneable {
 	*/
 	@Override
 	public final Produit deepClone(final CloneContext ctx) {
+		
+	    /* Clone profond avec gestion du contexte de manière thread-safe. */
+	    final Produit clone;
+	    final SousTypeProduitI parentProv;
 
-		/* Clone profond avec gestion du contexte de manière thread-safe. */
-		final Produit clone;
-		final SousTypeProduitI parentProv;
+	    synchronized (this) {
+	        /* Sécurise le couple get/put dans le même verrou.
+	         * Objectif : garantir l'unicité du clone
+	         * même si le même CloneContext
+	         * est partagé entre threads.
+	         */
+	        synchronized (ctx) {
+	            /* Vérifie que le clone n'existe pas déjà dans le contexte.
+	             * Le cas échéant, retourne le clone déjà existant.
+	             */
+	            final Produit existing = ctx.get(this);
+	            if (existing != null) {
+	                return existing;
+	            }
 
-		synchronized (this) {
+	            /* Crée un clone sans parent de manière thread-safe. */
+	            clone = new Produit();
+	            clone.idProduit = this.idProduit;
+	            clone.produit = this.produit;
+	            clone.sousTypeProduit = null;
+	            clone.recalculerValide();
 
-			/* Sécurise le couple get/put dans le même verrou.
-			 * Objectif : garantir l'unicité du clone
-			 * même si le même CloneContext
-			 * est partagé entre threads. */
-			synchronized (ctx) {
+	            /* Met le clone sans parent dans le contexte.
+	             */
+	            ctx.put(this, clone);
+	        }
 
-				/* Vérifie que le clone n'existe pas déjà dans le contexte.
-				 * Le cas échéant, retourne le clone déjà existant. */
-				final Produit existing = ctx.get(this);
+	        /* Snapshot thread-safe du parent à cloner hors verrou. */
+	        parentProv = this.sousTypeProduit;
+	    }
 
-				if (existing != null) {
-					return existing;
-				}
+	    /* Clone le parent SousTypeProduit (si présent)
+	     * et recolle le clone parent au clone via le Setter canonique.
+	     */
+	    if (parentProv != null) {
+	        final SousTypeProduitI cloneParent = parentProv.deepClone(ctx);
+	        clone.setSousTypeProduit(cloneParent);
+	    }
 
-				/* Crée un clone sans parent de manière thread-safe. */
-				clone = new Produit();
-				clone.idProduit = this.idProduit;
-				clone.produit = this.produit;
-				clone.sousTypeProduit = null;
-				clone.recalculerValide();
-
-				/* Met le clone sans parent dans le contexte. */
-				ctx.put(this, clone);
-			}
-
-			/* Snapshot thread-safe du parent à cloner hors verrou. */
-			parentProv = this.sousTypeProduit;
-		}
-
-		/* Clone le parent SousTypeProduit (si présent)
-		 * et recolle le clone parent au clone via le Setter canonique. */
-		if (parentProv != null) {
-			final SousTypeProduitI cloneParent = parentProv.deepClone(ctx);
-			clone.setSousTypeProduit(cloneParent);
-		}
-
-		return clone;
+	    return clone;
 	}
 
 

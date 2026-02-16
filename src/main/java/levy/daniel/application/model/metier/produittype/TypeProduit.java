@@ -879,8 +879,8 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	
 	
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	*/
 	@Override
 	public final TypeProduit deepClone(final CloneContext ctx) {
 	    /*
@@ -907,19 +907,18 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	     * Crée une copie thread-safe de la liste des enfants
 	     * pour éviter les modifications concurrentes.
 	     */
-	    final List<? extends SousTypeProduitI> enfantsSafeCopy;
-	    
+	    final List<SousTypeProduitI> enfantsSafeCopy;
 	    synchronized (this) {
-	        enfantsSafeCopy = new ArrayList<>(this.sousTypeProduits);
+	        enfantsSafeCopy 
+	        	= new ArrayList<SousTypeProduitI>(this.sousTypeProduits);
 	    }
 
 	    /*
 	     * Clone chaque enfant de manière thread-safe.
-	     * Chaque enfant est verrouillé individuellement 
+	     * Chaque enfant est verrouillé individuellement
 	     * pendant son clonage.
 	     */
 	    for (final SousTypeProduitI enfant : enfantsSafeCopy) {
-	    	
 	        if (enfant == null) {
 	            continue;
 	        }
@@ -929,13 +928,13 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	         * pour éviter les incohérences.
 	         */
 	        final SousTypeProduitI cloneEnfant;
-	        
 	        synchronized (enfant) {
 	            cloneEnfant = enfant.deepClone(ctx);
 	        }
 
 	        /* rattache le clone profond de l'enfant au clone parent
-	         * via la méthode Thread-Safe canonique du parent. */
+	         * via la méthode Thread-Safe canonique du parent.
+	         */
 	        clone.rattacherEnfantSTP(cloneEnfant);
 	    }
 

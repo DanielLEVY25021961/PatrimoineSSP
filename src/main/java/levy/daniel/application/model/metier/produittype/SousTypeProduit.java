@@ -726,48 +726,46 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	 */
 	@Override
 	public final SousTypeProduit deepClone(final CloneContext ctx) {
-
 	    final SousTypeProduit clone;
 	    final TypeProduitI typeProduitProv;
 	    final List<ProduitI> produitsSafeCopy;
 
 	    synchronized (this) {
-
 	        /* Sécurise le couple get/put dans le même verrou.
-	         * Objectif : garantir l'unicité du clone 
+	         * Objectif : garantir l'unicité du clone
 	         * même si le même CloneContext
 	         * est partagé entre threads.
 	         */
 	        synchronized (ctx) {
-
-	        	/* Vérifie que le clone n'existe pas déjà dans le contexte.
-	    	     * Le cas échéant, retourne le clone déjà existant.
-	    	     */
+	            /* Vérifie que le clone n'existe pas déjà dans le contexte.
+	             * Le cas échéant, retourne le clone déjà existant.
+	             */
 	            final SousTypeProduit existing = ctx.get(this);
 	            if (existing != null) {
 	                return existing;
 	            }
 
-	            /* Crée un clone sans parent ni enfants 
-	             * de manière thread-safe. */
+	            /* Crée un clone sans parent ni enfants
+	             * de manière thread-safe.
+	             */
 	            clone = new SousTypeProduit(
 	                    this.idSousTypeProduit,
 	                    this.sousTypeProduit,
 	                    null,
-	                    null
-	            );
+	                    null);
 
-	            /* Met le clone sans parent ni enfants dans le contexte. */
+	            /* Met le clone sans parent ni enfants dans le contexte.
+	             */
 	            ctx.put(this, clone);
-
 	        }
 
-	        /* Snapshots thread-safe des dépendances 
-	         * à cloner hors verrou. */
+	        /* Snapshots thread-safe des dépendances
+	         * à cloner hors verrou.
+	         */
 	        typeProduitProv = this.typeProduit;
 
 	        /* Copie thread-safe de la liste des enfants.
-	         * On évite tout Raw Type : 
+	         * On évite tout Raw Type :
 	         * on reconstruit une liste typée ProduitI.
 	         */
 	        produitsSafeCopy = new ArrayList<ProduitI>();
@@ -777,10 +775,9 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	                produitsSafeCopy.add(produit);
 	            }
 	        }
-
 	    }
 
-	    /* Clone le parent TypeProduit (si présent) 
+	    /* Clone le parent TypeProduit (si présent)
 	     * et recolle le clone parent
 	     * au clone via le setter canonique.
 	     */
@@ -790,8 +787,9 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	        clone.setTypeProduit(cloneTypeProduit);
 	    }
 
-	    /* Clone les enfants Produit hors verrous 
-	     * pour réduire la contention. */
+	    /* Clone les enfants Produit hors verrous
+	     * pour réduire la contention.
+	     */
 	    for (final ProduitI produit : produitsSafeCopy) {
 	        if (produit != null) {
 	            final ProduitI cloneProduit = produit.deepClone(ctx);
@@ -800,7 +798,6 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	    }
 
 	    return clone;
-
 	}
 
 
