@@ -119,6 +119,32 @@
 			<id>desktop</id>
 		</profile>
 
+		<!-- ================= METIER-ONLY ================= -->
+		<profile>
+		    <id>metier-only</id>
+		
+		    <build>
+		        <plugins>
+		
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-surefire-plugin</artifactId>
+		                <version>3.2.5</version>
+		
+		                <configuration>
+		                    <includes>
+		                        <include>**/levy/daniel/application/model/metier/produittype/**/*Test.java</include>
+		                    </includes>
+		
+		                    <!-- Optionnel mais utile : si jamais ça ne match rien, tu le SAIS -->
+		                    <failIfNoTests>true</failIfNoTests>
+		                </configuration>
+		
+		            </plugin>
+		
+		        </plugins>
+		    </build>
+		</profile>				
 	</profiles>
 
 

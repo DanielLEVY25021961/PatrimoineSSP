@@ -43,7 +43,7 @@ la méthode (%M)dans le pattern du LOG -->
 			si TimeBasedTriggeringPolicy est seul). -->
 		<RollingFile name="RollingFile"			
 			fileName="${LOG_DIR}/application.log"
-			filePattern="${LOG_DIR}/application-%d{yyyy-MM-dd:HH-mm-ss}-%i.log.gz">
+			filePattern="${LOG_DIR}/application-%d{yyyy-MM-dd_HH-mm-ss}-%i.log.gz">
 			
 			<PatternLayout pattern="${LOG_PATTERN}" />
 			
