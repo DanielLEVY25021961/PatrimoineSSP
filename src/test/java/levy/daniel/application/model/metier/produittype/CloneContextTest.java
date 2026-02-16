@@ -299,4 +299,89 @@ public class CloneContextTest {
         final boolean containsNull = context.contains(null);
         assertThat(containsNull).as("contains(null) doit retourner false.").isFalse();
     }
+    
+    
+    
+    /**
+     *  .
+     *
+     * @throws Exception
+     */
+    @SuppressWarnings("resource")
+	@Tag(TAG_CLONE_CONTEXT_BETON)
+    @DisplayName("computeIfAbsent : unicité inter-threads (une seule computation)")
+    @Test
+    public void testComputeIfAbsentInterThreadsUnicite() throws Exception {
+
+        final CloneContext context = new CloneContext();
+        final Object key = new Object();
+
+        final java.util.concurrent.atomic.AtomicInteger counter
+                = new java.util.concurrent.atomic.AtomicInteger(0);
+
+        final java.util.concurrent.Callable<Object> task
+                = new java.util.concurrent.Callable<Object>() {
+
+                    @Override
+                    public Object call() {
+
+                        return context.computeIfAbsent(
+                                key,
+                                new CloneContext.CloneComputation<Object>() {
+
+                                    @Override
+                                    public Object compute() {
+
+                                        counter.incrementAndGet();
+
+                                        final Object clone = new Object();
+                                        context.put(key, clone);
+
+                                        return clone;
+                                    }
+                                });
+                    }
+                };
+
+        final int nbThreads = 16;
+
+        final java.util.concurrent.ExecutorService executor
+                = java.util.concurrent.Executors.newFixedThreadPool(nbThreads);
+
+        try {
+
+            final java.util.List<java.util.concurrent.Callable<Object>> tasks
+                    = new java.util.ArrayList<>();
+
+            for (int i = 0; i < nbThreads; i++) {
+                tasks.add(task);
+            }
+
+            final java.util.List<java.util.concurrent.Future<Object>> futures
+                    = executor.invokeAll(tasks);
+
+            Object first = null;
+
+            for (final java.util.concurrent.Future<Object> f : futures) {
+
+                final Object r = f.get();
+
+                if (first == null) {
+                    first = r;
+                }
+
+                assertThat(r)
+                        .as("Tous les threads doivent récupérer la même instance de clone.")
+                        .isSameAs(first);
+            }
+
+            assertThat(counter.get())
+                    .as("La computation doit être exécutée une seule fois.")
+                    .isEqualTo(1);
+
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
 }

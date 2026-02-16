@@ -724,80 +724,78 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 */
+    /** {@inheritDoc} */
 	@Override
 	public final SousTypeProduit deepClone(final CloneContext ctx) {
-	    final SousTypeProduit clone;
-	    final TypeProduitI typeProduitProv;
-	    final List<ProduitI> produitsSafeCopy;
 
-	    synchronized (this) {
-	        /* Sécurise le couple get/put dans le même verrou.
-	         * Objectif : garantir l'unicité du clone
-	         * même si le même CloneContext
-	         * est partagé entre threads.
-	         */
-	        synchronized (ctx) {
-	            /* Vérifie que le clone n'existe pas déjà dans le contexte.
-	             * Le cas échéant, retourne le clone déjà existant.
-	             */
-	            final SousTypeProduit existing = ctx.get(this);
-	            if (existing != null) {
-	                return existing;
-	            }
+		if (ctx == null) {
+			throw new IllegalArgumentException(
+					"ctx ne doit pas être null.");
+		}
 
-	            /* Crée un clone sans parent ni enfants
-	             * de manière thread-safe.
-	             */
-	            clone = new SousTypeProduit(
-	                    this.idSousTypeProduit,
-	                    this.sousTypeProduit,
-	                    null,
-	                    null);
+		/*
+		 * Contrat : unicité (anti-cycle) via le contexte. On commence par
+		 * retourner le clone s'il existe déjà.
+		 */
+		final SousTypeProduit dejaClone = ctx.get(this);
 
-	            /* Met le clone sans parent ni enfants dans le contexte.
-	             */
-	            ctx.put(this, clone);
-	        }
+		if (dejaClone != null) {
+			return dejaClone;
+		}
 
-	        /* Snapshots thread-safe des dépendances
-	         * à cloner hors verrou.
-	         */
-	        typeProduitProv = this.typeProduit;
+		/*
+		 * Crée un clone "nu" (sans parent ni enfants), puis l'enregistre
+		 * immédiatement pour casser les cycles (références croisées).
+		 */
+		final SousTypeProduit clone = this.cloneWithoutParentAndChildren();
+		ctx.put(this, clone);
 
-	        /* Copie thread-safe de la liste des enfants.
-	         * On évite tout Raw Type :
-	         * on reconstruit une liste typée ProduitI.
-	         */
-	        produitsSafeCopy = new ArrayList<ProduitI>();
-	        
-	        for (final Object objet : this.produits) {
-	            if (objet instanceof final ProduitI produit) {
-	                produitsSafeCopy.add(produit);
-	            }
-	        }
-	    }
+		/*
+		 * Snapshot thread-safe des enfants.
+		 */
+		final java.util.List<ProduitI> produitsSafeCopy;
 
-	    /* Clone le parent TypeProduit (si présent)
-	     * et recolle le clone parent
-	     * au clone via le setter canonique.
-	     */
-	    if (typeProduitProv != null) {
-	        final TypeProduitI cloneTypeProduit 
-	        	= typeProduitProv.deepClone(ctx);
-	        clone.setTypeProduit(cloneTypeProduit);
-	    }
+		synchronized (this) {
+			produitsSafeCopy = new java.util.ArrayList<>(this.produits);
+		}
 
-	    /* Clone les enfants Produit hors verrous
-	     * pour réduire la contention.
-	     */
-	    for (final ProduitI produit : produitsSafeCopy) {
-	        if (produit != null) {
-	            final ProduitI cloneProduit = produit.deepClone(ctx);
-	            cloneProduit.setSousTypeProduit(clone);
-	        }
-	    }
+		/*
+		 * Clone le parent TypeProduit si présent (et rattache le clone à ce
+		 * parent).
+		 */
+		final TypeProduitI typeProduitSafeCopy;
 
-	    return clone;
+		synchronized (this) {
+
+			typeProduitSafeCopy = this.typeProduit;
+
+		}
+
+		if (typeProduitSafeCopy != null) {
+
+			final TypeProduitI cloneTypeProduit = typeProduitSafeCopy
+					.deepClone(ctx);
+			clone.setTypeProduit(cloneTypeProduit);
+
+		}
+
+		/*
+		 * Clone les produits et rattache chaque clone au SousTypeProduit
+		 * clone.
+		 */
+		for (final ProduitI produit : produitsSafeCopy) {
+
+			if (produit != null) {
+
+				final ProduitI cloneProduit = produit.deepClone(ctx);
+				cloneProduit.setSousTypeProduit(clone);
+
+			}
+
+		}
+
+		return clone;
+
 	}
 
 

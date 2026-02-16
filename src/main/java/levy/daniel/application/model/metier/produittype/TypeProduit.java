@@ -881,64 +881,56 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	/**
 	* {@inheritDoc}
 	*/
-	@Override
+    @Override
 	public final TypeProduit deepClone(final CloneContext ctx) {
-	    /*
-	     * Vérifie si un clone de cet objet existe déjà dans le contexte.
-	     * Si oui, le retourne pour éviter les duplications.
-	     */
-	    final TypeProduit existing = ctx.get(this);
-	    if (existing != null) {
-	        return existing;
-	    }
 
-	    /*
-	     * Crée un clone "nu" (sans enfants) de manière thread-safe.
-	     * Le clone est ajouté au contexte avant de cloner les enfants
-	     * pour gérer les références circulaires.
-	     */
-	    final TypeProduit clone;
-	    synchronized (this) {
-	        clone = this.cloneWithoutChildren();
-	        ctx.put(this, clone);
-	    }
+		return ctx.computeIfAbsent(this,
+				new CloneContext.CloneComputation<TypeProduit>() {
 
-	    /*
-	     * Crée une copie thread-safe de la liste des enfants
-	     * pour éviter les modifications concurrentes.
-	     */
-	    final List<SousTypeProduitI> enfantsSafeCopy;
-	    synchronized (this) {
-	        enfantsSafeCopy 
-	        	= new ArrayList<SousTypeProduitI>(this.sousTypeProduits);
-	    }
+					@Override
+					public TypeProduit compute() {
 
-	    /*
-	     * Clone chaque enfant de manière thread-safe.
-	     * Chaque enfant est verrouillé individuellement
-	     * pendant son clonage.
-	     */
-	    for (final SousTypeProduitI enfant : enfantsSafeCopy) {
-	        if (enfant == null) {
-	            continue;
-	        }
+						final TypeProduit clone;
 
-	        /*
-	         * Clone l'enfant en synchronisant sur celui-ci
-	         * pour éviter les incohérences.
-	         */
-	        final SousTypeProduitI cloneEnfant;
-	        synchronized (enfant) {
-	            cloneEnfant = enfant.deepClone(ctx);
-	        }
+						/*
+						 * Capture un snapshot minimal sous verrou, puis
+						 * publie le clone dans le contexte le plus tôt
+						 * possible pour casser les cycles.
+						 */
+						synchronized (TypeProduit.this) {
 
-	        /* rattache le clone profond de l'enfant au clone parent
-	         * via la méthode Thread-Safe canonique du parent.
-	         */
-	        clone.rattacherEnfantSTP(cloneEnfant);
-	    }
+							clone = TypeProduit.this.cloneWithoutChildren();
+							ctx.put(TypeProduit.this, clone);
 
-	    return clone;
+						}
+
+						/*
+						 * Clone les enfants hors verrou de l'original. La
+						 * sérialisation inter-threads est assurée par le
+						 * verrou du cache dans computeIfAbsent(...) (verrou
+						 * ré-entrant).
+						 */
+						for (final SousTypeProduitI stp : TypeProduit.this
+								.getSousTypeProduits()) {
+
+							final SousTypeProduit stpClone 
+								= ((SousTypeProduit) stp).deepClone(ctx);
+
+							/*
+							 * Ajout unidirectionnel "bas niveau" (pas de
+							 * bidirectionnalité) car le clone de l'enfant
+							 * s'occupe de pointer vers son parent clone.
+							 */
+							clone.internalAddSousTypeProduit(stpClone);
+
+						}
+
+						return clone;
+
+					}
+
+				});
+
 	}
 
 
