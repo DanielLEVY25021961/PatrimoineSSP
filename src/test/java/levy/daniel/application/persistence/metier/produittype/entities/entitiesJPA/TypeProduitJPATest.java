@@ -105,6 +105,11 @@ public class TypeProduitJPATest {
 	 * "vêtement"
 	 */
 	public static final String VETEMENT = "vêtement";
+	
+	/**
+	 * "vêtement enfant"
+	 */
+	public static final String VETEMENT_ENFANT = "vêtement enfant";
 
 	/* ------------------------------------------------------------------ */
 
@@ -1353,7 +1358,7 @@ public class TypeProduitJPATest {
 		
 		// ARRANGE - GIVEN
 		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
-		final SousTypeProduitJPA enfant1 = new SousTypeProduitJPA(1L, "vêtement enfant", parent);
+		final SousTypeProduitJPA enfant1 = new SousTypeProduitJPA(1L, VETEMENT_ENFANT, parent);
 		final SousTypeProduitJPA enfant2 = new SousTypeProduitJPA(2L, "vêtement adulte", parent);
 		
 		assertTrue(parent.getSousTypeProduits().contains(enfant1), "précondition : parent contient enfant1 : ");
@@ -1515,7 +1520,7 @@ public class TypeProduitJPATest {
 
 	    //**** ARRANGE - GIVEN
 	    final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
-	    final SousTypeProduitJPA enfant = new SousTypeProduitJPA(1L, "vêtement enfant", parent);
+	    final SousTypeProduitJPA enfant = new SousTypeProduitJPA(1L, VETEMENT_ENFANT, parent);
 
 	    // ACT - WHEN
 	    final List<? extends SousTypeProduitI> sousTypes = parent.getSousTypeProduits();
@@ -1536,6 +1541,114 @@ public class TypeProduitJPATest {
 	    assertTrue(sousTypes.stream()
 	                       .allMatch(st -> st instanceof SousTypeProduitJPA),
 	              "Tous les éléments doivent être des SousTypeProduitJPA : ");
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>rattacherEnfantSTP(SousTypeProduitI)</b> :</p>
+	 * <li>rattache un enfant au parent (bidirectionnel).</li>
+	 * <li>ajoute l'enfant dans la liste du parent.</li>
+	 * <li>ne crée pas de doublon si on rattache deux fois le même enfant.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testRattacherEnfantSTP() : vérifie le rattachement bidirectionnel et l'absence de doublons")
+	@Tag("relations")
+	@Test
+	public final void testRattacherEnfantSTP() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testRattacherEnfantSTP() ********** ");
+			System.out.println("CE TEST VERIFIE rattacherEnfantSTP(SousTypeProduitI).");
+			System.out.println();
+		}
+
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+
+		final SousTypeProduitJPA enfant = new SousTypeProduitJPA();
+		enfant.setIdSousTypeProduit(1L);
+		enfant.setSousTypeProduit(VETEMENT_ENFANT);
+
+		/* préconditions. */
+		assertNotNull(parent.getSousTypeProduits(), "précondition : parent.getSousTypeProduits() ne doit pas être null : ");
+		assertTrue(parent.getSousTypeProduits().isEmpty(), "précondition : parent ne doit contenir aucun enfant : ");
+		assertNull(enfant.getTypeProduit(), "précondition : enfant.getTypeProduit() doit être null : ");
+
+		// ACT - WHEN
+		parent.rattacherEnfantSTP(enfant);
+
+		// ASSERT - THEN
+		assertSame(parent, enfant.getTypeProduit(), "rattacherEnfantSTP() doit rattacher l'enfant au parent : ");
+		assertTrue(parent.getSousTypeProduits().contains(enfant), "rattacherEnfantSTP() doit ajouter l'enfant dans la liste du parent : ");
+		assertTrue(parent.getSousTypeProduits().size() == 1, "le parent doit contenir exactement 1 enfant : ");
+
+		// ACT - WHEN (2) : rattachement du même enfant une seconde fois.
+		parent.rattacherEnfantSTP(enfant);
+
+		// ASSERT - THEN : pas de doublons.
+		assertTrue(parent.getSousTypeProduits().size() == 1, "rattacher 2 fois le même enfant ne doit pas créer de doublon : ");
+
+	} //___________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>detacherEnfantSTP(SousTypeProduitI)</b> :</p>
+	 * <li>détache un enfant du parent (bidirectionnel).</li>
+	 * <li>retire l'enfant de la liste du parent.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testDetacherEnfantSTP() : vérifie le détachement bidirectionnel et le retrait de la liste du parent")
+	@Tag("relations")
+	@Test
+	public final void testDetacherEnfantSTP() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testDetacherEnfantSTP() ********** ");
+			System.out.println("CE TEST VERIFIE detacherEnfantSTP(SousTypeProduitI).");
+			System.out.println();
+		}
+
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+		final SousTypeProduitJPA enfant = new SousTypeProduitJPA(1L, VETEMENT_ENFANT, parent);
+
+		/* préconditions. */
+		assertSame(parent, enfant.getTypeProduit(), "précondition : enfant doit être rattaché au parent : ");
+		assertTrue(parent.getSousTypeProduits().contains(enfant), "précondition : parent doit contenir enfant : ");
+		assertTrue(parent.getSousTypeProduits().size() == 1, "précondition : parent doit contenir exactement 1 enfant : ");
+
+		// ACT - WHEN
+		parent.detacherEnfantSTP(enfant);
+
+		// ASSERT - THEN
+		assertNull(enfant.getTypeProduit(), "detacherEnfantSTP() doit détacher l'enfant (parent null) : ");
+		assertFalse(parent.getSousTypeProduits().contains(enfant), "detacherEnfantSTP() doit retirer l'enfant de la liste du parent : ");
+		assertTrue(parent.getSousTypeProduits().isEmpty(), "après détachement, la liste du parent doit être vide : ");
+
 	} //___________________________________________________________________
 	
 	
