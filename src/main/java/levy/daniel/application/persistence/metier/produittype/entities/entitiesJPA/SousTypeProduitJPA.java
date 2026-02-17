@@ -563,27 +563,57 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 
 
 	/**
-	* {@inheritDoc}
-	* <div>
-	* <ol>
-	* <p style="font-weight:bold;">Classe dans l'ordre alphabétique de :</p>
-	* <li style="font-weight:bold;">typeProduit</li>
-	* <li style="font-weight:bold;">sousTypeProduit</li>
-	* </ol>
-	* </div>
-	*/
+	 * {@inheritDoc}
+	 * <div>
+	 * <ol>
+	 * <p style="font-weight:bold;">
+	 * Classe dans l'ordre alphabétique de :</p>
+	 * <li style="font-weight:bold;">typeProduit</li>
+	 * <li style="font-weight:bold;">sousTypeProduit</li>
+	 * </ol>
+	 * </div>
+	 */
 	@Override
 	public final int compareTo(final SousTypeProduitI pObject) {
 
+		/* Comparaison de la même instance retourne toujours 0. */
 		if (this == pObject) {
 			return 0;
 		}
 
+		/* Comparaison avec null retourne toujours < 0. */
 		if (pObject == null) {
 			return -1;
 		}
 
-		/* TypeProduit. */
+		return this.compareFields(pObject);
+
+	} // Fin de compareTo(...)._____________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Compare les champs de manière canonique et homogène
+	 * (sans verrous, en alignement avec la stratégie "minimum de verrous"
+	 * dans les Entities JPA).</p>
+	 * <ul>
+	 * <li>Compare d'abord les {@code TypeProduit} 
+	 * (via {@code compareTo}).</li>
+	 * <li>Puis compare {@code sousTypeProduit} 
+	 * (case-insensitive) via {@code Strings.CI.compare}.</li>
+	 * <li>Les {@code null} sont placés "après" 
+	 * (donc considérés plus grands).</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pObject : {@code SousTypeProduitI} : l'objet à comparer.
+	 * @return int : résultat de la comparaison.
+	 */
+	private int compareFields(final SousTypeProduitI pObject) {
+
+		/* 1) TypeProduit. */
 		final TypeProduitI a = this.getTypeProduit();
 		final TypeProduitI b = pObject.getTypeProduit();
 
@@ -591,7 +621,6 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 			if (b != null) {
 				return +1;
 			}
-
 		} else {
 			if (b == null) {
 				return -1;
@@ -604,20 +633,22 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 			}
 		}
 
-		/* SousTypeProduit. */
+		/* 2) SousTypeProduit. */
 		final String s1 = this.getSousTypeProduit();
 		final String s2 = pObject.getSousTypeProduit();
-		
+
 		if (s1 == null) {
-			return (s2 == null) ? 0 : +1; // null "après"
+			/* null "après". */
+			return (s2 == null) ? 0 : +1;
 		}
-		
+
 		if (s2 == null) {
 			return -1;
 		}
 
 		return Strings.CI.compare(s1, s2);
-	}
+
+	} // Fin de compareFields(...)._________________________________________
 	
 	
 
