@@ -10,6 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -64,6 +68,11 @@ public class TypeProduitJPATest {
 	 * "null" 
 	 */
 	public static final String NULL = "null";
+	
+	/**
+	 * "setters"
+	 */
+	public static final String SETTERS = "setters";
 	
 	/* ------------------------------------------------------------------ */
 	
@@ -296,10 +305,10 @@ public class TypeProduitJPATest {
 			System.out.println("*** APRES TypeProduitJPA objet1 = new TypeProduitJPA(1L, PHOTOGRAPHIE, null); ***");
 			this.afficher(objet1);
 			System.out.println();
-			System.out.println("*** TypeProduitJPA objet2EqualsObjet1 = new TypeProduitJPA(2L, PHOTOGRAPHIE, null); ***");
+			System.out.println("*** TypeProduitJPA objet2EqualsObjet1 = new TypeProduitJPA(1L, PHOTOGRAPHIE, null); ***");
 			this.afficher(objet2EqualsObjet1);
 			System.out.println();
-			System.out.println("*** TypeProduitJPA objet3EqualsObjet1 = new TypeProduitJPA(3L, PHOTOGRAPHIE, null); ***");
+			System.out.println("*** TypeProduitJPA objet3EqualsObjet1 = new TypeProduitJPA(1L, PHOTOGRAPHIE, null); ***");
 			this.afficher(objet3EqualsObjet1);
 			System.out.println();
 			System.out.println("*** TypeProduitJPA objet4PasEqualsObjet1 = new TypeProduitJPA(4L, ANATOMIE, null); ***");
@@ -311,9 +320,13 @@ public class TypeProduitJPATest {
 		// ACT - WHEN
 		
 		// ASSERT - THEN
+		
 		/* garantit que x.equals(mauvaise instance) retourne false 
 		 * ("unlikely-arg-type"). */
 		assertFalse(objet1.equals(mauvaiseInstance), "x.equals(mauvaise instance) doit retourner false : ");
+		
+		/* garantit que x.equals(null) retourne false (avec x non null). */
+		assertFalse(objet1.equals(null), "x.equals(null) doit retourner false (avec x non null) : "); // NOPMD by danyl on 17/02/2026 10:03
 		
 		/* garantit le contrat Java reflexif x.equals(x). */
 		assertEquals(objet1, objet1, "x.equals(x) : ");
@@ -333,8 +346,6 @@ public class TypeProduitJPATest {
 		/* garantit le contrat Java sur les hashcode 
 		 * x.equals(y) ----> x.hashcode() == y.hashcode(). */
 		assertEquals(objet1.hashCode(), objet2EqualsObjet1.hashCode(), "objet1.hashCode().equals(objet2EqualsObjet1.hashCode()) : ");
-		/* garantit que x.equals(null) retourne false (avec x non null). */
-		assertNotNull(objet1, "objet1.equals(null) retourne false (avec objet1 non null) : ");
 		
 		/* garantit le bon fonctionnement de equals() 
 		 * en cas d'égalité métier. */
@@ -343,7 +354,33 @@ public class TypeProduitJPATest {
 		/* garantit le bon fonctionnement de equals() 
 		 * en cas d'inégalité métier. */
 		assertNotEquals(objet1, objet4PasEqualsObjet1, "objet1 n'est pas equals() avec objet4PasEqualsObjet1 : ");
-
+		
+		
+		/* ----------------------------- */
+		/* Branches manquantes : fallback */
+		/* ----------------------------- */
+		
+		/* Cas id null / id null : fallback métier (case-insensitive). */
+		final TypeProduitJPA objetIdNull1 = new TypeProduitJPA(null, VETEMENT, null);
+		final TypeProduitJPA objetIdNull2 = new TypeProduitJPA(null, "VÊTEMENT", null);
+		
+		assertEquals(objetIdNull1, objetIdNull2, "id null/id null : fallback métier case-insensitive : ");
+		assertEquals(objetIdNull1.hashCode(), objetIdNull2.hashCode(), "id null/id null : hashCode cohérent avec equals : ");
+		
+		/* Cas id non null / id null : fallback métier (case-insensitive). */
+		final TypeProduitJPA objetIdNonNull = new TypeProduitJPA(7L, VETEMENT, null);
+		final TypeProduitJPA objetIdNull = new TypeProduitJPA(null, "VÊTEMENT", null);
+		
+		assertEquals(objetIdNonNull, objetIdNull, "id non null / id null : fallback métier case-insensitive : ");
+		assertEquals(objetIdNull, objetIdNonNull, "symétrie id non null / id null : ");
+		
+		/* Cas typeProduit null / typeProduit non null : false. */
+		final TypeProduitJPA objetTypeNull = new TypeProduitJPA(null, null, null);
+		final TypeProduitJPA objetTypeNonNull = new TypeProduitJPA(null, VETEMENT, null);
+		
+		assertNotEquals(objetTypeNull, objetTypeNonNull, "typeProduit null / non null : doit être false : ");
+		assertNotEquals(objetTypeNonNull, objetTypeNull, "symétrie typeProduit null / non null : ");
+		
 	} //___________________________________________________________________	
 
 
@@ -523,24 +560,23 @@ public class TypeProduitJPATest {
 		final TypeProduitJPA objetConstructeurNull1 = new TypeProduitJPA();
 		final TypeProduitJPA objetConstructeurNull2 = new TypeProduitJPA();
 		
-		final TypeProduitJPA objetAvecValeurV1Vide1 = new TypeProduitJPA(1L, "", null);
-		final TypeProduitJPA objetAvecValeurV1Vide2 = new TypeProduitJPA(2L, "", null);
-		final TypeProduitJPA objetAvecValeurV1Null2 = new TypeProduitJPA(2L, null, null);
-		final TypeProduitJPA objetAvecValeurV1NonVide3 = new TypeProduitJPA(3L, "toto", null);
+		final TypeProduitJPA objetAvecTypeNull1 = new TypeProduitJPA(1L, null, null);
+		final TypeProduitJPA objetAvecTypeNull2 = new TypeProduitJPA(2L, null, null);
+		final TypeProduitJPA objetAvecTypeNonNull3 = new TypeProduitJPA(3L, "toto", null);
 		
 		// ACT - WHEN
 		final int compareToConstructeurNull 
 			= objetConstructeurNull1.compareTo(objetConstructeurNull2);
-		final int compareToAvecValeursVides 
-			= objetAvecValeurV1Vide1.compareTo(objetAvecValeurV1Vide2);
-		final int compareToAvecValeurNonVide 
-			= objetAvecValeurV1NonVide3.compareTo(objetAvecValeurV1Vide1);
+		final int compareToAvecTypesNull 
+			= objetAvecTypeNull1.compareTo(objetAvecTypeNull2);
+		final int compareToAvecTypeNonNull 
+			= objetAvecTypeNonNull3.compareTo(objetAvecTypeNull1);
 		
 		// ASSERT - THEN
 		/* garantit que les null sont bien gérés dans compareTo(). */
 		assertTrue(compareToConstructeurNull == 0, "objetConstructeurNull1.compareTo(objetConstructeurNull2) == 0 : ");
-		assertTrue(compareToAvecValeursVides == 0, "objetAvecValeurV1Vide1.compareTo(objetAvecValeurV1Vide2)  == 0 : ");
-		assertTrue(compareToAvecValeurNonVide < 0, "objetAvecValeurV1NonVide3.compareTo(objetAvecValeurV1Vide1)  < 0 : ");		
+		assertTrue(compareToAvecTypesNull == 0, "objetAvecTypeNull1.compareTo(objetAvecTypeNull2)  == 0 : ");
+		assertTrue(compareToAvecTypeNonNull < 0, "objetAvecTypeNonNull3.compareTo(objetAvecTypeNull1)  < 0 : ");		
 		
 	} //___________________________________________________________________
 	
@@ -652,9 +688,72 @@ public class TypeProduitJPATest {
 		assertFalse(objet1.getTypeProduit().equals(objet1Clone.getTypeProduit()), "la modification du TypeProduitJPA dans le clone ne doit pas modifier le TypeProduitJPA dans l'objet cloné : ");
 		
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>cloneDeep()</b> sur un graphe complet :</p>
+	 * <li>garantit que le clone et l'original ne sont pas la même instance.</li>
+	 * <li>garantit que les listes ne sont pas partagées.</li>
+	 * <li>garantit que les enfants clonés pointent vers le parent cloné.</li>
+	 * </ul>
+	 * </div>
+	 * @throws CloneNotSupportedException 
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCloneDeepGrapheComplet() : vérifie le clonage profond du graphe TypeProduitJPA→SousTypeProduitJPA→ProduitJPA")
+	@Tag("clone")
+	@Test
+	public final void testCloneDeepGrapheComplet() throws CloneNotSupportedException {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testCloneDeepGrapheComplet() ********** ");
+			System.out.println("CE TEST VERIFIE LE CLONAGE PROFOND DU GRAPHE COMPLET.");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final TypeProduitJPA typeVetement = new TypeProduitJPA(null, VETEMENT, null);
+		final SousTypeProduitJPA sousTypeHomme = new SousTypeProduitJPA(null, "vêtement homme", typeVetement);
+		final ProduitJPA produitChemise = new ProduitJPA(null, "chemise homme", sousTypeHomme);
+		
+		/* Preconditions minimales. */
+		assertTrue(typeVetement.getSousTypeProduits().contains(sousTypeHomme), "précondition : typeVetement contient sousTypeHomme : ");
+		assertTrue(sousTypeHomme.getProduits().contains(produitChemise), "précondition : sousTypeHomme contient produitChemise : ");
+		
+		// ACT - WHEN
+		final TypeProduitJPA clone = typeVetement.clone();
+		
+		// ASSERT - THEN
+		assertNotSame(typeVetement, clone, "le clone ne doit pas être la même instance : ");
+		assertEquals(typeVetement, clone, "clonex.equals(x) doit être vrai : ");
+		assertEquals(typeVetement.getClass(), clone.getClass(), "clone.getClass() == x.getClass() : ");
+		
+		/* Vérifie que les listes ne sont pas partagées. */
+		assertNotSame(typeVetement.getSousTypeProduits(), clone.getSousTypeProduits(), "les listes sousTypeProduits ne doivent pas être partagées : ");
+		
+		/* Vérifie le rattachement enfant->parent sur le clone. */
+		assertNotNull(clone.getSousTypeProduits(), "clone.getSousTypeProduits() ne doit pas être null : ");
+		assertTrue(clone.getSousTypeProduits().size() == 1, "le clone doit avoir 1 sousTypeProduit : ");
+		
+		final SousTypeProduitI cloneStpI = clone.getSousTypeProduits().get(0);
+		assertNotNull(cloneStpI, "le sousTypeProduit cloné ne doit pas être null : ");
+		assertNotSame(sousTypeHomme, cloneStpI, "l'enfant cloné ne doit pas être la même instance que l'original : ");
+		assertSame(clone, cloneStpI.getTypeProduit(), "l'enfant cloné doit référencer le parent cloné : ");
+		
+	} //___________________________________________________________________
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p>teste la méthode <span style= "font-weight : bold">getEnTeteCsv()</span></p>
@@ -911,7 +1010,7 @@ public class TypeProduitJPATest {
 		// ASSERT - THEN
 		assertEquals("1", valeur0, "valeur0 doit retourner \"1\" :  ");
 		assertEquals("Pêche", valeur1, "valeur1 doit retourner \"Pêche\" :  ");
-		assertEquals("invalide", valeur7Null, "valeur7Null doit retourner \"invalide\" :  ");
+		assertEquals("invalide", valeur7, "valeur7 doit retourner \"invalide\" :  ");
 		
 	} //___________________________________________________________________
 	
@@ -949,14 +1048,15 @@ public class TypeProduitJPATest {
 	    final TypeProduitJPA typeProduitJPA = new TypeProduitJPA();
 
 	    // ACT - WHEN
-	    final String typeProduitString = typeProduitJPA.getTypeProduit(); // Correction : getTypeProduit() retourne une String
+	    /* getTypeProduit() retourne une String. */
+	    final String typeProduitString = typeProduitJPA.getTypeProduit();
 
 	    // ASSERT - THEN
 	    /* vérifie que getTypeProduit() retourne null si le champ typeProduit est null. */
 	    assertNull(typeProduitString, "getTypeProduit() doit retourner null si le champ typeProduit est null : ");
 
 	    //**** ARRANGE - GIVEN
-	    typeProduitJPA.setTypeProduit(VETEMENT); // Définition d'une valeur non-null
+	    typeProduitJPA.setTypeProduit(VETEMENT);
 
 	    // ACT - WHEN
 	    final String typeProduitAvecValeur = typeProduitJPA.getTypeProduit();
@@ -985,7 +1085,7 @@ public class TypeProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testSetIdTypeProduit() : vérifie le comportement de la méthode setIdTypeProduit(Long)")
-	@Tag("setters")
+	@Tag(SETTERS)
 	@Test
 	public final void testSetIdTypeProduit() {
 
@@ -1052,14 +1152,11 @@ public class TypeProduitJPATest {
 	    }
 
 	    //**** ARRANGE - GIVEN
-	    // Utilisation du constructeur existant : TypeProduitJPA(Long pIdTypeProduit, String pTypeProduit)
 	    final TypeProduitJPA typeProduitVetement = new TypeProduitJPA(1L, VETEMENT);
 
-	    // Utilisation du constructeur existant : SousTypeProduitJPA(Long, String, TypeProduitI)
 	    final SousTypeProduitJPA sousTypeProduitVetementHomme = new SousTypeProduitJPA(1L, "vêtement pour homme", typeProduitVetement);
 
 	    // ACT - WHEN
-	    // Le rattachement bidirectionnel est déjà géré par le constructeur de SousTypeProduitJPA via setTypeProduit()
 
 	    /* AFFICHAGE A LA CONSOLE. */
 	    if (AFFICHAGE_GENERAL && affichage) {
@@ -1118,12 +1215,13 @@ public class TypeProduitJPATest {
 	    // ASSERT - THEN
 	    assertNotNull(sousTypes, "getSousTypeProduits() doit retourner une liste non null : ");
 
-	    // Vérification de la liste défensive : tentative de cast pour déclencher UnsupportedOperationException
+	    /* Vérification de la liste défensive : tentative de cast
+	     * pour déclencher UnsupportedOperationException. */
 	    assertThrows(UnsupportedOperationException.class, () -> {
 	        @SuppressWarnings("unchecked")
 	        final List<SousTypeProduitI> mutableList 
-	        	= (List<SousTypeProduitI>) sousTypes; // Cast explicite
-	        mutableList.add(new SousTypeProduitJPA()); // Tentative d'ajout
+	        	= (List<SousTypeProduitI>) sousTypes;
+	        mutableList.add(new SousTypeProduitJPA());
 	    }, "La liste doit être défensive (impossible à modifier) : ");
 	} //___________________________________________________________________
 	
@@ -1141,7 +1239,7 @@ public class TypeProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testSetTypeProduitNormalisation() : vérifie la normalisation dans setTypeProduit(String)")
-	@Tag("setters")
+	@Tag(SETTERS)
 	@Test
 	public final void testSetTypeProduitNormalisation() {
 	    // **********************************
@@ -1159,15 +1257,15 @@ public class TypeProduitJPATest {
 	    final TypeProduitJPA typeProduit = new TypeProduitJPA();
 
 	    // ACT - WHEN & ASSERT - THEN
-	    // Test avec null
+	    /* Test avec null. */
 	    typeProduit.setTypeProduit(null);
 	    assertNull(typeProduit.getTypeProduit(), "setTypeProduit(null) doit mettre null : ");
 
-	    // Test avec chaîne vide
+	    /* Test avec chaîne vide. */
 	    typeProduit.setTypeProduit("");
 	    assertNull(typeProduit.getTypeProduit(), "setTypeProduit(\"\") doit retourner null après normalisation : ");
 
-	    // Test avec espaces
+	    /* Test avec espaces. */
 	    typeProduit.setTypeProduit("  vêtement  ");
 	    assertEquals(VETEMENT, typeProduit.getTypeProduit(), "setTypeProduit(\"  vêtement  \") doit normaliser en \"vêtement\" : ");
 	} //___________________________________________________________________
@@ -1206,17 +1304,17 @@ public class TypeProduitJPATest {
 	    final ProduitJPA produitChemise = new ProduitJPA(1L, "chemise homme", sousTypeHomme);
 
 	    // ACT - WHEN & ASSERT - THEN
-	    // Vérification des rattachements
+	    /* Vérification des rattachements. */
 	    assertSame(typeVetement, sousTypeHomme.getTypeProduit(), "SousType doit référencer son TypeProduit : ");
 	    assertSame(sousTypeHomme, produitChemise.getSousTypeProduit(), "Produit doit référencer son SousType : ");
 
-	    // Vérification de la cohérence des listes
+	    /* Vérification de la cohérence des listes. */
 	    assertTrue(typeVetement.getSousTypeProduits().contains(sousTypeHomme),
 	              "TypeProduit doit contenir son SousType : ");
 	    assertTrue(sousTypeHomme.getProduits().contains(produitChemise),
 	              "SousType doit contenir son Produit : ");
 
-	    // Test de modification (doit être isolée)
+	    /* Test de modification (doit être isolée). */
 	    produitChemise.setProduit("chemise modifiée");
 	    assertEquals("chemise modifiée", produitChemise.getProduit(),
 	                 "Modification du libellé doit être isolée : ");
@@ -1226,6 +1324,170 @@ public class TypeProduitJPATest {
 	
 	
 	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>setSousTypeProduits(List)</b> :</p>
+	 * <li>vérifie que setSousTypeProduits(null) vide la liste et détache les enfants.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testSetSousTypeProduitsNull() : vérifie que setSousTypeProduits(null) vide la liste et détache les enfants")
+	@Tag(SETTERS)
+	@Test
+	public final void testSetSousTypeProduitsNull() {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testSetSousTypeProduitsNull() ********** ");
+			System.out.println("CE TEST VERIFIE setSousTypeProduits(null).");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+		final SousTypeProduitJPA enfant1 = new SousTypeProduitJPA(1L, "vêtement enfant", parent);
+		final SousTypeProduitJPA enfant2 = new SousTypeProduitJPA(2L, "vêtement adulte", parent);
+		
+		assertTrue(parent.getSousTypeProduits().contains(enfant1), "précondition : parent contient enfant1 : ");
+		assertTrue(parent.getSousTypeProduits().contains(enfant2), "précondition : parent contient enfant2 : ");
+		assertSame(parent, enfant1.getTypeProduit(), "précondition : enfant1 pointe vers parent : ");
+		assertSame(parent, enfant2.getTypeProduit(), "précondition : enfant2 pointe vers parent : ");
+		
+		// ACT - WHEN
+		parent.setSousTypeProduits(null);
+		
+		// ASSERT - THEN
+		assertNotNull(parent.getSousTypeProduits(), "la liste ne doit jamais être null : ");
+		assertTrue(parent.getSousTypeProduits().isEmpty(), "setSousTypeProduits(null) doit vider la liste : ");
+		assertNull(enfant1.getTypeProduit(), "setSousTypeProduits(null) doit détacher enfant1 : ");
+		assertNull(enfant2.getTypeProduit(), "setSousTypeProduits(null) doit détacher enfant2 : ");
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>setSousTypeProduits(List)</b> :</p>
+	 * <li>vérifie que setSousTypeProduits(liste) rattache correctement les enfants.</li>
+	 * <li>vérifie que l'ancienne liste est détachée.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testSetSousTypeProduitsListe() : vérifie le rattachement et le détachement via setSousTypeProduits(List)")
+	@Tag(SETTERS)
+	@Test
+	public final void testSetSousTypeProduitsListe() {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testSetSousTypeProduitsListe() ********** ");
+			System.out.println("CE TEST VERIFIE setSousTypeProduits(List).");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+		final SousTypeProduitJPA ancien1 = new SousTypeProduitJPA(1L, "ancien 1", parent);
+		final SousTypeProduitJPA ancien2 = new SousTypeProduitJPA(2L, "ancien 2", parent);
+		
+		assertTrue(parent.getSousTypeProduits().contains(ancien1), "précondition : parent contient ancien1 : ");
+		assertTrue(parent.getSousTypeProduits().contains(ancien2), "précondition : parent contient ancien2 : ");
+		
+		final SousTypeProduitJPA nouveau1 = new SousTypeProduitJPA();
+		nouveau1.setIdSousTypeProduit(10L);
+		nouveau1.setSousTypeProduit("nouveau 1");
+		
+		final SousTypeProduitJPA nouveau2 = new SousTypeProduitJPA();
+		nouveau2.setIdSousTypeProduit(11L);
+		nouveau2.setSousTypeProduit("nouveau 2");
+		
+		final List<SousTypeProduitI> listeNouveaux = Arrays.asList(nouveau1, nouveau2);
+		
+		// ACT - WHEN
+		parent.setSousTypeProduits(listeNouveaux);
+		
+		// ASSERT - THEN
+		assertNotNull(parent.getSousTypeProduits(), "parent.getSousTypeProduits() ne doit pas être null : ");
+		assertTrue(parent.getSousTypeProduits().size() == 2, "parent doit contenir 2 nouveaux enfants : ");
+		
+		assertNull(ancien1.getTypeProduit(), "ancien1 doit être détaché : ");
+		assertNull(ancien2.getTypeProduit(), "ancien2 doit être détaché : ");
+		
+		assertSame(parent, nouveau1.getTypeProduit(), "nouveau1 doit référencer parent : ");
+		assertSame(parent, nouveau2.getTypeProduit(), "nouveau2 doit référencer parent : ");
+		
+		assertTrue(parent.getSousTypeProduits().contains(nouveau1), "parent doit contenir nouveau1 : ");
+		assertTrue(parent.getSousTypeProduits().contains(nouveau2), "parent doit contenir nouveau2 : ");
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste les méthodes de fail-fast pour les mauvaises instances :</p>
+	 * <li>rattacherEnfantSTP(mauvaise instance) doit lever IllegalStateException.</li>
+	 * <li>setSousTypeProduits(liste contenant mauvaise instance) doit lever IllegalStateException.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testFailFastMauvaiseInstance() : vérifie le fail-fast en cas de mauvaise instance SousTypeProduitI non-JPA")
+	@Tag("fail-fast")
+	@Test
+	public final void testFailFastMauvaiseInstance() {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testFailFastMauvaiseInstance() ********** ");
+			System.out.println("CE TEST VERIFIE LE FAIL-FAST SUR MAUVAISE INSTANCE.");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+		final SousTypeProduitI mauvaiseInstance = creerMauvaiseInstanceSousTypeProduitI();
+		
+		// ACT - WHEN / ASSERT - THEN
+		assertThrows(IllegalStateException.class, () -> {
+			parent.rattacherEnfantSTP(mauvaiseInstance);
+		}, "rattacherEnfantSTP(mauvaise instance) doit lever IllegalStateException : ");
+		
+		final List<SousTypeProduitI> liste = new ArrayList<>();
+		liste.add(mauvaiseInstance);
+		
+		assertThrows(IllegalStateException.class, () -> {
+			parent.setSousTypeProduits(liste);
+		}, "setSousTypeProduits(liste contenant mauvaise instance) doit lever IllegalStateException : ");
+		
+	} //___________________________________________________________________
+
+
+
 	/**
 	 * <div>
 	 * <ul>
@@ -1259,22 +1521,22 @@ public class TypeProduitJPATest {
 	    final List<? extends SousTypeProduitI> sousTypes = parent.getSousTypeProduits();
 
 	    // ASSERT - THEN
-	    // Vérification du typage
+	    /* Vérification du typage. */
 	    assertNotNull(sousTypes, "La liste ne doit pas être null : ");
 	    assertTrue(sousTypes.contains(enfant), "La liste doit contenir l'enfant : ");
 
-	    // Vérification de l'immuabilité
+	    /* Vérification de l'immuabilité. */
 	    assertThrows(UnsupportedOperationException.class, () -> {
 	        @SuppressWarnings("unchecked")
 	        final List<SousTypeProduitI> mutableList = (List<SousTypeProduitI>) sousTypes;
 	        mutableList.add(new SousTypeProduitJPA(2L, "test", parent));
 	    }, "La liste doit être immuable : ");
 
-	    // Vérification du type des éléments
+	    /* Vérification du type des éléments. */
 	    assertTrue(sousTypes.stream()
 	                       .allMatch(st -> st instanceof SousTypeProduitJPA),
 	              "Tous les éléments doivent être des SousTypeProduitJPA : ");
-	}
+	} //___________________________________________________________________
 	
 	
 
@@ -1292,7 +1554,35 @@ public class TypeProduitJPATest {
 		System.out.println("id du TypeProduitJPA : " + pTypeProduit.getIdTypeProduit());
 		System.out.println("TypeProduitJPA : " + pTypeProduit.getTypeProduit());		
 	}
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Crée une mauvaise instance de {@code SousTypeProduitI}
+	 * (non Entity JPA) pour tester le fail-fast.</p>
+	 * <ul>
+	 * <li>Utilise un Proxy dynamique Java.</li>
+	 * <li>Retourne null pour toutes les méthodes.</li>
+	 * <li>Instance non {@code SousTypeProduitJPA} par construction.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return SousTypeProduitI : une mauvaise instance (non-JPA).
+	 */
+	private SousTypeProduitI creerMauvaiseInstanceSousTypeProduitI() {
+		
+		final InvocationHandler handler = (proxy, method, args) -> {
+			return null;
+		};
+		
+		return (SousTypeProduitI) Proxy.newProxyInstance(
+				Thread.currentThread().getContextClassLoader(),
+				new Class<?>[] { SousTypeProduitI.class },
+				handler);
+		
+	}
 
 	
 
-}
+} 
