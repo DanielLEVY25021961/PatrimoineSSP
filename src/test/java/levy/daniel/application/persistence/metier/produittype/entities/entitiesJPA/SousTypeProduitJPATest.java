@@ -995,6 +995,123 @@ public class SousTypeProduitJPATest {
 		assertNotEquals(objet1, objetPasEqualsObjetDeep2, "objet1 n'est pas equals() avec objetPasEqualsObjetDeep2 : ");
 		
 	} //___________________________________________________________________
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste l'égalité métier <b>case-insensitive</b> sur le libellé <b>sousTypeProduit</b> :</p>
+	 * <li>force le fallback métier (IDs SousTypeProduit null).</li>
+	 * <li>utilise le fallback sur l'ID du parent TypeProduit (IDs parent non null).</li>
+	 * <li>vérifie equals() et la cohérence hashCode() en case-insensitive.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testEqualsCaseInsensitiveSurLibelle() : vérifie equals/hashCode case-insensitive sur sousTypeProduit")
+	@Tag("equals")
+	@Test
+	public final void testEqualsCaseInsensitiveSurLibelle() {
+
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent1 = new TypeProduitJPA(PECHE);
+		final TypeProduitJPA parent2 = new TypeProduitJPA(PECHE);
+
+		/* Force le fallback sur l'ID du parent (et pas sur l'ID technique du sous-type). */
+		parent1.setIdTypeProduit(1L);
+		parent2.setIdTypeProduit(1L);
+
+		final String libelleMinuscule = CANNE_A_PECHE;
+		final String libelleMajuscule = "CANNE À PÊCHE";
+
+		final SousTypeProduitI stp1
+			= new SousTypeProduitJPA(null, libelleMinuscule, parent1, null);
+		final SousTypeProduitI stp2
+			= new SousTypeProduitJPA(null, libelleMajuscule, parent2, null);
+
+		// ACT - WHEN
+		final boolean equals12 = stp1.equals(stp2);
+		final boolean equals21 = stp2.equals(stp1);
+		final int hash1 = stp1.hashCode();
+		final int hash2 = stp2.hashCode();
+
+		// ASSERT - THEN
+		assertTrue(equals12, "stp1.equals(stp2) doit retourner true (case-insensitive) : ");
+		assertTrue(equals21, "stp2.equals(stp1) doit retourner true (case-insensitive) : ");
+		assertEquals(hash1, hash2, "stp1 et stp2 doivent avoir le même hashCode (case-insensitive) : ");
+
+	} //___________________________________________________________________
+
+
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste le fallback final de equals() (sans IDs) en <b>case-insensitive</b> :</p>
+	 * <li>IDs SousTypeProduit null.</li>
+	 * <li>IDs TypeProduit parent null.</li>
+	 * <li>même instance de parent pour éviter toute ambiguïté sur equals(parent).</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testEqualsFallbackFinalCaseInsensitive() : vérifie le fallback final (sans IDs) en case-insensitive")
+	@Tag("equals")
+	@Test
+	public final void testEqualsFallbackFinalCaseInsensitive() {
+
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent = new TypeProduitJPA(PECHE);
+
+		/* Force l'absence d'IDs parent pour aller sur le fallback final. */
+		parent.setIdTypeProduit(null);
+
+		final SousTypeProduitI stp1
+			= new SousTypeProduitJPA(null, CANNE_A_PECHE, parent, null);
+		final SousTypeProduitI stp2
+			= new SousTypeProduitJPA(null, "CANNE À PÊCHE", parent, null);
+
+		// ACT - WHEN
+		final boolean equals12 = stp1.equals(stp2);
+
+		// ASSERT - THEN
+		assertTrue(equals12, "stp1.equals(stp2) doit retourner true (fallback final case-insensitive) : ");
+		assertEquals(stp1.hashCode(), stp2.hashCode(), "hashCode doit rester cohérent avec equals (fallback final case-insensitive) : ");
+
+	} //___________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste <b>compareTo()</b> en cohérence avec equals() en <b>case-insensitive</b> :</p>
+	 * <li>stp1.equals(stp2) implique stp1.compareTo(stp2) == 0.</li>
+	 * <li>utilise des libellés identiques à la casse près.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToCaseInsensitive() : vérifie compareTo() cohérent avec equals() en case-insensitive")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToCaseInsensitive() {
+
+		// ARRANGE - GIVEN
+		final TypeProduitJPA parent = new TypeProduitJPA(PECHE);
+		parent.setIdTypeProduit(1L);
+
+		final SousTypeProduitJPA stp1
+			= new SousTypeProduitJPA(null, CANNE_A_PECHE, parent, null);
+		final SousTypeProduitJPA stp2
+			= new SousTypeProduitJPA(null, "CANNE À PÊCHE", parent, null);
+
+		// ACT - WHEN
+		final boolean equals12 = stp1.equals(stp2);
+		final int compare12 = stp1.compareTo(stp2);
+
+		// ASSERT - THEN
+		assertTrue(equals12, "Pré-condition : stp1.equals(stp2) doit être true : ");
+		assertTrue(compare12 == 0, "Contrat : stp1.equals(stp2) ---> stp1.compareTo(stp2) == 0 : ");
+
+	} //___________________________________________________________________
 
 
 		
