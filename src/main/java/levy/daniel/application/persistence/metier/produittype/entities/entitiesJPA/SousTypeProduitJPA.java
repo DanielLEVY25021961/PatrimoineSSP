@@ -445,48 +445,58 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	@Override
 	public final boolean equals(final Object pObject) {
 
+		/* retourne true si pObject est la présente instance. */
 		if (this == pObject) {
 			return true;
 		}
 
-		if (!(pObject instanceof SousTypeProduitI other)) {
+		/* retourne false si pObject n'est pas une bonne instance. */
+		if (!(pObject instanceof SousTypeProduitJPA other)) {
 			return false;
 		}
 
+		/*
+		 * 1) Stratégie ID-first.
+		 * Si les deux entités possèdent un ID technique non null,
+		 * on considère que l'identité persistence prime.
+		 */
 		final Long thisId = this.getIdSousTypeProduit();
 		final Long otherId = other.getIdSousTypeProduit();
 
 		if (thisId != null && otherId != null) {
-			return Objects.equals(thisId, otherId);
+			return thisId.equals(otherId);
 		}
 
-		/* Fallback “business key” proxy-safe : (sousTypeProduit + parent
-		par ID si possible). */
-		final String thisName = this.getSousTypeProduit();
-		final String otherName = other.getSousTypeProduit();
-
-		if (!Objects.equals(thisName, otherName)) {
-			return false;
-		}
-
+		/*
+		 * 2) Fallback sur l'ID du TypeProduit parent.
+		 * Permet de conserver une cohérence métier même
+		 * si l'ID technique n'est pas encore attribué.
+		 */
 		final TypeProduitI thisTp = this.getTypeProduit();
 		final TypeProduitI otherTp = other.getTypeProduit();
 
 		final Long thisTpId = (thisTp != null) 
-				? thisTp.getIdTypeProduit()
-				: null;
-		final Long otherTpId = (otherTp != null)
-				? otherTp.getIdTypeProduit()
-				: null;
+				? thisTp.getIdTypeProduit() : null;
+		final Long otherTpId = (otherTp != null) 
+				? otherTp.getIdTypeProduit() : null;
 
+		/* Fallback sur ID parent si présent */
 		if (thisTpId != null && otherTpId != null) {
-			return Objects.equals(thisTpId, otherTpId);
+			return Objects.equals(
+					this.getSousTypeProduit(), other.getSousTypeProduit())
+					&& thisTpId.equals(otherTpId);
 		}
 
-		// dernier recours (évite de forcer l'init si proxy, mais dépend de
-		// l'impl)
-		return Objects.equals(thisTp, otherTp);
-
+		/*
+		 * 3) Fallback final purement métier.
+		 * Comparaison sur :
+		 * - le libellé sousTypeProduit
+		 * - le parent complet
+		 * Garantit la cohérence avec hashCode().
+		 */
+		return Objects.equals(
+				this.getSousTypeProduit(), other.getSousTypeProduit())
+				&& Objects.equals(thisTp, otherTp);
 	}
 
 
