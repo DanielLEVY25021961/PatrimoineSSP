@@ -145,14 +145,14 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>ID en base du sous-type de produit.</p>
+	 * <p style="font-weight:bold">ID en base du sous-type de produit.</p>
 	 * </div>
 	 */
 	private Long idSousTypeProduit;
 	
 	/**
 	 * <div>
-	 * <p>sous-type de produit comme :</p>
+	 * <p style="font-weight:bold">sous-type de produit comme :</p>
 	 * <ul>
 	 * <li>"vêtement pour homme"</li>
 	 * <li>"vêtement pour femme"</li>
@@ -164,7 +164,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>Type de produit auquel est rattaché le présent 
+	 * <p style="font-weight:bold">
+	 * Type de produit auquel est rattaché le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple "vêtement" pour le sous-type de produit 
 	 * "vêtement pour homme".</p>
@@ -175,7 +176,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>Collection des produits qualifiés par le présent 
+	 * <p style="font-weight:bold">
+	 * Collection des produits qualifiés par le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple : </p>
 	 * <ul>
@@ -191,10 +193,14 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>boolean qui indique si le présent SousTypeProduit 
-	 * possède un TypeProduit non null.</p>
+	 * <p style="font-weight:bold">
+	 * boolean qui indique si le présent SousTypeProduit 
+	 * est valide.</p>
 	 * <ul>
-	 * <li>true si le présent SousTypeProduit possède un TypeProduit non null.</li>
+	 * <li>true si :</li>
+	 * <li style="margin-left:20px;">typeProduit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon false.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
 	 * </div>
@@ -835,14 +841,26 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 
 	/**
 	 * <div>
-	 * <p>passe <code>this.valide</code> à true 
-	 * si <code>this.typeProduit</code> n'est pas null.</p>
-	 *</div>
+	 * <p>Recalcule le Boolean <b>valide</b> 
+	 * en fonction de l'état courant.</p>
+	 * <ul>
+	 * <li>valide == true si :</li>
+	 * <li style="margin-left:20px;">typeProduit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon valide == false.</li>
+	 * <li>Thread-Safe.</li>
+	 * </ul>
+	 * </div>
 	 */
 	private void recalculerValide() {
 
 	    synchronized (this) {
-	        this.valide = (this.typeProduit != null);
+	    	
+	    	/* Un SousTypeProduitJPA est valide si :
+			 * - son libellé sousTypeProduit est non null
+			 * - et s'il est rattaché à un TypeProduit. */
+			this.valide = this.typeProduit != null
+					&& this.sousTypeProduit != null;
 	    }
 
 	} // Fin de recalculerValide()._______________________________________
@@ -1314,6 +1332,9 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	    synchronized (this) {
 	        this.sousTypeProduit = pSousTypeProduit;
 	    }
+	    
+	    /* Maintient la cohérence du champ calculé. */
+		this.recalculerValide();
 	}
 
 

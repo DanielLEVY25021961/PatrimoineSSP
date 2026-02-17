@@ -197,7 +197,9 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	/* ------------------------------------------------------------------ */
 	
 	/**
-	 * <p>ID en base du type de produit.</p>
+	 * <div>
+	 * <p style="font-weight:bold">ID en base du type de produit.</p>
+	 * </div>
 	 */
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -205,7 +207,10 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	private Long idTypeProduit;
  
 	/**
-	 * <p>type de produit comme "vêtement", "outillage", ...</p>
+	 * <div>
+	 * <p style="font-weight:bold">
+	 * type de produit comme "vêtement", "outillage", ...</p>
+	 * </div>
 	 */
 	@Column(name = TYPE_PRODUIT
 			, unique = false, updatable = true
@@ -213,13 +218,16 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	private String typeProduit;
 	
 	/**
-	 * <p>Liste des sous-types de produit du présent type de produit.</p>
+	 * <div>
+	 * <p style="font-weight:bold">
+	 * Liste des sous-types de produit du présent type de produit.</p>
 	 * <p>par exemple, pour le type de produit "vêtement" :</p>
 	 * <ul>
 	 * <li>vêtement pour homme</li>
 	 * <li>vêtement pour femme</li>
 	 * <li>vêtement pour enfant</li>
 	 * </ul>
+	 * </div>
 	 */
 	@OneToMany(targetEntity = SousTypeProduitJPA.class
 			, cascade = CascadeType.ALL

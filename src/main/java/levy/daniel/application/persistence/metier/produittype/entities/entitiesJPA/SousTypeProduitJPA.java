@@ -170,7 +170,10 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	/* ----------------------------------------------------------------- */
 
 	/**
-	 * <p>ID en base du sous-type de produit.</p>
+	 * <div>
+	 * <p style="font-weight:bold">
+	 * ID en base du sous-type de produit.</p>
+	 * </div>
 	 */
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -178,12 +181,14 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	private Long idSousTypeProduit;
 	
 	/**
-	 * <p>sous-type de produit comme :</p>
+	 * <div>
+	 * <p style="font-weight:bold">sous-type de produit comme :</p>
 	 * <ul>
 	 * <li>"vêtement pour homme"</li>
 	 * <li>"vêtement pour femme"</li>
 	 * </ul>
 	 * <p>pour un type de produit "vêtement"</p>
+	 * </div>
 	 */
 	@Column(name = "SOUS_TYPE_PRODUIT"
 			, unique = false, updatable = true
@@ -191,11 +196,14 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	private String sousTypeProduit;
 	
 	/**
-	 * <p>Type de produit auquel est rattaché le présent 
+	 * <div>
+	 * <p style="font-weight:bold">
+	 * Type de produit auquel est rattaché le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple "vêtement" pour le sous-type de produit 
 	 * "vêtement pour homme".</p>
 	 * <p>ATTENTION : visibilité interface.</p>
+	 * </div>
 	 */
 	@ManyToOne(fetch = FetchType.LAZY
 			, optional = false
@@ -208,7 +216,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	
 	/**
 	 * <div>
-	 * <p>Collection des produits qualifiés par le présent 
+	 * <p style="font-weight:bold">
+	 * Collection des produits qualifiés par le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple : </p>
 	 * <ul>
@@ -228,7 +237,9 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	
 	
 	/**
-	 * <p>boolean qui indique si le présent SousTypeProduit 
+	 * <div>
+	 * <p style="font-weight:bold">
+	 * boolean qui indique si le présent SousTypeProduit 
 	 * est valide.</p>
 	 * <ul>
 	 * <li>true si :</li>
@@ -237,6 +248,7 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	 * <li>sinon false.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
+	 * </div>
 	 */
 	private transient boolean valide;
 
@@ -824,7 +836,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 		 * - et s'il est rattaché à un TypeProduit. */
 		this.valide = this.typeProduit != null
 				&& this.sousTypeProduit != null;
-	}
+		
+	} // Fin de recalculerValide()._______________________________________
 
 	
 	

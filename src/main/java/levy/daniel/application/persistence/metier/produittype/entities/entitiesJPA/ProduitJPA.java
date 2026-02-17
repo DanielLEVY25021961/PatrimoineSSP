@@ -177,13 +177,19 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 		= "le SousTypeProduit passé en paramètre "
 				+ "n'est pas de type Entity JPA : ";
 
+	/**
+	 * "idproduit;type de produit;sous-type de produit;produit;"
+	 */
+	public static final String ENTETECSV 
+		= "idproduit;type de produit;sous-type de produit;produit;";
 	
 	/* ----------------------------------------------------------------- */
 
 	
 	/**
 	 * <div>
-	 * <p>ID en base du produit.</p>
+	 * <p style="font-weight:bold">
+	 * ID dans le stockage du produit.</p>
 	 * </div>
 	 */
 	@Id
@@ -194,7 +200,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Nom du produit comme par exemple :</p>
+	 * <p style="font-weight:bold">
+	 * Nom du produit (libellé) comme par exemple :</p>
 	 * <ul>
      * <li>le produit "chemise à manches longues pour homme" 
      * pour le sous-produit "vêtement pour homme".</li>
@@ -213,7 +220,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	/**
 	 * <div>
-	 * <p>sous-type de produit qui caractérise le présent produit.</p>
+	 * <p style="font-weight:bold">
+	 * sous-type de produit qui caractérise le présent produit.</p>
 	 * <p>par exemple : "vêtement pour homme" pour un PRODUIT 
 	 * "tee-shirt pour homme".</p>
 	 * <p>ATTENTION : visibilité interface.</p>
@@ -231,7 +239,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	/**
 	 * <div>
-	 * <p>boolean qui indique si le présent Produit est valide.</p>
+	 * <p style="font-weight:bold">
+	 * boolean qui indique si le présent Produit est valide.</p>
 	 * <ul>
 	 * <li>true si :</li>
 	 * <li style="margin-left:20px;">produit != null</li>
@@ -738,7 +747,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Recalcule le Boolean <b>valide</b> 
+	 * <p style="font-weight:bold;">
+	 * Recalcule le Boolean <b>valide</b> 
 	 * en fonction de l'état courant.</p>
 	 * <ul>
 	 * <li>valide == true si :</li>
@@ -754,40 +764,39 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 		 * et s'il est rattaché à un SousTypeProduit. */
 		this.valide = this.produit != null
 				&& this.sousTypeProduit != null;
-
 	}
 
 
 	
 	/**
 	 * <div>
-	 * <p>Normalise une chaîne :</p>
+	 * <p style="font-weight:bold;">
+	 * retourne une chaine de caractères "nettoyée"
+	 * sans espaces superflus avant et après (trim()).</p>
 	 * <ul>
-	 * <li>retourne null si pString est null.</li>
-	 * <li>trim().</li>
-	 * <li>retourne null si la chaîne est vide après trim.</li>
+	 * <li>ne fait rien et retourne null si pString est null.</li>
+	 * <li>applique un trim() sur pString.</li>
+	 * <li>retourne null si pString est vide.</li>
+	 * <li>retourne la String trimée si elle est non vide.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pString : String à normaliser
-	 * @return String normalisée
+	 * @param pString : String : String à normaliser
+	 * @return String : pString normalisé (trimé).
 	 */
-	private String normalize(final String pString) {
-
-		/* Gestion du null. */
-		if (pString == null) {
-			return null;
-		}
-
-		/* Suppression des espaces en début et fin. */
-		final String trimmed = pString.trim();
-
-		/* Chaîne vide -> null. */
-		if (trimmed.isEmpty()) {
-			return null;
-		}
-
-		return trimmed;
+	private static String normalize(final String pString) {
+	    /*
+	     * Méthode statique, donc thread-safe par nature.
+	     */
+	    if (pString == null) {
+	        return null;
+	    }
+	    
+	    /* Suppression des espaces en début et fin. */
+	    final String trimmed = pString.trim();
+	    
+	    /* Chaîne vide -> null. */
+	    return trimmed.isEmpty() ? null : trimmed;
 	}
 
 	
@@ -806,7 +815,7 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	@Transient
 	@Override
 	public final String getEnTeteCsv() {
-		return "idproduit;type de produit;sous-type de produit;produit;";
+		return ENTETECSV;
 	}
 
 
@@ -826,7 +835,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	 * </ul>
 	 * </div>
 	 *
-	 * @return String : "this.idProduit;typeProduit;sous-type de produit;produit;"
+	 * @return String : 
+	 * "this.idProduit;typeProduit;sous-type de produit;produit;"
 	 */
 	@Override
 	public final String toStringCsv() {
@@ -1034,7 +1044,7 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	@Override
 	public String getProduit() {
 		return this.produit;	
-	}
+	} // Fin de getProduit()._____________________________________________
 
 
 		
@@ -1042,9 +1052,14 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	* {@inheritDoc}
 	*/
 	@Override
-	public void setProduit(final String pProduit) {	
-		this.produit = normalize(pProduit);	
-	}
+	public void setProduit(final String pProduit) {
+		
+		this.produit = normalize(pProduit);
+		
+		/* Maintient la cohérence du champ calculé. */
+		this.recalculerValide();
+		
+	} // Fin de setProduit(...).__________________________________________
 
 
 	
@@ -1141,9 +1156,7 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 		}
 	
-		/* return si pTypeProduit == null. */
-		return;
-	}
+	} // Fin de traiterMauvaiseInstanceSousTypeProduit(...)._______________
 
 	
 }
