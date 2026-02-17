@@ -398,7 +398,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	* <p style="font-weight:bold;">equals() sur :</p>
 	* <ol>
 	* <li style="font-weight:bold;">typeProduit</li>
-	* <li style="font-weight:bold;">sousTypeProduit</li>
+	* <li style="font-weight:bold;">sousTypeProduit 
+	* (insensible à la casse)</li>
 	* </ol>
 	* </div>
 	*/
@@ -751,10 +752,10 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 */
-    /** {@inheritDoc} */
 	@Override
 	public final SousTypeProduit deepClone(final CloneContext ctx) {
 
+		/* Garde au cas où le CloneContext passé en paramètre serait null.*/
 		if (ctx == null) {
 			throw new IllegalArgumentException(
 					"ctx ne doit pas être null.");
@@ -793,9 +794,7 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 		final TypeProduitI typeProduitSafeCopy;
 
 		synchronized (this) {
-
 			typeProduitSafeCopy = this.typeProduit;
-
 		}
 
 		if (typeProduitSafeCopy != null) {
@@ -822,7 +821,6 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 		}
 
 		return clone;
-
 	}
 
 

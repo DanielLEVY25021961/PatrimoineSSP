@@ -465,7 +465,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	* <ol>
 	* <li style="font-weight:bold;">idSousTypeProduit</li>
 	* <li style="font-weight:bold;">idTypeProduit</li>
-	* <li style="font-weight:bold;">sousTypeProduit (insensible à la casse)</li>
+	* <li style="font-weight:bold;">sousTypeProduit 
+	* (insensible à la casse)</li>
 	* </ol>
 	* </div>
 	*/
@@ -733,6 +734,12 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	*/
 	@Override
 	public final SousTypeProduitJPA deepClone(final CloneContext ctx) {
+
+		/* Garde au cas où le CloneContext passé en paramètre serait null.*/
+		if (ctx == null) {
+			throw new IllegalArgumentException(
+					"ctx ne doit pas être null.");
+		}
 
 		/*
 		 * Vérifie si l'objet a déjà été cloné
