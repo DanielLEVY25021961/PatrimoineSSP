@@ -55,7 +55,12 @@ public class SousTypeProduitJPATest {
 	 * "unused"
 	 */
 	public static final String UNUSED = "unused";
-		
+
+	/**
+	 * "equals"
+	 */
+	public static final String EQUALS = "equals";
+	
 	/**
 	 * System.getProperty("line.separator")
 	 */
@@ -856,7 +861,7 @@ public class SousTypeProduitJPATest {
 	 */
 	@SuppressWarnings({"unlikely-arg-type", UNUSED})
 	@DisplayName("testEquals() : vérifie le respect du contrat Java pour equals() et hashCode()")
-	@Tag("equals")
+	@Tag(EQUALS)
 	@Test
 	public final void testEquals() {
 		
@@ -1007,7 +1012,7 @@ public class SousTypeProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testEqualsCaseInsensitiveSurLibelle() : vérifie equals/hashCode case-insensitive sur sousTypeProduit")
-	@Tag("equals")
+	@Tag(EQUALS)
 	@Test
 	public final void testEqualsCaseInsensitiveSurLibelle() {
 
@@ -1053,7 +1058,7 @@ public class SousTypeProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testEqualsFallbackFinalCaseInsensitive() : vérifie le fallback final (sans IDs) en case-insensitive")
-	@Tag("equals")
+	@Tag(EQUALS)
 	@Test
 	public final void testEqualsFallbackFinalCaseInsensitive() {
 
@@ -1074,6 +1079,67 @@ public class SousTypeProduitJPATest {
 		// ASSERT - THEN
 		assertTrue(equals12, "stp1.equals(stp2) doit retourner true (fallback final case-insensitive) : ");
 		assertEquals(stp1.hashCode(), stp2.hashCode(), "hashCode doit rester cohérent avec equals (fallback final case-insensitive) : ");
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste equals() : même libellé mais parents différents (IDs null).</p>
+	 * <li>garantit la stricte cohérence avec ProduitJPA : parent différent + IDs null => equals() == false.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testEqualsMemeLibelleParentsDifferentsSansIds() : même libellé mais parents différents (IDs null) => equals() false")
+	@Tag(EQUALS)
+	@Test
+	public final void testEqualsMemeLibelleParentsDifferentsSansIds() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE SousTypeProduitJPATest - méthode testEqualsMemeLibelleParentsDifferentsSansIds() ********** ");
+			System.out.println("CE TEST VERIFIE equals() : MEME LIBELLE MAIS PARENTS DIFFERENTS (IDs null) => false.");
+			System.out.println();
+		}
+
+		//**** ARRANGE - GIVEN
+		/* Parents avec IDs null (constructeur String) et libellés différents. */
+		final TypeProduitI typeProduitParent1 = new TypeProduitJPA(PECHE);
+		final TypeProduitI typeProduitParent2 = new TypeProduitJPA(OUTILLAGE);
+
+		/* Enfants : mêmes sousTypeProduit, IDs techniques null (constructeur String). */
+		final SousTypeProduitI stp1 = new SousTypeProduitJPA(CANNE_A_PECHE);
+		final SousTypeProduitI stp2 = new SousTypeProduitJPA(CANNE_A_PECHE);
+
+		/* Rattachement aux parents différents. */
+		stp1.setTypeProduit(typeProduitParent1);
+		stp2.setTypeProduit(typeProduitParent2);
+
+		// ACT - WHEN
+		final boolean equalsResult = stp1.equals(stp2);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("*** stp1 ***");
+			this.afficher(stp1);
+			System.out.println();
+			System.out.println("*** stp2 ***");
+			this.afficher(stp2);
+			System.out.println();
+			System.out.println("equalsResult : " + equalsResult);
+		}
+
+		// ASSERT - THEN
+		assertFalse(equalsResult, "Même libellé mais parents différents (IDs null) : equals() doit retourner false : ");
 
 	} //___________________________________________________________________
 
@@ -1110,6 +1176,89 @@ public class SousTypeProduitJPATest {
 		// ASSERT - THEN
 		assertTrue(equals12, "Pré-condition : stp1.equals(stp2) doit être true : ");
 		assertTrue(compare12 == 0, "Contrat : stp1.equals(stp2) ---> stp1.compareTo(stp2) == 0 : ");
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste l'invalidation après validité (nouvelle règle valide).</p>
+	 * <li>rend l'objet valide (SousTypeProduit + TypeProduit non null).</li>
+	 * <li>puis invalide l'objet en supprimant le parent (TypeProduit = null).</li>
+	 * <li>puis rend l'objet de nouveau valide en remettant un parent non null.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testValideDevientInvalideApresSetters() : vérifie l'invalidation après validité via les setters")
+	@Tag("valide")
+	@Test
+	public final void testValideDevientInvalideApresSetters() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE SousTypeProduitJPATest - méthode testValideDevientInvalideApresSetters() ********** ");
+			System.out.println("CE TEST VERIFIE L'INVALIDATION APRES VALIDITE (NOUVELLE REGLE valide).");
+			System.out.println();
+		}
+
+		//**** ARRANGE - GIVEN
+		final TypeProduitI typeProduit1 = new TypeProduitJPA(10L, PECHE, null);
+		final SousTypeProduitI sousTypeProduit1 = new SousTypeProduitJPA();
+
+		// ACT - WHEN
+		sousTypeProduit1.setSousTypeProduit(CANNE_A_PECHE);
+		sousTypeProduit1.setTypeProduit(typeProduit1);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("*** APRES sousTypeProduit1.setSousTypeProduit(CANNE_A_PECHE) et sousTypeProduit1.setTypeProduit(typeProduit1) ***");
+			this.afficher(sousTypeProduit1);
+			this.afficherSousTypeProduitsDuTypeProduit(sousTypeProduit1);
+		}
+
+		// ASSERT - THEN
+		assertTrue(sousTypeProduit1.isValide(), "sousTypeProduit1 doit être valide à ce stade : ");
+
+		//**** ARRANGE - GIVEN
+		// ACT - WHEN
+		/* Invalidation : suppression du parent TypeProduit. */
+		sousTypeProduit1.setTypeProduit(null);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("*** APRES sousTypeProduit1.setTypeProduit(null) ***");
+			this.afficher(sousTypeProduit1);
+		}
+
+		// ASSERT - THEN
+		assertFalse(sousTypeProduit1.isValide(), "sousTypeProduit1 doit redevenir invalide si TypeProduit == null : ");
+
+		//**** ARRANGE - GIVEN
+		// ACT - WHEN
+		/* Re-validation : remet un parent TypeProduit non null. */
+		final TypeProduitI typeProduit2 = new TypeProduitJPA(20L, OUTILLAGE, null);
+		sousTypeProduit1.setTypeProduit(typeProduit2);
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("*** APRES sousTypeProduit1.setTypeProduit(typeProduit2) ***");
+			this.afficher(sousTypeProduit1);
+			this.afficherSousTypeProduitsDuTypeProduit(sousTypeProduit1);
+		}
+
+		// ASSERT - THEN
+		assertTrue(sousTypeProduit1.isValide(), "sousTypeProduit1 doit redevenir valide si TypeProduit != null et SousTypeProduit != null : ");
 
 	} //___________________________________________________________________
 
