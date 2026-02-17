@@ -65,6 +65,11 @@ public class TypeProduitJPATest {
 		= System.getProperty("line.separator");
 	
 	/**
+	 * "clone"
+	 */
+	public static final String CLONE = "clone";
+	
+	/**
 	 * "null" 
 	 */
 	public static final String NULL = "null";
@@ -115,6 +120,11 @@ public class TypeProduitJPATest {
 	 * "vêtement enfant"
 	 */
 	public static final String VETEMENT_ENFANT = "vêtement enfant";
+	
+	/**
+	 * "vêtement homme"
+	 */
+	public static final String VETEMENT_HOMME = "vêtement homme";
 
 	/* ------------------------------------------------------------------ */
 
@@ -626,7 +636,7 @@ public class TypeProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testClone() : vérifie le respect du contrat Java pour clone()")
-	@Tag("clone")
+	@Tag(CLONE)
 	@Test
 	public final void testClone() throws CloneNotSupportedException {
 				
@@ -732,7 +742,7 @@ public class TypeProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testCloneDeepGrapheComplet() : vérifie le clonage profond du graphe TypeProduitJPA→SousTypeProduitJPA→ProduitJPA")
-	@Tag("clone")
+	@Tag(CLONE)
 	@Test
 	public final void testCloneDeepGrapheComplet() throws CloneNotSupportedException {
 		
@@ -751,7 +761,7 @@ public class TypeProduitJPATest {
 		
 		// ARRANGE - GIVEN
 		final TypeProduitJPA typeVetement = new TypeProduitJPA(null, VETEMENT, null);
-		final SousTypeProduitJPA sousTypeHomme = new SousTypeProduitJPA(null, "vêtement homme", typeVetement);
+		final SousTypeProduitJPA sousTypeHomme = new SousTypeProduitJPA(null, VETEMENT_HOMME, typeVetement);
 		final ProduitJPA produitChemise = new ProduitJPA(null, "chemise homme", sousTypeHomme);
 		
 		/* Preconditions minimales. */
@@ -777,6 +787,149 @@ public class TypeProduitJPATest {
 		assertNotNull(cloneStpI, "le sousTypeProduit cloné ne doit pas être null : ");
 		assertNotSame(sousTypeHomme, cloneStpI, "l'enfant cloné ne doit pas être la même instance que l'original : ");
 		assertSame(clone, cloneStpI.getTypeProduit(), "l'enfant cloné doit référencer le parent cloné : ");
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>cloneWithoutChildren()</b> :</p>
+	 * <li>garantit que le clone n'est pas la même instance que l'original.</li>
+	 * <li>garantit que les propriétés simples (id, typeProduit) sont copiées.</li>
+	 * <li>garantit que la liste <b>sousTypeProduits</b> du clone est vide et non partagée.</li>
+	 * <li>garantit que les enfants de l'original restent rattachés à l'original.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCloneWithoutChildren() : vérifie cloneWithoutChildren() (clone nu sans enfants)")
+	@Tag(CLONE)
+	@Test
+	public final void testCloneWithoutChildren() {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testCloneWithoutChildren() ********** ");
+			System.out.println("CE TEST VERIFIE cloneWithoutChildren() : clone nu sans enfants.");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final TypeProduitJPA typeVetement = new TypeProduitJPA(1L, VETEMENT, null);
+		final SousTypeProduitJPA sousTypeHomme = new SousTypeProduitJPA(null, VETEMENT_HOMME, typeVetement);
+		
+		/* Préconditions minimales. */
+		assertTrue(
+				typeVetement.getSousTypeProduits().contains(sousTypeHomme)
+				, "précondition : typeVetement contient sousTypeHomme : ");
+		assertSame(
+				typeVetement
+				, sousTypeHomme.getTypeProduit()
+				, "précondition : sousTypeHomme référence typeVetement : ");
+		
+		// ACT - WHEN
+		final TypeProduitJPA cloneNu = typeVetement.cloneWithoutChildren();
+		
+		// ASSERT - THEN
+		
+		/* garantit que le clone n'est pas la même instance que l'original. */
+		assertNotSame(typeVetement, cloneNu, "cloneNu ne doit pas être la même instance que typeVetement : ");
+		
+		/* garantit que les propriétés simples (id, typeProduit) sont copiées. */
+		assertEquals(typeVetement.getIdTypeProduit(), cloneNu.getIdTypeProduit(), "idTypeProduit doit être copié : ");
+		assertEquals(typeVetement.getTypeProduit(), cloneNu.getTypeProduit(), "typeProduit doit être copié : ");
+		
+		/* garantit que la liste sousTypeProduits du clone est vide et non partagée. */
+		assertNotNull(cloneNu.getSousTypeProduits(), "cloneNu.getSousTypeProduits() ne doit pas être null : ");
+		assertTrue(cloneNu.getSousTypeProduits().isEmpty(), "cloneNu ne doit avoir aucun SousTypeProduit : ");
+		assertNotSame(
+				typeVetement.getSousTypeProduits()
+				, cloneNu.getSousTypeProduits()
+				, "les listes sousTypeProduits ne doivent pas être partagées : ");
+		
+		/* garantit que les enfants de l'original restent rattachés à l'original. */
+		assertSame(
+				typeVetement
+				, sousTypeHomme.getTypeProduit()
+				, "l'enfant original doit rester rattaché au parent original : ");
+		
+	} //___________________________________________________________________
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>deepClone(CloneContext)</b> :</p>
+	 * <li>garantit que le <b>CloneContext</b> joue son rôle de cache (même instance clone retournée).</li>
+	 * <li>garantit la cohérence du rattachement enfant-&gt;parent sur les clones.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testDeepCloneAvecCacheCloneContext() : vérifie deepClone(ctx) et le cache du CloneContext")
+	@Tag(CLONE)
+	@Test
+	public final void testDeepCloneAvecCacheCloneContext() {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testDeepCloneAvecCacheCloneContext() ********** ");
+			System.out.println("CE TEST VERIFIE deepClone(ctx) et le cache du CloneContext.");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final TypeProduitJPA typeVetement = new TypeProduitJPA(null, VETEMENT, null);
+		final SousTypeProduitJPA sousTypeHomme = new SousTypeProduitJPA(null, VETEMENT_HOMME, typeVetement);
+		
+		/* Préconditions minimales. */
+		assertTrue(
+				typeVetement.getSousTypeProduits().contains(sousTypeHomme)
+				, "précondition : typeVetement contient sousTypeHomme : ");
+		
+		final levy.daniel.application.model.metier.produittype.CloneContext ctx =
+				new levy.daniel.application.model.metier.produittype.CloneContext();
+		
+		// ACT - WHEN
+		final TypeProduitJPA clone1 = typeVetement.deepClone(ctx);
+		final TypeProduitJPA clone2 = typeVetement.deepClone(ctx);
+		final SousTypeProduitI cloneStpViaCtx = sousTypeHomme.deepClone(ctx);
+		
+		// ASSERT - THEN
+		
+		/* garantit que le CloneContext joue son rôle de cache. */
+		assertSame(clone1, clone2, "deepClone(ctx) doit retourner la même instance clone (cache) : ");
+		
+		/* garantit que le clone n'est pas la même instance que l'original. */
+		assertNotSame(typeVetement, clone1, "le clone ne doit pas être la même instance que l'original : ");
+		
+		/* garantit la cohérence des rattachements sur les clones. */
+		assertNotNull(clone1.getSousTypeProduits(), "clone1.getSousTypeProduits() ne doit pas être null : ");
+		assertTrue(clone1.getSousTypeProduits().size() == 1, "clone1 doit avoir 1 sousTypeProduit : ");
+		
+		final SousTypeProduitI cloneStpDansCloneParent = clone1.getSousTypeProduits().get(0);
+		assertSame(
+				cloneStpDansCloneParent
+				, cloneStpViaCtx
+				, "le clone d'enfant via ctx doit être le même que l'enfant du clone parent : ");
+		assertSame(
+				clone1
+				, cloneStpViaCtx.getTypeProduit()
+				, "l'enfant cloné doit référencer le parent cloné : ");
 		
 	} //___________________________________________________________________
 
@@ -1328,7 +1481,7 @@ public class TypeProduitJPATest {
 
 	    //**** ARRANGE - GIVEN
 	    final TypeProduitJPA typeVetement = new TypeProduitJPA(1L, VETEMENT);
-	    final SousTypeProduitJPA sousTypeHomme = new SousTypeProduitJPA(1L, "vêtement homme", typeVetement);
+	    final SousTypeProduitJPA sousTypeHomme = new SousTypeProduitJPA(1L, VETEMENT_HOMME, typeVetement);
 	    final ProduitJPA produitChemise = new ProduitJPA(1L, "chemise homme", sousTypeHomme);
 
 	    // ACT - WHEN & ASSERT - THEN
@@ -1346,7 +1499,7 @@ public class TypeProduitJPATest {
 	    produitChemise.setProduit("chemise modifiée");
 	    assertEquals("chemise modifiée", produitChemise.getProduit(),
 	                 "Modification du libellé doit être isolée : ");
-	    assertEquals("vêtement homme", sousTypeHomme.getSousTypeProduit(),
+	    assertEquals(VETEMENT_HOMME, sousTypeHomme.getSousTypeProduit(),
 	                 "SousType ne doit pas être affecté : ");
 	} //___________________________________________________________________
 	
