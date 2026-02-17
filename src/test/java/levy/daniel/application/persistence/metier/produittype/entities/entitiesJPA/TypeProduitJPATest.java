@@ -366,6 +366,24 @@ public class TypeProduitJPATest {
 		assertNotEquals(objet1, objet4PasEqualsObjet1, "objet1 n'est pas equals() avec objet4PasEqualsObjet1 : ");
 		
 		
+		/* -------------------------------------------------------------- */
+		/* Branche manquante : id non null / id non null (id-first)        */
+		/* -------------------------------------------------------------- */
+		
+		/* Cas id non null / id non null : même typeProduit mais IDs différents => false. */
+		final TypeProduitJPA objetIdsDifferentsMemeType1 = new TypeProduitJPA(1L, VETEMENT, null);
+		final TypeProduitJPA objetIdsDifferentsMemeType2 = new TypeProduitJPA(2L, "VÊTEMENT", null);
+		
+		assertNotEquals(
+				objetIdsDifferentsMemeType1
+				, objetIdsDifferentsMemeType2
+				, "id non null/id non null : IDs différents => equals false même si typeProduit identique : ");
+		assertNotEquals(
+				objetIdsDifferentsMemeType2
+				, objetIdsDifferentsMemeType1
+				, "symétrie id non null/id non null : IDs différents => equals false : ");
+		
+		
 		/* ----------------------------- */
 		/* Branches manquantes : fallback */
 		/* ----------------------------- */
@@ -391,7 +409,7 @@ public class TypeProduitJPATest {
 		assertNotEquals(objetTypeNull, objetTypeNonNull, "typeProduit null / non null : doit être false : ");
 		assertNotEquals(objetTypeNonNull, objetTypeNull, "symétrie typeProduit null / non null : ");
 		
-	} //___________________________________________________________________	
+	} //___________________________________________________________________
 
 
 	
