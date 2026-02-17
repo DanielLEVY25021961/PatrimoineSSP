@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -178,11 +178,11 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	public static final String TYPE_PRODUIT = "TYPE_PRODUIT";
 		
 	/**
-	 * "le SousTypeProduit passé en paramètre 
+	 * "le SousTypeProduit dans la liste passée en paramètre 
 	 * n'est pas de type Entity JPA : "
 	 */
 	public static final String MAUVAISE_INSTANCE_JPA 
-		= "le SousTypeProduit passé en paramètre "
+		= "le SousTypeProduit dans la liste passée en paramètre "
 				+ "n'est pas de type Entity JPA : ";
 	
 	/**
@@ -249,7 +249,7 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	
 	
 	/**
-	 * div>
+	 * <div>
 	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
 	 * </div>
 	 */
@@ -359,17 +359,33 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	*/
 	@Override
 	public final int hashCode() {
-
-		final Long thisId = this.getIdTypeProduit();
-
-		if (thisId != null) {
-			return thisId.hashCode();
-		}
-
-		return Objects.hash(this.getTypeProduit());
+	    
+	    final Long thisId = this.getIdTypeProduit();
+	    
+	    if (thisId != null) {
+	        return thisId.hashCode();
+	    }
+	    
+	    /* Snapshot court sous verrou pour alignement sur la couche métier :
+	     * - lecture directe du champ (pas du getter)
+	     * - garantit une valeur cohérente le temps du calcul.
+	     */
+	    final String typeSnapshot;
+	    
+	    synchronized (this) {
+	        typeSnapshot = this.typeProduit;
+	    }
+	    
+	    if (typeSnapshot == null) {
+	        return 0;
+	    }
+	    
+	    /* Alignement métier : hashCode insensible à la casse. */
+	    return typeSnapshot.toLowerCase(Locale.ROOT).hashCode();
+	    
 	}
-
-
+	
+	
 
 	/**
 	* {@inheritDoc}
@@ -383,30 +399,56 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	* </div>
 	*/
 	@Override
-	public final boolean equals(final Object pObject) {
-
-		if (this == pObject) {
+	public final boolean equals(final Object obj) {
+		
+		/*
+		 * retourne true si les références sont identiques.
+		 */
+		if (this == obj) {
 			return true;
 		}
-
-		if (pObject == null) {
+		
+		/*
+		 * return false si pObject == null.
+		 */
+		if (obj == null) {
 			return false;
 		}
-
-		if (!(pObject instanceof TypeProduitI other)) {
+		
+		/*
+		 * retourne false si pObject
+		 * n'est pas une bonne instance.
+		 */
+		if (!(obj instanceof TypeProduitJPA other)) {
 			return false;
 		}
 
 		final Long thisId = this.getIdTypeProduit();
 		final Long otherId = other.getIdTypeProduit();
-
+		
+		/* Stratégie id-first :
+		 * Si les deux identifiants sont non nuls,
+		 * comparaison stricte sur l'identité technique.
+		 */
 		if (thisId != null && otherId != null) {
-			return Objects.equals(thisId, otherId);
+			return thisId.equals(otherId);
 		}
-
-		// Fallback (transitoire avant persist)
-		return Objects.equals(this.getTypeProduit(),
-				other.getTypeProduit());
+		
+		/* Fallback métier :
+		 * comparaison insensible à la casse sur [TypeProduit].
+		 */
+		final String thisType = this.typeProduit;
+		final String otherType = other.typeProduit;
+		
+		if (thisType == null && otherType == null) {
+			return true;
+		}
+		
+		if (thisType == null || otherType == null) {
+			return false;
+		}
+		
+		return thisType.equalsIgnoreCase(otherType);		
 	}
 
 
@@ -719,8 +761,7 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	/**
 	* {@inheritDoc}
 	*/
-//	@Override
-	public final TypeProduitJPA cloneDeep() {
+	private TypeProduitJPA cloneDeep() {
 		return deepClone(new CloneContext());
 	}
 
@@ -1354,7 +1395,7 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	
 		}
 	
-		/* return si pTypeProduit == null. */
+		/* return si pSousTypeProduit == null. */
 		return;
 	}
 

@@ -379,6 +379,10 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	@Override
 	public final int hashCode() {
 
+		/* Snapshot court sous verrou pour alignement sur la couche métier :
+	     * - lecture directe du champ (pas du getter)
+	     * - garantit une valeur cohérente le temps du calcul.
+	     */
 	    final String typeSnapshot;
 
 	    synchronized (this) {
@@ -389,6 +393,7 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	        return 0;
 	    }
 
+	    /* Alignement métier : hashCode insensible à la casse. */
 	    return typeSnapshot.toLowerCase(Locale.ROOT).hashCode();
 	}
 
@@ -442,7 +447,7 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 		}
 
 		/*
-		 * equals sur [TypeProduit].
+		 * equals sur [TypeProduit] (comparaison insensible à la casse).
 		 */
 		final int thisHash = System.identityHashCode(this);
 		final int otherHash = System.identityHashCode(other);
