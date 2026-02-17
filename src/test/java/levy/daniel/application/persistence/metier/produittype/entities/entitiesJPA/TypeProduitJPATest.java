@@ -74,6 +74,11 @@ public class TypeProduitJPATest {
 	 */
 	public static final String SETTERS = "setters";
 	
+	/**
+	 * "getters"
+	 */
+	public static final String GETTERS = "getters";
+	
 	/* ------------------------------------------------------------------ */
 	
 	/**
@@ -1032,7 +1037,7 @@ public class TypeProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testGetTypeProduit() : vérifie le comportement de la méthode getTypeProduit()")
-	@Tag("getters")
+	@Tag(GETTERS)
 	@Test
 	public final void testGetTypeProduit() {
 
@@ -1189,45 +1194,45 @@ public class TypeProduitJPATest {
 	
 	/**
 	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Teste la méthode getSousTypeProduits().</p>
 	 * <ul>
-	 * <p>Teste la méthode <b>getSousTypeProduits()</b> :</p>
-	 * <li>vérifie que getSousTypeProduits() retourne une liste non null.</li>
-	 * <li>vérifie que la liste est défensive (modification impossible).</li>
+	 * <li>Vérifie que getSousTypeProduits() retourne une liste non null.</li>
+	 * <li>Vérifie que la liste est défensive (modification impossible).</li>
 	 * </ul>
 	 * </div>
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testGetSousTypeProduits() : vérifie le comportement de la méthode getSousTypeProduits()")
-	@Tag("getters")
+	@Tag(GETTERS)
 	@Test
 	public final void testGetSousTypeProduits() {
-	    // **********************************
-	    // AFFICHAGE DANS LE TEST ou NON
-	    final boolean affichage = false;
-	    // **********************************
 
-	    /* AFFICHAGE A LA CONSOLE. */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println("********** CLASSE TypeProduitJPATest - méthode testGetSousTypeProduits() **********");
-	    }
+		/* ********************************** */
+		/* AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+		/* ********************************** */
 
-	    //**** ARRANGE - GIVEN
-	    final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testGetSousTypeProduits() **********");
+		}
 
-	    // ACT - WHEN
-	    final List<? extends SousTypeProduitI> sousTypes = parent.getSousTypeProduits();
+		/* ARRANGE - GIVEN */
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
 
-	    // ASSERT - THEN
-	    assertNotNull(sousTypes, "getSousTypeProduits() doit retourner une liste non null : ");
+		/* ACT - WHEN */
+		final List<? extends SousTypeProduitI> sousTypes = parent.getSousTypeProduits();
 
-	    /* Vérification de la liste défensive : tentative de cast
-	     * pour déclencher UnsupportedOperationException. */
-	    assertThrows(UnsupportedOperationException.class, () -> {
-	        @SuppressWarnings("unchecked")
-	        final List<SousTypeProduitI> mutableList 
-	        	= (List<SousTypeProduitI>) sousTypes;
-	        mutableList.add(new SousTypeProduitJPA());
-	    }, "La liste doit être défensive (impossible à modifier) : ");
+		/* ASSERT - THEN */
+		assertNotNull(sousTypes, "getSousTypeProduits() doit retourner une liste non null : ");
+
+		/* Vérification de la liste défensive : clear() doit lever UnsupportedOperationException. */
+		assertThrows(
+				UnsupportedOperationException.class,
+				() -> sousTypes.clear(),
+				"La liste doit être défensive (impossible à modifier) : ");
+
 	} //___________________________________________________________________
 	
 	
@@ -1381,10 +1386,11 @@ public class TypeProduitJPATest {
 	
 	/**
 	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Teste la méthode setSousTypeProduits(List).</p>
 	 * <ul>
-	 * <p>Teste la méthode <b>setSousTypeProduits(List)</b> :</p>
-	 * <li>vérifie que setSousTypeProduits(liste) rattache correctement les enfants.</li>
-	 * <li>vérifie que l'ancienne liste est détachée.</li>
+	 * <li>Vérifie que setSousTypeProduits(liste) rattache correctement les enfants.</li>
+	 * <li>Vérifie que l'ancienne liste est détachée.</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -1393,12 +1399,12 @@ public class TypeProduitJPATest {
 	@Tag(SETTERS)
 	@Test
 	public final void testSetSousTypeProduitsListe() {
-		
-		// **********************************
-		// AFFICHAGE DANS LE TEST ou NON
+
+		/* ********************************** */
+		/* AFFICHAGE DANS LE TEST ou NON */
 		final boolean affichage = false;
-		// **********************************
-		
+		/* ********************************** */
+
 		/* AFFICHAGE A LA CONSOLE. */
 		if (AFFICHAGE_GENERAL && affichage) {
 			System.out.println();
@@ -1406,49 +1412,121 @@ public class TypeProduitJPATest {
 			System.out.println("CE TEST VERIFIE setSousTypeProduits(List).");
 			System.out.println();
 		}
-		
-		// ARRANGE - GIVEN
+
+		/* ARRANGE - GIVEN */
 		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+
 		final SousTypeProduitJPA ancien1 = new SousTypeProduitJPA(1L, "ancien 1", parent);
 		final SousTypeProduitJPA ancien2 = new SousTypeProduitJPA(2L, "ancien 2", parent);
-		
+
 		assertTrue(parent.getSousTypeProduits().contains(ancien1), "précondition : parent contient ancien1 : ");
 		assertTrue(parent.getSousTypeProduits().contains(ancien2), "précondition : parent contient ancien2 : ");
-		
+
 		final SousTypeProduitJPA nouveau1 = new SousTypeProduitJPA();
 		nouveau1.setIdSousTypeProduit(10L);
 		nouveau1.setSousTypeProduit("nouveau 1");
-		
+
 		final SousTypeProduitJPA nouveau2 = new SousTypeProduitJPA();
 		nouveau2.setIdSousTypeProduit(11L);
 		nouveau2.setSousTypeProduit("nouveau 2");
-		
+
 		final List<SousTypeProduitI> listeNouveaux = Arrays.asList(nouveau1, nouveau2);
-		
-		// ACT - WHEN
+
+		/* ACT - WHEN */
 		parent.setSousTypeProduits(listeNouveaux);
-		
-		// ASSERT - THEN
+
+		/* ASSERT - THEN */
 		assertNotNull(parent.getSousTypeProduits(), "parent.getSousTypeProduits() ne doit pas être null : ");
 		assertTrue(parent.getSousTypeProduits().size() == 2, "parent doit contenir 2 nouveaux enfants : ");
-		
+
 		assertNull(ancien1.getTypeProduit(), "ancien1 doit être détaché : ");
 		assertNull(ancien2.getTypeProduit(), "ancien2 doit être détaché : ");
-		
+
 		assertSame(parent, nouveau1.getTypeProduit(), "nouveau1 doit référencer parent : ");
 		assertSame(parent, nouveau2.getTypeProduit(), "nouveau2 doit référencer parent : ");
-		
+
 		assertTrue(parent.getSousTypeProduits().contains(nouveau1), "parent doit contenir nouveau1 : ");
 		assertTrue(parent.getSousTypeProduits().contains(nouveau2), "parent doit contenir nouveau2 : ");
+
+	} //___________________________________________________________________
+
 		
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Teste le contrat "vue live" de getSousTypeProduits().</p>
+	 * <ul>
+	 * <li>La liste retournée est immuable (non modifiable).</li>
+	 * <li>La liste retournée est une vue live : si le parent est modifié
+	 * par une opération canonique, la vue reflète la modification.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testGetSousTypeProduitsVueLive() : vérifie que getSousTypeProduits() retourne une vue live immuable")
+	@Tag(GETTERS)
+	@Test
+	public final void testGetSousTypeProduitsVueLive() {
+
+		/* ********************************** */
+		/* AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+		/* ********************************** */
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testGetSousTypeProduitsVueLive() ********** ");
+			System.out.println("CE TEST VERIFIE QUE getSousTypeProduits() RETOURNE UNE VUE LIVE IMMUABLE.");
+			System.out.println();
+		}
+
+		/* ARRANGE - GIVEN */
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT, null);
+
+		final List<? extends SousTypeProduitI> vue = parent.getSousTypeProduits();
+
+		assertNotNull(vue, "La vue retournée par getSousTypeProduits() ne doit pas être null : ");
+		assertTrue(vue.isEmpty(), "La vue doit être vide au départ : ");
+
+		/* Vérifie immutabilité : clear() doit lever UnsupportedOperationException. */
+		assertThrows(
+				UnsupportedOperationException.class,
+				() -> vue.clear(),
+				"La liste retournée doit être immuable : ");
+
+		final SousTypeProduitJPA enfant = new SousTypeProduitJPA();
+		enfant.setIdSousTypeProduit(1L);
+		enfant.setSousTypeProduit(VETEMENT_ENFANT);
+
+		/* ACT - WHEN */
+		parent.rattacherEnfantSTP(enfant);
+
+		/* ASSERT - THEN */
+		assertEquals(
+				1,
+				vue.size(),
+				"La vue doit refléter la modification (vue live) : ");
+
+		assertTrue(
+				vue.contains(enfant),
+				"La vue doit contenir l'enfant ajouté : ");
+
+		assertSame(
+				parent,
+				enfant.getTypeProduit(),
+				"L'enfant doit référencer le parent après rattachement : ");
+
 	} //___________________________________________________________________
 	
 	
 	
 	/**
 	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Teste les méthodes de fail-fast pour les mauvaises instances.</p>
 	 * <ul>
-	 * <p>Teste les méthodes de fail-fast pour les mauvaises instances :</p>
 	 * <li>rattacherEnfantSTP(mauvaise instance) doit lever IllegalStateException.</li>
 	 * <li>setSousTypeProduits(liste contenant mauvaise instance) doit lever IllegalStateException.</li>
 	 * </ul>
@@ -1459,12 +1537,12 @@ public class TypeProduitJPATest {
 	@Tag("fail-fast")
 	@Test
 	public final void testFailFastMauvaiseInstance() {
-		
-		// **********************************
-		// AFFICHAGE DANS LE TEST ou NON
+
+		/* ********************************** */
+		/* AFFICHAGE DANS LE TEST ou NON */
 		final boolean affichage = false;
-		// **********************************
-		
+		/* ********************************** */
+
 		/* AFFICHAGE A LA CONSOLE. */
 		if (AFFICHAGE_GENERAL && affichage) {
 			System.out.println();
@@ -1472,34 +1550,41 @@ public class TypeProduitJPATest {
 			System.out.println("CE TEST VERIFIE LE FAIL-FAST SUR MAUVAISE INSTANCE.");
 			System.out.println();
 		}
-		
-		// ARRANGE - GIVEN
+
+		/* ARRANGE - GIVEN */
 		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
 		final SousTypeProduitI mauvaiseInstance = creerMauvaiseInstanceSousTypeProduitI();
-		
-		// ACT - WHEN / ASSERT - THEN
-		assertThrows(IllegalStateException.class, () -> {
-			parent.rattacherEnfantSTP(mauvaiseInstance);
-		}, "rattacherEnfantSTP(mauvaise instance) doit lever IllegalStateException : ");
-		
+
+		/* ACT - WHEN / ASSERT - THEN */
+		assertThrows(
+				IllegalStateException.class,
+				() -> {
+					parent.rattacherEnfantSTP(mauvaiseInstance);
+				},
+				"rattacherEnfantSTP(mauvaise instance) doit lever IllegalStateException : ");
+
 		final List<SousTypeProduitI> liste = new ArrayList<>();
 		liste.add(mauvaiseInstance);
-		
-		assertThrows(IllegalStateException.class, () -> {
-			parent.setSousTypeProduits(liste);
-		}, "setSousTypeProduits(liste contenant mauvaise instance) doit lever IllegalStateException : ");
-		
+
+		assertThrows(
+				IllegalStateException.class,
+				() -> {
+					parent.setSousTypeProduits(liste);
+				},
+				"setSousTypeProduits(liste contenant mauvaise instance) doit lever IllegalStateException : ");
+
 	} //___________________________________________________________________
 
 
 
 	/**
 	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Teste la méthode getSousTypeProduits().</p>
 	 * <ul>
-	 * <p>Teste la méthode <b>getSousTypeProduits()</b> :</p>
-	 * <li>vérifie que la liste est typée correctement (SousTypeProduitI).</li>
-	 * <li>vérifie que la liste est immuable (UnsupportedOperationException).</li>
-	 * <li>vérifie que les éléments sont bien des SousTypeProduitJPA.</li>
+	 * <li>Vérifie que la liste est typée correctement (SousTypeProduitI).</li>
+	 * <li>Vérifie que la liste est immuable (UnsupportedOperationException).</li>
+	 * <li>Vérifie que les éléments sont bien des SousTypeProduitJPA.</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -1508,39 +1593,42 @@ public class TypeProduitJPATest {
 	@Tag("getters")
 	@Test
 	public final void testGetSousTypeProduitsTypage() {
-	    // **********************************
-	    // AFFICHAGE DANS LE TEST ou NON
-	    final boolean affichage = false;
-	    // **********************************
 
-	    /* AFFICHAGE A LA CONSOLE. */
-	    if (AFFICHAGE_GENERAL && affichage) {
-	        System.out.println("********** CLASSE TypeProduitJPATest - méthode testGetSousTypeProduitsTypage() **********");
-	    }
+		/* ********************************** */
+		/* AFFICHAGE DANS LE TEST ou NON */
+		final boolean affichage = false;
+		/* ********************************** */
 
-	    //**** ARRANGE - GIVEN
-	    final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
-	    final SousTypeProduitJPA enfant = new SousTypeProduitJPA(1L, VETEMENT_ENFANT, parent);
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println("********** CLASSE TypeProduitJPATest - méthode testGetSousTypeProduitsTypage() **********");
+		}
 
-	    // ACT - WHEN
-	    final List<? extends SousTypeProduitI> sousTypes = parent.getSousTypeProduits();
+		/* ARRANGE - GIVEN */
+		final TypeProduitJPA parent = new TypeProduitJPA(1L, VETEMENT);
+		final SousTypeProduitJPA enfant = new SousTypeProduitJPA(1L, VETEMENT_ENFANT, parent);
 
-	    // ASSERT - THEN
-	    /* Vérification du typage. */
-	    assertNotNull(sousTypes, "La liste ne doit pas être null : ");
-	    assertTrue(sousTypes.contains(enfant), "La liste doit contenir l'enfant : ");
+		/* ACT - WHEN */
+		final List<? extends SousTypeProduitI> sousTypes = parent.getSousTypeProduits();
 
-	    /* Vérification de l'immuabilité. */
-	    assertThrows(UnsupportedOperationException.class, () -> {
-	        @SuppressWarnings("unchecked")
-	        final List<SousTypeProduitI> mutableList = (List<SousTypeProduitI>) sousTypes;
-	        mutableList.add(new SousTypeProduitJPA(2L, "test", parent));
-	    }, "La liste doit être immuable : ");
+		/* ASSERT - THEN */
+		assertNotNull(sousTypes, "La liste ne doit pas être null : ");
+		assertTrue(sousTypes.contains(enfant), "La liste doit contenir l'enfant : ");
 
-	    /* Vérification du type des éléments. */
-	    assertTrue(sousTypes.stream()
-	                       .allMatch(st -> st instanceof SousTypeProduitJPA),
-	              "Tous les éléments doivent être des SousTypeProduitJPA : ");
+		assertThrows(
+				UnsupportedOperationException.class,
+				() -> sousTypes.clear(),
+				"La liste doit être immuable : ");
+
+		for (final SousTypeProduitI st : sousTypes) {
+			if (st == null) {
+				continue;
+			}
+			assertTrue(
+					st instanceof SousTypeProduitJPA,
+					"Tous les éléments doivent être des SousTypeProduitJPA : ");
+		}
+
 	} //___________________________________________________________________
 	
 	
