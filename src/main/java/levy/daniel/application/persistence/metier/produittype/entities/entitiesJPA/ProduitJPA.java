@@ -734,47 +734,56 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold">
-	 * passe <code>this.valide</code> à true 
-	 * si <code>this.sousTypeProduit</code> n'est pas null.</p>
-	 *</div>
+	 * <p>Recalcule le Boolean <b>valide</b> 
+	 * en fonction de l'état courant.</p>
+	 * <ul>
+	 * <li>valide == true si :</li>
+	 * <li style="margin-left:20px;">produit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon valide == false.</li>
+	 * </ul>
+	 * </div>
 	 */
 	private void recalculerValide() {
-	    this.valide = (this.sousTypeProduit != null);
+
+		/* Un ProduitJPA est valide si son libellé est non null
+		 * et s'il est rattaché à un SousTypeProduit. */
+		this.valide = this.produit != null
+				&& this.sousTypeProduit != null;
+
 	}
 
 
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold">
-	 * retourne une chaine de caractères "nettoyée" 
-	 * sans espaces superflus avant et après (trim()).</p>
+	 * <p>Normalise une chaîne :</p>
 	 * <ul>
-	 * <li>ne fait rien et retourne null si pString est null.</li>
-	 * <li>applique un trim() sur pString.</li>
-	 * <li>retourne null si pString est vide.</li>
-	 * <li>retourne la String trimée si elle est non vide.</li>
+	 * <li>retourne null si pString est null.</li>
+	 * <li>trim().</li>
+	 * <li>retourne null si la chaîne est vide après trim.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pString : String : String à normaliser
-	 * @return String : pString normalisé (trimé).
+	 * @param pString : String à normaliser
+	 * @return String normalisée
 	 */
-	private static String normalize(final String pString) {
-	
-		/* ne fait rien et retourne null si pString est null. */
+	private String normalize(final String pString) {
+
+		/* Gestion du null. */
 		if (pString == null) {
 			return null;
 		}
-		
-		/* applique un trim() sur pString. */
-		final String trime = pString.trim();
-		
-		/* retourne null si pString est vide. */
-		/* retourne la String trimée si elle est non vide. */
-		return trime.isEmpty() ? null : trime;
-	
+
+		/* Suppression des espaces en début et fin. */
+		final String trimmed = pString.trim();
+
+		/* Chaîne vide -> null. */
+		if (trimmed.isEmpty()) {
+			return null;
+		}
+
+		return trimmed;
 	}
 
 	

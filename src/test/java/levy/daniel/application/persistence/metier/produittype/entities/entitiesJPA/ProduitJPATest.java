@@ -110,6 +110,16 @@ public class ProduitJPATest {
 	public static final String DINDON = "dindon";
 	
 	/**
+	 * "chemise"
+	 */
+	public static final String CHEMISE = "chemise";
+	
+	/**
+	 * "vêtement"
+	 */
+	public static final String VETEMENT = "vêtement";
+	
+	/**
 	 * "vêtement pour homme"
 	 */
 	public static final String VETEMENT_HOMME = "vêtement pour homme";
@@ -617,6 +627,146 @@ public class ProduitJPATest {
 		 * en cas d'inégalité métier. */
 		assertNotEquals(objet1, objetPasEqualsObjet1, "objet1 n'est pas equals() avec objetPasEqualsObjet1 : ");
 		assertNotEquals(objet1, objetPasEqualsObjet2, "objet1 n'est pas equals() avec objetPasEqualsObjet2 : ");
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste equals() avec <b>même libellé produit</b> mais <b>parents différents</b>
+	 * (et <b>IDs parent null</b>) :</p>
+	 * <li>force le fallback final (pas d'ID technique Produit, pas d'ID parent SousTypeProduit).</li>
+	 * <li>vérifie que deux produits de même libellé mais rattachés à des parents
+	 * différents ne sont pas equals.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testEqualsMemeLibelleParentsDifferentsSansIds() : même libellé mais parents différents (IDs null) -> pas equals")
+	@Tag("equals")
+	@Test
+	public final void testEqualsMemeLibelleParentsDifferentsSansIds() {
+
+		// ARRANGE - GIVEN
+		final String libelleProduit = CHEMISE;
+		final String libelleSousType = "vêtement homme";
+
+		/* Parents TypeProduitJPA (IDs null). */
+		final TypeProduitJPA type1 = new TypeProduitJPA(VETEMENT);
+		final TypeProduitJPA type2 = new TypeProduitJPA(VETEMENT);
+
+		type1.setIdTypeProduit(null);
+		type2.setIdTypeProduit(null);
+
+		/* Parents SousTypeProduitJPA différents (IDs null) */
+		final SousTypeProduitJPA stp1
+			= new SousTypeProduitJPA(null, libelleSousType, type1, null);
+		final SousTypeProduitJPA stp2
+			= new SousTypeProduitJPA(null, libelleSousType, type2, null);
+
+		/* Produits : même libellé, parents différents, IDs null. */
+		final ProduitJPA p1 = new ProduitJPA(null, libelleProduit, stp1);
+		final ProduitJPA p2 = new ProduitJPA(null, libelleProduit, stp2);
+
+		// ACT - WHEN
+		final boolean equals12 = p1.equals(p2);
+		final boolean equals21 = p2.equals(p1);
+
+		// ASSERT - THEN
+		assertFalse(equals12, "Même libellé mais parents différents (IDs null) : equals() doit retourner false : ");
+		assertFalse(equals21, "Symétrie : equals() doit retourner false : ");
+
+	} //___________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste compareTo() avec <b>parent null</b> vs <b>parent non null</b> :</p>
+	 * <li>compareTo() est cohérent et ne dépend pas du parent.</li>
+	 * <li>même libellé produit (case-insensitive) -> compareTo == 0.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCompareToParentNullVsNonNull() : parent null vs non null ne doit pas impacter compareTo")
+	@Tag("compareTo")
+	@Test
+	public final void testCompareToParentNullVsNonNull() {
+
+		// ARRANGE - GIVEN
+		final String libelleProduit1 = CHEMISE;
+		final String libelleProduit2 = "CHEMISE";
+
+		final TypeProduitJPA type = new TypeProduitJPA(VETEMENT);
+		final SousTypeProduitJPA stp
+			= new SousTypeProduitJPA(null, "vêtement homme", type, null);
+
+		final ProduitJPA produitAvecParent
+			= new ProduitJPA(null, libelleProduit1, stp);
+
+		final ProduitJPA produitSansParent
+			= new ProduitJPA(null, libelleProduit2, null);
+
+		// ACT - WHEN
+		final int compare12 = produitAvecParent.compareTo(produitSansParent);
+		final int compare21 = produitSansParent.compareTo(produitAvecParent);
+
+		// ASSERT - THEN
+		assertTrue(compare12 == 0, "compareTo() doit être insensible au parent (même libellé, case-insensitive) : ");
+		assertTrue(compare21 == 0, "Symétrie compareTo() (case-insensitive) : ");
+
+	} //___________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste explicitement la (re)mise à jour de la validité via les setters :</p>
+	 * <li>au départ : produit null et sousTypeProduit null -> valide false.</li>
+	 * <li>après setProduit(non null) seul -> valide false.</li>
+	 * <li>après setSousTypeProduit(non null) -> valide true.</li>
+	 * <li>après setProduit(null) -> valide false.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testRecalculerValideViaSetters() : vérifie la mise à jour de valide via les setters")
+	@Tag("valide")
+	@Test
+	public final void testRecalculerValideViaSetters() {
+
+		// ARRANGE - GIVEN
+		final ProduitJPA produit = new ProduitJPA();
+
+		final TypeProduitJPA type = new TypeProduitJPA(VETEMENT);
+		final SousTypeProduitJPA stp
+			= new SousTypeProduitJPA(null, "vêtement homme", type, null);
+
+		// ASSERT - THEN
+		assertFalse(produit.isValide(), "ProduitJPA (constructeur nul) doit être invalide : ");
+
+		// ACT - WHEN
+		produit.setProduit(CHEMISE);
+
+		// ASSERT - THEN
+		assertFalse(produit.isValide(), "ProduitJPA sans parent doit rester invalide : ");
+
+		// ACT - WHEN
+		produit.setSousTypeProduit(stp);
+
+		// ASSERT - THEN
+		assertTrue(produit.isValide(), "ProduitJPA avec libellé + parent doit être valide : ");
+
+		// ACT - WHEN
+		produit.setProduit(null);
+
+		// ASSERT - THEN
+		assertFalse(produit.isValide(), "ProduitJPA sans libellé doit redevenir invalide : ");
 
 	} //___________________________________________________________________
 
@@ -1414,7 +1564,7 @@ public class ProduitJPATest {
 	public void testHashSetTransientThenPersistIdChangesHashCode() {
 
 		final ProduitJPA p = new ProduitJPA();
-		p.setProduit("chemise");
+		p.setProduit(CHEMISE);
 
 		// transient: id null
 		final Set<ProduitJPA> set = new HashSet<>();
@@ -1450,7 +1600,7 @@ public class ProduitJPATest {
 	public void testToStringDoesNotExplodeGraph() {
 
 		// Arrange : petit graphe cyclique
-	    final TypeProduitJPA tp = new TypeProduitJPA("vêtement");
+	    final TypeProduitJPA tp = new TypeProduitJPA(VETEMENT);
 	    final SousTypeProduitJPA stp = new SousTypeProduitJPA("vêtement pour homme", tp, null);
 	    final ProduitJPA p = new ProduitJPA("chemise manches longues", stp);
 
