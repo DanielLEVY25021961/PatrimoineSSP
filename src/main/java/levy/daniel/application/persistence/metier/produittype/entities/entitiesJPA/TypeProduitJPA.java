@@ -362,27 +362,22 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	    
 	    final Long thisId = this.getIdTypeProduit();
 	    
+	    /* Stratégie id-first :
+	     * Si l'identifiant technique est non nul,
+	     * hashCode() est basé sur l'identité technique (proxy-safe).
+	     */
 	    if (thisId != null) {
 	        return thisId.hashCode();
 	    }
 	    
-	    /* Snapshot court sous verrou pour alignement sur la couche métier :
-	     * - lecture directe du champ (pas du getter)
-	     * - garantit une valeur cohérente le temps du calcul.
+	    /* Stratégie JPA : minimum de verrous.
+	     * Alignement métier : hashCode insensible à la casse sur typeProduit.
 	     */
-	    final String typeSnapshot;
-	    
-	    synchronized (this) {
-	        typeSnapshot = this.typeProduit;
-	    }
-	    
-	    if (typeSnapshot == null) {
+	    if (this.typeProduit == null) {
 	        return 0;
 	    }
 	    
-	    /* Alignement métier : hashCode insensible à la casse. */
-	    return typeSnapshot.toLowerCase(Locale.ROOT).hashCode();
-	    
+	    return this.typeProduit.toLowerCase(Locale.ROOT).hashCode();	    
 	}
 	
 	
@@ -655,10 +650,7 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	}
 
 
-
-
-
-
+	
 	/**
 	 * {@inheritDoc}
 	 * <div>
@@ -683,56 +675,37 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	        return -1;
 	    }
 
-	    /*
-	     * Verrouillage systématique et cohérent :
-	     * toujours this puis pObject.
-	     * Convention globale du projet pour éviter les deadlocks.
-	     */
-	    synchronized (this) {
-	        synchronized (pObject) {
-	            return compareFields(pObject);
-	        }
-	    }
+	    return compareFields(pObject);
 	}
 	
 
 	
 	/**
 	 * <p style="font-weight:bold;">
-	 * Compare les champs de manière thread-safe en accédant 
-	 * directement aux champs et pas aux getters 
-	 * (pas toujours Thread-Safe).</p>
+	 * Compare les champs sans synchronisation
+	 * conformément à la stratégie JPA
+	 * "minimum de verrous".</p>
 	 *
-	 * @param pObject : TypeProduitI : 
+	 * @param pObject : TypeProduitI :
 	 * L'objet à comparer avec this.
 	 * @return Le résultat de la comparaison.
 	 */
 	private int compareFields(final TypeProduitI pObject) {
-	    /*
-	     * Accès directs aux champs pour éviter les appels aux getters
-	     * non synchronisés. Le cast est safe 
-	     * car TypeProduitI est implémenté
-	     * uniquement par TypeProduit.
-	     */
+
 	    final String a = this.typeProduit;
-	    
-	    final String b;
-	    if (pObject instanceof TypeProduitJPA other) {
-	        b = other.typeProduit;
-	    } else {
-	        b = pObject.getTypeProduit();
-	    }
+
+	    final String b = (pObject instanceof TypeProduitJPA other)
+	            ? other.typeProduit
+	            : pObject.getTypeProduit();
 
 	    /*
 	     * Gestion des cas null :
-	     * - Si a est null et b est null, les objets sont égaux (retourne 0).
-	     * - Si a est null et b n'est pas null, 
-	     * a est considéré comme "après" b (retourne +1).
-	     * - Si a n'est pas null et b est null, 
-	     * a est considéré comme "avant" b (retourne -1).
+	     * - Si a est null et b est null, retourne 0.
+	     * - Si a est null et b non null, retourne +1.
+	     * - Si a non null et b null, retourne -1.
 	     */
 	    if (a == null) {
-	        return (b == null) ? 0 : +1; /* null "après". */
+	        return (b == null) ? 0 : +1;
 	    }
 
 	    if (b == null) {
@@ -740,11 +713,11 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	    }
 
 	    /*
-	     * Comparaison case-insensitive des chaînes de caractères.
+	     * Comparaison case-insensitive.
 	     * Strings.CI.compare() place les chaînes vides avant les autres.
 	     */
 	    return Strings.CI.compare(a, b);
-	}	
+	}
 
 
 
