@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -2024,6 +2026,140 @@ public class SousTypeProduitJPATest {
 	    assertEquals("idSousTypeProduit;type de produit;sous-type de produit;", enTeteCsv, "L'en-tête CSV doit être correcte : ");
 	    assertTrue(toStringCsv.startsWith("10;Pêche;canne à pêche;"), "Le CSV doit commencer par les informations du sous-type : ");
 	} //___________________________________________________________________
+	
+	
+	
+    /**
+     * <div>
+     * <p style="font-weight:bold;">
+     * Teste setProduits(List&lt;ProduitI&gt;).</p>
+     * <ul>
+     * <li>Détache tous les anciens enfants via le setter canonique
+     * (produit.getSousTypeProduit() == null).</li>
+     * <li>Rattache tous les nouveaux enfants et garantit la cohérence
+     * bidirectionnelle.</li>
+     * <li>setProduits(null) : vide la liste et détache les enfants.</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testSetProduits() : vérifie setProduits(List) (détache/rattache/null)")
+    @Tag("produits")
+    @Test
+    public final void testSetProduits() {
+
+        /* ********************************** */
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+        /* ********************************** */
+
+        /* **** ARRANGE - GIVEN */
+        final TypeProduitI typeProduitPeche = new TypeProduitJPA(10L, PECHE, null);
+
+        final SousTypeProduitI sousTypeProduitCanneAPeche =
+                new SousTypeProduitJPA(10L, CANNE_A_PECHE, typeProduitPeche, null);
+
+        final ProduitI ancien1 = new ProduitJPA(100L, CANNE_TELESCOPIQUE, null);
+        final ProduitI ancien2 = new ProduitJPA(200L, CANNE_CARBONE, null);
+
+        sousTypeProduitCanneAPeche.ajouterSTPauProduit(ancien1);
+        sousTypeProduitCanneAPeche.ajouterSTPauProduit(ancien2);
+
+        assertEquals(
+                2,
+                sousTypeProduitCanneAPeche.getProduits().size(),
+                "Pré-condition : 2 produits rattachés : ");
+
+        final ProduitI nouveau1 = new ProduitJPA(300L, CUILLERE, null);
+        final ProduitI nouveau2 = new ProduitJPA(400L, MOULINET, null);
+
+        final List<ProduitI> nouveaux = new ArrayList<>();
+        nouveaux.add(nouveau1);
+        nouveaux.add(nouveau2);
+
+        /* **** ACT - WHEN */
+        sousTypeProduitCanneAPeche.setProduits(nouveaux);
+
+        /* **** ASSERT - THEN */
+        assertEquals(
+                2,
+                sousTypeProduitCanneAPeche.getProduits().size(),
+                "Après setProduits(nouveaux) : 2 éléments : ");
+
+        assertSame(
+                sousTypeProduitCanneAPeche,
+                nouveau1.getSousTypeProduit(),
+                "nouveau1 doit être rattaché au parent : ");
+
+        assertSame(
+                sousTypeProduitCanneAPeche,
+                nouveau2.getSousTypeProduit(),
+                "nouveau2 doit être rattaché au parent : ");
+
+        assertNull(
+                ancien1.getSousTypeProduit(),
+                "ancien1 doit être détaché : ");
+
+        assertNull(
+                ancien2.getSousTypeProduit(),
+                "ancien2 doit être détaché : ");
+
+        /* **** ACT - WHEN */
+        sousTypeProduitCanneAPeche.setProduits(null);
+
+        /* **** ASSERT - THEN */
+        assertTrue(
+                sousTypeProduitCanneAPeche.getProduits().isEmpty(),
+                "Après setProduits(null) : la liste doit être vide : ");
+
+        assertNull(
+                nouveau1.getSousTypeProduit(),
+                "nouveau1 doit être détaché après setProduits(null) : ");
+
+        assertNull(
+                nouveau2.getSousTypeProduit(),
+                "nouveau2 doit être détaché après setProduits(null) : ");
+
+    } //___________________________________________________________________
+
+
+    
+    /**
+     * <div>
+     * <p style="font-weight:bold;">
+     * Teste l'immutabilité de la liste retournée par getProduits().</p>
+     * <ul>
+     * <li>La liste retournée doit être non modifiable
+     * (UnsupportedOperationException).</li>
+     * </ul>
+     * </div>
+     */
+    @SuppressWarnings(UNUSED)
+    @DisplayName("testGetProduitsImmuable() : vérifie que getProduits() retourne une liste immuable")
+    @Tag("produits")
+    @Test
+    public final void testGetProduitsImmuable() {
+
+        /* ********************************** */
+        /* AFFICHAGE DANS LE TEST ou NON */
+        final boolean affichage = false;
+        /* ********************************** */
+
+        /* **** ARRANGE - GIVEN */
+        final TypeProduitI typeProduitPeche = new TypeProduitJPA(10L, PECHE, null);
+
+        final SousTypeProduitI sousTypeProduitCanneAPeche =
+                new SousTypeProduitJPA(10L, CANNE_A_PECHE, typeProduitPeche, null);
+
+        final List<? extends ProduitI> produits = sousTypeProduitCanneAPeche.getProduits();
+
+        /* **** ACT - WHEN + ASSERT - THEN */
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> produits.clear(),
+                "La liste retournée par getProduits() doit être immuable : ");
+
+    } //___________________________________________________________________
 	
 	
 	
