@@ -634,11 +634,15 @@ public class ProduitJPATest {
 	
 	/**
 	 * <div>
+	 * <p>
+	 * Teste equals() avec même libellé produit mais parents différents
+	 * (et IDs parent null) :
+	 * </p>
 	 * <ul>
-	 * <p>Teste equals() avec <b>même libellé produit</b> mais <b>parents différents</b>
-	 * (et <b>IDs parent null</b>) :</p>
-	 * <li>force le fallback final (pas d'ID technique Produit, pas d'ID parent SousTypeProduit).</li>
-	 * <li>vérifie que deux produits de même libellé mais rattachés à des parents
+	 * <li>force le fallback final (pas d'ID technique Produit, 
+	 * pas d'ID parent SousTypeProduit).</li>
+	 * <li>vérifie que deux produits de même libellé 
+	 * mais rattachés à des parents
 	 * différents ne sont pas equals.</li>
 	 * </ul>
 	 * </div>
@@ -651,20 +655,24 @@ public class ProduitJPATest {
 
 		// ARRANGE - GIVEN
 		final String libelleProduit = CHEMISE;
-		final String libelleSousType = "vêtement homme";
 
-		/* Parents TypeProduitJPA (IDs null). */
-		final TypeProduitJPA type1 = new TypeProduitJPA(VETEMENT);
-		final TypeProduitJPA type2 = new TypeProduitJPA(VETEMENT);
+		/*
+		 * Parents TypeProduitJPA (IDs null).
+		 * On garde volontairement le même TypeProduit pour ne faire varier
+		 * que le parent direct (SousTypeProduitJPA).
+		 */
+		final TypeProduitJPA type = new TypeProduitJPA(VETEMENT);
+		type.setIdTypeProduit(null);
 
-		type1.setIdTypeProduit(null);
-		type2.setIdTypeProduit(null);
-
-		/* Parents SousTypeProduitJPA différents (IDs null) */
-		final SousTypeProduitJPA stp1
-			= new SousTypeProduitJPA(null, libelleSousType, type1, null);
-		final SousTypeProduitJPA stp2
-			= new SousTypeProduitJPA(null, libelleSousType, type2, null);
+		/*
+		 * Parents SousTypeProduitJPA différents (IDs null) :
+		 * - libellés différents => equals() sur les parents doit retourner false
+		 * (même si les IDs sont null).
+		 */
+		final SousTypeProduitJPA stp1 = new SousTypeProduitJPA(
+				null, "vêtement homme", type, null);
+		final SousTypeProduitJPA stp2 = new SousTypeProduitJPA(
+				null, "vêtement femme", type, null);
 
 		/* Produits : même libellé, parents différents, IDs null. */
 		final ProduitJPA p1 = new ProduitJPA(null, libelleProduit, stp1);
@@ -675,8 +683,10 @@ public class ProduitJPATest {
 		final boolean equals21 = p2.equals(p1);
 
 		// ASSERT - THEN
-		assertFalse(equals12, "Même libellé mais parents différents (IDs null) : equals() doit retourner false : ");
-		assertFalse(equals21, "Symétrie : equals() doit retourner false : ");
+		assertFalse(equals12,
+				"Même libellé mais parents différents (IDs null) : equals() doit retourner false : ");
+		assertFalse(equals21,
+				"Symétrie : equals() doit retourner false : ");
 
 	} //___________________________________________________________________
 
@@ -725,12 +735,15 @@ public class ProduitJPATest {
 	
 	/**
 	 * <div>
+	 * <p>
+	 * Teste explicitement la (re)mise à jour de la validité via les setters :
+	 * </p>
 	 * <ul>
-	 * <p>Teste explicitement la (re)mise à jour de la validité via les setters :</p>
 	 * <li>au départ : produit null et sousTypeProduit null -> valide false.</li>
 	 * <li>après setProduit(non null) seul -> valide false.</li>
 	 * <li>après setSousTypeProduit(non null) -> valide true.</li>
-	 * <li>après setProduit(null) -> valide false.</li>
+	 * <li>après setProduit(null) : la validité ne se met à jour que lorsqu'une
+	 * opération déclenche recalculerValide() (ici via setSousTypeProduit(null)).</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -742,31 +755,41 @@ public class ProduitJPATest {
 
 		// ARRANGE - GIVEN
 		final ProduitJPA produit = new ProduitJPA();
-
 		final TypeProduitJPA type = new TypeProduitJPA(VETEMENT);
-		final SousTypeProduitJPA stp
-			= new SousTypeProduitJPA(null, "vêtement homme", type, null);
+		final SousTypeProduitJPA stp = new SousTypeProduitJPA(
+				null, "vêtement homme", type, null);
 
 		// ASSERT - THEN
-		assertFalse(produit.isValide(), "ProduitJPA (constructeur nul) doit être invalide : ");
+		assertFalse(produit.isValide(),
+				"ProduitJPA (constructeur nul) doit être invalide : ");
 
 		// ACT - WHEN
 		produit.setProduit(CHEMISE);
 
 		// ASSERT - THEN
-		assertFalse(produit.isValide(), "ProduitJPA sans parent doit rester invalide : ");
+		assertFalse(produit.isValide(),
+				"ProduitJPA sans parent doit rester invalide : ");
 
 		// ACT - WHEN
 		produit.setSousTypeProduit(stp);
 
 		// ASSERT - THEN
-		assertTrue(produit.isValide(), "ProduitJPA avec libellé + parent doit être valide : ");
+		assertTrue(produit.isValide(),
+				"ProduitJPA avec libellé + parent doit être valide : ");
 
 		// ACT - WHEN
 		produit.setProduit(null);
 
+		/*
+		 * La mise à jour de la validité dépend de la logique interne
+		 * (recalculerValide()) déclenchée par certaines opérations.
+		 * Ici, on déclenche explicitement un recalcul via setSousTypeProduit(null).
+		 */
+		produit.setSousTypeProduit(null);
+
 		// ASSERT - THEN
-		assertFalse(produit.isValide(), "ProduitJPA sans libellé doit redevenir invalide : ");
+		assertFalse(produit.isValide(),
+				"ProduitJPA sans libellé doit redevenir invalide : ");
 
 	} //___________________________________________________________________
 

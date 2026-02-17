@@ -232,7 +232,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	 * <p>boolean qui indique si le présent SousTypeProduit 
 	 * possède un TypeProduit non null.</p>
 	 * <ul>
-	 * <li>true si le présent SousTypeProduit possède un TypeProduit non null.</li>
+	 * <li>true si le présent SousTypeProduit 
+	 * possède un TypeProduit non null.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
 	 * </div>

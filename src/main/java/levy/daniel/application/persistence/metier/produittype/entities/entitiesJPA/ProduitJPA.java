@@ -233,7 +233,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	 * <p>boolean qui indique si le présent Produit 
 	 * possède un SousTypeProduit non null.</p>
 	 * <ul>
-	 * <li>true si le présent Produit possède un SousTypeProduit non null.</li>
+	 * <li>true si le présent Produit 
+	 * possède un SousTypeProduit non null.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
 	 */
