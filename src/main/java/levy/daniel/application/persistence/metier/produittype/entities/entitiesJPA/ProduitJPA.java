@@ -5,6 +5,7 @@ package levy.daniel.application.persistence.metier.produittype.entities.entities
 
 import java.io.Serializable;
 
+import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -625,7 +626,7 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 		 * Comparaison case-insensitive des chaînes de caractères.
 		 * Strings.CI.compare() place les chaînes vides avant les autres.
 		 */
-		return org.apache.commons.lang3.Strings.CI.compare(a, b);
+		return Strings.CI.compare(a, b);
 	}
 
 
@@ -664,7 +665,7 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	 * </ul>
 	 * </div>
 	 *
-	 * @return Produit : clone profond.
+	 * @return ProduitJPA : clone profond.
 	 */
 	private ProduitJPA cloneDeep() {
 		return deepClone(new CloneContext());	
@@ -733,7 +734,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	/**
 	 * <div>
-	 * <p>passe <code>this.valide</code> à true 
+	 * <p style="font-weight:bold">
+	 * passe <code>this.valide</code> à true 
 	 * si <code>this.sousTypeProduit</code> n'est pas null.</p>
 	 *</div>
 	 */
@@ -745,7 +747,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	/**
 	 * <div>
-	 * <p>retourne une chaine de caractères "nettoyée" 
+	 * <p style="font-weight:bold">
+	 * retourne une chaine de caractères "nettoyée" 
 	 * sans espaces superflus avant et après (trim()).</p>
 	 * <ul>
 	 * <li>ne fait rien et retourne null si pString est null.</li>
@@ -779,7 +782,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	/**
 	 * {@inheritDoc}
 	 * <div>
-	 * <p style="font-weight:bold;">retourne une String pour afficher 
+	 * <p style="font-weight:bold;">
+	 * retourne une String pour afficher 
 	 * l'en-tête d'un Produit en csv.</p>
 	 * </div>
 	 *
@@ -865,7 +869,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	/**
 	 * {@inheritDoc}
 	 * <div>
-	 * <p style="font-weight:bold;">en-tête Jtable pour un ProduitJPA</b> :</p>
+	 * <p style="font-weight:bold;">
+	 * en-tête Jtable pour un ProduitJPA</b> :</p>
 	 * <p>"idproduit;type de produit;sous-type de produit;produit;".</p>
 	 * </div>
 	 */
@@ -909,7 +914,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	/**
 	 * {@inheritDoc}
 	 * <div>
-	 * <p style="font-weight:bold;">ligne Jtable pour un ProduitJPA</b> :</p>
+	 * <p style="font-weight:bold;">
+	 * ligne Jtable pour un ProduitJPA</b> :</p>
 	 * <p>"idproduit;type de produit;sous-type de produit;produit;".</p>
 	 * </div>
 	 */
@@ -1085,7 +1091,8 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">traite le cas où une 
+	 * <p style="font-weight:bold;">
+	 * traite le cas où une 
 	 * mauvaise instance de SousTypeProduitI non Entity JPA 
 	 * est passée en paramètre d'une méthode.</p>
 	 * <ul>

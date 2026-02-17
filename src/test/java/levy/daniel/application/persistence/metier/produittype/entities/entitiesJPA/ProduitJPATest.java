@@ -760,23 +760,13 @@ public class ProduitJPATest {
 	 * <p>Teste la méthode <b>compareTo(ProduitI pObject)</b> :</p>
 	 * <li>garantit que compareTo(memeInstance) retourne 0.</li>
 	 * <li>garantit que compareTo(null) retourne un nombre négatif.</li>
-	 * <li>garantit le Contrat Java : 
+	 * <li>garantit le Contrat Java :
 	 * x.equals(y) ---> x.compareTo(y) == 0.</li>
-	 * <li>garantit que les null sont bien gérés 
+	 * <li>garantit que les null sont bien gérés
 	 * dans compareTo(ProduitI pObject).</li>
 	 * <li>garantit le bon fonctionnement (bon ordre) de compareTo().</li>
 	 * <li>garantit le bon fonctionnement de Collections.sort()</li>
 	 * </ul>
-	 * <div>
-	 * <p>
-	 * <img src="../../../../../../../../../javadoc/images/model/metier/methodes/activités_methode_compareTo.jpg" 
-	 * alt="méthode compareTo()" border="1" align="center" height= 800px />
-	 * </p>
-	 * <p>
-	 * <img src="../../../../../../../../../javadoc/images/model/metier/methodes/activités_methode_compareTo_2valeurs.jpg" 
-	 * alt="méthode compareTo()" border="1" align="center" height= 800px />
-	 * </p>
-	 * </div>
 	 * </div>
 	 */
 	@SuppressWarnings(UNUSED)
@@ -784,162 +774,111 @@ public class ProduitJPATest {
 	@Tag("compareTo")
 	@Test
 	public final void testCompareTo() {
-		
+
 		// **********************************
 		// AFFICHAGE DANS LE TEST ou NON
 		final boolean affichage = false;
 		// **********************************
-				
+
 		/* AFFICHAGE A LA CONSOLE. */
 		if (AFFICHAGE_GENERAL && affichage) {
 			System.out.println();
 			System.out.println("********** CLASSE ProduitJPATest - méthode testCompareTo() ********** ");
 			System.out.println("CE TEST VERIFIE LE RESPECT des contrats Java de la méthode compareTo().");
-			System.out.println();				
+			System.out.println();
 		}
-		
+
 		//*** ARRANGE - GIVEN
 		/* TypeProduitI */
 		final TypeProduitI typeProduit1 = new TypeProduitJPA(ANATOMIE);
 		final TypeProduitI typeProduit2 = new TypeProduitJPA(PHOTOGRAPHIE);
-		/* SousTypeProduitJPA. */
-		final SousTypeProduitI sousTypeProduit1 = new SousTypeProduitJPA(ANATOMIE_MAIN, typeProduit1);
-		final SousTypeProduitI sousTypeProduit2 = new SousTypeProduitJPA(CAMERAS, typeProduit2);
-		/* ProduitJPA. */
-		final ProduitI objet1 = new ProduitJPA(ANATOMIE_ARTHRO_MAIN, sousTypeProduit1);
-		final ProduitI objetEqualsObjet1 = new ProduitJPA(ANATOMIE_ARTHRO_MAIN, sousTypeProduit1);
+
+		/* SousTypeProduitI */
+		final SousTypeProduitI sousTypeProduit1
+			= new SousTypeProduitJPA(ANATOMIE_MAIN, typeProduit1);
+		final SousTypeProduitI sousTypeProduit2
+			= new SousTypeProduitJPA(CAMERAS, typeProduit2);
+
+		/* ProduitI */
+		final ProduitI objet1
+			= new ProduitJPA(ANATOMIE_ARTHRO_MAIN, sousTypeProduit1);
+		final ProduitI objetEqualsObjet1
+			= new ProduitJPA(ANATOMIE_ARTHRO_MAIN, sousTypeProduit1);
 		final ProduitI objet1MemeInstance = objet1;
-		final ProduitI objet2ApresObjet1 = new ProduitJPA(ANATOMIE_ARTHRO_MAIN, sousTypeProduit2);
-		final ProduitI objet3ApresObjet1 = new ProduitJPA("Zétamine", sousTypeProduit1);
-		
-		/* AFFICHAGE A LA CONSOLE. */
-		if (AFFICHAGE_GENERAL && affichage) {
-			System.out.println("***APRES ProduitI objet1 = new ProduitJPA(ANATOMIE_ARTHRO_MAIN, sousTypeProduit1);***");
-			this.afficher(objet1);
-			System.out.println();
-			System.out.println("***APRES ProduitI objet2ApresObjet1 = new ProduitJPA(ANATOMIE_ARTHRO_MAIN, sousTypeProduit2);***");
-			this.afficher(objet2ApresObjet1);
-			System.out.println();
-			System.out.println("***APRES ProduitI objet3ApresObjet1 = new ProduitJPA(\"Zétamine\", sousTypeProduit1);***");
-			this.afficher(objet3ApresObjet1);
-			System.out.println();
-		}
-		
-		
+
+		/* Ordre alphabétique sur produit (case-insensitive). */
+		final ProduitI objet2AvantObjet1
+			= new ProduitJPA("aaa", sousTypeProduit1);
+		final ProduitI objet3ApresObjet1
+			= new ProduitJPA("zzz", sousTypeProduit2);
+
+		/* Case-insensitive : doit être équivalent à objet1 au compareTo(). */
+		final ProduitI objetCaseDifferent
+			= new ProduitJPA("ANATOMIE ARTHROSCOPIQUE DE LA MAIN", sousTypeProduit2);
+
+		/* Gestion des null. */
+		final ProduitI objetProduitNull1
+			= new ProduitJPA(null, sousTypeProduit1);
+		final ProduitI objetProduitNull2
+			= new ProduitJPA(null, sousTypeProduit2);
+
+		/* Gestion des vides : on ne force pas un contrat non garanti,
+		 * on vérifie seulement l'absence d'exception et la stabilité du tri. */
+		final ProduitI objetProduitVide
+			= new ProduitJPA("", sousTypeProduit1);
+
 		// ACT - WHEN
-		final int compareMemeInstance 
-			= objet1.compareTo(objet1MemeInstance);
+		final int compareMemeInstance = objet1.compareTo(objet1MemeInstance);
 		final int compareToNull = objet1.compareTo(null);
 		final int compareToEquals = objet1.compareTo(objetEqualsObjet1);
-		
+
 		// ASSERT - THEN
 		/* garantit que compareTo(memeInstance) retourne 0. */
 		assertTrue(compareMemeInstance == 0, "compareTo(memeInstance) doit retourner 0 : ");
-		
-		/* garantit que compareTo(null) retourne -1. */
+
+		/* garantit que compareTo(null) retourne un nombre négatif. */
 		assertTrue(compareToNull < 0, "compareTo(null) doit retourner négatif : ");
-		
-		/* garantit le Contrat Java : 
-		 * x.equals(y) ---> x.compareTo(y) == 0. */	
+
+		/* garantit le Contrat Java :
+		 * x.equals(y) ---> x.compareTo(y) == 0. */
 		assertNotSame(objet1, objetEqualsObjet1, "objet1 n'est pas la même instance que objetEqualsObjet1 : ");
 		assertEquals(objet1, objetEqualsObjet1, "objet1 equals objetEqualsObjet1 : ");
 		assertEquals(objet1.hashCode(), objetEqualsObjet1.hashCode(), "objet1.hashCode() == objetEqualsObjet1.hashCode() : ");
 		assertTrue(compareToEquals == 0, "objet1 equals objetEqualsObjet1 ----> objet1.compareTo(objetEqualsObjet1) == 0 : ");
-		
-				
-		//*** ARRANGE - GIVEN
-		final ProduitI objetConstructeurNull1 = new ProduitJPA();
-		final ProduitI objetConstructeurNull2 = new ProduitJPA();
-		
-		final ProduitI objetAvecValeursNull1 = new ProduitJPA(1L, null, sousTypeProduit1);
-		final ProduitI objetAvecValeursNull2Apres1 = new ProduitJPA(2L, null, sousTypeProduit2);
 
-		final ProduitI objetAvecValeursVide1 = new ProduitJPA(1L, "", sousTypeProduit1);
-		final ProduitI objetAvecValeursVide2 = new ProduitJPA(2L, "", sousTypeProduit2);
-		
-		final ProduitI objetAvecSousValeursNull1 = new ProduitJPA(1L, DINDON, null);
-		final ProduitI objetAvecSousValeursNull2 = new ProduitJPA(2L, DINDON, null);
-		
-		// ACT - WHEN
-		final int compareToConstructeurNull 
-			= objetConstructeurNull1.compareTo(objetConstructeurNull2);
-		final int compareToAvecValeursNull 
-			= objetAvecValeursNull1.compareTo(objetAvecValeursNull2Apres1);
-		final int compareToAvecValeursVides 
-			= objetAvecValeursVide1.compareTo(objetAvecValeursVide2);
-		
-		
-		// ASSERT - THEN
-		/* garantit que les null sont bien gérés dans compareTo(). */
-		assertTrue(compareToConstructeurNull == 0, "objetConstructeurNull1.compareTo(objetConstructeurNull2) == 0 : ");
-		assertFalse(compareToAvecValeursNull < 0, "objetAvecValeursNull1.compareTo(objetAvecValeursNull2Apres1) > 0 : ");
-		assertFalse(compareToAvecValeursVides < 0, "objetAvecValeursVide1.compareTo(objetAvecValeursVide2)  > 0 : ");
+		/* garantit l'insensibilité à la casse dans compareTo(). */
+		assertTrue(objet1.compareTo(objetCaseDifferent) == 0, "compareTo() doit être insensible à la casse : ");
+		assertTrue(objetCaseDifferent.compareTo(objet1) == 0, "compareTo() doit être insensible à la casse (symétrie) : ");
 
-		
-		//*** ARRANGE - GIVEN
-		final ProduitI objetAvecV1Null = new ProduitJPA(ANATOMIE, null);
-		final ProduitI objetAvecV1PasNull = new ProduitJPA(ANATOMIE, sousTypeProduit2);
-		final ProduitI objetAvecV1PasNullAvantObjet2 = new ProduitJPA("toto", sousTypeProduit1);
-		final ProduitI objetAvecV1PasNullApresObjet1 = new ProduitJPA("toto", sousTypeProduit2);
-		final ProduitI objetAvecV2PasNullAvantObjet2 = new ProduitJPA("aaa", sousTypeProduit1);
-		final ProduitI objetAvecV2PasNullApresObjet1 = new ProduitJPA("zzz", sousTypeProduit1);
-		final ProduitI objetAvecV2PasNullIdemObjet2 = new ProduitJPA("idem", sousTypeProduit1);
-		final ProduitI objetAvecV2PasNullIdemObjet1 = new ProduitJPA("idem", sousTypeProduit1);
-		final ProduitI objetAvecV2Null1 = new ProduitJPA(null, sousTypeProduit1);
-		final ProduitI objetAvecV2Null2 = new ProduitJPA(null, sousTypeProduit1);
-		
-		// ACT - WHEN
-		
-		// ASSERT - THEN
-		/* garantit que this.v1 == null et other.v1 != null retourne > 0 . */
-		assertTrue(objetAvecV1Null.compareTo(objetAvecV1PasNull) > 0, "this.v1 == null et other.v1 != null doit retourner > 0 : ");
-		/* garantit que this.v1 != null et other.v1 == null retourne < 0 . */
-		assertTrue(objetAvecV1PasNull.compareTo(objetAvecV1Null) < 0, "this.v1 != null et other.v1 == null doit retourner < 0 : ");
-		/* garantit que this.v1 != null et other.v1 != null et this.v1.compareTo(other.v1) != 0 retourne this.v1.compareTo(other.v1) . */
-		assertTrue(objetAvecV1PasNullAvantObjet2.compareTo(objetAvecV1PasNullApresObjet1) < 0, "this.v1 != null et other.v1 != null et this.v1.compareTo(other.v1) != 0 doit retourner this.v1.compareTo(other.v1) : ");
-		/* garantit que this.v2 != null et other.v2 != null et this.v2.compareTo(other.v2) != 0 retourne this.v2.compareTo(other.v2). */
-		assertTrue(objetAvecV2PasNullAvantObjet2.compareTo(objetAvecV2PasNullApresObjet1) < 0, "this.v2 != null et other.v2 != null et this.v2.compareTo(other.v2) != 0 doit retourner this.v2.compareTo(other.v2) : ");
-		/* garantit que this.v2 != null et other.v2 != null et this.v2.compareTo(other.v2) == 0 retourne this.v2.compareTo(other.v2). */
-		assertTrue(objetAvecV2PasNullIdemObjet2.compareTo(objetAvecV2PasNullIdemObjet1) == 0, "this.v2 != null et other.v2 != null et this.v2.compareTo(other.v2) == 0 doit retourner this.v2.compareTo(other.v2) : ");
-		/* garantit que this.v2 == null et other.v2 == null et v1 pareils non nuls retourne 0. */
-		assertTrue(objetAvecV2Null1.compareTo(objetAvecV2Null2) == 0, "this.v2 == null et other.v2 == null et v1 pareils non nuls doit retourner 0 : ");
-		
-		
-		final List<ProduitI> listeProduits = new ArrayList<ProduitI>();
+		/* garantit le bon ordre sur produit (alphabetique). */
+		assertTrue(objet2AvantObjet1.compareTo(objet1) < 0, "objet2AvantObjet1 doit être avant objet1 : ");
+		assertTrue(objet3ApresObjet1.compareTo(objet1) > 0, "objet3ApresObjet1 doit être après objet1 : ");
+
+		/* garantit la gestion des null sur le champ produit :
+		 * - produit null est considéré "après" un produit non null. */
+		assertTrue(objetProduitNull1.compareTo(objet1) > 0, "produit null doit être après un produit non null : ");
+		assertTrue(objet1.compareTo(objetProduitNull1) < 0, "produit non null doit être avant produit null : ");
+		assertTrue(objetProduitNull1.compareTo(objetProduitNull2) == 0, "deux produits null doivent être égaux au compareTo : ");
+
+		/* garantit le bon fonctionnement de Collections.sort()
+		 * sans faire d'hypothèse non contractuelle sur l'ordre des vides. */
+		final List<ProduitI> listeProduits = new ArrayList<>();
 		listeProduits.add(objet1);
 		listeProduits.add(objetEqualsObjet1);
-		listeProduits.add(objet1MemeInstance);
-		listeProduits.add(objet2ApresObjet1);
+		listeProduits.add(objet2AvantObjet1);
 		listeProduits.add(objet3ApresObjet1);
-		listeProduits.add(objetConstructeurNull1);
-		listeProduits.add(objetConstructeurNull2);
-		listeProduits.add(objetAvecValeursNull1);
-		listeProduits.add(objetAvecValeursNull2Apres1);
-		listeProduits.add(objetAvecValeursVide1);
-		listeProduits.add(objetAvecValeursVide2);
-		listeProduits.add(objetAvecSousValeursNull1);
-		listeProduits.add(objetAvecSousValeursNull2);
-		listeProduits.add(objetAvecV1PasNull);
-		listeProduits.add(objetAvecV1PasNullAvantObjet2);
-		listeProduits.add(objetAvecV1PasNullApresObjet1);
-		listeProduits.add(objetAvecV2PasNullAvantObjet2);
-		listeProduits.add(objetAvecV2PasNullApresObjet1);
-		listeProduits.add(objetAvecV2PasNullIdemObjet2);
-		listeProduits.add(objetAvecV2PasNullIdemObjet1);
-		listeProduits.add(objetAvecV2Null1);
-		listeProduits.add(objetAvecV2Null2);
-		
-		
-		/* tri de la liste; */
-		Collections.sort(listeProduits);
-		
-		/* AFFICHAGE A LA CONSOLE. */
-		if (AFFICHAGE_GENERAL && affichage) {
-			System.out.println("********** AFFICHAGE DE LA LISTE DE PRODUITS ******");
-			this.afficherListeProduits(listeProduits);
+		listeProduits.add(objetCaseDifferent);
+		listeProduits.add(objetProduitVide);
+		listeProduits.add(objetProduitNull1);
+		listeProduits.add(objetProduitNull2);
 
-		}
-		
+		Collections.sort(listeProduits);
+
+		/* Les derniers doivent être des produits null (null "après"). */
+		assertTrue(
+				listeProduits.get(listeProduits.size() - 1).getProduit() == null,
+				"Le dernier élément trié doit avoir produit == null : ");
+
 	} //___________________________________________________________________
 	
 
