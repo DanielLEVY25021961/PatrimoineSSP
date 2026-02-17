@@ -656,7 +656,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	* {@inheritDoc}
 	*/
 	@Override
-	public final SousTypeProduitJPA clone() throws CloneNotSupportedException {		
+	public final SousTypeProduitJPA clone() 
+			throws CloneNotSupportedException {		
 		return this.cloneDeep();
 	}
 
@@ -701,55 +702,64 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	public final SousTypeProduitJPA deepClone(final CloneContext ctx) {
 
 		/*
-		 * vérifie que le clone n'existe pas déjà dans l'IdentityHashMap du
-		 * CloneContext. 
-		 * Le cas échéant, retourne le clone déjà existant.
-		 */	
-	    final SousTypeProduitJPA existing = ctx.get(this);
-	    if (existing != null) {
-	        return existing;
-	    }
+		 * Vérifie si l'objet a déjà été cloné
+		 * (cycle-safe via IdentityHashMap).
+		 */
+		final SousTypeProduitJPA existing = ctx.get(this);
 
-	    // CLONAGE DU SousTypeProduit.
-	    /* instancie un clone "nu" cloneSTP sans parent ni enfants.*/
-	    final SousTypeProduitJPA cloneSTP 
-	    	= this.cloneWithoutParentAndChildren();
-	    
-	    /* rajoute le clone "nu" cloneTP dans le cache du CloneContext. */
-	    ctx.put(this, cloneSTP);
+		if (existing != null) {
+			return existing;
+		}
 
-	    // CLONAGE DU PARENT Produit.
-	    /* Clone le parent TypeProduit (si présent) et recolle 
-	     * le clone parent au CloneSTP via le Setter canonique. */
-	    final TypeProduitI tpI = this.getTypeProduit();
-	    
-	    if (tpI != null) {
-	    	
-	        final TypeProduitI cloneTP = tpI.deepClone(ctx);
-	        
-	        cloneSTP.setTypeProduit(cloneTP);
-	    }
+		/* Clone "nu" sans parent ni enfants. */
+		final SousTypeProduitJPA clone 
+			= this.cloneWithoutParentAndChildren();
 
-	    // CLONAGE DES ENFANTS Produit
-	    final List<? extends ProduitI> produitsInternes 
-	    	= this.getProduits();
-	    
-	    if (produitsInternes != null) {
-	        for (final ProduitI pI : produitsInternes) {
-	        	
-	            if (pI == null) {
-	            	continue;
-	            }
+		/* Enregistre dans le contexte AVANT de cloner les relations. */
+		ctx.put(this, clone);
 
-	            final ProduitI cloneP = pI.deepClone(ctx);
+		/* ===================== */
+		/* Clonage du parent     */
+		/* ===================== */
 
-	            /* recolle via setter canonique du Produit qui ajoute 
-	             * le cloneP dans cloneSTP.produits. */
-	            cloneP.setSousTypeProduit(cloneSTP);
-	        }
-	    }
+		final TypeProduitI parent = this.getTypeProduit();
 
-	    return cloneSTP;
+		if (parent != null) {
+
+			final TypeProduitI cloneParent = parent.deepClone(ctx);
+
+			/*
+			 * Utilise le setter canonique pour
+			 * garantir la cohérence bidirectionnelle.
+			 */
+			clone.setTypeProduit(cloneParent);
+		}
+
+		/* ===================== */
+		/* Clonage des enfants   */
+		/* ===================== */
+
+		final List<? extends ProduitI> produitsProv = this.getProduits();
+
+		if (produitsProv != null) {
+
+			for (final ProduitI produit : produitsProv) {
+
+				if (produit == null) {
+					continue;
+				}
+
+				final ProduitI cloneProduit = produit.deepClone(ctx);
+
+				/*
+				 * Le setter canonique de Produit
+				 * rattache automatiquement au clone.
+				 */
+				cloneProduit.setSousTypeProduit(clone);
+			}
+		}
+
+		return clone;
 	}
 
 
