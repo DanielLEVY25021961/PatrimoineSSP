@@ -230,13 +230,16 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	
 	
 	/**
-	 * <p>boolean qui indique si le présent Produit 
-	 * possède un SousTypeProduit non null.</p>
+	 * <div>
+	 * <p>boolean qui indique si le présent Produit est valide.</p>
 	 * <ul>
-	 * <li>true si le présent Produit 
-	 * possède un SousTypeProduit non null.</li>
+	 * <li>true si :</li>
+	 * <li style="margin-left:20px;">produit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>false sinon.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
+	 * </div>
 	 */
 	private transient boolean valide;
 	
