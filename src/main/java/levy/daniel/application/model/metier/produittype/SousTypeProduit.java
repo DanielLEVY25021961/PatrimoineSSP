@@ -588,17 +588,18 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	
 	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
 	 * Compare les champs de manière thread-safe en accédant
 	 * directement aux champs et pas aux getters
-	 * (pas toujours Thread-Safe).
+	 * (pas toujours Thread-Safe).</p>
+	 * </div>
+	 * 
 	 * @param pObject : SousTypeProduitI :
 	 * L'objet à comparer avec this.
 	 * @return Le résultat de la comparaison.
 	 */
 	private int compareFields(final SousTypeProduitI pObject) {
-
-	    /* L'implémentation de SousTypeProduitI est SousTypeProduit. */
-	    final SousTypeProduit other = (SousTypeProduit) pObject;
 
 	    /* Snapshots des champs nécessaires pour comparer hors verrous. */
 	    final TypeProduitI typeA;
@@ -606,44 +607,20 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	    final TypeProduitI typeB;
 	    final String sousB;
 
-	    /* Détermine l'ordre de verrouillage pour éviter les deadlocks.
-	     * L'ordre est basé sur System.identityHashCode() pour garantir
-	     * un verrouillage systématique et reproductible.
-	     */
-	    final int thisHash = System.identityHashCode(this);
-	    final int otherHash = System.identityHashCode(other);
+	    /* Cas nominal : comparaison Métier <-> Métier 
+	     * (thread-safe fort). */
+	    if (pObject instanceof SousTypeProduit other) {
 
-	    if (thisHash < otherHash) {
-
-	        /* Verrouillage ordonné : this puis other. */
-	        synchronized (this) {
-	            synchronized (other) {
-	                typeA = this.typeProduit;
-	                sousA = this.sousTypeProduit;
-	                typeB = other.typeProduit;
-	                sousB = other.sousTypeProduit;
-	            }
-	        }
-
-	    } else if (thisHash > otherHash) {
-
-	        /* Verrouillage ordonné : other puis this. */
-	        synchronized (other) {
-	            synchronized (this) {
-	                typeA = this.typeProduit;
-	                sousA = this.sousTypeProduit;
-	                typeB = other.typeProduit;
-	                sousB = other.sousTypeProduit;
-	            }
-	        }
-
-	    } else {
-
-	        /* Cas rarissime : collision de System.identityHashCode(...)
-	         * -> verrou de départ unique pour imposer un ordre stable
-	         * et éviter tout deadlock.
+	        /* Détermine l'ordre de verrouillage pour éviter les deadlocks.
+	         * L'ordre est basé sur System.identityHashCode() pour garantir
+	         * un verrouillage systématique et reproductible.
 	         */
-	        synchronized (SousTypeProduit.class) {
+	        final int thisHash = System.identityHashCode(this);
+	        final int otherHash = System.identityHashCode(other);
+
+	        if (thisHash < otherHash) {
+
+	            /* Verrouillage ordonné : this puis other. */
 	            synchronized (this) {
 	                synchronized (other) {
 	                    typeA = this.typeProduit;
@@ -652,7 +629,51 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	                    sousB = other.sousTypeProduit;
 	                }
 	            }
+
+	        } else if (thisHash > otherHash) {
+
+	            /* Verrouillage ordonné : other puis this. */
+	            synchronized (other) {
+	                synchronized (this) {
+	                    typeA = this.typeProduit;
+	                    sousA = this.sousTypeProduit;
+	                    typeB = other.typeProduit;
+	                    sousB = other.sousTypeProduit;
+	                }
+	            }
+
+	        } else {
+
+	            /* Cas rarissime : collision de System.identityHashCode(...)
+	             * -> verrou de départ unique pour imposer un ordre stable
+	             * et éviter tout deadlock.
+	             */
+	            synchronized (SousTypeProduit.class) {
+	                synchronized (this) {
+	                    synchronized (other) {
+	                        typeA = this.typeProduit;
+	                        sousA = this.sousTypeProduit;
+	                        typeB = other.typeProduit;
+	                        sousB = other.sousTypeProduit;
+	                    }
+	                }
+	            }
+
 	        }
+
+	    } else {
+
+	        /* Cas général : comparaison via l'interface (pas de cast).
+	         * Thread-safe garanti uniquement pour this 
+	         * (snapshot sous verrou).
+	         */
+	        synchronized (this) {
+	            typeA = this.typeProduit;
+	            sousA = this.sousTypeProduit;
+	        }
+
+	        typeB = pObject.getTypeProduit();
+	        sousB = pObject.getSousTypeProduit();
 
 	    }
 
