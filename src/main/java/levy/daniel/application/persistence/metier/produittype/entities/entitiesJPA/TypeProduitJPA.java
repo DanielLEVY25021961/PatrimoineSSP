@@ -1134,7 +1134,8 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	/**
 	* {@inheritDoc}
 	* <div>
-	 * <p style="font-weight:bold;">en-tête Jtable pour un SousTypeProduitJPA</b> :</p>
+	 * <p style="font-weight:bold;">
+	 * en-tête Jtable pour un TypeProduitJPA</b> :</p>
 	 * <p>"idTypeProduit;type de produit;".</p>
 	 * </div>
 	*/
@@ -1169,7 +1170,8 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	/**
 	* {@inheritDoc}
 	*  <div>
-	 * <p style="font-weight:bold;">ligne Jtable pour un TypeProduitJPA</b> :</p>
+	 * <p style="font-weight:bold;">
+	 * ligne Jtable pour un TypeProduitJPA</b> :</p>
 	 * <p>"idTypeProduit;type de produit;".</p>
 	 * </div>
 	*/
@@ -1239,6 +1241,9 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	
 	/**
 	* {@inheritDoc}
+	* <div>
+	* <p>dans l'Entity JPA, on Normalize.</p>
+	* </div>
 	*/
 	@Override
 	public void setTypeProduit(final String pTypeProduit) {	
@@ -1249,6 +1254,17 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	
 	/**
 	* {@inheritDoc}
+	* <div>
+	* <li>Pas de méthode Thread-Safe dans l'Entity JPA.</li>
+	* <li>Pas d’exposition directe de la liste interne. 
+	* Collections.unmodifiableList(...) protège 
+	* contre les modifications externes.</li>
+	* <li>Conforme au modèle bidirectionnel 
+	* (modification via setters canoniques uniquement).</li>
+	* <li>Hibernate-safe (ne remplace pas la liste interne).</li>
+	* <li>Cohérent avec internalAdd / internalRemove.</li>
+	* <li>Pas de lazy loading involontaire.</li>
+	* </div>
 	*/
 	@Override
 	public List<? extends SousTypeProduitI> getSousTypeProduits() {	
