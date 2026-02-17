@@ -228,15 +228,15 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	
 	
 	/**
-	 * <div>
 	 * <p>boolean qui indique si le présent SousTypeProduit 
-	 * possède un TypeProduit non null.</p>
+	 * est valide.</p>
 	 * <ul>
-	 * <li>true si le présent SousTypeProduit 
-	 * possède un TypeProduit non null.</li>
+	 * <li>true si :</li>
+	 * <li style="margin-left:20px;">typeProduit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon false.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
-	 * </div>
 	 */
 	private transient boolean valide;
 
@@ -807,14 +807,24 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * passe <code>this.valide</code> à true 
-	 * si <code>this.typeProduit</code> n'est pas null.</p>
-	 *</div>
+	 * <p>Recalcule le Boolean <b>valide</b> 
+	 * en fonction de l'état courant.</p>
+	 * <ul>
+	 * <li>valide == true si :</li>
+	 * <li style="margin-left:20px;">typeProduit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon valide == false.</li>
+	 * </ul>
+	 * </div>
 	 */
 	private void recalculerValide() {
-        this.valide = (this.typeProduit != null);
-    }	
+
+		/* Un SousTypeProduitJPA est valide si :
+		 * - son libellé sousTypeProduit est non null
+		 * - et s'il est rattaché à un TypeProduit. */
+		this.valide = this.typeProduit != null
+				&& this.sousTypeProduit != null;
+	}
 
 	
 	
@@ -1180,14 +1190,18 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 
 	
 	/**
-	* {@inheritDoc}
-	* <div>
-	* <p>Dans l'Entity JPA, on normalize.</p>
-	* </div>
-	*/
+	 * {@inheritDoc}
+	 * <div>
+	 * <p style="font-weight:bold;">Dans l'Entity JPA, on normalize.</p>
+	 * </div>
+	 */
 	@Override
 	public void setSousTypeProduit(final String pSousTypeProduit) {
-		this.sousTypeProduit = normalize(pSousTypeProduit);	
+
+		this.sousTypeProduit = normalize(pSousTypeProduit);
+
+		/* Maintient la cohérence du champ calculé. */
+		this.recalculerValide();
 	}
 
 
