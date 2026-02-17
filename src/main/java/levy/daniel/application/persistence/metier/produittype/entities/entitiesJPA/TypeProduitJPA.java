@@ -732,8 +732,31 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 
 	
 	/**
-	* {@inheritDoc}
-	*/
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Instancie un {@link CloneContext} et appelle 
+	 * {@code deepClone(ctxt)} en lui passant le CloneContext.</p>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li>Appeler {@code deepClone(ctxt)} 
+	 * en lui passant un nouveau {@link CloneContext}.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>méthode appelée par {@code clone()}.</li>
+	 * <li>méthode private interne invisible.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return TypeProduitJPA : clone profond.
+	 */
 	private TypeProduitJPA cloneDeep() {
 		return deepClone(new CloneContext());
 	}
@@ -811,37 +834,29 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 	}
 
 
-
-
-
-
+	
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	* <div>
+	* <p style="font-weight:bold">Pas de verrou ici. 
+	* Utilisation monothreadée des Entities JPA.</p>
+	* </div>
+	*/
 	@Override
 	public final void rattacherEnfantSTP(
-			final SousTypeProduitI pEnfant) {
+	        final SousTypeProduitI pEnfant) {
 
-		/* Traite le cas d'une mauvaise instance en paramètre. */
-		this.traiterMauvaiseInstanceSousTypeProduit(pEnfant);
+	    /* Traite le cas d'une mauvaise instance en paramètre. */
+	    this.traiterMauvaiseInstanceSousTypeProduit(pEnfant);
 
-		/* retourne et ne fait rien si pEnfant == null
-		 * ou si le libellé de pEnfant est blank (null ou espaces). */
-		if (pEnfant == null 
-				|| StringUtils.isBlank(pEnfant.getSousTypeProduit())) {
-			return;
-		}
+	    /* retourne et ne fait rien si pEnfant == null
+	     * ou si le libellé de pEnfant est blank (null ou espaces). */
+	    if (pEnfant == null 
+	            || StringUtils.isBlank(pEnfant.getSousTypeProduit())) {
+	        return;
+	    }
 
-		/* Ordre de verrouillage UNIQUE :
-		 * toujours parent (this) puis enfant (pEnfant). */
-		synchronized (this) {
-
-			synchronized (pEnfant) {
-
-				/* Rattache pEnfant au parent this si nécessaire. */
-				this.rattacherSiNecessaire(pEnfant);
-			}
-		}
+	    this.rattacherSiNecessaire(pEnfant);
 	}
 
 
@@ -879,32 +894,27 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
 
 
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	* <div>
+	* <p style="font-weight:bold">Pas de verrou ici. 
+	* Utilisation monothreadée des Entities JPA.</p>
+	* </div>
+	*/
 	@Override
 	public final void detacherEnfantSTP(
-			final SousTypeProduitI pEnfant) {
+	        final SousTypeProduitI pEnfant) {
 
-		/* Traite le cas d'une mauvaise instance en paramètre. */
-		this.traiterMauvaiseInstanceSousTypeProduit(pEnfant);
+	    /* Traite le cas d'une mauvaise instance en paramètre. */
+	    this.traiterMauvaiseInstanceSousTypeProduit(pEnfant);
 
-		/* retourne et ne fait rien si pEnfant == null
-		 * ou si le libellé de pEnfant est blank (null ou espaces). */
-		if (pEnfant == null 
-				|| StringUtils.isBlank(pEnfant.getSousTypeProduit())) {
-			return;
-		}
+	    /* retourne et ne fait rien si pEnfant == null
+	     * ou si le libellé de pEnfant est blank (null ou espaces). */
+	    if (pEnfant == null 
+	            || StringUtils.isBlank(pEnfant.getSousTypeProduit())) {
+	        return;
+	    }
 
-		/* Ordre de verrouillage UNIQUE :
-		 * toujours parent (this) puis enfant (pEnfant). */
-		synchronized (this) {
-
-			synchronized (pEnfant) {
-
-				/* Détache pEnfant du parent this si nécessaire. */
-				this.detacherSiNecessaire(pEnfant);
-			}
-		}
+	    this.detacherSiNecessaire(pEnfant);
 	}
 	 
 	
@@ -981,7 +991,7 @@ public class TypeProduitJPA implements TypeProduitI, Cloneable, Serializable {
         	 * de pSousTypeProduit dans this.sousTypeProduits. */
             this.sousTypeProduits.add(pSousTypeProduit);
         }
-    }
+    } // Fin de internalAddSousTypeProduit(...).____________________________
 
     
     
