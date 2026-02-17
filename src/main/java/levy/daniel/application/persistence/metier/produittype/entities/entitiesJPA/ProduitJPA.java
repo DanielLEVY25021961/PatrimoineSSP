@@ -5,7 +5,6 @@ package levy.daniel.application.persistence.metier.produittype.entities.entities
 
 import java.io.Serializable;
 
-import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -536,60 +535,97 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 
 
 	/**
-	* {@inheritDoc}
-	* <div>
-	* <ol>
-	* <p style="font-weight:bold;">Classe dans l'ordre alphabétique de :</p>
-	* <li style="font-weight:bold;">SousTypeProduit</li>
-	* <li style="font-weight:bold;">produit</li>
-	* </ol>
-	* </div>
-	*/
+	 * {@inheritDoc}
+	 * <div>
+	 * <ol>
+	 * <p style="font-weight:bold;">
+	 * Classe dans l'ordre alphabétique de :</p>
+	 * <li style="font-weight:bold;">produit</li>
+	 * </ol>
+	 * <p style="font-weight:bold;">ATTENTION :
+	 * Strings.CI.compare(a, b) place les vides avant tout texte.</p>
+	 * </div>
+	 */
 	@Override
 	public final int compareTo(final ProduitI pObject) {
-		
+
+		/* Comparaison de la même instance retourne toujours 0. */
 		if (this == pObject) {
 			return 0;
 		}
 
+		/* Comparaison avec null retourne toujours < 0. */
 		if (pObject == null) {
 			return -1;
 		}
-		
-		/* SousTypeProduit. */
-		final SousTypeProduitI a = this.getSousTypeProduit();
-		final SousTypeProduitI b = pObject.getSousTypeProduit();
-		
-		if (a == null) {
-			if (b != null) {
-				return +1;
-			}
+
+		/*
+		 * Entity JPA : stratégie "minimum de verrous".
+		 * On compare via une méthode dédiée, 
+		 * en privilégiant l'accès direct
+		 * aux champs quand l'objet comparé 
+		 * est de même type (pattern matching),
+		 * sinon via l'interface.
+		 */
+		return this.compareFields(pObject);
+	}
+
+
+	
+	/**
+	 * <p style="font-weight:bold;">
+	 * Compare les champs en cohérence avec TypeProduitJPA 
+	 * et SousTypeProduitJPA
+	 * en utilisant le pattern matching Java 21.
+	 * </p>
+	 *
+	 * @param pObject : ProduitI :
+	 * L'objet à comparer avec this.
+	 * @return Le résultat de la comparaison.
+	 */
+	private int compareFields(final ProduitI pObject) {
+
+		/*
+		 * Accès direct au champ produit du présent objet.
+		 * On ne passe pas par le getter pour rester au plus proche
+		 * de la donnée portée par l'Entity.
+		 */
+		final String a = this.produit;
+
+		/*
+		 * Récupération de la valeur "produit" de l'objet comparé :
+		 * - si ProduitJPA, accès direct au champ (pattern matching)
+		 * - sinon, via l'interface ProduitI.
+		 */
+		final String b;
+		if (pObject instanceof ProduitJPA other) {
+			b = other.produit;
 		} else {
-			if (b == null) {
-				return -1;
-			}
-			
-			final int compareSousTypeProduit = a.compareTo(b);
-			
-			if (compareSousTypeProduit != 0) {
-				return compareSousTypeProduit;
-			}
+			b = pObject.getProduit();
 		}
-		
-		/* produit. */
-		final String s1 = this.getProduit();
-		final String s2 = pObject.getProduit();
-		
-		if (s1 == null) {
-			return (s2 == null) ? 0 : +1; // null "après"
+
+		/*
+		 * Gestion des cas null :
+		 * - Si a est null et b est null, 
+		 * les objets sont égaux (retourne 0).
+		 * - Si a est null et b n'est pas null, 
+		 * a est considéré comme "après" b (retourne +1).
+		 * - Si a n'est pas null et b est null, 
+		 * a est considéré comme "avant" b (retourne -1).
+		 */
+		if (a == null) {
+			return (b == null) ? 0 : +1;
 		}
-		
-		if (s2 == null) {
+
+		if (b == null) {
 			return -1;
 		}
-		
-		return Strings.CI.compare(s1, s2);
-	
+
+		/*
+		 * Comparaison case-insensitive des chaînes de caractères.
+		 * Strings.CI.compare() place les chaînes vides avant les autres.
+		 */
+		return org.apache.commons.lang3.Strings.CI.compare(a, b);
 	}
 
 

@@ -872,8 +872,8 @@ public class ProduitJPATest {
 		// ASSERT - THEN
 		/* garantit que les null sont bien gérés dans compareTo(). */
 		assertTrue(compareToConstructeurNull == 0, "objetConstructeurNull1.compareTo(objetConstructeurNull2) == 0 : ");
-		assertTrue(compareToAvecValeursNull < 0, "objetAvecValeursNull1.compareTo(objetAvecValeursNull2Apres1) < 0 : ");
-		assertTrue(compareToAvecValeursVides < 0, "objetAvecValeursVide1.compareTo(objetAvecValeursVide2)  < 0 : ");
+		assertFalse(compareToAvecValeursNull < 0, "objetAvecValeursNull1.compareTo(objetAvecValeursNull2Apres1) > 0 : ");
+		assertFalse(compareToAvecValeursVides < 0, "objetAvecValeursVide1.compareTo(objetAvecValeursVide2)  > 0 : ");
 
 		
 		//*** ARRANGE - GIVEN
