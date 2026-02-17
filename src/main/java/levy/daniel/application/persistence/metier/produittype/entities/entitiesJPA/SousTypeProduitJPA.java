@@ -786,7 +786,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 
 	/**
 	 * <div>
-	 * <p>passe <code>this.valide</code> à true 
+	 * <p style="font-weight:bold;">
+	 * passe <code>this.valide</code> à true 
 	 * si <code>this.typeProduit</code> n'est pas null.</p>
 	 *</div>
 	 */
@@ -798,7 +799,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	
 	/**
 	 * <div>
-	 * <p>retourne une chaine de caractères "nettoyée" 
+	 * <p style="font-weight:bold;">
+	 * retourne une chaine de caractères "nettoyée" 
 	 * sans espaces superflus avant et après (trim()).</p>
 	 * <ul>
 	 * <li>ne fait rien et retourne null si pString est null.</li>
@@ -922,7 +924,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	/**
 	 * {@inheritDoc}
 	 * <div>
-	 * <p style="font-weight:bold;">en-tête Jtable pour un SousTypeProduit</b> :</p>
+	 * <p style="font-weight:bold;">
+	 * en-tête Jtable pour un SousTypeProduit</b> :</p>
 	 * <p>"idSousTypeProduit;type de produit;sous-type de produit;".</p>
 	 * </div>
 	 */
@@ -1059,7 +1062,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 
 	/**
 	 * <div>
-	 * <p>ajoute pProduit à la <code>List&lt;ProduitI&gt;</code> 
+	 * <p style="font-weight:bold;">
+	 * ajoute pProduit à la <code>List&lt;ProduitI&gt;</code> 
 	 * <code style="font-weight:bold;">this.produits</code> si 
 	 * la liste ne le contient pas déjà.</p>
 	 * <p>traite le cas d'une mauvaise instance passée en paramètre.</p>
@@ -1088,7 +1092,8 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 
 	/**
 	 * <div>
-	 * <p>retire pProduit de la <code>List&lt;ProduitI&gt;</code> 
+	 * <p style="font-weight:bold;">
+	 * retire pProduit de la <code>List&lt;ProduitI&gt;</code> 
 	 * <code style="font-weight:bold;">this.produits</code></p>
 	 * <p>traite le cas d'une mauvaise instance passée en paramètre.</p>
 	 * <p>Méthode interne au Package (protected) 
@@ -1155,6 +1160,9 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	
 	/**
 	* {@inheritDoc}
+	* <div>
+	* <p>Dans l'Entity JPA, on normalize.</p>
+	* </div>
 	*/
 	@Override
 	public void setSousTypeProduit(final String pSousTypeProduit) {
