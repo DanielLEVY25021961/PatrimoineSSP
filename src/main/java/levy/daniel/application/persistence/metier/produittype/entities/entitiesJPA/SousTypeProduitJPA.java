@@ -7,7 +7,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
@@ -400,32 +399,47 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	* <p style="font-weight:bold;">hashCode() sur :</p>
 	* <ol>
 	* <li style="font-weight:bold;">idSousTypeProduit</li>
-	* <li style="font-weight:bold;">typeProduit</li>
-	* <li style="font-weight:bold;">sousTypeProduit</li>
+	* <li style="font-weight:bold;">idTypeProduit</li>
+	* <li style="font-weight:bold;">sousTypeProduit (insensible à la casse)</li>
 	* </ol>
 	* </div>
 	*/
 	@Override
 	public final int hashCode() {
 
-		/* ID. */
+		/* =========================
+		 * STRATÉGIE ID-FIRST JPA
+		 * =========================
+		 */
 		final Long thisId = this.getIdSousTypeProduit();
 
 		if (thisId != null) {
 			return thisId.hashCode();
 		}
 
-		/* ID du TypeProduit parent. */
+		/* =========================
+		 * FALLBACK SUR ID PARENT
+		 * =========================
+		 */
 		final TypeProduitI tp = this.getTypeProduit();
-		final Long tpId = (tp != null) ? tp.getIdTypeProduit() : null;
+		final Long tpId = (tp != null)
+				? tp.getIdTypeProduit()
+				: null;
+
+		final String libelle = this.getSousTypeProduit();
+		final String libelleLower = (libelle != null)
+				? libelle.toLowerCase(java.util.Locale.ROOT)
+				: null;
 
 		if (tpId != null) {
-			return Objects.hash(this.getSousTypeProduit(), tpId);
+			return java.util.Objects.hash(libelleLower, tpId);
 		}
 
-		/* SousTypeProduit. */
-		return Objects.hash(this.getSousTypeProduit(), tp);
-
+		/* =========================
+		 * FALLBACK FINAL MÉTIER
+		 * =========================
+		 */
+		return java.util.Objects.hash(libelleLower, tp);
 	}
 
 
@@ -437,28 +451,27 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 	* <p style="font-weight:bold;">equals() sur :</p>
 	* <ol>
 	* <li style="font-weight:bold;">idSousTypeProduit</li>
-	* <li style="font-weight:bold;">typeProduit</li>
-	* <li style="font-weight:bold;">sousTypeProduit</li>
+	* <li style="font-weight:bold;">idTypeProduit</li>
+	* <li style="font-weight:bold;">sousTypeProduit (insensible à la casse)</li>
 	* </ol>
 	* </div>
 	*/
 	@Override
 	public final boolean equals(final Object pObject) {
 
-		/* retourne true si pObject est la présente instance. */
+		/* Même instance. */
 		if (this == pObject) {
 			return true;
 		}
 
-		/* retourne false si pObject n'est pas une bonne instance. */
+		/* Mauvaise instance. */
 		if (!(pObject instanceof SousTypeProduitJPA other)) {
 			return false;
 		}
 
-		/*
-		 * 1) Stratégie ID-first.
-		 * Si les deux entités possèdent un ID technique non null,
-		 * on considère que l'identité persistence prime.
+		/* =========================
+		 * STRATÉGIE ID-FIRST
+		 * =========================
 		 */
 		final Long thisId = this.getIdSousTypeProduit();
 		final Long otherId = other.getIdSousTypeProduit();
@@ -467,36 +480,43 @@ public class SousTypeProduitJPA  implements SousTypeProduitI
 			return thisId.equals(otherId);
 		}
 
-		/*
-		 * 2) Fallback sur l'ID du TypeProduit parent.
-		 * Permet de conserver une cohérence métier même
-		 * si l'ID technique n'est pas encore attribué.
+		/* =========================
+		 * FALLBACK SUR ID PARENT
+		 * =========================
 		 */
 		final TypeProduitI thisTp = this.getTypeProduit();
 		final TypeProduitI otherTp = other.getTypeProduit();
 
-		final Long thisTpId = (thisTp != null) 
-				? thisTp.getIdTypeProduit() : null;
-		final Long otherTpId = (otherTp != null) 
-				? otherTp.getIdTypeProduit() : null;
+		final Long thisTpId = (thisTp != null)
+				? thisTp.getIdTypeProduit()
+				: null;
 
-		/* Fallback sur ID parent si présent */
+		final Long otherTpId = (otherTp != null)
+				? otherTp.getIdTypeProduit()
+				: null;
+
+		final String thisLib = this.getSousTypeProduit();
+		final String otherLib = other.getSousTypeProduit();
+
 		if (thisTpId != null && otherTpId != null) {
-			return Objects.equals(
-					this.getSousTypeProduit(), other.getSousTypeProduit())
-					&& thisTpId.equals(otherTpId);
+
+			return thisTpId.equals(otherTpId)
+					&& (thisLib == null
+							? otherLib == null
+							: thisLib.equalsIgnoreCase(otherLib));
 		}
 
-		/*
-		 * 3) Fallback final purement métier.
-		 * Comparaison sur :
-		 * - le libellé sousTypeProduit
-		 * - le parent complet
-		 * Garantit la cohérence avec hashCode().
+		/* =========================
+		 * FALLBACK FINAL MÉTIER
+		 * =========================
 		 */
-		return Objects.equals(
-				this.getSousTypeProduit(), other.getSousTypeProduit())
-				&& Objects.equals(thisTp, otherTp);
+		final boolean libEquals =
+				(thisLib == null)
+						? otherLib == null
+						: thisLib.equalsIgnoreCase(otherLib);
+
+		return libEquals
+				&& java.util.Objects.equals(thisTp, otherTp);
 	}
 
 

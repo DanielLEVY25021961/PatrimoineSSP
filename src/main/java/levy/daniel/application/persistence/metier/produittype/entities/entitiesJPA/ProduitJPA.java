@@ -4,7 +4,6 @@
 package levy.daniel.application.persistence.metier.produittype.entities.entitiesJPA;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
@@ -353,28 +352,47 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	* <p style="font-weight:bold;">hashCode() sur :</p>
 	* <ol>
 	* <li style="font-weight:bold;">idProduit</li>
-	* <li style="font-weight:bold;">produit</li>
-	* <li style="font-weight:bold;">sousTypeProduit</li>
+	* <li style="font-weight:bold;">idSousTypeProduit</li>
+	* <li style="font-weight:bold;">produit (insensible à la casse)</li>
 	* </ol>
 	* </div>
 	*/
 	@Override
 	public final int hashCode() {
-		
-	    final Long thisId = this.getIdProduit();
 
-	    if (thisId != null) {
-	        return thisId.hashCode();
-	    }
+		/* =========================
+		 * STRATÉGIE ID-FIRST
+		 * =========================
+		 */
+		final Long thisId = this.getIdProduit();
 
-	    final SousTypeProduitI stp = this.getSousTypeProduit();
-	    final Long stpId = (stp != null) ? stp.getIdSousTypeProduit() : null;
+		if (thisId != null) {
+			return thisId.hashCode();
+		}
 
-	    if (stpId != null) {
-	        return Objects.hash(this.getProduit(), stpId);
-	    }
+		/* =========================
+		 * FALLBACK SUR ID PARENT
+		 * =========================
+		 */
+		final SousTypeProduitI stp = this.getSousTypeProduit();
+		final Long stpId = (stp != null)
+				? stp.getIdSousTypeProduit()
+				: null;
 
-	    return Objects.hash(this.getProduit(), stp);
+		final String libelle = this.getProduit();
+		final String libelleLower = (libelle != null)
+				? libelle.toLowerCase(java.util.Locale.ROOT)
+				: null;
+
+		if (stpId != null) {
+			return java.util.Objects.hash(libelleLower, stpId);
+		}
+
+		/* =========================
+		 * FALLBACK FINAL MÉTIER
+		 * =========================
+		 */
+		return java.util.Objects.hash(libelleLower, stp);
 	}
 
 
@@ -386,53 +404,72 @@ public class ProduitJPA implements ProduitI, Cloneable, Serializable {
 	* <p style="font-weight:bold;">equals() sur :</p>
 	* <ol>
 	* <li style="font-weight:bold;">idProduit</li>
-	* <li style="font-weight:bold;">produit</li>
-	* <li style="font-weight:bold;">sousTypeProduit</li>
+	* <li style="font-weight:bold;">idSousTypeProduit</li>
+	* <li style="font-weight:bold;">produit (insensible à la casse)</li>
 	* </ol>
 	* </div>
 	*/
 	@Override
 	public final boolean equals(final Object pObject) {
 
+		/* Même instance. */
 		if (this == pObject) {
 			return true;
 		}
 
-		if (!(pObject instanceof ProduitI other)) {
+		/* Mauvaise instance. */
+		if (!(pObject instanceof ProduitJPA other)) {
 			return false;
 		}
 
+		/* =========================
+		 * STRATÉGIE ID-FIRST
+		 * =========================
+		 */
 		final Long thisId = this.getIdProduit();
 		final Long otherId = other.getIdProduit();
 
 		if (thisId != null && otherId != null) {
-			return Objects.equals(thisId, otherId);
+			return thisId.equals(otherId);
 		}
 
-		/* Fallback “business key” proxy-safe : 
-		 * (produit + parent par ID si possible) */
-		final String thisName = this.getProduit();
-		final String otherName = other.getProduit();
-
-		if (!Objects.equals(thisName, otherName)) {
-			return false;
-		}
-
+		/* =========================
+		 * FALLBACK SUR ID PARENT
+		 * =========================
+		 */
 		final SousTypeProduitI thisStp = this.getSousTypeProduit();
 		final SousTypeProduitI otherStp = other.getSousTypeProduit();
 
 		final Long thisStpId = (thisStp != null)
 				? thisStp.getIdSousTypeProduit()
 				: null;
+
 		final Long otherStpId = (otherStp != null)
 				? otherStp.getIdSousTypeProduit()
 				: null;
 
+		final String thisLib = this.getProduit();
+		final String otherLib = other.getProduit();
+
 		if (thisStpId != null && otherStpId != null) {
-			return Objects.equals(thisStpId, otherStpId);
+
+			return thisStpId.equals(otherStpId)
+					&& (thisLib == null
+							? otherLib == null
+							: thisLib.equalsIgnoreCase(otherLib));
 		}
 
-		return Objects.equals(thisStp, otherStp);
+		/* =========================
+		 * FALLBACK FINAL MÉTIER
+		 * =========================
+		 */
+		final boolean libEquals =
+				(thisLib == null)
+						? otherLib == null
+						: thisLib.equalsIgnoreCase(otherLib);
+
+		return libEquals
+				&& java.util.Objects.equals(thisStp, otherStp);
 	}
 
 
