@@ -117,12 +117,18 @@ public class Produit implements ProduitI, Cloneable {
 		= "le SousTypeProduit passé en paramètre "
 				+ "n'est pas de type Objet métier : ";
 
+	/**
+	 * "idproduit;type de produit;sous-type de produit;produit;"
+	 */
+	public static final String ENTETECSV 
+		= "idproduit;type de produit;sous-type de produit;produit;";
 
 	/* ----------------------------------------------------------------- */
 	
 	/**
 	 * <div>
-	 * <p>ID en base du produit.</p>
+	 * <p style="font-weight:bold">
+	 * ID dans le stockage du produit.</p>
 	 * </div>
 	 */
 	private Long idProduit;
@@ -130,7 +136,8 @@ public class Produit implements ProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>Nom du produit comme par exemple :</p>
+	 * <p style="font-weight:bold">
+	 * Nom du produit (libellé) comme par exemple :</p>
 	 * <ul>
      * <li>le produit "chemise à manches longues pour homme" 
      * pour le sous-produit "vêtement pour homme".</li>
@@ -146,7 +153,8 @@ public class Produit implements ProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>sous-type de produit qui caractérise le présent produit.</p>
+	 * <p style="font-weight:bold">
+	 * sous-type de produit qui caractérise le présent produit.</p>
 	 * <p>par exemple : "vêtement pour homme" pour un PRODUIT 
 	 * "tee-shirt pour homme".</p>
 	 * <p>ATTENTION : visibilité interface.</p>
@@ -156,12 +164,17 @@ public class Produit implements ProduitI, Cloneable {
 	
 	
 	/**
-	 * <p>boolean qui indique si le présent Produit 
-	 * possède un SousTypeProduit non null.</p>
+	 * <div>
+	 * <p style="font-weight:bold">
+	 * boolean qui indique si le présent Produit est valide.</p>
 	 * <ul>
-	 * <li>true si le présent Produit possède un SousTypeProduit non null.</li>
+	 * <li>true si :</li>
+	 * <li style="margin-left:20px;">produit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>false sinon.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
+	 * </div>
 	 */
 	private transient boolean valide;
 	
@@ -708,7 +721,6 @@ public class Produit implements ProduitI, Cloneable {
 	/**
 	* {@inheritDoc}
 	*/
-    /** {@inheritDoc} */
     @Override
 	public final Produit deepClone(final CloneContext ctx) {
 
@@ -753,7 +765,6 @@ public class Produit implements ProduitI, Cloneable {
 		}
 
 		return clone;
-
 	}
 
 
@@ -767,11 +778,15 @@ public class Produit implements ProduitI, Cloneable {
 	     * Clone sans parent de manière thread-safe.
 	     */
 	    synchronized (this) {
+	    	
 	        final Produit clone = new Produit();
+	        
 	        clone.idProduit = this.idProduit;
 	        clone.produit = this.produit;
 	        clone.sousTypeProduit = null;
+	        
 	        clone.recalculerValide();
+	        
 	        return clone;
 	    }
 	}
@@ -780,9 +795,16 @@ public class Produit implements ProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>passe <code>this.valide</code> à true
-	 * si <code>this.sousTypeProduit</code> n'est pas null.</p>
-	 *</div>
+	 * <p style="font-weight:bold;">
+	 * Recalcule le Boolean <b>valide</b> 
+	 * en fonction de l'état courant.</p>
+	 * <ul>
+	 * <li>valide == true si :</li>
+	 * <li style="margin-left:20px;">produit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon valide == false.</li>
+	 * </ul>
+	 * </div>
 	 */
 	private void recalculerValide() {
 		/*
@@ -791,14 +813,18 @@ public class Produit implements ProduitI, Cloneable {
 		 * sont déjà sous synchronized(this).
 		 * On évite donc le double-lock (ré-entrant mais redondant).
 		 */
-		this.valide = (this.sousTypeProduit != null);
+		/* Un ProduitJPA est valide si son libellé est non null
+		 * et s'il est rattaché à un SousTypeProduit. */
+		this.valide = this.produit != null
+				&& this.sousTypeProduit != null;
 	}
 
 
 	
 	/**
 	 * <div>
-	 * <p>retourne une chaine de caractères "nettoyée"
+	 * <p style="font-weight:bold;">
+	 * retourne une chaine de caractères "nettoyée"
 	 * sans espaces superflus avant et après (trim()).</p>
 	 * <ul>
 	 * <li>ne fait rien et retourne null si pString est null.</li>
@@ -819,8 +845,11 @@ public class Produit implements ProduitI, Cloneable {
 	        return null;
 	    }
 	    
-	    final String trime = pString.trim();
-	    return trime.isEmpty() ? null : trime;
+	    /* Suppression des espaces en début et fin. */
+	    final String trimmed = pString.trim();
+	    
+	    /* Chaîne vide -> null. */
+	    return trimmed.isEmpty() ? null : trimmed;
 	}
 
 	
@@ -828,7 +857,8 @@ public class Produit implements ProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 * <div>
-	 * <p style="font-weight:bold;">retourne une String pour afficher 
+	 * <p style="font-weight:bold;">
+	 * retourne une String pour afficher 
 	 * l'en-tête d'un Produit en csv.</p>
 	 * </div>
 	 *
@@ -837,7 +867,7 @@ public class Produit implements ProduitI, Cloneable {
 	 */
 	@Override
 	public final String getEnTeteCsv() {
-		return "idproduit;type de produit;sous-type de produit;produit;";
+		return ENTETECSV;
 	}
 
 
@@ -946,12 +976,14 @@ public class Produit implements ProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 * <div>
-	 * <p style="font-weight:bold;">en-tête Jtable pour un Produit</b> :</p>
+	 * <p style="font-weight:bold;">
+	 * en-tête Jtable pour un Produit</b> :</p>
 	 * <p>"idproduit;type de produit;sous-type de produit;produit;".</p>
 	 * </div>
 	 */
 	@Override
-	public final String getEnTeteColonne(final int pI) {
+	public final String getEnTeteColonne(
+			final int pI) {
 
 		/*
 		 * Méthode pure : ne dépend d'aucun champ de l'instance.
@@ -1105,7 +1137,7 @@ public class Produit implements ProduitI, Cloneable {
 	 * <p>Retourne le statut de validité du <code>Produit</code>.</p>
 	 * <ul>
 	 * <li>retourne true si <code>sousTypeProduit</code> 
-	 * n'est pas null.</li>
+	 * n'est pas null et <code>produit</code> n'est pas null.</li>
 	 * <li>lecture thread-safe du champ <code>valide</code>.</li>
 	 * </ul>
 	 * </div>
@@ -1219,6 +1251,9 @@ public class Produit implements ProduitI, Cloneable {
 		synchronized (this) {
 			this.produit = pProduit;
 		}
+		
+		/* Maintient la cohérence du champ calculé. */
+		this.recalculerValide();
 
 	} // Fin de setProduit(...).__________________________________________
 
@@ -1326,7 +1361,11 @@ public class Produit implements ProduitI, Cloneable {
 		 * Aucun synchronized nécessaire.
 		 */
 		if (pSousTypeProduit != null) {
-
+			
+			/*
+			 * LOG.fatal et throw IllegalStateException si un
+			 * pSousTypeProduit est une mauvaise instance.
+			 */
 			if (!(pSousTypeProduit instanceof SousTypeProduit)) {
 
 				final String messageKo

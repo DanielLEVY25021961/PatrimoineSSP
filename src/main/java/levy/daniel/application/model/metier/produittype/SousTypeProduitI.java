@@ -257,16 +257,20 @@ public interface SousTypeProduitI extends Comparable<SousTypeProduitI>
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Getter du Boolean qui indique si le présent SousTypeProduit 
-	 * possède un TypeProduit non null.</p>
+	 * Getter du Boolean qui indique si le présent SousTypeProduitI 
+	 * possède un typeProduit et un sousTypeProduit non null.</p>
 	 * <ul>
-	 * <li>true si le présent SousTypeProduit possède 
-	 * un TypeProduit non null.</li>
+	 * <li>true si :</li>
+	 * <li style="margin-left:20px;">typeProduit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon false.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
 	 * </div>
 	 *
-	 * @return boolean : true si le présent SousTypeProduit a un TypeProduit
+	 * @return boolean : 
+	 * true si le présent SousTypeProduitI a un typeProduit 
+	 * et un sousTypeProduit non null.
 	 */
 	boolean isValide();
 

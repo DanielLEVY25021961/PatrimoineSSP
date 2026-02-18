@@ -221,21 +221,23 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>ID en base du type de produit.</p>
+	 * <p style="font-weight:bold">ID en base du type de produit.</p>
 	 * </div>
 	 */
 	private Long idTypeProduit;
  
 	/**
 	 * <div>
-	 * <p>type de produit comme "vêtement", "outillage", ...</p>
+	 * <p style="font-weight:bold">
+	 * type de produit comme "vêtement", "outillage", ...</p>
 	 * </div>
 	 */
 	private String typeProduit;
 	
 	/**
 	 * <div>
-	 * <p>Liste des sous-types de produit du présent type de produit.</p>
+	 * <p style="font-weight:bold">
+	 * Liste des sous-types de produit du présent type de produit.</p>
 	 * <p>par exemple, pour le type de produit "vêtement" :</p>
 	 * <ul>
 	 * <li>vêtement pour homme</li>
@@ -379,6 +381,10 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	@Override
 	public final int hashCode() {
 
+		/* Snapshot court sous verrou pour alignement sur la couche métier :
+	     * - lecture directe du champ (pas du getter)
+	     * - garantit une valeur cohérente le temps du calcul.
+	     */
 	    final String typeSnapshot;
 
 	    synchronized (this) {
@@ -389,6 +395,7 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 	        return 0;
 	    }
 
+	    /* Alignement métier : hashCode insensible à la casse. */
 	    return typeSnapshot.toLowerCase(Locale.ROOT).hashCode();
 	}
 
@@ -442,7 +449,7 @@ public class TypeProduit implements TypeProduitI, Cloneable {
 		}
 
 		/*
-		 * equals sur [TypeProduit].
+		 * equals sur [TypeProduit] (comparaison insensible à la casse).
 		 */
 		final int thisHash = System.identityHashCode(this);
 		final int otherHash = System.identityHashCode(other);

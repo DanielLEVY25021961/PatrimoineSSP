@@ -145,14 +145,14 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>ID en base du sous-type de produit.</p>
+	 * <p style="font-weight:bold">ID en base du sous-type de produit.</p>
 	 * </div>
 	 */
 	private Long idSousTypeProduit;
 	
 	/**
 	 * <div>
-	 * <p>sous-type de produit comme :</p>
+	 * <p style="font-weight:bold">sous-type de produit comme :</p>
 	 * <ul>
 	 * <li>"vêtement pour homme"</li>
 	 * <li>"vêtement pour femme"</li>
@@ -164,7 +164,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>Type de produit auquel est rattaché le présent 
+	 * <p style="font-weight:bold">
+	 * Type de produit auquel est rattaché le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple "vêtement" pour le sous-type de produit 
 	 * "vêtement pour homme".</p>
@@ -175,7 +176,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>Collection des produits qualifiés par le présent 
+	 * <p style="font-weight:bold">
+	 * Collection des produits qualifiés par le présent 
 	 * sous-type de produit.</p>
 	 * <p>par exemple : </p>
 	 * <ul>
@@ -191,10 +193,14 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	/**
 	 * <div>
-	 * <p>boolean qui indique si le présent SousTypeProduit 
-	 * possède un TypeProduit non null.</p>
+	 * <p style="font-weight:bold">
+	 * boolean qui indique si le présent SousTypeProduit 
+	 * est valide.</p>
 	 * <ul>
-	 * <li>true si le présent SousTypeProduit possède un TypeProduit non null.</li>
+	 * <li>true si :</li>
+	 * <li style="margin-left:20px;">typeProduit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon false.</li>
 	 * </ul>
 	 * <p>Doit être calculé et jamais serializé.</p>
 	 * </div>
@@ -392,7 +398,8 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	* <p style="font-weight:bold;">equals() sur :</p>
 	* <ol>
 	* <li style="font-weight:bold;">typeProduit</li>
-	* <li style="font-weight:bold;">sousTypeProduit</li>
+	* <li style="font-weight:bold;">sousTypeProduit 
+	* (insensible à la casse)</li>
 	* </ol>
 	* </div>
 	*/
@@ -582,17 +589,18 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	
 	
 	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
 	 * Compare les champs de manière thread-safe en accédant
 	 * directement aux champs et pas aux getters
-	 * (pas toujours Thread-Safe).
+	 * (pas toujours Thread-Safe).</p>
+	 * </div>
+	 * 
 	 * @param pObject : SousTypeProduitI :
 	 * L'objet à comparer avec this.
 	 * @return Le résultat de la comparaison.
 	 */
 	private int compareFields(final SousTypeProduitI pObject) {
-
-	    /* L'implémentation de SousTypeProduitI est SousTypeProduit. */
-	    final SousTypeProduit other = (SousTypeProduit) pObject;
 
 	    /* Snapshots des champs nécessaires pour comparer hors verrous. */
 	    final TypeProduitI typeA;
@@ -600,44 +608,20 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	    final TypeProduitI typeB;
 	    final String sousB;
 
-	    /* Détermine l'ordre de verrouillage pour éviter les deadlocks.
-	     * L'ordre est basé sur System.identityHashCode() pour garantir
-	     * un verrouillage systématique et reproductible.
-	     */
-	    final int thisHash = System.identityHashCode(this);
-	    final int otherHash = System.identityHashCode(other);
+	    /* Cas nominal : comparaison Métier <-> Métier 
+	     * (thread-safe fort). */
+	    if (pObject instanceof SousTypeProduit other) {
 
-	    if (thisHash < otherHash) {
-
-	        /* Verrouillage ordonné : this puis other. */
-	        synchronized (this) {
-	            synchronized (other) {
-	                typeA = this.typeProduit;
-	                sousA = this.sousTypeProduit;
-	                typeB = other.typeProduit;
-	                sousB = other.sousTypeProduit;
-	            }
-	        }
-
-	    } else if (thisHash > otherHash) {
-
-	        /* Verrouillage ordonné : other puis this. */
-	        synchronized (other) {
-	            synchronized (this) {
-	                typeA = this.typeProduit;
-	                sousA = this.sousTypeProduit;
-	                typeB = other.typeProduit;
-	                sousB = other.sousTypeProduit;
-	            }
-	        }
-
-	    } else {
-
-	        /* Cas rarissime : collision de System.identityHashCode(...)
-	         * -> verrou de départ unique pour imposer un ordre stable
-	         * et éviter tout deadlock.
+	        /* Détermine l'ordre de verrouillage pour éviter les deadlocks.
+	         * L'ordre est basé sur System.identityHashCode() pour garantir
+	         * un verrouillage systématique et reproductible.
 	         */
-	        synchronized (SousTypeProduit.class) {
+	        final int thisHash = System.identityHashCode(this);
+	        final int otherHash = System.identityHashCode(other);
+
+	        if (thisHash < otherHash) {
+
+	            /* Verrouillage ordonné : this puis other. */
 	            synchronized (this) {
 	                synchronized (other) {
 	                    typeA = this.typeProduit;
@@ -646,7 +630,51 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	                    sousB = other.sousTypeProduit;
 	                }
 	            }
+
+	        } else if (thisHash > otherHash) {
+
+	            /* Verrouillage ordonné : other puis this. */
+	            synchronized (other) {
+	                synchronized (this) {
+	                    typeA = this.typeProduit;
+	                    sousA = this.sousTypeProduit;
+	                    typeB = other.typeProduit;
+	                    sousB = other.sousTypeProduit;
+	                }
+	            }
+
+	        } else {
+
+	            /* Cas rarissime : collision de System.identityHashCode(...)
+	             * -> verrou de départ unique pour imposer un ordre stable
+	             * et éviter tout deadlock.
+	             */
+	            synchronized (SousTypeProduit.class) {
+	                synchronized (this) {
+	                    synchronized (other) {
+	                        typeA = this.typeProduit;
+	                        sousA = this.sousTypeProduit;
+	                        typeB = other.typeProduit;
+	                        sousB = other.sousTypeProduit;
+	                    }
+	                }
+	            }
+
 	        }
+
+	    } else {
+
+	        /* Cas général : comparaison via l'interface (pas de cast).
+	         * Thread-safe garanti uniquement pour this 
+	         * (snapshot sous verrou).
+	         */
+	        synchronized (this) {
+	            typeA = this.typeProduit;
+	            sousA = this.sousTypeProduit;
+	        }
+
+	        typeB = pObject.getTypeProduit();
+	        sousB = pObject.getSousTypeProduit();
 
 	    }
 
@@ -724,10 +752,10 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	/**
 	 * {@inheritDoc}
 	 */
-    /** {@inheritDoc} */
 	@Override
 	public final SousTypeProduit deepClone(final CloneContext ctx) {
 
+		/* Garde au cas où le CloneContext passé en paramètre serait null.*/
 		if (ctx == null) {
 			throw new IllegalArgumentException(
 					"ctx ne doit pas être null.");
@@ -766,9 +794,7 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 		final TypeProduitI typeProduitSafeCopy;
 
 		synchronized (this) {
-
 			typeProduitSafeCopy = this.typeProduit;
-
 		}
 
 		if (typeProduitSafeCopy != null) {
@@ -795,7 +821,6 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 		}
 
 		return clone;
-
 	}
 
 
@@ -835,14 +860,26 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 
 	/**
 	 * <div>
-	 * <p>passe <code>this.valide</code> à true 
-	 * si <code>this.typeProduit</code> n'est pas null.</p>
-	 *</div>
+	 * <p>Recalcule le Boolean <b>valide</b> 
+	 * en fonction de l'état courant.</p>
+	 * <ul>
+	 * <li>valide == true si :</li>
+	 * <li style="margin-left:20px;">typeProduit != null</li>
+	 * <li style="margin-left:20px;">sousTypeProduit != null</li>
+	 * <li>sinon valide == false.</li>
+	 * <li>Thread-Safe.</li>
+	 * </ul>
+	 * </div>
 	 */
 	private void recalculerValide() {
 
 	    synchronized (this) {
-	        this.valide = (this.typeProduit != null);
+	    	
+	    	/* Un SousTypeProduitJPA est valide si :
+			 * - son libellé sousTypeProduit est non null
+			 * - et s'il est rattaché à un TypeProduit. */
+			this.valide = this.typeProduit != null
+					&& this.sousTypeProduit != null;
 	    }
 
 	} // Fin de recalculerValide()._______________________________________
@@ -1314,6 +1351,9 @@ public class SousTypeProduit  implements SousTypeProduitI, Cloneable {
 	    synchronized (this) {
 	        this.sousTypeProduit = pSousTypeProduit;
 	    }
+	    
+	    /* Maintient la cohérence du champ calculé. */
+		this.recalculerValide();
 	}
 
 
