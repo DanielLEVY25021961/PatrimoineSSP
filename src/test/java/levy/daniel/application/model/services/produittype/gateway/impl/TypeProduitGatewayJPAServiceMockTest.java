@@ -598,8 +598,11 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
         assertThat(resultat.getContent()).hasSize(1);
         assertThat(resultat.getContent().get(0).getTypeProduit()).isEqualTo(CAMPING);
-    }
+        
+    } // _________________________________________________________________
 
+    
+    
     /**
      * <div>
      * <p>rechercherTousParPage(KO DAO) : wrappe en {@link ExceptionTechniqueGateway}.</p>
@@ -615,8 +618,109 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
-    }
+        
+    } // _________________________________________________________________
 
+    
+    
+    /**
+     * <div>
+     * <p>rechercherTous(KO DAO avec message technique) :
+     * encapsule en {@link ExceptionTechniqueGateway}
+     * en conservant le message d'origine.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(KO DAO) : encapsulation avec message technique")
+    @Test
+    public void testRechercherTousExceptionDAOMessagePreserve() {
+
+        /* Le DAO est simulé pour lever une RuntimeException
+         * contenant déjà un message technique.
+         * On ne peut pas lever ExceptionTechniqueGateway directement
+         * car c'est une checked exception non déclarée par findAll(). */
+        when(this.typeProduitDaoJPA.findAll())
+            .thenThrow(new RuntimeException(MSG_ERREUR_TECH_KO_STOCKAGE));
+
+        /* Vérifie que le Gateway encapsule l'exception technique
+         * dans une ExceptionTechniqueGateway et que le message
+         * final contient à la fois :
+         * - le préfixe contractuel ERREUR_TECHNIQUE_STOCKAGE
+         * - le message d'origine fourni par le DAO */
+        assertThatThrownBy(() -> this.service.rechercherTous())
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* Vérifie que la méthode DAO a bien été appelée une fois. */
+        verify(this.typeProduitDaoJPA).findAll();
+        
+    } // _________________________________________________________________
+
+    
+    
+    
+    /**
+     * <div>
+     * <p>rechercherTousParPage(contenu avec nulls) :
+     * filtre les nulls lors de la conversion.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(contenu avec nulls) : filtre les nulls")
+    @Test
+    public void testRechercherTousParPageContenuAvecNulls() throws Exception {
+
+        final List<TypeProduitJPA> contenu = Arrays.asList(
+            fabriquerTypeProduitJPA(VETEMENT, ID_1),
+            null,
+            fabriquerTypeProduitJPA(OUTILLAGE, ID_2)
+        );
+
+        final Page<TypeProduitJPA> page =
+            creerPage(contenu, 0, 10, 3L);
+
+        when(this.typeProduitDaoJPA.findAll(any(Pageable.class)))
+            .thenReturn(page);
+
+        final ResultatPage<TypeProduit> resultat =
+            this.service.rechercherTousParPage(new RequetePage());
+
+        assertThat(resultat.getContent())
+            .extracting(TypeProduit::getTypeProduit)
+            .containsExactly(VETEMENT, OUTILLAGE);
+        
+    } // _________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>rechercherTous(KO DAO) :
+     * wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testRechercherTousExceptionDAO() {
+
+        when(this.typeProduitDaoJPA.findAll())
+            .thenThrow(new RuntimeException(MSG_BOOM));
+
+        assertThatThrownBy(() -> this.service.rechercherTous())
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(MSG_BOOM);
+
+        verify(this.typeProduitDaoJPA).findAll();
+        
+    } // _________________________________________________________________
+
+
+    
+    
     // ========================= FINDBYOBJETMETIER =========================
 
     /**
@@ -908,7 +1012,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
-    }
+        
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -932,8 +1039,44 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
             .containsExactlyInAnyOrder(VETEMENT, OUTILLAGE);
-    }
+        
+    } // ________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>findByLibelleRapide(tri final) :
+     * retourne les résultats triés par libellé.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER_RAPIDE)
+    @DisplayName("findByLibelleRapide(tri final) : retourne les résultats triés")
+    @Test
+    public void testFindByLibelleRapideTriFinal() throws Exception {
 
+        final List<TypeProduitJPA> entities = Arrays.asList(
+            fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
+            fabriquerTypeProduitJPA(CAMPING, ID_1),
+            fabriquerTypeProduitJPA(VETEMENT, ID_3)
+        );
+
+        when(this.typeProduitDaoJPA
+            .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
+            .thenReturn(entities);
+
+        final List<TypeProduit> resultat =
+            this.service.findByLibelleRapide(RECHERCHE_ME);
+
+        assertThat(resultat)
+            .extracting(TypeProduit::getTypeProduit)
+            .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
+        
+    } // ________________________________________________________________
+
+
+    
     // ============================== FINDBYID ==============================
 
     /**
@@ -1431,7 +1574,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
         final long resultat = this.service.count();
         assertThat(resultat).isEqualTo(TOTAL_0);
         verify(this.typeProduitDaoJPA).count();
-    }
+    } // _________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1448,7 +1593,33 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).count();
-    }
+    } // _________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>count(valeur négative) :
+     * retourne la valeur telle quelle.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_COUNT)
+    @DisplayName("count(valeur négative) : retourne la valeur telle quelle")
+    @Test
+    public void testCountValeurNegative() throws Exception {
+
+        when(this.typeProduitDaoJPA.count()).thenReturn(-1L);
+
+        final long resultat = this.service.count();
+
+        assertThat(resultat).isEqualTo(-1L);
+
+        verify(this.typeProduitDaoJPA).count();
+        
+    } // _________________________________________________________________
+    
+
 
     // ================================ TRIS ===============================
 
