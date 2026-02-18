@@ -813,7 +813,8 @@ public class TypeProduitGatewayJPAService
 	 * et convertit en objets métier.
 	 * </p>
 	 * <p>
-	 * Au sens métier, deux TypeProduit ne peuvent pas avoir le même libellé.
+	 * Au sens métier, deux TypeProduit ne peuvent pas 
+	 * avoir le même libellé.
 	 * </p>
 	 * <p style="font-weight:bold;">STRATEGIE :</p>
 	 * <ul>
@@ -859,11 +860,13 @@ public class TypeProduitGatewayJPAService
 
 	            if (objetMetier != null) {
 
+	                final String libelle = objetMetier.getTypeProduit();
+
 	                final String libelleNormalise
-	                    = (objetMetier.getTypeProduit() != null)
-	                    ? objetMetier.getTypeProduit().trim()
-	                            .toLowerCase(Locale.ROOT)
+	                    = (libelle != null)
+	                    ? libelle.trim().toLowerCase(Locale.ROOT)
 	                    : "";
+
 	                if (!libellesDejaVus.contains(libelleNormalise)) {
 	                    libellesDejaVus.add(libelleNormalise);
 	                    resultat.add(objetMetier);
@@ -872,18 +875,25 @@ public class TypeProduitGatewayJPAService
 	        }
 	    }
 
-	    /* 2. Trie la liste finale par libellé (case-insensitive). */
+	    /* 2. Trie la liste finale sur le même libellé normalisé
+	     * (trim + lowerCase(Locale.ROOT)) pour rester cohérent
+	     * avec le dédoublonnage et éviter toute NPE. */
 	    Collections.sort(
 	        resultat,
 	        Comparator.comparing(
-	            TypeProduit::getTypeProduit,
-	            String.CASE_INSENSITIVE_ORDER
+	            tp -> {
+	                if (tp == null) {
+	                    return "";
+	                }
+	                final String s = tp.getTypeProduit();
+	                return (s != null) 
+	                		? s.trim().toLowerCase(Locale.ROOT) : "";
+	            }
 	        )
 	    );
 
 	    return resultat;
 	}
-
 
 
 	/**
