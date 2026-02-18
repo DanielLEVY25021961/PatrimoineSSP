@@ -871,12 +871,24 @@ public class TypeProduitGatewayJPAService
 	        }
 	    }
 
-	    /* 2. Trie la liste finale par libellé (case-insensitive). */
+	    /*
+	     * 2. Trie la liste finale en cohérence avec le dédoublonnage :
+	     * tri sur un libellé normalisé (trim + lowerCase(Locale.ROOT)),
+	     * et non sur le libellé brut 
+	     * (qui pourrait contenir des espaces parasites).
+	     */
 	    Collections.sort(
 	        resultat,
 	        Comparator.comparing(
-	            TypeProduit::getTypeProduit,
-	            Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)
+	            (TypeProduit tp) -> {
+	                if (tp == null) {
+	                    return "";
+	                }
+	                final String s = tp.getTypeProduit();
+	                return (s != null) 
+	                		? s.trim().toLowerCase(Locale.ROOT) : "";
+	            },
+	            String::compareTo
 	        )
 	    );
 
