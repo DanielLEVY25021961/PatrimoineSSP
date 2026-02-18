@@ -650,10 +650,13 @@ public interface TypeProduitGatewayIService {
 	 * (mais pas {@code null}).</li>
 	 * <li>Retourner une liste vide si le contenu n'est pas trouvé.</li>
 	 * <li>Fabriquer une liste réponse d'Entities sans null.</li>
-	 * <li>Trier la liste réponse.</li>
+	 * <li>Convertir chaque Entity de la liste réponse 
+	 * en objet métier.</li>
 	 * <li>Garantir l'unicité dans la liste réponse
-	 * au moyen d'un {@code LinkedHashSet}.</li>
-	 * <li>Convertir chaque Entity de la liste réponse en objet métier.</li>
+	 * au moyen d'un {@code Set} de libellés déjà vus
+	 * (unicité stricte sur le libellé, sans tenir compte de la casse).</li>
+	 * <li>Trier la liste finale par libellé 
+	 * (sans tenir compte de la casse).</li>
 	 * <li>Retourner la liste d'objets métier.</li>
 	 * <li>Retourner toujours une {@link List} non {@code null}.</li>
 	 * </ul>
