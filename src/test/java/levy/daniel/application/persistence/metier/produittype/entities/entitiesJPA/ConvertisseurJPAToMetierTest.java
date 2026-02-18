@@ -16,6 +16,11 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
@@ -97,6 +102,10 @@ public class ConvertisseurJPAToMetierTest {
 	 */
 	public static final String FORMAT_IDPRODUIT = "%-1s";
 
+	/**
+	 * "sousTypeProduit"
+	 */
+	public static final String SOUSTYPEPRODUIT = "sousTypeProduit";
 	
 	/**
 	 * "typeProduitStringJPA doit valoir \"vêtement\" : "
@@ -227,6 +236,12 @@ public class ConvertisseurJPAToMetierTest {
 	public ConvertisseurJPAToMetierTest() {
 		super();
 	} // Fin du CONSTRUCTEUR D'ARITE NULLE.________________________________
+
+	
+	
+	// ==========================================================
+	// Tests
+	// ==========================================================
 
 	
 	
@@ -834,7 +849,7 @@ public class ConvertisseurJPAToMetierTest {
 		final String sousTypeProduitPasNullString = "sousTypeProduitPasNull";
 		final String typeProduitPasNullString = "typeProduitPasNull";
 		final String typeProduitString = TYPEPRODUIT;
-		final String sousTypeProduitString = "sousTypeProduit";
+		final String sousTypeProduitString = SOUSTYPEPRODUIT;
 		final String typeProduitDifferentString = "typeProduit différent";
 		
 		/* TypeProduitJPA */
@@ -983,7 +998,7 @@ public class ConvertisseurJPAToMetierTest {
 		final String sousTypeProduitPasNullString = "sousTypeProduitPasNull";
 		final String typeProduitPasNullString = "typeProduitPasNull";
 		final String typeProduitString = TYPEPRODUIT;
-		final String sousTypeProduitString = "sousTypeProduit";
+		final String sousTypeProduitString = SOUSTYPEPRODUIT;
 		final String typeProduitDifferentString = "typeProduit différent";
 		final String produitString = "produit";
 		
@@ -1076,1195 +1091,6 @@ public class ConvertisseurJPAToMetierTest {
 	
 
 		
-	/**
-	 * <div>
-	 * <p>compare les valeurs equalsMetier d'un TypeProduit Entity JPA 
-	 * et d'un TypeProduit objet Métier et ne retourne true que 
-	 * si elles sont toutes égales.</p>
-	 * <ul>
-	 * <li>retourne true si les deux paramètres sont null.</li>
-	 * <li>retourne false si un seul des paramètres est null.</li>
-	 * <li>compare les idTypeProduit et retourne false 
-	 * s'ils ne sont pas égaux.</li>
-	 * <li>compare les typeProduit (String) et retourne false 
-	 * s'ils ne sont pas égaux.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @param pTypeProduitJPA
-	 * @param pTypeProduit
-	 * @return boolean : true si toutes les valeurs sont égales.
-	 */
-	private boolean memeEqualsTypeProduit(
-			final TypeProduitJPA pTypeProduitJPA
-				, final TypeProduit pTypeProduit) {
-		
-		if (pTypeProduitJPA == null) {
-			if (pTypeProduit != null) {
-				/* retourne false si un seul des paramètres est null. */
-				return false;
-			}
-			
-			/* retourne true si les deux paramètres sont null. */
-			return true;
-		}
-		
-		/* retourne false si un seul des paramètres est null. */
-		if (pTypeProduit == null) {
-			return false;
-		}
-		
-		/* idTypeProduit. */
-		final Long idTypeProduitJPA = pTypeProduitJPA.getIdTypeProduit();
-		final Long idTypeProduit = pTypeProduit.getIdTypeProduit();
-		
-		/* compare les idTypeProduit et 
-		 * retourne false s'ils ne sont pas égaux. */
-		if (idTypeProduitJPA != idTypeProduit) {
-			return false;
-		}
-		
-		/* typeProduit. */
-		final String typeProduitJPA = pTypeProduitJPA.getTypeProduit();
-		final String typeProduit = pTypeProduit.getTypeProduit();
-		
-		/* compare les typeProduit (String) de niveau 1 (TypeProduit) 
-		 * et retourne false s'ils ne sont pas égaux. */
-		if (!Strings.CS.equals(typeProduitJPA, typeProduit)) {
-			return false;
-		}
-		
-		return true;
-		
-	} //___________________________________________________________________
-	
-
-	
-	/**
-	 * <div>
-	 * <p>compare les valeurs equalsMetier de SousTypeProduit 
-	 * d'une Entity JPA de type 
-	 * <code><span style="font-weight:bold;">SousTypeProduitJPA</span>
-	 *  pSousTypeProduitJPA</code> et d'un objet métier 
-	 *  équivalent de type <code><span style="font-weight:bold;">
-	 *  SousTypeProduit</span> pSousTypeProduit</code>.</p>
-	 *  <p>le paramètre de type <code><span style="font-weight:bold;">
-	 *  SousTypeProduit</span> SousTypeProduit</code> est censé être 
-	 *  encapsulé dans un <code><span style="font-weight:bold;">
-	 *  TypeProduit</span> pTypeProduit</code>.</p>
-	 *  <ul>
-	 *  <li>retourne false si pTypeProduit == null.</li>
-	 *  <li>retourne false si pSousTypeProduitJPA == null.</li>
-	 *  <li>retourne false si pSousTypeProduit == null.</li>
-	 *  <li>compare les <code><span style="font-weight:bold;">
-	 *  idSousTypeProduit</code> de niveau 2 (SousTypeProduit) 
-	 *  et retourne false s'ils ne sont pas égaux.</li>
-	 *  <li>vérifie que le <code><span style="font-weight:bold;">
-	 *  typeProduit</code> du paramètre pSousTypeProduit est l'instance 
-	 *  <code>pTypeProduit</code> passée en paramètre. 
-	 *  Retourne false si ce n'est pas le cas.</li>
-	 *  <li>compare les <code style="font-weight:bold;">
-	 *  sousTypeProduit</code> (String) et retourne false 
-	 *  s'ils ne sont pas égaux.</li>
-	 *  <li>retourne true si toutes les valeurs sont égales.</li>
-	 *  </ul>
-	 * </div>
-	 *
-	 * @param pTypeProduit : TypeProduit
-	 * @param pSousTypeProduitJPA : SousTypeProduitJPA
-	 * @param pSousTypeProduit : SousTypeProduit
-	 * 
-	 * @return boolean : true si toutes les valeurs sont égales.
-	 */
-	private boolean memeEqualsSousTypeProduit(
-			final TypeProduit pTypeProduit
-			, final SousTypeProduitJPA pSousTypeProduitJPA
-				, final SousTypeProduit pSousTypeProduit) {
-		
-		/* retourne false si pTypeProduit == null. */
-		if (pTypeProduit == null) {
-			return false;
-		}
-		
-		/* retourne false si pSousTypeProduitJPA == null. */
-		if (pSousTypeProduitJPA == null) {
-			return false;
-		}
-		
-		/* retourne false si pSousTypeProduit == null. */
-		if (pSousTypeProduit == null) {
-			return false;
-		}
-		
-		/* compare les idSousTypeProduit de niveau 2 (SousTypeProduit) 
-		 * et retourne false s'ils ne sont pas égaux. */
-		if (pSousTypeProduitJPA.getIdSousTypeProduit() 
-				!= pSousTypeProduit.getIdSousTypeProduit()) {
-			return false;
-		}
-		
-		/* vérifie que le typeProduit du paramètre pSousTypeProduit 
-		 * est l'instance pTypeProduit passée en paramètre. */
-		/* retourne false si ce n'est pas le cas. */
-		if (pTypeProduit != pSousTypeProduit.getTypeProduit()) {
-			return false;
-		}
-		
-		/* compare les sousTypeProduit (String) et retourne 
-		 * false s'ils ne sont pas égaux.. */
-		if (!Strings.CS.equals(
-				pSousTypeProduitJPA.getSousTypeProduit()
-				, pSousTypeProduit.getSousTypeProduit())) {
-			return false;
-		}
-		
-		/* retourne true si toutes les valeurs sont égales. */ 
-		return true;
-		
-	} //___________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>retourne une String formatée pour l'affichage 
-	 * d'un TypeProduitJPA</p>
-	 * <ul>
-	 * <li>retourne null si pTypeProduitJPA == null.</li>
-	 * <li>affiche le TypeProduitJPA</li>
-	 * <li>affiche la liste des SousTypeProduitJPA contenus 
-	 * dans le TypeProduitJPA</li>
-	 * <li>affiche pour chaque SousTypeProduitJPA la liste des ProduitJPA qu'il contient.</li>
-	 * </ul>
-	 * </div>
-	 * 
-	 * <div>
-	 * <p style="text-decoration:underline;">Exemple d'affichage : </p>
-	 * <pre>******* TypeProduitJPA : vêtement *******
-	 * [idTypeProduit : 1 - typeProduit : vêtement  ]
-	 * 
-	 * ******* sousTypeProduitsJPA du TypeProduitJPA : vêtement
-	 * [idSousTypeProduit : 1 - sousTypeProduit : vêtement pour homme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
-	 * ***** liste des produits dans le sousProduitJPA : vêtement pour homme
-	 * [idProduit dans produits du SousTypeProduit : 1 - produit dans produits du SousTypeProduit : chemise à manches longues pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * [idProduit dans produits du SousTypeProduit : 2 - produit dans produits du SousTypeProduit : chemise à manches courtes pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * [idProduit dans produits du SousTypeProduit : 3 - produit dans produits du SousTypeProduit : sweatshirt pour homme                    - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * [idProduit dans produits du SousTypeProduit : 4 - produit dans produits du SousTypeProduit : teeshirt pour homme                      - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * 
-	 * [idSousTypeProduit : 2 - sousTypeProduit : vêtement pour femme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
-	 * ***** liste des produits dans le sousProduitJPA : vêtement pour femme
-	 * null
-	 * 
-	 * [idSousTypeProduit : 3 - sousTypeProduit : vêtement pour enfant - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
-	 * ***** liste des produits dans le sousProduitJPA : vêtement pour enfant
-	 * null
-	 * </pre>
-	 * </div>
-	 *
-	 * @param pTypeProduitJPA : TypeProduitJPA : Entity JPA à afficher
-	 * @return String
-	 */
-	private String afficherTypeProduitFormate(
-			final TypeProduitJPA pTypeProduitJPA) {
-		
-		/* retourne null si pTypeProduitJPA == null. */
-		if (pTypeProduitJPA == null) {
-			return null;
-		}
-		
-		final Long idTypeProduitJPA = pTypeProduitJPA.getIdTypeProduit();
-		final String typeProduitStringJPA 
-			= pTypeProduitJPA.getTypeProduit();
-		final List<? extends SousTypeProduitI> sousTypeProduitsJPA 
-			= pTypeProduitJPA.getSousTypeProduits();
-		
-		final StringBuilder stb = new StringBuilder();
-		
-		stb.append("******* TypeProduitJPA : ");
-		stb.append(typeProduitStringJPA);
-		stb.append(" *******");
-		stb.append(SAUT_DE_LIGNE);
-				
-		final String pres1 
-			= String.format("[idTypeProduit : %-1s - typeProduit : %-10s]"
-					, idTypeProduitJPA, typeProduitStringJPA);
-		stb.append(pres1);
-		stb.append(SAUT_DE_LIGNE);
-		stb.append(SAUT_DE_LIGNE);
-		
-		stb.append("******* sousTypeProduitsJPA du TypeProduitJPA : ");
-		stb.append(typeProduitStringJPA);
-		stb.append(SAUT_DE_LIGNE);
-		
-		if (sousTypeProduitsJPA == null) {
-			stb.append(NULL);
-		} else {
-			
-			for (final SousTypeProduitI 
-					sousTypeProduitJPA : sousTypeProduitsJPA) {
-				
-				final Long idSousTypeProduitJPA 
-					= sousTypeProduitJPA.getIdSousTypeProduit();
-				final String sousTypeProduitJPAString 
-					= sousTypeProduitJPA.getSousTypeProduit();
-				final TypeProduitJPA typeProduitJPAduSousTypeProduit 
-					= (TypeProduitJPA) sousTypeProduitJPA.getTypeProduit();
-				
-				final List<? extends ProduitI> produitsDansSousProduit 
-					= sousTypeProduitJPA.getProduits();
-				
-				Long idTypeProduitJPAduSousTypeProduit = null;
-				String typeProduitJPAduSousTypeProduitString = null;
-				
-				if (typeProduitJPAduSousTypeProduit != null) {
-					idTypeProduitJPAduSousTypeProduit 
-						= typeProduitJPAduSousTypeProduit.getIdTypeProduit();
-					typeProduitJPAduSousTypeProduitString 
-						= typeProduitJPAduSousTypeProduit.getTypeProduit();
-				}
-				
-				final String pres2 
-				= String
-				.format("[idSousTypeProduit : %-1s "
-						+ "- sousTypeProduit : %-20s "
-						+ "- [idTypeProduit du TypeProduit dans le SousTypeProduit : %-1s "
-						+ "- typeProduitString du TypeProduit dans le SousTypeProduit : %-13s]]"
-						, idSousTypeProduitJPA
-						, sousTypeProduitJPAString
-						, idTypeProduitJPAduSousTypeProduit
-						, typeProduitJPAduSousTypeProduitString);
-				
-				stb.append(pres2);
-				stb.append(SAUT_DE_LIGNE);
-				
-				stb.append("***** liste des produits dans le sousProduitJPA : ");
-				stb.append(sousTypeProduitJPAString);
-				stb.append(SAUT_DE_LIGNE);
-				if (produitsDansSousProduit == null) {
-					stb.append(NULL);
-					stb.append(SAUT_DE_LIGNE);
-				} else {
-					
-					for (final ProduitI produitJPA : produitsDansSousProduit) {
-						
-						final Long idProduitJPA = produitJPA.getIdProduit();
-						final String produitJPAString = produitJPA.getProduit();
-						final SousTypeProduitJPA sousTypeProduitJPAProduit 
-							= (SousTypeProduitJPA) produitJPA.getSousTypeProduit();
-						
-						String sousTypeProduitJPAProduitString = null;
-						
-						if (sousTypeProduitJPAProduit != null) {
-							sousTypeProduitJPAProduitString 
-								= sousTypeProduitJPAProduit.getSousTypeProduit();
-						}
-						
-						stb.append('\t');
-						
-						final String presProduit 
-						= String.format("[idProduit dans produits du SousTypeProduit : %-1s - "
-								+ "produit dans produits du SousTypeProduit : %-40s - "
-								+ "sousTypeProduit dans le produit : %-20s]"
-								, idProduitJPA
-								, produitJPAString
-								, sousTypeProduitJPAProduitString);
-						
-						stb.append(presProduit);
-						stb.append(SAUT_DE_LIGNE);						
-					}
-					
-				}
-				stb.append(SAUT_DE_LIGNE);
-			}
-			
-		}
-		
-		return stb.toString();
-		
-	} //___________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>retourne une String formatée pour l'affichage 
-	 * d'un TypeProduit</p>
-	 * <ul>
-	 * <li>retourne null si pTypeProduit == null.</li>
-	 * <li>affiche le TypeProduit</li>
-	 * <li>affiche la liste des SousTypeProduit contenus 
-	 * dans le TypeProduit</li>
-	 * <li>affiche pour chaque SousTypeProduit la liste des Produit qu'il contient.</li>
-	 * </ul>
-	 * </div>
-	 * 
-	 * <div>
-	 * <p style="text-decoration:underline;">Exemple d'affichage : </p>
-	 * <pre>******* TypeProduit : vêtement *******
-	 * [idTypeProduit : 1 - typeProduit : vêtement  ]
-	 * 
-	 * ******* sousTypeProduits du TypeProduit : vêtement
-	 * [idSousTypeProduit : 1 - sousTypeProduit : vêtement pour homme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
-	 * ***** liste des produits dans le sousProduitJPA : vêtement pour homme
-	 * [idProduit dans produits du SousTypeProduit : 1 - produit dans produits du SousTypeProduit : chemise à manches longues pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * [idProduit dans produits du SousTypeProduit : 2 - produit dans produits du SousTypeProduit : chemise à manches courtes pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * [idProduit dans produits du SousTypeProduit : 3 - produit dans produits du SousTypeProduit : sweatshirt pour homme                    - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * [idProduit dans produits du SousTypeProduit : 4 - produit dans produits du SousTypeProduit : teeshirt pour homme                      - sousTypeProduit dans le produit : vêtement pour homme ]
-	 * 
-	 * [idSousTypeProduit : 2 - sousTypeProduit : vêtement pour femme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
-	 * ***** liste des produits dans le sousProduitJPA : vêtement pour femme
-	 * null
-	 * 
-	 * [idSousTypeProduit : 3 - sousTypeProduit : vêtement pour enfant - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
-	 * ***** liste des produits dans le sousProduitJPA : vêtement pour enfant
-	 * null
-	 * </pre>
-	 * </div>
-	 *
-	 * @param pTypeProduit : TypeProduit : Objet métier à afficher
-	 * @return String
-	 */
-	private String afficherTypeProduitFormate(
-			final TypeProduitI pTypeProduit) {
-		
-		/* retourne null si pTypeProduit == null. */
-		if (pTypeProduit == null) {
-			return null;
-		}
-		
-		final Long idTypeProduit = pTypeProduit.getIdTypeProduit();
-		final String typeProduitString 
-			= pTypeProduit.getTypeProduit();
-		final List<SousTypeProduit> sousTypeProduits 
-			= (List<SousTypeProduit>) pTypeProduit.getSousTypeProduits();
-		
-		final StringBuilder stb = new StringBuilder();
-		
-		stb.append("******* TypeProduit : ");
-		stb.append(typeProduitString);
-		stb.append(" *******");
-		stb.append(SAUT_DE_LIGNE);
-				
-		final String pres1 
-			= String.format("[idTypeProduit : %-1s - typeProduit : %-10s]"
-					, idTypeProduit, typeProduitString);
-		stb.append(pres1);
-		stb.append(SAUT_DE_LIGNE);
-		stb.append(SAUT_DE_LIGNE);
-		
-		stb.append("******* sousTypeProduits du TypeProduit : ");
-		stb.append(typeProduitString);
-		stb.append(SAUT_DE_LIGNE);
-		
-		if (sousTypeProduits == null) {
-			stb.append(NULL);
-		} else {
-			
-			for (final SousTypeProduit 
-					sousTypeProduit : sousTypeProduits) {
-				
-				final Long idSousTypeProduit 
-					= sousTypeProduit.getIdSousTypeProduit();
-				final String sousTypeProduitString 
-					= sousTypeProduit.getSousTypeProduit();
-				final TypeProduit typeProduitduSousTypeProduit 
-					= (TypeProduit) sousTypeProduit.getTypeProduit();
-				
-				final List<ProduitI> produitsI = sousTypeProduit.getProduits();
-				
-				final List<Produit> produitsDansSousProduit 
-				= convertirListProduitEnListProduit(
-						sousTypeProduit.getProduits());
-				
-				Long idTypeProduitduSousTypeProduit = null;
-				String typeProduitduSousTypeProduitString = null;
-				
-				if (typeProduitduSousTypeProduit != null) {
-					idTypeProduitduSousTypeProduit 
-						= typeProduitduSousTypeProduit.getIdTypeProduit();
-					typeProduitduSousTypeProduitString 
-						= typeProduitduSousTypeProduit.getTypeProduit();
-				}
-				
-				final String pres2 
-				= String.format("[idSousTypeProduit : %-1s "
-						+ "- sousTypeProduit : %-20s - "
-						+ "[idTypeProduit du TypeProduit dans le SousTypeProduit : %-1s "
-						+ "- typeProduitString du TypeProduit dans le SousTypeProduit : %-13s]]"
-						, idSousTypeProduit
-						, sousTypeProduitString
-						, idTypeProduitduSousTypeProduit
-						, typeProduitduSousTypeProduitString);
-				
-				stb.append(pres2);
-				stb.append(SAUT_DE_LIGNE);
-				
-				stb.append("***** liste des produits dans le sousProduit : ");
-				stb.append(sousTypeProduitString);
-				stb.append(SAUT_DE_LIGNE);
-				if (produitsDansSousProduit == null) {
-					stb.append(NULL);
-					stb.append(SAUT_DE_LIGNE);
-				} else {
-					
-					for (final Produit produit : produitsDansSousProduit) {
-						
-						final Long idProduit = produit.getIdProduit();
-						final String produitString = produit.getProduit();
-						final SousTypeProduit sousTypeProduitProduit 
-							= (SousTypeProduit) produit.getSousTypeProduit();
-						
-						String sousTypeProduitProduitString = null;
-						
-						if (sousTypeProduitProduit != null) {
-							sousTypeProduitProduitString 
-								= sousTypeProduitProduit.getSousTypeProduit();
-						}
-						
-						stb.append('\t');
-						
-						final String presProduit 
-						= String.format("[idProduit dans produits du SousTypeProduit : %-1s - "
-								+ "produit dans produits du SousTypeProduit : %-40s - "
-								+ "sousTypeProduit dans le produit : %-20s]"
-								, idProduit
-								, produitString
-								, sousTypeProduitProduitString);
-						
-						stb.append(presProduit);
-						stb.append(SAUT_DE_LIGNE);						
-					}
-					
-				}
-				stb.append(SAUT_DE_LIGNE);
-			}
-			
-		}
-		
-		return stb.toString();
-		
-	} //___________________________________________________________________
-
-
-	
-	/**
-	 * <div>
-	 * <p>retourne une String formatée pour l'affichage 
-	 * d'un ProduitJPA</p>
-	 * <ul>
-	 * <li>retourne null si pTypeProduit == null.</li>
-	 * <li>affiche en 1ere ligne [idProduit - produit (String)]</li>
-	 * <li>affiche en 1ere ligne [idSousTypeProduit - 
-	 * typeProduit du SousTypeProduit - SousTypeProduit (String)]</li>
-	 * <li>affiche en 1ère ligne [idTypeProduit - typeProduit (String)]</li>
-	 * <li>affiche sur des lignes séparées chaque produit de 
-	 * la liste produits du sousTypeProduit.</li>
-	 * </ul>
-	 * </div>
-	 * 
-	 * <div>
-	 * <p style="text-decoration:underline;">Exemple d'affichage : </p>
-	 * <pre>
-	 * idProduit : 2 - produit : chemise à manches courtes pour homme     - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme ] - [idTypeProduit : 1 - typeProduit : vêtement     ]
-	 * **** Liste des produits du sousTypeProduit : vêtement pour homme
-	 * 	[idProduit : 1 - produit : chemise à manches longues pour homme     - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
-	 * 	[idProduit : 2 - produit : chemise à manches courtes pour homme     - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
-	 * 	[idProduit : 3 - produit : sweatshirt pour homme                    - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
-	 * 	[idProduit : 4 - produit : teeshirt pour homme                      - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
-	 * </pre>
-	 * </div>
-	 *
-	 * @param pProduit : ProduitJPA 
-	 * @return String
-	 */
-	private String afficherProduitFormate(final ProduitJPA pProduit) {
-
-		/* retourne null si pTypeProduit == null. */
-		if (pProduit == null) {
-			return null;
-		}
-		
-		/* INSTANCIATION d'un StringBuilder. */
-		final StringBuilder stb = new StringBuilder();
-		
-		/* NIVEAU Produit. */
-		final Long idProduitProv = pProduit.getIdProduit();
-		final String produitString = pProduit.getProduit();
-		
-		/* NIVEAU SousTypeProduit. */
-		final SousTypeProduitJPA sousTypeProduitProv 
-			= (SousTypeProduitJPA) pProduit.getSousTypeProduit();
-		
-		Long idSousTypeProduitProv = null;
-		TypeProduitI typeProduit = null;
-		String typeProduitStringSTP = null;
-		String sousTypeProduitString = null;
-		
-		if (sousTypeProduitProv != null) {
-			
-			idSousTypeProduitProv 
-				= sousTypeProduitProv.getIdSousTypeProduit();
-			
-			typeProduit = sousTypeProduitProv.getTypeProduit();
-			
-			if (typeProduit != null) {
-				typeProduitStringSTP = typeProduit.getTypeProduit();
-			}
-			
-			sousTypeProduitString = sousTypeProduitProv.getSousTypeProduit();
-		}
-		
-		/* NIVEAU TypeProduit. */
-		Long idTypeProduit = null;
-		String typeProduitString = null;
-		
-		final TypeProduitI typeProduitProv = pProduit.getTypeProduit();
-		
-		if (typeProduitProv != null) {
-			idTypeProduit = typeProduitProv.getIdTypeProduit();
-			typeProduitString = typeProduitProv.getTypeProduit();
-		}
-				 		
-		final String pres 
-		= String.format(
-				"idProduit : %-1s - produit : %-40s "
-				+ FORMAT_IDSOUSTYPEPRODUIT
-				+ FORMAT_TYPEPRODUIT_STP
-				+ "- sousTypeProduit : %-20s] "
-				+ "- [idTypeProduit : %-1s - typeProduit : %-13s]"
-				, idProduitProv
-				, produitString
-				, idSousTypeProduitProv
-				, typeProduitStringSTP
-				, sousTypeProduitString
-				, idTypeProduit
-				, typeProduitString);
-
-		stb.append(pres);
-		stb.append(SAUT_DE_LIGNE);
-		
-		/* NIVEAU produits du SousTypeProduit. */		
-		List<? extends ProduitI> produitsSTP = null;
-		
-		if (sousTypeProduitProv != null) {
-			
-			stb.append("**** Liste des produits du sousTypeProduit : ");
-			stb.append(sousTypeProduitProv.getSousTypeProduit());
-			stb.append(SAUT_DE_LIGNE);
-
-			produitsSTP = sousTypeProduitProv.getProduits();
-			
-			if (produitsSTP == null) {
-				stb.append(NULL);
-				stb.append(SAUT_DE_LIGNE);
-			} else {
-				
-				for (final ProduitI produitProv : produitsSTP) {
-					
-					final Long idProduitSTP = produitProv.getIdProduit();
-					final String produitStringProv 
-						= produitProv.getProduit();
-					
-					/* NIVEAU SousTypeProduit du produit du sousTypeProduit. */
-					final SousTypeProduitJPA sousTypeProduitProvSTP 
-						= (SousTypeProduitJPA) produitProv.getSousTypeProduit();
-					
-					Long idSousTypeProduitProvSTP = null;
-					TypeProduitJPA typeProduitProvSTP = null;
-					String typeProduitStringSTPProv = null;
-					String sousTypeProduitStringSTP = null;
-					
-					if (sousTypeProduitProvSTP != null) {
-						
-						idSousTypeProduitProvSTP 
-							= sousTypeProduitProvSTP
-								.getIdSousTypeProduit();
-						
-						typeProduitProvSTP 
-							= (TypeProduitJPA) sousTypeProduitProvSTP.getTypeProduit();
-						
-						if (typeProduitProvSTP != null) {
-							typeProduitStringSTPProv 
-								= typeProduitProvSTP.getTypeProduit();
-						}
-						
-						sousTypeProduitStringSTP 
-							= sousTypeProduitProvSTP.getSousTypeProduit();
-					}
-
-					/* NIVEAU TypeProduit du produit du sousTypeProduit. */
-					Long idTypeProduitSTP = null;
-					String typeProduitString1 = null;
-					
-					final TypeProduitI typeProduitProv1 
-						= pProduit.getTypeProduit();
-					
-					if (typeProduitProv1 != null) {
-						idTypeProduitSTP 
-							= typeProduitProv1.getIdTypeProduit();
-						typeProduitString1 
-							= typeProduitProv1.getTypeProduit();
-					}
-
-					
-					stb.append('\t');
-					
-					final String pres2 
-						= String.format(
-								"[idProduit : %-1s "
-								+ "- produit : %-40s "
-								+ FORMAT_IDSOUSTYPEPRODUIT
-								+ FORMAT_TYPEPRODUIT_STP
-								+ "- sousTypeProduit : %-30s] "
-								+ "- [idTypeProduit : %-1s "
-								+ "- typeProduit : %-13s]]"
-								, idProduitSTP
-								, produitStringProv
-								, idSousTypeProduitProvSTP
-								, typeProduitStringSTPProv
-								, sousTypeProduitStringSTP
-								, idTypeProduitSTP
-								, typeProduitString1);
-					
-					stb.append(pres2);
-					stb.append(SAUT_DE_LIGNE);
-					
-				}
-			}
-			
-		}
-				
-		return stb.toString();
-		
-	} //___________________________________________________________________
-	
-
-	
-	/**
-	 * <div>
-	 * <p>retourne une String formatée pour l'affichage 
-	 * d'un Produit</p>
-	 * <ul>
-	 * <li>retourne null si pTypeProduit == null.</li>
-	 * <li>affiche en 1ere ligne [idProduit - produit (String)]</li>
-	 * <li>affiche en 1ere ligne [idSousTypeProduit - 
-	 * typeProduit du SousTypeProduit - SousTypeProduit (String)]</li>
-	 * <li>affiche en 1ère ligne [idTypeProduit - typeProduit (String)]</li>
-	 * <li>affiche sur des lignes séparées chaque produit de 
-	 * la liste produits du sousTypeProduit.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @param pProduit : Produit
-	 * @return String
-	 */
-	private String afficherProduitFormate(final Produit pProduit) {
-
-		if (pProduit == null) {
-			return null;
-		}
-		
-		/* INSTANCIATION d'un StringBuilder. */
-		final StringBuilder stb = new StringBuilder();
-		
-		/* NIVEAU Produit. */
-		final Long idProduitProv = pProduit.getIdProduit();
-		final String produitString = pProduit.getProduit();
-		
-		/* NIVEAU SousTypeProduit. */
-		final SousTypeProduit sousTypeProduitProv 
-			= (SousTypeProduit) pProduit.getSousTypeProduit();
-		
-		Long idSousTypeProduitProv = null;
-		TypeProduit typeProduit = null;
-		String typeProduitStringSTP = null;
-		String sousTypeProduitString = null;
-		
-		if (sousTypeProduitProv != null) {
-			
-			idSousTypeProduitProv 
-				= sousTypeProduitProv.getIdSousTypeProduit();
-			
-			typeProduit = (TypeProduit) sousTypeProduitProv.getTypeProduit();
-			
-			if (typeProduit != null) {
-				typeProduitStringSTP = typeProduit.getTypeProduit();
-			}
-			
-			sousTypeProduitString = sousTypeProduitProv.getSousTypeProduit();
-		}
-		
-		/* NIVEAU TypeProduit. */
-		Long idTypeProduit = null;
-		String typeProduitString = null;
-		
-		final TypeProduit typeProduitProv = (TypeProduit) pProduit.getTypeProduit();
-		
-		if (typeProduitProv != null) {
-			idTypeProduit = typeProduitProv.getIdTypeProduit();
-			typeProduitString = typeProduitProv.getTypeProduit();
-		}
-		
-		final String pres 
-		= String.format(
-				"idProduit : %-1s - produit : %-40s "
-				+ FORMAT_IDSOUSTYPEPRODUIT
-				+ FORMAT_TYPEPRODUIT_STP
-				+ "- sousTypeProduit : %-20s] "
-				+ "- [idTypeProduit : %-1s - typeProduit : %-13s]"
-				, idProduitProv
-				, produitString
-				, idSousTypeProduitProv
-				, typeProduitStringSTP
-				, sousTypeProduitString
-				, idTypeProduit
-				, typeProduitString);
-		
-		stb.append(pres);
-		stb.append(SAUT_DE_LIGNE);
-		
-		/* NIVEAU produits du SousTypeProduit. */		
-		List<Produit> produitsSTP = null;
-		
-		if (sousTypeProduitProv != null) {
-			
-			stb.append("**** Liste des produits du sousTypeProduit : ");
-			stb.append(sousTypeProduitProv.getSousTypeProduit());
-			stb.append(SAUT_DE_LIGNE);
-
-			produitsSTP 
-				= convertirListProduitEnListProduit(
-						sousTypeProduitProv.getProduits());
-			
-			if (produitsSTP == null) {
-				stb.append(NULL);
-				stb.append(SAUT_DE_LIGNE);
-			} else {
-				
-				for (final Produit produitProv : produitsSTP) {
-					
-					final Long idProduitSTP = produitProv.getIdProduit();
-					final String produitStringProv 
-						= produitProv.getProduit();
-					
-					/* NIVEAU SousTypeProduit du produit du sousTypeProduit. */
-					final SousTypeProduit sousTypeProduitProvSTP 
-						= (SousTypeProduit) produitProv.getSousTypeProduit();
-					
-					Long idSousTypeProduitProvSTP = null;
-					TypeProduit typeProduitProvSTP = null;
-					String typeProduitStringSTPProv = null;
-					String sousTypeProduitStringSTP = null;
-					
-					if (sousTypeProduitProvSTP != null) {
-						
-						idSousTypeProduitProvSTP 
-							= sousTypeProduitProvSTP.getIdSousTypeProduit();
-						
-						typeProduitProvSTP 
-							= (TypeProduit) sousTypeProduitProvSTP.getTypeProduit();
-						
-						if (typeProduitProvSTP != null) {
-							typeProduitStringSTPProv 
-								= typeProduitProvSTP.getTypeProduit();
-						}
-						
-						sousTypeProduitStringSTP 
-							= sousTypeProduitProvSTP.getSousTypeProduit();
-					}
-
-					/* NIVEAU TypeProduit du produit du sousTypeProduit. */
-					Long idTypeProduitSTP = null;
-					String typeProduitString1 = null;
-					
-					final TypeProduit typeProduitProv1 
-						= (TypeProduit) pProduit.getTypeProduit();
-					
-					if (typeProduitProv1 != null) {
-						idTypeProduitSTP 
-							= typeProduitProv1.getIdTypeProduit();
-						typeProduitString1 
-							= typeProduitProv1.getTypeProduit();
-					}
-
-					
-					stb.append('\t');
-					
-					final String pres2 
-						= String.format(
-								"[idProduit : %-1s "
-								+ "- produit : %-40s "
-								+ FORMAT_IDSOUSTYPEPRODUIT
-								+ FORMAT_TYPEPRODUIT_STP
-								+ "- sousTypeProduit : %-30s] "
-								+ "- [idTypeProduit : %-1s "
-								+ "- typeProduit : %-13s]]"
-								, idProduitSTP
-								, produitStringProv
-								, idSousTypeProduitProvSTP
-								, typeProduitStringSTPProv
-								, sousTypeProduitStringSTP
-								, idTypeProduitSTP
-								, typeProduitString1);
-					
-					stb.append(pres2);
-					stb.append(SAUT_DE_LIGNE);
-
-				}
-			}
-			
-		}
-		
-		return stb.toString();
-		
-	} //___________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>fournit une String formatée pour l'affichage à la console 
-	 * d'une List&lt;SousTypeProduitJPA&gt;</p>
-	 * </div>
-	 *
-	 * @param pList : List&lt;SousTypeProduitJPA&gt;
-	 * 
-	 * @return String
-	 */
-	private String afficherSousTypeProduitsJPA(final List<? extends SousTypeProduitI> pList) {
-		
-		if (pList == null) {
-			return null;
-		}
-		
-		final StringBuilder stb = new StringBuilder();
-		
-		for (final SousTypeProduitI sousTypeProduit : pList) {
-						
-			final Long idSousTypeProduit 
-				= sousTypeProduit.getIdSousTypeProduit();
-			final String sousTypeProduitString 
-				= sousTypeProduit.getSousTypeProduit();
-			final String typeProduit 
-				= sousTypeProduit.getTypeProduit().getTypeProduit();
-			
-			final String presentation 
-				= String.format(
-						"idSousTypeProduit : %-1s - sousTypeProduit : %-30s - typeProduit : %-20s"
-						, idSousTypeProduit, sousTypeProduitString, typeProduit);
-			
-			stb.append(presentation);
-			stb.append(SAUT_DE_LIGNE);
-		}
-		
-		return stb.toString();	
-		
-	} //___________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>fournit une String formatée pour l'affichage à la console 
-	 * d'une List&lt;SousTypeProduit&gt;</p>
-	 * </div>
-	 *
-	 * @param pList : List&lt;SousTypeProduit&gt;
-	 * 
-	 * @return String
-	 */
-	private String afficherSousTypeProduits(final List<SousTypeProduit> pList) {
-		
-		if (pList == null) {
-			return null;
-		}
-		
-		final StringBuilder stb = new StringBuilder();
-		
-		for (final SousTypeProduit sousTypeProduit : pList) {
-						
-			final Long idSousTypeProduit 
-				= sousTypeProduit.getIdSousTypeProduit();
-			final String sousTypeProduitString 
-				= sousTypeProduit.getSousTypeProduit();
-			final String typeProduit 
-				= sousTypeProduit.getTypeProduit().getTypeProduit();
-			
-			final String presentation 
-				= String.format(
-						"idSousTypeProduit : %-1s - sousTypeProduit : %-30s - typeProduit : %-20s"
-						, idSousTypeProduit, sousTypeProduitString, typeProduit);
-			
-			stb.append(presentation);
-			stb.append(SAUT_DE_LIGNE);
-		}
-		
-		return stb.toString();
-		
-	} //___________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>fournit une String pour l'affichage à la console 
-	 * d'une List&lt;ProduitJPA&gt;</p>
-	 * </div>
-	 *
-	 * @param pList : List&lt;ProduitJPA&gt;
-	 * 
-	 * @return String
-	 */
-	private String afficherProduitsJPA(final List<ProduitJPA> pList) {
-		
-		if (pList == null) {
-			return null;
-		}
-		
-		final StringBuilder stb = new StringBuilder();
-		
-		for (final ProduitJPA produit : pList) {
-			
-			if (produit != null) {
-				
-				/* idProduit. */
-				final Long idProduit = produit.getIdProduit();
-				
-				/* produit. */
-				final String produitString = produit.getProduit();
-				
-				/* SOUSTYPEPRODUIT.*/
-				final SousTypeProduitJPA sousTypeProduit 
-					= (SousTypeProduitJPA) produit.getSousTypeProduit();
-				
-				/* sousTypeProduit. */
-				Long idSousProduit = null;
-				String sousTypeProduitString = null;
-				TypeProduitJPA typeProduitduSousTypeProduit = null;
-				String typeProduitduSousTypeProduitString = null;
-				
-				if (sousTypeProduit != null) {
-					idSousProduit 
-						= sousTypeProduit.getIdSousTypeProduit();
-					sousTypeProduitString 
-						= sousTypeProduit.getSousTypeProduit();
-					typeProduitduSousTypeProduit 
-						= (TypeProduitJPA) sousTypeProduit.getTypeProduit();
-					if (typeProduitduSousTypeProduit != null) {
-						typeProduitduSousTypeProduitString 
-							= typeProduitduSousTypeProduit.getTypeProduit();
-					}
-				}
-				
-				/* TYPEPRODUIT*/
-				final TypeProduitI typeProduit = produit.getTypeProduit();
-				
-				Long idTypeProduit = null;
-				String typeProduitString = null;
-				
-				if (typeProduit != null) {
-					idTypeProduit = typeProduit.getIdTypeProduit();
-					typeProduitString = typeProduit.getTypeProduit();
-				}
-							
-				final String presentation 
-					= String.format(
-							"idProduit : "
-							+ FORMAT_IDPRODUIT
-							+ " - produit : "
-							+ "%-40s"
-							+ " - [idSousProduit : "
-							+ FORMAT_IDSTP
-							+ " - sousTypeProduit : "
-							+ "%-20s"
-							+ " - typeProduit du sousTypeProduit : "
-							+ "%-12s"
-							+ "] - [idTypeProduit du Produit : "
-							+ FORMAT_IDTP
-							+ " - typeProduit du Produit : "
-							+ "%-12s]"
-							, idProduit
-							, produitString
-							, idSousProduit
-							, sousTypeProduitString
-							, typeProduitduSousTypeProduitString
-							, idTypeProduit
-							, typeProduitString);
-				
-				stb.append(presentation);
-				stb.append(SAUT_DE_LIGNE);
-				
-			}
-			
-		}
-		
-		return stb.toString();
-		
-	} //___________________________________________________________________
-
-
-	
-	/**
-	 * <div>
-	 * <p>fournit une String pour l'affichage à la console 
-	 * d'une List&lt;Produit&gt;</p>
-	 * </div>
-	 *
-	 * @param pList : List&lt;Produit&gt;
-	 * 
-	 * @return String
-	 */
-	private String afficherProduits(final List<Produit> pList) {
-		
-		if (pList == null) {
-			return null;
-		}
-		
-		final StringBuilder stb = new StringBuilder();
-		
-		for (final Produit produit : pList) {
-			
-			if (produit != null) {
-				
-				/* idProduit. */
-				final Long idProduit = produit.getIdProduit();
-				
-				/* produit. */
-				final String produitString = produit.getProduit();
-				
-				/* SOUSTYPEPRODUIT.*/
-				final SousTypeProduit sousTypeProduit 
-					= (SousTypeProduit) produit.getSousTypeProduit();
-				
-				/* sousTypeProduit. */
-				Long idSousProduit = null;
-				String sousTypeProduitString = null;
-				TypeProduit typeProduitduSousTypeProduit = null;
-				String typeProduitduSousTypeProduitString = null;
-				
-				if (sousTypeProduit != null) {
-					idSousProduit 
-						= sousTypeProduit.getIdSousTypeProduit();
-					sousTypeProduitString 
-						= sousTypeProduit.getSousTypeProduit();
-					typeProduitduSousTypeProduit 
-						= (TypeProduit) sousTypeProduit.getTypeProduit();
-					if (typeProduitduSousTypeProduit != null) {
-						typeProduitduSousTypeProduitString 
-							= typeProduitduSousTypeProduit.getTypeProduit();
-					}
-				}
-				
-				/* TYPEPRODUIT*/
-				final TypeProduit typeProduit = (TypeProduit) produit.getTypeProduit();
-				
-				Long idTypeProduit = null;
-				String typeProduitString = null;
-				
-				if (typeProduit != null) {
-					idTypeProduit = typeProduit.getIdTypeProduit();
-					typeProduitString = typeProduit.getTypeProduit();
-				}
-							
-				final String presentation 
-					= String.format(
-							"idProduit : "
-							+ FORMAT_IDPRODUIT
-							+ " - produit : "
-							+ "%-40s"
-							+ " - [idSousProduit : "
-							+ FORMAT_IDSTP
-							+ " - sousTypeProduit : "
-							+ "%-20s"
-							+ " - typeProduit du sousTypeProduit : "
-							+ "%-12s"
-							+ "] - [idTypeProduit du Produit : "
-							+ FORMAT_IDTP
-							+ " - typeProduit du Produit : "
-							+ "%-12s]"
-							, idProduit
-							, produitString
-							, idSousProduit
-							, sousTypeProduitString
-							, typeProduitduSousTypeProduitString
-							, idTypeProduit
-							, typeProduitString);
-				
-				stb.append(presentation);
-				stb.append(SAUT_DE_LIGNE);
-				
-			}
-			
-		}
-		
-		return stb.toString();
-		
-	} //___________________________________________________________________
-	
-
-	
-	/**
-	 * <div>
-	 * <p>peuple les Entities</p>
-	 * </div>
-	 */
-	private void creerScenario() {
-		
-		/* création de TypeProduit. */
-		this.typeProduitVetementJPA = new TypeProduitJPA(1L, VETEMENT);
-		this.typeProduitPecheJPA = new TypeProduitJPA(2L, "pêche");
-		
-		/* création de SousTypeProduit. */
-		this.sousTypeProduitVetementHommeJPA 
-			= new SousTypeProduitJPA(1L
-					, VETEMENT_POUR_HOMME
-					, this.typeProduitVetementJPA);
-		this.sousTypeProduitVetementFemmeJPA 
-			= new SousTypeProduitJPA(2L
-				, "vêtement pour femme"
-				, this.typeProduitVetementJPA);
-		this.sousTypeProduitVetementEnfantJPA 
-			= new SousTypeProduitJPA(3L
-				, "vêtement pour enfant"
-				, this.typeProduitVetementJPA);
-		
-		this.sousTypeProduitPecheCanneJPA 
-			= new SousTypeProduitJPA(4L
-					, "canne"
-					, this.typeProduitPecheJPA);
-		this.sousTypeProduitPecheCuillerJPA 
-			= new SousTypeProduitJPA(5L
-					, "cuiller"
-					, this.typeProduitPecheJPA);
-		
-		/* création de Produit. */
-		this.produitChemiseManchesLonguesPourHomme 
-			= new ProduitJPA(
-					1L
-					, "chemise à manches longues pour homme"
-					, this.sousTypeProduitVetementHommeJPA);
-		this.produitChemiseManchesCourtesPourHomme 
-			= new ProduitJPA(
-					2L
-					, "chemise à manches courtes pour homme"
-					, this.sousTypeProduitVetementHommeJPA);
-		this.produitSweatshirtPourHomme 
-			= new ProduitJPA(
-					3L
-					, "sweatshirt pour homme"
-					, this.sousTypeProduitVetementHommeJPA);
-		this.produitTeeshirtPourHomme 
-			= new ProduitJPA(
-					4L
-					, "teeshirt pour homme"
-					, this.sousTypeProduitVetementHommeJPA);
-		
-	} //___________________________________________________________________
-	
-
-	// ==========================================================
-	// Tests
-	// ==========================================================
 	/**
 	 * Conversion démarrant par TypeProduitJPA : 
 	 * graphe cohérent, instances uniques, pas de doublons
@@ -2480,7 +1306,7 @@ public class ConvertisseurJPAToMetierTest {
 		final SousTypeProduitJPA stpJPA = new SousTypeProduitJPA(VETEMENT_POUR_HOMME);
 		stpJPA.setIdSousTypeProduit(10L);
 
-		final ProduitJPA pJPA = new ProduitJPA("chemise manches longues");
+		final ProduitJPA pJPA = new ProduitJPA(CHEMISES_MANCHES_LONGUES);
 		pJPA.setIdProduit(100L);
 
 		/* Simule "LAZY non initialisé" :
@@ -2488,7 +1314,7 @@ public class ConvertisseurJPAToMetierTest {
 		 * et on laisse tpJPA.sousTypeProduits vide.
 		 */
 		setField(stpJPA, TYPEPRODUIT, tpJPA);
-		setField(pJPA, "sousTypeProduit", stpJPA);
+		setField(pJPA, SOUSTYPEPRODUIT, stpJPA);
 
 		final List<SousTypeProduitI> sousTypesVides = new ArrayList<SousTypeProduitI>();
 		setField(tpJPA, "sousTypeProduits", sousTypesVides);
@@ -2499,7 +1325,7 @@ public class ConvertisseurJPAToMetierTest {
 
 		assertNotNull(produitMetier);
 		assertEquals(100L, produitMetier.getIdProduit());
-		assertEquals("chemise manches longues", produitMetier.getProduit());
+		assertEquals(CHEMISES_MANCHES_LONGUES, produitMetier.getProduit());
 
 		final SousTypeProduitI stpMetier = produitMetier.getSousTypeProduit();
 		assertNotNull(stpMetier);
@@ -2715,7 +1541,7 @@ public class ConvertisseurJPAToMetierTest {
 	 * </ul>
 	 * </div>
 	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings(UNUSED)
 	@Tag("JPAToMetier-Beton")
 	@DisplayName("Concurrences : doit gérer les conversions multi-thread")
 	@Test
@@ -2777,11 +1603,280 @@ public class ConvertisseurJPAToMetierTest {
 	    }
 	} //___________________________________________________________________
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste la stabilité d'<b>identity</b> (cache) en concurrence :</p>
+	 * <ul>
+	 * <li>garantit que plusieurs threads convertissant le <b>même</b> TypeProduitJPA retournent la <b>même instance</b> métier.</li>
+	 * <li>utilise un <b>ExecutorService</b> avec timeout (stratégie projet).</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings({ "unused", "resource" })
+	@Tag(JPATOMETIER_BETON)
+	@Test
+	@DisplayName("Concurrence: mêmes conversions -> même instance (identity/cache)")
+	public final void testConcurrenceIdentityCacheTypeProduit() throws Exception {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ConvertisseurJPAToMetierTest - méthode testConcurrenceIdentityCacheTypeProduit() ********** ");
+			System.out.println("CE TEST VERIFIE EN CONCURRENCE QUE LE CACHE RETOURNE LA MEME INSTANCE METIER.");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final ScenarioJPA scenario = creerScenarioVetement();
+		final TypeProduitJPA tpJPA = scenario.typeProduitVetement;
+		
+		final TypeProduit reference = ConvertisseurJPAToMetier.typeProduitJPAToMetier(tpJPA);
+		assertNotNull(reference, "précondition : la référence métier ne doit pas être null : ");
+		
+		final int nbThreads = 10;
+		final ExecutorService executor = Executors.newFixedThreadPool(nbThreads);
+		
+		final List<Callable<TypeProduit>> tasks = new ArrayList<>();
+		
+		for (int i = 0; i < nbThreads; i++) {
+			
+			tasks.add(new Callable<TypeProduit>() {
+				@Override
+				public TypeProduit call() throws Exception {
+					return ConvertisseurJPAToMetier.typeProduitJPAToMetier(tpJPA);
+				}
+			});
+			
+		}
+		
+		// ACT - WHEN
+		final List<Future<TypeProduit>> futures = executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
+		executor.shutdown();
+		
+		// ASSERT - THEN
+		
+		for (final Future<TypeProduit> future : futures) {
+			
+			assertTrue(future.isDone(), "tâche terminée : ");
+			
+			final TypeProduit resultat = future.get();
+			assertNotNull(resultat, "le résultat ne doit pas être null : ");
+			
+			/* Identity/cache : même instance attendue. */
+			assertSame(reference, resultat, "identity/cache : tous les threads doivent récupérer la même instance métier : ");
+			
+		}
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Teste le comportement "LAZY" côté JPA lorsque <b>TypeProduitJPA.sousTypeProduits</b> est <b>vide</b>.</p>
+	 * <ul>
+	 * <li>La conversion depuis un <b>ProduitJPA</b> doit stabiliser le graphe parent ↔ enfant.</li>
+	 * <li>Le <b>TypeProduit</b> métier retourné doit contenir le <b>SousTypeProduit</b> métier (pas de wipe).</li>
+	 * </ul>
+	 * </div>
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unused")
+	@Tag(JPATOMETIER_BETON)
+	@Test
+	@DisplayName("Lazy: TypeProduitJPA.sousTypeProduits vide -> conversion stabilise le graphe sans wipe")
+	public final void testLazyTypeProduitCollectionVideDepuisProduit() throws Exception {
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+		
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ConvertisseurJPAToMetierTest - méthode testLazyTypeProduitCollectionVideDepuisProduit() ********** ");
+			System.out.println("CE TEST VERIFIE LE COMPORTEMENT LAZY QUAND TypeProduitJPA.sousTypeProduits EST VIDE.");
+			System.out.println();
+		}
+		
+		// ARRANGE - GIVEN
+		final TypeProduitJPA tpJPA = new TypeProduitJPA(VETEMENT);
+		tpJPA.setIdTypeProduit(1L);
+		
+		final SousTypeProduitJPA stpJPA = new SousTypeProduitJPA(VETEMENT_POUR_HOMME);
+		stpJPA.setIdSousTypeProduit(10L);
+		
+		final ProduitJPA pJPA = new ProduitJPA("chemise manches longues");
+		pJPA.setIdProduit(100L);
+		
+		/* Simule "lazy": collection vide (le getter ne supporte pas null). */
+		setField(tpJPA, "sousTypeProduits", new ArrayList<SousTypeProduitJPA>());
+		
+		/* Force le graphe minimal sans utiliser les setters canoniques. */
+		setField(stpJPA, TYPEPRODUIT, tpJPA);
+		setField(pJPA, "sousTypeProduit", stpJPA);
+		
+		// ACT - WHEN
+		final ProduitI produitMetier = ConvertisseurJPAToMetier.produitJPAToMetier(pJPA);
+		
+		// ASSERT - THEN
+		assertNotNull(produitMetier, "Le Produit métier ne doit pas être null : ");
+		assertEquals(100L, produitMetier.getIdProduit(), "idProduit converti : ");
+		assertEquals("chemise manches longues", produitMetier.getProduit(), "produit (String) converti : ");
+		
+		final SousTypeProduitI stpMetier = produitMetier.getSousTypeProduit();
+		assertNotNull(stpMetier, "Le SousTypeProduit métier ne doit pas être null : ");
+		assertEquals(10L, stpMetier.getIdSousTypeProduit(), "idSousTypeProduit converti : ");
+		assertEquals(VETEMENT_POUR_HOMME, stpMetier.getSousTypeProduit(), "sousTypeProduit (String) converti : ");
+		
+		final TypeProduitI tpMetier = stpMetier.getTypeProduit();
+		assertNotNull(tpMetier, "Le TypeProduit métier ne doit pas être null : ");
+		assertEquals(1L, tpMetier.getIdTypeProduit(), "idTypeProduit converti : ");
+		assertEquals(VETEMENT, tpMetier.getTypeProduit(), "typeProduit (String) converti : ");
+		
+		/* Identity stabilisée. */
+		assertSame(tpMetier, produitMetier.getTypeProduit(), "Le Produit doit remonter au même TypeProduit (même instance) : ");
+		
+		/* Pas de wipe : le parent doit contenir l'enfant. */
+		assertNotNull(tpMetier.getSousTypeProduits(), "La liste sousTypeProduits métier ne doit pas être null : ");
+		assertTrue(tpMetier.getSousTypeProduits().contains(stpMetier), "Le TypeProduit doit contenir le STP après conversion : ");
+		
+	} //___________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>Teste le cache partagé du convertisseur sur <b>deux appels</b> successifs.</p>
+	 * <ul>
+	 * <li>Deux conversions du <b>même</b> TypeProduitJPA doivent retourner la <b>même instance</b> métier (cache/identity).</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@Tag(JPATOMETIER_BETON)
+	@Test
+	@DisplayName("Cache partagé: 2 appels typeProduitJPAToMetier(même JPA) -> même instance métier")
+	public final void testCachePartageEntreDeuxAppelsTypeProduit() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ConvertisseurJPAToMetierTest - méthode testCachePartageEntreDeuxAppelsTypeProduit() ********** ");
+			System.out.println("CE TEST VERIFIE LE CACHE PARTAGE (IDENTITY) ENTRE DEUX APPELS SUCCESSIFS.");
+			System.out.println();
+		}
+
+		// ARRANGE - GIVEN
+		final ScenarioJPA scenario = creerScenarioVetement();
+		final TypeProduitJPA tpJPA = scenario.typeProduitVetement;
+
+		// ACT - WHEN
+		final TypeProduit tpMetier1 = ConvertisseurJPAToMetier.typeProduitJPAToMetier(tpJPA);
+		final TypeProduit tpMetier2 = ConvertisseurJPAToMetier.typeProduitJPAToMetier(tpJPA);
+
+		// ASSERT - THEN
+		assertNotNull(tpMetier1, "tpMetier1 ne doit pas être null : ");
+		assertNotNull(tpMetier2, "tpMetier2 ne doit pas être null : ");
+		assertSame(tpMetier1, tpMetier2, "Deux appels sur la même Entity doivent retourner la même instance métier (cache/identity) : ");
+
+	} //___________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>Teste la méthode privée <b>requireJPA(Object, Class, String)</b> par reflection.</p>
+	 * <ul>
+	 * <li>Objet null &rarr; IllegalStateException.</li>
+	 * <li>Mauvaise implémentation &rarr; IllegalStateException contenant <b>IMPLEMENTATION_NON_JPA</b>.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@Tag(JPATOMETIER_BETON)
+	@Test
+	@DisplayName("requireJPA(...) : null et mauvaise implémentation -> IllegalStateException")
+	public final void testRequireJPA() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ConvertisseurJPAToMetierTest - méthode testRequireJPA() ********** ");
+			System.out.println("CE TEST VERIFIE requireJPA(...) (NULL + MAUVAISE IMPLEMENTATION).");
+			System.out.println();
+		}
+
+		// ARRANGE - GIVEN
+		final String contexte = "TEST requireJPA";
+		final Class<?> clazz = ConvertisseurJPAToMetier.class;
+
+		// ACT - WHEN / ASSERT - THEN
+		try {
+			final java.lang.reflect.Method m = clazz.getDeclaredMethod(
+					"requireJPA",
+					Object.class,
+					Class.class,
+					String.class);
+			m.setAccessible(true); // NOPMD by danyl on 18/02/2026 10:43
+
+			/* Cas objet null. */
+			try {
+				m.invoke(null, null, TypeProduitJPA.class, contexte);
+				fail("requireJPA(null, ...) doit lever IllegalStateException : ");
+			} catch (final java.lang.reflect.InvocationTargetException e) {
+				assertNotNull(e.getCause(), "La cause doit exister : ");
+				assertTrue(e.getCause() instanceof IllegalStateException, "La cause doit être IllegalStateException : ");
+				assertTrue(e.getCause().getMessage().contains("objet null"), "Le message doit mentionner \"objet null\" : ");
+			}
+
+			/* Cas mauvaise implémentation. */
+			try {
+				m.invoke(null, new Object(), TypeProduitJPA.class, contexte);
+				fail("requireJPA(mauvaise implémentation, ...) doit lever IllegalStateException : ");
+			} catch (final java.lang.reflect.InvocationTargetException e) {
+				assertNotNull(e.getCause(), "La cause doit exister : ");
+				assertTrue(e.getCause() instanceof IllegalStateException, "La cause doit être IllegalStateException : ");
+				assertTrue(
+						e.getCause().getMessage().contains(ConvertisseurJPAToMetier.IMPLEMENTATION_NON_JPA),
+						"Le message doit contenir IMPLEMENTATION_NON_JPA : ");
+				assertTrue(
+						e.getCause().getMessage().contains("contexte=" + contexte),
+						"Le message doit contenir le contexte : ");
+			}
+
+		} catch (final Exception e) {
+			fail("Reflection sur requireJPA(...) a échoué : " + e.getMessage());
+		}
+
+	} //___________________________________________________________________
+	
 
 
 	// ==========================================================
 	// Helpers - Scénario JPA
 	// ==========================================================
+	
+	
+	
 	/**
 	 */
 	private static final class ScenarioJPA {
@@ -2827,6 +1922,1193 @@ public class ConvertisseurJPAToMetierTest {
 		private ProduitJPA p4;
 
 	}
+
+
+
+	/**
+	 * <div>
+	 * <p>compare les valeurs equalsMetier d'un TypeProduit Entity JPA 
+	 * et d'un TypeProduit objet Métier et ne retourne true que 
+	 * si elles sont toutes égales.</p>
+	 * <ul>
+	 * <li>retourne true si les deux paramètres sont null.</li>
+	 * <li>retourne false si un seul des paramètres est null.</li>
+	 * <li>compare les idTypeProduit et retourne false 
+	 * s'ils ne sont pas égaux.</li>
+	 * <li>compare les typeProduit (String) et retourne false 
+	 * s'ils ne sont pas égaux.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pTypeProduitJPA
+	 * @param pTypeProduit
+	 * @return boolean : true si toutes les valeurs sont égales.
+	 */
+	private boolean memeEqualsTypeProduit(
+			final TypeProduitJPA pTypeProduitJPA
+				, final TypeProduit pTypeProduit) {
+		
+		if (pTypeProduitJPA == null) {
+			if (pTypeProduit != null) {
+				/* retourne false si un seul des paramètres est null. */
+				return false;
+			}
+			
+			/* retourne true si les deux paramètres sont null. */
+			return true;
+		}
+		
+		/* retourne false si un seul des paramètres est null. */
+		if (pTypeProduit == null) {
+			return false;
+		}
+		
+		/* idTypeProduit. */
+		final Long idTypeProduitJPA = pTypeProduitJPA.getIdTypeProduit();
+		final Long idTypeProduit = pTypeProduit.getIdTypeProduit();
+		
+		/* compare les idTypeProduit et 
+		 * retourne false s'ils ne sont pas égaux. */
+		if (idTypeProduitJPA != idTypeProduit) {
+			return false;
+		}
+		
+		/* typeProduit. */
+		final String typeProduitJPA = pTypeProduitJPA.getTypeProduit();
+		final String typeProduit = pTypeProduit.getTypeProduit();
+		
+		/* compare les typeProduit (String) de niveau 1 (TypeProduit) 
+		 * et retourne false s'ils ne sont pas égaux. */
+		if (!Strings.CS.equals(typeProduitJPA, typeProduit)) {
+			return false;
+		}
+		
+		return true;
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>compare les valeurs equalsMetier de SousTypeProduit 
+	 * d'une Entity JPA de type 
+	 * <code><span style="font-weight:bold;">SousTypeProduitJPA</span>
+	 *  pSousTypeProduitJPA</code> et d'un objet métier 
+	 *  équivalent de type <code><span style="font-weight:bold;">
+	 *  SousTypeProduit</span> pSousTypeProduit</code>.</p>
+	 *  <p>le paramètre de type <code><span style="font-weight:bold;">
+	 *  SousTypeProduit</span> SousTypeProduit</code> est censé être 
+	 *  encapsulé dans un <code><span style="font-weight:bold;">
+	 *  TypeProduit</span> pTypeProduit</code>.</p>
+	 *  <ul>
+	 *  <li>retourne false si pTypeProduit == null.</li>
+	 *  <li>retourne false si pSousTypeProduitJPA == null.</li>
+	 *  <li>retourne false si pSousTypeProduit == null.</li>
+	 *  <li>compare les <code><span style="font-weight:bold;">
+	 *  idSousTypeProduit</code> de niveau 2 (SousTypeProduit) 
+	 *  et retourne false s'ils ne sont pas égaux.</li>
+	 *  <li>vérifie que le <code><span style="font-weight:bold;">
+	 *  typeProduit</code> du paramètre pSousTypeProduit est l'instance 
+	 *  <code>pTypeProduit</code> passée en paramètre. 
+	 *  Retourne false si ce n'est pas le cas.</li>
+	 *  <li>compare les <code style="font-weight:bold;">
+	 *  sousTypeProduit</code> (String) et retourne false 
+	 *  s'ils ne sont pas égaux.</li>
+	 *  <li>retourne true si toutes les valeurs sont égales.</li>
+	 *  </ul>
+	 * </div>
+	 *
+	 * @param pTypeProduit : TypeProduit
+	 * @param pSousTypeProduitJPA : SousTypeProduitJPA
+	 * @param pSousTypeProduit : SousTypeProduit
+	 * 
+	 * @return boolean : true si toutes les valeurs sont égales.
+	 */
+	private boolean memeEqualsSousTypeProduit(
+			final TypeProduit pTypeProduit
+			, final SousTypeProduitJPA pSousTypeProduitJPA
+				, final SousTypeProduit pSousTypeProduit) {
+		
+		/* retourne false si pTypeProduit == null. */
+		if (pTypeProduit == null) {
+			return false;
+		}
+		
+		/* retourne false si pSousTypeProduitJPA == null. */
+		if (pSousTypeProduitJPA == null) {
+			return false;
+		}
+		
+		/* retourne false si pSousTypeProduit == null. */
+		if (pSousTypeProduit == null) {
+			return false;
+		}
+		
+		/* compare les idSousTypeProduit de niveau 2 (SousTypeProduit) 
+		 * et retourne false s'ils ne sont pas égaux. */
+		if (pSousTypeProduitJPA.getIdSousTypeProduit() 
+				!= pSousTypeProduit.getIdSousTypeProduit()) {
+			return false;
+		}
+		
+		/* vérifie que le typeProduit du paramètre pSousTypeProduit 
+		 * est l'instance pTypeProduit passée en paramètre. */
+		/* retourne false si ce n'est pas le cas. */
+		if (pTypeProduit != pSousTypeProduit.getTypeProduit()) {
+			return false;
+		}
+		
+		/* compare les sousTypeProduit (String) et retourne 
+		 * false s'ils ne sont pas égaux.. */
+		if (!Strings.CS.equals(
+				pSousTypeProduitJPA.getSousTypeProduit()
+				, pSousTypeProduit.getSousTypeProduit())) {
+			return false;
+		}
+		
+		/* retourne true si toutes les valeurs sont égales. */ 
+		return true;
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>retourne une String formatée pour l'affichage 
+	 * d'un TypeProduitJPA</p>
+	 * <ul>
+	 * <li>retourne null si pTypeProduitJPA == null.</li>
+	 * <li>affiche le TypeProduitJPA</li>
+	 * <li>affiche la liste des SousTypeProduitJPA contenus 
+	 * dans le TypeProduitJPA</li>
+	 * <li>affiche pour chaque SousTypeProduitJPA la liste des ProduitJPA qu'il contient.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="text-decoration:underline;">Exemple d'affichage : </p>
+	 * <pre>******* TypeProduitJPA : vêtement *******
+	 * [idTypeProduit : 1 - typeProduit : vêtement  ]
+	 * 
+	 * ******* sousTypeProduitsJPA du TypeProduitJPA : vêtement
+	 * [idSousTypeProduit : 1 - sousTypeProduit : vêtement pour homme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
+	 * ***** liste des produits dans le sousProduitJPA : vêtement pour homme
+	 * [idProduit dans produits du SousTypeProduit : 1 - produit dans produits du SousTypeProduit : chemise à manches longues pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * [idProduit dans produits du SousTypeProduit : 2 - produit dans produits du SousTypeProduit : chemise à manches courtes pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * [idProduit dans produits du SousTypeProduit : 3 - produit dans produits du SousTypeProduit : sweatshirt pour homme                    - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * [idProduit dans produits du SousTypeProduit : 4 - produit dans produits du SousTypeProduit : teeshirt pour homme                      - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * 
+	 * [idSousTypeProduit : 2 - sousTypeProduit : vêtement pour femme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
+	 * ***** liste des produits dans le sousProduitJPA : vêtement pour femme
+	 * null
+	 * 
+	 * [idSousTypeProduit : 3 - sousTypeProduit : vêtement pour enfant - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
+	 * ***** liste des produits dans le sousProduitJPA : vêtement pour enfant
+	 * null
+	 * </pre>
+	 * </div>
+	 *
+	 * @param pTypeProduitJPA : TypeProduitJPA : Entity JPA à afficher
+	 * @return String
+	 */
+	private String afficherTypeProduitFormate(
+			final TypeProduitJPA pTypeProduitJPA) {
+		
+		/* retourne null si pTypeProduitJPA == null. */
+		if (pTypeProduitJPA == null) {
+			return null;
+		}
+		
+		final Long idTypeProduitJPA = pTypeProduitJPA.getIdTypeProduit();
+		final String typeProduitStringJPA 
+			= pTypeProduitJPA.getTypeProduit();
+		final List<? extends SousTypeProduitI> sousTypeProduitsJPA 
+			= pTypeProduitJPA.getSousTypeProduits();
+		
+		final StringBuilder stb = new StringBuilder();
+		
+		stb.append("******* TypeProduitJPA : ");
+		stb.append(typeProduitStringJPA);
+		stb.append(" *******");
+		stb.append(SAUT_DE_LIGNE);
+				
+		final String pres1 
+			= String.format("[idTypeProduit : %-1s - typeProduit : %-10s]"
+					, idTypeProduitJPA, typeProduitStringJPA);
+		stb.append(pres1);
+		stb.append(SAUT_DE_LIGNE);
+		stb.append(SAUT_DE_LIGNE);
+		
+		stb.append("******* sousTypeProduitsJPA du TypeProduitJPA : ");
+		stb.append(typeProduitStringJPA);
+		stb.append(SAUT_DE_LIGNE);
+		
+		if (sousTypeProduitsJPA == null) {
+			stb.append(NULL);
+		} else {
+			
+			for (final SousTypeProduitI 
+					sousTypeProduitJPA : sousTypeProduitsJPA) {
+				
+				final Long idSousTypeProduitJPA 
+					= sousTypeProduitJPA.getIdSousTypeProduit();
+				final String sousTypeProduitJPAString 
+					= sousTypeProduitJPA.getSousTypeProduit();
+				final TypeProduitJPA typeProduitJPAduSousTypeProduit 
+					= (TypeProduitJPA) sousTypeProduitJPA.getTypeProduit();
+				
+				final List<? extends ProduitI> produitsDansSousProduit 
+					= sousTypeProduitJPA.getProduits();
+				
+				Long idTypeProduitJPAduSousTypeProduit = null;
+				String typeProduitJPAduSousTypeProduitString = null;
+				
+				if (typeProduitJPAduSousTypeProduit != null) {
+					idTypeProduitJPAduSousTypeProduit 
+						= typeProduitJPAduSousTypeProduit.getIdTypeProduit();
+					typeProduitJPAduSousTypeProduitString 
+						= typeProduitJPAduSousTypeProduit.getTypeProduit();
+				}
+				
+				final String pres2 
+				= String
+				.format("[idSousTypeProduit : %-1s "
+						+ "- sousTypeProduit : %-20s "
+						+ "- [idTypeProduit du TypeProduit dans le SousTypeProduit : %-1s "
+						+ "- typeProduitString du TypeProduit dans le SousTypeProduit : %-13s]]"
+						, idSousTypeProduitJPA
+						, sousTypeProduitJPAString
+						, idTypeProduitJPAduSousTypeProduit
+						, typeProduitJPAduSousTypeProduitString);
+				
+				stb.append(pres2);
+				stb.append(SAUT_DE_LIGNE);
+				
+				stb.append("***** liste des produits dans le sousProduitJPA : ");
+				stb.append(sousTypeProduitJPAString);
+				stb.append(SAUT_DE_LIGNE);
+				if (produitsDansSousProduit == null) {
+					stb.append(NULL);
+					stb.append(SAUT_DE_LIGNE);
+				} else {
+					
+					for (final ProduitI produitJPA : produitsDansSousProduit) {
+						
+						final Long idProduitJPA = produitJPA.getIdProduit();
+						final String produitJPAString = produitJPA.getProduit();
+						final SousTypeProduitJPA sousTypeProduitJPAProduit 
+							= (SousTypeProduitJPA) produitJPA.getSousTypeProduit();
+						
+						String sousTypeProduitJPAProduitString = null;
+						
+						if (sousTypeProduitJPAProduit != null) {
+							sousTypeProduitJPAProduitString 
+								= sousTypeProduitJPAProduit.getSousTypeProduit();
+						}
+						
+						stb.append('\t');
+						
+						final String presProduit 
+						= String.format("[idProduit dans produits du SousTypeProduit : %-1s - "
+								+ "produit dans produits du SousTypeProduit : %-40s - "
+								+ "sousTypeProduit dans le produit : %-20s]"
+								, idProduitJPA
+								, produitJPAString
+								, sousTypeProduitJPAProduitString);
+						
+						stb.append(presProduit);
+						stb.append(SAUT_DE_LIGNE);						
+					}
+					
+				}
+				stb.append(SAUT_DE_LIGNE);
+			}
+			
+		}
+		
+		return stb.toString();
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>retourne une String formatée pour l'affichage 
+	 * d'un TypeProduit</p>
+	 * <ul>
+	 * <li>retourne null si pTypeProduit == null.</li>
+	 * <li>affiche le TypeProduit</li>
+	 * <li>affiche la liste des SousTypeProduit contenus 
+	 * dans le TypeProduit</li>
+	 * <li>affiche pour chaque SousTypeProduit la liste des Produit qu'il contient.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="text-decoration:underline;">Exemple d'affichage : </p>
+	 * <pre>******* TypeProduit : vêtement *******
+	 * [idTypeProduit : 1 - typeProduit : vêtement  ]
+	 * 
+	 * ******* sousTypeProduits du TypeProduit : vêtement
+	 * [idSousTypeProduit : 1 - sousTypeProduit : vêtement pour homme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
+	 * ***** liste des produits dans le sousProduitJPA : vêtement pour homme
+	 * [idProduit dans produits du SousTypeProduit : 1 - produit dans produits du SousTypeProduit : chemise à manches longues pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * [idProduit dans produits du SousTypeProduit : 2 - produit dans produits du SousTypeProduit : chemise à manches courtes pour homme     - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * [idProduit dans produits du SousTypeProduit : 3 - produit dans produits du SousTypeProduit : sweatshirt pour homme                    - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * [idProduit dans produits du SousTypeProduit : 4 - produit dans produits du SousTypeProduit : teeshirt pour homme                      - sousTypeProduit dans le produit : vêtement pour homme ]
+	 * 
+	 * [idSousTypeProduit : 2 - sousTypeProduit : vêtement pour femme  - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
+	 * ***** liste des produits dans le sousProduitJPA : vêtement pour femme
+	 * null
+	 * 
+	 * [idSousTypeProduit : 3 - sousTypeProduit : vêtement pour enfant - [idTypeProduit du TypeProduit dans le SousTypeProduit : 1 - typeProduitString du TypeProduit dans le SousTypeProduit : vêtement     ]]
+	 * ***** liste des produits dans le sousProduitJPA : vêtement pour enfant
+	 * null
+	 * </pre>
+	 * </div>
+	 *
+	 * @param pTypeProduit : TypeProduit : Objet métier à afficher
+	 * @return String
+	 */
+	private String afficherTypeProduitFormate(
+			final TypeProduitI pTypeProduit) {
+		
+		/* retourne null si pTypeProduit == null. */
+		if (pTypeProduit == null) {
+			return null;
+		}
+		
+		final Long idTypeProduit = pTypeProduit.getIdTypeProduit();
+		final String typeProduitString 
+			= pTypeProduit.getTypeProduit();
+		final List<SousTypeProduit> sousTypeProduits 
+			= (List<SousTypeProduit>) pTypeProduit.getSousTypeProduits();
+		
+		final StringBuilder stb = new StringBuilder();
+		
+		stb.append("******* TypeProduit : ");
+		stb.append(typeProduitString);
+		stb.append(" *******");
+		stb.append(SAUT_DE_LIGNE);
+				
+		final String pres1 
+			= String.format("[idTypeProduit : %-1s - typeProduit : %-10s]"
+					, idTypeProduit, typeProduitString);
+		stb.append(pres1);
+		stb.append(SAUT_DE_LIGNE);
+		stb.append(SAUT_DE_LIGNE);
+		
+		stb.append("******* sousTypeProduits du TypeProduit : ");
+		stb.append(typeProduitString);
+		stb.append(SAUT_DE_LIGNE);
+		
+		if (sousTypeProduits == null) {
+			stb.append(NULL);
+		} else {
+			
+			for (final SousTypeProduit 
+					sousTypeProduit : sousTypeProduits) {
+				
+				final Long idSousTypeProduit 
+					= sousTypeProduit.getIdSousTypeProduit();
+				final String sousTypeProduitString 
+					= sousTypeProduit.getSousTypeProduit();
+				final TypeProduit typeProduitduSousTypeProduit 
+					= (TypeProduit) sousTypeProduit.getTypeProduit();
+				
+				final List<ProduitI> produitsI = sousTypeProduit.getProduits();
+				
+				final List<Produit> produitsDansSousProduit 
+				= convertirListProduitEnListProduit(
+						sousTypeProduit.getProduits());
+				
+				Long idTypeProduitduSousTypeProduit = null;
+				String typeProduitduSousTypeProduitString = null;
+				
+				if (typeProduitduSousTypeProduit != null) {
+					idTypeProduitduSousTypeProduit 
+						= typeProduitduSousTypeProduit.getIdTypeProduit();
+					typeProduitduSousTypeProduitString 
+						= typeProduitduSousTypeProduit.getTypeProduit();
+				}
+				
+				final String pres2 
+				= String.format("[idSousTypeProduit : %-1s "
+						+ "- sousTypeProduit : %-20s - "
+						+ "[idTypeProduit du TypeProduit dans le SousTypeProduit : %-1s "
+						+ "- typeProduitString du TypeProduit dans le SousTypeProduit : %-13s]]"
+						, idSousTypeProduit
+						, sousTypeProduitString
+						, idTypeProduitduSousTypeProduit
+						, typeProduitduSousTypeProduitString);
+				
+				stb.append(pres2);
+				stb.append(SAUT_DE_LIGNE);
+				
+				stb.append("***** liste des produits dans le sousProduit : ");
+				stb.append(sousTypeProduitString);
+				stb.append(SAUT_DE_LIGNE);
+				if (produitsDansSousProduit == null) {
+					stb.append(NULL);
+					stb.append(SAUT_DE_LIGNE);
+				} else {
+					
+					for (final Produit produit : produitsDansSousProduit) {
+						
+						final Long idProduit = produit.getIdProduit();
+						final String produitString = produit.getProduit();
+						final SousTypeProduit sousTypeProduitProduit 
+							= (SousTypeProduit) produit.getSousTypeProduit();
+						
+						String sousTypeProduitProduitString = null;
+						
+						if (sousTypeProduitProduit != null) {
+							sousTypeProduitProduitString 
+								= sousTypeProduitProduit.getSousTypeProduit();
+						}
+						
+						stb.append('\t');
+						
+						final String presProduit 
+						= String.format("[idProduit dans produits du SousTypeProduit : %-1s - "
+								+ "produit dans produits du SousTypeProduit : %-40s - "
+								+ "sousTypeProduit dans le produit : %-20s]"
+								, idProduit
+								, produitString
+								, sousTypeProduitProduitString);
+						
+						stb.append(presProduit);
+						stb.append(SAUT_DE_LIGNE);						
+					}
+					
+				}
+				stb.append(SAUT_DE_LIGNE);
+			}
+			
+		}
+		
+		return stb.toString();
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>retourne une String formatée pour l'affichage 
+	 * d'un ProduitJPA</p>
+	 * <ul>
+	 * <li>retourne null si pTypeProduit == null.</li>
+	 * <li>affiche en 1ere ligne [idProduit - produit (String)]</li>
+	 * <li>affiche en 1ere ligne [idSousTypeProduit - 
+	 * typeProduit du SousTypeProduit - SousTypeProduit (String)]</li>
+	 * <li>affiche en 1ère ligne [idTypeProduit - typeProduit (String)]</li>
+	 * <li>affiche sur des lignes séparées chaque produit de 
+	 * la liste produits du sousTypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 * 
+	 * <div>
+	 * <p style="text-decoration:underline;">Exemple d'affichage : </p>
+	 * <pre>
+	 * idProduit : 2 - produit : chemise à manches courtes pour homme     - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme ] - [idTypeProduit : 1 - typeProduit : vêtement     ]
+	 * **** Liste des produits du sousTypeProduit : vêtement pour homme
+	 * 	[idProduit : 1 - produit : chemise à manches longues pour homme     - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
+	 * 	[idProduit : 2 - produit : chemise à manches courtes pour homme     - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
+	 * 	[idProduit : 3 - produit : sweatshirt pour homme                    - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
+	 * 	[idProduit : 4 - produit : teeshirt pour homme                      - [idSousTypeProduit : 1 - typeProduit du sousTypeProduit : vêtement      - sousTypeProduit : vêtement pour homme           ] - [idTypeProduit : 1 - typeProduit : vêtement     ]]
+	 * </pre>
+	 * </div>
+	 *
+	 * @param pProduit : ProduitJPA 
+	 * @return String
+	 */
+	private String afficherProduitFormate(final ProduitJPA pProduit) {
+	
+		/* retourne null si pTypeProduit == null. */
+		if (pProduit == null) {
+			return null;
+		}
+		
+		/* INSTANCIATION d'un StringBuilder. */
+		final StringBuilder stb = new StringBuilder();
+		
+		/* NIVEAU Produit. */
+		final Long idProduitProv = pProduit.getIdProduit();
+		final String produitString = pProduit.getProduit();
+		
+		/* NIVEAU SousTypeProduit. */
+		final SousTypeProduitJPA sousTypeProduitProv 
+			= (SousTypeProduitJPA) pProduit.getSousTypeProduit();
+		
+		Long idSousTypeProduitProv = null;
+		TypeProduitI typeProduit = null;
+		String typeProduitStringSTP = null;
+		String sousTypeProduitString = null;
+		
+		if (sousTypeProduitProv != null) {
+			
+			idSousTypeProduitProv 
+				= sousTypeProduitProv.getIdSousTypeProduit();
+			
+			typeProduit = sousTypeProduitProv.getTypeProduit();
+			
+			if (typeProduit != null) {
+				typeProduitStringSTP = typeProduit.getTypeProduit();
+			}
+			
+			sousTypeProduitString = sousTypeProduitProv.getSousTypeProduit();
+		}
+		
+		/* NIVEAU TypeProduit. */
+		Long idTypeProduit = null;
+		String typeProduitString = null;
+		
+		final TypeProduitI typeProduitProv = pProduit.getTypeProduit();
+		
+		if (typeProduitProv != null) {
+			idTypeProduit = typeProduitProv.getIdTypeProduit();
+			typeProduitString = typeProduitProv.getTypeProduit();
+		}
+				 		
+		final String pres 
+		= String.format(
+				"idProduit : %-1s - produit : %-40s "
+				+ FORMAT_IDSOUSTYPEPRODUIT
+				+ FORMAT_TYPEPRODUIT_STP
+				+ "- sousTypeProduit : %-20s] "
+				+ "- [idTypeProduit : %-1s - typeProduit : %-13s]"
+				, idProduitProv
+				, produitString
+				, idSousTypeProduitProv
+				, typeProduitStringSTP
+				, sousTypeProduitString
+				, idTypeProduit
+				, typeProduitString);
+	
+		stb.append(pres);
+		stb.append(SAUT_DE_LIGNE);
+		
+		/* NIVEAU produits du SousTypeProduit. */		
+		List<? extends ProduitI> produitsSTP = null;
+		
+		if (sousTypeProduitProv != null) {
+			
+			stb.append("**** Liste des produits du sousTypeProduit : ");
+			stb.append(sousTypeProduitProv.getSousTypeProduit());
+			stb.append(SAUT_DE_LIGNE);
+	
+			produitsSTP = sousTypeProduitProv.getProduits();
+			
+			if (produitsSTP == null) {
+				stb.append(NULL);
+				stb.append(SAUT_DE_LIGNE);
+			} else {
+				
+				for (final ProduitI produitProv : produitsSTP) {
+					
+					final Long idProduitSTP = produitProv.getIdProduit();
+					final String produitStringProv 
+						= produitProv.getProduit();
+					
+					/* NIVEAU SousTypeProduit du produit du sousTypeProduit. */
+					final SousTypeProduitJPA sousTypeProduitProvSTP 
+						= (SousTypeProduitJPA) produitProv.getSousTypeProduit();
+					
+					Long idSousTypeProduitProvSTP = null;
+					TypeProduitJPA typeProduitProvSTP = null;
+					String typeProduitStringSTPProv = null;
+					String sousTypeProduitStringSTP = null;
+					
+					if (sousTypeProduitProvSTP != null) {
+						
+						idSousTypeProduitProvSTP 
+							= sousTypeProduitProvSTP
+								.getIdSousTypeProduit();
+						
+						typeProduitProvSTP 
+							= (TypeProduitJPA) sousTypeProduitProvSTP.getTypeProduit();
+						
+						if (typeProduitProvSTP != null) {
+							typeProduitStringSTPProv 
+								= typeProduitProvSTP.getTypeProduit();
+						}
+						
+						sousTypeProduitStringSTP 
+							= sousTypeProduitProvSTP.getSousTypeProduit();
+					}
+	
+					/* NIVEAU TypeProduit du produit du sousTypeProduit. */
+					Long idTypeProduitSTP = null;
+					String typeProduitString1 = null;
+					
+					final TypeProduitI typeProduitProv1 
+						= pProduit.getTypeProduit();
+					
+					if (typeProduitProv1 != null) {
+						idTypeProduitSTP 
+							= typeProduitProv1.getIdTypeProduit();
+						typeProduitString1 
+							= typeProduitProv1.getTypeProduit();
+					}
+	
+					
+					stb.append('\t');
+					
+					final String pres2 
+						= String.format(
+								"[idProduit : %-1s "
+								+ "- produit : %-40s "
+								+ FORMAT_IDSOUSTYPEPRODUIT
+								+ FORMAT_TYPEPRODUIT_STP
+								+ "- sousTypeProduit : %-30s] "
+								+ "- [idTypeProduit : %-1s "
+								+ "- typeProduit : %-13s]]"
+								, idProduitSTP
+								, produitStringProv
+								, idSousTypeProduitProvSTP
+								, typeProduitStringSTPProv
+								, sousTypeProduitStringSTP
+								, idTypeProduitSTP
+								, typeProduitString1);
+					
+					stb.append(pres2);
+					stb.append(SAUT_DE_LIGNE);
+					
+				}
+			}
+			
+		}
+				
+		return stb.toString();
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>retourne une String formatée pour l'affichage 
+	 * d'un Produit</p>
+	 * <ul>
+	 * <li>retourne null si pTypeProduit == null.</li>
+	 * <li>affiche en 1ere ligne [idProduit - produit (String)]</li>
+	 * <li>affiche en 1ere ligne [idSousTypeProduit - 
+	 * typeProduit du SousTypeProduit - SousTypeProduit (String)]</li>
+	 * <li>affiche en 1ère ligne [idTypeProduit - typeProduit (String)]</li>
+	 * <li>affiche sur des lignes séparées chaque produit de 
+	 * la liste produits du sousTypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pProduit : Produit
+	 * @return String
+	 */
+	private String afficherProduitFormate(final Produit pProduit) {
+	
+		if (pProduit == null) {
+			return null;
+		}
+		
+		/* INSTANCIATION d'un StringBuilder. */
+		final StringBuilder stb = new StringBuilder();
+		
+		/* NIVEAU Produit. */
+		final Long idProduitProv = pProduit.getIdProduit();
+		final String produitString = pProduit.getProduit();
+		
+		/* NIVEAU SousTypeProduit. */
+		final SousTypeProduit sousTypeProduitProv 
+			= (SousTypeProduit) pProduit.getSousTypeProduit();
+		
+		Long idSousTypeProduitProv = null;
+		TypeProduit typeProduit = null;
+		String typeProduitStringSTP = null;
+		String sousTypeProduitString = null;
+		
+		if (sousTypeProduitProv != null) {
+			
+			idSousTypeProduitProv 
+				= sousTypeProduitProv.getIdSousTypeProduit();
+			
+			typeProduit = (TypeProduit) sousTypeProduitProv.getTypeProduit();
+			
+			if (typeProduit != null) {
+				typeProduitStringSTP = typeProduit.getTypeProduit();
+			}
+			
+			sousTypeProduitString = sousTypeProduitProv.getSousTypeProduit();
+		}
+		
+		/* NIVEAU TypeProduit. */
+		Long idTypeProduit = null;
+		String typeProduitString = null;
+		
+		final TypeProduit typeProduitProv = (TypeProduit) pProduit.getTypeProduit();
+		
+		if (typeProduitProv != null) {
+			idTypeProduit = typeProduitProv.getIdTypeProduit();
+			typeProduitString = typeProduitProv.getTypeProduit();
+		}
+		
+		final String pres 
+		= String.format(
+				"idProduit : %-1s - produit : %-40s "
+				+ FORMAT_IDSOUSTYPEPRODUIT
+				+ FORMAT_TYPEPRODUIT_STP
+				+ "- sousTypeProduit : %-20s] "
+				+ "- [idTypeProduit : %-1s - typeProduit : %-13s]"
+				, idProduitProv
+				, produitString
+				, idSousTypeProduitProv
+				, typeProduitStringSTP
+				, sousTypeProduitString
+				, idTypeProduit
+				, typeProduitString);
+		
+		stb.append(pres);
+		stb.append(SAUT_DE_LIGNE);
+		
+		/* NIVEAU produits du SousTypeProduit. */		
+		List<Produit> produitsSTP = null;
+		
+		if (sousTypeProduitProv != null) {
+			
+			stb.append("**** Liste des produits du sousTypeProduit : ");
+			stb.append(sousTypeProduitProv.getSousTypeProduit());
+			stb.append(SAUT_DE_LIGNE);
+	
+			produitsSTP 
+				= convertirListProduitEnListProduit(
+						sousTypeProduitProv.getProduits());
+			
+			if (produitsSTP == null) {
+				stb.append(NULL);
+				stb.append(SAUT_DE_LIGNE);
+			} else {
+				
+				for (final Produit produitProv : produitsSTP) {
+					
+					final Long idProduitSTP = produitProv.getIdProduit();
+					final String produitStringProv 
+						= produitProv.getProduit();
+					
+					/* NIVEAU SousTypeProduit du produit du sousTypeProduit. */
+					final SousTypeProduit sousTypeProduitProvSTP 
+						= (SousTypeProduit) produitProv.getSousTypeProduit();
+					
+					Long idSousTypeProduitProvSTP = null;
+					TypeProduit typeProduitProvSTP = null;
+					String typeProduitStringSTPProv = null;
+					String sousTypeProduitStringSTP = null;
+					
+					if (sousTypeProduitProvSTP != null) {
+						
+						idSousTypeProduitProvSTP 
+							= sousTypeProduitProvSTP.getIdSousTypeProduit();
+						
+						typeProduitProvSTP 
+							= (TypeProduit) sousTypeProduitProvSTP.getTypeProduit();
+						
+						if (typeProduitProvSTP != null) {
+							typeProduitStringSTPProv 
+								= typeProduitProvSTP.getTypeProduit();
+						}
+						
+						sousTypeProduitStringSTP 
+							= sousTypeProduitProvSTP.getSousTypeProduit();
+					}
+	
+					/* NIVEAU TypeProduit du produit du sousTypeProduit. */
+					Long idTypeProduitSTP = null;
+					String typeProduitString1 = null;
+					
+					final TypeProduit typeProduitProv1 
+						= (TypeProduit) pProduit.getTypeProduit();
+					
+					if (typeProduitProv1 != null) {
+						idTypeProduitSTP 
+							= typeProduitProv1.getIdTypeProduit();
+						typeProduitString1 
+							= typeProduitProv1.getTypeProduit();
+					}
+	
+					
+					stb.append('\t');
+					
+					final String pres2 
+						= String.format(
+								"[idProduit : %-1s "
+								+ "- produit : %-40s "
+								+ FORMAT_IDSOUSTYPEPRODUIT
+								+ FORMAT_TYPEPRODUIT_STP
+								+ "- sousTypeProduit : %-30s] "
+								+ "- [idTypeProduit : %-1s "
+								+ "- typeProduit : %-13s]]"
+								, idProduitSTP
+								, produitStringProv
+								, idSousTypeProduitProvSTP
+								, typeProduitStringSTPProv
+								, sousTypeProduitStringSTP
+								, idTypeProduitSTP
+								, typeProduitString1);
+					
+					stb.append(pres2);
+					stb.append(SAUT_DE_LIGNE);
+	
+				}
+			}
+			
+		}
+		
+		return stb.toString();
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>fournit une String formatée pour l'affichage à la console 
+	 * d'une List&lt;SousTypeProduitJPA&gt;</p>
+	 * </div>
+	 *
+	 * @param pList : List&lt;SousTypeProduitJPA&gt;
+	 * 
+	 * @return String
+	 */
+	private String afficherSousTypeProduitsJPA(final List<? extends SousTypeProduitI> pList) {
+		
+		if (pList == null) {
+			return null;
+		}
+		
+		final StringBuilder stb = new StringBuilder();
+		
+		for (final SousTypeProduitI sousTypeProduit : pList) {
+						
+			final Long idSousTypeProduit 
+				= sousTypeProduit.getIdSousTypeProduit();
+			final String sousTypeProduitString 
+				= sousTypeProduit.getSousTypeProduit();
+			final String typeProduit 
+				= sousTypeProduit.getTypeProduit().getTypeProduit();
+			
+			final String presentation 
+				= String.format(
+						"idSousTypeProduit : %-1s - sousTypeProduit : %-30s - typeProduit : %-20s"
+						, idSousTypeProduit, sousTypeProduitString, typeProduit);
+			
+			stb.append(presentation);
+			stb.append(SAUT_DE_LIGNE);
+		}
+		
+		return stb.toString();	
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>fournit une String formatée pour l'affichage à la console 
+	 * d'une List&lt;SousTypeProduit&gt;</p>
+	 * </div>
+	 *
+	 * @param pList : List&lt;SousTypeProduit&gt;
+	 * 
+	 * @return String
+	 */
+	private String afficherSousTypeProduits(final List<SousTypeProduit> pList) {
+		
+		if (pList == null) {
+			return null;
+		}
+		
+		final StringBuilder stb = new StringBuilder();
+		
+		for (final SousTypeProduit sousTypeProduit : pList) {
+						
+			final Long idSousTypeProduit 
+				= sousTypeProduit.getIdSousTypeProduit();
+			final String sousTypeProduitString 
+				= sousTypeProduit.getSousTypeProduit();
+			final String typeProduit 
+				= sousTypeProduit.getTypeProduit().getTypeProduit();
+			
+			final String presentation 
+				= String.format(
+						"idSousTypeProduit : %-1s - sousTypeProduit : %-30s - typeProduit : %-20s"
+						, idSousTypeProduit, sousTypeProduitString, typeProduit);
+			
+			stb.append(presentation);
+			stb.append(SAUT_DE_LIGNE);
+		}
+		
+		return stb.toString();
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>fournit une String pour l'affichage à la console 
+	 * d'une List&lt;ProduitJPA&gt;</p>
+	 * </div>
+	 *
+	 * @param pList : List&lt;ProduitJPA&gt;
+	 * 
+	 * @return String
+	 */
+	private String afficherProduitsJPA(final List<ProduitJPA> pList) {
+		
+		if (pList == null) {
+			return null;
+		}
+		
+		final StringBuilder stb = new StringBuilder();
+		
+		for (final ProduitJPA produit : pList) {
+			
+			if (produit != null) {
+				
+				/* idProduit. */
+				final Long idProduit = produit.getIdProduit();
+				
+				/* produit. */
+				final String produitString = produit.getProduit();
+				
+				/* SOUSTYPEPRODUIT.*/
+				final SousTypeProduitJPA sousTypeProduit 
+					= (SousTypeProduitJPA) produit.getSousTypeProduit();
+				
+				/* sousTypeProduit. */
+				Long idSousProduit = null;
+				String sousTypeProduitString = null;
+				TypeProduitJPA typeProduitduSousTypeProduit = null;
+				String typeProduitduSousTypeProduitString = null;
+				
+				if (sousTypeProduit != null) {
+					idSousProduit 
+						= sousTypeProduit.getIdSousTypeProduit();
+					sousTypeProduitString 
+						= sousTypeProduit.getSousTypeProduit();
+					typeProduitduSousTypeProduit 
+						= (TypeProduitJPA) sousTypeProduit.getTypeProduit();
+					if (typeProduitduSousTypeProduit != null) {
+						typeProduitduSousTypeProduitString 
+							= typeProduitduSousTypeProduit.getTypeProduit();
+					}
+				}
+				
+				/* TYPEPRODUIT*/
+				final TypeProduitI typeProduit = produit.getTypeProduit();
+				
+				Long idTypeProduit = null;
+				String typeProduitString = null;
+				
+				if (typeProduit != null) {
+					idTypeProduit = typeProduit.getIdTypeProduit();
+					typeProduitString = typeProduit.getTypeProduit();
+				}
+							
+				final String presentation 
+					= String.format(
+							"idProduit : "
+							+ FORMAT_IDPRODUIT
+							+ " - produit : "
+							+ "%-40s"
+							+ " - [idSousProduit : "
+							+ FORMAT_IDSTP
+							+ " - sousTypeProduit : "
+							+ "%-20s"
+							+ " - typeProduit du sousTypeProduit : "
+							+ "%-12s"
+							+ "] - [idTypeProduit du Produit : "
+							+ FORMAT_IDTP
+							+ " - typeProduit du Produit : "
+							+ "%-12s]"
+							, idProduit
+							, produitString
+							, idSousProduit
+							, sousTypeProduitString
+							, typeProduitduSousTypeProduitString
+							, idTypeProduit
+							, typeProduitString);
+				
+				stb.append(presentation);
+				stb.append(SAUT_DE_LIGNE);
+				
+			}
+			
+		}
+		
+		return stb.toString();
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>fournit une String pour l'affichage à la console 
+	 * d'une List&lt;Produit&gt;</p>
+	 * </div>
+	 *
+	 * @param pList : List&lt;Produit&gt;
+	 * 
+	 * @return String
+	 */
+	private String afficherProduits(final List<Produit> pList) {
+		
+		if (pList == null) {
+			return null;
+		}
+		
+		final StringBuilder stb = new StringBuilder();
+		
+		for (final Produit produit : pList) {
+			
+			if (produit != null) {
+				
+				/* idProduit. */
+				final Long idProduit = produit.getIdProduit();
+				
+				/* produit. */
+				final String produitString = produit.getProduit();
+				
+				/* SOUSTYPEPRODUIT.*/
+				final SousTypeProduit sousTypeProduit 
+					= (SousTypeProduit) produit.getSousTypeProduit();
+				
+				/* sousTypeProduit. */
+				Long idSousProduit = null;
+				String sousTypeProduitString = null;
+				TypeProduit typeProduitduSousTypeProduit = null;
+				String typeProduitduSousTypeProduitString = null;
+				
+				if (sousTypeProduit != null) {
+					idSousProduit 
+						= sousTypeProduit.getIdSousTypeProduit();
+					sousTypeProduitString 
+						= sousTypeProduit.getSousTypeProduit();
+					typeProduitduSousTypeProduit 
+						= (TypeProduit) sousTypeProduit.getTypeProduit();
+					if (typeProduitduSousTypeProduit != null) {
+						typeProduitduSousTypeProduitString 
+							= typeProduitduSousTypeProduit.getTypeProduit();
+					}
+				}
+				
+				/* TYPEPRODUIT*/
+				final TypeProduit typeProduit = (TypeProduit) produit.getTypeProduit();
+				
+				Long idTypeProduit = null;
+				String typeProduitString = null;
+				
+				if (typeProduit != null) {
+					idTypeProduit = typeProduit.getIdTypeProduit();
+					typeProduitString = typeProduit.getTypeProduit();
+				}
+							
+				final String presentation 
+					= String.format(
+							"idProduit : "
+							+ FORMAT_IDPRODUIT
+							+ " - produit : "
+							+ "%-40s"
+							+ " - [idSousProduit : "
+							+ FORMAT_IDSTP
+							+ " - sousTypeProduit : "
+							+ "%-20s"
+							+ " - typeProduit du sousTypeProduit : "
+							+ "%-12s"
+							+ "] - [idTypeProduit du Produit : "
+							+ FORMAT_IDTP
+							+ " - typeProduit du Produit : "
+							+ "%-12s]"
+							, idProduit
+							, produitString
+							, idSousProduit
+							, sousTypeProduitString
+							, typeProduitduSousTypeProduitString
+							, idTypeProduit
+							, typeProduitString);
+				
+				stb.append(presentation);
+				stb.append(SAUT_DE_LIGNE);
+				
+			}
+			
+		}
+		
+		return stb.toString();
+		
+	} //___________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>peuple les Entities</p>
+	 * </div>
+	 */
+	private void creerScenario() {
+		
+		/* création de TypeProduit. */
+		this.typeProduitVetementJPA = new TypeProduitJPA(1L, VETEMENT);
+		this.typeProduitPecheJPA = new TypeProduitJPA(2L, "pêche");
+		
+		/* création de SousTypeProduit. */
+		this.sousTypeProduitVetementHommeJPA 
+			= new SousTypeProduitJPA(1L
+					, VETEMENT_POUR_HOMME
+					, this.typeProduitVetementJPA);
+		this.sousTypeProduitVetementFemmeJPA 
+			= new SousTypeProduitJPA(2L
+				, "vêtement pour femme"
+				, this.typeProduitVetementJPA);
+		this.sousTypeProduitVetementEnfantJPA 
+			= new SousTypeProduitJPA(3L
+				, "vêtement pour enfant"
+				, this.typeProduitVetementJPA);
+		
+		this.sousTypeProduitPecheCanneJPA 
+			= new SousTypeProduitJPA(4L
+					, "canne"
+					, this.typeProduitPecheJPA);
+		this.sousTypeProduitPecheCuillerJPA 
+			= new SousTypeProduitJPA(5L
+					, "cuiller"
+					, this.typeProduitPecheJPA);
+		
+		/* création de Produit. */
+		this.produitChemiseManchesLonguesPourHomme 
+			= new ProduitJPA(
+					1L
+					, "chemise à manches longues pour homme"
+					, this.sousTypeProduitVetementHommeJPA);
+		this.produitChemiseManchesCourtesPourHomme 
+			= new ProduitJPA(
+					2L
+					, "chemise à manches courtes pour homme"
+					, this.sousTypeProduitVetementHommeJPA);
+		this.produitSweatshirtPourHomme 
+			= new ProduitJPA(
+					3L
+					, "sweatshirt pour homme"
+					, this.sousTypeProduitVetementHommeJPA);
+		this.produitTeeshirtPourHomme 
+			= new ProduitJPA(
+					4L
+					, "teeshirt pour homme"
+					, this.sousTypeProduitVetementHommeJPA);
+		
+	} //___________________________________________________________________
 
 
 
