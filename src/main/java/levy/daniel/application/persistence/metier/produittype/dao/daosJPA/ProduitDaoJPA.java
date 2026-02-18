@@ -33,7 +33,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * {@code ProduitGatewayJPAService} pour :
  * </p>
  * <ul>
- * <li>créer / modifier une Entity via {@link #save(Object)}</li>
+ * <li>créer / modifier une Entity via {@link #save(ProduitJPA)}</li>
  * <li>lister toutes les Entities via {@link #findAll()}</li>
  * <li>lister toutes les Entities par pages via 
  * {@link #findAll(Pageable)}</li>
@@ -43,9 +43,9 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * via {@link #findByProduitContainingIgnoreCase(String)}</li>
  * <li>rechercher par parent via 
  * {@link #findAllBySousTypeProduit(SousTypeProduitJPA)}</li>
- * <li>rechercher par ID via {@link #findById(Object)}</li>
+ * <li>rechercher par ID via {@link #findById(Long)}</li>
  * <li>compter via {@link #count()}</li>
- * <li>supprimer via {@link #delete(Object)}</li>
+ * <li>supprimer via {@link #delete(ProduitJPA)}</li>
  * </ul>
  * </div>
  *
@@ -58,8 +58,8 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 public interface ProduitDaoJPA extends 
 						JpaRepository<ProduitJPA, Long> {
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -69,7 +69,7 @@ public interface ProduitDaoJPA extends
 	 * </p>
 	 * <ul>
 	 * <li>Retourne une <span style="font-weight:bold;">
-	 * liste vide</span> (pas {@code null)} 
+	 * liste vide</span> (pas {@code null}) 
 	 * si la recherche ne trouve pas.</li>
 	 * <li>ATTENTION : le Modèle Conceptuel de Données MCD
 	 * et les Entities indiquent que
@@ -92,8 +92,8 @@ public interface ProduitDaoJPA extends
 	 */
 	List<ProduitJPA> findByProduitIgnoreCase(String pLibelle);
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -133,7 +133,7 @@ public interface ProduitDaoJPA extends
 	List<ProduitJPA> findAll();
 
 
-	
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -145,14 +145,16 @@ public interface ProduitDaoJPA extends
 	 * </ul>
 	 * </div>
 	 *
+	 * @param pPageable : Pageable :
+	 * objet de pagination.
 	 * @return Page&lt;ProduitJPA&gt; : 
 	 * liste complète (éventuellement vide) paginée.
 	 */
 	@Override
 	Page<ProduitJPA> findAll(Pageable pPageable);
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -168,5 +170,7 @@ public interface ProduitDaoJPA extends
 	 */
 	List<ProduitJPA> findAllBySousTypeProduit(
 			SousTypeProduitJPA pSousTypeProduit);
+
+
 
 }
