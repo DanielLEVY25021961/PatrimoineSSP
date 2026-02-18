@@ -420,8 +420,8 @@ public class TypeProduitJPATest {
 		assertNotEquals(objetTypeNonNull, objetTypeNull, "symétrie typeProduit null / non null : ");
 		
 	} //___________________________________________________________________
-
-
+	
+	
 	
 	/**
 	 * <div>
