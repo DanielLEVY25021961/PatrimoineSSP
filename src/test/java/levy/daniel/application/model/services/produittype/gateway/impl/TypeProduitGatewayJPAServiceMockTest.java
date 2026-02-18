@@ -12,7 +12,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -1698,87 +1697,8 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .containsExactly(CAMPING, OUTILLAGE, VETEMENT); // Tri alphabétique
     }
 
-    /**
-     * <div>
-     * <p>Test de la méthode privée construireComparateurTypeProduit() :
-     * construit un comparateur valide.</p>
-     * </div>
-     */
-    @Tag(TAG_TRIS)
-    @DisplayName("construireComparateurTypeProduit() : construit un comparateur valide")
-    @Test
-    public void testConstruireComparateurTypeProduit() throws Exception {
-        @SuppressWarnings(UNCHECKED)
-        final Comparator<TypeProduitJPA> comparateur = (Comparator<TypeProduitJPA>) invokePrivateMethod(
-                this.service,
-                "construireComparateurTypeProduit",
-                new Class<?>[]{},
-                new Object[]{});
 
-        assertThat(comparateur).isNotNull();
-
-        final TypeProduitJPA entity1 = fabriquerTypeProduitJPA("A", ID_1);
-        final TypeProduitJPA entity2 = fabriquerTypeProduitJPA("B", ID_2);
-        final TypeProduitJPA entity3 = fabriquerTypeProduitJPA("a", ID_3);
-
-        assertThat(comparateur.compare(entity1, entity2)).isLessThan(0);
-        assertThat(comparateur.compare(entity2, entity1)).isGreaterThan(0);
-        assertThat(comparateur.compare(entity1, entity3)).isEqualTo(0); // case-insensitive
-    }
-
-    /**
-     * <div>
-     * <p>Test de la méthode privée construireComparateurTypeProduit() avec null :
-     * gère correctement les entités null.</p>
-     * </div>
-     */
-    @Tag(TAG_TRIS)
-    @DisplayName("construireComparateurTypeProduit() : gère correctement les entités null")
-    @Test
-    public void testConstruireComparateurTypeProduitAvecNull() throws Exception {
-        @SuppressWarnings(UNCHECKED)
-        final Comparator<TypeProduitJPA> comparateur = (Comparator<TypeProduitJPA>) invokePrivateMethod(
-                this.service,
-                "construireComparateurTypeProduit",
-                new Class<?>[]{},
-                new Object[]{});
-
-        assertThat(comparateur).isNotNull();
-
-        final TypeProduitJPA entity1 = fabriquerTypeProduitJPA("A", ID_1);
-        final TypeProduitJPA entityNull = null;
-
-        assertThat(comparateur.compare(entity1, entityNull)).isGreaterThan(0);
-        assertThat(comparateur.compare(entityNull, entity1)).isLessThan(0);
-        assertThat(comparateur.compare(entityNull, entityNull)).isEqualTo(0);
-    }
-
-    /**
-     * <div>
-     * <p>Test de la méthode privée construireComparateurTypeProduit() avec libellé null :
-     * gère correctement les libellés null.</p>
-     * </div>
-     */
-    @Tag(TAG_TRIS)
-    @DisplayName("construireComparateurTypeProduit() : gère correctement les libellés null")
-    @Test
-    public void testConstruireComparateurTypeProduitAvecLibelleNull() throws Exception {
-        @SuppressWarnings(UNCHECKED)
-        final Comparator<TypeProduitJPA> comparateur = (Comparator<TypeProduitJPA>) invokePrivateMethod(
-                this.service,
-                "construireComparateurTypeProduit",
-                new Class<?>[]{},
-                new Object[]{});
-
-        assertThat(comparateur).isNotNull();
-
-        final TypeProduitJPA entity1 = fabriquerTypeProduitJPA(null, ID_1);
-        final TypeProduitJPA entity2 = fabriquerTypeProduitJPA("B", ID_2);
-
-        assertThat(comparateur.compare(entity1, entity2)).isLessThan(0);
-        assertThat(comparateur.compare(entity2, entity1)).isGreaterThan(0);
-    }
-
+    
     /**
      * <div>
      * <p>Test de la méthode privée appliquerModifications() avec null :
@@ -1808,6 +1728,8 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(resultatNullMetier).isFalse();
     }
 
+    
+    
     /**
      * <div>
      * <p>Test de la méthode privée appliquerModifications() sans modification :

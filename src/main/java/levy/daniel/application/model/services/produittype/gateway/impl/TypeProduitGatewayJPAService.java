@@ -844,6 +844,15 @@ public class TypeProduitGatewayJPAService
 	        return new ArrayList<TypeProduit>();
 	    }
 
+	    /*
+	     * - Ignore les objets métier dont le libellé est null/blank
+	     *   (inexploitables fonctionnellement).
+	     * - Dédoublonne sur un libellé normalisé 
+	     * (trim + lowerCase(Locale.ROOT))
+	     *   et trie ensuite sur la même base normalisée 
+	     *   (cohérence dédoublonnage/tri).
+	     */
+
 	    /* 1. Filtre les nulls,
 	     * convertit en objets métier et dédoublonne en un seul parcours. */
 	    final List<TypeProduit> resultat = new ArrayList<TypeProduit>();
@@ -858,11 +867,21 @@ public class TypeProduitGatewayJPAService
 
 	            if (objetMetier != null) {
 
+	                final String libelleBrut = objetMetier.getTypeProduit();
+
+	                /* Ignore les libellés inexploitables (null/blank). */
+	                if (libelleBrut == null || libelleBrut.isBlank()) {
+	                    continue;
+	                }
+
 	                final String libelleNormalise
-	                    = (objetMetier.getTypeProduit() != null)
-	                    ? objetMetier.getTypeProduit().trim()
-	                            .toLowerCase(Locale.ROOT)
-	                    : "";
+	                    = libelleBrut.trim().toLowerCase(Locale.ROOT);
+
+	                /* Ignore les libellés ne contenant que des espaces. */
+	                if (libelleNormalise.isEmpty()) {
+	                    continue;
+	                }
+
 	                if (!libellesDejaVus.contains(libelleNormalise)) {
 	                    libellesDejaVus.add(libelleNormalise);
 	                    resultat.add(objetMetier);
@@ -871,22 +890,24 @@ public class TypeProduitGatewayJPAService
 	        }
 	    }
 
-	    /*
-	     * 2. Trie la liste finale en cohérence avec le dédoublonnage :
-	     * tri sur un libellé normalisé (trim + lowerCase(Locale.ROOT)),
-	     * et non sur le libellé brut 
-	     * (qui pourrait contenir des espaces parasites).
-	     */
+	    /* 2. Trie la liste finale par libellé normalisé 
+	     * (case-insensitive + trim). */
 	    Collections.sort(
 	        resultat,
 	        Comparator.comparing(
 	            (TypeProduit tp) -> {
+
 	                if (tp == null) {
 	                    return "";
 	                }
-	                final String s = tp.getTypeProduit();
-	                return (s != null) 
-	                		? s.trim().toLowerCase(Locale.ROOT) : "";
+
+	                final String lib = tp.getTypeProduit();
+
+	                if (lib == null) {
+	                    return "";
+	                }
+
+	                return lib.trim().toLowerCase(Locale.ROOT);
 	            },
 	            String::compareTo
 	        )
