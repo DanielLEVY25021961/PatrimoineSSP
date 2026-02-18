@@ -876,7 +876,7 @@ public class TypeProduitGatewayJPAService
 	        resultat,
 	        Comparator.comparing(
 	            TypeProduit::getTypeProduit,
-	            String.CASE_INSENSITIVE_ORDER
+	            Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)
 	        )
 	    );
 
@@ -884,39 +884,7 @@ public class TypeProduitGatewayJPAService
 	}
 	
 
-	
-	/**
-	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Construit un comparateur d'Entities TypeProduitJPA
-	 * basé uniquement sur le libellé (case-insensitive).
-	 * </p>
-	 * <p>
-	 * Au sens métier, deux TypeProduit ne peuvent pas avoir le même libellé.
-	 * </p>
-	 * <ul>
-	 * <li>Trie uniquement par libellé (sans tenir compte de la casse).</li>
-	 * <li>Gère les cas null pour les libellés.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @return Comparator&lt;TypeProduitJPA&gt; : comparateur métier.
-	 */
-	private static Comparator<TypeProduitJPA> 
-				construireComparateurTypeProduit() {
 		
-	    return Comparator.comparing(
-	        (TypeProduitJPA entity) ->
-	            (entity != null && entity.getTypeProduit() != null)
-	                ? entity.getTypeProduit().trim()
-	                		.toLowerCase(Locale.getDefault())
-	                : "",
-	        String::compareTo
-	    );
-	}
-	
-
-	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
