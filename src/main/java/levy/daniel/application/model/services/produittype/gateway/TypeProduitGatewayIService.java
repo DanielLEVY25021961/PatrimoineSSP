@@ -652,9 +652,11 @@ public interface TypeProduitGatewayIService {
 	 * <li>Fabriquer une liste réponse d'Entities sans null.</li>
 	 * <li>Convertir chaque Entity de la liste réponse 
 	 * en objet métier.</li>
-	 * <li>Garantir l'unicité dans la liste réponse
-	 * au moyen d'un {@code Set} de libellés déjà vus
-	 * (unicité stricte sur le libellé, sans tenir compte de la casse).</li>
+	 * <li>Garantir l'unicité dans la liste réponse 
+	 * au sens métier (unicité sur le libellé sans tenir compte 
+	 * de la casse), au moyen d'un ensemble de libellés 
+	 * normalisés (trim + lowerCase) puis tri final 
+	 * de la liste résultat.</li>
 	 * <li>Trier la liste finale par libellé 
 	 * (sans tenir compte de la casse).</li>
 	 * <li>Retourner la liste d'objets métier.</li>
