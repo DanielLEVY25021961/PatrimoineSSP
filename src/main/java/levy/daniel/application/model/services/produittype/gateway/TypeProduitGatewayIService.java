@@ -353,10 +353,10 @@ public interface TypeProduitGatewayIService {
 	 * @return TypeProduit :
 	 * le Type de Produit sauvegardé dans le stockage.
 	 * @throws ExceptionAppliParamNull si {@code pObject == null}.
-	 * @throws ExceptionAppliLibelleBlank 
+	 * @throws ExceptionAppliLibelleBlank
 	 * si le libellé de {@code pObject} est blank.
 	 * @throws ExceptionTechniqueGateway
-	 * si le stockage retourne {@code null} ou 
+	 * si le stockage retourne {@code null} ou
 	 * si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
@@ -379,7 +379,8 @@ public interface TypeProduitGatewayIService {
 	 * <li>Fabriquer une liste réponse d'Entities sans null.</li>
 	 * <li>Trier la liste réponse.</li>
 	 * <li>Garantir l'unicité dans la liste réponse
-	 * au moyen d'un {@code LinkedHashSet}.</li>
+	 * (au sens métier : unicité sur le libellé, sans tenir compte
+	 * de la casse).</li>
 	 * <li>Convertir chaque Entity de la liste réponse en objet métier.</li>
 	 * <li>Retourner la liste d'objets métier.</li>
 	 * <li>Retourner toujours une {@link List} non {@code null}.</li>
@@ -409,17 +410,17 @@ public interface TypeProduitGatewayIService {
 	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
 	 * <ul>
 	 * <li>Aucune information utilisateur n'est produite à ce niveau.</li>
-	 * <li>La collection retournée 
+	 * <li>La collection retournée
 	 * correspond à l'état réellement persisté.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @return List&lt;TypeProduit&gt; :
 	 * Liste des TypeProduit dans le stockage. jamais null.
-	 * @throws ExceptionTechniqueGateway 
-	 * si le stockage retourne {@code null} 
+	 * @throws ExceptionTechniqueGateway
+	 * si le stockage retourne {@code null}
 	 * ou si une erreur technique survient.
-	 * @throws Exception toute autre exception 
+	 * @throws Exception toute autre exception
 	 * levée par l'implémentation.
 	 */
 	List<TypeProduit> rechercherTous() throws Exception;
@@ -462,7 +463,7 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si {@code DAO.findAll(pageable)} retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
-	 * <li>Si {@code DAO.findAll(pageable).getContent()} 
+	 * <li>Si {@code DAO.findAll(pageable).getContent()}
 	 * retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
@@ -486,11 +487,11 @@ public interface TypeProduitGatewayIService {
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pRequetePage : {@link RequetePage} : 
+	 * @param pRequetePage : {@link RequetePage} :
 	 * requête pagination.
 	 * @return {@link ResultatPage}&lt;TypeProduit&gt; :
 	 * page d'objets métier. Jamais {@code null}.
-	 * @throws ExceptionTechniqueGateway  si {@code DAO.findAll(pageable)} 
+	 * @throws ExceptionTechniqueGateway  si {@code DAO.findAll(pageable)}
 	 * ou son contenu retourne {@code null},
 	 * ou si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
@@ -550,15 +551,15 @@ public interface TypeProduitGatewayIService {
 	 * objet métier à retrouver dans le stockage.
 	 * @return TypeProduit :
 	 * objet persistant correspondant, ou null si non trouvé.
-	 * @throws ExceptionAppliParamNull 
+	 * @throws ExceptionAppliParamNull
 	 * si {@code pObject == null}.
-	 * @throws ExceptionAppliLibelleBlank 
+	 * @throws ExceptionAppliLibelleBlank
 	 * si le libellé de {@code pObject} est blank.
-	 * @throws ExceptionTechniqueGateway 
+	 * @throws ExceptionTechniqueGateway
 	 * si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
-	TypeProduit findByObjetMetier(TypeProduit pObject) 
+	TypeProduit findByObjetMetier(TypeProduit pObject)
 			throws Exception;
 
 
@@ -566,7 +567,7 @@ public interface TypeProduitGatewayIService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche un 
+	 * Recherche un
 	 * {@link TypeProduit}
 	 * via son libellé exact (sans tenir compte de la casse).</p>
 	 * <ul>
@@ -585,7 +586,7 @@ public interface TypeProduitGatewayIService {
 	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
 	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Déléguer la recherche de l'Entity par libellé exact 
+	 * <li>Déléguer la recherche de l'Entity par libellé exact
 	 * (sans tenir compte de la casse) au DAO.</li>
 	 * <li>Retourner {@code null} si aucun objet n'est trouvé.</li>
 	 * <li>Convertir l'Entity trouvée en objet métier.</li>
@@ -621,15 +622,15 @@ public interface TypeProduitGatewayIService {
 	 * @param pLibelle : String : libellé exact à rechercher.
 	 * @return TypeProduit :
 	 * l'objet métier correspondant au libellé, ou {@code null}.
-	 * @throws ExceptionAppliLibelleBlank 
+	 * @throws ExceptionAppliLibelleBlank
 	 * si {@code pLibelle} est blank (y compris {@code null}).
-	 * @throws ExceptionTechniqueGateway 
+	 * @throws ExceptionTechniqueGateway
 	 * si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	TypeProduit findByLibelle(String pLibelle) throws Exception;
 
-	
+
 
 	/**
 	 * <div>
@@ -664,7 +665,7 @@ public interface TypeProduitGatewayIService {
 	 * <li>Retourne toujours une {@link List} non {@code null}.</li>
 	 * <li>Si {@code pContenu == null} :
 	 * jette une {@link ExceptionAppliParamNull}
-	 * avec un message 
+	 * avec un message
 	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL}.</li>
 	 * <li>Si {@code pContenu} est Blank mais pas {@code null} :
 	 * retourne tous les enregistrements.</li>
@@ -695,17 +696,17 @@ public interface TypeProduitGatewayIService {
 	 * @return List&lt;TypeProduit&gt; :
 	 * Liste des objets métier dont le libellé contient pContenu.
 	 * Jamais {@code null}.
-	 * @throws ExceptionAppliParamNull 
+	 * @throws ExceptionAppliParamNull
 	 * si {@code pContenu == null}.
-	 * @throws ExceptionTechniqueGateway 
-	 * si le stockage retourne {@code null} 
+	 * @throws ExceptionTechniqueGateway
+	 * si le stockage retourne {@code null}
 	 * ou si une erreur technique survient.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	List<TypeProduit> findByLibelleRapide(String pContenu) throws Exception;
 
 
-	
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">Retourne un {@link TypeProduit}
@@ -754,15 +755,16 @@ public interface TypeProduitGatewayIService {
 	 * @param pId : Long : ID dans le stockage.
 	 * @return TypeProduit :
 	 * l'objet métier qui possède pId, ou {@code null}.
-	 * 
-	 * @throws ExceptionAppliParamNull 
+	 *
+	 * @throws ExceptionAppliParamNull
 	 * si {@code pId == null}.
-	 * @throws ExceptionTechniqueGateway 
-	 * si le DAO retourne null ou 
+	 * @throws ExceptionTechniqueGateway
+	 * si le DAO retourne null ou
 	 * si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	TypeProduit findById(Long pId) throws Exception;
+
 
 
 	/**
@@ -781,7 +783,7 @@ public interface TypeProduitGatewayIService {
 	 * <li>Rechercher l'Entity à modifier par ID via le DAO.</li>
 	 * <li>Retourner {@code null} si l'objet n'existe pas en stockage.</li>
 	 * <li>Détecter les modifications (libellé).</li>
-	 * <li>Si aucune modification : 
+	 * <li>Si aucune modification :
 	 * retourner l'objet persistant inchangé.</li>
 	 * <li>Appliquer les modifications sur l'Entity persistée.</li>
 	 * <li>Si modification : persister la mise à jour via le DAO.</li>
@@ -835,22 +837,22 @@ public interface TypeProduitGatewayIService {
 	 * @return TypeProduit :
 	 * objet de même ID que pObject, modifié ou inchangé,
 	 * ou {@code null} si absent du stockage.
-	 * 
-	 * @throws ExceptionAppliParamNull 
+	 *
+	 * @throws ExceptionAppliParamNull
 	 * si {@code pObject == null}.
-	 * @throws ExceptionAppliLibelleBlank 
+	 * @throws ExceptionAppliLibelleBlank
 	 * si le libellé de {@code pObject} est blank.
-	 * @throws ExceptionAppliParamNonPersistent 
+	 * @throws ExceptionAppliParamNonPersistent
 	 * si l'ID de {@code pObject} est {@code null}.
-	 * @throws ExceptionTechniqueGateway 
-	 * si le DAO retourne null ou 
+	 * @throws ExceptionTechniqueGateway
+	 * si le DAO retourne null ou
 	 * si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	TypeProduit update(TypeProduit pObject) throws Exception;
 
 
-	
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">Détruit un {@link TypeProduit}
@@ -900,16 +902,17 @@ public interface TypeProduitGatewayIService {
 	 *
 	 * @param pObject : TypeProduit :
 	 * Objet métier à détruire dans le stockage.
-	 * 
+	 *
 	 * @throws ExceptionAppliParamNull si {@code pObject == null}.
-	 * @throws ExceptionAppliParamNonPersistent 
+	 * @throws ExceptionAppliParamNonPersistent
 	 * si l'ID de {@code pObject} est {@code null}.
-	 * @throws ExceptionTechniqueGateway 
-	 * si le DAO retourne null ou 
+	 * @throws ExceptionTechniqueGateway
+	 * si le DAO retourne null ou
 	 * si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	void delete(TypeProduit pObject) throws Exception;
+
 
 
 	/**
@@ -951,8 +954,8 @@ public interface TypeProduitGatewayIService {
 	 * </div>
 	 *
 	 * @return long : nombre d'enregistrements.
-	 * 
-	 * @throws ExceptionTechniqueGateway 
+	 *
+	 * @throws ExceptionTechniqueGateway
 	 * si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
