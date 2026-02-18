@@ -426,8 +426,14 @@ public class TypeProduitGatewayJPAService
 
 			/* retourne l'objet métier. */
 			return reponse;
-			
+
 		} catch (final Exception e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			if (e instanceof ExceptionTechniqueGateway) {
+				throw (ExceptionTechniqueGateway) e;
+			}
 
 			final String message
 				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
