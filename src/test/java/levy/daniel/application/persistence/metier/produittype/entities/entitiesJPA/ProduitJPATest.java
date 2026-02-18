@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -70,6 +71,11 @@ public class ProduitJPATest {
 	 * "null" 
 	 */
 	public static final String NULL = "null";
+	
+	/**
+	 * "clone"
+	 */
+	public static final String CLONE = "clone";
 	
 	/* ------------------------------------------------------------------ */
 
@@ -689,6 +695,127 @@ public class ProduitJPATest {
 				"Symétrie : equals() doit retourner false : ");
 
 	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la stratégie <b>id-first</b> de <b>equals(Object pObj)</b> :</p>
+	 * <li>garantit que <b>2 IDs techniques non nuls et différents</b> rendent equals() <b>false</b>, même si les champs métier sont identiques (même libellé + même parent).</li>
+	 * <li>garantit la <b>symétrie</b> : x.equals(y) == y.equals(x) == false.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testEqualsIdFirstIdsDifferentsMemeMetier() : id-first => IDs différents => equals false même si métier identique")
+	@Tag("equals")
+	@Test
+	public final void testEqualsIdFirstIdsDifferentsMemeMetier() {
+		
+		// ARRANGE - GIVEN
+		
+		final TypeProduitJPA typeProduit = new TypeProduitJPA(1L, VETEMENT, null);
+		final SousTypeProduitJPA sousTypeProduit = new SousTypeProduitJPA(10L, VETEMENT_HOMME, typeProduit, null);
+		
+		final ProduitJPA produitId1 = new ProduitJPA(1L, CHEMISE_MANCHES_LONGUES, sousTypeProduit);
+		final ProduitJPA produitId2 = new ProduitJPA(2L, CHEMISE_MANCHES_LONGUES, sousTypeProduit);
+		
+		// ACT - WHEN
+		
+		// ASSERT - THEN
+		
+		/* garantit que les deux objets ne sont pas la même instance. */
+		assertNotSame(
+				produitId1
+				, produitId2
+				, "produitId1 et produitId2 ne sont pas la même instance : ");
+		
+		/* id-first : IDs non nuls et différents => equals() doit retourner false. */
+		assertNotEquals(
+				produitId1
+				, produitId2
+				, "id-first : IDs différents => equals false même si métier identique : ");
+		
+		/* symétrie : y.equals(x) doit aussi retourner false. */
+		assertNotEquals(
+				produitId2
+				, produitId1
+				, "symétrie id-first : IDs différents => equals false : ");
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>deepClone(CloneContext ctx)</b> :</p>
+	 * <li>garantit que le <b>CloneContext</b> joue son rôle de cache (même ctx ⇒ même clone retourné).</li>
+	 * <li>garantit la reconstruction cohérente parent ↔ enfant clonés via un ctx partagé.</li>
+	 * <li>garantit que les clones ne sont pas les mêmes instances que les originaux.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testDeepCloneAvecCloneContext() : vérifie cache CloneContext et reconstruction parent↔enfant")
+	@Tag(CLONE)
+	@Test
+	public final void testDeepCloneAvecCloneContext() {
+		
+		// ARRANGE - GIVEN
+		
+		final TypeProduitJPA typeProduit = new TypeProduitJPA(1L, VETEMENT, null);
+		final SousTypeProduitJPA sousTypeProduit = new SousTypeProduitJPA(10L, VETEMENT_HOMME, typeProduit, null);
+		final ProduitJPA produit = new ProduitJPA(100L, CHEMISE_MANCHES_LONGUES, sousTypeProduit);
+		
+		/* Préconditions : cohérence du graphe original. */
+		assertSame(
+				sousTypeProduit
+				, produit.getSousTypeProduit()
+				, "précondition : le produit référence le sous-type original : ");
+		assertTrue(
+				sousTypeProduit.getProduits().contains(produit)
+				, "précondition : le sous-type original contient le produit original : ");
+		
+		final levy.daniel.application.model.metier.produittype.CloneContext ctx =
+				new levy.daniel.application.model.metier.produittype.CloneContext();
+		
+		// ACT - WHEN
+		
+		final ProduitJPA clone1 = produit.deepClone(ctx);
+		final ProduitJPA clone2 = produit.deepClone(ctx);
+		
+		// ASSERT - THEN
+		
+		/* garantit que le CloneContext joue son rôle de cache. */
+		assertSame(
+				clone1
+				, clone2
+				, "deepClone(ctx) doit retourner la même instance clone (cache) : ");
+		
+		/* garantit que le clone n'est pas la même instance que l'original. */
+		assertNotSame(
+				produit
+				, clone1
+				, "le clone ne doit pas être la même instance que l'original : ");
+		
+		/* garantit la reconstruction cohérente parent ↔ enfant clonés. */
+		final SousTypeProduitI sousTypeCloneI = clone1.getSousTypeProduit();
+		
+		assertNotNull(
+				sousTypeCloneI
+				, "le clone doit référencer un sous-type cloné : ");
+		assertNotSame(
+				sousTypeProduit
+				, sousTypeCloneI
+				, "le sous-type cloné ne doit pas être la même instance que l'original : ");
+		
+		assertTrue(
+				sousTypeCloneI.getProduits().contains(clone1)
+				, "le sous-type cloné doit contenir le produit cloné : ");
+		
+	} //___________________________________________________________________
 
 
 	
@@ -1072,7 +1199,7 @@ public class ProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testClone() : vérifie le respect du contrat Java pour clone()")
-	@Tag("clone")
+	@Tag(CLONE)
 	@Test
 	public final void testClone() throws CloneNotSupportedException {
 				
@@ -1171,6 +1298,69 @@ public class ProduitJPATest {
 		assertFalse(objet1.getIdProduit() == objet1Clone.getIdProduit(), "la modification de l'ID dans le clone ne doit pas modifier l'ID dans l'objet cloné : ");
 		assertFalse(objet1.getProduit().equals(objet1Clone.getProduit()), "la modification du ProduitI dans le clone ne doit pas modifier le ProduitI dans l'objet cloné : ");
 		assertFalse(objet1.getSousTypeProduit().equals(objet1Clone.getSousTypeProduit()), "la modification du SousTypeProduitI dans le clone ne doit pas modifier le SousTypeProduitI dans l'objet cloné : ");
+		
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la méthode <b>cloneWithoutParent()</b> :</p>
+	 * <li>garantit que le clone est un clone profond <b>sans parent</b> (sousTypeProduit == null).</li>
+	 * <li>garantit que la validité est recalculée (sans parent ⇒ valide == false).</li>
+	 * <li>garantit que le clone n'est pas la même instance que l'original.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCloneWithoutParent() : vérifie clone sans parent et validité recalculée")
+	@Tag(CLONE)
+	@Test
+	public final void testCloneWithoutParent() {
+		
+		// ARRANGE - GIVEN
+		
+		final TypeProduitJPA typeProduit = new TypeProduitJPA(1L, VETEMENT, null);
+		final SousTypeProduitJPA sousTypeProduit = new SousTypeProduitJPA(10L, VETEMENT_HOMME, typeProduit, null);
+		final ProduitJPA produit = new ProduitJPA(100L, CHEMISE_MANCHES_LONGUES, sousTypeProduit);
+		
+		/* Précondition : l'original est valide (libellé non null + parent non null). */
+		assertTrue(
+				produit.isValide()
+				, "précondition : le produit original doit être valide : ");
+		
+		// ACT - WHEN
+		
+		final ProduitJPA clone = produit.cloneWithoutParent();
+		
+		// ASSERT - THEN
+		
+		/* garantit que le clone n'est pas la même instance que l'original. */
+		assertNotSame(
+				produit
+				, clone
+				, "cloneWithoutParent() ne doit pas retourner la même instance : ");
+		
+		/* garantit le clonage des propriétés simples. */
+		assertEquals(
+				produit.getIdProduit()
+				, clone.getIdProduit()
+				, "le clone doit reprendre l'ID : ");
+		assertEquals(
+				produit.getProduit()
+				, clone.getProduit()
+				, "le clone doit reprendre le libellé produit : ");
+		
+		/* garantit l'absence de parent. */
+		assertNull(
+				clone.getSousTypeProduit()
+				, "cloneWithoutParent() doit retourner un clone sans parent : ");
+		
+		/* garantit la validité recalculée (sans parent => invalide). */
+		assertFalse(
+				clone.isValide()
+				, "sans parent, le clone doit être invalide : ");
 		
 	} //___________________________________________________________________
 	
@@ -1770,7 +1960,7 @@ public class ProduitJPATest {
 	 */
 	@SuppressWarnings(UNUSED)
 	@DisplayName("testCloneAvecSousTypeEtTypeProduit() : vérifie le clonage profond avec sous-type et type de produit associés")
-	@Tag("clone")
+	@Tag(CLONE)
 	@Test
 	public final void testCloneAvecSousTypeEtTypeProduit() throws CloneNotSupportedException {
 	    // **********************************
