@@ -883,11 +883,14 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si l'ID est {@code null} :
 	 * jette une {@link ExceptionAppliParamNonPersistent}
 	 * avec un message {@link #MESSAGE_DELETE_KO_ID_NULL}.</li>
+	 * <li>L'inexistence en stockage est constatée
+	 * exclusivement par la recherche préalable via
+	 * {@code DAO.findById(id)}.</li>
+	 * <li>Si {@code DAO.findById(id)} retourne vide :
+	 * ne fait rien. Pas d'Exception.</li>
 	 * <li>Si {@code DAO} retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
-	 * <li>Si l'objet n'existe pas en stockage :
-	 * ne fait rien. Pas d'Exception.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
