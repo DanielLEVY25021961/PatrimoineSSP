@@ -33,7 +33,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * {@code SousTypeProduitGatewayJPAService} pour :
  * </p>
  * <ul>
- * <li>créer / modifier via {@link #save(Object)}</li>
+ * <li>créer / modifier via {@link #save(SousTypeProduitJPA)}</li>
  * <li>lister toutes les Entities via {@link #findAll()}</li>
  * <li>lister toutes les Entities par pages via 
  * {@link #findAll(Pageable)}</li>
@@ -43,9 +43,9 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * via {@link #findBySousTypeProduitContainingIgnoreCase(String)}</li>
  * <li>rechercher par parent via 
  * {@link #findAllByTypeProduit(TypeProduitJPA)}</li>
- * <li>rechercher par ID via {@link #findById(Object)}</li>
+ * <li>rechercher par ID via {@link #findById(Long)}</li>
  * <li>compter via {@link #count()}</li>
- * <li>supprimer via {@link #delete(Object)}</li>
+ * <li>supprimer via {@link #delete(SousTypeProduitJPA)}</li>
  * </ul>
  * </div>
  *
@@ -54,10 +54,11 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * @since 18 janvier 2026
  */
 @Repository("SousTypeProduitDaoJPA")
-public interface SousTypeProduitDaoJPA extends JpaRepository<SousTypeProduitJPA, Long> {
+public interface SousTypeProduitDaoJPA 
+		extends JpaRepository<SousTypeProduitJPA, Long> {
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -67,7 +68,7 @@ public interface SousTypeProduitDaoJPA extends JpaRepository<SousTypeProduitJPA,
 	 * </p>
 	 * <ul>
 	 * <li>Retourne une <span style="font-weight:bold;">
-	 * liste vide</span> (pas {@code null)} 
+	 * liste vide</span> (pas {@code null}) 
 	 * si la recherche ne trouve pas.</li>
 	 * <li>ATTENTION : le Modèle Conceptuel de Données MCD
 	 * et les Entities indiquent que
@@ -92,8 +93,8 @@ public interface SousTypeProduitDaoJPA extends JpaRepository<SousTypeProduitJPA,
 	List<SousTypeProduitJPA> findBySousTypeProduitIgnoreCase(
 			String pLibelle);
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -132,8 +133,8 @@ public interface SousTypeProduitDaoJPA extends JpaRepository<SousTypeProduitJPA,
 	@Override
 	List<SousTypeProduitJPA> findAll();
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -146,14 +147,16 @@ public interface SousTypeProduitDaoJPA extends JpaRepository<SousTypeProduitJPA,
 	 * </ul>
 	 * </div>
 	 *
+	 * @param pPageable : Pageable :
+	 * objet de pagination.
 	 * @return Page&lt;SousTypeProduitJPA&gt; : 
 	 * liste complète (éventuellement vide) paginée.
 	 */
 	@Override
 	Page<SousTypeProduitJPA> findAll(Pageable pPageable);
 
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -169,5 +172,7 @@ public interface SousTypeProduitDaoJPA extends JpaRepository<SousTypeProduitJPA,
 	 */
 	List<SousTypeProduitJPA> findAllByTypeProduit(
 			TypeProduitJPA pTypeProduit);
+
+
 
 }
