@@ -131,8 +131,8 @@ public class TypeProduitGatewayJPAService
 		this.typeProduitDaoJPA = pTypeProduitDaoJPA;
 	}
 
-	
-	
+
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -161,7 +161,7 @@ public class TypeProduitGatewayJPAService
 		}
 
 		try {
-			
+
 			/* convertit l'objet métier à stocker en Entity JPA. */
 			final TypeProduitJPA entity
 				= ConvertisseurMetierToJPA.typeProduitMETIERToJPA(pObject);
@@ -192,7 +192,7 @@ public class TypeProduitGatewayJPAService
 			/* Préserve le message contractuel
 			 * (messages techniques déjà construits). */
 			throw e;
-			
+
 		} catch (final Exception e) {
 
 			final String message
@@ -241,9 +241,9 @@ public class TypeProduitGatewayJPAService
 
 	        /* Utilise la méthode dédiée pour 
 	         * filtrer, trier, dédoublonner et convertir. */
-	        final List<TypeProduit> reponse 
+	        final List<TypeProduit> reponse
 	        	= this.filtrerTrierDedoublonner(entities);
-	        
+
 	        /* retourne la reponse. */
 	        return reponse;
 
@@ -255,19 +255,19 @@ public class TypeProduitGatewayJPAService
 
 	    } catch (final Exception e) {
 
-	        final String message 
+	        final String message
 	        	= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
 
 	        /* jette une ExceptionTechniqueGateway avec un
 	         * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
 	         * et propage l'Exception technique cause. */
 	        throw new ExceptionTechniqueGateway(message, e);
-	        
+
 	    }
 	}
-	
 
-	
+
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -546,7 +546,7 @@ public class TypeProduitGatewayJPAService
 			/* délègue au composant technique (DAO) la recherche. */
 			final Optional<TypeProduitJPA> optEntity
 				= this.typeProduitDaoJPA.findById(pId);
-			
+
 			/* Si le DAO répond null :
 			 * jette une ExceptionTechniqueGateway
 			 * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE. */
@@ -567,7 +567,7 @@ public class TypeProduitGatewayJPAService
 
 			/* retourne l'objet métier trouvé.*/
 			return reponse;
-			
+
 		} catch (final ExceptionTechniqueGateway e) {
 
 			/* Préserve le message contractuel
@@ -639,7 +639,7 @@ public class TypeProduitGatewayJPAService
 			 * à modifier par ID via le DAO. */
 			final Optional<TypeProduitJPA> optEntity
 				= this.typeProduitDaoJPA.findById(id);
-			
+
 			/* Si le DAO répond null :
 			 * jette une ExceptionTechniqueGateway
 			 * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE. */
@@ -741,7 +741,7 @@ public class TypeProduitGatewayJPAService
 			/* Recherche préalable de l'Entity persistée par ID. */
 			final Optional<TypeProduitJPA> optEntity
 				= this.typeProduitDaoJPA.findById(id);
-			
+
 			/* Si le DAO répond null :
 			 * jette une ExceptionTechniqueGateway
 			 * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE. */
@@ -758,13 +758,13 @@ public class TypeProduitGatewayJPAService
 
 			/* détruit l'Entity JPA persistée dans le stockage. */
 			this.typeProduitDaoJPA.delete(optEntity.get());
-			
+
 		} catch (final ExceptionTechniqueGateway e) {
 
 			/* Préserve le message contractuel
 			 * (messages techniques déjà construits). */
 			throw e;
-			
+
 		} catch (final Exception e) {
 
 			final String message
@@ -813,17 +813,18 @@ public class TypeProduitGatewayJPAService
 	 * et convertit en objets métier.
 	 * </p>
 	 * <p>
-	 * Au sens métier, deux TypeProduit ne peuvent
-	 * pas avoir le même libellé.
+	 * Au sens métier, deux TypeProduit ne peuvent pas avoir le même libellé.
 	 * </p>
+	 * <p style="font-weight:bold;">STRATEGIE :</p>
 	 * <ul>
 	 * <li>Si pListe == null : retourne une liste vide.</li>
 	 * <li>Si pListe.isEmpty() : retourne une liste vide.</li>
 	 * <li>Filtre les nulls.</li>
-	 * <li>Trie la liste par libellé (case-insensitive).</li>
-	 * <li>Dédoublonne strictement sur le libellé (case-insensitive).</li>
 	 * <li>Convertit chaque Entity en objet métier.</li>
-	 * <li>Retourne la réponse (jamais {@code null}).</li>
+	 * <li>Dédoublonne strictement sur un libellé normalisé
+	 * (trim + lowerCase(Locale.ROOT)).</li>
+	 * <li>Trie la liste finale (case-insensitive).</li>
+	 * <li>Retourne une liste jamais {@code null}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -844,15 +845,6 @@ public class TypeProduitGatewayJPAService
 	        return new ArrayList<TypeProduit>();
 	    }
 
-	    /*
-	     * - Ignore les objets métier dont le libellé est null/blank
-	     *   (inexploitables fonctionnellement).
-	     * - Dédoublonne sur un libellé normalisé 
-	     * (trim + lowerCase(Locale.ROOT))
-	     *   et trie ensuite sur la même base normalisée 
-	     *   (cohérence dédoublonnage/tri).
-	     */
-
 	    /* 1. Filtre les nulls,
 	     * convertit en objets métier et dédoublonne en un seul parcours. */
 	    final List<TypeProduit> resultat = new ArrayList<TypeProduit>();
@@ -867,21 +859,11 @@ public class TypeProduitGatewayJPAService
 
 	            if (objetMetier != null) {
 
-	                final String libelleBrut = objetMetier.getTypeProduit();
-
-	                /* Ignore les libellés inexploitables (null/blank). */
-	                if (libelleBrut == null || libelleBrut.isBlank()) {
-	                    continue;
-	                }
-
 	                final String libelleNormalise
-	                    = libelleBrut.trim().toLowerCase(Locale.ROOT);
-
-	                /* Ignore les libellés ne contenant que des espaces. */
-	                if (libelleNormalise.isEmpty()) {
-	                    continue;
-	                }
-
+	                    = (objetMetier.getTypeProduit() != null)
+	                    ? objetMetier.getTypeProduit().trim()
+	                            .toLowerCase(Locale.ROOT)
+	                    : "";
 	                if (!libellesDejaVus.contains(libelleNormalise)) {
 	                    libellesDejaVus.add(libelleNormalise);
 	                    resultat.add(objetMetier);
@@ -890,68 +872,55 @@ public class TypeProduitGatewayJPAService
 	        }
 	    }
 
-	    /* 2. Trie la liste finale par libellé normalisé 
-	     * (case-insensitive + trim). */
+	    /* 2. Trie la liste finale par libellé (case-insensitive). */
 	    Collections.sort(
 	        resultat,
 	        Comparator.comparing(
-	            (TypeProduit tp) -> {
-
-	                if (tp == null) {
-	                    return "";
-	                }
-
-	                final String lib = tp.getTypeProduit();
-
-	                if (lib == null) {
-	                    return "";
-	                }
-
-	                return lib.trim().toLowerCase(Locale.ROOT);
-	            },
-	            String::compareTo
+	            TypeProduit::getTypeProduit,
+	            String.CASE_INSENSITIVE_ORDER
 	        )
 	    );
 
 	    return resultat;
 	}
-	
 
-		
+
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Applique les modifications sur l'Entity persistée 
-	 * et retourne true si des modifications 
-	 * ont réellement été appliquées.</p>
+	 * Applique les modifications sur l'Entity persistée
+	 * et retourne true si des modifications
+	 * ont réellement été appliquées.
+	 * </p>
 	 * </div>
 	 *
-	 * @param pPersistant : TypeProduitJPA : 
+	 * @param pPersistant : TypeProduitJPA :
 	 * Entity persistante à modifier.
-	 * @param pObject : TypeProduit : 
+	 * @param pObject : TypeProduit :
 	 * objet métier portant des modifications.
 	 * @return boolean : true si des modifications ont été appliquées.
 	 */
 	private static boolean appliquerModifications(
 	        final TypeProduitJPA pPersistant,
 	        final TypeProduit pObject) {
-	
+
 	    /* Si l'objet persistant à modifier ou l'objet
 	     * portant les modifications est null : retourne false. */
 	    if (pPersistant == null || pObject == null) {
 	        return false;
 	    }
-	
+
 	    final String nouveauLibelle = pObject.getTypeProduit();
 	    final String ancienLibelle = pPersistant.getTypeProduit();
-	
+
 	    /* modifie les libellés si les libellés
 	     * actuels et futurs sont différents. */
 	    if (!safeEquals(ancienLibelle, nouveauLibelle)) {
 	        pPersistant.setTypeProduit(nouveauLibelle);
 	        return true;
 	    }
-	
+
 	    return false;
 	}
 
@@ -966,61 +935,42 @@ public class TypeProduitGatewayJPAService
 	 *
 	 * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
 	 * <ul>
-	 *   <li>Gère les cas où {@code pRequetePage} est {@code null}
-	 *   en utilisant une requête par défaut.</li>
-	 *   <li>Convertit les spécifications de tri ({@link TriSpec})
-	 *   en un objet {@link Sort} Spring.</li>
-	 *   <li>Filtre les spécifications de tri invalides
-	 *   (null, propriété vide ou blank).</li>
-	 *   <li>Retourne un {@link Pageable} configuré avec :
-	 *     <ul>
-	 *       <li>le numéro de page ({@code pageNumber})</li>
-	 *       <li>la taille de la page ({@code pageSize})</li>
-	 *       <li>les tris valides (si présents)</li>
-	 *     </ul>
-	 *   </li>
-	 *   <li>Si aucune spécification de tri n'est valide,
-	 *   retourne un {@link Pageable} non trié.</li>
+	 * <li>Gère le cas {@code pRequetePage == null}
+	 * en utilisant une requête par défaut.</li>
+	 * <li>Convertit les spécifications de tri ({@link TriSpec})
+	 * en un {@link Sort} Spring.</li>
+	 * <li>Ignore les spécifications de tri invalides
+	 * (null, propriété vide ou blank).</li>
+	 * <li>Retourne un {@link Pageable} configuré
+	 * (pageNumber, pageSize, sort).</li>
 	 * </ul>
 	 *
 	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
 	 * <ul>
-	 *   <li>Si {@code pRequetePage == null} :
-	 *   utilise une nouvelle instance de {@link RequetePage} par défaut.</li>
-	 *   <li>Si {@code pRequetePage.getTris() == null} ou vide :
-	 *   retourne un {@link Pageable} non trié.</li>
-	 *   <li>Si une spécification de tri est invalide
-	 *   (null, propriété null/blank) : l'ignore.</li>
-	 *   <li>Retourne toujours un objet {@link Pageable} valide
-	 *   (jamais {@code null}).</li>
+	 * <li>Retourne toujours un {@link Pageable} valide
+	 * (jamais {@code null}).</li>
+	 * <li>Si aucun tri valide n'est trouvé :
+	 * retourne un {@link Pageable} non trié.</li>
 	 * </ul>
 	 *
 	 * <p style="font-weight:bold;">GARANTIES :</p>
 	 * <ul>
-	 *   <li>L'objet retourné est toujours compatible avec Spring Data.</li>
-	 *   <li>Aucune exception n'est levée en cas de paramètres invalides
-	 *   (comportement silencieux).</li>
-	 * </ul>
-	 *
-	 * <p style="font-weight:bold;">EXEMPLES D'UTILISATION :</p>
-	 * <ul>
-	 *   <li>Si {@code pRequetePage} est {@code null} :
-	 *   retourne un {@link Pageable} avec les paramètres par défaut.</li>
-	 *   <li>Si {@code pRequetePage.getTris()} est vide :
-	 *   retourne un {@link Pageable} non trié.</li>
-	 *   <li>Si {@code pRequetePage.getTris()} contient des spécifications invalides :
-	 *   les ignore et construit le {@link Pageable} avec les spécifications valides.</li>
+	 * <li>Compatible Spring Data.</li>
+	 * <li>Comportement silencieux en cas de tris invalides
+	 * (pas d'Exception).</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pRequetePage : {@link RequetePage} - Requête de pagination métier à convertir.
-	 *        Peut être {@code null} (auquel cas une requête par défaut est utilisée).
-	 * @return {@link Pageable} - Objet Spring Data configuré pour la pagination et le tri.
-	 *         Jamais {@code null}.
+	 * @param pRequetePage : {@link RequetePage}
+	 * Requête de pagination métier à convertir.
+	 * Peut être {@code null} (requête par défaut).
+	 * @return {@link Pageable}
+	 * Objet Spring Data configuré pour la pagination et le tri.
+	 * Jamais {@code null}.
 	 */
 	private Pageable convertirRequetePageEnPageable(
 	        final RequetePage pRequetePage) {
-	
+
 	    /* Utilise une requête par défaut si pRequetePage est null.
 	     * Cela évite les NullPointerException et 
 	     * garantit un comportement cohérent. */
@@ -1028,7 +978,7 @@ public class TypeProduitGatewayJPAService
 	        ? pRequetePage : new RequetePage();
 	    final int pageNumber = requete.getPageNumber();
 	    final int pageSize = requete.getPageSize();
-	
+
 	    /* Convertit les spécifications de tri en un objet Sort Spring.
 	     * 1. Vérifie si la liste des tris est non-null et non-vide.
 	     * 2. Pour chaque TriSpec valide (non-null, propriété non-null/non-blank) :
@@ -1075,30 +1025,23 @@ public class TypeProduitGatewayJPAService
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold">
+	 * <p style="font-weight:bold;">
 	 * Détermine si un libellé (ou tout texte fonctionnel)
-	 * est inexploitable du point de vue métier.</p>
+	 * est inexploitable du point de vue métier.
+	 * </p>
 	 * </div>
 	 *
 	 * <div>
-	 * <p><b>Sens métier :</b></p>
+	 * <p style="font-weight:bold;">SENS METIER :</p>
 	 * <ul>
 	 * <li>Retourne {@code true} si {@code pString} est {@code null} :
-	 * absence de valeur fournie (libellé non renseigné).</li>
+	 * absence de valeur fournie.</li>
 	 * <li>Retourne {@code true} si {@code pString}
-	 * ne contient que des caractères
-	 * d'espacement (blancs) : libellé « vide » et donc non significatif
-	 * pour l'identification
-	 * ou la recherche d'un objet métier.</li>
+	 * ne contient que des caractères blancs
+	 * (Java 11+ {@link String#isBlank()}).</li>
 	 * <li>Retourne {@code false} dès que {@code pString}
-	 * contient au moins un caractère
-	 * non blanc : valeur considérée comme renseignée et exploitable.</li>
+	 * contient au moins un caractère non blanc.</li>
 	 * </ul>
-	 * </div>
-	 *
-	 * <div>
-	 * <p><b>Remarque technique :</b> utilise {@link String#isBlank()}
-	 * (Java 11+).</p>
 	 * </div>
 	 *
 	 * @param pString : String
@@ -1117,6 +1060,11 @@ public class TypeProduitGatewayJPAService
 	 * Fournit une représentation textuelle sûre d'un objet
 	 * sans jamais retourner {@code null}.
 	 * </p>
+	 * <ul>
+	 * <li>Si {@code p == null} : retourne une chaîne vide.</li>
+	 * <li>Sinon : retourne {@code p.toString()} si non {@code null},
+	 * sinon une chaîne vide.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @param p : Object
@@ -1137,7 +1085,13 @@ public class TypeProduitGatewayJPAService
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Compare deux objets de manière sûre.</p>
+	 * Compare deux objets de manière sûre.
+	 * </p>
+	 * <ul>
+	 * <li>Si {@code p1 == p2} : retourne {@code true}.</li>
+	 * <li>Si l'un des deux est {@code null} : retourne {@code false}.</li>
+	 * <li>Sinon : délègue à {@link Object#equals(Object)}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @param p1 : Object
@@ -1156,5 +1110,5 @@ public class TypeProduitGatewayJPAService
 
 		return p1.equals(p2);
 	}
-	
+
 }
