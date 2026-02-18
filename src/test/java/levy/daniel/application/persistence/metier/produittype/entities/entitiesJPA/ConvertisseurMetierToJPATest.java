@@ -84,6 +84,11 @@ public class ConvertisseurMetierToJPATest {
      * "null"
      */
     public static final String NULL = "null";
+    
+    /**
+     * "MetierToJPA"
+     */
+    public static final String METIERTOJPA = "MetierToJPA";
 
     /**
      * "- typeProduit du sousTypeProduit : %-13s "
@@ -249,7 +254,7 @@ public class ConvertisseurMetierToJPATest {
      */
     @SuppressWarnings(UNUSED)
     @DisplayName("testTypeProduitMETIERToJPANull() : vérifie le comportement de la méthode typeProduitMETIERToJPA(null)")
-    @Tag("MetierToJPA")
+    @Tag(METIERTOJPA)
     @Test
     public final void testTypeProduitMETIERToJPANull() {
         final boolean affichage = false;
@@ -286,7 +291,7 @@ public class ConvertisseurMetierToJPATest {
      */
     @SuppressWarnings(UNUSED)
     @DisplayName("testTypeProduitMETIERToJPA() : vérifie le comportement général de la méthode typeProduitMETIERToJPA(TypeProduit pTypeProduit)")
-    @Tag("MetierToJPA")
+    @Tag(METIERTOJPA)
     @Test
     public final void testTypeProduitMETIERToJPA() {
         final boolean affichage = false;
@@ -389,7 +394,7 @@ public class ConvertisseurMetierToJPATest {
      */
     @SuppressWarnings(UNUSED)
     @DisplayName("testSousTypeProduitMETIERToJPA() : vérifie le comportement général de la méthode sousTypeProduitMETIERToJPA(SousTypeProduit pSousTypeProduit)")
-    @Tag("MetierToJPA")
+    @Tag(METIERTOJPA)
     @Test
     public final void testSousTypeProduitMETIERToJPA() {
         final boolean affichage = false;
@@ -1672,6 +1677,204 @@ public class ConvertisseurMetierToJPATest {
             assertEquals(reference.getTypeProduit(), results[i].getTypeProduit(), "Les noms doivent être identiques");
         }
     } //___________________________________________________________________
+    
+    
+    
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste <b>requireMetier(...)</b> (garde-fou d'implémentation) :</p>
+	 * <li>garantit que <b>o == null</b> déclenche une <b>IllegalStateException</b>.</li>
+	 * <li>garantit que <b>o</b> n'est pas instance de la classe attendue déclenche une <b>IllegalStateException</b> avec le préfixe <b>IMPLEMENTATION_NON_METIER</b>.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testRequireMetier() : vérifie le garde-fou requireMetier(null / mauvaise instance)")
+	@Tag(METIERTOJPA)
+	@Test
+	public final void testRequireMetier() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ConvertisseurMetierToJPATest - méthode testRequireMetier() ********** ");
+			System.out.println("CE TEST VERIFIE le garde-fou requireMetier(null / mauvaise instance) via reflection.");
+			System.out.println();
+		}
+
+		// ARRANGE - GIVEN
+		final String contexte = "Test.requireMetier(contexte)";
+
+		/* Récupération de la méthode privée requireMetier(...) via reflection. */
+		final java.lang.reflect.Method requireMetierMethod;
+		try {
+			requireMetierMethod = ConvertisseurMetierToJPA.class.getDeclaredMethod(
+					"requireMetier",
+					Object.class,
+					Class.class,
+					String.class);
+			requireMetierMethod.setAccessible(true); // NOPMD by danyl on 18/02/2026 11:00
+		} catch (final Exception e) {
+			fail("Impossible de récupérer requireMetier(...) via reflection : " + e.getMessage());
+			return;
+		}
+
+		// ACT - WHEN - ASSERT - THEN
+
+		/* Cas o == null -> IllegalStateException ("objet null"). */
+		try {
+			requireMetierMethod.invoke(null, null, TypeProduit.class, contexte);
+			fail("requireMetier(null, ...) devait lever IllegalStateException : ");
+		} catch (final Exception e) {
+			final Throwable cause = e.getCause();
+			assertNotNull(cause, "La cause de l'exception doit être non nulle : ");
+			assertTrue(cause instanceof IllegalStateException, "La cause doit être IllegalStateException : ");
+			assertThat(cause.getMessage()).contains("objet null");
+			assertThat(cause.getMessage()).contains(contexte);
+		}
+
+		/* Cas mauvaise instance -> IllegalStateException (IMPLEMENTATION_NON_METIER...). */
+		try {
+			requireMetierMethod.invoke(null, new Object(), TypeProduit.class, contexte);
+			fail("requireMetier(mauvaise instance, ...) devait lever IllegalStateException : ");
+		} catch (final Exception e) {
+			final Throwable cause = e.getCause();
+			assertNotNull(cause, "La cause de l'exception doit être non nulle : ");
+			assertTrue(cause instanceof IllegalStateException, "La cause doit être IllegalStateException : ");
+			assertThat(cause.getMessage()).contains(ConvertisseurMetierToJPA.IMPLEMENTATION_NON_METIER);
+			assertThat(cause.getMessage()).contains("TypeProduit");
+			assertThat(cause.getMessage()).contains(contexte);
+		}
+
+	} //___________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste le <b>cache partagé</b> entre appels publics :</p>
+	 * <li>garantit que deux appels successifs à <b>produitMETIERToJPA(même instance métier)</b> retournent la <b>même instance</b> (cache/identity).</li>
+	 * <li>garantit que le graphe (parent(s)) reste lui aussi sur les <b>mêmes instances</b>.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testCachePartageEntreAppels() : mêmes instances JPA sur appels successifs (cache/identity)")
+	@Tag(METIERTOJPA_BETON)
+	@Test
+	public final void testCachePartageEntreAppels() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ConvertisseurMetierToJPATest - méthode testCachePartageEntreAppels() ********** ");
+			System.out.println("CE TEST VERIFIE le cache partagé entre deux appels publics successifs.");
+			System.out.println();
+		}
+
+		// ARRANGE - GIVEN
+		this.creerScenario();
+
+		// ACT - WHEN
+		final ProduitJPA produitJPA1 = ConvertisseurMetierToJPA.produitMETIERToJPA(this.produitChemiseManchesLonguesPourHomme);
+		final ProduitJPA produitJPA2 = ConvertisseurMetierToJPA.produitMETIERToJPA(this.produitChemiseManchesLonguesPourHomme);
+
+		// ASSERT - THEN
+		assertNotNull(produitJPA1, "Le premier appel doit retourner un ProduitJPA non null : ");
+		assertNotNull(produitJPA2, "Le second appel doit retourner un ProduitJPA non null : ");
+		assertSame(produitJPA1, produitJPA2, "Deux appels successifs doivent retourner la même instance (cache partagé) : ");
+
+		final SousTypeProduitI stpJPA1 = produitJPA1.getSousTypeProduit();
+		final SousTypeProduitI stpJPA2 = produitJPA2.getSousTypeProduit();
+		assertNotNull(stpJPA1, "Le parent SousTypeProduitJPA ne doit pas être null : ");
+		assertNotNull(stpJPA2, "Le parent SousTypeProduitJPA ne doit pas être null : ");
+		assertSame(stpJPA1, stpJPA2, "Le parent STP doit être la même instance (cache/identity) : ");
+
+		final TypeProduitI tpJPA1 = produitJPA1.getTypeProduit();
+		final TypeProduitI tpJPA2 = produitJPA2.getTypeProduit();
+		assertNotNull(tpJPA1, "Le TypeProduitJPA remonté ne doit pas être null : ");
+		assertNotNull(tpJPA2, "Le TypeProduitJPA remonté ne doit pas être null : ");
+		assertSame(tpJPA1, tpJPA2, "Le parent TypeProduitJPA doit être la même instance (cache/identity) : ");
+
+	} //___________________________________________________________________
+   
+    
+    
+	/**
+	 * <div>
+	 * <ul>
+	 * <p>Teste la stabilité du graphe lors d'une conversion démarrant par une feuille :</p>
+	 * <li>garantit que la conversion d'un <b>Produit</b> stabilise le graphe parent (STP/TP) par rattachements canoniques.</li>
+	 * <li>garantit que le <b>TypeProduitJPA</b> remonté contient bien le <b>SousTypeProduitJPA</b> parent (pas de wipe).</li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings(UNUSED)
+	@DisplayName("testTypeProduitMETIERToJPADepuisLeafGrapheStable() : conversion depuis Produit stabilise parent↔enfant sans wipe")
+	@Tag("Conversion-Beton")
+	@Test
+	public final void testTypeProduitMETIERToJPADepuisLeafGrapheStable() {
+
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
+
+		/* AFFICHAGE A LA CONSOLE. */
+		if (AFFICHAGE_GENERAL && affichage) {
+			System.out.println();
+			System.out.println("********** CLASSE ConvertisseurMetierToJPATest - méthode testTypeProduitMETIERToJPADepuisLeafGrapheStable() ********** ");
+			System.out.println("CE TEST VERIFIE QUE LA CONVERSION DEMARRANT PAR UN PRODUIT STABILISE LE GRAPHE SANS WIPE.");
+			System.out.println();
+		}
+
+		// ARRANGE - GIVEN
+		this.creerScenario();
+
+		// ACT - WHEN
+		final ProduitJPA produitJPA =
+				ConvertisseurMetierToJPA.produitMETIERToJPA(this.produitChemiseManchesLonguesPourHomme);
+
+		final TypeProduitJPA typeProduitJPA =
+				ConvertisseurMetierToJPA.typeProduitMETIERToJPA(this.typeProduitVetement);
+
+		// ASSERT - THEN
+		assertNotNull(produitJPA, "La conversion du produit doit retourner un ProduitJPA non null : ");
+		assertNotNull(typeProduitJPA, "La conversion du type produit doit retourner un TypeProduitJPA non null : ");
+
+		/* Le produit doit remonter au même TypeProduitJPA que celui converti directement. */
+		assertSame(
+				typeProduitJPA
+				, produitJPA.getTypeProduit()
+				, "Le TypeProduitJPA doit être la même instance (cache/identity) : ");
+
+		/* Le TypeProduitJPA doit contenir le STP parent (rattachement canonique, pas de wipe). */
+		final List<? extends SousTypeProduitI> sousTypeProduitsJPA 
+			= typeProduitJPA.getSousTypeProduits();
+		assertNotNull(
+				sousTypeProduitsJPA
+				, "La liste sousTypeProduits du TypeProduitJPA ne doit pas être null : ");
+		assertFalse(
+				sousTypeProduitsJPA.isEmpty()
+				, "La liste sousTypeProduits du TypeProduitJPA ne doit pas être vide : ");
+
+		assertTrue(
+				sousTypeProduitsJPA.contains(produitJPA.getSousTypeProduit())
+				, "Le TypeProduitJPA doit contenir le SousTypeProduitJPA parent du produit : ");
+
+	} //___________________________________________________________________
 
     
     
