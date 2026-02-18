@@ -896,6 +896,7 @@ public class TypeProduitGatewayJPAService
 	}
 
 
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
