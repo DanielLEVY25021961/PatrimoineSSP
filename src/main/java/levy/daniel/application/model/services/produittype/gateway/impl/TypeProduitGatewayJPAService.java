@@ -838,24 +838,24 @@ public class TypeProduitGatewayJPAService
 	        return new ArrayList<TypeProduit>();
 	    }
 
-	    /* 1. Filtre les nulls, 
+	    /* 1. Filtre les nulls,
 	     * convertit en objets métier et dédoublonne en un seul parcours. */
 	    final List<TypeProduit> resultat = new ArrayList<TypeProduit>();
 	    final Set<String> libellesDejaVus = new HashSet<String>();
 
 	    for (final TypeProduitJPA entity : pListe) {
-	    	
+
 	        if (entity != null) {
-	        	
+
 	            final TypeProduit objetMetier =
 	                ConvertisseurJPAToMetier.typeProduitJPAToMetier(entity);
-	            
+
 	            if (objetMetier != null) {
-	            	
-	                final String libelleNormalise 
-	                	= (objetMetier.getTypeProduit() != null)
+
+	                final String libelleNormalise
+	                    = (objetMetier.getTypeProduit() != null)
 	                    ? objetMetier.getTypeProduit().trim()
-	                    		.toLowerCase(Locale.getDefault())
+	                            .toLowerCase(Locale.ROOT)
 	                    : "";
 	                if (!libellesDejaVus.contains(libelleNormalise)) {
 	                    libellesDejaVus.add(libelleNormalise);
