@@ -197,6 +197,37 @@ Règles impératives :
 Objectif : garantir un travail reproductible,
 traçable et indépendant de la mémoire interne.
 
+## MODE OFFLINE — Reproductible sans GitHub (bundle obligatoire)
+
+Objectif : permettre un workflow industriel où l’Utilisateur fournit uniquement le SHA,
+et l’IA travaille sur pièces, même sans accès GitHub.
+
+Règles :
+
+- Si l’IA ne peut pas lire correctement GitHub au SHA (incident de lecture) :
+  elle doit basculer en MODE OFFLINE.
+- En MODE OFFLINE, la source de vérité devient un bundle versionné
+  contenant les fichiers du périmètre au SHA.
+
+Bundle minimal requis :
+
+- AI_OFFLINE/INDEX.txt (liste des fichiers inclus)
+- AI_OFFLINE/PROVENANCE.yaml (SHA, lot, environnement)
+- AI_OFFLINE/CHECKSUMS.sha256 (preuve sha256 des fichiers)
+- AI_OFFLINE/FILES/** (contenu des fichiers)
+
+Interdictions :
+
+- Interdiction d’analyser/coder si CHECKSUMS/PROVENANCE/INDEX manquent.
+- Interdiction d’improviser des chemins ou du contenu.
+
+Traçabilité :
+
+- Toute réponse doit tracer :
+  - les fichiers lus (paths)
+  - et leur checksum (ligne correspondante dans CHECKSUMS.sha256)
+
+
 ## 5) Statuts des fichiers
 - `MEMORISE` : conservé tel quel ; modification uniquement sur demande explicite.
 - `VALIDE` : verrouillé ; modification uniquement sur demande explicite de **déverrouillage**.

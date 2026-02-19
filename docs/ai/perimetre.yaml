@@ -25,6 +25,7 @@ policy:
     rebuild_urls_sha_on_new_sha: true
     lecture_github_obligatoire: "RT-LECTURE-GITHUB-02"
     interdit_demander_urls_raw: true
+	offline_required_when_github_unavailable: true
 
 raw:
   template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"
@@ -40,6 +41,7 @@ packs:
       - "tools/ai/pack_reading_list.py"
       - "tools/ai/paths.txt"
       - "tools/ai/resolve_raw_sha.py"
+	  - "tools/ai/make_offline_bundle.py"
 
   docs_contrats:
     description: "Contrats fonctionnels/techniques lisibles (docs/contrats)."
