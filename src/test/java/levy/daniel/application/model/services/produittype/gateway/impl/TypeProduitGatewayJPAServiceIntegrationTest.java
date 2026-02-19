@@ -194,6 +194,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
     /** DisplayName : update(modification). */
     public static final String DN_UPDATE_AVEC_MODIF = "update(modification) - modifie le stockage et retourne l'objet modifié";
+    
+    /** DisplayName : update(libellé existant). */
+    public static final String DN_UPDATE_LIBELLE_EXISTANT =
+            "update(libellé existant) - vérifie le comportement en cas de doublon";
 
     /** DisplayName : delete(null). */
     public static final String DN_DELETE_NULL = "delete(null) - jette ExceptionAppliParamNull (contrat du port)";
@@ -206,6 +210,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
     /** DisplayName : delete(ID inexistant). */
     public static final String DN_DELETE_ID_INEXISTANT = "delete(ID inexistant) - ne lève pas d'exception";
+    
+    /** DisplayName : delete(double suppression). */
+    public static final String DN_DELETE_DOUBLE =
+            "delete(double suppression) - ne lève pas d'exception";
 
     /** DisplayName : findByLibelleRapide(case-insensitive). */
     public static final String DN_RAPIDE_CASE_INSENSITIVE = "findByLibelleRapide(case-insensitive) - recherche insensible à la casse";
@@ -218,6 +226,21 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
     /** DisplayName : rechercherTousParPage(taille > total). */
     public static final String DN_PAGE_TAILLE_SUP = "rechercherTousParPage(taille > total) - retourne tous les éléments";
+    
+    /** DisplayName : findByLibelleRapide(aucun résultat). */
+    public static final String DN_RAPIDE_AUCUN =
+            "findByLibelleRapide(aucun résultat) - retourne une liste vide";
+
+    /** Recherche rapide sans résultat. */
+    public static final String RECHERCHE_AUCUN = "zzz";
+    
+    /** DisplayName : rechercherTousParPage(page hors bornes). */
+    public static final String DN_PAGE_HORS_BORNES =
+            "rechercherTousParPage(page hors bornes) - retourne une page vide cohérente";
+    
+    /** DisplayName : rechercherTousParPage(taille zéro). */
+    public static final String DN_PAGE_TAILLE_ZERO =
+            "rechercherTousParPage(taille zéro) - retourne une page vide";
 
     /** blank (espaces). */
     public static final String BLANK = "   ";
@@ -637,6 +660,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
             .allMatch(s -> s != null && s.contains(RECHERCHE_ME));
     }
 
+    
+    
     /**
      * <div>
      * <p>Vérifie que `findByLibelleRapide(case-insensitive)` est insensible à la casse.</p>
@@ -656,7 +681,9 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
             .extracting(TypeProduit::getTypeProduit)
             .containsExactlyInAnyOrderElementsOf(
                 retourMaj.stream().map(TypeProduit::getTypeProduit).toList());
-    }
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -673,7 +700,35 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(retour)
             .extracting(TypeProduit::getTypeProduit)
             .doesNotHaveDuplicates();
-    }
+        
+    } // ________________________________________________________________
+
+
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie que `findByLibelleRapide(aucun résultat)`
+     * retourne une liste vide (pas {@code null}).
+     * </p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER_RAPIDE)
+    @DisplayName(DN_RAPIDE_AUCUN)
+    @Test
+    public void testFindByLibelleRapideAucunResultat() throws Exception {
+
+        /* Recherche avec un motif absent. */
+        final List<TypeProduit> retour =
+                this.service.findByLibelleRapide(RECHERCHE_AUCUN);
+
+        /* Vérifie liste non nulle et vide. */
+        assertThat(retour).isNotNull().isEmpty();
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -688,7 +743,9 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.findById(null)
             ).isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL);
-    }
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -703,7 +760,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testFindByIdNonTrouve() throws Exception {
         final TypeProduit retour = this.service.findById(ID_INEXISTANTE);
         assertThat(retour).isNull();
-    }
+        
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -723,7 +783,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(relu).isNotNull();
         assertThat(relu.getIdTypeProduit()).isEqualTo(seed.getIdTypeProduit());
         assertThat(relu.getTypeProduit()).isEqualTo(VETEMENT);
-    }
+        
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -803,8 +866,71 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
         assertThat(page.getContent()).hasSize(tous.size());
         assertThat(page.getTotalElements()).isEqualTo(tous.size());
-    }
+        
+    } // _________________________________________________________________
 
+    
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie qu'une page très au-delà du nombre total
+     * retourne un contenu vide mais cohérent.
+     * </p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_HORS_BORNES)
+    @Test
+    public void testRechercherTousParPageHorsBornes() throws Exception {
+
+        final List<TypeProduit> tous = this.service.rechercherTous();
+
+        /* Page très élevée. */
+        final RequetePage requete =
+                new RequetePage(9999, 10, new ArrayList<>());
+
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(requete);
+
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().isEmpty();
+        assertThat(page.getTotalElements()).isEqualTo(tous.size());
+        
+    } // _________________________________________________________________
+
+
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie qu'une taille de page égale à zéro
+     * retourne un contenu vide.
+     * </p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_TAILLE_ZERO)
+    @Test
+    public void testRechercherTousParPageTailleZero() throws Exception {
+
+        final RequetePage requete =
+                new RequetePage(0, 0, new ArrayList<>());
+
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(requete);
+
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().isEmpty();
+        
+    } // _________________________________________________________________
+   
+
+    
     /**
      * <div>
      * <p>Vérifie que `update(null)` respecte le contrat du port :
@@ -818,8 +944,11 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL);
-    }
+        
+    } // _________________________________________________________________
 
+    
+    
     /**
      * <div>
      * <p>Vérifie que `update(blank)` respecte le contrat du port :
@@ -834,7 +963,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.update(blank))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
-    }
+        
+    } // _________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -850,7 +982,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.update(nonPersistant))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT + VETEMENT);
-    }
+        
+    } // _________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -935,7 +1070,41 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         final TypeProduit reluApresCS = this.service.findById(id);
         assertThat(reluApresCS).isNotNull();
         assertThat(reluApresCS.getTypeProduit()).isEqualTo(upper);
-    }
+        
+    } // ________________________________________________________________
+
+
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie le comportement lorsque l'on modifie
+     * un type vers un libellé déjà existant.
+     * </p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName(DN_UPDATE_LIBELLE_EXISTANT)
+    @Test
+    public void testUpdateLibelleExistant() throws Exception {
+
+        final TypeProduit t1 = this.service.findByLibelle(VETEMENT);
+        final TypeProduit t2 = this.service.findByLibelle(BAZAR);
+
+        assertThat(t1).isNotNull();
+        assertThat(t2).isNotNull();
+
+        /* Tentative de collision de libellé. */
+        final TypeProduit aModifier =
+                new TypeProduit(t2.getIdTypeProduit(), VETEMENT);
+
+        assertThatThrownBy(() -> this.service.update(aModifier))
+                .isInstanceOf(Exception.class);
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -950,7 +1119,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL);
-    }
+        
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -966,8 +1138,11 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.delete(idNull))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL);
-    }
+        
+    } // ________________________________________________________________
 
+    
+    
     /**
      * <div>
      * <p>Vérifie que `delete(ID inexistant)` ne lève pas d'exception.</p>
@@ -981,8 +1156,11 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testDeleteIdInexistant() throws Exception {
         final TypeProduit inexistant = new TypeProduit(ID_INEXISTANTE, VETEMENT);
         this.service.delete(inexistant); // Pas d'exception attendue
-    }
+        
+    } // ________________________________________________________________
 
+    
+    
     /**
      * <div>
      * <p>Vérifie que `delete(TypeProduit)` supprime un type créé
@@ -1006,8 +1184,42 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(countApresDelete).isEqualTo(countAvant);
         final TypeProduit relu = this.service.findById(cree.getIdTypeProduit());
         assertThat(relu).isNull();
-    }
+        
+    } // ________________________________________________________________
 
+
+    
+    /**
+     * <div>
+     * <p>
+     * Vérifie qu'une suppression répétée du même objet
+     * ne provoque pas d'exception.
+     * </p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName(DN_DELETE_DOUBLE)
+    @Test
+    public void testDeleteDouble() throws Exception {
+
+        /* Création d'un objet temporaire. */
+        final TypeProduit cree =
+                this.service.creer(new TypeProduit(TEMP_A_SUPPRIMER));
+
+        assertThat(cree).isNotNull();
+
+        /* Première suppression. */
+        this.service.delete(cree);
+
+        /* Seconde suppression : ne doit rien faire. */
+        this.service.delete(cree);
+        
+    } // ________________________________________________________________
+
+    
+    
     /**
      * <div>
      * <p>Vérifie que `count()` est cohérent avec `rechercherTous()`.</p>
@@ -1023,7 +1235,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         final List<TypeProduit> liste = this.service.rechercherTous();
         assertThat(liste).isNotNull();
         assertThat(count).isEqualTo(liste.size());
-    }
+        
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1041,7 +1256,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         final TypeProduit aCreer = new TypeProduit(VETEMENT);
         assertThatThrownBy(() -> this.service.creer(aCreer))
             .isInstanceOf(Exception.class);
-    }
+        
+    } // ________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1068,5 +1286,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(relu2).isNotNull();
         assertThat(relu1.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_1);
         assertThat(relu2.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_2);
-    }
+        
+    } // ________________________________________________________________
+    
+    
 }
