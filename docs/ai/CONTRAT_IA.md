@@ -91,6 +91,81 @@ Sortie :
 - Interdiction d’utiliser `refs/heads/...` comme source de vérité.
 - Les URLs `refs/heads/...` ne servent qu’à retrouver le `path`, puis conversion en raw SHA.
 
+## 4 bis) PRIORITÉ ABSOLUE — Sacralisation des URLs Raw du projet
+
+L’objectif fondamental est de garantir que les URLs Raw du projet ne soient jamais perdues, afin d’éviter toute dépendance à la mémoire interne de l’IA ou à l’historique du chat.
+
+Principe général
+
+L’IA doit pouvoir retrouver de manière autonome, déterministe et reproductible l’ensemble des fichiers du périmètre à partir du dépôt lui-même.
+
+Règles obligatoires
+
+Inventaire permanent des URLs Raw
+
+Toutes les URLs Raw (format refs/heads/...) du périmètre doivent être stockées dans un fichier AI versionné du dépôt (ex : docs/ai/perimetre.yaml).
+
+Objectif :
+➜ ne plus jamais avoir à redemander les URLs dans le chat.
+
+Stockage du SHA courant
+
+Le SHA unique courant doit être stocké dans un fichier AI versionné accessible à l’IA (ex : fichier dédié ou clé dans perimetre.yaml).
+
+Objectif :
+➜ garantir la reproductibilité exacte du contexte.
+
+Transformation automatique en URLs Raw SHA
+
+À chaque nouveau commit/push (nouveau SHA) :
+
+l’IA doit reconstruire automatiquement les URLs au format :
+
+https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
+
+en remplaçant uniquement la partie refs/heads/... par le SHA.
+
+Objectif :
+➜ obtenir des URLs figées, immuables et auditables.
+
+Lecture obligatoire via URLs Raw SHA
+
+Toute analyse, diagnostic ou génération de code doit être précédée :
+
+d’une lecture effective des fichiers via ces URLs Raw SHA reconstruites,
+
+selon la méthode RT-LECTURE-GITHUB-02.
+
+Interdiction d’utiliser :
+
+des URLs de branche mouvante,
+
+des contenus mémorisés,
+
+des approximations ou suppositions.
+
+Gestion des incidents
+
+Si l’IA ne peut pas reconstruire ou lire correctement les URLs SHA :
+
+elle doit signaler explicitement l’échec,
+
+demander les éléments manquants,
+
+et ne jamais improviser.
+
+Résultat attendu
+
+Grâce à ce mécanisme :
+
+le périmètre du projet est auto-décrit par le dépôt lui-même ;
+
+les URLs Raw ne peuvent plus être “perdues” ;
+
+chaque analyse est traçable et reproductible ;
+
+l’IA peut être pilotée comme un collaborateur technique travaillant uniquement sur pièces.
+
 ## 5) Statuts des fichiers
 - `MEMORISE` : conservé tel quel ; modification uniquement sur demande explicite.
 - `VALIDE` : verrouillé ; modification uniquement sur demande explicite de **déverrouillage**.
