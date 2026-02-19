@@ -166,6 +166,37 @@ chaque analyse est traçable et reproductible ;
 
 l’IA peut être pilotée comme un collaborateur technique travaillant uniquement sur pièces.
 
+## 4 ter) Hiérarchie des sources et obligation de lecture préalable
+
+Ordre de priorité des références :
+
+1. docs/ai/CONTRAT_IA.md   → Constitution du système IA
+2. docs/ai/perimetre.yaml  → Inventaire opérationnel des ressources
+3. docs/contrats/**        → Spécifications fonctionnelles
+4. Code source             → Implémentation
+5. Historique du chat      → Contexte non fiable
+
+Règles impératives :
+
+- Avant toute analyse, diagnostic ou génération de code,
+  l’IA DOIT lire :
+
+  a) CONTRAT_IA.md  
+  b) perimetre.yaml  
+  c) les fichiers pertinents du périmètre au SHA fourni  
+
+- Si une ressource ne peut pas être lue correctement :
+  → signaler explicitement "incident de lecture"
+  → NE PAS improviser
+  → NE PAS supposer
+  → NE PAS coder
+
+- Toute réponse doit être basée uniquement
+  sur des éléments effectivement lus au SHA.
+
+Objectif : garantir un travail reproductible,
+traçable et indépendant de la mémoire interne.
+
 ## 5) Statuts des fichiers
 - `MEMORISE` : conservé tel quel ; modification uniquement sur demande explicite.
 - `VALIDE` : verrouillé ; modification uniquement sur demande explicite de **déverrouillage**.
