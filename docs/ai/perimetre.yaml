@@ -36,7 +36,7 @@ packs:
   ai:
     description: "Fichiers de pilotage IA (constitution + périmètre + outils)."
     paths:
-	  - "docs/ai/MANIFEST_IA.yaml"
+      - "docs/ai/MANIFEST_IA.yaml"
       - "docs/ai/CONTRAT_IA.md"
       - "docs/ai/perimetre.yaml"
       - "tools/ai/pack_reading_list.py"
