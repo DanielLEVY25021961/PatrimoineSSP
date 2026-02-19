@@ -2,6 +2,48 @@
 
 # Contrat IA — Projet Java Hexagonal (référence unique versionnée)
 
+<!-- ******************************************************************** -->
+<!-- ************************** CONTRAT IA ******************************* -->
+<!-- ******************************************************************** -->
+
+<!--
+CONTRAT_IA.md est le contrat de fonctionnement (la “constitution”)
+entre l’Utilisateur et l’IA pour travailler sur le dépôt.
+
+Il a pour objectifs :
+
+- Rappeler le contexte (gros projet, risque d’oubli)
+  et l’objectif fondamental : ne jamais dépendre
+  de la mémoire interne de l’IA.
+
+- Fixer la source de vérité :
+  les fichiers présents dans le dépôt
+  (docs/ai + docs/contrats + tools/ai).
+
+- Imposer une discipline de lecture stricte :
+  l’IA doit lire les fichiers pertinents AVANT toute analyse
+  ou génération de code, et tracer explicitement
+  ce qui a été lu.
+
+- Définir la traçabilité du travail :
+  utilisation d’un SHA unique,
+  d’URLs Raw figées par SHA,
+  et d’un outillage dédié
+  (perimetre.yaml, scripts tools/ai).
+
+- Servir de garde-fou opérationnel :
+  si l’IA ne peut pas lire correctement une ressource,
+  elle doit le signaler explicitement
+  et ne jamais improviser ni deviner.
+
+En pratique :
+ce fichier constitue la pièce maîtresse permettant
+de piloter l’IA comme un collaborateur technique
+qui ne peut agir que sur pièces,
+sur la base exclusive des éléments présents dans le dépôt.
+-->
+
+
 ## 1) Source de vérité
 - La **seule source de vérité** est le **repo Git** au **SHA unique** fourni.
 - Toute discussion, analyse ou correction doit être **reproductible** en relisant les fichiers au SHA.
