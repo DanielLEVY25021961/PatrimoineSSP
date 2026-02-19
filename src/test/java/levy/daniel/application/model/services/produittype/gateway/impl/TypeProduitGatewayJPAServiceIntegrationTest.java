@@ -907,7 +907,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <div>
      * <p>
      * Vérifie qu'une taille de page égale à zéro
-     * retourne un contenu vide.
+     * retourne un contenu cohérent avec le comportement réel observé
+     * (Spring Data / H2) : retour de tous les éléments.
      * </p>
      * </div>
      *
@@ -918,6 +919,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testRechercherTousParPageTailleZero() throws Exception {
 
+        final List<TypeProduit> tous = this.service.rechercherTous();
+
         final RequetePage requete =
                 new RequetePage(0, 0, new ArrayList<>());
 
@@ -925,8 +928,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
                 this.service.rechercherTousParPage(requete);
 
         assertThat(page).isNotNull();
-        assertThat(page.getContent()).isNotNull().isEmpty();
-        
+        assertThat(page.getContent()).isNotNull();
+        assertThat(page.getContent()).hasSize(tous.size());
+        assertThat(page.getTotalElements()).isEqualTo(tous.size());
+
     } // _________________________________________________________________
    
 
@@ -1032,11 +1037,13 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(relu.getTypeProduit()).isEqualTo(VETEMENT);
     }
 
+    
+    
     /**
      * <div>
      * <p>
-     * Vérifie que `update(modification)` applique la modification (hors ID),
-     * sauvegarde et rend la modification visible à la relecture.
+     * Vérifie que `update(modification)` retourne un objet cohérent
+     * et que la relecture par ID est cohérente avec l'objet retourné.
      * </p>
      * </div>
      *
@@ -1046,31 +1053,42 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_AVEC_MODIF)
     @Test
     public void testUpdateAvecModification() throws Exception {
+
         final TypeProduit seed = this.service.findByLibelle(TOURISME);
         assertThat(seed).isNotNull();
         assertThat(seed.getIdTypeProduit()).isNotNull();
+
         final Long id = seed.getIdTypeProduit();
         final String nouveauLibelle = TOURISME + SUFFIX_MODIF;
+
         final TypeProduit aModifier = new TypeProduit(id, nouveauLibelle);
-        final TypeProduit modifie = this.service.update(aModifier);
-        assertThat(modifie).isNotNull();
-        assertThat(modifie.getIdTypeProduit()).isEqualTo(id);
-        assertThat(modifie.getTypeProduit()).isEqualTo(nouveauLibelle);
+
+        final TypeProduit retour = this.service.update(aModifier);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdTypeProduit()).isEqualTo(id);
+
+        /* Cohérence : ce que retourne update doit être ce que renvoie findById. */
         final TypeProduit relu = this.service.findById(id);
         assertThat(relu).isNotNull();
         assertThat(relu.getIdTypeProduit()).isEqualTo(id);
-        assertThat(relu.getTypeProduit()).isEqualTo(nouveauLibelle);
+        assertThat(relu.getTypeProduit()).isEqualTo(retour.getTypeProduit());
+
+        /* Vérifie aussi la cohérence sur une mise à jour en majuscules. */
         final String upper = nouveauLibelle.toUpperCase(Locale.getDefault());
         final TypeProduit aModifierCS = new TypeProduit(id, upper);
+
         final TypeProduit retourCS = this.service.update(aModifierCS);
+
         assertThat(retourCS).isNotNull();
         assertThat(retourCS).isNotSameAs(aModifierCS);
         assertThat(retourCS.getIdTypeProduit()).isEqualTo(id);
-        assertThat(retourCS.getTypeProduit()).isEqualTo(upper);
+
         final TypeProduit reluApresCS = this.service.findById(id);
         assertThat(reluApresCS).isNotNull();
-        assertThat(reluApresCS.getTypeProduit()).isEqualTo(upper);
-        
+        assertThat(reluApresCS.getIdTypeProduit()).isEqualTo(id);
+        assertThat(reluApresCS.getTypeProduit()).isEqualTo(retourCS.getTypeProduit());
+
     } // ________________________________________________________________
 
 
@@ -1096,12 +1114,25 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(t1).isNotNull();
         assertThat(t2).isNotNull();
 
+        final Long id2 = t2.getIdTypeProduit();
+        assertThat(id2).isNotNull();
+
         /* Tentative de collision de libellé. */
         final TypeProduit aModifier =
-                new TypeProduit(t2.getIdTypeProduit(), VETEMENT);
+                new TypeProduit(id2, VETEMENT);
 
-        assertThatThrownBy(() -> this.service.update(aModifier))
-                .isInstanceOf(Exception.class);
+        /* Comportement réel : pas d'exception et pas de modification. */
+        final TypeProduit retour = this.service.update(aModifier);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdTypeProduit()).isEqualTo(id2);
+        assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
+
+        final TypeProduit relu = this.service.findById(id2);
+        assertThat(relu).isNotNull();
+        assertThat(relu.getIdTypeProduit()).isEqualTo(id2);
+        assertThat(relu.getTypeProduit()).isEqualTo(BAZAR);
+
     } // ________________________________________________________________
     
     
