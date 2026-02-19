@@ -805,6 +805,11 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si {@code libelle de l'objet métier} est {@code null} ou blank :
 	 * jette une {@link ExceptionAppliLibelleBlank}
 	 * avec un message {@link #MESSAGE_UPDATE_KO_LIBELLE_BLANK}.</li>
+	 * <li>Si {@code libelle de l'objet métier} correspond 
+	 * à celui d'un autre {@link TypeProduit} déjà présent 
+	 * dans le stockage : aucune exception n'est levée, 
+	 * aucune modification n'est appliquée, 
+	 * et l'objet persistant inchangé est retourné.</li>
 	 * <li>Si l'ID est {@code null} :
 	 * jette une {@link ExceptionAppliParamNonPersistent}
 	 * avec un message {@link #MESSAGE_UPDATE_KO_NON_PERSISTENT}
