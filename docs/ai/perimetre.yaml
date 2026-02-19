@@ -1,0 +1,77 @@
+# docs/ai/perimetre.yaml
+
+owner: "DanielLEVY25021961"
+repo: "PatrimoineSSP"
+
+workflow:
+  sha_unique_required: true
+  raw_url_template: "https://raw.githubusercontent.com/{owner}/{repo}/{sha}/{path}"
+  reading_rule: "RT-LECTURE-GITHUB-02"
+  modes:
+    - "LECTURE"
+    - "DIAGNOSTIC"
+    - "CODER"
+
+layers:
+  config:
+    - "pom.xml"
+  test_config:
+    - "src/test/resources/truncate-test.sql"
+    - "src/test/resources/data-test.sql"
+    - "src/test/resources/log4j2-test.xml"
+
+  metier:
+    - "src/main/java/levy/daniel/application/model/metier/produittype/TypeProduitI.java"
+    - "src/main/java/levy/daniel/application/model/metier/produittype/TypeProduit.java"
+    - "src/test/java/levy/daniel/application/model/metier/produittype/TypeProduitTest.java"
+    - "src/main/java/levy/daniel/application/model/metier/produittype/SousTypeProduitI.java"
+    - "src/main/java/levy/daniel/application/model/metier/produittype/SousTypeProduit.java"
+    - "src/test/java/levy/daniel/application/model/metier/produittype/SousTypeProduitTest.java"
+    - "src/main/java/levy/daniel/application/model/metier/produittype/ProduitI.java"
+    - "src/main/java/levy/daniel/application/model/metier/produittype/Produit.java"
+    - "src/test/java/levy/daniel/application/model/metier/produittype/ProduitTest.java"
+
+  persistance:
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPA.java"
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPA.java"
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPA.java"
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPA.java"
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetier.java"
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/utilitaires/NormalizerUtils.java"
+    - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java"
+    - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPATest.java"
+    - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPATest.java"
+
+  dao:
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/TypeProduitDaoJPA.java"
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/SousTypeProduitDaoJPA.java"
+    - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/ProduitDaoJPA.java"
+
+  gateway:
+    ports:
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/TypeProduitGatewayIService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/SousTypeProduitGatewayIService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/ProduitGatewayIService.java"
+    adapters:
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAService.java"
+    pagination:
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/RequetePage.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/ResultatPage.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/TriSpec.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/DirectionTri.java"
+    exceptions_gateway:
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliLibelleBlank.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNull.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNonPersistent.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionTechniqueGateway.java"
+    tests:
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java"
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceMockTest.java"
+
+status:
+  default: "MEMORISE"
+  rules:
+    valide_is_locked: true
+    unlock_keyword: "déverrouiller"
