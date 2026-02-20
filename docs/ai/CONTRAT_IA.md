@@ -1,428 +1,293 @@
 # docs/ai/CONTRAT_IA.md
 
-# Contrat IA — Projet Java Hexagonal (référence unique versionnée)
+# CONTRAT IA — Projet Java Hexagonal (Constitution technique)
 
 <!-- ******************************************************************** -->
 <!-- ************************** CONTRAT IA ******************************* -->
 <!-- ******************************************************************** -->
 
-<!--
-CONTRAT_IA.md est le contrat de fonctionnement (la “constitution”)
-entre l’Utilisateur et l’IA pour travailler sur le dépôt.
+## PRÉAMBULE
 
-Il a pour objectifs :
+Ce document constitue la **constitution technique** régissant le fonctionnement de l’IA
+sur le dépôt.
 
-- Rappeler le contexte (gros projet, risque d’oubli)
-  et l’objectif fondamental : ne jamais dépendre
-  de la mémoire interne de l’IA.
+Objectifs fondamentaux :
 
-- Fixer la source de vérité :
-  les fichiers présents dans le dépôt
-  (docs/ai + docs/contrats + tools/ai).
+- Permettre un workflow industriel où l’Utilisateur fournit uniquement un SHA
+- Garantir un travail reproductible, déterministe et audit-ready
+- Éliminer toute dépendance à la mémoire interne de l’IA
+- Permettre un fonctionnement ONLINE et OFFLINE
+- Assurer une traçabilité complète des analyses et corrections
 
-- Imposer une discipline de lecture stricte :
-  l’IA doit lire les fichiers pertinents AVANT toute analyse
-  ou génération de code, et tracer explicitement
-  ce qui a été lu.
+L’IA doit être pilotable comme un collaborateur technique travaillant strictement **sur pièces**,
+uniquement à partir des éléments effectivement lus.
 
-- Définir la traçabilité du travail :
-  utilisation d’un SHA unique,
-  d’URLs Raw figées par SHA,
-  et d’un outillage dédié
-  (perimetre.yaml, scripts tools/ai).
-
-- Servir de garde-fou opérationnel :
-  si l’IA ne peut pas lire correctement une ressource,
-  elle doit le signaler explicitement
-  et ne jamais improviser ni deviner.
-
-En pratique :
-ce fichier constitue la pièce maîtresse permettant
-de piloter l’IA comme un collaborateur technique
-qui ne peut agir que sur pièces,
-sur la base exclusive des éléments présents dans le dépôt.
--->
-
+---
 
 ## 1) Source de vérité
-- La **seule source de vérité** est le **repo Git** au **SHA unique** fourni.
-- Toute discussion, analyse ou correction doit être **reproductible** en relisant les fichiers au SHA.
 
-## 2) Méthode de lecture autorisée (RT-LECTURE-GITHUB-02)
-La lecture autorisée est **uniquement** :
-1. URL Raw au format :
-   `https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}`
-2. **Download binaire** (octets bruts)
-3. Lecture locale des octets
-4. **Vérification des génériques** (jamais de Raw Types)
+La source de vérité est déterminée selon l’ordre de priorité suivant :
 
-Règles :
-- Si un fichier ne peut pas être lu correctement (ex : génériques illisibles) :
-  - signaler **"incident de lecture"**
-  - demander une **nouvelle URL raw SHA** ou une **recopie dans le chat**
-- En cas d’incident de lecture : relancer automatiquement jusqu’à succès (max 3 tentatives).
+1. **Baseline consolidée interne** (dernière version validée)
+2. **Repo GitHub au SHA fourni**
+3. **Bundle OFFLINE validé**
 
-## 3) Modes d’interaction (toujours explicites)
-### MODE A — LECTURE (zéro code)
-Entrées attendues :
-- SHA
-- liste de fichiers (paths)
-- objectif
-
-Sortie :
-- confirmation de lecture
-- signatures exactes / contrats trouvés
-- différences factuelles / divergences
-
-### MODE B — DIAGNOSTIC (zéro patch)
-Sortie :
-- comparaison “test suppose X / impl fait Y”
-- causes racines
-- options de correction (test vs impl), impact
-
-### MODE C — CODER (patch)
-Uniquement si le message contient : **"coder"**.
-Sortie :
-- code intégrable (fichiers complets ou méthodes complètes selon demande)
-- style conforme (javadoc, commentaires, etc.) si Java
-
-## 4) SHA unique obligatoire
-- Toute requête doit fournir **un SHA unique courant**.
-- Interdiction d’utiliser `refs/heads/...` comme source de vérité.
-- Les URLs `refs/heads/...` ne servent qu’à retrouver le `path`, puis conversion en raw SHA.
-
-## 4 bis) PRIORITÉ ABSOLUE — Sacralisation des URLs Raw du projet
-
-L’objectif fondamental est de garantir que les URLs Raw du projet ne soient jamais perdues, afin d’éviter toute dépendance à la mémoire interne de l’IA ou à l’historique du chat.
-
-Principe général
-
-L’IA doit pouvoir retrouver de manière autonome, déterministe et reproductible l’ensemble des fichiers du périmètre à partir du dépôt lui-même.
-
-Règles obligatoires
-
-Inventaire permanent des URLs Raw
-
-Toutes les URLs Raw (format refs/heads/...) du périmètre doivent être stockées dans un fichier AI versionné du dépôt (ex : docs/ai/perimetre.yaml).
-
-Objectif :
-➜ ne plus jamais avoir à redemander les URLs dans le chat.
-
-Stockage du SHA courant
-
-Le SHA unique courant doit être stocké dans un fichier AI versionné accessible à l’IA (ex : fichier dédié ou clé dans perimetre.yaml).
-
-Objectif :
-➜ garantir la reproductibilité exacte du contexte.
-
-Transformation automatique en URLs Raw SHA
-
-À chaque nouveau commit/push (nouveau SHA) :
-
-l’IA doit reconstruire automatiquement les URLs au format :
-
-https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
-
-en remplaçant uniquement la partie refs/heads/... par le SHA.
-
-Objectif :
-➜ obtenir des URLs figées, immuables et auditables.
-
-Lecture obligatoire via URLs Raw SHA
-
-Toute analyse, diagnostic ou génération de code doit être précédée :
-
-d’une lecture effective des fichiers via ces URLs Raw SHA reconstruites,
-
-selon la méthode RT-LECTURE-GITHUB-02.
-
-Interdiction d’utiliser :
-
-des URLs de branche mouvante,
-
-des contenus mémorisés,
-
-des approximations ou suppositions.
-
-Gestion des incidents
-
-Si l’IA ne peut pas reconstruire ou lire correctement les URLs SHA :
-
-elle doit signaler explicitement l’échec,
-
-demander les éléments manquants,
-
-et ne jamais improviser.
-
-Résultat attendu
-
-Grâce à ce mécanisme :
-
-le périmètre du projet est auto-décrit par le dépôt lui-même ;
-
-les URLs Raw ne peuvent plus être “perdues” ;
-
-chaque analyse est traçable et reproductible ;
-
-l’IA peut être pilotée comme un collaborateur technique travaillant uniquement sur pièces.
-
-## 4 ter) Hiérarchie des sources et obligation de lecture préalable
-
-Ordre de priorité des références :
-
-1. docs/ai/CONTRAT_IA.md   → Constitution du système IA
-2. docs/ai/perimetre.yaml  → Inventaire opérationnel des ressources
-3. docs/contrats/**        → Spécifications fonctionnelles
-4. Code source             → Implémentation
-5. Historique du chat      → Contexte non fiable
-
-Règles impératives :
-
-- Avant toute analyse, diagnostic ou génération de code,
-  l’IA DOIT lire :
-
-  a) CONTRAT_IA.md  
-  b) perimetre.yaml  
-  c) les fichiers pertinents du périmètre au SHA fourni  
-
-- Si une ressource ne peut pas être lue correctement :
-  → signaler explicitement "incident de lecture"
-  → NE PAS improviser
-  → NE PAS supposer
-  → NE PAS coder
-
-- Toute réponse doit être basée uniquement
-  sur des éléments effectivement lus au SHA.
-
-Objectif : garantir un travail reproductible,
-traçable et indépendant de la mémoire interne.
-
-## MODE OFFLINE — Reproductible sans GitHub (bundle obligatoire)
-
-Objectif : permettre un workflow industriel où l’Utilisateur fournit uniquement le SHA,
-et l’IA travaille sur pièces, même sans accès GitHub.
-
-Règles :
-
-- Si l’IA ne peut pas lire correctement GitHub au SHA (incident de lecture) :
-  elle doit basculer en MODE OFFLINE.
-- En MODE OFFLINE, la source de vérité devient un bundle versionné
-  contenant les fichiers du périmètre au SHA.
-
-Bundle minimal requis :
-
-- AI_OFFLINE/INDEX.txt (liste des fichiers inclus)
-- AI_OFFLINE/PROVENANCE.yaml (SHA, lot, environnement)
-- AI_OFFLINE/CHECKSUMS.sha256 (preuve sha256 des fichiers)
-- AI_OFFLINE/FILES/** (contenu des fichiers)
-
-Interdictions :
-
-- Interdiction d’analyser/coder si CHECKSUMS/PROVENANCE/INDEX manquent.
-- Interdiction d’improviser des chemins ou du contenu.
-
-Traçabilité :
-
-- Toute réponse doit tracer :
-  - les fichiers lus (paths)
-  - et leur checksum (ligne correspondante dans CHECKSUMS.sha256)
-
-
-## 5) Statuts des fichiers
-- `MEMORISE` : conservé tel quel ; modification uniquement sur demande explicite.
-- `VALIDE` : verrouillé ; modification uniquement sur demande explicite de **déverrouillage**.
-- `DEVERROUILLE` : modifiable selon la demande.
-
-## 6) “Test = Spec”
-- Les tests d’intégration et unitaires décrivent le **contrat réel** (comportement).
-- Toute ambiguïté doit être tranchée dans :
-  - le test (preuve)
-  - le document de contrat (spécification lisible)
-
-## 7) Checklist minimale (à chaque demande)
-- [ ] SHA fourni
-- [ ] liste des paths fournie
-- [ ] mode demandé : LECTURE / DIAG / CODER
-- [ ] si CODER : indiquer “fichier complet” ou “méthodes uniquement”
-
-## RÈGLES CANONIQUES OPÉRATIONNELLES — WORKFLOW INDUSTRIEL IA
-
-### 1) Principe fondamental — Travail « sur pièces »
-
-L’IA agit exclusivement sur des éléments effectivement lus.
-
-Ordre des sources (décroissant) :
-
-1. Baseline consolidée (source principale)
-2. Repo GitHub au SHA fourni
-3. Bundle OFFLINE validé
-
-Interdictions absolues :
+Règles absolues :
 
 - Ne jamais deviner
 - Ne jamais supposer
 - Ne jamais improviser
-- Ne jamais utiliser une ancienne version
-- Ne jamais dépendre de la mémoire interne
+- Ne jamais utiliser une version non vérifiée
+- Toute analyse doit être reproductible au SHA
 
-En cas d’impossibilité de lecture :
+---
 
-➡️ Signaler explicitement **"incident de lecture"**  
-➡️ Demander l’élément manquant  
-➡️ Suspendre toute analyse ou génération  
+## 2) Gestion du SHA
 
-
-### 2) Gestion du SHA
-
-- L’utilisateur fournit un SHA unique uniquement après commit/push.
+- L’Utilisateur fournit un **SHA unique** après chaque commit/push.
 - Si aucun nouveau SHA n’est fourni → le SHA courant reste valide.
 - L’IA ne doit jamais redemander un SHA déjà valide.
-- Toute lecture GitHub doit se faire au SHA fourni.
+- Toute lecture GitHub doit être effectuée au SHA fourni.
 
 Flux nominal :
 
 1. Correction dans STS  
 2. Commit / Push  
-3. Nouveau SHA fourni  
+3. Transmission du nouveau SHA  
 4. Relecture GitHub au SHA  
 5. Consolidation de la baseline  
 
+---
 
-### 3) Lecture GitHub — Méthode autorisée
+## 3) Découverte automatique du projet
+
+Principe fondamental :
+
+➡️ L’IA doit pouvoir retrouver tous les fichiers nécessaires **à partir du dépôt lui-même**.
+
+Algorithme de découverte :
+
+SHA → docs/ai/MANIFEST_IA.yaml → docs/ai/perimetre.yaml → fichiers
+
+Les URLs Raw `refs/heads/...` stockées dans le dépôt servent uniquement à :
+
+- retrouver les paths
+- reconstruire automatiquement les URLs Raw SHA
+
+---
+
+## 4) Reconstruction automatique des URLs Raw SHA
+
+Format canonique :
+
+https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
+
+Règles :
+
+- L’IA doit reconstruire automatiquement ces URLs à partir des paths.
+- Interdiction d’utiliser une URL de branche mouvante comme source de vérité.
+- L’Utilisateur n’a jamais à fournir d’URLs.
+- Les URLs Raw refs/heads servent uniquement à dériver les paths.
+
+Objectif :
+
+➡️ Garantir un fonctionnement “SHA-only”.
+
+---
+
+## 5) Méthode de lecture GitHub autorisée
 
 Lecture autorisée exclusivement :
 
 1. URL Raw SHA  
-   https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
-2. Téléchargement binaire (octets bruts)
-3. Lecture locale
+2. Téléchargement binaire (octets bruts)  
+3. Lecture locale  
 4. Vérification stricte des génériques (aucun Raw Type)
 
 Règles :
 
-- Reconstruire automatiquement les URLs SHA à partir des URLs Raw refs/heads stockées.
-- Relancer automatiquement la lecture en cas d’échec (max 3 tentatives).
-- Ne jamais utiliser une URL de branche mouvante comme source de vérité.
+- Relancer automatiquement en cas d’échec (max 3 tentatives)
+- Toute lecture doit être traçable
+- Interdiction d’utiliser des contenus mémorisés non vérifiés
 
+En cas d’échec persistant :
 
-### 4) Baseline — Source de vérité opérationnelle
+➡️ Passer en MODE OFFLINE
+
+---
+
+## 6) Gestion des incidents de lecture
+
+Si l’IA ne peut pas lire correctement une ressource :
+
+➡️ Signaler explicitement **"incident de lecture"**  
+➡️ Demander l’élément manquant  
+➡️ Suspendre toute analyse ou génération  
+
+L’IA ne doit jamais demander d’URLs Raw.
+
+Priorité des demandes :
+
+1. Bundle OFFLINE valide  
+2. Recopie du fichier dans le chat  
+
+---
+
+## 7) Hiérarchie des ressources du dépôt
+
+Ordre de priorité :
+
+1. docs/ai/CONTRAT_IA.md
+2. docs/ai/perimetre.yaml
+3. docs/ai/MANIFEST_IA.yaml
+4. docs/contrats/**
+5. Code source
+6. Tests
+7. Historique du chat (non fiable)
+
+Avant toute analyse ou génération de code, l’IA DOIT lire :
+
+- CONTRAT_IA.md
+- perimetre.yaml
+- les fichiers pertinents au SHA
+
+---
+
+## 8) Baseline consolidée
 
 Propriétés :
 
-- Toujours à jour avec le GitHub.
-- Une seule version par fichier (la plus récente).
-- Aucun fichier ne peut être perdu ou ignoré.
-- Conservation strictement ligne par ligne.
-- Modification uniquement sur ordre explicite.
+- Toujours à jour avec le GitHub
+- Une seule version par fichier (la plus récente)
+- Conservation strictement ligne par ligne
+- Aucun fichier ne peut être perdu ou ignoré
+- Modification uniquement sur ordre explicite
 
 Après chaque lecture GitHub :
 
 ➡️ Consolidation obligatoire  
 ➡️ Suppression des versions précédentes  
 
+---
 
-### 5) Règles de mémorisation
+## 9) Modes d’interaction
 
-#### 5.1 Mémorisation standard — « mémoriser. baseline »
+### MODE LECTURE (zéro code)
 
-- Lecture approfondie (code + javadoc + commentaires)
-- Stockage strict ligne par ligne
-- Aucune modification
-- Pas de génération de code
-- Synthèse structurée uniquement
+Sortie :
 
-#### 5.2 Mémorisation simple — « mémoriser. baseline. Pas analyser. Pas coder »
+- confirmation de lecture
+- signatures exactes
+- divergences factuelles
 
-- Stockage brut ligne par ligne
-- Aucune analyse
-- Aucune suggestion
+---
 
-#### 5.3 Unicité
+### MODE DIAGNOSTIC (zéro patch)
 
-Lors d’une mémorisation :
+Sortie :
 
-➡️ Effacer toute version précédente  
-➡️ Conserver uniquement la version la plus récente  
+- analyse des causes racines
+- comparaison implémentation vs tests
+- options de correction
 
+---
 
-### 6) Relecture obligatoire avant génération de code
+### MODE CODER (patch)
 
-Avant toute génération de code :
+Activé uniquement si le message contient explicitement : **"coder"**.
 
-1. Relire toutes les règles de travail
-2. Relire toutes les règles de codage
-3. Relire les fichiers concernés dans la baseline ou GitHub
-4. Vérifier imports, dépendances, signatures exactes
-5. Confirmer explicitement la relecture
+Sortie :
 
-Si aucun fichier n’est précisé :
+- code intégrable dans STS
+- conforme aux conventions du projet
 
-➡️ Relire toute la baseline  
+---
 
+## 10) MODE OFFLINE — Continuité sans GitHub
 
-### 7) Statuts des fichiers
-
-- VALIDÉ : verrouillé — modification uniquement après déverrouillage explicite
-- MEMORISÉ : conservé tel quel
-- Toute modification nécessite instruction explicite
-
-
-### 8) Mode OFFLINE — Continuité sans GitHub
-
-Activé si lecture GitHub impossible.
+Activé si GitHub est inaccessible ou illisible.
 
 Source de vérité : bundle versionné contenant :
 
-- INDEX.txt
-- PROVENANCE.yaml
-- CHECKSUMS.sha256
-- FILES/**
+- AI_OFFLINE/INDEX.txt
+- AI_OFFLINE/PROVENANCE.yaml
+- AI_OFFLINE/CHECKSUMS.sha256
+- AI_OFFLINE/FILES/**
 
 Conditions :
 
 - Tous les fichiers de preuve doivent être présents
 - Les checksums doivent correspondre
-- Traçabilité obligatoire des fichiers utilisés
+- Le SHA doit être indiqué dans PROVENANCE.yaml
+
+Traçabilité obligatoire :
+
+➡️ Lister les fichiers utilisés  
+➡️ Mentionner leur checksum  
 
 Interdiction d’analyser ou coder sans bundle valide.
 
+---
 
-### 9) Règles de processus de réponse
+## 11) Travail « sur pièces »
 
-- Générer du code uniquement si le message contient explicitement « coder ».
-- Travailler méthode par méthodeпحة მეთдение.
-- Ne pas renvoyer toute une classe si non demandé.
-- Fournir du code directement intégrable dans STS.
-- Proposer une seule stratégie cohérente.
-- Ne pas revenir en arrière sans raison technique.
+L’IA agit uniquement sur des éléments effectivement lus.
 
+Ordre des sources :
 
-### 10) Règles de style et commentaires
+1. Baseline
+2. GitHub au SHA
+3. Bundle OFFLINE
 
-#### 10.1 Javadoc et commentaires
+Si aucune source valide n’est accessible :
 
-- Conserver la Javadoc existante (sauf erreur).
-- Respecter strictement le formalisme HTML :
-  <div><p>...</p></div>
-- Ajouter uniquement des commentaires de bloc.
-- Ne jamais utiliser de commentaires de ligne.
-- Respecter intégralement les commentaires fournis.
+➡️ Arrêt du processus avec signalement explicite.
 
-#### 10.2 Format du code
+---
 
-- Code multi-lignes uniquement
+## 12) Statuts des fichiers
+
+- MEMORISÉ : conservé tel quel
+- VALIDÉ : verrouillé
+- DEVERROUILLÉ : modifiable
+
+Toute modification nécessite instruction explicite.
+
+---
+
+## 13) Test = Spécification
+
+Les tests décrivent le comportement réel.
+
+En cas d’ambiguïté :
+
+➡️ Priorité aux tests  
+➡️ Puis aux documents de contrat  
+
+---
+
+## 14) Règles de génération de code
+
+- Générer du code uniquement si "coder" est explicitement présent
+- Fournir du code directement intégrable dans STS
+- Ne pas renvoyer plus que demandé
+- Proposer une seule stratégie cohérente
+- Ne pas revenir en arrière sans justification technique
+
+---
+
+## 15) Règles de qualité
+
+- Code multi-lignes
 - Indentation claire
 - Accolades obligatoires
-- Aucun code condensé sur une ligne
+- Aucun Raw Type
+- Respect strict du style du projet
+- Commentaires de bloc uniquement
 
-#### 10.3 Génériques
+---
 
-➡️ Aucun Raw Type autorisé  
-
-
-### 11) Règles de qualité et architecture
-
-#### 11.1 Général
+## 16) Règles d’architecture
 
 - Métier pur Java
 - Code thread-safe
@@ -430,42 +295,53 @@ Interdiction d’analyser ou coder sans bundle valide.
 - Pas de var
 - Pas de modérateur friendly
 
-#### 11.2 Comparaisons et égalité
+Comparaisons :
 
 - Alignement strict equals / hashCode / compareTo / toString
 - Métier : business key uniquement
 - JPA : compatible proxies Hibernate
-- Comparateurs Gateway : business key uniquement
 
-#### 11.3 Constantes
+---
+
+## 17) Constantes
 
 Toute String répétitive doit être factorisée dans une constante documentée.
 
-#### 11.4 Constructeurs
+---
+
+## 18) Constructeurs
 
 Chaque classe doit posséder au moins un constructeur documenté.
 
-#### 11.5 Logs
+---
+
+## 19) Logs
 
 - Ne pas analyser la présence de logger inutilisé
-- Ne pas générer LOG.warn
+- LOG.warn non généré automatiquement
 - LOG.fatal uniquement pour erreurs très graves
 
+---
 
-### 12) Homogénéité du projet
+## 20) Homogénéité du projet
 
 - Maintenir un niveau de qualité identique entre modules
 - S’aligner sur les méthodes existantes
 - Commenter toute logique non triviale
 
+---
 
-### 13) Objectif global
+## 21) Objectif global
 
 Ce dispositif vise un workflow industriel :
 
+- SHA-only
 - reproductible
 - déterministe
 - audit-ready
 - indépendant de la mémoire interne
-- piloté uniquement par le SHA
-- capable de fonctionner offline
+- capable de fonctionner ONLINE et OFFLINE
+
+L’IA doit pouvoir être pilotée comme un collaborateur technique
+travaillant exclusivement sur pièces,
+sans jamais dépendre d’informations implicites.
