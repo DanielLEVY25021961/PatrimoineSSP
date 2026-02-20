@@ -1,0 +1,128 @@
+# docs/ai/perimetre.yaml
+# ======================================================================
+# PERIMETRE IA — Projet PatrimoineSSP (Hexagonal)
+# ======================================================================
+# Objectif ABSOLU :
+# - Sacraliser TOUTES les URLs Raw "refs/heads/${branche}" du projet.
+# - Ne plus jamais redemander une URL Raw : on se réfère à CE fichier.
+# - A chaque nouveau SHA :
+#   1) reconstruire automatiquement les URLs raw SHA
+#      (https://raw.githubusercontent.com/{owner}/{repo}/{sha}/{path})
+#   2) relire sur GitHub via ces URLs SHA (RT-LECTURE-GITHUB-02)
+# ======================================================================
+
+project:
+  owner: "DanielLEVY25021961"
+  repo: "PatrimoineSSP"
+
+variables:
+  branche: "feature/gateway"
+
+policy:
+  priorite_absolue:
+    sacraliser_urls_raw: true
+    source_de_verite: "docs/ai/perimetre.yaml"
+    rebuild_urls_sha_on_new_sha: true
+    lecture_github_obligatoire: "RT-LECTURE-GITHUB-02"
+    interdit_demander_urls_raw: true
+    offline_required_when_github_unavailable: true
+
+raw:
+  template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"
+  template_sha: "https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${path}"
+
+packs:
+
+  ai:
+    description: "Fichiers de pilotage IA (constitution + périmètre + outils)."
+    paths:
+      - "docs/ai/MANIFEST_IA.yaml"
+      - "docs/ai/CONTRAT_IA.md"
+      - "docs/ai/perimetre.yaml"
+      - "tools/ai/pack_reading_list.py"
+      - "tools/ai/paths.txt"
+      - "tools/ai/resolve_raw_sha.py"
+      - "tools/ai/make_offline_bundle.py"
+
+  docs_contrats:
+    description: "Contrats fonctionnels/techniques lisibles (docs/contrats)."
+    paths:
+      - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+
+  metier:
+    description: "Couche métier (domain model + tests)."
+    paths:
+      - "src/main/java/levy/daniel/application/model/metier/IExportateurJTable.java"
+      - "src/main/java/levy/daniel/application/model/metier/IExportateurCsv.java"
+      - "src/main/java/levy/daniel/application/model/metier/produittype/TypeProduitI.java"
+      - "src/main/java/levy/daniel/application/model/metier/produittype/TypeProduit.java"
+      - "src/main/java/levy/daniel/application/model/metier/produittype/SousTypeProduitI.java"
+      - "src/main/java/levy/daniel/application/model/metier/produittype/SousTypeProduit.java"
+      - "src/main/java/levy/daniel/application/model/metier/produittype/ProduitI.java"
+      - "src/main/java/levy/daniel/application/model/metier/produittype/Produit.java"
+      - "src/main/java/levy/daniel/application/model/metier/produittype/CloneContext.java"
+      - "src/test/java/levy/daniel/application/model/metier/produittype/TypeProduitTest.java"
+      - "src/test/java/levy/daniel/application/model/metier/produittype/TypeProduitSousTypeProduitIntegrationTest.java"
+      - "src/test/java/levy/daniel/application/model/metier/produittype/SousTypeProduitTest.java"
+      - "src/test/java/levy/daniel/application/model/metier/produittype/ProduitTest.java"
+      - "src/test/java/levy/daniel/application/model/metier/produittype/MetierGlobalConformiteTest.java"
+      - "src/test/java/levy/daniel/application/model/metier/produittype/CloneContextTest.java"
+
+  persistance:
+    description: "Couche persistance (entities/dao/utils + tests)."
+    paths:
+      - "src/main/java/levy/daniel/application/persistence/metier/IExportateurCsv.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/IExportateurJTable.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPA.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPA.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPA.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetier.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPA.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/TypeProduitDaoJPA.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/SousTypeProduitDaoJPA.java"
+      - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/ProduitDaoJPA.java"
+      - "src/main/java/levy/daniel/application/model/utilitaires/metier/produittype/NormalizerUtils.java"
+      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java"
+      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPATest.java"
+      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPATest.java"
+      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPATest.java"
+      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetierTest.java"
+      - "src/test/java/levy/daniel/application/model/utilitaires/metier/produittype/NormalizerUtilsTest.java"
+      - "src/test/java/levy/daniel/application/model/metier/produittype/MetierGlobalConformiteTest.java"
+
+  gateway:
+    description: "Couche gateway (pagination, exceptions, ports/adapters, CU + tests)."
+    paths:
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/TriSpec.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/ResultatPage.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/RequetePage.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/DirectionTri.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliLibelleBlank.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNonPersistent.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNull.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParentNull.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionTechniqueGateway.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionTechniqueGatewayNonPersistent.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionDoublon.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionNonPersistant.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionParametreBlank.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionParametreNull.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionStockageVide.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/TypeProduitGatewayIService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/SousTypeProduitGatewayIService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/ProduitGatewayIService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/cu/TypeProduitICuService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/cu/impl/TypeProduitCuService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/cu/SousTypeProduitICuService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/cu/impl/SousTypeProduitCuService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/cu/ProduitICuService.java"
+      - "src/main/java/levy/daniel/application/model/services/produittype/cu/impl/ProduitCuService.java"
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceMockTest.java"
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java"
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceMockTest.java"
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceIntegrationTest.java"
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceMockTest.java"
+      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceIntegrationTest.java"
