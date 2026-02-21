@@ -417,3 +417,48 @@ Objectif :
 
 ➡️ Garantir que le commit/push **SHA2** est strictement un ajout d’artefact OFFLINE
 pour le **code validé** au **SHA1**, sans altérer le code ni les contrats.
+
+## 24) Règle de rafraîchissement de la baseline (précondition absolue)
+
+Principe :
+
+➡️ La **baseline consolidée** est la **seule source de vérité opérationnelle** pour l’analyse,
+le diagnostic et la génération de code.
+Le GitHub au SHA sert uniquement à **rafraîchir** la baseline après chaque commit/push.
+
+Précondition absolue (ANTI-ANALYSE-SANS-BASELINE-A-JOUR) :
+
+- Toute analyse/diagnostic/codage est **interdit** tant que la baseline n’est pas
+  **parfaitement à jour** avec le **SHA courant** fourni par l’Utilisateur.
+- Dès qu’un nouveau SHA est fourni, l’IA doit relire au minimum les ressources nécessaires
+  (selon le périmètre) sur GitHub au SHA, puis mettre à jour la baseline.
+
+Mise à jour obligatoire après lecture GitHub réussie :
+
+- Après chaque lecture GitHub au SHA réalisée selon **RT-LECTURE-GITHUB-02** et jugée
+  techniquement parfaite (lecture binaire, contenu non altéré, génériques lisibles, pas de Raw Types),
+  l’IA doit :
+  1) **Mémoriser strictement ligne à ligne** le contenu lu depuis GitHub,
+  2) **Écraser** la version précédente du même fichier en baseline,
+  3) **Consolider** la baseline (une seule version par chemin : la plus récente),
+  4) Considérer la baseline comme unique matériau autorisé pour l’analyse.
+
+Critères minimaux de “lecture parfaite” (pour autoriser la mise à jour baseline) :
+
+- Lecture effectuée via URL Raw **au SHA** : `https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}`
+- Téléchargement binaire (octets bruts) + lecture locale
+- Contenu cohérent (non vide, non HTML d’erreur, non tronqué)
+- Génériques Java correctement lus lorsque applicable (aucun “Raw Type” dû à une lecture incorrecte)
+
+En cas de lecture imparfaite :
+
+- Si l’IA ne peut pas garantir la lecture correcte (ex : doute sur génériques, contenu altéré, lecture incomplète) :
+  ➜ signaler explicitement **"incident de lecture"**
+  ➜ suspendre toute analyse/génération
+  ➜ relancer automatiquement la lecture jusqu’à succès (max 3 tentatives) conformément à RT-LECTURE-GITHUB-02
+  ➜ à échec persistant : basculer en MODE OFFLINE (bundle) selon le présent contrat.
+
+Objectif :
+
+➡️ Garantir que toute analyse/correction est **reproductible**, **audit-ready** et
+strictement basée sur une baseline **consolidée** et **alignée** sur le SHA fourni.
