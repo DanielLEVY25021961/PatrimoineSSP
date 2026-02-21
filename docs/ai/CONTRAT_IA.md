@@ -345,3 +345,40 @@ Ce dispositif vise un workflow industriel :
 L’IA doit pouvoir être pilotée comme un collaborateur technique
 travaillant exclusivement sur pièces,
 sans jamais dépendre d’informations implicites.
+
+---
+
+## 22) Livraison des corrections — Règle de complétude (ANTI-SNIPPETS)
+
+Toute correction ou proposition de code fournie par l’IA doit être livrée sous la forme d’un **fichier complet directement intégrable dans STS**, sans nécessité d’édition manuelle intermédiaire.
+
+Règles obligatoires :
+
+- L’IA doit fournir soit :
+  - la totalité d’un fichier ou d’une classe (ex : `docs/ai/CONTRAT_IA.md`, une classe Java complète),
+  - soit la totalité d’une méthode (ex : une méthode `creer()` complète dans un ADAPTER).
+
+- Le contenu fourni doit être :
+  - complet,
+  - cohérent,
+  - prêt à être copié-collé tel quel,
+  - compilable lorsque applicable,
+  - conforme aux conventions du projet.
+
+Interdictions absolues :
+
+- Fournir des fragments partiels (“snippets”)
+- Donner des instructions du type :
+  - « insérer ce code ligne X »
+  - « remplacer la ligne Y »
+  - « ajouter ceci après telle méthode »
+  - « modifier tel endroit manuellement »
+- Produire un patch nécessitant une reconstruction par l’utilisateur
+- Répartir une correction sur plusieurs messages
+
+Principe :
+
+➡️ **L’utilisateur ne doit jamais avoir à reconstituer le code.**  
+➡️ **La livraison doit être immédiatement exploitable.**
+
+Cette règle s’applique à tous les modes produisant du code, en particulier le MODE CODER.

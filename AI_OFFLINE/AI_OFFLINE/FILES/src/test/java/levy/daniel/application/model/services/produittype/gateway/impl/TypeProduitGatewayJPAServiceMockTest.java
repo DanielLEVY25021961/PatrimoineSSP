@@ -324,7 +324,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -342,7 +345,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -371,7 +377,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -390,7 +399,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -411,7 +423,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ============================ RECHERCHER =============================
 

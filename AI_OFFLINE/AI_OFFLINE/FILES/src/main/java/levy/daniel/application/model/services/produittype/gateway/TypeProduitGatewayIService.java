@@ -298,6 +298,7 @@ public interface TypeProduitGatewayIService {
 
 	// ***************************** METHODES ****************************/
 
+	
 
 	/**
 	 * <div>
@@ -329,6 +330,15 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si {@code DAO.save(entity)} retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
+	 * <li>Si le {@code libelle} fourni correspond à un doublon fonctionnel
+	 * déjà présent dans le stockage :
+	 * la création est refusée par les contraintes d'intégrité du stockage
+	 * (contrainte d'unicité, clé candidate, etc.) ; cette situation est
+	 * traitée comme une erreur technique d'accès au stockage et
+	 * jette une {@link ExceptionTechniqueGateway}
+	 * avec un message {@link #ERREUR_TECHNIQUE_STOCKAGE}
+	 * + un message sûr dérivé de l'Exception (jamais {@code null}),
+	 * et propage l'Exception technique cause.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
@@ -345,6 +355,8 @@ public interface TypeProduitGatewayIService {
 	 * <li>L'objet retourné correspond à l'état réellement persisté
 	 * (si non {@code null}).</li>
 	 * <li>Aucune écriture partielle n'est réalisée.</li>
+	 * <li>La création de doublons fonctionnels (même {@code libelle})
+	 * est impossible : le stockage refuse l'écriture.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -357,13 +369,14 @@ public interface TypeProduitGatewayIService {
 	 * si le libellé de {@code pObject} est blank.
 	 * @throws ExceptionTechniqueGateway
 	 * si le stockage retourne {@code null} ou
-	 * si une erreur technique survient lors de l'accès au stockage.
+	 * si une erreur technique survient lors de l'accès au stockage
+	 * (y compris violation de contraintes d'intégrité / unicité).
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	TypeProduit creer(TypeProduit pObject) throws Exception;
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">Retourne tous les {@link TypeProduit}

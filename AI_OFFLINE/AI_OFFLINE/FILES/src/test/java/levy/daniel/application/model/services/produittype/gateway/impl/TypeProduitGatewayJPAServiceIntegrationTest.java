@@ -364,30 +364,6 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     /**
      * <div>
      * <p>
-     * Vérifie que `rechercherTous()` retourne une liste non nulle, non vide,
-     * et contient les types seedés par data-test.sql.
-     * </p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName(DN_RECHERCHER_TOUS)
-    @Test
-    public void testRechercherTous() throws Exception {
-        final List<TypeProduit> resultats = this.service.rechercherTous();
-        assertThat(resultats).isNotNull();
-        assertThat(resultats).isNotEmpty();
-        assertThat(resultats)
-            .extracting(TypeProduit::getTypeProduit)
-            .doesNotHaveDuplicates()
-            .contains(VETEMENT, BAZAR, OUTILLAGE, TOURISME, VESTONS);
-        assertListeTrieeParLibelle(resultats);
-    }
-
-    /**
-     * <div>
-     * <p>
      * Vérifie que `creer(TypeProduit)` ajoute bien un élément,
      * rend l'élément retrouvable et ne "wipe" pas les seedés.
      * </p>
@@ -414,7 +390,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(liste)
             .extracting(TypeProduit::getTypeProduit)
             .contains(VETEMENT, BAZAR, OUTILLAGE, TOURISME, VESTONS, NOUVEAU_TYPE_1);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -429,7 +408,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -445,7 +427,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.creer(blank))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -559,7 +544,175 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(retourCasse).isNotNull();
     }
 
-    /**
+    // =============================== TESTS ===============================
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Vérifie que `rechercherTous()` retourne une liste non nulle, non vide,
+	 * et contient les types seedés par data-test.sql.
+	 * </p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER)
+	@DisplayName(DN_RECHERCHER_TOUS)
+	@Test
+	public void testRechercherTous() throws Exception {
+	    final List<TypeProduit> resultats = this.service.rechercherTous();
+	    assertThat(resultats).isNotNull();
+	    assertThat(resultats).isNotEmpty();
+	    assertThat(resultats)
+	        .extracting(TypeProduit::getTypeProduit)
+	        .doesNotHaveDuplicates()
+	        .contains(VETEMENT, BAZAR, OUTILLAGE, TOURISME, VESTONS);
+	    assertListeTrieeParLibelle(resultats);
+	}
+
+	/**
+	 * <div>
+	 * <p>Vérifie que `rechercherTousParPage(null)` retourne une page cohérente.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName(DN_PAGE_NULL)
+	@Test
+	public void testRechercherTousParPageNull() throws Exception {
+	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(null);
+	    assertThat(page).isNotNull();
+	    assertThat(page.getContent()).isNotNull();
+	    assertThat(page.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+	    assertThat(page.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+	    assertThat(page.getTotalElements()).isPositive();
+	}
+
+	/**
+	 * <div>
+	 * <p>Vérifie que `rechercherTousParPage(avec tri)` respecte le tri demandé.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName(DN_PAGE_TRI)
+	@Test
+	public void testRechercherTousParPageAvecTri() throws Exception {
+	    final List<TriSpec> tris = new ArrayList<TriSpec>();
+	    tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
+	    final RequetePage requete = new RequetePage(0, 3, tris);
+	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
+	    assertThat(page).isNotNull();
+	    assertThat(page.getContent()).isNotNull().isNotEmpty();
+	    assertThat(page.getPageNumber()).isEqualTo(0);
+	    assertThat(page.getPageSize()).isEqualTo(3);
+	    assertThat(page.getTotalElements()).isPositive();
+	    assertThat(page.getContent().size()).isLessThanOrEqualTo(3);
+	    assertListeTrieeParLibelle(page.getContent());
+	}
+
+	/**
+	 * <div>
+	 * <p>Vérifie que `rechercherTousParPage(vide)` retourne une page vide si la base est vide.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName(DN_PAGE_VIDE)
+	@Test
+	public void testRechercherTousParPageVide() throws Exception {
+	    final List<TypeProduit> tous = this.service.rechercherTous();
+	    final RequetePage requete = new RequetePage(0, 10, new ArrayList<>());
+	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
+	    assertThat(page).isNotNull();
+	    assertThat(page.getContent()).hasSize(tous.size());
+	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
+	}
+
+	/**
+	 * <div>
+	 * <p>Vérifie que `rechercherTousParPage(taille > total)` retourne tous les éléments.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName(DN_PAGE_TAILLE_SUP)
+	@Test
+	public void testRechercherTousParPageTailleSuperieure() throws Exception {
+	    final List<TypeProduit> tous = this.service.rechercherTous();
+	    final RequetePage requete = new RequetePage(0, tous.size() + 10, new ArrayList<>());
+	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
+	    assertThat(page.getContent()).hasSize(tous.size());
+	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
+	    
+	} // _________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>
+	 * Vérifie qu'une page très au-delà du nombre total
+	 * retourne un contenu vide mais cohérent.
+	 * </p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName(DN_PAGE_HORS_BORNES)
+	@Test
+	public void testRechercherTousParPageHorsBornes() throws Exception {
+	
+	    final List<TypeProduit> tous = this.service.rechercherTous();
+	
+	    /* Page très élevée. */
+	    final RequetePage requete =
+	            new RequetePage(9999, 10, new ArrayList<>());
+	
+	    final ResultatPage<TypeProduit> page =
+	            this.service.rechercherTousParPage(requete);
+	
+	    assertThat(page).isNotNull();
+	    assertThat(page.getContent()).isNotNull().isEmpty();
+	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
+	    
+	} // _________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>
+	 * Vérifie qu'une taille de page égale à zéro
+	 * retourne un contenu cohérent avec le comportement réel observé
+	 * (Spring Data / H2) : retour de tous les éléments.
+	 * </p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName(DN_PAGE_TAILLE_ZERO)
+	@Test
+	public void testRechercherTousParPageTailleZero() throws Exception {
+	
+	    final List<TypeProduit> tous = this.service.rechercherTous();
+	
+	    final RequetePage requete =
+	            new RequetePage(0, 0, new ArrayList<>());
+	
+	    final ResultatPage<TypeProduit> page =
+	            this.service.rechercherTousParPage(requete);
+	
+	    assertThat(page).isNotNull();
+	    assertThat(page.getContent()).isNotNull();
+	    assertThat(page.getContent()).hasSize(tous.size());
+	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
+	
+	} // _________________________________________________________________
+
+	/**
      * <div>
      * <p>Vérifie que `findByLibelle(blank)` respecte le contrat du port :
      * jette une {@link ExceptionAppliLibelleBlank}.</p>
@@ -788,154 +941,6 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     
     
 
-    /**
-     * <div>
-     * <p>Vérifie que `rechercherTousParPage(null)` retourne une page cohérente.</p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName(DN_PAGE_NULL)
-    @Test
-    public void testRechercherTousParPageNull() throws Exception {
-        final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(null);
-        assertThat(page).isNotNull();
-        assertThat(page.getContent()).isNotNull();
-        assertThat(page.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
-        assertThat(page.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
-        assertThat(page.getTotalElements()).isPositive();
-    }
-
-    /**
-     * <div>
-     * <p>Vérifie que `rechercherTousParPage(avec tri)` respecte le tri demandé.</p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName(DN_PAGE_TRI)
-    @Test
-    public void testRechercherTousParPageAvecTri() throws Exception {
-        final List<TriSpec> tris = new ArrayList<TriSpec>();
-        tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
-        final RequetePage requete = new RequetePage(0, 3, tris);
-        final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
-        assertThat(page).isNotNull();
-        assertThat(page.getContent()).isNotNull().isNotEmpty();
-        assertThat(page.getPageNumber()).isEqualTo(0);
-        assertThat(page.getPageSize()).isEqualTo(3);
-        assertThat(page.getTotalElements()).isPositive();
-        assertThat(page.getContent().size()).isLessThanOrEqualTo(3);
-        assertListeTrieeParLibelle(page.getContent());
-    }
-
-    /**
-     * <div>
-     * <p>Vérifie que `rechercherTousParPage(vide)` retourne une page vide si la base est vide.</p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName(DN_PAGE_VIDE)
-    @Test
-    public void testRechercherTousParPageVide() throws Exception {
-        final List<TypeProduit> tous = this.service.rechercherTous();
-        final RequetePage requete = new RequetePage(0, 10, new ArrayList<>());
-        final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
-        assertThat(page).isNotNull();
-        assertThat(page.getContent()).hasSize(tous.size());
-        assertThat(page.getTotalElements()).isEqualTo(tous.size());
-    }
-
-    /**
-     * <div>
-     * <p>Vérifie que `rechercherTousParPage(taille > total)` retourne tous les éléments.</p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName(DN_PAGE_TAILLE_SUP)
-    @Test
-    public void testRechercherTousParPageTailleSuperieure() throws Exception {
-        final List<TypeProduit> tous = this.service.rechercherTous();
-        final RequetePage requete = new RequetePage(0, tous.size() + 10, new ArrayList<>());
-        final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
-        assertThat(page.getContent()).hasSize(tous.size());
-        assertThat(page.getTotalElements()).isEqualTo(tous.size());
-        
-    } // _________________________________________________________________
-
-    
-    
-    /**
-     * <div>
-     * <p>
-     * Vérifie qu'une page très au-delà du nombre total
-     * retourne un contenu vide mais cohérent.
-     * </p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName(DN_PAGE_HORS_BORNES)
-    @Test
-    public void testRechercherTousParPageHorsBornes() throws Exception {
-
-        final List<TypeProduit> tous = this.service.rechercherTous();
-
-        /* Page très élevée. */
-        final RequetePage requete =
-                new RequetePage(9999, 10, new ArrayList<>());
-
-        final ResultatPage<TypeProduit> page =
-                this.service.rechercherTousParPage(requete);
-
-        assertThat(page).isNotNull();
-        assertThat(page.getContent()).isNotNull().isEmpty();
-        assertThat(page.getTotalElements()).isEqualTo(tous.size());
-        
-    } // _________________________________________________________________
-
-
-    
-    /**
-     * <div>
-     * <p>
-     * Vérifie qu'une taille de page égale à zéro
-     * retourne un contenu cohérent avec le comportement réel observé
-     * (Spring Data / H2) : retour de tous les éléments.
-     * </p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName(DN_PAGE_TAILLE_ZERO)
-    @Test
-    public void testRechercherTousParPageTailleZero() throws Exception {
-
-        final List<TypeProduit> tous = this.service.rechercherTous();
-
-        final RequetePage requete =
-                new RequetePage(0, 0, new ArrayList<>());
-
-        final ResultatPage<TypeProduit> page =
-                this.service.rechercherTousParPage(requete);
-
-        assertThat(page).isNotNull();
-        assertThat(page.getContent()).isNotNull();
-        assertThat(page.getContent()).hasSize(tous.size());
-        assertThat(page.getTotalElements()).isEqualTo(tous.size());
-
-    } // _________________________________________________________________
-   
-
-    
     /**
      * <div>
      * <p>Vérifie que `update(null)` respecte le contrat du port :
