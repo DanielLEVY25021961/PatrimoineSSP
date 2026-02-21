@@ -917,9 +917,41 @@ public class ProduitGatewayJPAService
 			 * ont été appliquées avant de sauvegarder.
 			 * Cela évite une opération de sauvegarde inutile 
 			 * si l'objet n'a pas changé. */
-			final boolean modifie 
+			boolean modifie 
 				= appliquerModifications(
 						persiste, pObject, parentPersistant);
+
+			/* 
+			 * Sécurisation contractuelle :
+			 * si appliquerModifications(...) ne détecte pas le changement
+			 * alors que le contrat exige que l'état réellement persisté
+			 * reflète pObject (libellé/parent), on recontrôle explicitement
+			 * et on force la modification si nécessaire.
+			 */
+			if (!modifie) {
+
+				final String nouveauLibelle = pObject.getProduit();
+				final String ancienLibelle = persiste.getProduit();
+
+				if (!safeEquals(ancienLibelle, nouveauLibelle)) {
+					persiste.setProduit(nouveauLibelle);
+					modifie = true;
+				}
+
+				final SousTypeProduitI ancienParent = persiste.getSousTypeProduit();
+				final SousTypeProduitI nouveauParent = pObject.getSousTypeProduit();
+
+				if (ancienParent == null && nouveauParent == null) {
+					/* Pas de changement de parent. */
+				} else if (ancienParent == null || nouveauParent == null) {
+					persiste.setSousTypeProduit(parentPersistant);
+					modifie = true;
+				} else if (!safeEquals(ancienParent.getIdSousTypeProduit(),
+						nouveauParent.getIdSousTypeProduit())) {
+					persiste.setSousTypeProduit(parentPersistant);
+					modifie = true;
+				}
+			}
 
 			/* si il n'y a eu aucune modification :
 			 * retourne l'Entity non modifiée convertie en objet metier. */
@@ -965,8 +997,9 @@ public class ProduitGatewayJPAService
 			throw new ExceptionTechniqueGateway(message, e);
 
 		}
-	}
 
+	} // Fin de update(...).________________________________________________
+	
 	
 	
 	/**
