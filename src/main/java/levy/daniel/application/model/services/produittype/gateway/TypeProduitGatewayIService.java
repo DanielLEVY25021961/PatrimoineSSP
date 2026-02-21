@@ -309,10 +309,12 @@ public interface TypeProduitGatewayIService {
 	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
 	 * (scénario nominal) :</p>
 	 * <ul>
+	 * <li>Valider l'objet métier et ses invariants.</li>
+	 * <li>Vérifier l'absence de collision métier
+	 * (ex : libellé déjà existant).</li>
 	 * <li>Convertir l'objet métier en Entity stockable.</li>
-	 * <li>Déléguer la sauvegarde de l'Entity dans le stockage
-	 * au composant de persistance (DAO).</li>
-	 * <li>Convertir l'Entity stockable en objet métier.</li>
+	 * <li>Déléguer la sauvegarde de l'Entity au composant de persistance (DAO).</li>
+	 * <li>Convertir l'Entity persistée en objet métier.</li>
 	 * <li>Retourner l'objet métier effectivement persisté.</li>
 	 * </ul>
 	 * </div>
