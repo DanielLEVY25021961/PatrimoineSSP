@@ -590,8 +590,8 @@ public class TypeProduitGatewayJPAService
 
 
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	*/
 	@Override
 	public TypeProduit update(
 			final TypeProduit pObject) throws Exception {
@@ -655,6 +655,36 @@ public class TypeProduitGatewayJPAService
 
 			final TypeProduitJPA persiste = optEntity.get();
 
+			/* 
+			 * Si {@code libelle de l'objet métier} correspond 
+			 * à celui d'un autre TypeProduit déjà présent 
+			 * dans le stockage : aucune exception n'est levée, 
+			 * aucune modification n'est appliquée, 
+			 * et l'objet persistant inchangé est retourné.
+			 */
+			final String libelleDemande = pObject.getTypeProduit();
+			final String libelleActuel = persiste.getTypeProduit();
+
+			if (!safeEquals(libelleActuel, libelleDemande)) {
+
+				/* Recherche un éventuel homonyme (ignore case). */
+				final TypeProduitJPA homonyme
+					= this.typeProduitDaoJPA
+						.findByTypeProduitIgnoreCase(libelleDemande);
+
+				/* Si un autre TypeProduit porte déjà ce libellé :
+				 * retourne l'objet persistant inchangé. */
+				if (homonyme != null) {
+
+					final Long idHomonyme = homonyme.getIdTypeProduit();
+
+					if (idHomonyme != null && !idHomonyme.equals(id)) {
+						return ConvertisseurJPAToMetier
+								.typeProduitJPAToMetier(persiste);
+					}
+				}
+			}
+
 			final boolean modifie
 				= appliquerModifications(persiste, pObject);
 
@@ -705,7 +735,7 @@ public class TypeProduitGatewayJPAService
 	}
 
 
-
+	
 	/**
 	 * {@inheritDoc}
 	 */
