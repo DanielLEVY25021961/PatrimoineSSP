@@ -313,7 +313,8 @@ public interface TypeProduitGatewayIService {
 	 * <li>Vérifier l'absence de collision métier
 	 * (ex : libellé déjà existant).</li>
 	 * <li>Convertir l'objet métier en Entity stockable.</li>
-	 * <li>Déléguer la sauvegarde de l'Entity au composant de persistance (DAO).</li>
+	 * <li>Déléguer la sauvegarde de l'Entity 
+	 * au composant de persistance (DAO).</li>
 	 * <li>Convertir l'Entity persistée en objet métier.</li>
 	 * <li>Retourner l'objet métier effectivement persisté.</li>
 	 * </ul>
@@ -328,6 +329,10 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si {@code libelle de l'objet métier} est {@code null} ou blank :
 	 * jette une {@link ExceptionAppliLibelleBlank}
 	 * avec un message {@link #MESSAGE_CREER_KO_LIBELLE_BLANK}.</li>
+	 * <li>Si un {@code TypeProduit} portant le même libellé existe déjà
+	 * dans le stockage :
+	 * jette une Exception applicative
+	 * et aucune création n'est effectuée.</li>
 	 * <li>Si {@code DAO.save(entity)} retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
@@ -365,7 +370,7 @@ public interface TypeProduitGatewayIService {
 	TypeProduit creer(TypeProduit pObject) throws Exception;
 
 
-
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">Retourne tous les {@link TypeProduit}
