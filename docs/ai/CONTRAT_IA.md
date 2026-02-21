@@ -463,6 +463,18 @@ Objectif :
 ➡️ Garantir que toute analyse/correction est **reproductible**, **audit-ready** et
 strictement basée sur une baseline **consolidée** et **alignée** sur le SHA fourni.
 
+### Bloc PREUVE DE LECTURE (OBLIGATOIRE)
+
+Toute réponse contenant une **analyse**, un **diagnostic** ou du **code** DOIT commencer par un bloc **PREUVE DE LECTURE** listant au minimum :
+
+- **SHA courant**
+- **URL Raw SHA** utilisée pour la lecture de `docs/ai/CONTRAT_IA.md`
+- **Taille** (en octets) du fichier lu
+- **Nombre de lignes** du fichier lu
+- **Checksum** du contenu lu (SHA-256)
+
+Interdiction : aucune analyse/diagnostic/génération ne doit être produite tant que ce bloc n’a pas été affiché et que la baseline n’a pas été rafraîchie/consolidée au SHA courant.
+
 ## 25) Détection des modifications au nouveau SHA (comparaison GitHub ↔ baseline)
 
 Principe :
