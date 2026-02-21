@@ -382,3 +382,38 @@ Principe :
 ➡️ **La livraison doit être immédiatement exploitable.**
 
 Cette règle s’applique à tous les modes produisant du code, en particulier le MODE CODER.
+
+## 23) Règle de couplage CODE/BUNDLE (Variante A — 2 SHAs)
+
+Définitions :
+
+- **SHA1 (CODE)** : SHA du commit/push contenant les corrections fonctionnelles/techniques (hors bundle).
+- **SHA2 (BUNDLE)** : SHA du commit/push ne contenant que le bundle OFFLINE généré pour le **SHA1**.
+
+Règles obligatoires :
+
+1. **Interdiction de modifications hors bundle entre SHA1 et SHA2**
+   - Entre le push de **SHA1** et le push de **SHA2**, aucun fichier ne doit être modifié
+     en dehors de `AI_OFFLINE/**` (et éventuellement du zip `AI_OFFLINE_*.zip` stocké sous `AI_OFFLINE/**`).
+   - Si un fichier hors `AI_OFFLINE/**` diffère entre **SHA1** et **SHA2** :
+     ➜ le SHA2 n’est plus un “bundle de SHA1”  
+     ➜ le cycle Variante A est considéré invalide.
+
+2. **Provenance du bundle**
+   - Le fichier `AI_OFFLINE/PROVENANCE.yaml` doit référencer explicitement le **SHA1 (CODE)**
+     comme SHA de référence du contenu packagé (le bundle peut être committé au SHA2).
+   - Si `PROVENANCE.yaml` ne référence pas **SHA1** :
+     ➜ signaler explicitement **"incident de lecture"** et suspendre toute analyse/génération.
+
+3. **Contrôle obligatoire par l’IA à réception de SHA2**
+   - À réception de **SHA2**, l’IA doit vérifier que :
+     - seuls des chemins sous `AI_OFFLINE/**` ont changé entre **SHA1** et **SHA2**,
+     - et que `AI_OFFLINE/PROVENANCE.yaml` référence bien **SHA1**.
+   - Si l’IA constate une divergence hors `AI_OFFLINE/**` :
+     ➜ signaler **"problème grave"**  
+     ➜ exiger un nouveau cycle complet (nouveau SHA1 puis nouveau SHA2).
+
+Objectif :
+
+➡️ Garantir que le commit/push **SHA2** est strictement un ajout d’artefact OFFLINE
+pour le **code validé** au **SHA1**, sans altérer le code ni les contrats.
