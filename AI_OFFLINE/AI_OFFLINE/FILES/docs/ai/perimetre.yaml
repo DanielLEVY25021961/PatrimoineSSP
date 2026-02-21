@@ -88,7 +88,6 @@ packs:
       - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPATest.java"
       - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetierTest.java"
       - "src/test/java/levy/daniel/application/model/utilitaires/metier/produittype/NormalizerUtilsTest.java"
-      - "src/test/java/levy/daniel/application/model/metier/produittype/MetierGlobalConformiteTest.java"
 
   gateway:
     description: "Couche gateway (pagination, exceptions, ports/adapters, CU + tests)."

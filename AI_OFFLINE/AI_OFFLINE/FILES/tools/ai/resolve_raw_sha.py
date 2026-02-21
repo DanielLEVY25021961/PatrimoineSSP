@@ -1,5 +1,3 @@
-
-```python
 # tools/ai/resolve_raw_sha.py
 # -*- coding: utf-8 -*-
 
@@ -42,91 +40,118 @@ RAW_SHA_PREFIX = re.compile(
 
 
 @dataclass(frozen=True)
-class InputItem:
-    raw: str
-    path: Optional[str]
+class ParsedInput:
+    path: str
+    owner: Optional[str] = None
+    repo: Optional[str] = None
+    branch: Optional[str] = None
+    sha: Optional[str] = None
 
 
-def _normalize_line(line: str) -> str:
-    return line.strip()
+def _extract_path_from_ref_heads(url: str) -> Optional[ParsedInput]:
+    m = RAW_REFS_HEADS_PREFIX.match(url.strip())
+    if not m:
+        return None
+    return ParsedInput(
+        owner=m.group("owner"),
+        repo=m.group("repo"),
+        branch=m.group("branch"),
+        path=m.group("path"),
+    )
 
 
-def _extract_path_from_line(line: str) -> InputItem:
-    """
-    Returns InputItem(raw=line, path=maybe_path).
-    If line is:
-      - a raw refs/heads URL => extract path
-      - a raw sha URL       => extract path
-      - a plain path        => keep as path
-      - empty/comment       => path=None
-    """
-    if not line:
-        return InputItem(raw=line, path=None)
-
-    if line.startswith("#"):
-        return InputItem(raw=line, path=None)
-
-    m1 = RAW_REFS_HEADS_PREFIX.match(line)
-    if m1:
-        return InputItem(raw=line, path=m1.group("path"))
-
-    m2 = RAW_SHA_PREFIX.match(line)
-    if m2:
-        return InputItem(raw=line, path=m2.group("path"))
-
-    # Assume it's a repo-relative path
-    return InputItem(raw=line, path=line)
+def _extract_path_from_raw_sha(url: str) -> Optional[ParsedInput]:
+    m = RAW_SHA_PREFIX.match(url.strip())
+    if not m:
+        return None
+    return ParsedInput(
+        owner=m.group("owner"),
+        repo=m.group("repo"),
+        sha=m.group("sha"),
+        path=m.group("path"),
+    )
 
 
-def _read_input_file(fp: str) -> List[InputItem]:
-    items: List[InputItem] = []
-    with open(fp, "rb") as f:
-        for bline in f.readlines():
-            line = bline.decode("utf-8", errors="replace")
-            norm = _normalize_line(line)
-            items.append(_extract_path_from_line(norm))
-    return items
+def _normalize_path(s: str) -> str:
+    s2 = s.strip()
+    if not s2:
+        return ""
+    if s2.startswith("/"):
+        s2 = s2[1:]
+    return s2
+
+
+def _iter_input_lines(path: str) -> Iterable[str]:
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line2 = line.strip()
+            if not line2:
+                continue
+            if line2.startswith("#"):
+                continue
+            yield line2
 
 
 def _make_raw_sha_url(owner: str, repo: str, sha: str, path: str) -> str:
-    path2 = path.lstrip("/")
-    return f"https://raw.githubusercontent.com/{owner}/{repo}/{sha}/{path2}"
+    return f"https://raw.githubusercontent.com/{owner}/{repo}/{sha}/{path}"
 
 
-def _iter_paths(args: argparse.Namespace) -> Iterable[str]:
-    # From --path
-    for p in args.path or []:
-        p2 = _normalize_line(p)
+def _collect_paths(
+    direct_paths: List[str],
+    input_file: Optional[str],
+) -> List[str]:
+
+    out: List[str] = []
+
+    for p in direct_paths:
+        p2 = _normalize_path(p)
         if p2:
-            yield p2
+            out.append(p2)
 
-    # From --input file
-    if args.input:
-        for item in _read_input_file(args.input):
-            if item.path:
-                yield item.path
+    if input_file:
+        for line in _iter_input_lines(input_file):
+            parsed = _extract_path_from_ref_heads(line)
+            if parsed is not None:
+                p3 = _normalize_path(parsed.path)
+                if p3:
+                    out.append(p3)
+                continue
+
+            parsed2 = _extract_path_from_raw_sha(line)
+            if parsed2 is not None:
+                p4 = _normalize_path(parsed2.path)
+                if p4:
+                    out.append(p4)
+                continue
+
+            p5 = _normalize_path(line)
+            if p5:
+                out.append(p5)
+
+    return out
 
 
-def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--owner", default="", help="GitHub owner (required if building URLs)")
-    parser.add_argument("--repo", default="", help="GitHub repo (required if building URLs)")
-    parser.add_argument("--sha", required=True, help="Unique SHA (required)")
-    parser.add_argument("--path", action="append", default=[], help="Repo-relative path (repeatable)")
-    parser.add_argument("--input", default="", help="Text file containing paths and/or raw URLs")
-    parser.add_argument("--print-paths", action="store_true", help="Print extracted paths only")
-    args = parser.parse_args(argv)
+def main() -> int:
 
-    paths = list(dict.fromkeys(_iter_paths(args)))  # deduplicate, keep order
+    parser = argparse.ArgumentParser(description="Resolve GitHub raw SHA URLs from paths or refs/heads URLs.")
+    parser.add_argument("--owner", default="DanielLEVY25021961", help="GitHub owner")
+    parser.add_argument("--repo", default="PatrimoineSSP", help="GitHub repo")
+    parser.add_argument("--sha", required=True, help="Git SHA (7-40 hex)")
+    parser.add_argument("--path", action="append", default=[], help="Path (repeatable)")
+    parser.add_argument("--input", help="Input file containing paths and/or raw URLs")
+    parser.add_argument("--print-paths", action="store_true", help="Print only normalized paths (no URLs)")
+
+    args = parser.parse_args()
+
+    paths = _collect_paths(args.path, args.input)
+    if not paths:
+        sys.stderr.write("No paths provided.\n")
+        return 2
 
     if args.print_paths:
         for p in paths:
             sys.stdout.write(p + "\n")
         return 0
-
-    if not args.owner or not args.repo:
-        sys.stderr.write("ERROR: --owner and --repo are required to build raw SHA URLs.\n")
-        return 2
 
     for p in paths:
         sys.stdout.write(_make_raw_sha_url(args.owner, args.repo, args.sha, p) + "\n")
