@@ -104,6 +104,10 @@ Lecture autorisée exclusivement :
 3. Lecture locale  
 4. Vérification stricte des génériques (aucun Raw Type)
 
+Sacralisation RT-LECTURE-GITHUB-02 :
+
+La lecture GitHub est exclusivement RT-LECTURE-GITHUB-02 (Raw SHA + téléchargement binaire + lecture locale). Toute autre forme de lecture (rendu texte, HTML, extraction) est interdite et doit déclencher “incident de lecture” puis bascule OFFLINE si échec persistant.
+
 Règles :
 
 - Relancer automatiquement en cas d’échec (max 3 tentatives)
