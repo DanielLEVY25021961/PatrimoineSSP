@@ -49,6 +49,15 @@ packs:
     paths:
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
+  configuration:
+    description: "Configuration build + ressources de tests (pom + SQL + log4j2 + properties)."
+    paths:
+      - "pom.xml"
+      - "src/test/resources/truncate-test.sql"
+      - "src/test/resources/data-test.sql"
+      - "src/test/resources/application-test.properties"
+      - "src/test/resources/Log4j2-test.xml"
+
   metier:
     description: "Couche métier (domain model + tests)."
     paths:

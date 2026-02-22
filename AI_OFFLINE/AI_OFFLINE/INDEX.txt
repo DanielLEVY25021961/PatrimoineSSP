@@ -2,6 +2,7 @@ docs/ai/CONTRAT_IA.md
 docs/ai/MANIFEST_IA.yaml
 docs/ai/perimetre.yaml
 docs/contrats/gateway/TypeProduitGatewayJPAService.md
+pom.xml
 src/main/java/levy/daniel/application/model/metier/IExportateurCsv.java
 src/main/java/levy/daniel/application/model/metier/IExportateurJTable.java
 src/main/java/levy/daniel/application/model/metier/produittype/CloneContext.java
@@ -67,6 +68,10 @@ src/test/java/levy/daniel/application/persistence/metier/produittype/entities/en
 src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPATest.java
 src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPATest.java
 src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java
+src/test/resources/Log4j2-test.xml
+src/test/resources/application-test.properties
+src/test/resources/data-test.sql
+src/test/resources/truncate-test.sql
 tools/ai/make_offline_bundle.py
 tools/ai/pack_reading_list.py
 tools/ai/paths.txt

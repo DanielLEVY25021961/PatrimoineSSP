@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+	https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+
+	<!-- ================================================== -->
+	<!-- POM pour MAVEN 4.0.0 -->
+	<!-- Java 24 -->
+	<!-- C:\Program Files\Java\jdk-24 -->
+	<!-- ================================================== -->
+
+	<!-- Version du POM. -->
+	<modelVersion>4.0.0</modelVersion>
+
+	<!-- ========================================================== -->
+	<!-- DEPENDANCES IMPOSEES PAR SPRING -->
+	<!-- ========================================================== -->
+	<!-- Parent Spring Boot -->
+	<!-- Compatible Java 17+, donc Java 21 OK -->
+	<!-- ========================================================== -->
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.3</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<!-- ========================================================== -->
+
+	<!-- ========================================================== -->
+	<!-- POM APPLICATIF FILS DE POM PARENT SPRING BOOT -->
+	<!-- GAV (identifiant du projet) -->
+	<!-- G : groupId : nom de domaine -->
+	<!-- A : artifactId : nom du projet -->
+	<!-- V : version : version du projet -->
+	<!-- ========================================================== -->
+
+	<!-- domaine (espace de nom) appelé GROUPE (G) dans Maven -->
+	<groupId>levy.daniel.application</groupId>
+
+
+	<!-- NOM DU FUTUR FUTUR LIVRABLE (JAR, WAR, POM, ...) généré 
+		appelé artifactId (A) dans Maven -->
+	<!-- également le nom du projet MAVEN JAVA généré dans ECLIPSE -->
+	<artifactId>patrimoineSSP</artifactId>
+
+
+	<!-- VERSION DU FUTUR LIVRABLE (JAR, WAR, POM, ...) -->
+	<!-- Si Version Bêta de développement (SNAPSHOT) -->
+	<!--non incrémentée dans Maven -->
+	<version>0.0.1-SNAPSHOT</version>
+
+
+
+	<!-- ========================================================== -->
+	<!-- PACKAGING -->
+	<!-- Préciser ici la forme du livrable -->
+	<!-- que le projet Maven doit produire (war, jar, -->
+	<!-- POM, ...). -->
+	<!-- ========================================================== -->
+	<!-- Résultat du Packaging (forme du livrable). Ici JAR -->
+	<packaging>jar</packaging>
+
+	<!-- INTERVIENT DANS LES LOGS MAVEN LORS DU BUILD. Par exemple, "Building 
+		'bidon_name' 0.0.1-SNAPSHOT" -->
+	<!-- N'interfère pas dans le nom du livrable créé. C'est artifactId qui 
+		compte. -->
+	<name>patrimoineSSP</name>
+
+	<!-- Description de l'application générée par le projet Maven -->
+	<description>Patrimoine avec Spring Boot</description>
+
+
+	<properties>
+		<!--  version de Java -->
+		<java.version>21</java.version>
+		<!-- version de JavaFX -->
+		<javafx.version>21</javafx.version>
+		<!-- version du Plugin JavaFX javafx-maven-plugin -->
+		<javafx-maven-plugin.version>0.0.8</javafx-maven-plugin.version>
+		
+		<!-- version de la BDD H2 utilisée dans le projet -->
+		<h2.version>2.4.240</h2.version>
+		<!-- version de apache.commons-lang3 -->
+		<commons-lang3.version>3.20.0</commons-lang3.version>
+		
+		<!-- version de spring-boot-maven-plugin -->
+		<spring-boot-maven-plugin.version>4.0.1</spring-boot-maven-plugin.version>
+		
+		<!-- version de Mockito pour les tests d'intégration. -->
+		<mockito.version>5.2.0</mockito.version>
+		
+	</properties>
+
+
+	<!-- ============ PROFILS MAVEN (pas profils SPRING =============== -->
+	<profiles>
+
+		<!-- ================= PROD ================= -->
+		<profile>
+			<id>prod</id>
+		</profile>
+
+		<!-- ================= DEV ================= -->
+		<profile>
+			<id>dev</id>
+			<dependencies>
+				<!-- devTools -->
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-devtools</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<!-- ================= DESKTOP ================= -->
+		<profile>
+			<id>desktop</id>
+		</profile>
+
+		<!-- ================= METIER-ONLY ================= -->
+		<profile>
+		    <id>metier-only</id>
+		
+		    <build>
+		        <plugins>
+		
+		            <plugin>
+		                <groupId>org.apache.maven.plugins</groupId>
+		                <artifactId>maven-surefire-plugin</artifactId>
+		                <version>3.2.5</version>
+		
+		                <configuration>
+		                    <includes>
+		                        <include>**/levy/daniel/application/model/metier/produittype/**/*Test.java</include>
+		                    </includes>
+		
+		                    <!-- Optionnel mais utile : si jamais ça ne match rien, tu le SAIS -->
+		                    <failIfNoTests>true</failIfNoTests>
+		                </configuration>
+		
+		            </plugin>
+		
+		        </plugins>
+		    </build>
+		</profile>				
+	</profiles>
+
+
+	<dependencies>	
+		
+		<!-- Exclure logback (logging par défaut Spring Boot) -->
+		<dependency>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-starter</artifactId>
+		  <exclusions>
+		    <exclusion>
+		      <groupId>org.springframework.boot</groupId>
+		      <artifactId>spring-boot-starter-logging</artifactId>
+		    </exclusion>
+		  </exclusions>
+		</dependency>	
+	
+		<!-- dépendances Spring Boot -->
+		<!-- JPA -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<!-- Web MVC -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		
+		<!-- Base H2 Pour les tests -->
+		<dependency>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-h2console</artifactId>
+		  <scope>test</scope>
+		</dependency>
+		
+		<!-- DEVTOOLS -->
+		 <dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-devtools</artifactId>
+	        <scope>runtime</scope>
+	        <optional>true</optional>
+    	</dependency>
+
+		<!-- JOURNALISATION -->		
+		<!-- Activer Log4j2 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-log4j2</artifactId>
+		</dependency>
+		
+		<!-- Tests JUnit -->
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-test -->
+        <!-- Starter for testing Spring Boot applications with libraries including JUnit Jupiter, Hamcrest and Mockito -->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-test</artifactId>
+		    <scope>test</scope>
+		</dependency>
+		<!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-data-jpa-test -->
+		<!-- indispensable pour @DataJpaTest -->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-data-jpa-test</artifactId>
+		    <scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Tests Mockito -->
+		<!-- https://mvnrepository.com/artifact/org.mockito/mockito-inline -->
+<!-- 		<dependency> -->
+<!-- 		    <groupId>org.mockito</groupId> -->
+<!-- 		    <artifactId>mockito-inline</artifactId> -->
+<!-- 		    <scope>test</scope> -->
+<!-- 		</dependency> -->
+
+		<!-- Indispensable pour que la console H2 fonctionne -->
+		<!-- http://localhost:8080/h2-console -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.springframework.boot</groupId> -->
+<!-- 			<artifactId>spring-boot-h2console</artifactId> -->
+<!-- 		</dependency> -->
+
+		<!-- BASES DE DONNEES -->
+		<!-- H2 base embarquée (DEV uniquement) -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		
+		<!-- PostgreSQL -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Utilitaires -->
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+
+		<!-- JavaFX -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>${javafx.version}</version>
+		</dependency>
+		<!-- JavaFX FXML -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-fxml</artifactId>
+			<version>${javafx.version}</version>
+		</dependency>
+
+	</dependencies>
+
+
+	<build>
+	
+		<plugins>
+		
+			<!-- Spring Boot -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			
+			<!-- JavaFX Plugin -->
+			<plugin>
+				<groupId>org.openjfx</groupId>
+				<artifactId>javafx-maven-plugin</artifactId>
+				<version>${javafx-maven-plugin.version}</version>
+				<configuration>
+<!-- 					<mainClass>levy.daniel.application.ApplicationJavaFX</mainClass> -->
+					<mainClass>levy.daniel.application.views.metier.produittype.desktop.TypeProduitAppFX</mainClass>
+					<!-- force la bonne version de Java (du projet). -->
+					<release>${java.version}</release>
+				</configuration>
+			</plugin>
+
+			<!-- Maven -->
+			<!-- maven-compiler-plugin (fix Eclipse m2e) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<release>${java.version}</release>
+				</configuration>
+			</plugin>
+
+			<!-- maven-surefire-plugin -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+			        <argLine>
+			            -XX:+EnableDynamicAgentLoading
+			        </argLine>
+    			</configuration>
+			</plugin>
+
+			<!-- maven-failsafe-plugin pour les tests d'intégration -->
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+		</plugins>
+		
+	</build>
+
+</project>

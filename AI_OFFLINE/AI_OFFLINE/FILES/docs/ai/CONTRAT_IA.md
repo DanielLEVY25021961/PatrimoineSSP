@@ -382,3 +382,153 @@ Principe :
 ➡️ **La livraison doit être immédiatement exploitable.**
 
 Cette règle s’applique à tous les modes produisant du code, en particulier le MODE CODER.
+
+## 23) Règle de couplage CODE/BUNDLE (Variante A — 2 SHAs)
+
+Définitions :
+
+- **SHA1 (CODE)** : SHA du commit/push contenant les corrections fonctionnelles/techniques (hors bundle).
+- **SHA2 (BUNDLE)** : SHA du commit/push ne contenant que le bundle OFFLINE généré pour le **SHA1**.
+
+Règles obligatoires :
+
+1. **Interdiction de modifications hors bundle entre SHA1 et SHA2**
+   - Entre le push de **SHA1** et le push de **SHA2**, aucun fichier ne doit être modifié
+     en dehors de `AI_OFFLINE/**` (et éventuellement du zip `AI_OFFLINE_*.zip` stocké sous `AI_OFFLINE/**`).
+   - Si un fichier hors `AI_OFFLINE/**` diffère entre **SHA1** et **SHA2** :
+     ➜ le SHA2 n’est plus un “bundle de SHA1”  
+     ➜ le cycle Variante A est considéré invalide.
+
+2. **Provenance du bundle**
+   - Le fichier `AI_OFFLINE/PROVENANCE.yaml` doit référencer explicitement le **SHA1 (CODE)**
+     comme SHA de référence du contenu packagé (le bundle peut être committé au SHA2).
+   - Si `PROVENANCE.yaml` ne référence pas **SHA1** :
+     ➜ signaler explicitement **"incident de lecture"** et suspendre toute analyse/génération.
+
+3. **Contrôle obligatoire par l’IA à réception de SHA2**
+   - À réception de **SHA2**, l’IA doit vérifier que :
+     - seuls des chemins sous `AI_OFFLINE/**` ont changé entre **SHA1** et **SHA2**,
+     - et que `AI_OFFLINE/PROVENANCE.yaml` référence bien **SHA1**.
+   - Si l’IA constate une divergence hors `AI_OFFLINE/**` :
+     ➜ signaler **"problème grave"**  
+     ➜ exiger un nouveau cycle complet (nouveau SHA1 puis nouveau SHA2).
+
+Objectif :
+
+➡️ Garantir que le commit/push **SHA2** est strictement un ajout d’artefact OFFLINE
+pour le **code validé** au **SHA1**, sans altérer le code ni les contrats.
+
+## 24) Règle de rafraîchissement de la baseline (précondition absolue)
+
+Principe :
+
+➡️ La **baseline consolidée** est la **seule source de vérité opérationnelle** pour l’analyse,
+le diagnostic et la génération de code.
+Le GitHub au SHA sert uniquement à **rafraîchir** la baseline après chaque commit/push.
+
+Précondition absolue (ANTI-ANALYSE-SANS-BASELINE-A-JOUR) :
+
+- Toute analyse/diagnostic/codage est **interdit** tant que la baseline n’est pas
+  **parfaitement à jour** avec le **SHA courant** fourni par l’Utilisateur.
+- Dès qu’un nouveau SHA est fourni, l’IA doit relire au minimum les ressources nécessaires
+  (selon le périmètre) sur GitHub au SHA, puis mettre à jour la baseline.
+
+Mise à jour obligatoire après lecture GitHub réussie :
+
+- Après chaque lecture GitHub au SHA réalisée selon **RT-LECTURE-GITHUB-02** et jugée
+  techniquement parfaite (lecture binaire, contenu non altéré, génériques lisibles, pas de Raw Types),
+  l’IA doit :
+  1) **Mémoriser strictement ligne à ligne** le contenu lu depuis GitHub,
+  2) **Écraser** la version précédente du même fichier en baseline,
+  3) **Consolider** la baseline (une seule version par chemin : la plus récente),
+  4) Considérer la baseline comme unique matériau autorisé pour l’analyse.
+
+Critères minimaux de “lecture parfaite” (pour autoriser la mise à jour baseline) :
+
+- Lecture effectuée via URL Raw **au SHA** : `https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}`
+- Téléchargement binaire (octets bruts) + lecture locale
+- Contenu cohérent (non vide, non HTML d’erreur, non tronqué)
+- Génériques Java correctement lus lorsque applicable (aucun “Raw Type” dû à une lecture incorrecte)
+
+En cas de lecture imparfaite :
+
+- Si l’IA ne peut pas garantir la lecture correcte (ex : doute sur génériques, contenu altéré, lecture incomplète) :
+  ➜ signaler explicitement **"incident de lecture"**
+  ➜ suspendre toute analyse/génération
+  ➜ relancer automatiquement la lecture jusqu’à succès (max 3 tentatives) conformément à RT-LECTURE-GITHUB-02
+  ➜ à échec persistant : basculer en MODE OFFLINE (bundle) selon le présent contrat.
+
+Objectif :
+
+➡️ Garantir que toute analyse/correction est **reproductible**, **audit-ready** et
+strictement basée sur une baseline **consolidée** et **alignée** sur le SHA fourni.
+
+### Bloc PREUVE DE LECTURE (OBLIGATOIRE)
+
+Toute réponse contenant une **analyse**, un **diagnostic** ou du **code** DOIT commencer par un bloc **PREUVE DE LECTURE** listant au minimum :
+
+- **SHA courant**
+- **URL Raw SHA** utilisée pour la lecture de `docs/ai/CONTRAT_IA.md`
+- **Taille** (en octets) du fichier lu
+- **Nombre de lignes** du fichier lu
+- **Checksum** du contenu lu (SHA-256)
+
+Interdiction : aucune analyse/diagnostic/génération ne doit être produite tant que ce bloc n’a pas été affiché et que la baseline n’a pas été rafraîchie/consolidée au SHA courant.
+
+## 25) Détection des modifications au nouveau SHA (comparaison GitHub ↔ baseline)
+
+Principe :
+
+➡️ À chaque **nouveau SHA unique** fourni par l’Utilisateur, l’IA doit être capable de
+**détecter et constater** les modifications par rapport à la baseline consolidée,
+uniquement à partir de lectures GitHub au SHA (RT-LECTURE-GITHUB-02) et/ou du bundle OFFLINE.
+
+Algorithme obligatoire (à réception d’un nouveau SHA) :
+
+1. **Pré-lecture d’ancrage (obligatoire)**
+   - Lire au SHA : `docs/ai/MANIFEST_IA.yaml`, `docs/ai/perimetre.yaml`, `docs/ai/CONTRAT_IA.md`.
+
+2. **Découverte du périmètre**
+   - Extraire la liste canonique des `paths` depuis `docs/ai/perimetre.yaml`.
+   - Reconstruire toutes les URLs Raw SHA : `https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}`.
+
+3. **Lecture + contrôle technique (RT-LECTURE-GITHUB-02)**
+   - Pour chaque fichier requis :
+     - télécharger en binaire (octets bruts) via Raw SHA,
+     - lire localement,
+     - vérifier la cohérence (non vide, non HTML d’erreur, non tronqué),
+     - vérifier les génériques lorsque applicable (aucun “Raw Type” dû à une lecture incorrecte).
+
+4. **Comparaison stricte avec la baseline**
+   - Comparer strictement **ligne à ligne** (ou octets stricts) le contenu lu au SHA
+     avec la version correspondante en baseline consolidée.
+   - Classer chaque fichier dans l’un des statuts :
+     - **INCHANGÉ** : identique à la baseline,
+     - **MODIFIÉ** : différence constatée,
+     - **INACCESSIBLE** : non lisible au SHA (fichier manquant / erreur persistante).
+
+5. **Signalements obligatoires**
+   - Si un fichier attendu devient **INACCESSIBLE** :
+     ➜ signaler explicitement **"problème grave"** (périmètre non satisfaisable au SHA),
+     ➜ suspendre analyse/génération.
+   - Si la lecture d’un fichier est douteuse (ex : génériques illisibles) :
+     ➜ signaler explicitement **"incident de lecture"**,
+     ➜ relancer automatiquement jusqu’à succès (max 3 tentatives),
+     ➜ à échec persistant : basculer en MODE OFFLINE.
+
+6. **Mise à jour de la baseline (obligatoire, après lectures parfaites)**
+   - Après lecture parfaite au SHA :
+     - mémoriser strictement ligne à ligne dans la baseline,
+     - écraser l’ancienne version,
+     - consolider la baseline (une seule version par chemin : la plus récente).
+
+Interdiction :
+
+- Il est **interdit** de démarrer une analyse/diagnostic/génération tant que :
+  - la comparaison GitHub ↔ baseline n’a pas été effectuée au SHA courant,
+  - et la baseline n’a pas été rafraîchie/consolidée lorsque des modifications existent.
+
+Objectif :
+
+➡️ Garantir que l’IA peut, à partir du **SHA seul**, (1) découvrir, (2) lire, (3) comparer,
+(4) prouver les modifications, et (5) travailler uniquement sur une baseline à jour.
