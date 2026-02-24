@@ -598,7 +598,7 @@ Pour chaque méthode analysée (ex : « analyser l’alignement du PORT GATEWAY 
      - **Test Mock** + **Test d’intégration**
    - Vérifier l’homogénéité du code (PORT/ADAPTER/tests) avec le code similaire existant (parent/enfants).
 
-Précondition absolue : **lecture stricte** (ligne à ligne / octet par octet) de `docs/ai/CONTRAT_IA.md` et des fichiers nécessaires **avant toute analyse** ou **tout code** (cf. §24, RT-LECTURE-GITHUB-02).
+Précondition absolue : **lecture stricte** ligne à ligne (normalisation CRLF/LF) de `docs/ai/CONTRAT_IA.md` et des fichiers nécessaires **avant toute analyse** ou **tout code** (cf. §24, RT-LECTURE-GITHUB-02).
 
 ### 26.3 Boucle opérationnelle (7 points)
 
