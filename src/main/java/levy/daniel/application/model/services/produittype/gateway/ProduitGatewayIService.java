@@ -540,6 +540,9 @@ public interface ProduitGatewayIService {
 	 * <li>Si {@code pObject.getSousTypeProduit() == null} :
 	 * jette une {@link ExceptionAppliParentNull}
 	 * avec un message {@link #MESSAGE_CREER_KO_PARENT_NULL}.</li>
+	 * <li>Si {@code libelle du parent} est {@code null} ou blank :
+	 * jette une {@link ExceptionAppliLibelleBlank}
+	 * avec un message {@link #MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK}.</li>
 	 * <li>Si {@code parent} n'est pas persistant (ID {@code null}) :
 	 * jette une {@link ExceptionTechniqueGatewayNonPersistent}
 	 * avec un message {@link #MESSAGE_CREER_KO_PARENT_NON_PERSISTENT}
@@ -548,11 +551,14 @@ public interface ProduitGatewayIService {
 	 * jette une {@link ExceptionTechniqueGatewayNonPersistent}
 	 * avec un message {@link #MESSAGE_CREER_KO_PARENT_NON_PERSISTENT}
 	 * + {@code pObject.getSousTypeProduit().getSousTypeProduit()}.</li>
+	 * <li>Si {@code DAO.save(entity)} retourne {@code null} :
+	 * jette une {@link ExceptionTechniqueGateway}
+	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_STOCKAGE}
-	 *  + {@code safeMessage(e)} 
+	 *  + {@code safeMessage(e)}
 	 * et propage l'Exception technique cause.</li>
 	 * </ul>
 	 * </div>
@@ -561,7 +567,7 @@ public interface ProduitGatewayIService {
 	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
 	 * <ul>
 	 * <li>Aucune information utilisateur n'est produite à ce niveau.</li>
-	 * <li>L'objet retourné correspond à l'état réellement persisté 
+	 * <li>L'objet retourné correspond à l'état réellement persisté
 	 * (si non {@code null}).</li>
 	 * <li>Aucune écriture partielle n'est réalisée.</li>
 	 * </ul>
@@ -571,23 +577,25 @@ public interface ProduitGatewayIService {
 	 * le Produit à stocker.
 	 * @return Produit :
 	 * le Produit sauvegardé dans le stockage.
-	 * 
+	 *
 	 * @throws ExceptionAppliParamNull si {@code pObject == null}.
-	 * @throws ExceptionAppliLibelleBlank 
-	 * si le libellé de {@code pObject} est blank.
-	 * @throws ExceptionAppliParentNull 
+	 * @throws ExceptionAppliLibelleBlank
+	 * si le libellé de {@code pObject} est blank
+	 * ou si le libellé du parent est blank.
+	 * @throws ExceptionAppliParentNull
 	 * si l'objet métier n'a pas de parent.
-	 * @throws ExceptionTechniqueGatewayNonPersistent 
-	 * si l'objet a un parent sans ID (non persisté) 
+	 * @throws ExceptionTechniqueGatewayNonPersistent
+	 * si l'objet a un parent sans ID (non persisté)
 	 * ou introuvable dans le stockage.
-	 * @throws ExceptionTechniqueGateway 
-	 * si une erreur technique survient lors de l'accès au stockage.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de l'accès au stockage
+	 * ou si le composant de persistance (DAO) retourne {@code null}.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	Produit creer(Produit pObject) throws Exception;
 
 
-
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
