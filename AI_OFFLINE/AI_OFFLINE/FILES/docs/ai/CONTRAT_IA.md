@@ -1,5 +1,3 @@
-# docs/ai/CONTRAT_IA.md
-
 # CONTRAT IA — Projet Java Hexagonal (Constitution technique)
 
 <!-- ******************************************************************** -->
@@ -133,7 +131,27 @@ L’IA ne doit jamais demander d’URLs Raw.
 Priorité des demandes :
 
 1. Bundle OFFLINE valide  
-2. Recopie du fichier dans le chat  
+2. Fichier transmis via le chat (coller le contenu ou pièce jointe)  
+
+### 6.1 Lecture d’un fichier transmis via le chat (fallback contrôlé)
+
+Objectif : permettre la continuité de travail lorsque GitHub est indisponible et/ou pour valider l’intégrité d’un fichier transmis par l’Utilisateur.
+
+Règles :
+
+- Le fichier transmis via le chat est traité comme une **source `CHAT`**.
+- L’IA doit :
+  1) lire le contenu **tel quel**,  
+  2) calculer **taille**, **nombre de lignes** et **SHA-256**,  
+  3) comparer avec la version correspondante disponible (baseline et/ou bundle OFFLINE et/ou GitHub si lisible) :
+     - **texte** : comparaison **ligne à ligne** (CRLF/LF normalisés),
+     - **binaire** : comparaison **octet à octet** (rare en chat).
+- Si le contenu `CHAT` est **strictement identique** à une source considérée saine (baseline consolidée à jour, ou bundle OFFLINE validé, ou GitHub@SHA lu parfaitement) :
+  - le fichier `CHAT` est considéré **intègre**,
+  - il peut être **mémorisé** et **écrasé** en baseline,
+  - puis la baseline est **consolidée**.
+- Si une différence est constatée, ou si l’IA ne peut pas comparer :
+  ➜ signaler explicitement **"incident de lecture via le chat"** et **suspendre** analyse/génération.
 
 ---
 
@@ -164,6 +182,8 @@ Propriétés :
 - Toujours à jour avec le GitHub
 - Une seule version par fichier (la plus récente)
 - Conservation strictement ligne par ligne
+- Comparaison/mémorisation des fichiers **texte** (Java, XML, YAML, properties, Markdown, etc.) : **ligne à ligne** avec normalisation **CRLF/LF**.
+- Comparaison des fichiers **binaires** (zip, images, etc.) : **octet à octet**.
 - Aucun fichier ne peut être perdu ou ignoré
 - Modification uniquement sur ordre explicite
 
@@ -489,7 +509,9 @@ Révocation immédiate :
 Toute réponse contenant une **analyse**, un **diagnostic** ou du **code** DOIT commencer par un bloc **PREUVE DE LECTURE** listant au minimum :
 
 - **SHA courant**
-- **URL Raw SHA** utilisée pour la lecture de `docs/ai/CONTRAT_IA.md`
+- **Source de lecture** de `docs/ai/CONTRAT_IA.md` : `GITHUB_RAW_SHA` / `BUNDLE_OFFLINE` / `CHAT`
+- **URL Raw SHA** utilisée (si source = `GITHUB_RAW_SHA`, sinon `N/A`)
+- **Chemin local** utilisé (si source = `BUNDLE_OFFLINE` ou `CHAT`, sinon `N/A`)
 - **Taille** (en octets) du fichier lu
 - **Nombre de lignes** du fichier lu
 - **Checksum** du contenu lu (SHA-256)
@@ -513,6 +535,13 @@ Algorithme obligatoire (à réception d’un nouveau SHA) :
    - Extraire la liste canonique des `paths` depuis `docs/ai/perimetre.yaml`.
    - Reconstruire toutes les URLs Raw SHA : `https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}`.
 
+   **Détermination des fichiers requis (performance) :**
+   - Par défaut, l’IA rafraîchit **uniquement** les fichiers **nécessaires** à la demande courante :
+     - pivots (`docs/ai/CONTRAT_IA.md`, `docs/ai/MANIFEST_IA.yaml`, `docs/ai/perimetre.yaml`),
+     - fichiers explicitement concernés (PORT/ADAPTER/tests/document de contrat),
+     - fichiers strictement indispensables à la compréhension/compilation de la zone (si besoin).
+   - Si l’Utilisateur demande explicitement un **rafraîchissement complet**, alors l’IA traite **tous** les `paths` du périmètre.
+
 3. **Lecture + contrôle technique (RT-LECTURE-GITHUB-02)**
    - Pour chaque fichier requis :
      - télécharger en binaire (octets bruts) via Raw SHA,
@@ -521,8 +550,10 @@ Algorithme obligatoire (à réception d’un nouveau SHA) :
      - vérifier les génériques lorsque applicable (aucun “Raw Type” dû à une lecture incorrecte).
 
 4. **Comparaison stricte avec la baseline**
-   - Comparer strictement **ligne à ligne** (ou octets stricts) le contenu lu au SHA
-     avec la version correspondante en baseline consolidée.
+   - Comparer strictement le contenu lu au SHA avec la version correspondante en baseline consolidée :
+     - **Fichiers texte** : comparaison **ligne à ligne** avec normalisation **CRLF/LF**.
+     - **Fichiers binaires** : comparaison **octet à octet**.
+
    - Classer chaque fichier dans l’un des statuts :
      - **INCHANGÉ** : identique à la baseline,
      - **MODIFIÉ** : différence constatée,
@@ -598,7 +629,7 @@ Pour chaque méthode analysée (ex : « analyser l’alignement du PORT GATEWAY 
      - **Test Mock** + **Test d’intégration**
    - Vérifier l’homogénéité du code (PORT/ADAPTER/tests) avec le code similaire existant (parent/enfants).
 
-Précondition absolue : **lecture stricte** ligne à ligne (normalisation CRLF/LF) de `docs/ai/CONTRAT_IA.md` et des fichiers nécessaires **avant toute analyse** ou **tout code** (cf. §24, RT-LECTURE-GITHUB-02).
+Précondition absolue : **lecture stricte** (ligne à ligne, CRLF/LF normalisés) de `docs/ai/CONTRAT_IA.md` et des fichiers nécessaires **avant toute analyse** ou **tout code** (cf. §24, RT-LECTURE-GITHUB-02).
 
 ### 26.3 Boucle opérationnelle (7 points)
 
@@ -617,3 +648,37 @@ Précondition absolue : **lecture stricte** ligne à ligne (normalisation CRLF/L
 - Cette procédure s’applique aux analyses d’alignement en **MODE DIAGNOSTIC**.
 - Toute production de code reste soumise à la règle : **MODE CODER uniquement si “coder” est explicitement demandé**.
 - En cas de baseline non à jour au SHA courant, ou d’**incident de lecture**, la procédure est **suspendue** jusqu’à restauration d’une baseline saine (cf. §24 et §6).
+
+---
+
+## 27) Gouvernance du `docs/ai/CONTRAT_IA.md` (stabilité et changements batchés)
+
+Objectif : éviter la dérive et les micro-changements continus du CONTRAT, tout en permettant des évolutions contrôlées, auditables et efficaces.
+
+### 27.1 Principe de stabilité
+
+- Par défaut, `docs/ai/CONTRAT_IA.md` est considéré **VALIDÉ** (verrouillé).
+- L’IA **ne propose pas** de modifications du CONTRAT “à chaque échange”.
+- Les suggestions d’amélioration peuvent être listées en **backlog** (dans le chat), mais **sans** modifier le CONTRAT tant que l’Utilisateur n’a pas explicitement demandé une mise à jour.
+
+### 27.2 Déclenchement explicite d’une mise à jour (gating)
+
+Une mise à jour du CONTRAT n’est autorisée que si l’Utilisateur la demande explicitement (exemples : “MAJ CONTRAT”, “mettre à jour le CONTRAT”, ou message contenant **coder** + demande de consolidation du CONTRAT).
+
+Dans ce cas :
+
+1. L’IA prépare une **proposition consolidée unique** (toutes les modifications nécessaires) au format **fichier complet** `docs/ai/CONTRAT_IA.md` (ANTI-SNIPPETS).
+2. L’Utilisateur applique la mise à jour, commit/push, fournit un **nouveau SHA**.
+3. L’IA relit au SHA via **RT-LECTURE-GITHUB-02**, puis **consolide** la baseline.
+4. Le CONTRAT repasse en statut **VALIDÉ** (verrouillé) jusqu’à la prochaine demande explicite.
+
+### 27.3 Baseline potentiellement “en avance” sur le bundle OFFLINE
+
+- La baseline peut être **en avance** sur le bundle OFFLINE si l’Utilisateur a committé des changements (contrat, code) sans avoir encore produit/committé un nouveau bundle.
+- Dans ce cas, la source de vérité reste l’ordre défini en §1 : baseline (si prouvée à jour) > GitHub@SHA > bundle OFFLINE.
+- Le bundle OFFLINE est un **artefact** de continuité : il peut être produit ultérieurement (cf. Variante A) sans bloquer la progression, tant que la baseline est prouvée saine au SHA courant.
+
+### 27.4 Exigences de performance (Java)
+
+- Pour les fichiers **texte** (Java et assimilés), la comparaison opérationnelle est **ligne à ligne** avec normalisation **CRLF/LF**.
+- L’IA doit privilégier le **rafraîchissement minimal par objectif** (cf. §25) afin d’éviter de relire un périmètre inutilement large quand la tâche porte sur un sous-ensemble (PORT/ADAPTER/tests).

@@ -724,34 +724,56 @@ public class ProduitGatewayJPAServiceMockTest {
     @Test
     public void testRechercherTousNominalOk() throws Exception {
     	
-        final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
-        p1.setIdProduit(2L);
+        final ProduitJPA femmeChemise = this.fabriquerProduitJPA(CHEMISE, VETEMENT_FEMME);
+        femmeChemise.setIdProduit(10L);
 
-        final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        p2.setIdProduit(1L);
+        final ProduitJPA femmeSweat = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_FEMME);
+        femmeSweat.setIdProduit(11L);
 
-        final List<ProduitJPA> liste = new ArrayList<ProduitJPA>();
-        liste.add(null);
-        liste.add(p1);
-        liste.add(p2);
+        final ProduitJPA hommeChemiseMc = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        hommeChemiseMc.setIdProduit(20L);
+
+        final ProduitJPA hommeChemiseMl = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        hommeChemiseMl.setIdProduit(21L);
+
+        /* Doublon métier (même libellé Produit + même parent) -> doit être dédoublonné. */
+        final ProduitJPA doublonHommeChemiseMc = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        doublonHommeChemiseMc.setIdProduit(999L);
+
+        final List<ProduitJPA> liste = Arrays.asList(
+                null,
+                hommeChemiseMl,
+                doublonHommeChemiseMc,
+                femmeSweat,
+                hommeChemiseMc,
+                null,
+                femmeChemise);
 
         when(this.produitDaoJPA.findAll()).thenReturn(liste);
 
         final List<Produit> retour = this.service.rechercherTous();
 
+        /* Filtrage des null + dédoublonnage. */
         assertThat(retour).isNotNull();
-        assertThat(retour).isNotEmpty();
+        assertThat(retour).doesNotContainNull();
+        assertThat(retour).hasSize(4);
+
+        /* Vérifie l'ordre : parent puis libellé (insensible à la casse). */
+        assertThat(retour)
+            .extracting(p -> p.getSousTypeProduit().getSousTypeProduit())
+            .containsExactly(VETEMENT_FEMME, VETEMENT_FEMME, VETEMENT_HOMME, VETEMENT_HOMME);
+
         assertThat(retour)
             .extracting(Produit::getProduit)
-            .contains(CHEMISE_ML_HOMME, CHEMISE_MC_HOMME);
+            .containsExactly(CHEMISE, SWEAT_HOMME, CHEMISE_MC_HOMME, CHEMISE_ML_HOMME);
 
         verify(this.produitDaoJPA, times(1)).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
         
-    } // __________________________________________________________________
+    } // __________________________________________________________________    
     
-    
+
     
     /**
      * <div>
