@@ -157,6 +157,17 @@ public class ProduitGatewayJPAServiceMockTest {
 
     /** Message attendu : MESSAGE_CREER_KO_PARENT_NULL. */
     public static final String MSG_CREER_KO_PARENT_NULL = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL;
+    
+    /** Message attendu : MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK. */
+    public static final String MSG_CREER_KO_LIBELLE_PARENT_BLANK
+        = ProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK;
+
+    /** Message attendu : MESSAGE_CREER_KO_PARENT_NON_PERSISTENT (préfixe). */
+    public static final String MSG_CREER_KO_PARENT_NON_PERSISTENT
+        = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT;
+
+    /** Libellé trop long pour forcer une exception sur save(). */
+    public static final String LIBELLE_TROP_LONG = "X".repeat(10_000);
 
     /** Message attendu : MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK. */
     public static final String MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK = ProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK;
@@ -368,13 +379,17 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(null) - ExceptionAppliParamNull")
     @Test
     public void testCreerParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_CREER_KO_PARAM_NULL);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -385,6 +400,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(blank) - ExceptionAppliLibelleBlank")
     @Test
     public void testCreerLibelleBlankExceptionAppliLibelleBlank() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(BLANK);
@@ -396,7 +412,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -407,6 +426,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(sans parent) - ExceptionAppliParentNull")
     @Test
     public void testCreerSousTypeProduitNullExceptionAppliParentNull() {
+    	
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
         p.setSousTypeProduit(null);
@@ -417,7 +437,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -433,6 +456,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(parent non persistant) - ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testCreerParentNonPersistantExceptionTechniqueGatewayNonPersistent() {
+    	
         // --- 1. DONNÉES ---
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
@@ -450,7 +474,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -461,6 +488,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(DAO parent jette Exception) - ExceptionTechniqueGateway")
     @Test
     public void testCreerParentDaoJetteExceptionTechniqueGateway() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -474,7 +502,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -485,6 +516,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(save retourne null) - ExceptionTechniqueGateway")
     @Test
     public void testCreerSaveNullExceptionTechniqueGateway() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -499,8 +531,99 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>creer(parent libellé blank) lève ExceptionAppliLibelleBlank.</p>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(parent libellé blank) - ExceptionAppliLibelleBlank")
+    @Test
+    public void testCreerParentLibelleBlankExceptionAppliLibelleBlank() {
 
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(BLANK);
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        assertThatThrownBy(() -> this.service.creer(p))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(MSG_CREER_KO_LIBELLE_PARENT_BLANK);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>creer(parent id null) lève ExceptionTechniqueGatewayNonPersistent.</p>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(parent id null) - ExceptionTechniqueGatewayNonPersistent")
+    @Test
+    public void testCreerParentIdNullExceptionTechniqueGatewayNonPersistent() {
+
+        final SousTypeProduit parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        parent.setIdSousTypeProduit(null); // Parent NON persistant
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        assertThatThrownBy(() -> this.service.creer(p))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(MSG_CREER_KO_PARENT_NON_PERSISTENT + VETEMENT_HOMME);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>creer(DAO save jette Exception) lève ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(save jette Exception) - ExceptionTechniqueGateway")
+    @Test
+    public void testCreerDaoSaveJetteExceptionTechniqueGateway() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
+        when(this.produitDaoJPA.save(any(ProduitJPA.class)))
+            .thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.creer(p))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
+
+    
     /**
      * <div>
      * <p>creer(nominal) retourne un objet métier non null.</p>
@@ -511,6 +634,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(nominal) - OK")
     @Test
     public void testCreerNominalOk() throws Exception {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -532,9 +656,14 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ============================ RECHERCHER =============================
+    
+    
 
     /**
      * <div>
@@ -545,6 +674,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTous(DAO null) - ExceptionTechniqueGateway")
     @Test
     public void testRechercherTousDaoNullExceptionTechniqueGateway() {
+    	
         when(this.produitDaoJPA.findAll()).thenReturn(null);
 
         assertThatThrownBy(() -> this.service.rechercherTous())
@@ -553,7 +683,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -565,6 +698,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTous(DAO vide) - liste vide")
     @Test
     public void testRechercherTousVideOk() throws Exception {
+    	
         when(this.produitDaoJPA.findAll()).thenReturn(Collections.emptyList());
 
         final List<Produit> retour = this.service.rechercherTous();
@@ -574,7 +708,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -586,6 +723,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTous(nominal) - liste filtrée/triee/dédoublonnée")
     @Test
     public void testRechercherTousNominalOk() throws Exception {
+    	
         final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
         p1.setIdProduit(2L);
 
@@ -610,7 +748,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -621,13 +762,17 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelle(blank) - ExceptionAppliLibelleBlank")
     @Test
     public void testFindByLibelleBlankExceptionAppliLibelleBlank() {
+    	
         assertThatThrownBy(() -> this.service.findByLibelle(BLANK))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -638,6 +783,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelle(DAO null) - ExceptionTechniqueGateway")
     @Test
     public void testFindByLibelleDaoNullExceptionTechniqueGateway() {
+    	
         when(this.produitDaoJPA.findByProduitIgnoreCase(CHEMISE_ML_HOMME)).thenReturn(null);
 
         assertThatThrownBy(() -> this.service.findByLibelle(CHEMISE_ML_HOMME))
@@ -646,7 +792,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findByProduitIgnoreCase(CHEMISE_ML_HOMME);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -658,6 +807,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelle(nominal) - liste non vide")
     @Test
     public void testFindByLibelleNominalOk() throws Exception {
+    	
         final ProduitJPA pJPA = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
         pJPA.setIdProduit(11L);
 
@@ -674,7 +824,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findByProduitIgnoreCase(CHEMISE_ML_HOMME);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -685,13 +838,17 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(null) - ExceptionAppliParamNull")
     @Test
     public void testFindByLibelleRapideParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_FINDBYLIBELLERAPIDE_KO_PARAM_NULL);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -703,6 +860,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(blank) - délègue à rechercherTous()")
     @Test
     public void testFindByLibelleRapideBlankRetourneTous() throws Exception {
+    	
         when(this.produitDaoJPA.findAll()).thenReturn(Collections.emptyList());
 
         final List<Produit> retour = this.service.findByLibelleRapide(BLANK);
@@ -712,7 +870,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -723,6 +884,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(DAO null) - ExceptionTechniqueGateway")
     @Test
     public void testFindByLibelleRapideDaoNullExceptionTechniqueGateway() {
+    	
         when(this.produitDaoJPA.findByProduitContainingIgnoreCase(CHEMISE)).thenReturn(null);
 
         assertThatThrownBy(() -> this.service.findByLibelleRapide(CHEMISE))
@@ -731,7 +893,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase(CHEMISE);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -743,6 +908,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(nominal) - liste non vide")
     @Test
     public void testFindByLibelleRapideNominalOk() throws Exception {
+    	
         final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
         p1.setIdProduit(1L);
 
@@ -763,7 +929,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase(CHEMISE);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -774,13 +943,17 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findAllByParent(null) - ExceptionAppliParentNull")
     @Test
     public void testFindAllByParentParamNullExceptionAppliParentNull() {
+    	
         assertThatThrownBy(() -> this.service.findAllByParent(null))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(MSG_FINDALLBYPARENT_KO_PARAM_NULL);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -791,6 +964,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findAllByParent(parent non persistant) - ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testFindAllByParentParentNonPersistantExceptionTechniqueGatewayNonPersistent() {
+    	
         final SousTypeProduit parent = new SousTypeProduit();
         parent.setSousTypeProduit(VETEMENT_HOMME);
         // Pas d'ID --> parent non persistant
@@ -800,7 +974,10 @@ public class ProduitGatewayJPAServiceMockTest {
             .hasMessage("Anomalie applicative - le parent de l'objet n'existait pas déjà dans le stockage : vêtement pour homme");
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.produitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -821,7 +998,10 @@ public class ProduitGatewayJPAServiceMockTest {
             .hasMessage("Anomalie applicative - le parent de l'objet n'existait pas déjà dans le stockage : vêtement pour homme");
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verifyNoInteractions(this.produitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -832,6 +1012,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findAllByParent(DAO enfant null) - ExceptionTechniqueGateway")
     @Test
     public void testFindAllByParentDaoEnfantNullExceptionTechniqueGateway() {
+    	
         final SousTypeProduit parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
         when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
@@ -842,7 +1023,10 @@ public class ProduitGatewayJPAServiceMockTest {
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(any(SousTypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -854,6 +1038,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findAllByParent(nominal) - liste non vide")
     @Test
     public void testFindAllByParentNominalOk() throws Exception {
+    	
         final SousTypeProduit parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
         final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
@@ -872,7 +1057,10 @@ public class ProduitGatewayJPAServiceMockTest {
 
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(any(SousTypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ============================= PAGINATION ============================
 
@@ -886,6 +1074,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTousParPage(null) - requête par défaut")
     @Test
     public void testRechercherTousParPageNullOk() throws Exception {
+    	
         final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
         p1.setIdProduit(1L);
 
@@ -905,7 +1094,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -917,6 +1109,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTousParPage(tris) - page triée")
     @Test
     public void testRechercherTousParPageAvecTrisOk() throws Exception {
+    	
         final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
         p1.setIdProduit(1L);
 
@@ -949,9 +1142,13 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // =============================== UPDATE ==============================
+    
 
     /**
      * <div>
@@ -962,13 +1159,17 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(null) - ExceptionAppliParamNull")
     @Test
     public void testUpdateNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_UPDATE_KO_PARAM_NULL);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -979,6 +1180,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(blank) - ExceptionAppliLibelleBlank")
     @Test
     public void testUpdateBlankExceptionAppliLibelleBlank() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(BLANK);
@@ -991,7 +1193,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1002,6 +1207,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(id null) - ExceptionAppliParamNonPersistent")
     @Test
     public void testUpdateIdNullExceptionAppliParamNonPersistent() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -1014,7 +1220,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1025,6 +1234,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(parent null) - ExceptionAppliParentNull")
     @Test
     public void testUpdateParentNullExceptionAppliParentNull() {
+    	
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
         p.setSousTypeProduit(null);
@@ -1036,7 +1246,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1047,6 +1260,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(parent non persistant) - ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testUpdateParentNonPersistantExceptionTechniqueGatewayNonPersistent() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -1061,7 +1275,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1073,6 +1290,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(id inconnu) - retourne null")
     @Test
     public void testUpdateIdInconnuRetourneNull() throws Exception {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
@@ -1089,7 +1307,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(99L);
         verifyNoMoreInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1101,6 +1322,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(sans modification) - objet inchangé")
     @Test
     public void testUpdateSansModificationOk() throws Exception {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
         final Produit aModifier = new Produit();
@@ -1123,7 +1345,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(30L);
         verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1135,6 +1360,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(modif libellé) - sauvegarde l'objet modifié")
     @Test
     public void testUpdateAvecModificationLibelleOk() throws Exception {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
         final Produit aModifier = new Produit();
@@ -1163,7 +1389,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(31L);
         verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1180,6 +1409,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(modif parent) - sauvegarde l'objet modifié")
     @Test
     public void testUpdateAvecModificationParentOk() throws Exception {
+    	
         // --- 1. DONNÉES ---
         // Parent initial : vêtement pour homme (ID=1L)
         final SousTypeProduitI parentHomme = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
@@ -1235,7 +1465,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(40L);
         verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1246,6 +1479,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(DAO save jette Exception) - ExceptionTechniqueGateway")
     @Test
     public void testUpdateDaoSaveJetteExceptionTechniqueGateway() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit aModifier = new Produit();
         aModifier.setProduit(CHEMISE_MC_HOMME + SUFFIX_MODIF);
@@ -1266,7 +1500,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(50L);
         verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // =============================== DELETE ==============================
 
@@ -1279,13 +1516,17 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(null) - ExceptionAppliParamNull")
     @Test
     public void testDeleteNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_DELETE_KO_PARAM_NULL);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1296,6 +1537,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(id null) - ExceptionAppliParamNonPersistent")
     @Test
     public void testDeleteIdNullExceptionAppliParamNonPersistent() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -1308,7 +1550,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1319,6 +1564,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(DAO findById null) - ExceptionTechniqueGateway")
     @Test
     public void testDeleteDaoFindByIdRetourneNullOptionalExceptionTechniqueGateway() {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -1333,7 +1579,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(71L);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1345,6 +1594,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(absent) - ne fait rien")
     @Test
     public void testDeleteAbsentNeFaitRien() throws Exception {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
@@ -1358,7 +1608,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(71L);
         verifyNoInteractions(this.entityManager);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1371,6 +1624,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(nominal) - suppression vérifiée")
     @Test
     public void testDeleteNominalOk() throws Exception {
+    	
         final Long id = 70L;
         final String libelle = CHEMISE_ML_HOMME;
 
@@ -1392,9 +1646,14 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.entityManager, times(1)).remove(produitJPA);
         verify(this.entityManager, times(1)).flush();
         verify(this.produitDaoJPA, times(2)).findById(id);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // =============================== COUNT ===============================
+    
+    
 
     /**
      * <div>
@@ -1406,6 +1665,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("count(nominal) - retourne le nombre d'éléments")
     @Test
     public void testCountNominalOk() throws Exception {
+    	
         when(this.produitDaoJPA.count()).thenReturn(TOTAL_10);
 
         final long count = this.service.count();
@@ -1414,7 +1674,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).count();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1425,6 +1688,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("count(DAO jette Exception) - ExceptionTechniqueGateway")
     @Test
     public void testCountDaoJetteExceptionTechniqueGateway() {
+    	
         when(this.produitDaoJPA.count()).thenThrow(new RuntimeException(BOOM));
 
         assertThatThrownBy(() -> this.service.count())
@@ -1433,9 +1697,13 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).count();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== TESTS BETON (sanity / invariants) =====================
+    
 
     /**
      * <div>
@@ -1446,9 +1714,13 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("Sanity - safeMessage")
     @Test
     public void testSanitySafeMessage() {
+    	
         assertThat(safeMessage(null)).isEqualTo("");
         assertThat(safeMessage("")).isEqualTo("");
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1461,6 +1733,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(remove jette Exception) - ExceptionTechniqueGateway")
     @Test
     public void testDeleteEntityManagerRemoveJetteException() {
+    	
         final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
                 this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
 
@@ -1477,7 +1750,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(70L);
         verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
         verifyNoMoreInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1490,6 +1766,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(flush jette Exception) - ExceptionTechniqueGateway")
     @Test
     public void testDeleteEntityManagerFlushJetteException() {
+    	
         final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
                 this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
 
@@ -1507,7 +1784,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(70L);
         verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
         verify(this.entityManager, times(1)).flush();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1520,6 +1800,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(vérification post-suppression échoue) - ExceptionTechniqueGateway")
     @Test
     public void testDeleteVerificationPostSuppressionEchoue() {
+    	
         final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
                 this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
 
@@ -1539,7 +1820,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(2)).findById(70L);
         verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
         verify(this.entityManager, times(1)).flush();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1551,6 +1835,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("update(parent modifié case-sensitive) - OK")
     @Test
     public void testUpdateParentLibelleCaseSensitiveOk() throws Exception {
+    	
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME.toUpperCase(LOCALE_DEFAUT));
 
         final Produit aModifier = new Produit();
@@ -1573,7 +1858,10 @@ public class ProduitGatewayJPAServiceMockTest {
         verify(this.produitDaoJPA, times(1)).findById(30L);
         verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
         verifyNoInteractions(this.entityManager);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1585,6 +1873,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(contenu introuvable) - liste vide")
     @Test
     public void testFindByLibelleRapideContenuIntrouvable() throws Exception {
+    	
         when(this.produitDaoJPA.findByProduitContainingIgnoreCase("INCONNU"))
             .thenReturn(new ArrayList<ProduitJPA>());
 
@@ -1593,7 +1882,10 @@ public class ProduitGatewayJPAServiceMockTest {
         assertThat(retour).isNotNull();
         assertThat(retour).isEmpty();
         verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase("INCONNU");
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1610,6 +1902,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("findAllByParent(produits distincts) - vérification du comportement réel")
     @Test
     public void testFindAllByParentProduitsDistincts() throws Exception {
+    	
         // --- 1. DONNÉES ---
         final SousTypeProduit parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
@@ -1642,7 +1935,8 @@ public class ProduitGatewayJPAServiceMockTest {
 
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(any(SousTypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
 
     
 }
