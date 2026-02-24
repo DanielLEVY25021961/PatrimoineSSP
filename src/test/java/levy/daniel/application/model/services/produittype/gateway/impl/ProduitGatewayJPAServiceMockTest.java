@@ -752,7 +752,31 @@ public class ProduitGatewayJPAServiceMockTest {
     } // __________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>rechercherTous(findAll jette Exception) wrap en ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(findAll jette Exception) - ExceptionTechniqueGateway")
+    @Test
+    public void testRechercherTousDaoFindAllJetteExceptionTechniqueGateway() throws Exception {
 
+        when(this.produitDaoJPA.findAll()).thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.rechercherTous())
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+
+        verify(this.produitDaoJPA, times(1)).findAll();
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________    
+    
+
+    
     /**
      * <div>
      * <p>findByLibelle(blank) lève ExceptionAppliLibelleBlank.</p>
