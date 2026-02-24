@@ -367,7 +367,34 @@ public class ProduitGatewayJPAServiceIntegrationTest {
      * </div>
      */
     public static final String MSG_CREER_KO_PARENT_NULL = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL;
+    
+    /** DisplayName : "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
+    public static final String DN_CREER_PARENT_LIBELLE_BLANK
+        = "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
+    /** DisplayName : "creer(parent id null) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)". */
+    public static final String DN_CREER_PARENT_ID_NULL
+        = "creer(parent id null) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
+
+    /** DisplayName : "creer(save jette Exception) - wrap en ExceptionTechniqueGateway (contrat du port)". */
+    public static final String DN_CREER_SAVE_EXCEPTION
+        = "creer(save jette Exception) - wrap en ExceptionTechniqueGateway (contrat du port)";
+
+    /** Message d'erreur : MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK. */
+    public static final String MSG_CREER_KO_LIBELLE_PARENT_BLANK
+        = ProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK;
+
+    /** Message d'erreur : MESSAGE_CREER_KO_PARENT_NON_PERSISTENT (préfixe). */
+    public static final String MSG_CREER_KO_PARENT_NON_PERSISTENT
+        = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT;
+
+    /** Message attendu : "Erreur Technique lors du stockage : ". */
+    public static final String MSG_PREFIX_ERREUR_TECH
+        = ProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE;
+
+    /** Libellé trop long pour forcer une exception sur save(). */
+    public static final String LIBELLE_TROP_LONG = "X".repeat(10_000);
+    
     /**
      * <div>
      * <p>Message d'erreur : MESSAGE_FINDBYID_KO_PARAM_NULL.</p>
@@ -581,6 +608,8 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
     // =============================== TESTS ===============================
 
+    
+    
     // ===================== CREER =====================
 
     /**
@@ -595,10 +624,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_NULL)
     @Test
     public void testCreerParamNullExceptionAppliParamNull() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_CREER_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -612,6 +645,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_BLANK)
     @Test
     public void testCreerLibelleBlankExceptionAppliLibelleBlank() throws Exception {
+    	
         // On récupère directement un produit existant pour obtenir son parent
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
@@ -624,7 +658,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.creer(aCreer))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_CREER_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     /**
      * <div>
@@ -638,13 +675,117 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_PARENT_NULL)
     @Test
     public void testCreerParentNullExceptionAppliParentNull() throws Exception {
+    	
         final Produit produit = new Produit(null, TEMP_PRODUIT_A_SUPPRIMER, null);
 
         assertThatThrownBy(() -> this.service.creer(produit))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(MSG_CREER_KO_PARENT_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>Vérifier le contrôle de libellé blank du parent sur creer(pObject).</p>
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>creer(parent libellé blank) jette {@link ExceptionAppliLibelleBlank} avec MSG_CREER_KO_LIBELLE_PARENT_BLANK.</p>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName(DN_CREER_PARENT_LIBELLE_BLANK)
+    @Test
+    public void testCreerParentLibelleBlankExceptionAppliLibelleBlank() throws Exception {
 
+        // Parent existant (seed) pour récupérer un ID persistant
+        final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
+        assertThat(produitsExistants).isNotEmpty();
+        final SousTypeProduitI parentSeed = produitsExistants.get(0).getSousTypeProduit();
+
+        final SousTypeProduit parentBlank = new SousTypeProduit();
+        parentBlank.setIdSousTypeProduit(parentSeed.getIdSousTypeProduit());
+        parentBlank.setSousTypeProduit(BLANK);
+
+        final Produit aCreer = new Produit();
+        aCreer.setProduit(TEMP_PRODUIT_A_SUPPRIMER);
+        aCreer.setSousTypeProduit(parentBlank);
+
+        assertThatThrownBy(() -> this.service.creer(aCreer))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(MSG_CREER_KO_LIBELLE_PARENT_BLANK);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>Provoquer une erreur de stockage sur creer(pObject) pour vérifier le wrap.</p>
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>creer(save jette Exception) wrap en ExceptionTechniqueGateway avec prefix ERREUR_TECHNIQUE_STOCKAGE.</p>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName(DN_CREER_SAVE_EXCEPTION)
+    @Test
+    public void testCreerDaoSaveJetteExceptionTechniqueGateway() throws Exception {
+
+        // Parent existant (seed)
+        final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
+        assertThat(produitsExistants).isNotEmpty();
+        final SousTypeProduitI parent = produitsExistants.get(0).getSousTypeProduit();
+
+        // Libellé volontairement trop long pour faire échouer l'INSERT (contrainte longueur colonne)
+        final Produit aCreer = new Produit();
+        aCreer.setProduit(LIBELLE_TROP_LONG);
+        aCreer.setSousTypeProduit(parent);
+
+        assertThatThrownBy(() -> this.service.creer(aCreer))
+            .isInstanceOf(levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>Vérifier le contrôle de non-persistance du parent (ID null) sur creer(pObject).</p>
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>creer(parent ID null) jette {@link ExceptionTechniqueGatewayNonPersistent} avec
+     * MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + libelléParent.</p>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName(DN_CREER_PARENT_ID_NULL)
+    @Test
+    public void testCreerParentIdNullExceptionTechniqueGatewayNonPersistent() throws Exception {
+
+        final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
+        assertThat(produitsExistants).isNotEmpty();
+        final SousTypeProduitI parentSeed = produitsExistants.get(0).getSousTypeProduit();
+        final String libelleParent = parentSeed.getSousTypeProduit();
+
+        final SousTypeProduit parentIdNull = new SousTypeProduit();
+        parentIdNull.setIdSousTypeProduit(null); // NON persistant
+        parentIdNull.setSousTypeProduit(libelleParent);
+
+        final Produit aCreer = new Produit();
+        aCreer.setProduit(TEMP_PRODUIT_A_SUPPRIMER);
+        aCreer.setSousTypeProduit(parentIdNull);
+
+        assertThatThrownBy(() -> this.service.creer(aCreer))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(MSG_CREER_KO_PARENT_NON_PERSISTENT + libelleParent);
+
+    } // __________________________________________________________________
+    
+
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -657,6 +798,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("creer(parent non persistant) - ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testCreerParentNonPersistantExceptionTechniqueGatewayNonPersistent() throws Exception {
+    	
         final SousTypeProduit parent = new SousTypeProduit();
         parent.setIdSousTypeProduit(999L); // ID inexistant
         parent.setSousTypeProduit("Parent inexistant");
@@ -665,7 +807,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
         assertThatThrownBy(() -> this.service.creer(produit))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -681,6 +826,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_NOMINAL)
     @Test
     public void testCreerNominalOk() throws Exception {
+    	
         final long avant = this.service.count();
 
         // On récupère directement un produit existant pour obtenir son parent
@@ -704,9 +850,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         final Produit relu = this.service.findById(cree.getIdProduit());
         assertThat(relu).isNotNull();
         assertThat(relu.getProduit()).isEqualTo(TEMP_PRODUIT_A_SUPPRIMER);
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     // ===================== RECHERCHER =====================
+    
+    
 
     /**
      * <div>
@@ -720,6 +871,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_RECHERCHER_TOUS)
     @Test
     public void testRechercherTousNominalOk() throws Exception {
+    	
         final List<Produit> resultats = this.service.rechercherTous();
 
         assertThat(resultats).isNotNull().isNotEmpty();
@@ -734,7 +886,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
             assertThat(p.getSousTypeProduit()).isNotNull();
             assertThat(p.getSousTypeProduit().getIdSousTypeProduit()).isNotNull();
         });
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     /**
      * <div>
@@ -750,10 +905,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)")
     @Test
     public void testFindByObjetMetierParamNullExceptionAppliParamNull() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.findByObjetMetier(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -769,6 +928,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
     public void testFindByObjetMetierLibelleBlankExceptionAppliLibelleBlank() throws Exception {
+    	
         // On récupère un parent existant
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
@@ -781,7 +941,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.findByObjetMetier(probe))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -797,6 +960,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)")
     @Test
     public void testFindByObjetMetierParentNullExceptionAppliParentNull() throws Exception {
+    	
         final Produit probe = new Produit();
         probe.setProduit(CHEMISE_ML_HOMME);
         probe.setSousTypeProduit(null);
@@ -804,7 +968,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.findByObjetMetier(probe))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -820,6 +987,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)")
     @Test
     public void testFindByObjetMetierParentNonPersistantExceptionTechniqueGatewayNonPersistent() throws Exception {
+    	
         final SousTypeProduit parent = new SousTypeProduit();
         parent.setIdSousTypeProduit(999L); // ID inexistant
         parent.setSousTypeProduit("Parent inexistant");
@@ -831,7 +999,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.findByObjetMetier(probe))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
             .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT + "Parent inexistant");
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -847,6 +1018,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByObjetMetier(nominal) - retourne l'objet métier correspondant")
     @Test
     public void testFindByObjetMetierNominalOk() throws Exception {
+    	
         // On récupère un produit existant pour construire la probe
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
@@ -862,7 +1034,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThat(trouve.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
         assertThat(trouve.getSousTypeProduit()).isNotNull();
         assertThat(trouve.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(seed.getSousTypeProduit().getIdSousTypeProduit());
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -876,12 +1051,16 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByLibelle(nominal) - retrouve un produit seedé via le libellé exact")
     @Test
     public void testFindByLibelleNominalOk() throws Exception {
+    	
         final List<Produit> resultats = this.service.findByLibelle(CHEMISE_ML_HOMME);
 
         assertThat(resultats).isNotNull().isNotEmpty();
         assertThat(resultats.get(0).getProduit()).isEqualTo(CHEMISE_ML_HOMME);
         assertThat(resultats.get(0).getSousTypeProduit()).isNotNull();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -895,10 +1074,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLE_INEXISTANT)
     @Test
     public void testFindByLibelleBlankExceptionAppliLibelleBlank() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.findByLibelle(BLANK))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -912,9 +1095,13 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLE_INEXISTANT)
     @Test
     public void testFindByLibelleInexistantVideOk() throws Exception {
+    	
         final List<Produit> resultats = this.service.findByLibelle(INTROUVABLE);
         assertThat(resultats).isNotNull().isEmpty();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -928,12 +1115,16 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLERAPIDE_INEXISTANT)
     @Test
     public void testFindByLibelleRapideBlankRetourneTous() throws Exception {
+    	
         final List<Produit> tous = this.service.rechercherTous();
         final List<Produit> rapides = this.service.findByLibelleRapide(BLANK);
 
         assertThat(rapides).isNotNull();
         assertThat(rapides).hasSameSizeAs(tous);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -947,13 +1138,17 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByLibelleRapide(nominal) - retourne les correspondances partielles")
     @Test
     public void testFindByLibelleRapideNominalOk() throws Exception {
+    	
         final List<Produit> resultats = this.service.findByLibelleRapide(CHEMISE);
 
         assertThat(resultats).isNotNull().isNotEmpty();
         assertThat(resultats)
             .extracting(Produit::getProduit)
             .allMatch(libelle -> libelle.toLowerCase(LOCALE_DEFAUT).contains(CHEMISE));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -967,10 +1162,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findByLibelleRapide(null) - ExceptionAppliParamNull")
     @Test
     public void testFindByLibelleRapideNullExceptionAppliParamNull() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_FINDBYLIBELLERAPIDE_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -984,6 +1183,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDALLBYPARENT_NOMINAL)
     @Test
     public void testFindAllByParentNominalOk() throws Exception {
+    	
         // On récupère directement un produit existant pour obtenir son parent
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
@@ -996,7 +1196,9 @@ public class ProduitGatewayJPAServiceIntegrationTest {
             .extracting(Produit::getSousTypeProduit)
             .extracting(SousTypeProduitI::getIdSousTypeProduit)
             .containsOnly(parent.getIdSousTypeProduit());
-    }
+        
+    } // __________________________________________________________________
+    
     
     
     /**
@@ -1011,10 +1213,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findAllByParent(null) - ExceptionAppliParentNull")
     @Test
     public void testFindAllByParentNullExceptionAppliParentNull() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.findAllByParent(null))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(MSG_FINDALLBYPARENT_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1028,13 +1234,17 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYID_NOMINAL)
     @Test
     public void testFindByIdNominalOk() throws Exception {
+    	
         final Produit seed = this.service.findByLibelle(CHEMISE_ML_HOMME).get(0);
         final Produit relu = this.service.findById(seed.getIdProduit());
 
         assertThat(relu).isNotNull();
         assertThat(relu.getIdProduit()).isEqualTo(seed.getIdProduit());
         assertThat(relu.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1048,12 +1258,18 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("findById(null) - ExceptionAppliParamNull")
     @Test
     public void testFindByIdNullExceptionAppliParamNull() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.findById(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_FINDBYID_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== UPDATE =====================
+    
+    
 
     /**
      * <div>
@@ -1067,10 +1283,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_NULL)
     @Test
     public void testUpdateNullExceptionAppliParamNull() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_UPDATE_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1084,13 +1304,17 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_BLANK)
     @Test
     public void testUpdateLibelleBlankExceptionAppliLibelleBlank() throws Exception {
+    	
         final Produit seed = this.service.findByLibelle(CHEMISE_ML_HOMME).get(0);
         final Produit aModifier = new Produit(seed.getIdProduit(), BLANK, seed.getSousTypeProduit());
 
         assertThatThrownBy(() -> this.service.update(aModifier))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_UPDATE_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1104,6 +1328,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("update(id null) - ExceptionAppliParamNonPersistent")
     @Test
     public void testUpdateIdNullExceptionAppliParamNonPersistent() throws Exception {
+    	
         // On récupère directement un produit existant pour obtenir son parent
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
@@ -1117,7 +1342,9 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.update(aModifier))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(MSG_UPDATE_KO_NON_PERSISTENT + TEMP_PRODUIT_A_MODIFIER);
-    }
+        
+    } // __________________________________________________________________
+    
 
 
     /**
@@ -1132,6 +1359,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_NOMINAL)
     @Test
     public void testUpdateNominalOk() throws Exception {
+    	
         final Produit seed = this.service.findByLibelle(CHEMISE_ML_HOMME).get(0);
         final Produit aModifier = new Produit(
             seed.getIdProduit(),
@@ -1146,7 +1374,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
         final Produit relu = this.service.findById(seed.getIdProduit());
         assertThat(relu.getProduit()).isEqualTo(seed.getProduit() + SUFFIX_MODIF);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1160,6 +1391,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_PARENT_MODIFIE)
     @Test
     public void testUpdateParentModifieOk() throws Exception {
+    	
         // Récupération d'un produit existant
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
@@ -1184,9 +1416,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         final Produit relu = this.service.findById(seed.getIdProduit());
         assertThat(relu.getSousTypeProduit().getIdSousTypeProduit())
             .isEqualTo(nouveauParent.getIdSousTypeProduit());
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     // ===================== DELETE =====================
+    
+    
 
     /**
      * <div>
@@ -1200,10 +1437,14 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("delete(null) - ExceptionAppliParamNull")
     @Test
     public void testDeleteNullExceptionAppliParamNull() throws Exception {
+    	
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_DELETE_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1217,6 +1458,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("delete(id null) - ExceptionAppliParamNonPersistent")
     @Test
     public void testDeleteIdNullExceptionAppliParamNonPersistent() throws Exception {
+    	
         final SousTypeProduitI parent = new SousTypeProduit();   
         parent.setSousTypeProduit(CHEMISE_ML_HOMME);
         final Produit aSupprimer = new Produit(null, TEMP_PRODUIT_A_SUPPRIMER, parent);
@@ -1224,7 +1466,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.delete(aSupprimer))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(MSG_DELETE_KO_ID_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1238,6 +1483,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("delete(absent) - ne fait rien")
     @Test
     public void testDeleteAbsentNeFaitRien() throws Exception {
+    	
         final long avant = this.service.count();
 
         // On récupère directement un produit existant pour obtenir son parent
@@ -1254,7 +1500,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
         final long apres = this.service.count();
         assertThat(apres).isEqualTo(avant);
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     /**
      * <div>
@@ -1274,6 +1523,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @Transactional(propagation = Propagation.NEVER)
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     public void testDeleteNominalOk() throws Exception {
+    	
         // On récupère directement un produit existant pour obtenir son parent
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
@@ -1307,7 +1557,8 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
         // Vérification via service
         assertThat(this.service.findById(cree.getIdProduit())).isNull();
-    }
+        
+    } // __________________________________________________________________
     
     
 }

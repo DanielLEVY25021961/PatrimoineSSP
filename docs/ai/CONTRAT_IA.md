@@ -553,3 +553,67 @@ Objectif :
 
 ➡️ Garantir que l’IA peut, à partir du **SHA seul**, (1) découvrir, (2) lire, (3) comparer,
 (4) prouver les modifications, et (5) travailler uniquement sur une baseline à jour.
+
+## 26) Méthode d’analyse d’alignement PORT–ADAPTER (procédure + analyse en 7 points)
+
+Objectif : analyser l’alignement **PORT ↔ ADAPTER** **méthode par méthode**, de façon exhaustive et contrôlée, avec une boucle de correction reproductible (SHA-only), sans jamais “sauter” un défaut sérieux.
+
+### 26.1 Principe de progression (gating strict)
+
+- L’IA analyse **une seule méthode à la fois**.
+- **Interdiction** de passer à la méthode suivante tant que l’analyse profonde détecte un problème sérieux sur la méthode courante (contrat incorrect, implémentation déficiente, tests incomplets/non alignés, etc.).
+- Le **passage à la méthode suivante** est **décidé uniquement par l’Utilisateur**.
+- **RAPPEL** : ne pas analyser les **LOG** ni leurs imports.
+
+### 26.2 Analyse profonde en 7 points (checklist obligatoire, méthode par méthode)
+
+Pour chaque méthode analysée (ex : « analyser l’alignement du PORT GATEWAY ProduitGatewayIService avec l’ADAPTER GATEWAY ProduitGatewayJPAService »), l’IA applique **strictement** les points suivants, **dans l’ordre**, et **ne passe pas au point suivant** tant qu’un problème sérieux subsiste :
+
+1. **Qualité des contrats dans le PORT**  
+   - Signature, exceptions, préconditions, cohérence des types, cohérence des messages/constantes de contrat.
+
+2. **Qualité du code de l’ADAPTER**  
+   - Implémentation conforme au contrat du PORT, robustesse, gestion des cas limites, cohérence avec l’architecture.
+
+3. **Javadoc du PORT**  
+   - Vérifier que chaque javadoc de méthode contient bien les 3 rubriques :
+     - **INTENTION TECHNIQUE**
+     - **CONTRAT TECHNIQUE**
+     - **GARANTIES TECHNIQUES et METIER**
+   - Contrôler l’homogénéité du formalisme HTML (div, <p>, exceptions jetées, etc.).
+   - **RAPPEL** : respecter systématiquement la javadoc existante et son formalisme HTML (sauf si elle est fausse).
+
+4. **Javadoc de l’ADAPTER**  
+   - Contrôler la javadoc (hors {@inheritDoc}) des méthodes **privées** de l’ADAPTER : intention/contrat/garanties lorsque pertinent + respect du style HTML du projet.
+
+5. **Commentaires (de bloc) dans l’ADAPTER**  
+   - Vérifier la présence, la cohérence et l’homogénéité des commentaires de bloc existants ; ne pas les dégrader ; les reproduire dans le code généré.
+
+6. **Détection exhaustive des défauts**  
+   - Rechercher **absolument tout** ce qui ne va pas en vue d’une correction finale.
+   - Examiner les remarques **point par point pour la méthode en cours**, **pas tout d’un coup**.
+
+7. **Alignement et complétude des tests JUnit**  
+   - Vérifier l’alignement et la complétude des tests relatifs à la méthode :
+     - **Test Mock** + **Test d’intégration**
+   - Vérifier l’homogénéité du code (PORT/ADAPTER/tests) avec le code similaire existant (parent/enfants).
+
+Précondition absolue : **lecture stricte** (ligne à ligne / octet par octet) de `docs/ai/CONTRAT_IA.md` et des fichiers nécessaires **avant toute analyse** ou **tout code** (cf. §24, RT-LECTURE-GITHUB-02).
+
+### 26.3 Boucle opérationnelle (7 points)
+
+1. **Détection d’un défaut d’alignement :** l’IA produit une première correction **autonome** et **directement intégrable dans STS** (javadoc + méthode complète / classe complète selon le besoin), en précisant **où** l’intégrer (classe + méthode / fichier concerné).
+2. L’Utilisateur **applique** la correction dans STS et **rejoue les tests unitaires**.
+3. Si tests **verts**, l’Utilisateur **commit/push** et fournit un **nouveau SHA unique**.  
+   3bis. Si tests **KO**, l’Utilisateur demande une **réécriture** de la correction ou du test incriminé.
+4. L’IA relit sur GitHub au **SHA** (exclusivement via **RT-LECTURE-GITHUB-02**) et, en l’absence d’incident de lecture, **mémorise** le(s) fichier(s) corrigé(s) en baseline, puis **consolide** la baseline (une seule version par chemin).
+5. À partir de là, l’IA **vérifie** la bonne application de la correction et **relance l’analyse** de **la même méthode** directement **depuis la baseline** (sans relecture GitHub/bundle).
+5bis. Si l’alignement est parfait : l’IA répond **uniquement** : `alignement parfait`.
+5ter. Sinon : l’IA propose une **nouvelle correction autonome** directement intégrable STS → retour au point **2**.
+6. Quand **plus aucun défaut** ne subsiste sur la méthode courante : l’IA répond **uniquement** : `alignement parfait` → l’Utilisateur peut décider de passer à la méthode suivante.
+
+### 26.4 Compatibilité avec les modes (LECTURE / DIAGNOSTIC / CODER)
+
+- Cette procédure s’applique aux analyses d’alignement en **MODE DIAGNOSTIC**.
+- Toute production de code reste soumise à la règle : **MODE CODER uniquement si “coder” est explicitement demandé**.
+- En cas de baseline non à jour au SHA courant, ou d’**incident de lecture**, la procédure est **suspendue** jusqu’à restauration d’une baseline saine (cf. §24 et §6).
