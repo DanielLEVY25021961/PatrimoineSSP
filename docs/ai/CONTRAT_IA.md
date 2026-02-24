@@ -467,6 +467,23 @@ Objectif :
 ➡️ Garantir que toute analyse/correction est **reproductible**, **audit-ready** et
 strictement basée sur une baseline **consolidée** et **alignée** sur le SHA fourni.
 
+### Règle d’exploitation de la baseline consolidée (ANTI-RELECTURE-GITHUB-BUNDLE)
+
+Principe : ➡️ Une fois la baseline **rafraîchie** et **consolidée** au **SHA courant** (lecture GitHub parfaite selon **RT-LECTURE-GITHUB-02**), l’IA est autorisée à **analyser / diagnostiquer / coder** uniquement à partir des fichiers de la **baseline**, sans relecture GitHub ni bundle, tant que le SHA courant reste inchangé.
+
+Règle absolue (ANTI-RELECTURE-APRES-BASELINE-A-JOUR) :
+- Si la baseline est jugée **parfaitement à jour** au SHA courant (lecture parfaite + consolidation réalisées), l’IA **ne doit pas** relire GitHub/bundle “par prudence” pour travailler : la baseline devient le **matériau unique** de travail opérationnel.
+- GitHub au SHA et le bundle OFFLINE ne servent ensuite **qu’à** :
+  1) rafraîchir la baseline lors d’un **nouveau SHA**,
+  2) résoudre un **incident de lecture**,
+  3) satisfaire une **demande explicite** de relecture par l’Utilisateur.
+
+Traçabilité :
+- Le bloc **PREUVE DE LECTURE** peut être produit à partir des **preuves déjà établies** lors du rafraîchissement (URL Raw SHA utilisée lors de la lecture, taille, checksum), sans nécessiter une nouvelle lecture GitHub/bundle tant que le SHA courant n’a pas changé.
+
+Révocation immédiate :
+- Si l’IA constate un doute sur la baseline (fichier requis manquant, incohérence, génériques illisibles/douteux, divergence constatée, ou **incident de lecture**) : ➜ signaler explicitement **"incident de lecture"** ➜ suspendre toute analyse/génération ➜ relancer la lecture (max 3 tentatives) conformément à RT-LECTURE-GITHUB-02 ➜ à échec persistant : basculer en MODE OFFLINE.
+
 ### Bloc PREUVE DE LECTURE (OBLIGATOIRE)
 
 Toute réponse contenant une **analyse**, un **diagnostic** ou du **code** DOIT commencer par un bloc **PREUVE DE LECTURE** listant au minimum :
