@@ -1246,6 +1246,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentChaussure);
     }
 
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>

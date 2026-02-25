@@ -1185,6 +1185,12 @@ public interface ProduitGatewayIService {
 	 * jette une {@link ExceptionTechniqueGatewayNonPersistent}
 	 * avec un message {@link #MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT}
 	 * + {@code pObject.getSousTypeProduit().getSousTypeProduit()}.</li>
+	 * <li>Si {@code DAO.findById(Long)} retourne {@code null} :
+	 * jette une {@link ExceptionTechniqueGateway}
+	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
+	 * <li>Si {@code DAO.save(...)} retourne {@code null} :
+	 * jette une {@link ExceptionTechniqueGateway}
+	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
 	 * <li>Si l'objet n'existe pas en stockage :
 	 * retourne {@code null}. Pas d'Exception.</li>
 	 * <li>Si une modification est effectuée :
@@ -1227,12 +1233,10 @@ public interface ProduitGatewayIService {
 	 * si le libellé du parent de pObject est blank.
 	 * @throws ExceptionTechniqueGatewayNonPersistent
 	 * Si le parent de pObject n'est pas persistant.
-	 * @throws ExceptionTechniqueGateway 
-	 * si une erreur technique survient lors de l'accès au stockage.
-	 * @throws Exception toute autre exception levée par l'implémentation.
+	 * @throws Exception
 	 */
 	Produit update(Produit pObject) throws Exception;
-
+	
 
 
 	/**
