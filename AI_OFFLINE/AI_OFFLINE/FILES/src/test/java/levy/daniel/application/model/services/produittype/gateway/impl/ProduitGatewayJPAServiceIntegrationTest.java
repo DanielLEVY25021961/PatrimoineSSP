@@ -566,8 +566,12 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         // Configuration minimale
     }
 
+    
+    
     // ============================== OUTILS ===============================
 
+    
+    
     /**
      * <div>
      * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} par libellé.</p>
@@ -585,7 +589,8 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThat(enfant).isNotNull();
         assertThat(enfant.getIdSousTypeProduit()).isNotNull();
         return enfant.getIdSousTypeProduit();
-    }
+        
+    } // __________________________________________________________________
 
     
     
@@ -597,6 +602,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
      * @param pId Long ID de l'entité supprimée
      */
     private void verifierSuppressionEnBase(final Long pId) {
+    	
         final Integer count = this.jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
             Integer.class, pId
@@ -604,13 +610,98 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThat(count)
             .as("L'enregistrement doit être physiquement supprimé de la base")
             .isEqualTo(0);
-    }
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>Lit le libellé PRODUIT physiquement en base (bypass Hibernate).</p>
+     * </div>
+     *
+     * @param pId Long : ID_PRODUIT.
+     * @return String : valeur de la colonne PRODUIT.
+     */
+    private String lireLibelleProduitEnBase(final Long pId) {
+    	
+        return this.jdbcTemplate.queryForObject(
+            "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?",
+            String.class, pId
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Lit l'ID du parent (SOUS_TYPE_PRODUIT) physiquement en base (bypass Hibernate).</p>
+     * </div>
+     *
+     * @param pId Long : ID_PRODUIT.
+     * @return Long : valeur de la colonne SOUS_TYPE_PRODUIT.
+     */
+    private Long lireIdParentEnBase(final Long pId) {
+    	
+        return this.jdbcTemplate.queryForObject(
+            "SELECT SOUS_TYPE_PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?",
+            Long.class, pId
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Retrouve l'ID d'un SousTypeProduit persistant par son libellé (physiquement en base).</p>
+     * </div>
+     *
+     * @param pLibelleParent String : SOUS_TYPE_PRODUIT.
+     * @return Long : ID_SOUS_TYPE_PRODUIT.
+     */
+    private Long retrouverIdParentPersistantParLibelleEnBase(final String pLibelleParent) {
+        return this.jdbcTemplate.queryForObject(
+            "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = ?",
+            Long.class, pLibelleParent
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Restaure physiquement en base un Produit (libellé + parent) pour garantir l'isolation des tests.</p>
+     * </div>
+     *
+     * @param pId Long : ID_PRODUIT.
+     * @param pLibelle String : PRODUIT.
+     * @param pIdParent Long : SOUS_TYPE_PRODUIT.
+     */
+    private void restaurerProduitEnBase(
+            final Long pId,
+            final String pLibelle,
+            final Long pIdParent) {
+
+        final int updated = this.jdbcTemplate.update(
+            "UPDATE PRODUITS SET PRODUIT = ?, SOUS_TYPE_PRODUIT = ? WHERE ID_PRODUIT = ?",
+            pLibelle, pIdParent, pId
+        );
+
+        assertThat(updated)
+            .as("La restauration en base doit modifier exactement 1 ligne.")
+            .isEqualTo(1);
+        
+    } // __________________________________________________________________
+    
+    
 
     // =============================== TESTS ===============================
 
     
     
     // ===================== CREER =====================
+    
+    
 
     /**
      * <div>
@@ -1464,30 +1555,55 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_NOMINAL)
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testUpdateNominalOk() throws Exception {
     	
         final Produit seed = this.service.findByLibelle(CHEMISE_ML_HOMME).get(0);
-        final Produit aModifier = new Produit(
-            seed.getIdProduit(),
-            seed.getProduit() + SUFFIX_MODIF,
-            seed.getSousTypeProduit()
-        );
+        assertThat(seed).isNotNull();
+        assertThat(seed.getIdProduit()).isNotNull();
 
-        final Produit modifie = this.service.update(aModifier);
+        final Long id = seed.getIdProduit();
 
-        assertThat(modifie).isNotNull();
-        assertThat(modifie.getProduit()).isEqualTo(seed.getProduit() + SUFFIX_MODIF);
+        /* Lecture physique en base AVANT update. */
+        final String libelleAvant = lireLibelleProduitEnBase(id);
+        final Long parentAvant = lireIdParentEnBase(id);
 
-        /* Force la synchronisation BD et évite un éventuel cache Hibernate. */
-        this.entityManager.flush();
-        this.entityManager.clear();
+        final String nouveauLibelle = libelleAvant + SUFFIX_MODIF;
 
-        final Produit relu = this.service.findById(seed.getIdProduit());
-        assertThat(relu).isNotNull();
-        assertThat(relu.getProduit()).isEqualTo(seed.getProduit() + SUFFIX_MODIF);
+        try {
+
+            final Produit aModifier = new Produit(
+                id,
+                nouveauLibelle,
+                seed.getSousTypeProduit()
+            );
+
+            final Produit modifie = this.service.update(aModifier);
+
+            assertThat(modifie).isNotNull();
+            assertThat(modifie.getProduit()).isEqualTo(nouveauLibelle);
+
+            /* Preuve inattaquable : lecture physique en base APRES update. */
+            final String libelleEnBase = lireLibelleProduitEnBase(id);
+            assertThat(libelleEnBase)
+                .as("La colonne PRODUIT doit être physiquement mise à jour en base.")
+                .isEqualTo(nouveauLibelle);
+
+            /* Double-check via service (nouvelle transaction/requête). */
+            final Produit relu = this.service.findById(id);
+            assertThat(relu).isNotNull();
+            assertThat(relu.getProduit()).isEqualTo(nouveauLibelle);
+
+        } finally {
+
+            /* Isolation : restauration en base, même si le test échoue. */
+            restaurerProduitEnBase(id, libelleAvant, parentAvant);
+            this.entityManager.clear();
+
+        }
         
-    } // __________________________________________________________________
-    
+    } // __________________________________________________________________    
+
     
 
     /**
@@ -1501,32 +1617,68 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_PARENT_MODIFIE)
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testUpdateParentModifieOk() throws Exception {
     	
-        // Récupération d'un produit existant
+        /* Produit seed (homme). */
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
         final Produit seed = produitsExistants.get(0);
+        assertThat(seed.getIdProduit()).isNotNull();
 
-        // Récupération d'un autre parent existant
-        final List<Produit> autresProduits = this.service.findByLibelle(CHEMISE_MC_HOMME);
-        assertThat(autresProduits).isNotEmpty();
-        final SousTypeProduitI nouveauParent = autresProduits.get(0).getSousTypeProduit();
+        final Long idProduit = seed.getIdProduit();
 
-        final Produit aModifier = new Produit();
-        aModifier.setIdProduit(seed.getIdProduit());
-        aModifier.setProduit(seed.getProduit());
-        aModifier.setSousTypeProduit(nouveauParent);
+        /* Lecture physique en base AVANT update. */
+        final String libelleAvant = lireLibelleProduitEnBase(idProduit);
+        final Long parentAvant = lireIdParentEnBase(idProduit);
 
-        final Produit modifie = this.service.update(aModifier);
+        /* Nouveau parent = "vêtement pour femme" (différent du parent homme). */
+        final String libelleNouveauParent = "vêtement pour femme";
+        final Long idNouveauParent = retrouverIdParentPersistantParLibelleEnBase(libelleNouveauParent);
 
-        assertThat(modifie).isNotNull();
-        assertThat(modifie.getSousTypeProduit().getIdSousTypeProduit())
-            .isEqualTo(nouveauParent.getIdSousTypeProduit());
+        assertThat(idNouveauParent).isNotNull();
+        assertThat(idNouveauParent)
+            .as("Le nouveau parent doit être différent du parent actuel.")
+            .isNotEqualTo(parentAvant);
 
-        final Produit relu = this.service.findById(seed.getIdProduit());
-        assertThat(relu.getSousTypeProduit().getIdSousTypeProduit())
-            .isEqualTo(nouveauParent.getIdSousTypeProduit());
+        final SousTypeProduit nouveauParent = new SousTypeProduit();
+        nouveauParent.setIdSousTypeProduit(idNouveauParent);
+        nouveauParent.setSousTypeProduit(libelleNouveauParent);
+
+        try {
+
+            final Produit aModifier = new Produit();
+            aModifier.setIdProduit(idProduit);
+            aModifier.setProduit(seed.getProduit());
+            aModifier.setSousTypeProduit(nouveauParent);
+
+            final Produit modifie = this.service.update(aModifier);
+
+            assertThat(modifie).isNotNull();
+            assertThat(modifie.getSousTypeProduit()).isNotNull();
+            assertThat(modifie.getSousTypeProduit().getIdSousTypeProduit())
+                .isEqualTo(idNouveauParent);
+
+            /* Preuve inattaquable : lecture physique en base APRES update. */
+            final Long parentEnBase = lireIdParentEnBase(idProduit);
+            assertThat(parentEnBase)
+                .as("La FK SOUS_TYPE_PRODUIT doit être physiquement mise à jour en base.")
+                .isEqualTo(idNouveauParent);
+
+            /* Double-check via service (nouvelle transaction/requête). */
+            final Produit relu = this.service.findById(idProduit);
+            assertThat(relu).isNotNull();
+            assertThat(relu.getSousTypeProduit()).isNotNull();
+            assertThat(relu.getSousTypeProduit().getIdSousTypeProduit())
+                .isEqualTo(idNouveauParent);
+
+        } finally {
+
+            /* Isolation : restauration en base, même si le test échoue. */
+            restaurerProduitEnBase(idProduit, libelleAvant, parentAvant);
+            this.entityManager.clear();
+
+        }
         
     } // __________________________________________________________________
     
