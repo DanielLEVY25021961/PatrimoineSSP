@@ -1478,7 +1478,12 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThat(modifie).isNotNull();
         assertThat(modifie.getProduit()).isEqualTo(seed.getProduit() + SUFFIX_MODIF);
 
+        /* Force la synchronisation BD et évite un éventuel cache Hibernate. */
+        this.entityManager.flush();
+        this.entityManager.clear();
+
         final Produit relu = this.service.findById(seed.getIdProduit());
+        assertThat(relu).isNotNull();
         assertThat(relu.getProduit()).isEqualTo(seed.getProduit() + SUFFIX_MODIF);
         
     } // __________________________________________________________________

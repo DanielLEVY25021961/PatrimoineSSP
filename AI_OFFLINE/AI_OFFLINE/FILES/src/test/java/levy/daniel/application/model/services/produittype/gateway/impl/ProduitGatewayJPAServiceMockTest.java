@@ -2535,10 +2535,8 @@ public class ProduitGatewayJPAServiceMockTest {
         
     } // __________________________________________________________________
     
+
     
-
-    // =============================== DELETE ==============================
-
     /**
 	 * <div>
 	 * <p>Test béton : vérifie que la méthode update() gère correctement
@@ -2574,7 +2572,149 @@ public class ProduitGatewayJPAServiceMockTest {
 	    verifyNoInteractions(this.entityManager);
 	    
 	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>update(parent libellé blank) lève ExceptionAppliLibelleBlank.</p>
+	 * </div>
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName("update(parent libellé blank) - ExceptionAppliLibelleBlank")
+	@Test
+	public void testUpdateParentLibelleBlankExceptionAppliLibelleBlank() {
 
+	    final SousTypeProduitI parent = new SousTypeProduit();
+	    parent.setIdSousTypeProduit(1L);
+	    parent.setSousTypeProduit(BLANK);
+
+	    final Produit p = new Produit();
+	    p.setProduit(CHEMISE_ML_HOMME);
+	    p.setSousTypeProduit(parent);
+	    p.setIdProduit(1L);
+
+	    assertThatThrownBy(() -> this.service.update(p))
+	        .isInstanceOf(ExceptionAppliLibelleBlank.class)
+	        .hasMessage(ProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK);
+
+	    verifyNoInteractions(this.produitDaoJPA);
+	    verifyNoInteractions(this.sousTypeProduitDaoJPA);
+	    verifyNoInteractions(this.entityManager);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(parent id null) lève ExceptionTechniqueGatewayNonPersistent.</p>
+	 * </div>
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName("update(parent id null) - ExceptionTechniqueGatewayNonPersistent")
+	@Test
+	public void testUpdateParentIdNullExceptionTechniqueGatewayNonPersistent() {
+
+	    final SousTypeProduitI parent = new SousTypeProduit();
+	    parent.setIdSousTypeProduit(null);
+	    parent.setSousTypeProduit(VETEMENT_HOMME);
+
+	    final Produit p = new Produit();
+	    p.setProduit(CHEMISE_ML_HOMME);
+	    p.setSousTypeProduit(parent);
+	    p.setIdProduit(1L);
+
+	    assertThatThrownBy(() -> this.service.update(p))
+	        .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+	        .hasMessage(ProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT + VETEMENT_HOMME);
+
+	    verifyNoInteractions(this.produitDaoJPA);
+	    verifyNoInteractions(this.sousTypeProduitDaoJPA);
+	    verifyNoInteractions(this.entityManager);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(DAO.findById retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
+	 * </div>
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName("update(DAO findById null) - ExceptionTechniqueGateway KO_STOCKAGE")
+	@Test
+	public void testUpdateDaoFindByIdNullExceptionTechniqueGateway() {
+
+	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+	    final Produit p = new Produit();
+	    p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
+	    p.setSousTypeProduit(parent);
+	    p.setIdProduit(1L);
+
+	    final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+	    when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+
+	    when(this.produitDaoJPA.findById(1L)).thenReturn(null);
+
+	    assertThatThrownBy(() -> this.service.update(p))
+	        .isInstanceOf(ExceptionTechniqueGateway.class)
+	        .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(0)).save(any(ProduitJPA.class));
+	    verifyNoInteractions(this.entityManager);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(DAO.save retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
+	 * </div>
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName("update(DAO save null) - ExceptionTechniqueGateway KO_STOCKAGE")
+	@Test
+	public void testUpdateDaoSaveNullExceptionTechniqueGateway() throws Exception {
+
+	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+	    final Produit p = new Produit();
+	    p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
+	    p.setSousTypeProduit(parent);
+	    p.setIdProduit(1L);
+
+	    final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+	    when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+
+	    final ProduitJPA persiste = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+	    persiste.setIdProduit(1L);
+	    when(this.produitDaoJPA.findById(1L)).thenReturn(Optional.of(persiste));
+
+	    when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(null);
+
+	    assertThatThrownBy(() -> this.service.update(p))
+	        .isInstanceOf(ExceptionTechniqueGateway.class)
+	        .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+	    verifyNoInteractions(this.entityManager);
+
+	} // __________________________________________________________________
+	
+    
+
+    // =============================== DELETE ==============================
+
+    
+	
 	/**
      * <div>
      * <p>delete(null) lève ExceptionAppliParamNull.</p>
