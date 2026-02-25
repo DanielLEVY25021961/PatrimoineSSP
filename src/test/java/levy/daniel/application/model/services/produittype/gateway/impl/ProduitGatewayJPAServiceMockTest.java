@@ -118,6 +118,11 @@ public class ProduitGatewayJPAServiceMockTest {
 
     /** "chemise à manches courtes pour homme". */
     public static final String CHEMISE_MC_HOMME = "chemise à manches courtes pour homme";
+    
+    /**
+     * "chemise à manches longues pour femme"
+     */
+    public static final String CHEMISE_ML_FEMME = "chemise à manches longues pour femme";
 
     /** "sweatshirt pour homme". */
     public static final String SWEAT_HOMME = "sweatshirt pour homme";
@@ -913,8 +918,352 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
 
-    } // __________________________________________________________________    
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>findByObjetMetier(null) lève ExceptionAppliParamNull.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(null) - ExceptionAppliParamNull")
+    @Test
+    public void testFindByObjetMetierParamNullExceptionAppliParamNull() {
 
+        assertThatThrownBy(() -> this.service.findByObjetMetier(null))
+            .isInstanceOf(ExceptionAppliParamNull.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(libellé blank) lève ExceptionAppliLibelleBlank.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(libellé blank) - ExceptionAppliLibelleBlank")
+    @Test
+    public void testFindByObjetMetierLibelleBlankExceptionAppliLibelleBlank() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = new Produit();
+        p.setProduit(BLANK);
+        p.setSousTypeProduit(parent);
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(parent null) lève ExceptionAppliParentNull.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(parent null) - ExceptionAppliParentNull")
+    @Test
+    public void testFindByObjetMetierParentNullExceptionAppliParentNull() {
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(null);
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionAppliParentNull.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(parent libellé blank) lève ExceptionAppliLibelleBlank.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(parent libellé blank) - ExceptionAppliLibelleBlank")
+    @Test
+    public void testFindByObjetMetierParentLibelleBlankExceptionAppliLibelleBlank() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(BLANK);
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(parent id null) lève ExceptionTechniqueGatewayNonPersistent.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(parent id null) - ExceptionTechniqueGatewayNonPersistent")
+    @Test
+    public void testFindByObjetMetierParentIdNullExceptionTechniqueGatewayNonPersistent() {
+
+        final SousTypeProduit parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        parent.setIdSousTypeProduit(null); // Parent NON persistant
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT + VETEMENT_HOMME);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(parent absent DAO) lève ExceptionTechniqueGatewayNonPersistent.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(parent absent DAO) - ExceptionTechniqueGatewayNonPersistent")
+    @Test
+    public void testFindByObjetMetierParentAbsentExceptionTechniqueGatewayNonPersistent() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT + VETEMENT_HOMME);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(DAO parent jette Exception) lève ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(DAO parent jette Exception) - ExceptionTechniqueGateway")
+    @Test
+    public void testFindByObjetMetierParentDaoJetteExceptionTechniqueGateway() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(DAO enfant retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(DAO enfant null) - ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testFindByObjetMetierDaoRetourneNullExceptionTechniqueGateway() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findAllBySousTypeProduit(parentJPA)).thenReturn(null);
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(DAO enfant jette Exception) lève ExceptionTechniqueGateway (wrap).</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(DAO enfant jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testFindByObjetMetierDaoJetteExceptionTechniqueGateway() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findAllBySousTypeProduit(parentJPA)).thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.findByObjetMetier(p))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(pas trouvé) retourne null.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(pas trouvé) - retourne null")
+    @Test
+    public void testFindByObjetMetierPasTrouveRetourneNull() throws Exception {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+
+        final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+
+        final List<ProduitJPA> entities = new ArrayList<>();
+        entities.add(null);
+        entities.add(this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME));
+        entities.add(this.fabriquerProduitJPA(CHEMISE_ML_FEMME, VETEMENT_FEMME));
+
+        when(this.produitDaoJPA.findAllBySousTypeProduit(parentJPA)).thenReturn(entities);
+
+        final Produit retour = this.service.findByObjetMetier(p);
+
+        assertThat(retour).isNull();
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByObjetMetier(trouvé) retourne objet métier non null.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByObjetMetier(trouvé) - retourne objet non null")
+    @Test
+    public void testFindByObjetMetierTrouveOk() throws Exception {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME.toUpperCase(Locale.ROOT));
+        p.setSousTypeProduit(parent);
+
+        final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+
+        final List<ProduitJPA> entities = new ArrayList<>();
+        entities.add(null);
+        entities.add(this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME));
+        entities.add(this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME));
+
+        when(this.produitDaoJPA.findAllBySousTypeProduit(parentJPA)).thenReturn(entities);
+
+        final Produit retour = this.service.findByObjetMetier(p);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(retour.getSousTypeProduit()).isNotNull();
+        assertThat(retour.getSousTypeProduit().getSousTypeProduit()).isEqualTo(VETEMENT_HOMME);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
  
     
     /**

@@ -724,34 +724,56 @@ public class ProduitGatewayJPAServiceMockTest {
     @Test
     public void testRechercherTousNominalOk() throws Exception {
     	
-        final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
-        p1.setIdProduit(2L);
+        final ProduitJPA femmeChemise = this.fabriquerProduitJPA(CHEMISE, VETEMENT_FEMME);
+        femmeChemise.setIdProduit(10L);
 
-        final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        p2.setIdProduit(1L);
+        final ProduitJPA femmeSweat = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_FEMME);
+        femmeSweat.setIdProduit(11L);
 
-        final List<ProduitJPA> liste = new ArrayList<ProduitJPA>();
-        liste.add(null);
-        liste.add(p1);
-        liste.add(p2);
+        final ProduitJPA hommeChemiseMc = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        hommeChemiseMc.setIdProduit(20L);
+
+        final ProduitJPA hommeChemiseMl = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        hommeChemiseMl.setIdProduit(21L);
+
+        /* Doublon métier (même libellé Produit + même parent) -> doit être dédoublonné. */
+        final ProduitJPA doublonHommeChemiseMc = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        doublonHommeChemiseMc.setIdProduit(999L);
+
+        final List<ProduitJPA> liste = Arrays.asList(
+                null,
+                hommeChemiseMl,
+                doublonHommeChemiseMc,
+                femmeSweat,
+                hommeChemiseMc,
+                null,
+                femmeChemise);
 
         when(this.produitDaoJPA.findAll()).thenReturn(liste);
 
         final List<Produit> retour = this.service.rechercherTous();
 
+        /* Filtrage des null + dédoublonnage. */
         assertThat(retour).isNotNull();
-        assertThat(retour).isNotEmpty();
+        assertThat(retour).doesNotContainNull();
+        assertThat(retour).hasSize(4);
+
+        /* Vérifie l'ordre : parent puis libellé (insensible à la casse). */
+        assertThat(retour)
+            .extracting(p -> p.getSousTypeProduit().getSousTypeProduit())
+            .containsExactly(VETEMENT_FEMME, VETEMENT_FEMME, VETEMENT_HOMME, VETEMENT_HOMME);
+
         assertThat(retour)
             .extracting(Produit::getProduit)
-            .contains(CHEMISE_ML_HOMME, CHEMISE_MC_HOMME);
+            .containsExactly(CHEMISE, SWEAT_HOMME, CHEMISE_MC_HOMME, CHEMISE_ML_HOMME);
 
         verify(this.produitDaoJPA, times(1)).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
         
-    } // __________________________________________________________________
+    } // __________________________________________________________________    
     
-    
+
     
     /**
      * <div>
@@ -773,9 +795,127 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
 
-    } // __________________________________________________________________    
+    } // __________________________________________________________________
     
+    
+    
+    /**
+     * <div>
+     * <p>rechercherTousParPage(DAO retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(DAO null) - ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testRechercherTousParPageDaoNullExceptionTechniqueGateway() {
 
+        when(this.produitDaoJPA.findAll(any(Pageable.class))).thenReturn(null);
+
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>rechercherTousParPage(content null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(content null) - ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testRechercherTousParPageContentNullExceptionTechniqueGateway() {
+
+        final Page<ProduitJPA> pageMock = org.mockito.Mockito.mock(Page.class);
+        when(pageMock.getContent()).thenReturn(null);
+
+        when(this.produitDaoJPA.findAll(any(Pageable.class))).thenReturn(pageMock);
+
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>rechercherTousParPage(DAO jette Exception) wrap en ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(DAO jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testRechercherTousParPageDaoJetteExceptionTechniqueGateway() {
+
+        when(this.produitDaoJPA.findAll(any(Pageable.class))).thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>rechercherTousParPage(contenu avec nulls) filtre les nulls lors de la conversion.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(contenu avec nulls) - filtre les nulls")
+    @Test
+    public void testRechercherTousParPageContenuAvecNullsOk() throws Exception {
+
+        final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        p1.setIdProduit(1L);
+
+        final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        p2.setIdProduit(2L);
+
+        final List<ProduitJPA> content = Arrays.asList(p1, null, p2);
+
+        final Pageable pageable = PageRequest.of(0, 10);
+        final Page<ProduitJPA> page = new PageImpl<ProduitJPA>(content, pageable, content.size());
+
+        when(this.produitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+
+        final ResultatPage<Produit> resultat = this.service.rechercherTousParPage(new RequetePage());
+
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getContent()).isNotNull();
+        assertThat(resultat.getContent()).doesNotContainNull();
+        assertThat(resultat.getContent()).hasSize(2);
+        assertThat(resultat.getContent())
+            .extracting(Produit::getProduit)
+            .contains(CHEMISE_ML_HOMME, CHEMISE_MC_HOMME);
+
+        verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________    
+
+ 
     
     /**
      * <div>
