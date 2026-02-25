@@ -946,8 +946,8 @@ public interface ProduitGatewayIService {
 	 * avec un message 
 	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL}.</li>
 	 * <li>Si {@code pContenu} est Blank mais pas {@code null} :
-	 * retourne tous les enregistrements. Pas d'Exception.</li>
-	 * <li>Si {@code DAO.findBySousTypeProduitContainingIgnoreCase(String)} 
+	 * retourne tous les enregistrements. Pas d'Exception applicative.</li>
+	 * <li>Si {@code DAO.findByProduitContainingIgnoreCase(String)} 
 	 * retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
@@ -985,7 +985,7 @@ public interface ProduitGatewayIService {
 	 */
 	List<Produit> findByLibelleRapide(String pContenu) 
 			throws Exception;
-
+	
 
 
 	/**
