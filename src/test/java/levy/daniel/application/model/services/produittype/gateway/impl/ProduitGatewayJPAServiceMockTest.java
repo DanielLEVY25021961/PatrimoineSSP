@@ -1570,6 +1570,103 @@ public class ProduitGatewayJPAServiceMockTest {
     } // __________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>findByLibelleRapide(blank) délègue à rechercherTous() qui peut échouer si DAO null.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByLibelleRapide(blank + DAO.findAll null) - ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testFindByLibelleRapideBlankDaoFindAllNullExceptionTechniqueGateway() {
+    	
+        when(this.produitDaoJPA.findAll()).thenReturn(null);
+
+        assertThatThrownBy(() -> this.service.findByLibelleRapide(BLANK))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        verify(this.produitDaoJPA, times(1)).findAll();
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+        
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByLibelleRapide(DAO jette Exception) wrap en ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByLibelleRapide(DAO jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testFindByLibelleRapideDaoJetteExceptionTechniqueGateway() {
+    	
+        when(this.produitDaoJPA.findByProduitContainingIgnoreCase(CHEMISE))
+            .thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.findByLibelleRapide(CHEMISE))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase(CHEMISE);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+        
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByLibelleRapide(nominal) filtre les nulls, trie (parent puis libellé), dédoublonne.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByLibelleRapide(nominal) - filtre/trie/dédoublonne")
+    @Test
+    public void testFindByLibelleRapideNominalFiltreTrieDedoublonneOk() throws Exception {
+    	
+        final ProduitJPA femme = this.fabriquerProduitJPA(CHEMISE_ML_FEMME, VETEMENT_FEMME);
+        femme.setIdProduit(11L);
+
+        final ProduitJPA homme = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        homme.setIdProduit(21L);
+
+        /* Doublon métier (même libellé Produit + même parent) -> doit être dédoublonné. */
+        final ProduitJPA doublonHomme = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        doublonHomme.setIdProduit(999L);
+
+        when(this.produitDaoJPA.findByProduitContainingIgnoreCase(CHEMISE))
+            .thenReturn(Arrays.asList(homme, null, doublonHomme, femme));
+
+        final List<Produit> retour = this.service.findByLibelleRapide(CHEMISE);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour).doesNotContainNull();
+        assertThat(retour).hasSize(2);
+
+        /* Ordre : parent puis libellé. */
+        assertThat(retour)
+            .extracting(p -> p.getSousTypeProduit().getSousTypeProduit())
+            .containsExactly(VETEMENT_FEMME, VETEMENT_HOMME);
+
+        assertThat(retour)
+            .extracting(Produit::getProduit)
+            .containsExactly(CHEMISE_ML_FEMME, CHEMISE_MC_HOMME);
+
+        verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase(CHEMISE);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>

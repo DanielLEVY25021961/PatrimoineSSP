@@ -1309,6 +1309,130 @@ public class ProduitGatewayJPAServiceMockTest {
     } // __________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>findByLibelle(null) lève ExceptionAppliLibelleBlank (null est blank).</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByLibelle(null) - ExceptionAppliLibelleBlank")
+    @Test
+    public void testFindByLibelleParamNullExceptionAppliLibelleBlank() {
+
+        assertThatThrownBy(() -> this.service.findByLibelle(null))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByLibelle(DAO retourne liste vide) retourne liste vide non null.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByLibelle(DAO vide) - retourne liste vide")
+    @Test
+    public void testFindByLibelleDaoVideRetourListeVideOk() throws Exception {
+
+        when(this.produitDaoJPA.findByProduitIgnoreCase(CHEMISE_ML_HOMME))
+            .thenReturn(new ArrayList<ProduitJPA>());
+
+        final List<Produit> retour = this.service.findByLibelle(CHEMISE_ML_HOMME);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour).isEmpty();
+
+        verify(this.produitDaoJPA, times(1)).findByProduitIgnoreCase(CHEMISE_ML_HOMME);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByLibelle(DAO jette Exception) wrap en ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByLibelle(DAO jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testFindByLibelleDaoJetteExceptionTechniqueGateway() {
+
+        when(this.produitDaoJPA.findByProduitIgnoreCase(CHEMISE_ML_HOMME))
+            .thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.findByLibelle(CHEMISE_ML_HOMME))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.produitDaoJPA, times(1)).findByProduitIgnoreCase(CHEMISE_ML_HOMME);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findByLibelle(nominal) filtre les nulls, trie (parent), dédoublonne.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findByLibelle(nominal) - filtre/trie/dédoublonne")
+    @Test
+    public void testFindByLibelleNominalFiltreTrieDedoublonneOk() throws Exception {
+
+        final ProduitJPA femme1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_FEMME);
+        femme1.setIdProduit(101L);
+
+        final ProduitJPA homme1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        homme1.setIdProduit(201L);
+
+        /* Doublon métier (même libellé Produit + même parent) -> doit être dédoublonné. */
+        final ProduitJPA doublonHomme = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        doublonHomme.setIdProduit(999L);
+
+        final List<ProduitJPA> entities = Arrays.asList(
+                homme1,
+                null,
+                doublonHomme,
+                femme1);
+
+        when(this.produitDaoJPA.findByProduitIgnoreCase(CHEMISE_ML_HOMME))
+            .thenReturn(entities);
+
+        final List<Produit> retour = this.service.findByLibelle(CHEMISE_ML_HOMME);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour).doesNotContainNull();
+        assertThat(retour).hasSize(2);
+
+        /* Ordre : parent puis libellé (ici libellé identique -> ordre parent). */
+        assertThat(retour)
+            .extracting(p -> p.getSousTypeProduit().getSousTypeProduit())
+            .containsExactly(VETEMENT_FEMME, VETEMENT_HOMME);
+
+        verify(this.produitDaoJPA, times(1)).findByProduitIgnoreCase(CHEMISE_ML_HOMME);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+   
+    
 
     /**
      * <div>
