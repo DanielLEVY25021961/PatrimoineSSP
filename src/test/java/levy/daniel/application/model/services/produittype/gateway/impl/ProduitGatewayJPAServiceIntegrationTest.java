@@ -891,6 +891,112 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     
     
     
+ // ===================== PAGINATION =====================
+
+
+
+    /**
+     * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>Vérifier rechercherTousParPage(null) -> requête par défaut.</p>
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>Résultat non null, content non null, pageNumber/pageSize = valeurs par défaut.</p>
+     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <p>totalElements cohérent (strictement positif sur base seedée).</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(null) - requête par défaut")
+    @Test
+    public void testRechercherTousParPageNullNominalOk() throws Exception {
+
+        final levy.daniel.application.model.services.produittype.pagination.ResultatPage<Produit> page =
+            this.service.rechercherTousParPage(null);
+
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull();
+
+        assertThat(page.getPageNumber())
+            .isEqualTo(levy.daniel.application.model.services.produittype.pagination.RequetePage.PAGE_DEFAUT);
+        assertThat(page.getPageSize())
+            .isEqualTo(levy.daniel.application.model.services.produittype.pagination.RequetePage.TAILLE_DEFAUT);
+
+        assertThat(page.getTotalElements()).isPositive();
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>Vérifier rechercherTousParPage(avec tri) sur le champ "produit".</p>
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>Résultat non null, contenu non vide, tri respecté.</p>
+     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <p>Le contenu est trié selon les spécifications (CASE_INSENSITIVE).</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(avec tri) - tri sur produit ASC")
+    @Test
+    public void testRechercherTousParPageAvecTriOk() throws Exception {
+
+        final java.util.List<levy.daniel.application.model.services.produittype.pagination.TriSpec> tris =
+            new java.util.ArrayList<levy.daniel.application.model.services.produittype.pagination.TriSpec>();
+
+        tris.add(new levy.daniel.application.model.services.produittype.pagination.TriSpec(
+            PROP_TRI_PRODUIT,
+            levy.daniel.application.model.services.produittype.pagination.DirectionTri.ASC));
+
+        final levy.daniel.application.model.services.produittype.pagination.RequetePage requete =
+            new levy.daniel.application.model.services.produittype.pagination.RequetePage(0, 5, tris);
+
+        final levy.daniel.application.model.services.produittype.pagination.ResultatPage<Produit> page =
+            this.service.rechercherTousParPage(requete);
+
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().isNotEmpty();
+        assertThat(page.getContent())
+            .extracting(Produit::getProduit)
+            .isSortedAccordingTo(String.CASE_INSENSITIVE_ORDER);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>Vérifier rechercherTousParPage(page très au-delà du nombre total).</p>
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>Contenu vide mais totalElements cohérent.</p>
+     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <p>totalElements = taille de rechercherTous().</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(hors bornes) - contenu vide, total cohérent")
+    @Test
+    public void testRechercherTousParPageHorsBornesOk() throws Exception {
+
+        final List<Produit> tous = this.service.rechercherTous();
+
+        final levy.daniel.application.model.services.produittype.pagination.RequetePage requete =
+            new levy.daniel.application.model.services.produittype.pagination.RequetePage(
+                9999, 10, new java.util.ArrayList<>());
+
+        final levy.daniel.application.model.services.produittype.pagination.ResultatPage<Produit> page =
+            this.service.rechercherTousParPage(requete);
+
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().isEmpty();
+        assertThat(page.getTotalElements()).isEqualTo(tous.size());
+
+    } // __________________________________________________________________
+    
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
