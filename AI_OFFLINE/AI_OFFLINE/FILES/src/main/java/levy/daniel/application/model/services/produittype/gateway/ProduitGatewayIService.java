@@ -991,8 +991,8 @@ public interface ProduitGatewayIService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Retourne tous les {@link Produit}
-	 * rattachés au {@link SousTypeProduit} pParent parent.
+	 * Retourne la List&lt;Produit&gt; des {@link Produit}
+	 * enfants de pParent.
 	 * </p>
 	 * </div>
 	 *
@@ -1000,10 +1000,8 @@ public interface ProduitGatewayIService {
 	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
 	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Vérifier la persistance du parent {@link SousTypeProduit}.</li>
-	 * <li>Convertir le parent métier en Entity stockable 
-	 * (si nécessaire).</li>
-	 * <li>Déléguer la recherche des Entities enfants dans le stockage
+	 * <li>Vérifier la persistance du parent {@code pParent}.</li>
+	 * <li>Déléguer la recherche des Entities dans le stockage
 	 * au composant de persistance (DAO).</li>
 	 * <li>Retourner une liste vide si aucun enfant n'est trouvé.</li>
 	 * <li>Fabriquer une liste réponse d'Entities sans null.</li>
@@ -1012,8 +1010,7 @@ public interface ProduitGatewayIService {
 	 * au moyen d'un {@code LinkedHashSet}.</li>
 	 * <li>Convertir chaque Entity de la liste réponse en objet métier.</li>
 	 * <li>Retourner la liste d'objets métier.</li>
-	 * <li>Retourner toujours une {@link List} non {@code null}.
-	 * La liste peut être vide.</li>
+	 * <li>Retourner toujours une {@link List} non {@code null}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1024,30 +1021,26 @@ public interface ProduitGatewayIService {
 	 * (éventuellement vide).</li>
 	 * <li>Si {@code pParent == null} :
 	 * jette une {@link ExceptionAppliParentNull}
-	 * avec un message {@link #MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL}.</li>
-	 * <li>Si {@code libelle de parent} est {@code null} ou blank :
+	 * avec un message {@link #MESSAGE_FINDALLBYPARENT_KO_PARENT_NULL}.</li>
+	 * <li>Si {@code pParent.getSousTypeProduit()} est Blank :
 	 * jette une {@link ExceptionAppliLibelleBlank}
 	 * avec un message 
 	 * {@link #MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK}.</li>
-	 * <li>Si {@code parent} n'est pas persistant (ID {@code null}) :
+	 * <li>Si {@code pParent} n'est pas persistant :
 	 * jette une {@link ExceptionTechniqueGatewayNonPersistent}
 	 * avec un message 
 	 * {@link #MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT}
-	 * + {@code pParent.getSousTypeProduit()}.</li>
-	 * <li>Si le parent n'existe pas dans le stockage :
-	 * jette une {@link ExceptionTechniqueGatewayNonPersistent}
-	 * avec un message 
-	 * {@link #MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT}
-	 * + {@code pParent.getSousTypeProduit()}.</li>
-	 * <li>Si {@code DAO.findAllByParent(...)} retourne {@code null} :
+	 * + libellé du parent.</li>
+	 * <li>Si {@code DAO.findAllBySousTypeProduit(...)} 
+	 * retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
-	 * <li>Si aucun résultat : 
-	 * retourne une liste vide. Pas d'Exception.</li>
+	 * <li>Si aucun résultat : retourne une liste vide. 
+	 * Pas d'Exception.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_STOCKAGE}
-	 *  + {@code safeMessage(e)} 
+	 *  + {@code safeMessage(e)}
 	 * et propage l'Exception technique cause.</li>
 	 * </ul>
 	 * </div>
@@ -1061,23 +1054,22 @@ public interface ProduitGatewayIService {
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pParent : SousTypeProduit : parent.
+	 * @param pParent : {@link SousTypeProduit} :
+	 * parent des produits recherchés.
 	 * @return List&lt;Produit&gt; :
-	 * liste des enfants attachés au parent pParent. Jamais {@code null}.
-	 * 
-	 * @throws ExceptionAppliParentNull 
-	 * si {@code pParent == null}.
-	 * @throws ExceptionAppliLibelleBlank 
-	 * si libellé de pParent est blank.
+	 * liste des produits enfants de pParent. Jamais {@code null}.
+	 *
+	 * @throws ExceptionAppliParentNull si {@code pParent == null}.
+	 * @throws ExceptionAppliLibelleBlank si le libellé du parent est blank.
 	 * @throws ExceptionTechniqueGatewayNonPersistent 
-	 * si pParent n'a pas d'id ou n'est pas persistant dans le stockage.
-	 * @throws ExceptionTechniqueGateway 
-	 * si une erreur technique survient lors de l'accès au stockage.
+	 * si le parent n'est pas persistant.
+	 * @throws ExceptionTechniqueGateway si le stockage retourne {@code null}
+	 * ou si une erreur technique survient.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	List<Produit> findAllByParent(SousTypeProduit pParent) 
 			throws Exception;
-
+	
 
 
 	/**

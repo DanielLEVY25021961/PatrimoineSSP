@@ -922,7 +922,90 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
     
-    /**
+    // ============================= PAGINATION ============================
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(null) utilise une requête par défaut.</p>
+	 * </div>
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName("rechercherTousParPage(null) - requête par défaut")
+	@Test
+	public void testRechercherTousParPageNullOk() throws Exception {
+		
+	    final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+	    p1.setIdProduit(1L);
+	
+	    final List<ProduitJPA> content = Arrays.asList(p1);
+	
+	    final Page<ProduitJPA> page = new PageImpl<ProduitJPA>(content);
+	
+	    when(this.produitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+	
+	    final ResultatPage<Produit> resultat = this.service.rechercherTousParPage(null);
+	
+	    assertThat(resultat).isNotNull();
+	    assertThat(resultat.getContent()).isNotNull();
+	    assertThat(resultat.getContent()).hasSize(1);
+	    assertThat(resultat.getContent().get(0).getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+	
+	    verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+	    verifyNoInteractions(this.sousTypeProduitDaoJPA);
+	    verifyNoInteractions(this.entityManager);
+	    
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(requête avec tris) retourne une page triée.</p>
+	 * </div>
+	 * @throws Exception
+	 */
+	@Tag(TAG_PAGINATION)
+	@DisplayName("rechercherTousParPage(tris) - page triée")
+	@Test
+	public void testRechercherTousParPageAvecTrisOk() throws Exception {
+		
+	    final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+	    p1.setIdProduit(1L);
+	
+	    final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+	    p2.setIdProduit(2L);
+	
+	    final List<ProduitJPA> content = Arrays.asList(p1, p2);
+	
+	    final List<TriSpec> tris = new ArrayList<TriSpec>();
+	    tris.add(new TriSpec(PROP_TRI_PRODUIT, DirectionTri.ASC));
+	
+	    final RequetePage requete = new RequetePage(1, 2, tris);
+	
+	    final Sort sort = Sort.by(Sort.Direction.ASC, PROP_TRI_PRODUIT);
+	    final Pageable pageable = PageRequest.of(1, 2, sort);
+	    final Page<ProduitJPA> page = new PageImpl<ProduitJPA>(content, pageable, content.size());
+	
+	    when(this.produitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+	
+	    final ResultatPage<Produit> resultat = this.service.rechercherTousParPage(requete);
+	
+	    assertThat(resultat).isNotNull();
+	    assertThat(resultat.getPageNumber()).isEqualTo(1);
+	    assertThat(resultat.getPageSize()).isEqualTo(2);
+	    assertThat(resultat.getTotalElements()).isEqualTo(page.getTotalElements());
+	
+	    assertThat(resultat.getContent()).isNotNull();
+	    assertThat(resultat.getContent()).hasSize(2);
+	
+	    verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+	    verifyNoInteractions(this.sousTypeProduitDaoJPA);
+	    verifyNoInteractions(this.entityManager);
+	    
+	} // __________________________________________________________________
+
+	/**
      * <div>
      * <p>findByObjetMetier(null) lève ExceptionAppliParamNull.</p>
      * </div>
@@ -1669,6 +1752,28 @@ public class ProduitGatewayJPAServiceMockTest {
     
 
     /**
+	 * <div>
+	 * <p>Test béton : vérifie que la méthode findByLibelleRapide()
+	 * retourne bien une liste vide si le contenu est introuvable.</p>
+	 * </div>
+	 */
+	@Tag(TAG_BETON)
+	@DisplayName("findByLibelleRapide(contenu introuvable) - liste vide")
+	@Test
+	public void testFindByLibelleRapideContenuIntrouvable() throws Exception {
+		
+	    when(this.produitDaoJPA.findByProduitContainingIgnoreCase("INCONNU"))
+	        .thenReturn(new ArrayList<ProduitJPA>());
+	
+	    final List<Produit> retour = this.service.findByLibelleRapide("INCONNU");
+	
+	    assertThat(retour).isNotNull();
+	    assertThat(retour).isEmpty();
+	    verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase("INCONNU");
+	    
+	} // __________________________________________________________________
+
+	/**
      * <div>
      * <p>findAllByParent(null) lève ExceptionAppliParentNull.</p>
      * </div>
@@ -1880,6 +1985,57 @@ public class ProduitGatewayJPAServiceMockTest {
 
 
     /**
+	 * <div>
+	 * <p>Test béton : vérifie que la méthode findAllByParent()
+	 * retourne correctement les produits associés à un parent.</p>
+	 * <p>Scénarios couverts :</p>
+	 * <ul>
+	 *   <li>Deux produits distincts avec le même libellé mais des IDs différents.</li>
+	 *   <li>Vérification du comportement réel du service.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Tag(TAG_BETON)
+	@DisplayName("findAllByParent(produits distincts) - vérification du comportement réel")
+	@Test
+	public void testFindAllByParentProduitsDistincts() throws Exception {
+		
+	    // --- 1. DONNÉES ---
+	    final SousTypeProduit parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+	
+	    // Deux produits distincts avec des IDs différents
+	    final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+	    p1.setIdProduit(10L);
+	
+	    // Deuxième produit avec un libellé différent pour éviter le filtrage
+	    final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+	    p2.setIdProduit(11L);
+	
+	    // --- 2. MOCKS ---
+	    when(this.sousTypeProduitDaoJPA.findById(1L))
+	        .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
+	    when(this.produitDaoJPA.findAllBySousTypeProduit(any(SousTypeProduitJPA.class)))
+	        .thenReturn(Arrays.asList(p1, p2));
+	
+	    // --- 3. EXÉCUTION ---
+	    final List<Produit> retour = this.service.findAllByParent(parent);
+	
+	    // --- 4. VÉRIFICATIONS ---
+	    assertThat(retour).isNotNull();
+	    assertThat(retour).hasSize(2);  // Doit retourner 2 éléments distincts
+	    assertThat(retour)
+	        .extracting(Produit::getIdProduit)
+	        .containsExactlyInAnyOrder(10L, 11L);
+	    assertThat(retour)
+	        .extracting(Produit::getProduit)
+	        .containsExactlyInAnyOrder(CHEMISE_ML_HOMME, CHEMISE_MC_HOMME);
+	
+	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(any(SousTypeProduitJPA.class));
+	    
+	} // __________________________________________________________________
+
+	/**
      * <div>
      * <p>findAllByParent(nominal) filtre les nulls, trie (parent puis libellé), dédoublonne.</p>
      * </div>
@@ -1926,89 +2082,98 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
 
-    // ============================= PAGINATION ============================
-    
-    
-
     /**
      * <div>
-     * <p>rechercherTousParPage(null) utilise une requête par défaut.</p>
+     * <p>findById(null) lève ExceptionAppliParamNull.</p>
      * </div>
-     * @throws Exception
      */
-    @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(null) - requête par défaut")
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findById(null) - ExceptionAppliParamNull")
     @Test
-    public void testRechercherTousParPageNullOk() throws Exception {
-    	
-        final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        p1.setIdProduit(1L);
+    public void testFindByIdParamNullExceptionAppliParamNull() {
 
-        final List<ProduitJPA> content = Arrays.asList(p1);
+        assertThatThrownBy(() -> this.service.findById(null))
+            .isInstanceOf(ExceptionAppliParamNull.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL);
 
-        final Page<ProduitJPA> page = new PageImpl<ProduitJPA>(content);
-
-        when(this.produitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
-
-        final ResultatPage<Produit> resultat = this.service.rechercherTousParPage(null);
-
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getContent()).isNotNull();
-        assertThat(resultat.getContent()).hasSize(1);
-        assertThat(resultat.getContent().get(0).getProduit()).isEqualTo(CHEMISE_ML_HOMME);
-
-        verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+        verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-        
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>rechercherTousParPage(requête avec tris) retourne une page triée.</p>
+     * <p>findById(DAO retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findById(DAO null) - ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testFindByIdDaoNullExceptionTechniqueGateway() {
+
+        when(this.produitDaoJPA.findById(1L)).thenReturn(null);
+
+        assertThatThrownBy(() -> this.service.findById(1L))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findById(Optional.empty) retourne null.</p>
      * </div>
      * @throws Exception
      */
-    @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(tris) - page triée")
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findById(Optional.empty) - retourne null")
     @Test
-    public void testRechercherTousParPageAvecTrisOk() throws Exception {
-    	
-        final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        p1.setIdProduit(1L);
+    public void testFindByIdNonTrouveRetourneNull() throws Exception {
 
-        final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
-        p2.setIdProduit(2L);
+        when(this.produitDaoJPA.findById(1L)).thenReturn(Optional.empty());
 
-        final List<ProduitJPA> content = Arrays.asList(p1, p2);
+        final Produit retour = this.service.findById(1L);
 
-        final List<TriSpec> tris = new ArrayList<TriSpec>();
-        tris.add(new TriSpec(PROP_TRI_PRODUIT, DirectionTri.ASC));
+        assertThat(retour).isNull();
 
-        final RequetePage requete = new RequetePage(1, 2, tris);
-
-        final Sort sort = Sort.by(Sort.Direction.ASC, PROP_TRI_PRODUIT);
-        final Pageable pageable = PageRequest.of(1, 2, sort);
-        final Page<ProduitJPA> page = new PageImpl<ProduitJPA>(content, pageable, content.size());
-
-        when(this.produitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
-
-        final ResultatPage<Produit> resultat = this.service.rechercherTousParPage(requete);
-
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getPageNumber()).isEqualTo(1);
-        assertThat(resultat.getPageSize()).isEqualTo(2);
-        assertThat(resultat.getTotalElements()).isEqualTo(page.getTotalElements());
-
-        assertThat(resultat.getContent()).isNotNull();
-        assertThat(resultat.getContent()).hasSize(2);
-
-        verify(this.produitDaoJPA, times(1)).findAll(any(Pageable.class));
+        verify(this.produitDaoJPA, times(1)).findById(1L);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-        
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findById(DAO jette Exception) wrap en ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findById(DAO jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testFindByIdDaoJetteExceptionTechniqueGateway() {
+
+        when(this.produitDaoJPA.findById(1L)).thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.findById(1L))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
     } // __________________________________________________________________
     
     
@@ -2016,6 +2181,7 @@ public class ProduitGatewayJPAServiceMockTest {
     // =============================== UPDATE ==============================
     
 
+    
     /**
      * <div>
      * <p>update(null) lève ExceptionAppliParamNull.</p>
@@ -2374,6 +2540,42 @@ public class ProduitGatewayJPAServiceMockTest {
     // =============================== DELETE ==============================
 
     /**
+	 * <div>
+	 * <p>Test béton : vérifie que la méthode update() gère correctement
+	 * un parent modifié avec un libellé en majuscules/minuscules différentes.</p>
+	 * </div>
+	 */
+	@Tag(TAG_BETON)
+	@DisplayName("update(parent modifié case-sensitive) - OK")
+	@Test
+	public void testUpdateParentLibelleCaseSensitiveOk() throws Exception {
+		
+	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME.toUpperCase(LOCALE_DEFAUT));
+	
+	    final Produit aModifier = new Produit();
+	    aModifier.setProduit(SWEAT_HOMME);
+	    aModifier.setSousTypeProduit(parent);
+	    aModifier.setIdProduit(30L);
+	
+	    final ProduitJPA persisteJPA = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_HOMME);
+	    persisteJPA.setIdProduit(30L);
+	
+	    when(this.sousTypeProduitDaoJPA.findById(1L))
+	        .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
+	    when(this.produitDaoJPA.findById(30L)).thenReturn(Optional.of(persisteJPA));
+	
+	    final Produit retour = this.service.update(aModifier);
+	
+	    assertThat(retour).isNotNull();
+	    assertThat(retour.getIdProduit()).isEqualTo(30L);
+	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(1)).findById(30L);
+	    verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
+	    verifyNoInteractions(this.entityManager);
+	    
+	} // __________________________________________________________________
+
+	/**
      * <div>
      * <p>delete(null) lève ExceptionAppliParamNull.</p>
      * </div>
@@ -2522,6 +2724,103 @@ public class ProduitGatewayJPAServiceMockTest {
     
 
     /**
+	 * <div>
+	 * <p>Test béton : vérifie que la méthode delete() gère correctement
+	 * une Exception levée par EntityManager.remove().</p>
+	 * </div>
+	 */
+	@SuppressWarnings(RESOURCE)
+	@Tag(TAG_BETON)
+	@DisplayName("delete(remove jette Exception) - ExceptionTechniqueGateway")
+	@Test
+	public void testDeleteEntityManagerRemoveJetteException() {
+		
+	    final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
+	            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
+	
+	    final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+	    entity.setIdProduit(70L);
+	
+	    when(this.produitDaoJPA.findById(70L)).thenReturn(Optional.of(entity));
+	    doThrow(new RuntimeException("Erreur simulatee par remove()"))
+	        .when(this.entityManager).remove(any(ProduitJPA.class));
+	
+	    assertThatThrownBy(() -> this.service.delete(p))
+	        .isInstanceOf(ExceptionTechniqueGateway.class)
+	        .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+	    verify(this.produitDaoJPA, times(1)).findById(70L);
+	    verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
+	    verifyNoMoreInteractions(this.entityManager);
+	    
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>Test béton : vérifie que la méthode delete() gère correctement
+	 * une Exception levée par EntityManager.flush().</p>
+	 * </div>
+	 */
+	@SuppressWarnings(RESOURCE)
+	@Tag(TAG_BETON)
+	@DisplayName("delete(flush jette Exception) - ExceptionTechniqueGateway")
+	@Test
+	public void testDeleteEntityManagerFlushJetteException() {
+		
+	    final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
+	            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
+	
+	    final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+	    entity.setIdProduit(70L);
+	
+	    when(this.produitDaoJPA.findById(70L)).thenReturn(Optional.of(entity));
+	    doNothing().when(this.entityManager).remove(any(ProduitJPA.class));
+	    doThrow(new RuntimeException("Erreur simulatee par flush()"))
+	        .when(this.entityManager).flush();
+	
+	    assertThatThrownBy(() -> this.service.delete(p))
+	        .isInstanceOf(ExceptionTechniqueGateway.class)
+	        .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+	    verify(this.produitDaoJPA, times(1)).findById(70L);
+	    verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
+	    verify(this.entityManager, times(1)).flush();
+	    
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>Test béton : vérifie que la méthode delete() vérifie bien
+	 * la suppression effective après flush().</p>
+	 * </div>
+	 */
+	@SuppressWarnings(RESOURCE)
+	@Tag(TAG_BETON)
+	@DisplayName("delete(vérification post-suppression échoue) - ExceptionTechniqueGateway")
+	@Test
+	public void testDeleteVerificationPostSuppressionEchoue() {
+		
+	    final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
+	            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
+	
+	    final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+	    entity.setIdProduit(70L);
+	
+	    when(this.produitDaoJPA.findById(70L))
+	        .thenReturn(Optional.of(entity))
+	        .thenReturn(Optional.of(entity));
+	
+	    doNothing().when(this.entityManager).remove(any(ProduitJPA.class));
+	    doNothing().when(this.entityManager).flush();
+	
+	    assertThatThrownBy(() -> this.service.delete(p))
+	        .isInstanceOf(ExceptionTechniqueGateway.class)
+	        .hasMessageStartingWith("Échec de la suppression");
+	    verify(this.produitDaoJPA, times(2)).findById(70L);
+	    verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
+	    verify(this.entityManager, times(1)).flush();
+	    
+	} // __________________________________________________________________
+
+	/**
      * <div>
      * <p>count(nominal) retourne le nombre d'éléments.</p>
      * </div>
@@ -2583,224 +2882,6 @@ public class ProduitGatewayJPAServiceMockTest {
     	
         assertThat(safeMessage(null)).isEqualTo("");
         assertThat(safeMessage("")).isEqualTo("");
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Test béton : vérifie que la méthode delete() gère correctement
-     * une Exception levée par EntityManager.remove().</p>
-     * </div>
-     */
-    @SuppressWarnings(RESOURCE)
-	@Tag(TAG_BETON)
-    @DisplayName("delete(remove jette Exception) - ExceptionTechniqueGateway")
-    @Test
-    public void testDeleteEntityManagerRemoveJetteException() {
-    	
-        final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
-                this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-
-        final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        entity.setIdProduit(70L);
-
-        when(this.produitDaoJPA.findById(70L)).thenReturn(Optional.of(entity));
-        doThrow(new RuntimeException("Erreur simulatee par remove()"))
-            .when(this.entityManager).remove(any(ProduitJPA.class));
-
-        assertThatThrownBy(() -> this.service.delete(p))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        verify(this.produitDaoJPA, times(1)).findById(70L);
-        verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
-        verifyNoMoreInteractions(this.entityManager);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Test béton : vérifie que la méthode delete() gère correctement
-     * une Exception levée par EntityManager.flush().</p>
-     * </div>
-     */
-    @SuppressWarnings(RESOURCE)
-	@Tag(TAG_BETON)
-    @DisplayName("delete(flush jette Exception) - ExceptionTechniqueGateway")
-    @Test
-    public void testDeleteEntityManagerFlushJetteException() {
-    	
-        final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
-                this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-
-        final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        entity.setIdProduit(70L);
-
-        when(this.produitDaoJPA.findById(70L)).thenReturn(Optional.of(entity));
-        doNothing().when(this.entityManager).remove(any(ProduitJPA.class));
-        doThrow(new RuntimeException("Erreur simulatee par flush()"))
-            .when(this.entityManager).flush();
-
-        assertThatThrownBy(() -> this.service.delete(p))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        verify(this.produitDaoJPA, times(1)).findById(70L);
-        verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
-        verify(this.entityManager, times(1)).flush();
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Test béton : vérifie que la méthode delete() vérifie bien
-     * la suppression effective après flush().</p>
-     * </div>
-     */
-    @SuppressWarnings(RESOURCE)
-	@Tag(TAG_BETON)
-    @DisplayName("delete(vérification post-suppression échoue) - ExceptionTechniqueGateway")
-    @Test
-    public void testDeleteVerificationPostSuppressionEchoue() {
-    	
-        final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
-                this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-
-        final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        entity.setIdProduit(70L);
-
-        when(this.produitDaoJPA.findById(70L))
-            .thenReturn(Optional.of(entity))
-            .thenReturn(Optional.of(entity));
-
-        doNothing().when(this.entityManager).remove(any(ProduitJPA.class));
-        doNothing().when(this.entityManager).flush();
-
-        assertThatThrownBy(() -> this.service.delete(p))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageStartingWith("Échec de la suppression");
-        verify(this.produitDaoJPA, times(2)).findById(70L);
-        verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
-        verify(this.entityManager, times(1)).flush();
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Test béton : vérifie que la méthode update() gère correctement
-     * un parent modifié avec un libellé en majuscules/minuscules différentes.</p>
-     * </div>
-     */
-    @Tag(TAG_BETON)
-    @DisplayName("update(parent modifié case-sensitive) - OK")
-    @Test
-    public void testUpdateParentLibelleCaseSensitiveOk() throws Exception {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME.toUpperCase(LOCALE_DEFAUT));
-
-        final Produit aModifier = new Produit();
-        aModifier.setProduit(SWEAT_HOMME);
-        aModifier.setSousTypeProduit(parent);
-        aModifier.setIdProduit(30L);
-
-        final ProduitJPA persisteJPA = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_HOMME);
-        persisteJPA.setIdProduit(30L);
-
-        when(this.sousTypeProduitDaoJPA.findById(1L))
-            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-        when(this.produitDaoJPA.findById(30L)).thenReturn(Optional.of(persisteJPA));
-
-        final Produit retour = this.service.update(aModifier);
-
-        assertThat(retour).isNotNull();
-        assertThat(retour.getIdProduit()).isEqualTo(30L);
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-        verify(this.produitDaoJPA, times(1)).findById(30L);
-        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
-        verifyNoInteractions(this.entityManager);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Test béton : vérifie que la méthode findByLibelleRapide()
-     * retourne bien une liste vide si le contenu est introuvable.</p>
-     * </div>
-     */
-    @Tag(TAG_BETON)
-    @DisplayName("findByLibelleRapide(contenu introuvable) - liste vide")
-    @Test
-    public void testFindByLibelleRapideContenuIntrouvable() throws Exception {
-    	
-        when(this.produitDaoJPA.findByProduitContainingIgnoreCase("INCONNU"))
-            .thenReturn(new ArrayList<ProduitJPA>());
-
-        final List<Produit> retour = this.service.findByLibelleRapide("INCONNU");
-
-        assertThat(retour).isNotNull();
-        assertThat(retour).isEmpty();
-        verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase("INCONNU");
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Test béton : vérifie que la méthode findAllByParent()
-     * retourne correctement les produits associés à un parent.</p>
-     * <p>Scénarios couverts :</p>
-     * <ul>
-     *   <li>Deux produits distincts avec le même libellé mais des IDs différents.</li>
-     *   <li>Vérification du comportement réel du service.</li>
-     * </ul>
-     * </div>
-     */
-    @Tag(TAG_BETON)
-    @DisplayName("findAllByParent(produits distincts) - vérification du comportement réel")
-    @Test
-    public void testFindAllByParentProduitsDistincts() throws Exception {
-    	
-        // --- 1. DONNÉES ---
-        final SousTypeProduit parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-
-        // Deux produits distincts avec des IDs différents
-        final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        p1.setIdProduit(10L);
-
-        // Deuxième produit avec un libellé différent pour éviter le filtrage
-        final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
-        p2.setIdProduit(11L);
-
-        // --- 2. MOCKS ---
-        when(this.sousTypeProduitDaoJPA.findById(1L))
-            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-        when(this.produitDaoJPA.findAllBySousTypeProduit(any(SousTypeProduitJPA.class)))
-            .thenReturn(Arrays.asList(p1, p2));
-
-        // --- 3. EXÉCUTION ---
-        final List<Produit> retour = this.service.findAllByParent(parent);
-
-        // --- 4. VÉRIFICATIONS ---
-        assertThat(retour).isNotNull();
-        assertThat(retour).hasSize(2);  // Doit retourner 2 éléments distincts
-        assertThat(retour)
-            .extracting(Produit::getIdProduit)
-            .containsExactlyInAnyOrder(10L, 11L);
-        assertThat(retour)
-            .extracting(Produit::getProduit)
-            .containsExactlyInAnyOrder(CHEMISE_ML_HOMME, CHEMISE_MC_HOMME);
-
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(any(SousTypeProduitJPA.class));
         
     } // __________________________________________________________________
 

@@ -1795,8 +1795,140 @@ public class ProduitGatewayJPAServiceMockTest {
     } // __________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>findAllByParent(parent libellé blank) lève ExceptionAppliLibelleBlank.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findAllByParent(parent libellé blank) - ExceptionAppliLibelleBlank")
+    @Test
+    public void testFindAllByParentParentLibelleBlankExceptionAppliLibelleBlank() {
+
+        final SousTypeProduit parent = this.fabriquerParentMetierPersistant(BLANK);
+
+        assertThatThrownBy(() -> this.service.findAllByParent(parent))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK);
+
+        verifyNoInteractions(this.produitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findAllByParent(DAO retourne liste vide) retourne liste vide non null.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findAllByParent(DAO vide) - retourne liste vide")
+    @Test
+    public void testFindAllByParentDaoVideRetourListeVideOk() throws Exception {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findAllBySousTypeProduit(parentJPA)).thenReturn(new ArrayList<ProduitJPA>());
+
+        final List<Produit> retour = this.service.findAllByParent((SousTypeProduit) parent);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour).isEmpty();
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findAllByParent(DAO jette Exception) wrap en ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findAllByParent(DAO jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testFindAllByParentDaoJetteExceptionTechniqueGateway() {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findAllBySousTypeProduit(parentJPA)).thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.findAllByParent((SousTypeProduit) parent))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>findAllByParent(nominal) filtre les nulls, trie (parent puis libellé), dédoublonne.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findAllByParent(nominal) - filtre/trie/dédoublonne")
+    @Test
+    public void testFindAllByParentNominalFiltreTrieDedoublonneOk() throws Exception {
+
+        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA p1 = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        p1.setIdProduit(1L);
+
+        final ProduitJPA p2 = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        p2.setIdProduit(2L);
+
+        /* Doublon métier (même libellé Produit + même parent) -> doit être dédoublonné. */
+        final ProduitJPA doublon = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        doublon.setIdProduit(999L);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findAllBySousTypeProduit(parentJPA))
+            .thenReturn(Arrays.asList(p2, null, doublon, p1));
+
+        final List<Produit> retour = this.service.findAllByParent((SousTypeProduit) parent);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour).doesNotContainNull();
+        assertThat(retour).hasSize(2);
+
+        /* Ordre : parent puis libellé (ici parent identique -> ordre libellé). */
+        assertThat(retour)
+            .extracting(Produit::getProduit)
+            .containsExactly(CHEMISE_MC_HOMME, CHEMISE_ML_HOMME);
+
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
+    
 
     // ============================= PAGINATION ============================
+    
+    
 
     /**
      * <div>

@@ -1074,8 +1074,9 @@ public interface ProduitGatewayIService {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Retourne un {@link Produit}
-	 * déterminé par son ID dans le stockage.</p>
+	 * <p style="font-weight:bold;">
+	 * Retourne le {@link Produit} dont l'identifiant est pId.
+	 * </p>
 	 * </div>
 	 *
 	 * <div>
@@ -1084,10 +1085,9 @@ public interface ProduitGatewayIService {
 	 * <ul>
 	 * <li>Déléguer la recherche de l'Entity dans le stockage
 	 * au composant de persistance (DAO).</li>
-	 * <li>Retourner {@code null} si le DAO ne trouve rien.</li>
-	 * <li>Convertir l'Entity retournée en objet métier.</li>
-	 * <li>Retourner l'objet métier trouvé.</li>
-	 * <li>Peut retourner {@code null}.</li>
+	 * <li>Convertir l'Entity trouvée en objet métier.</li>
+	 * <li>Retourner l'objet métier correspondant.</li>
+	 * <li>Retourner {@code null} si l'identifiant n'est pas trouvé.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1097,12 +1097,14 @@ public interface ProduitGatewayIService {
 	 * <li>Si {@code pId == null} :
 	 * jette une {@link ExceptionAppliParamNull}
 	 * avec un message {@link #MESSAGE_FINDBYID_KO_PARAM_NULL}.</li>
-	 * <li>Si le {@link Produit} n'est pas trouvé :
-	 * retourne {@code null}. Pas d'Exception.</li>
+	 * <li>Si {@code DAO.findById(Long)} retourne {@code null} :
+	 * jette une {@link ExceptionTechniqueGateway}
+	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
+	 * <li>Si {@code pId} n'est pas trouvé : retourne {@code null}. Pas d'Exception.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_STOCKAGE}
-	 *  + {@code safeMessage(e)} 
+	 * + {@code safeMessage(e)}
 	 * et propage l'Exception technique cause.</li>
 	 * </ul>
 	 * </div>
@@ -1110,24 +1112,23 @@ public interface ProduitGatewayIService {
 	 * <div>
 	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
 	 * <ul>
-	 * <li>L'objet retourné correspond
-	 * à l'état réellement persisté (si non {@code null}).</li>
+	 * <li>L'objet retourné correspond à l'état réellement persisté.</li>
 	 * <li>Aucune information utilisateur n'est produite à ce niveau.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pId : Long : ID dans le stockage.
-	 * @return Produit :
-	 * l'objet métier persistant qui possède pId, ou {@code null}.
-	 * 
-	 *  @throws ExceptionAppliParamNull 
-	 * si {@code pId == null}.
-	 * @throws ExceptionTechniqueGateway 
-	 * si une erreur technique survient lors de l'accès au stockage.
+	 * @param pId : Long :
+	 * identifiant du produit recherché.
+	 * @return {@link Produit} :
+	 * objet métier correspondant, ou {@code null} si non trouvé.
+	 *
+	 * @throws ExceptionAppliParamNull si {@code pId == null}.
+	 * @throws ExceptionTechniqueGateway si le stockage retourne {@code null}
+	 * ou si une erreur technique survient.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	Produit findById(Long pId) throws Exception;
-
+	
 
 
 	/**
