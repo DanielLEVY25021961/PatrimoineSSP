@@ -487,10 +487,29 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 	
     /**
      * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>
-     * Vérifie que `creer(TypeProduit)` ajoute bien un élément,
-     * rend l'élément retrouvable et ne "wipe" pas les seedés.
+     * Vérifier que <code>creer(TypeProduit)</code> :
+     * (1) crée réellement une ligne en base,
+     * (2) rend l'objet retrouvable,
+     * (3) ne "wipe" pas les données seedées.
      * </p>
+     *
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <ul>
+     * <li><code>creer</code> retourne un {@link TypeProduit} non {@code null} avec un ID non {@code null}.</li>
+     * <li>La colonne <code>TYPE_PRODUIT</code> est effectivement écrite en base
+     * (preuve par lecture SQL directe via {@link #lireLibelleTypeProduitEnBase(Long)}).</li>
+     * <li>La liste seedée reste présente après création.</li>
+     * </ul>
+     *
+     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <ul>
+     * <li>Le test est exécuté hors transaction de test
+     * (<code>@Transactional(NOT_SUPPORTED)</code>) pour éviter toute ambiguïté liée au cache ORM.</li>
+     * <li>Nettoyage physique en base en <code>finally</code> pour garantir l'isolation,
+     * même si une assertion échoue.</li>
+     * </ul>
      * </div>
      *
      * @throws Exception
@@ -512,19 +531,24 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         final Long id = cree.getIdTypeProduit();
 
+        /* IMPORTANT : test hors transaction de test -> la création est réelle en base.
+         * On nettoie donc physiquement en base en finally. */
         try {
 
             final long countApres = this.service.count();
             assertThat(countApres).isEqualTo(countAvant + 1L);
 
-            /* Preuve inattaquable : lecture physique en base. */
+            /* PREUVE BD INATTAQUABLE :
+             * lecture SQL directe de la colonne TYPE_PRODUIT (bypass Hibernate). */
             final String libelleEnBase = lireLibelleTypeProduitEnBase(id);
             assertThat(libelleEnBase).isEqualTo(NOUVEAU_TYPE_1);
 
+            /* Double-check par le service (doit être cohérent avec la base). */
             final TypeProduit relu = this.service.findById(id);
             assertThat(relu).isNotNull();
             assertThat(relu.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_1);
 
+            /* Les données seedées doivent rester présentes. */
             final List<TypeProduit> liste = this.service.rechercherTous();
             assertThat(liste)
                 .extracting(TypeProduit::getTypeProduit)
@@ -532,12 +556,14 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         } finally {
 
-            /* Nettoyage : ne pas dépendre uniquement du truncate SQL. */
+            /* Nettoyage physique :
+             * on ne dépend pas uniquement de truncate-test.sql. */
             supprimerTypeProduitEnBase(id);
 
         }
 
-    } // __________________________________________________________________    
+    } // __________________________________________________________________
+    
     
 
     /**
@@ -1354,10 +1380,28 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     
     /**
      * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>
-     * Vérifie que `update(modification)` retourne un objet cohérent
-     * et que la relecture par ID est cohérente avec l'objet retourné.
+     * Vérifier que <code>update(modification)</code> modifie réellement la base,
+     * puis que les relectures (JDBC et service) reflètent cette modification.
      * </p>
+     *
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <ul>
+     * <li><code>update</code> retourne un objet non {@code null} portant le même ID.</li>
+     * <li>La colonne <code>TYPE_PRODUIT</code> est réellement mise à jour en base
+     * (preuve par lecture SQL directe via {@link #lireLibelleTypeProduitEnBase(Long)}).</li>
+     * <li><code>findById</code> est cohérent avec l'état physique en base.</li>
+     * </ul>
+     *
+     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <ul>
+     * <li>Test hors transaction de test
+     * (<code>@Transactional(NOT_SUPPORTED)</code>) pour verrouiller le diagnostic transactionnel
+     * et éviter l'effet “cache ORM”.</li>
+     * <li>Restauration physique du libellé en <code>finally</code> (isolation),
+     * car le test n'est pas rollbacké par la transaction de test.</li>
+     * </ul>
      * </div>
      *
      * @throws Exception
@@ -1374,12 +1418,13 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         final Long id = seed.getIdTypeProduit();
 
-        /* Lecture physique en base AVANT update. */
+        /* PREUVE BD : lecture SQL directe AVANT update (point de référence). */
         final String libelleAvant = lireLibelleTypeProduitEnBase(id);
         assertThat(libelleAvant).isEqualTo(TOURISME);
 
         final String nouveauLibelle = TOURISME + SUFFIX_MODIF;
 
+        /* IMPORTANT : test hors transaction de test -> on doit restaurer physiquement en base. */
         try {
 
             final TypeProduit aModifier = new TypeProduit(id, nouveauLibelle);
@@ -1388,16 +1433,17 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
             assertThat(retour).isNotNull();
             assertThat(retour.getIdTypeProduit()).isEqualTo(id);
 
-            /* Preuve inattaquable : lecture physique en base APRES update. */
+            /* PREUVE BD INATTAQUABLE :
+             * lecture SQL directe APRES update (bypass Hibernate). */
             final String libelleEnBase = lireLibelleTypeProduitEnBase(id);
             assertThat(libelleEnBase).isEqualTo(nouveauLibelle);
 
-            /* Cohérence : findById doit refléter la base. */
+            /* Cohérence : le service doit refléter la base (pas l'inverse). */
             final TypeProduit relu = this.service.findById(id);
             assertThat(relu).isNotNull();
             assertThat(relu.getTypeProduit()).isEqualTo(nouveauLibelle);
 
-            /* Mise à jour en majuscules (CASE) + preuve base. */
+            /* Variante : mise à jour en majuscules (diagnostic CASE + preuve base). */
             final String upper = nouveauLibelle.toUpperCase(Locale.getDefault());
             final TypeProduit aModifierCS = new TypeProduit(id, upper);
 
@@ -1415,7 +1461,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         } finally {
 
-            /* Restauration : ne pas dépendre uniquement du truncate SQL. */
+            /* Isolation : restauration physique en base.
+             * On ne dépend pas uniquement de truncate-test.sql. */
             restaurerTypeProduitEnBase(id, libelleAvant);
 
         }
@@ -1532,8 +1579,25 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     
     /**
      * <div>
-     * <p>Vérifie que `delete(TypeProduit)` supprime un type créé
-     * et qu'il devient introuvable.</p>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>
+     * Vérifier que <code>delete(OK)</code> supprime réellement une ligne en base,
+     * et que l'objet devient introuvable.
+     * </p>
+     *
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <ul>
+     * <li>Après création, la ligne existe physiquement en base
+     * (preuve via {@link #compterTypeProduitEnBase(Long)}).</li>
+     * <li>Après delete, la ligne n'existe plus physiquement en base (preuve JDBC).</li>
+     * <li><code>findById</code> retourne {@code null}.</li>
+     * </ul>
+     *
+     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <ul>
+     * <li>Test hors transaction de test
+     * (<code>@Transactional(NOT_SUPPORTED)</code>) pour éviter tout effet de cache ORM.</li>
+     * </ul>
      * </div>
      *
      * @throws Exception
@@ -1552,7 +1616,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         final Long id = cree.getIdTypeProduit();
 
-        /* Preuve base : la ligne existe. */
+        /* PREUVE BD : la ligne existe physiquement après création. */
         assertThat(compterTypeProduitEnBase(id)).isEqualTo(1L);
 
         final long countApresCreation = this.service.count();
@@ -1560,17 +1624,19 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         this.service.delete(cree);
 
-        /* Preuve inattaquable : la ligne n'existe plus en base. */
+        /* PREUVE BD INATTAQUABLE : la ligne n'existe plus physiquement après delete. */
         assertThat(compterTypeProduitEnBase(id)).isZero();
 
         final long countApresDelete = this.service.count();
         assertThat(countApresDelete).isEqualTo(countAvant);
 
+        /* Cohérence : le service ne doit plus retrouver l'objet. */
         final TypeProduit relu = this.service.findById(id);
         assertThat(relu).isNull();
 
     } // ________________________________________________________________
-
+    
+    
     
     /**
      * <div>
