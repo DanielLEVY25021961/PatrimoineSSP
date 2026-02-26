@@ -1251,7 +1251,8 @@ public interface ProduitGatewayIService {
 	 * <ul>
 	 * <li>Rechercher l'Entity persistée par ID via le DAO.</li>
 	 * <li>Déléguer la destruction de l'Entity persistée au DAO.</li>
-	 * <li>Forcer l'exécution immédiate du DELETE en base via {@code dao.flush()}.</li>
+	 * <li>Forcer l'exécution immédiate du DELETE 
+	 * en base via {@code dao.flush()}.</li>
 	 * <li>Ne rien faire si l'objet n'existe pas en stockage.</li>
 	 * </ul>
 	 * </div>
@@ -1265,10 +1266,13 @@ public interface ProduitGatewayIService {
 	 * <li>Si {@code pObject.getIdProduit() == null} :
 	 * jette une {@link ExceptionAppliParamNonPersistent}
 	 * avec un message {@link #MESSAGE_DELETE_KO_ID_NULL}.</li>
+	 * <li>Si le stockage retourne {@code null} lors de la recherche par ID :
+	 * jette une {@link ExceptionTechniqueGateway}
+	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_STOCKAGE}
-	 *  + {@code safeMessage(e)} 
+	 *  + {@code safeMessage(e)}
 	 * et propage l'Exception technique cause.</li>
 	 * </ul>
 	 * </div>
@@ -1276,24 +1280,26 @@ public interface ProduitGatewayIService {
 	 * <div>
 	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
 	 * <ul>
-	 * <li>L'objet est retiré du stockage (suppression physique forcée par flush).</li>
+	 * <li>L'objet est retiré du stockage 
+	 * (suppression physique forcée par flush).</li>
 	 * <li>Aucune information utilisateur n'est produite à ce niveau.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pObject : Produit :
 	 * Objet métier à détruire dans le stockage.
-	 * 
+	 *
 	 * @throws ExceptionAppliParamNull si {@code pObject == null}.
-	 *  @throws ExceptionAppliParamNonPersistent 
+	 *  @throws ExceptionAppliParamNonPersistent
 	 * si {@code pObject.getIdProduit() == null}.
-	 * @throws ExceptionTechniqueGateway 
-	 * si une erreur technique survient lors de l'accès au stockage.
+	 * @throws ExceptionTechniqueGateway
+	 * si le stockage retourne {@code null}
+	 * ou si une erreur technique survient lors de l'accès au stockage.
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
-	void delete(Produit pObject) throws Exception;
-	
+	void delete(Produit pObject) throws Exception;	
 
+	
 
 	/**
 	 * <div>

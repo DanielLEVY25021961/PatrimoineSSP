@@ -993,6 +993,9 @@ public class ProduitGatewayJPAService
 	
 	
 	
+	/**
+	* {@inheritDoc}
+	*/
 	@Override
 	public void delete(final Produit pObject) throws Exception {
 		
