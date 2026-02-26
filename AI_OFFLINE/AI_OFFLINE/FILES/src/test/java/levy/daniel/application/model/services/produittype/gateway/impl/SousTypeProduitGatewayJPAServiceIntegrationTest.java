@@ -374,11 +374,16 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public static final class ConfigTest { // NOPMD by danyl on 01/02/2026 00:00
     }
 
+    
+    
     // ============================== OUTILS ===============================
 
+    
+    
     /**
      * <div>
-     * <p>Retrouve l'ID persistant d'un {@link TypeProduitJPA} par libellé.</p>
+     * <p>Retrouve l'ID persistant d'un {@link TypeProduitJPA} 
+     * par libellé.</p>
      * </div>
      *
      * @param pLibelleParent : String : 
@@ -392,17 +397,23 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(parent).isNotNull();
         assertThat(parent.getIdTypeProduit()).isNotNull();
         return parent.getIdTypeProduit();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
-     * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} par libellé.</p>
+     * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} 
+     * par libellé.</p>
      * </div>
      *
      * @param pLibelleEnfant : String
      * @return Long
      */
-    private Long retrouverIdEnfantPersistantParLibelle(final String pLibelleEnfant) {
+    private Long retrouverIdEnfantPersistantParLibelle(
+    		final String pLibelleEnfant) {
+    	
         final List<SousTypeProduitJPA> enfants 
         = this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(pLibelleEnfant);
         assertThat(enfants).isNotNull().isNotEmpty();
@@ -410,18 +421,54 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(enfant).isNotNull();
         assertThat(enfant.getIdSousTypeProduit()).isNotNull();
         return enfant.getIdSousTypeProduit();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ============================== TESTS ================================
+    
+    
 
     // ===================== creer =====================
+    
+    
 
     /**
+	 * Vérifie la suppression directement en base via JdbcTemplate
+	 * (contourne complètement Hibernate et son cache)
+	 *
+	 * @param idSupprime L'ID de l'entité supprimée à vérifier
+	 * @throws Exception
+	 */
+	private void verifierSuppressionEnBase(final Long idSupprime) throws Exception {
+		
+	    // Vérification de l'absence de l'enregistrement
+	    final Integer count = jdbcTemplate.queryForObject(
+	        "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+	        Integer.class, idSupprime
+	    );
+	
+	    assertThat(count)
+	        .as("L'enregistrement doit être physiquement supprimé de la base (expected: 0, actual: " + count + ")")
+	        .isEqualTo(0);
+	
+	    // Vérification supplémentaire via le service
+	    assertThat(this.service.findById(idSupprime))
+	        .as("Le service ne doit plus trouver l'objet supprimé")
+	        .isNull();
+	    
+	} // __________________________________________________________________
+
+
+
+	/**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de null sur creer(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(null) jette {@link ExceptionAppliParamNull} avec MESSAGE_CREER_KO_PARAM_NULL.</p>
+     * <p>creer(null) jette {@link ExceptionAppliParamNull} 
+     * avec MESSAGE_CREER_KO_PARAM_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -430,17 +477,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_NULL)
     @Test
     public void testCreerParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de libellé blank sur creer(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(libellé blank) jette {@link ExceptionAppliLibelleBlank} avec MESSAGE_CREER_KO_LIBELLE_BLANK.</p>
+     * <p>creer(libellé blank) jette {@link ExceptionAppliLibelleBlank} 
+     * avec MESSAGE_CREER_KO_LIBELLE_BLANK.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -449,6 +501,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_BLANK)
     @Test
     public void testCreerLibelleBlankExceptionAppliLibelleBlank() {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, BLANK, parent);
@@ -456,14 +509,18 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
 
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de parent null sur creer(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(parent null) jette {@link ExceptionAppliParentNull} avec MESSAGE_CREER_KO_PARENT_NULL.</p>
+     * <p>creer(parent null) jette {@link ExceptionAppliParentNull} 
+     * avec MESSAGE_CREER_KO_PARENT_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -472,19 +529,24 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_PARENT_NULL)
     @Test
     public void testCreerParentNullExceptionAppliParentNull() {
+    	
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, null);
 
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de libellé parent blank sur creer(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(parent libellé blank) jette {@link ExceptionAppliLibelleBlank} avec MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK.</p>
+     * <p>creer(parent libellé blank) jette {@link ExceptionAppliLibelleBlank} 
+     * avec MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -493,20 +555,27 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_PARENT_LIBELLE_BLANK)
     @Test
     public void testCreerParentLibelleBlankExceptionAppliLibelleBlank() {
+    	
         final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de persistance du parent sur creer(pObject) (id parent null).</p>
+     * <p>Vérifier le contrôle de persistance du parent sur creer(pObject) 
+     * (id parent null).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(parent id null) jette {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe MESSAGE_CREER_KO_PARENT_NON_PERSISTENT.</p>
+     * <p>creer(parent id null) jette 
+     * {@link ExceptionTechniqueGatewayNonPersistent} 
+     * avec préfixe MESSAGE_CREER_KO_PARENT_NON_PERSISTENT.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -515,13 +584,17 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_PARENT_NON_PERSISTANT)
     @Test
     public void testCreerParentIdNullExceptionTechniqueGatewayNonPersistent() {
+    	
         final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -537,28 +610,44 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_CREER_PARENT_NON_PERSISTANT)
     @Test
     public void testCreerParentAbsentExceptionTechniqueGatewayNonPersistent() {
+    	
         final TypeProduit parent = new TypeProduit(ID_INEXISTANT, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le fonctionnement nominal de creer(pObject).</p>
+     * <p>Vérifier le fonctionnement nominal de creer(pObject) 
+     * avec preuve d'écriture en base.</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(nominal) retourne un {@link SousTypeProduit} non null, avec ID renseigné.</p>
+     * <p>creer(nominal) retourne un {@link SousTypeProduit} non null, 
+     * avec ID renseigné.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Le count() augmente de 1.</p>
+     * <ul>
+     * <li>Le count() augmente de 1.</li>
+     * <li>Preuve “BD” : lecture SQL directe (JdbcTemplate) 
+     * après l’appel (contourne Hibernate).</li>
+     * <li>Test hors transaction de test : 
+     * {@code @Transactional(NOT_SUPPORTED)}.</li>
+     * <li>Nettoyage physique en finally (isolation), 
+     * même si une assertion échoue.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_NOMINAL)
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testCreerNominalOk() throws Exception {
+    	
         final long avant = this.service.count();
 
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
@@ -573,15 +662,57 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(cree.getTypeProduit()).isNotNull();
         assertThat(cree.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
 
-        final long apres = this.service.count();
-        assertThat(apres).isEqualTo(avant + 1L);
+        final Long idCree = cree.getIdSousTypeProduit();
 
-        final SousTypeProduit relu = this.service.findById(cree.getIdSousTypeProduit());
-        assertThat(relu).isNotNull();
-        assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_NOUVEAU_PULL);
-    }
+        try {
+        	
+            final long apres = this.service.count();
+            assertThat(apres).isEqualTo(avant + 1L);
 
+            /* PREUVE BD INATTAQUABLE : lecture SQL directe (bypass Hibernate). */
+            final Integer countEnBase = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                Integer.class, idCree
+            );
+            assertThat(countEnBase)
+                .as("La ligne doit exister physiquement en base après creer()")
+                .isEqualTo(1);
+
+            final String libelleEnBase = this.jdbcTemplate.queryForObject(
+                "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?", // NOPMD by danyl on 26/02/2026 00:55
+                String.class, idCree
+            );
+            assertThat(libelleEnBase).isEqualTo(LIBELLE_NOUVEAU_PULL);
+
+            final Long parentEnBase = this.jdbcTemplate.queryForObject(
+                "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?", // NOPMD by danyl on 26/02/2026 00:55
+                Long.class, idCree
+            );
+            assertThat(parentEnBase).isEqualTo(idParent);
+
+            /* Double-check via service. */
+            final SousTypeProduit relu = this.service.findById(idCree);
+            assertThat(relu).isNotNull();
+            assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_NOUVEAU_PULL);
+
+        } finally {
+
+            /* Nettoyage physique : le test n'est pas rollbacké (NOT_SUPPORTED). */
+            if (idCree != null) {
+                this.jdbcTemplate.update(
+                    "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                    idCree
+                );
+            }
+
+        }
+    } // __________________________________________________________________
+    
+    
+    
     // ===================== rechercherTous =====================
+    
+    
 
     /**
      * <div>
@@ -597,21 +728,28 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_RECHERCHER_TOUS)
     @Test
     public void testRechercherTousNominalOk() throws Exception {
+    	
         final List<SousTypeProduit> liste = this.service.rechercherTous();
 
         assertThat(liste).isNotNull().isNotEmpty();
         assertThat(liste).extracting(SousTypeProduit::getSousTypeProduit)
             .contains(LIBELLE_ENFANT_VETEMENT_HOMME, LIBELLE_ENFANT_VETEMENT_FEMME, LIBELLE_ENFANT_VETEMENT_ENFANT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== rechercherTousParPage =====================
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier rechercherTousParPage(null) (requête par défaut).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>rechercherTousParPage(null) retourne un {@link ResultatPage} non null.</p>
+     * <p>rechercherTousParPage(null) retourne un {@link ResultatPage} 
+     * non null.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>content non null.</p>
      * </div>
@@ -620,21 +758,27 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("rechercherTousParPage - null -> nominal")
     @Test
     public void testRechercherTousParPageParamNullNominalOk() throws Exception {
-        final ResultatPage<SousTypeProduit> resultat = this.service.rechercherTousParPage(null);
+    	
+        final ResultatPage<SousTypeProduit> resultat 
+        	= this.service.rechercherTousParPage(null);
 
         assertThat(resultat).isNotNull();
         assertThat(resultat.getContent()).isNotNull();
         assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
         assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
         assertThat(resultat.getTotalElements()).isPositive();
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier rechercherTousParPage(RequetePage avec tris valides).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>rechercherTousParPage(tris valides) retourne un {@link ResultatPage} non null avec contenu trié.</p>
+     * <p>rechercherTousParPage(tris valides) retourne un 
+     * {@link ResultatPage} non null avec contenu trié.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Le contenu est trié selon les spécifications.</p>
      * </div>
@@ -643,6 +787,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_RECHERCHER_TOUS_PAR_PAGE_TRI)
     @Test
     public void testRechercherTousParPageTrisValidesOk() throws Exception {
+    	
         final RequetePage requete = new RequetePage();
         requete.getTris().add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
 
@@ -653,14 +798,18 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(resultat.getContent())
             .extracting(SousTypeProduit::getSousTypeProduit)
             .isSortedAccordingTo(String.CASE_INSENSITIVE_ORDER);
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier rechercherTousParPage(pageNumber > nombre de pages).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>rechercherTousParPage(page vide) retourne un {@link ResultatPage} avec contenu vide.</p>
+     * <p>rechercherTousParPage(page vide) retourne 
+     * un {@link ResultatPage} avec contenu vide.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Le totalElements reste cohérent.</p>
      * </div>
@@ -669,6 +818,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_RECHERCHER_TOUS_PAR_PAGE_VIDE)
     @Test
     public void testRechercherTousParPagePageVideOk() throws Exception {
+    	
         final RequetePage requete = new RequetePage();
         requete.setPageNumber(999); // Page inexistante
 
@@ -677,17 +827,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(resultat).isNotNull();
         assertThat(resultat.getContent()).isNotNull().isEmpty();
         assertThat(resultat.getTotalElements()).isPositive();
-    }
+        
+    } // __________________________________________________________________
+    
 
 
     // ===================== findByObjetMetier =====================
 
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de null sur findByObjetMetier(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(null) jette {@link ExceptionAppliParamNull} avec MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL.</p>
+     * <p>findByObjetMetier(null) jette {@link ExceptionAppliParamNull} 
+     * avec MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -696,17 +851,24 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYOBJETMETIER_NULL)
     @Test
     public void testFindByObjetMetierParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.findByObjetMetier(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de libellé blank sur findByObjetMetier(pObject).</p>
+     * <p>Vérifier le contrôle de libellé blank 
+     * sur findByObjetMetier(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(libellé blank) jette {@link ExceptionAppliLibelleBlank} avec MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK.</p>
+     * <p>findByObjetMetier(libellé blank) jette
+     *  {@link ExceptionAppliLibelleBlank} avec 
+     *  MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -715,6 +877,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYOBJETMETIER_BLANK)
     @Test
     public void testFindByObjetMetierLibelleBlankExceptionAppliLibelleBlank() {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, BLANK, parent);
@@ -722,14 +885,20 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de parent null sur findByObjetMetier(pObject).</p>
+     * <p>Vérifier le contrôle de parent null 
+     * sur findByObjetMetier(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(parent null) jette {@link ExceptionAppliParentNull} avec MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL.</p>
+     * <p>findByObjetMetier(parent null) jette 
+     * {@link ExceptionAppliParentNull} avec 
+     * MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -738,19 +907,26 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYOBJETMETIER_PARENT_NULL)
     @Test
     public void testFindByObjetMetierParentNullExceptionAppliParentNull() {
+    	
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, null);
 
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de libellé parent blank sur findByObjetMetier(pObject).</p>
+     * <p>Vérifier le contrôle de libellé parent blank 
+     * sur findByObjetMetier(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(parent libellé blank) jette {@link ExceptionAppliLibelleBlank} avec MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK.</p>
+     * <p>findByObjetMetier(parent libellé blank) jette 
+     * {@link ExceptionAppliLibelleBlank} avec 
+     * MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -759,20 +935,27 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYOBJETMETIER_PARENT_LIBELLE_BLANK)
     @Test
     public void testFindByObjetMetierParentLibelleBlankExceptionAppliLibelleBlank() {
+    	
         final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
 
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de persistance du parent sur findByObjetMetier(pObject) (id parent null).</p>
+     * <p>Vérifier le contrôle de persistance du parent sur 
+     * findByObjetMetier(pObject) (id parent null).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(parent id null) jette {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT.</p>
+     * <p>findByObjetMetier(parent id null) jette 
+     * {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe 
+     * MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -781,20 +964,25 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT)
     @Test
     public void testFindByObjetMetierParentIdNullExceptionTechniqueGatewayNonPersistent() {
+    	
         final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
 
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier findByObjetMetier(nominal) sur donnée seed.</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(trouvé) retourne un {@link SousTypeProduit} non null.</p>
+     * <p>findByObjetMetier(trouvé) retourne un 
+     * {@link SousTypeProduit} non null.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Libellé et parent cohérents.</p>
      * </div>
@@ -803,6 +991,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYOBJETMETIER_NOMINAL)
     @Test
     public void testFindByObjetMetierNominalOk() throws Exception {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
 
@@ -814,16 +1003,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(trouve.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
         assertThat(trouve.getTypeProduit()).isNotNull();
         assertThat(trouve.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== findByLibelle =====================
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de blank sur findByLibelle(pLibelle).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelle(blank) jette {@link ExceptionAppliLibelleBlank} avec MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK.</p>
+     * <p>findByLibelle(blank) jette {@link ExceptionAppliLibelleBlank} 
+     * avec MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -832,29 +1027,15 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLE_BLANK)
     @Test
     public void testFindByLibelleBlankExceptionAppliLibelleBlank() {
+    	
         assertThatThrownBy(() -> this.service.findByLibelle(BLANK))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
     
-    /**
-     * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findByLibelleRapide(contenu inexistant).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelleRapide(inexistant) retourne une liste vide.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune exception.</p>
-     * </div>
-     */
-    @Tag(TAG_RECHERCHER_RAPIDE)
-    @DisplayName(DN_FINDBYLIBELLERAPIDE_INEXISTANT)
-    @Test
-    public void testFindByLibelleRapideInexistantVideOk() throws Exception {
-        final List<SousTypeProduit> liste = this.service.findByLibelleRapide(CONTENU_PARTIEL_INEXISTANT);
-        assertThat(liste).isNotNull().isEmpty();
-    }
-
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -869,9 +1050,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLE_INEXISTANT)
     @Test
     public void testFindByLibelleInexistantVideOk() throws Exception {
+    	
         final List<SousTypeProduit> liste = this.service.findByLibelle(LIBELLE_INEXISTANT);
         assertThat(liste).isNotNull().isEmpty();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -887,21 +1072,28 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLE_NOMINAL)
     @Test
     public void testFindByLibelleNominalOk() throws Exception {
+    	
         final List<SousTypeProduit> liste = this.service.findByLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
 
         assertThat(liste).isNotNull().isNotEmpty();
         assertThat(liste).extracting(SousTypeProduit::getSousTypeProduit)
             .contains(LIBELLE_ENFANT_VETEMENT_HOMME);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== findByLibelleRapide =====================
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de null sur findByLibelleRapide(pLibelle).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelleRapide(null) jette {@link ExceptionAppliParamNull} avec MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL.</p>
+     * <p>findByLibelleRapide(null) jette {@link ExceptionAppliParamNull} 
+     * avec MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -910,15 +1102,42 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLERAPIDE_NULL)
     @Test
     public void testFindByLibelleRapideParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
+	 * <div>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+	 * <p>Vérifier findByLibelleRapide(contenu inexistant).</p>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <p>findByLibelleRapide(inexistant) retourne une liste vide.</p>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <p>Aucune exception.</p>
+	 * </div>
+	 */
+	@Tag(TAG_RECHERCHER_RAPIDE)
+	@DisplayName(DN_FINDBYLIBELLERAPIDE_INEXISTANT)
+	@Test
+	public void testFindByLibelleRapideInexistantVideOk() throws Exception {
+		
+	    final List<SousTypeProduit> liste = this.service.findByLibelleRapide(CONTENU_PARTIEL_INEXISTANT);
+	    assertThat(liste).isNotNull().isEmpty();
+	    
+	} // __________________________________________________________________
+
+
+
+	/**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findByLibelleRapide(blank mais pas null) -> rechercherTous().</p>
+     * <p>Vérifier findByLibelleRapide(blank mais 
+     * pas null) -> rechercherTous().</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
      * <p>findByLibelleRapide(blank) retourne une liste non null.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
@@ -929,12 +1148,16 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLERAPIDE_BLANK)
     @Test
     public void testFindByLibelleRapideBlankRetourneTous() throws Exception {
+    	
         final List<SousTypeProduit> tous = this.service.rechercherTous();
         final List<SousTypeProduit> rapide = this.service.findByLibelleRapide(BLANK);
 
         assertThat(rapide).isNotNull();
         assertThat(rapide).hasSameSizeAs(tous);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -950,21 +1173,29 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYLIBELLERAPIDE_NOMINAL)
     @Test
     public void testFindByLibelleRapideNominalOk() throws Exception {
-        final List<SousTypeProduit> liste = this.service.findByLibelleRapide(CONTENU_PARTIEL_VET);
+    	
+        final List<SousTypeProduit> liste 
+        	= this.service.findByLibelleRapide(CONTENU_PARTIEL_VET);
 
         assertThat(liste).isNotNull().isNotEmpty();
         assertThat(liste).extracting(SousTypeProduit::getSousTypeProduit)
             .allMatch(libelle -> libelle.contains(CONTENU_PARTIEL_VET));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== findAllByParent =====================
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de null sur findAllByParent(pParent).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findAllByParent(null) jette {@link ExceptionAppliParentNull} avec MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL.</p>
+     * <p>findAllByParent(null) jette {@link ExceptionAppliParentNull} 
+     * avec MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune lecture DAO enfant.</p>
      * </div>
@@ -973,17 +1204,24 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDALLBYPARENT_NULL)
     @Test
     public void testFindAllByParentParamNullExceptionAppliParentNull() {
+    	
         assertThatThrownBy(() -> this.service.findAllByParent(null))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle du libellé parent blank sur findAllByParent(pParent).</p>
+     * <p>Vérifier le contrôle du libellé parent blank 
+     * sur findAllByParent(pParent).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findAllByParent(parent libellé blank) jette {@link ExceptionAppliLibelleBlank} avec MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK.</p>
+     * <p>findAllByParent(parent libellé blank) jette 
+     * {@link ExceptionAppliLibelleBlank} avec 
+     * MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune lecture DAO enfant.</p>
      * </div>
@@ -992,19 +1230,26 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDALLBYPARENT_LIBELLE_BLANK)
     @Test
     public void testFindAllByParentParentLibelleBlankExceptionAppliLibelleBlank() {
+    	
         final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
 
         assertThatThrownBy(() -> this.service.findAllByParent(parent))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de persistance du parent sur findAllByParent(pParent) (id null).</p>
+     * <p>Vérifier le contrôle de persistance du parent sur 
+     * findAllByParent(pParent) (id null).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findAllByParent(parent id null) jette {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT.</p>
+     * <p>findAllByParent(parent id null) jette 
+     * {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe 
+     * MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune lecture DAO enfant.</p>
      * </div>
@@ -1013,12 +1258,16 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDALLBYPARENT_NON_PERSISTANT)
     @Test
     public void testFindAllByParentParentNonPersistantExceptionTechniqueGatewayNonPersistent() {
+    	
         final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
 
         assertThatThrownBy(() -> this.service.findAllByParent(parent))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1034,6 +1283,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDALLBYPARENT_NOMINAL)
     @Test
     public void testFindAllByParentNominalOk() throws Exception {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
 
@@ -1044,16 +1294,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         .extracting(SousTypeProduit::getTypeProduit)  // Extrait d'abord le TypeProduit
         .extracting("idTypeProduit")  // Puis extrait la propriété idTypeProduit par nom
         .containsOnly(idParent);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== findById =====================
 
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de null sur findById(pId).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findById(null) jette {@link ExceptionAppliParamNull} avec MESSAGE_FINDBYID_KO_PARAM_NULL.</p>
+     * <p>findById(null) jette {@link ExceptionAppliParamNull} 
+     * avec MESSAGE_FINDBYID_KO_PARAM_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune lecture DAO.</p>
      * </div>
@@ -1062,10 +1318,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYID_NULL)
     @Test
     public void testFindByIdParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.findById(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1081,9 +1341,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYID_ABSENT)
     @Test
     public void testFindByIdAbsentNull() throws Exception {
+    	
         final SousTypeProduit retour = this.service.findById(ID_INEXISTANT);
         assertThat(retour).isNull();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1099,13 +1363,17 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_FINDBYID_NOMINAL)
     @Test
     public void testFindByIdNominalOk() throws Exception {
+    	
         final Long id = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
         final SousTypeProduit retour = this.service.findById(id);
 
         assertThat(retour).isNotNull();
         assertThat(retour.getIdSousTypeProduit()).isEqualTo(id);
         assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ===================== update =====================
 
@@ -1114,7 +1382,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle de null sur update(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(null) jette {@link ExceptionAppliParamNull} avec MESSAGE_UPDATE_KO_PARAM_NULL.</p>
+     * <p>update(null) jette {@link ExceptionAppliParamNull} 
+     * avec MESSAGE_UPDATE_KO_PARAM_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -1123,17 +1392,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_NULL)
     @Test
     public void testUpdateParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
      * <p>Vérifier le contrôle du libellé blank sur update(pObject).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(libellé blank) jette {@link ExceptionAppliLibelleBlank} avec MESSAGE_UPDATE_KO_LIBELLE_BLANK.</p>
+     * <p>update(libellé blank) jette {@link ExceptionAppliLibelleBlank} 
+     * avec MESSAGE_UPDATE_KO_LIBELLE_BLANK.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune écriture en base.</p>
      * </div>
@@ -1142,6 +1416,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_BLANK)
     @Test
     public void testUpdateLibelleBlankExceptionAppliLibelleBlank() {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(Long.valueOf(1L), BLANK, parent);
@@ -1149,7 +1424,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.update(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1165,6 +1443,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_ID_NULL)
     @Test
     public void testUpdateIdNullExceptionAppliParamNonPersistent() {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_FEMME, parent);
@@ -1172,7 +1451,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.update(stp))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT + LIBELLE_ENFANT_VETEMENT_FEMME);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1188,100 +1470,195 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_ABSENT)
     @Test
     public void testUpdateAbsentNull() throws Exception {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(ID_INEXISTANT, LIBELLE_A_SUPPRIMER, parent);
 
         final SousTypeProduit retour = this.service.update(stp);
         assertThat(retour).isNull();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier update(nominal) avec changement de parent.</p>
+     * <p>Vérifier update(nominal) avec changement de parent, avec preuve de mise à jour en base.</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
      * <p>update(parent modifié) retourne un {@link SousTypeProduit} avec le nouveau parent.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Le parent est mis à jour en base.</p>
+     * <ul>
+     * <li>Le parent est réellement mis à jour en base (preuve JDBC).</li>
+     * <li>Le test choisit un parent existant et différent du parent initial (sinon test inutile).</li>
+     * <li>Test hors transaction de test : {@code @Transactional(NOT_SUPPORTED)}.</li>
+     * <li>Restauration physique du parent en finally (isolation).</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_PARENT_MODIFIE)
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testUpdateParentModifieOk() throws Exception {
-        // Récupération des IDs persistants
         final Long idEnfant = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_FEMME);
-        final Long idParentVetement = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+        final Long idParentInitial = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
 
-        // Vérification de l'existence du second parent (ex: "Chaussure")
-        final TypeProduitJPA parentChaussure 
-        	= this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(
-        			LIBELLE_PARENT_CHAUSSURE);
-        
-        final Long idParentChaussure;
-        if (parentChaussure == null) {
-            // Si "Chaussure" n'existe pas, on utilise le parent "vêtement" pour éviter les erreurs
-            idParentChaussure = idParentVetement;
-        } else {
-            idParentChaussure = parentChaussure.getIdTypeProduit();
+        /* Référence “physique” : état initial en base (bypass Hibernate). */
+        final String libelleAvant = this.jdbcTemplate.queryForObject(
+            "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+            String.class, idEnfant
+        );
+        final Long parentAvant = this.jdbcTemplate.queryForObject(
+            "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+            Long.class, idEnfant
+        );
+        assertThat(parentAvant)
+            .as("Le parent initial en base doit être 'vêtement' (seed data)")
+            .isEqualTo(idParentInitial);
+
+        /* Choisit un parent EXISTANT et DIFFÉRENT de 'vêtement' (sinon le test ne prouve rien). */
+        final List<TypeProduitJPA> parents = this.typeProduitDaoJPA.findAll();
+        assertThat(parents).isNotNull().isNotEmpty();
+
+        Long idNouveauParent = null;
+        String libelleNouveauParent = null;
+
+        for (final TypeProduitJPA p : parents) {
+            if (p != null
+                    && p.getIdTypeProduit() != null
+                    && p.getTypeProduit() != null
+                    && !p.getTypeProduit().equalsIgnoreCase(LIBELLE_PARENT_VETEMENT)) {
+                idNouveauParent = p.getIdTypeProduit();
+                libelleNouveauParent = p.getTypeProduit();
+                break;
+            }
         }
 
-        // Création de l'objet à mettre à jour
-        final String libelleNouveauParent = idParentChaussure.equals(idParentVetement) ? LIBELLE_PARENT_VETEMENT : LIBELLE_PARENT_CHAUSSURE;
-        final TypeProduit nouveauParent = new TypeProduit(idParentChaussure, libelleNouveauParent);
-        final SousTypeProduit aMettreAJour = new SousTypeProduit(idEnfant, LIBELLE_ENFANT_VETEMENT_FEMME, nouveauParent);
+        assertThat(idNouveauParent)
+            .as("Il doit exister en base au moins un TypeProduit différent de 'vêtement' (seed data).")
+            .isNotNull();
+        assertThat(libelleNouveauParent).isNotBlank();
+        assertThat(idNouveauParent).isNotEqualTo(idParentInitial);
 
-        // Mise à jour
-        final SousTypeProduit maj = this.service.update(aMettreAJour);
+        try {
+            final TypeProduit nouveauParent = new TypeProduit(idNouveauParent, libelleNouveauParent);
+            final SousTypeProduit aMettreAJour = new SousTypeProduit(
+                idEnfant, LIBELLE_ENFANT_VETEMENT_FEMME, nouveauParent
+            );
 
-        // Vérifications
-        assertThat(maj).isNotNull();
-        assertThat(maj.getTypeProduit()).isNotNull();
-        assertThat(maj.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentChaussure);
+            final SousTypeProduit maj = this.service.update(aMettreAJour);
 
-        // Vérification en base
-        final SousTypeProduit relu = this.service.findById(idEnfant);
-        assertThat(relu).isNotNull();
-        assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentChaussure);
-    }
+            assertThat(maj).isNotNull();
+            assertThat(maj.getTypeProduit()).isNotNull();
+            assertThat(maj.getTypeProduit().getIdTypeProduit()).isEqualTo(idNouveauParent);
 
+            /* PREUVE BD INATTAQUABLE : lecture SQL directe du FK parent après update(). */
+            final Long parentEnBase = this.jdbcTemplate.queryForObject(
+                "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                Long.class, idEnfant
+            );
+            assertThat(parentEnBase).isEqualTo(idNouveauParent);
+
+            /* Double-check via service. */
+            final SousTypeProduit relu = this.service.findById(idEnfant);
+            assertThat(relu).isNotNull();
+            assertThat(relu.getTypeProduit()).isNotNull();
+            assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idNouveauParent);
+
+        } finally {
+
+            /* Restauration physique (test non rollbacké). */
+            this.jdbcTemplate.update(
+                "UPDATE SOUS_TYPES_PRODUIT SET SOUS_TYPE_PRODUIT = ?, TYPE_PRODUIT = ? WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                libelleAvant, parentAvant, idEnfant
+            );
+
+        }
+    } // __________________________________________________________________
+    
     
     
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier update(nominal) : modification du libellé.</p>
+     * <p>Vérifier update(nominal) : modification du libellé avec preuve de mise à jour en base.</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
      * <p>update(nominal) retourne un {@link SousTypeProduit} non null.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Libellé mis à jour.</p>
+     * <ul>
+     * <li>Libellé mis à jour.</li>
+     * <li>Preuve “BD” : lecture SQL directe (JdbcTemplate) après l’appel (contourne Hibernate).</li>
+     * <li>Test hors transaction de test : {@code @Transactional(NOT_SUPPORTED)}.</li>
+     * <li>Restauration physique du libellé en finally (isolation).</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_NOMINAL)
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testUpdateNominalOk() throws Exception {
         final Long idEnfant = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_FEMME);
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
 
-        final SousTypeProduit stp = new SousTypeProduit(idEnfant, LIBELLE_MODIFIE_FEMME, parent);
+        /* État initial “physique” (référence) : bypass Hibernate. */
+        final String libelleAvant = this.jdbcTemplate.queryForObject(
+            "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+            String.class, idEnfant
+        );
+        final Long parentAvant = this.jdbcTemplate.queryForObject(
+            "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+            Long.class, idEnfant
+        );
 
-        final SousTypeProduit maj = this.service.update(stp);
+        try {
+            final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
+            final SousTypeProduit stp = new SousTypeProduit(idEnfant, LIBELLE_MODIFIE_FEMME, parent);
 
-        assertThat(maj).isNotNull();
-        assertThat(maj.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
-        assertThat(maj.getTypeProduit()).isNotNull();
-        assertThat(maj.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
+            final SousTypeProduit maj = this.service.update(stp);
 
-        final SousTypeProduit relu = this.service.findById(idEnfant);
-        assertThat(relu).isNotNull();
-        assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
-    }
+            assertThat(maj).isNotNull();
+            assertThat(maj.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
+            assertThat(maj.getTypeProduit()).isNotNull();
+            assertThat(maj.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
+
+            /* PREUVE BD INATTAQUABLE : lecture SQL directe après update(). */
+            final String libelleEnBase = this.jdbcTemplate.queryForObject(
+                "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                String.class, idEnfant
+            );
+            assertThat(libelleEnBase).isEqualTo(LIBELLE_MODIFIE_FEMME);
+
+            final Long parentEnBase = this.jdbcTemplate.queryForObject(
+                "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                Long.class, idEnfant
+            );
+            assertThat(parentEnBase).isEqualTo(idParent);
+
+            /* Double-check via service. */
+            final SousTypeProduit relu = this.service.findById(idEnfant);
+            assertThat(relu).isNotNull();
+            assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
+
+        } finally {
+
+            /* Restauration physique (test non rollbacké). */
+            this.jdbcTemplate.update(
+                "UPDATE SOUS_TYPES_PRODUIT SET SOUS_TYPE_PRODUIT = ?, TYPE_PRODUIT = ? WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                libelleAvant, parentAvant, idEnfant
+            );
+
+        }
+    } // __________________________________________________________________
+    
+    
 
     // ===================== delete =====================
 
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -1296,19 +1673,23 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_DELETE_NULL)
     @Test
     public void testDeleteParamNullExceptionAppliParamNull() {
+    	
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL);
-    }
+        
+    } // __________________________________________________________________
 
     
     
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de non-persistance sur delete(pObject) (id null).</p>
+     * <p>Vérifier le contrôle de non-persistance sur 
+     * delete(pObject) (id null).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>delete(id null) jette {@link ExceptionAppliParamNonPersistent} avec MESSAGE_DELETE_KO_ID_NULL.</p>
+     * <p>delete(id null) jette {@link ExceptionAppliParamNonPersistent} 
+     * avec MESSAGE_DELETE_KO_ID_NULL.</p>
      * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
      * <p>Aucune suppression en base.</p>
      * </div>
@@ -1317,6 +1698,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_DELETE_ID_NULL)
     @Test
     public void testDeleteIdNullExceptionAppliParamNonPersistent() {
+    	
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_A_SUPPRIMER, parent);
@@ -1324,7 +1706,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThatThrownBy(() -> this.service.delete(stp))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL);
-    }
+        
+    } // __________________________________________________________________
 
     
     
@@ -1342,6 +1725,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_DELETE_ABSENT)
     @Test
     public void testDeleteAbsentNeFaitRien() throws Exception {
+    	
         final long avant = this.service.count();
 
         final Long idParent = retrouverIdParentPersistantParLibelle(
@@ -1355,7 +1739,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
         final long apres = this.service.count();
         assertThat(apres).isEqualTo(avant);
-    }
+        
+    } // __________________________________________________________________
 
  
     
@@ -1382,7 +1767,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      *
      * <p style="font-weight:bold;">SOLUTION TECHNIQUE :</p>
      * <ul>
-     * <li>Utilisation de @Transactional(propagation = Propagation.NEVER) pour éviter les transactions imbriquées</li>
+     * <li>Utilisation de @Transactional(propagation = Propagation.NEVER) 
+     * pour éviter les transactions imbriquées</li>
      * <li>Vérification directe via JdbcTemplate (contourne Hibernate)</li>
      * <li>Suppression via EntityManager.remove() + flush() pour forcer l'exécution</li>
      * </ul>
@@ -1396,6 +1782,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Sql(scripts = {CLASSPATH_TRUNCATE_SQL, CLASSPATH_DATA_SQL},
          executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     public void testDeleteNominalOk() throws Exception {
+    	
         // =============================================
         // 1. VÉRIFICATION DE L'ÉTAT INITIAL
         // =============================================
@@ -1442,34 +1829,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(apres)
             .as("Le nombre d'enregistrements doit revenir à 3 après suppression")
             .isEqualTo(3L);
-    }
+        
+    } // __________________________________________________________________
 
     
     
-    /**
-     * Vérifie la suppression directement en base via JdbcTemplate
-     * (contourne complètement Hibernate et son cache)
-     *
-     * @param idSupprime L'ID de l'entité supprimée à vérifier
-     * @throws Exception
-     */
-    private void verifierSuppressionEnBase(final Long idSupprime) throws Exception {
-    	
-        // Vérification de l'absence de l'enregistrement
-        final Integer count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-            Integer.class, idSupprime
-        );
-
-        assertThat(count)
-            .as("L'enregistrement doit être physiquement supprimé de la base (expected: 0, actual: " + count + ")")
-            .isEqualTo(0);
-
-        // Vérification supplémentaire via le service
-        assertThat(this.service.findById(idSupprime))
-            .as("Le service ne doit plus trouver l'objet supprimé")
-            .isNull();
-    }
+    
     
     
      
@@ -1489,10 +1854,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_COUNT_NOMINAL)
     @Test
     public void testCountNominalOk() throws Exception {
+    	
         final long viaService = this.service.count();
         final long viaDao = this.sousTypeProduitDaoJPA.count();
 
         assertThat(viaService).isGreaterThanOrEqualTo(0L);
         assertThat(viaService).isEqualTo(viaDao);
-    }
+        
+    } // __________________________________________________________________
+    
 }

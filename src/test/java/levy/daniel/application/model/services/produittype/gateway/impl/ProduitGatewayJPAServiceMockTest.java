@@ -2709,6 +2709,43 @@ public class ProduitGatewayJPAServiceMockTest {
 
 	} // __________________________________________________________________
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>update(DAO.findById jette Exception) wrap 
+	 * en ExceptionTechniqueGateway.</p>
+	 * </div>
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName("update(DAO findById jette Exception) - ExceptionTechniqueGateway (wrap)")
+	@Test
+	public void testUpdateDaoFindByIdJetteExceptionTechniqueGateway() {
+
+	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+	    final Produit p = new Produit();
+	    p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
+	    p.setSousTypeProduit(parent);
+	    p.setIdProduit(1L);
+
+	    final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+	    when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+
+	    when(this.produitDaoJPA.findById(1L)).thenThrow(new RuntimeException(BOOM));
+
+	    assertThatThrownBy(() -> this.service.update(p))
+	        .isInstanceOf(ExceptionTechniqueGateway.class)
+	        .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
+	        .hasMessageContaining(BOOM);
+
+	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(1)).findById(1L);
+	    verify(this.produitDaoJPA, times(0)).save(any(ProduitJPA.class));
+	    verifyNoInteractions(this.entityManager);
+
+	} // __________________________________________________________________
+	
     
 
     // =============================== DELETE ==============================
