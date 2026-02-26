@@ -811,7 +811,7 @@ Règle prioritaire invariante :
 - L’IA NE DOIT déclarer **"incident de lecture"** que si :
   - les deux canaux ont été testés,
   - et les tentatives ont échoué,
-  - ou que le contenu téléchargé est manifestement invalide (HTML d’erreur, contenu vide, tronqué, incohérent).
+  - et que, pour chacune des tentatives, tout contenu manifestement invalide (HTML d’erreur, contenu vide, tronqué, incohérent) est traité comme un échec de tentative ; l’autre canal doit donc être testé au moins une fois avant de conclure à un “incident de lecture”.
 
 En cas de succès (sur l’un des canaux) :
 
