@@ -36,3 +36,4 @@ build/
 /logs/
 /temp/
 *.log
+/AI_OFFLINE/
