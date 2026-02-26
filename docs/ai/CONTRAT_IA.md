@@ -796,3 +796,28 @@ Commande : “mémoriser. baseline. Pas analyser. Pas coder”
 - Les commentaires de l’Utilisateur doivent être reproduits en respectant le formalisme HTML `<div><p>...</p></div>` sans lignes vides, sauf s’ils sont faux.
 - Les commentaires ajoutés par l’IA doivent être exclusivement des commentaires de bloc (jamais de commentaires de ligne).
 - La javadoc existante doit être conservée (sauf si fausse) et la javadoc ajoutée par l’IA doit respecter le style HTML du projet.
+
+---
+
+### 28.13 RT-PRIORITAIRE-CANAL-LECTURE-01 (VALIDÉ) — Sélection du canal de lecture GitHub@SHA avant “incident de lecture”
+
+Objectif : éviter tout faux “incident de lecture” dû à l’échec d’un canal technique unique alors qu’un autre canal de téléchargement binaire est fonctionnel.
+
+Règle prioritaire invariante :
+
+- Lors d’une lecture GitHub@SHA (RT-LECTURE-GITHUB-02), l’IA DOIT sélectionner un canal technique de téléchargement binaire (octets bruts) et, en cas d’échec, DOIT basculer sur un second canal technique distinct avant de conclure à un “incident de lecture”.
+- Les deux canaux doivent produire un **téléchargement binaire** (octets bruts) depuis l’URL Raw@SHA. Exemples de canaux distincts (non exhaustif) : client HTTP “A” / client HTTP “B” (ex. `curl` et un autre mécanisme de téléchargement binaire).
+- L’IA DOIT effectuer au maximum **3 tentatives au total**, en garantissant **au moins une tentative sur chacun des deux canaux**.
+- L’IA NE DOIT déclarer **"incident de lecture"** que si :
+  - les deux canaux ont été testés,
+  - et les tentatives ont échoué,
+  - ou que le contenu téléchargé est manifestement invalide (HTML d’erreur, contenu vide, tronqué, incohérent).
+
+En cas de succès (sur l’un des canaux) :
+
+- L’IA poursuit la procédure RT-LECTURE-GITHUB-02 : lecture locale du fichier téléchargé + vérification de cohérence + vérification stricte des génériques (aucun Raw Type).
+- Si les génériques sont illisibles/douteux : l’IA DOIT demander confirmation avant toute conclusion.
+
+Fallback :
+
+- Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) n’est autorisé qu’après un **incident de lecture** établi selon la présente règle (deux canaux testés, ≤3 tentatives).
