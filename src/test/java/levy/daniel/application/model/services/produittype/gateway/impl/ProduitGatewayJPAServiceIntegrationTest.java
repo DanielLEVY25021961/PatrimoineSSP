@@ -2039,6 +2039,54 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         }
 
     } // __________________________________________________________________
+
+    
+    
+    // ===================== COUNT =====================
+
+
+
+    /**
+     * <div>
+     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+     * <p>Test d'intégration “béton” : prouver que count() 
+     * reflète exactement le nombre de lignes en base.</p>
+     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>count() retourne le nombre total de {@link Produit} persistés.</p>
+     * <p style="font-weight:bold;">GARANTIES :</p>
+     * <ul>
+     * <li>Preuve “BD” : lecture SQL directe 
+     * via {@link JdbcTemplate} (bypass Hibernate).</li>
+     * <li>entityManager.clear() avant l’appel pour éviter 
+     * toute illusion de cache/persistence context.</li>
+     * <li>Test hors transaction de test : 
+     * {@code @Transactional(NOT_SUPPORTED)}.</li>
+     * </ul>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_COUNT)
+    @DisplayName(DN_COUNT_NOMINAL)
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testCountNominalOk() throws Exception {
+
+        /* Anti-illusion cache avant l’appel. */
+        this.entityManager.clear();
+
+        final long countService = this.service.count();
+
+        final Long countSql = this.jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM PRODUITS",
+            Long.class
+        );
+        assertThat(countSql).isNotNull();
+
+        assertThat(countService)
+            .as("count() doit être strictement cohérent avec SELECT COUNT(*) FROM PRODUITS")
+            .isEqualTo(countSql.longValue());
+
+    } // __________________________________________________________________
     
 }
 
