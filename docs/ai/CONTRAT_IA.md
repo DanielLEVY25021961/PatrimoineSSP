@@ -682,3 +682,117 @@ Dans ce cas :
 
 - Pour les fichiers **texte** (Java et assimilés), la comparaison opérationnelle est **ligne à ligne** avec normalisation **CRLF/LF**.
 - L’IA doit privilégier le **rafraîchissement minimal par objectif** (cf. §25) afin d’éviter de relire un périmètre inutilement large quand la tâche porte sur un sous-ensemble (PORT/ADAPTER/tests).
+
+## 28) Règles prioritaires invariantes (sacralisation) — RT-PRIORITAIRE-* / RT-MEMORISATION-* / REGLE-COMMENTAIRE-JAVADOC-07
+
+Cette section sacralise explicitement des règles déjà appliquées dans le workflow, afin d’éliminer toute ambiguïté.
+
+---
+
+### 28.1 RT-PRIORITAIRE-00 (VALIDÉ) — Relecture des règles avant tout code
+
+Avant toute génération de code (MODE CODER), l’IA DOIT relire strictement :
+- les règles de travail du présent CONTRAT,
+- les règles de qualité et d’architecture,
+et NE DOIT JAMAIS deviner / supposer / improviser.
+
+---
+
+### 28.2 RT-PRIORITAIRE-01 (VALIDÉ) — Relecture des fichiers baseline avant tout code
+
+Avant toute génération de code (MODE CODER), l’IA DOIT relire strictement ligne à ligne tous les fichiers de travail nécessaires dans la baseline afin d’en déduire sans hypothèse :
+- types de retour des méthodes,
+- imports,
+- dépendances entre classes,
+- contraintes et invariants (y compris listes défensives immutables),
+- modificateurs d’accès (public/private/protected),
+- signatures exactes et surcharges.
+
+---
+
+### 28.3 RT-PRIORITAIRE-02 (VALIDÉ) — Relecture strictement ligne à ligne
+
+L’IA DOIT relire strictement ligne à ligne les fichiers concernés de la baseline (liste fournie le cas échéant ; sinon toute la baseline) avant toute action nécessitant ces fichiers.
+
+---
+
+### 28.4 RT-PRIORITAIRE-03 (VALIDÉ) — Déduction + preuve de relecture par signatures
+
+Après application de RT-PRIORITAIRE-02, l’IA DOIT déduire (avant tout code) :
+- constructeurs,
+- méthodes (signatures exactes),
+- types de retour,
+- modificateurs,
+- dépendances,
+- contraintes.
+
+Exigence de traçabilité :
+- En MODE CODER, l’IA DOIT confirmer la relecture en listant explicitement les signatures exactes (constructeurs/méthodes), types et modificateurs pertinents pour la tâche demandée.
+- L’IA ne doit pas oublier les fichiers explicitement cités par l’Utilisateur (ex : `TypeProduitGatewayJPAService.java`).
+
+---
+
+### 28.5 RT-PRIORITAIRE-100 (VALIDÉ) — Intangibilité de la baseline (hors ordre explicite)
+
+Tout fichier déposé/mémorisé dans la baseline DOIT être conservé intégralement, ligne à ligne, sans modification.
+Interdiction totale de modifier un fichier baseline tant que l’Utilisateur n’a pas ordonné explicitement de travailler dessus.
+
+---
+
+### 28.6 RT-PRIORITAIRE-101 (VALIDÉ) — Vérification baseline avant toute affirmation factuelle
+
+Avant de répondre, analyser ou coder, l’IA DOIT vérifier dans la baseline les informations factuelles qu’elle avance (imports, signatures, constantes, etc.).
+Interdiction d’écrire des hypothèses conditionnelles du type “si l’import X existe…”.
+
+---
+
+### 28.7 RT-PRIORITAIRE-102 (VALIDÉ) — Baseline unique source de vérité + consolidation
+
+La baseline est l’unique source de vérité.
+Toute lecture GitHub au SHA DOIT conduire à une consolidation de la baseline en écrasant toute version précédente (une seule version par path, la plus récente).
+Aucun fichier baseline ne doit être oublié / égaré / perdu.
+Modification uniquement sur ordre explicite de l’Utilisateur.
+
+---
+
+### 28.8 RT-LECTURE-GITHUB-02 — Clarification “génériques illisibles”
+
+Si l’IA ne peut pas lire correctement les génériques (doute, troncature, rendu altéré, Raw Types possibles) :
+- elle DOIT signaler un “incident de lecture”,
+- elle DOIT demander confirmation (ou l’élément manquant) avant toute conclusion,
+- elle DOIT relancer automatiquement la lecture (max 3 tentatives) conformément à RT-LECTURE-GITHUB-02,
+- puis basculer en MODE OFFLINE si échec persistant.
+
+---
+
+### 28.9 RT-MEMORISATION-UNICITE-01 (VALIDÉ) — Unicité de mémorisation
+
+Lors de la mémorisation d’un élément (fichier, règle, chat, etc.), l’IA DOIT effacer les versions précédentes.
+Invariant : ne conserver qu’une seule version, toujours la plus récente.
+
+---
+
+### 28.10 RT-MEMORISATION-COURANTE-02 (VALIDÉ) — “mémoriser. baseline” (analyse sans codage)
+
+Commande : “mémoriser. baseline”
+- Lire et analyser le fichier transmis (javadoc/code/commentaires),
+- Stocker ligne à ligne sans modification dans la baseline en écrasant toute version précédente,
+- Ne générer aucun code, aucune suggestion,
+- Produire uniquement une synthèse structurée de mémorisation.
+
+---
+
+### 28.11 RT-MEMORISATION-SIMPLE-03 (VALIDÉ) — “mémoriser. baseline. Pas analyser. Pas coder”
+
+Commande : “mémoriser. baseline. Pas analyser. Pas coder”
+- Stocker ligne à ligne sans modification dans la baseline en écrasant toute version précédente,
+- Aucun traitement immédiat, aucune analyse, aucun code, aucune suggestion,
+- Produire uniquement une synthèse structurée de mémorisation.
+
+---
+
+### 28.12 REGLE-COMMENTAIRE-JAVADOC-07 (VALIDÉ) — Javadoc et commentaires (HTML + bloc)
+
+- Les commentaires de l’Utilisateur doivent être reproduits en respectant le formalisme HTML `<div><p>...</p></div>` sans lignes vides, sauf s’ils sont faux.
+- Les commentaires ajoutés par l’IA doivent être exclusivement des commentaires de bloc (jamais de commentaires de ligne).
+- La javadoc existante doit être conservée (sauf si fausse) et la javadoc ajoutée par l’IA doit respecter le style HTML du projet.
