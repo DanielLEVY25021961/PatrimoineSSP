@@ -1542,6 +1542,13 @@ public class ProduitGatewayJPAServiceIntegrationTest {
      * <p>Vérifier findById(nominal).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
      * <p>findById(trouvé) retourne un {@link Produit} non null.</p>
+     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <ul>
+     * <li>Preuve “BD” : l'ID et les valeurs attendues sont lues 
+     * en SQL direct (JdbcTemplate), puis comparées au retour service.</li>
+     * <li>entityManager.clear() avant l’appel pour éviter 
+     * toute illusion de cache/persistence context.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
@@ -1549,17 +1556,45 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testFindByIdNominalOk() throws Exception {
     	
-        final Produit seed = this.service.findByLibelle(CHEMISE_ML_HOMME).get(0);
-        final Produit relu = this.service.findById(seed.getIdProduit());
+        /* Détermine un ID existant via SQL (bypass service/cache). */
+        final List<Long> ids = this.jdbcTemplate.queryForList(
+            "SELECT ID_PRODUIT FROM PRODUITS WHERE PRODUIT = ?",
+            Long.class, CHEMISE_ML_HOMME
+        );
+        assertThat(ids).isNotNull().isNotEmpty();
+
+        final Long id = ids.get(0);
+        assertThat(id).isNotNull();
+
+        /* Attendus SQL (preuve BD). */
+        final String libelleAttendu = lireLibelleProduitEnBase(id);
+        assertThat(libelleAttendu).isEqualTo(CHEMISE_ML_HOMME);
+
+        final Long idParentAttendu = lireIdParentEnBase(id);
+        assertThat(idParentAttendu).isNotNull();
+
+        final String libelleParentAttendu = this.jdbcTemplate.queryForObject(
+            "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+            String.class, idParentAttendu
+        );
+        assertThat(libelleParentAttendu).isNotNull();
+
+        /* Anti-illusion cache avant l’appel. */
+        this.entityManager.clear();
+
+        final Produit relu = this.service.findById(id);
 
         assertThat(relu).isNotNull();
-        assertThat(relu.getIdProduit()).isEqualTo(seed.getIdProduit());
-        assertThat(relu.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(relu.getIdProduit()).isEqualTo(id);
+        assertThat(relu.getProduit()).isEqualTo(libelleAttendu);
+        assertThat(relu.getSousTypeProduit()).isNotNull();
+        assertThat(relu.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(idParentAttendu);
+        assertThat(relu.getSousTypeProduit().getSousTypeProduit()).isEqualTo(libelleParentAttendu);
         
-    } // __________________________________________________________________
-    
+    } // __________________________________________________________________    
     
 
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>

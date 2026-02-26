@@ -2125,7 +2125,40 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>findById(nominal trouvé) retourne l'objet métier correspondant.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findById(nominal trouvé) - retourne l'objet métier")
+    @Test
+    public void testFindByIdNominalTrouveRetourneObjetMetier() throws Exception {
 
+        final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(1L);
+
+        when(this.produitDaoJPA.findById(1L)).thenReturn(Optional.of(entity));
+
+        final Produit retour = this.service.findById(1L);
+
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdProduit()).isEqualTo(1L);
+        assertThat(retour.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(retour.getSousTypeProduit()).isNotNull();
+        assertThat(retour.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(1L);
+        assertThat(retour.getSousTypeProduit().getSousTypeProduit()).isEqualTo(VETEMENT_HOMME);
+
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
 
 
     /**
