@@ -604,7 +604,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     private void verifierSuppressionEnBase(final Long pId) {
     	
         final Integer count = this.jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
+            "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?", // NOPMD by danyl on 26/02/2026 15:18
             Integer.class, pId
         );
         assertThat(count)
@@ -911,11 +911,17 @@ public class ProduitGatewayJPAServiceIntegrationTest {
      * <p>creer(nominal) retourne un {@link Produit} non null avec ID.</p>
      * <p style="font-weight:bold;">GARANTIES :</p>
      * <p>Le count() augmente de 1 et l'objet est retrouvable.</p>
+     * <ul>
+     * <li>Preuve “BD” : lecture SQL directe (JdbcTemplate) après l’appel (contourne Hibernate).</li>
+     * <li>Test hors transaction de test : {@code @Transactional(NOT_SUPPORTED)}.</li>
+     * <li>Nettoyage physique en finally (isolation), même si une assertion échoue.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_NOMINAL)
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testCreerNominalOk() throws Exception {
     	
         final long avant = this.service.count();
@@ -924,6 +930,9 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
         assertThat(produitsExistants).isNotEmpty();
         final SousTypeProduitI parent = produitsExistants.get(0).getSousTypeProduit();
+        assertThat(parent).isNotNull();
+        assertThat(parent.getIdSousTypeProduit()).isNotNull();
+        final Long idParent = parent.getIdSousTypeProduit();
 
         final Produit aCreer = new Produit();
         aCreer.setProduit(TEMP_PRODUIT_A_SUPPRIMER);
@@ -935,12 +944,46 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         assertThat(cree.getIdProduit()).isNotNull();
         assertThat(cree.getProduit()).isEqualTo(TEMP_PRODUIT_A_SUPPRIMER);
 
-        final long apres = this.service.count();
-        assertThat(apres).isEqualTo(avant + 1L);
+        final Long idCree = cree.getIdProduit();
 
-        final Produit relu = this.service.findById(cree.getIdProduit());
-        assertThat(relu).isNotNull();
-        assertThat(relu.getProduit()).isEqualTo(TEMP_PRODUIT_A_SUPPRIMER);
+        try {
+        	
+            final long apres = this.service.count();
+            assertThat(apres).isEqualTo(avant + 1L);
+
+            /* PREUVE BD INATTAQUABLE : lecture SQL directe (bypass Hibernate). */
+            final Integer countEnBase = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
+                Integer.class, idCree
+            );
+            assertThat(countEnBase)
+                .as("La ligne doit exister physiquement en base après creer()")
+                .isEqualTo(1);
+
+            final String libelleEnBase = lireLibelleProduitEnBase(idCree);
+            assertThat(libelleEnBase).isEqualTo(TEMP_PRODUIT_A_SUPPRIMER);
+
+            final Long parentEnBase = lireIdParentEnBase(idCree);
+            assertThat(parentEnBase).isEqualTo(idParent);
+
+            /* Double-check via service (nouvelle transaction/requête). */
+            this.entityManager.clear();
+            final Produit relu = this.service.findById(idCree);
+            assertThat(relu).isNotNull();
+            assertThat(relu.getProduit()).isEqualTo(TEMP_PRODUIT_A_SUPPRIMER);
+
+        } finally {
+
+            /* Nettoyage physique : le test n'est pas rollbacké (NOT_SUPPORTED). */
+            if (idCree != null) {
+                this.jdbcTemplate.update(
+                    "DELETE FROM PRODUITS WHERE ID_PRODUIT = ?",
+                    idCree
+                );
+            }
+            this.entityManager.clear();
+
+        }
         
     } // __________________________________________________________________
     
