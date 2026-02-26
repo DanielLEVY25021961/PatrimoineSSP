@@ -1417,25 +1417,99 @@ public class ProduitGatewayJPAServiceIntegrationTest {
      * <p>Vérifier findAllByParent(nominal).</p>
      * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
      * <p>findAllByParent(nominal) retourne une liste non vide.</p>
+     * <p style="font-weight:bold;">GARANTIES :</p>
+     * <ul>
+     * <li>Preuve “BD” : lecture SQL directe (JdbcTemplate) après l’appel (contourne Hibernate).</li>
+     * <li>Test hors transaction de test : {@code @Transactional(NOT_SUPPORTED)}.</li>
+     * <li>entityManager.clear() avant l’appel pour éviter les illusions de cache.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDALLBYPARENT_NOMINAL)
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testFindAllByParentNominalOk() throws Exception {
     	
-        // On récupère directement un produit existant pour obtenir son parent
-        final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
-        assertThat(produitsExistants).isNotEmpty();
-        final SousTypeProduitI parent = produitsExistants.get(0).getSousTypeProduit();
+        /* Détermine un parent existant via SQL (bypass service/cache). */
+        final List<Long> idsParents = this.jdbcTemplate.queryForList(
+            "SELECT SOUS_TYPE_PRODUIT FROM PRODUITS WHERE PRODUIT = ?",
+            Long.class, CHEMISE_ML_HOMME
+        );
+        assertThat(idsParents).isNotNull().isNotEmpty();
 
-        final List<Produit> enfants = this.service.findAllByParent((SousTypeProduit) parent);
+        final Long idParent = idsParents.get(0);
+        assertThat(idParent).isNotNull();
 
-        assertThat(enfants).isNotNull();
+        final List<String> libellesParents = this.jdbcTemplate.queryForList(
+            "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+            String.class, idParent
+        );
+        assertThat(libellesParents).isNotNull().isNotEmpty();
+
+        final String libelleParent = libellesParents.get(0);
+        assertThat(libelleParent).isNotNull();
+
+        final SousTypeProduit parent = new SousTypeProduit();
+        parent.setIdSousTypeProduit(idParent);
+        parent.setSousTypeProduit(libelleParent);
+
+        /* Neutralise toute illusion de persistence context avant l’appel. */
+        this.entityManager.clear();
+
+        final List<Produit> enfants = this.service.findAllByParent(parent);
+
+        assertThat(enfants).isNotNull().isNotEmpty();
+
+        /* Contrôles métier minimaux sur les objets retournés. */
         assertThat(enfants)
-            .extracting(Produit::getSousTypeProduit)
-            .extracting(SousTypeProduitI::getIdSousTypeProduit)
-            .containsOnly(parent.getIdSousTypeProduit());
+            .allSatisfy(p -> {
+                assertThat(p).isNotNull();
+                assertThat(p.getProduit()).isNotNull().isNotBlank();
+                assertThat(p.getSousTypeProduit()).isNotNull();
+                assertThat(p.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(idParent);
+            });
+
+        /* PREUVE BD INATTAQUABLE : résultat = projection SQL (case-insensitive) triée. */
+        final Integer countDistinctEnBase = this.jdbcTemplate.queryForObject(
+            "SELECT COUNT(DISTINCT LOWER(PRODUIT)) FROM PRODUITS WHERE SOUS_TYPE_PRODUIT = ?",
+            Integer.class, idParent
+        );
+        assertThat(countDistinctEnBase).isNotNull();
+        assertThat(enfants)
+            .as("La liste retournée doit correspondre au contenu physique en base (dédoublonnage métier).")
+            .hasSize(countDistinctEnBase.intValue());
+
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+            "SELECT PRODUIT FROM PRODUITS WHERE SOUS_TYPE_PRODUIT = ? ORDER BY LOWER(PRODUIT), PRODUIT",
+            String.class, idParent
+        );
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+
+        /* Normalise + dédoublonne SQL selon l’égalité métier (case-insensitive sur PRODUIT). */
+        final List<String> attendusNormalises = new java.util.ArrayList<>();
+        for (final String libelle : libellesEnBase) {
+            if (libelle != null) {
+                final String normalise = libelle.toLowerCase(LOCALE_DEFAUT);
+                if (!attendusNormalises.contains(normalise)) {
+                    attendusNormalises.add(normalise);
+                }
+            }
+        }
+
+        /* Normalise + dédoublonne la sortie service (case-insensitive sur PRODUIT). */
+        final List<String> trouvesNormalises = new java.util.ArrayList<>();
+        for (final Produit enfant : enfants) {
+            final String libelle = enfant.getProduit();
+            final String normalise = libelle.toLowerCase(LOCALE_DEFAUT);
+            if (!trouvesNormalises.contains(normalise)) {
+                trouvesNormalises.add(normalise);
+            }
+        }
+
+        assertThat(trouvesNormalises)
+            .as("La liste retournée par le service doit être identique (contenu + ordre) à la projection SQL.")
+            .isEqualTo(attendusNormalises);
         
     } // __________________________________________________________________
     
