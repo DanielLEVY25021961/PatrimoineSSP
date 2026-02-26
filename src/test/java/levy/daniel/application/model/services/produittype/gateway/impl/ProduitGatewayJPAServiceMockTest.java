@@ -2784,7 +2784,7 @@ public class ProduitGatewayJPAServiceMockTest {
 
     
 	
-	/**
+    /**
      * <div>
      * <p>delete(null) lève ExceptionAppliParamNull.</p>
      * </div>
@@ -2793,18 +2793,18 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(null) - ExceptionAppliParamNull")
     @Test
     public void testDeleteNullExceptionAppliParamNull() {
-    	
+
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_DELETE_KO_PARAM_NULL);
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-        
-    } // __________________________________________________________________
-    
-    
 
+    } // __________________________________________________________________
+
+
+    
     /**
      * <div>
      * <p>delete(id null) lève ExceptionAppliParamNonPersistent.</p>
@@ -2814,8 +2814,9 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(id null) - ExceptionAppliParamNonPersistent")
     @Test
     public void testDeleteIdNullExceptionAppliParamNonPersistent() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final SousTypeProduitI parent 
+        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
         p.setSousTypeProduit(parent);
@@ -2827,22 +2828,25 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-        
-    } // __________________________________________________________________
-    
-    
 
+    } // __________________________________________________________________
+
+
+    
     /**
      * <div>
-     * <p>delete(DAO findById retourne null Optional) lève ExceptionTechniqueGateway.</p>
+     * <p>delete(DAO findById retourne null Optional) 
+     * lève ExceptionTechniqueGateway KO_STOCKAGE
+     * et ne supprime pas.</p>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(DAO findById null) - ExceptionTechniqueGateway")
+    @DisplayName("delete(DAO findById null) - ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testDeleteDaoFindByIdRetourneNullOptionalExceptionTechniqueGateway() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final SousTypeProduitI parent 
+        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
         p.setSousTypeProduit(parent);
@@ -2853,14 +2857,53 @@ public class ProduitGatewayJPAServiceMockTest {
         assertThatThrownBy(() -> this.service.delete(p))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
         verify(this.produitDaoJPA, times(1)).findById(71L);
+        verify(this.produitDaoJPA, never()).delete(any(ProduitJPA.class));
+        verify(this.produitDaoJPA, never()).flush();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
-        
-    } // __________________________________________________________________
-    
-    
 
+    } // __________________________________________________________________
+
+
+    
+    /**
+     * <div>
+     * <p>delete(KO DAO sur findById) wrappe 
+     * en ExceptionTechniqueGateway.</p>
+     * </div>
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(KO DAO sur findById) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testDeleteDaoFindByIdJetteExceptionWrapExceptionTechniqueGateway() {
+
+        final SousTypeProduitI parent 
+        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p = new Produit();
+        p.setProduit(CHEMISE_ML_HOMME);
+        p.setSousTypeProduit(parent);
+        p.setIdProduit(71L);
+
+        when(this.produitDaoJPA.findById(71L))
+            .thenThrow(new RuntimeException(BOOM));
+
+        assertThatThrownBy(() -> this.service.delete(p))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.produitDaoJPA, times(1)).findById(71L);
+        verify(this.produitDaoJPA, never()).delete(any(ProduitJPA.class));
+        verify(this.produitDaoJPA, never()).flush();
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+
+
+    
     /**
      * <div>
      * <p>delete(absent) ne fait rien.</p>
@@ -2871,8 +2914,9 @@ public class ProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(absent) - ne fait rien")
     @Test
     public void testDeleteAbsentNeFaitRien() throws Exception {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final SousTypeProduitI parent 
+        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
         final Produit p = new Produit();
         p.setProduit(CHEMISE_ML_HOMME);
         p.setSousTypeProduit(parent);
@@ -2883,47 +2927,126 @@ public class ProduitGatewayJPAServiceMockTest {
         this.service.delete(p);
 
         verify(this.produitDaoJPA, times(1)).findById(71L);
+        verify(this.produitDaoJPA, never()).delete(any(ProduitJPA.class));
+        verify(this.produitDaoJPA, never()).flush();
         verifyNoInteractions(this.entityManager);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
+
     } // __________________________________________________________________
-    
+
     
 
     /**
      * <div>
-     * <p>delete(nominal) supprime l'objet et vérifie la suppression.</p>
+     * <p>delete(nominal) supprime via DAO.delete() + DAO.flush().</p>
      * </div>
      * @throws Exception
      */
-    @SuppressWarnings(RESOURCE)
-	@Tag(TAG_DELETE)
-    @DisplayName("delete(nominal) - suppression vérifiée")
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(nominal) - DAO.delete + flush")
     @Test
     public void testDeleteNominalOk() throws Exception {
-    	
+
         final Long id = 70L;
-        final String libelle = CHEMISE_ML_HOMME;
+        final ProduitJPA entity 
+        	= this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(id);
 
-        final ProduitJPA produitJPA = this.fabriquerProduitJPA(libelle, VETEMENT_HOMME);
-        produitJPA.setIdProduit(id);
+        final Produit metier 
+        	= this.fabriquerProduitMetier(CHEMISE_ML_HOMME, id,
+            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
 
-        final Produit produitMetier = this.fabriquerProduitMetier(libelle, id,
-                this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
+        doNothing().when(this.produitDaoJPA).delete(any(ProduitJPA.class));
+        doNothing().when(this.produitDaoJPA).flush();
 
-        when(this.produitDaoJPA.findById(id))
-            .thenReturn(Optional.of(produitJPA))
-            .thenReturn(Optional.empty());
+        this.service.delete(metier);
 
-        doNothing().when(this.entityManager).remove(any(ProduitJPA.class));
-        doNothing().when(this.entityManager).flush();
+        verify(this.produitDaoJPA, times(1)).findById(id);
+        verify(this.produitDaoJPA, times(1)).delete(entity);
+        verify(this.produitDaoJPA, times(1)).flush();
+        verifyNoInteractions(this.entityManager);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
-        this.service.delete(produitMetier);
+    } // __________________________________________________________________
 
-        verify(this.entityManager, times(1)).remove(produitJPA);
-        verify(this.entityManager, times(1)).flush();
-        verify(this.produitDaoJPA, times(2)).findById(id);
-        
+
+    
+    /**
+     * <div>
+     * <p>Test béton : delete() wrappe correctement 
+     * une Exception levée par DAO.delete().</p>
+     * </div>
+     */
+    @Tag(TAG_BETON)
+    @DisplayName("delete(DAO.delete jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testDeleteDaoDeleteJetteExceptionWrapExceptionTechniqueGateway() {
+
+        final Long id = 70L;
+
+        final Produit metier = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, id,
+            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
+
+        final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(id);
+
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
+        doThrow(new RuntimeException(BOOM))
+            .when(this.produitDaoJPA).delete(any(ProduitJPA.class));
+
+        assertThatThrownBy(() -> this.service.delete(metier))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.produitDaoJPA, times(1)).findById(id);
+        verify(this.produitDaoJPA, times(1)).delete(entity);
+        verify(this.produitDaoJPA, never()).flush();
+        verifyNoInteractions(this.entityManager);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+    
+    /**
+     * <div>
+     * <p>Test béton : delete() wrappe correctement 
+     * une Exception levée par DAO.flush().</p>
+     * </div>
+     */
+    @Tag(TAG_BETON)
+    @DisplayName("delete(DAO.flush jette Exception) - ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testDeleteDaoFlushJetteExceptionWrapExceptionTechniqueGateway() {
+
+        final Long id = 70L;
+
+        final Produit metier 
+        	= this.fabriquerProduitMetier(CHEMISE_ML_HOMME, id,
+            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
+
+        final ProduitJPA entity 
+        	= this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(id);
+
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
+        doNothing().when(this.produitDaoJPA).delete(any(ProduitJPA.class));
+        doThrow(new RuntimeException(BOOM))
+            .when(this.produitDaoJPA).flush();
+
+        assertThatThrownBy(() -> this.service.delete(metier))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        verify(this.produitDaoJPA, times(1)).findById(id);
+        verify(this.produitDaoJPA, times(1)).delete(entity);
+        verify(this.produitDaoJPA, times(1)).flush();
+        verifyNoInteractions(this.entityManager);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
     } // __________________________________________________________________
     
     
@@ -2931,104 +3054,7 @@ public class ProduitGatewayJPAServiceMockTest {
     // =============================== COUNT ===============================
     
     
-
-    /**
-	 * <div>
-	 * <p>Test béton : vérifie que la méthode delete() gère correctement
-	 * une Exception levée par EntityManager.remove().</p>
-	 * </div>
-	 */
-	@SuppressWarnings(RESOURCE)
-	@Tag(TAG_BETON)
-	@DisplayName("delete(remove jette Exception) - ExceptionTechniqueGateway")
-	@Test
-	public void testDeleteEntityManagerRemoveJetteException() {
-		
-	    final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
-	            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-	
-	    final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-	    entity.setIdProduit(70L);
-	
-	    when(this.produitDaoJPA.findById(70L)).thenReturn(Optional.of(entity));
-	    doThrow(new RuntimeException("Erreur simulatee par remove()"))
-	        .when(this.entityManager).remove(any(ProduitJPA.class));
-	
-	    assertThatThrownBy(() -> this.service.delete(p))
-	        .isInstanceOf(ExceptionTechniqueGateway.class)
-	        .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-	    verify(this.produitDaoJPA, times(1)).findById(70L);
-	    verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
-	    verifyNoMoreInteractions(this.entityManager);
-	    
-	} // __________________________________________________________________
-
-	/**
-	 * <div>
-	 * <p>Test béton : vérifie que la méthode delete() gère correctement
-	 * une Exception levée par EntityManager.flush().</p>
-	 * </div>
-	 */
-	@SuppressWarnings(RESOURCE)
-	@Tag(TAG_BETON)
-	@DisplayName("delete(flush jette Exception) - ExceptionTechniqueGateway")
-	@Test
-	public void testDeleteEntityManagerFlushJetteException() {
-		
-	    final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
-	            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-	
-	    final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-	    entity.setIdProduit(70L);
-	
-	    when(this.produitDaoJPA.findById(70L)).thenReturn(Optional.of(entity));
-	    doNothing().when(this.entityManager).remove(any(ProduitJPA.class));
-	    doThrow(new RuntimeException("Erreur simulatee par flush()"))
-	        .when(this.entityManager).flush();
-	
-	    assertThatThrownBy(() -> this.service.delete(p))
-	        .isInstanceOf(ExceptionTechniqueGateway.class)
-	        .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-	    verify(this.produitDaoJPA, times(1)).findById(70L);
-	    verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
-	    verify(this.entityManager, times(1)).flush();
-	    
-	} // __________________________________________________________________
-
-	/**
-	 * <div>
-	 * <p>Test béton : vérifie que la méthode delete() vérifie bien
-	 * la suppression effective après flush().</p>
-	 * </div>
-	 */
-	@SuppressWarnings(RESOURCE)
-	@Tag(TAG_BETON)
-	@DisplayName("delete(vérification post-suppression échoue) - ExceptionTechniqueGateway")
-	@Test
-	public void testDeleteVerificationPostSuppressionEchoue() {
-		
-	    final Produit p = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 70L,
-	            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-	
-	    final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-	    entity.setIdProduit(70L);
-	
-	    when(this.produitDaoJPA.findById(70L))
-	        .thenReturn(Optional.of(entity))
-	        .thenReturn(Optional.of(entity));
-	
-	    doNothing().when(this.entityManager).remove(any(ProduitJPA.class));
-	    doNothing().when(this.entityManager).flush();
-	
-	    assertThatThrownBy(() -> this.service.delete(p))
-	        .isInstanceOf(ExceptionTechniqueGateway.class)
-	        .hasMessageStartingWith("Échec de la suppression");
-	    verify(this.produitDaoJPA, times(2)).findById(70L);
-	    verify(this.entityManager, times(1)).remove(any(ProduitJPA.class));
-	    verify(this.entityManager, times(1)).flush();
-	    
-	} // __________________________________________________________________
-
+    
 	/**
      * <div>
      * <p>count(nominal) retourne le nombre d'éléments.</p>

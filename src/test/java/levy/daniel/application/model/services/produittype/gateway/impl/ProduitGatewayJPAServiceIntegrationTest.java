@@ -29,6 +29,7 @@ import jakarta.persistence.EntityManager;
 import levy.daniel.application.model.metier.produittype.Produit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduitI;
+import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionAppliLibelleBlank;
 import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionAppliParamNonPersistent;
 import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionAppliParamNull;
@@ -1923,58 +1924,121 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Test d'intégration pour vérifier le comportement nominal de la suppression.</p>
+     * <p>Test d'intégration “béton” : prouver que delete(nominal) retire physiquement la ligne en base.</p>
      * <p style="font-weight:bold;">SCÉNARIO TESTÉ :</p>
      * <ol>
-     * <li>Création d'un nouvel enregistrement</li>
-     * <li>Suppression de l'enregistrement créé</li>
-     * <li>Vérification physique de la suppression en base</li>
+     * <li>Détermination d'un parent existant via SQL (JdbcTemplate) (bypass service/cache).</li>
+     * <li>Reconstruction complète du parent (SousTypeProduit + TypeProduit) pour satisfaire le convertisseur METIER→JPA.</li>
+     * <li>Création d'un nouvel enregistrement.</li>
+     * <li>Vérification physique en base avant suppression (COUNT(*)=1).</li>
+     * <li>Suppression via le service.</li>
+     * <li>Vérification physique en base après suppression (COUNT(*)=0).</li>
      * </ol>
+     * <p style="font-weight:bold;">GARANTIES :</p>
+     * <ul>
+     * <li>Exécution hors transaction de test : {@code @Transactional(NOT_SUPPORTED)}.</li>
+     * <li>Nettoyage physique en finally (isolation), même si une assertion échoue.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
     @DisplayName(DN_DELETE_NOMINAL)
     @Test
-    @Transactional(propagation = Propagation.NEVER)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     public void testDeleteNominalOk() throws Exception {
-    	
-        // On récupère directement un produit existant pour obtenir son parent
-        final List<Produit> produitsExistants = this.service.findByLibelle(CHEMISE_ML_HOMME);
-        assertThat(produitsExistants).isNotEmpty();
-        final SousTypeProduitI parent = produitsExistants.get(0).getSousTypeProduit();
 
-        final Produit aCreer = new Produit();
-        aCreer.setProduit(TEMP_PRODUIT_A_SUPPRIMER);
-        aCreer.setSousTypeProduit(parent);
+        Long idCree = null;
 
-        final Produit cree = this.service.creer(aCreer);
+        try {
 
-        assertThat(cree).isNotNull();
-        assertThat(cree.getIdProduit()).isNotNull();
+            /* Parent via SQL direct (bypass service/cache). */
+            final List<Long> idsParents = this.jdbcTemplate.queryForList(
+                "SELECT SOUS_TYPE_PRODUIT FROM PRODUITS WHERE PRODUIT = ?",
+                Long.class, CHEMISE_ML_HOMME
+            );
+            assertThat(idsParents).isNotNull().isNotEmpty();
 
-        // Vérification avant suppression
-        final Integer countAvant = this.jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
-            Integer.class, cree.getIdProduit()
-        );
-        assertThat(countAvant).isEqualTo(1);
+            final Long idSousTypeProduit = idsParents.get(0);
+            assertThat(idSousTypeProduit).isNotNull();
 
-        // Suppression
-        this.service.delete(cree);
+            final String libelleSousTypeProduit = this.jdbcTemplate.queryForObject(
+                "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                String.class, idSousTypeProduit
+            );
+            assertThat(libelleSousTypeProduit).isNotNull();
 
-        // Vérification après suppression
-        final Integer countApres = this.jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
-            Integer.class, cree.getIdProduit()
-        );
-        assertThat(countApres).isEqualTo(0);
+            /* IMPORTANT : reconstruire aussi le TypeProduit (parent du SousTypeProduit). */
+            final Long idTypeProduit = this.jdbcTemplate.queryForObject(
+                "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                Long.class, idSousTypeProduit
+            );
+            assertThat(idTypeProduit).isNotNull();
 
-        // Vérification via service
-        assertThat(this.service.findById(cree.getIdProduit())).isNull();
-        
+            final String libelleTypeProduit = this.jdbcTemplate.queryForObject(
+                "SELECT TYPE_PRODUIT FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+                String.class, idTypeProduit
+            );
+            assertThat(libelleTypeProduit).isNotNull();
+
+            final TypeProduit typeProduit = new TypeProduit();
+            typeProduit.setIdTypeProduit(idTypeProduit);
+            typeProduit.setTypeProduit(libelleTypeProduit);
+
+            final SousTypeProduit sousTypeProduit = new SousTypeProduit();
+            sousTypeProduit.setIdSousTypeProduit(idSousTypeProduit);
+            sousTypeProduit.setSousTypeProduit(libelleSousTypeProduit);
+            sousTypeProduit.setTypeProduit(typeProduit);
+
+            final Produit aCreer = new Produit();
+            aCreer.setProduit(TEMP_PRODUIT_A_SUPPRIMER);
+            aCreer.setSousTypeProduit(sousTypeProduit);
+
+            final Produit cree = this.service.creer(aCreer);
+
+            assertThat(cree).isNotNull();
+            assertThat(cree.getIdProduit()).isNotNull();
+            idCree = cree.getIdProduit();
+
+            /* Vérification SQL avant suppression. */
+            final Integer countAvant = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
+                Integer.class, idCree
+            );
+            assertThat(countAvant).isEqualTo(1);
+
+            /* Anti-illusion cache avant delete + après. */
+            this.entityManager.clear();
+
+            /* Suppression. */
+            this.service.delete(cree);
+
+            this.entityManager.clear();
+
+            /* Vérification SQL après suppression : preuve BD. */
+            final Integer countApres = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
+                Integer.class, idCree
+            );
+            assertThat(countApres).isEqualTo(0);
+
+            /* Oracle secondaire (service). */
+            assertThat(this.service.findById(idCree)).isNull();
+
+        } finally {
+
+            /* Cleanup physique (au cas où la suppression aurait échoué). */
+            if (idCree != null) {
+                this.jdbcTemplate.update(
+                    "DELETE FROM PRODUITS WHERE ID_PRODUIT = ?",
+                    idCree
+                );
+            }
+            this.entityManager.clear();
+
+        }
+
     } // __________________________________________________________________
-    
     
 }
 
