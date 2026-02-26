@@ -259,7 +259,6 @@ public class ProduitGatewayJPAServiceMockTest {
         this.service = new ProduitGatewayJPAService(
                 this.produitDaoJPA,
                 this.sousTypeProduitDaoJPA);
-        this.service.setEntityManager(this.entityManager);
     }
 
     // ============================ OUTILS TESTS ===========================

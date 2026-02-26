@@ -1251,6 +1251,7 @@ public interface ProduitGatewayIService {
 	 * <ul>
 	 * <li>Rechercher l'Entity persistée par ID via le DAO.</li>
 	 * <li>Déléguer la destruction de l'Entity persistée au DAO.</li>
+	 * <li>Forcer l'exécution immédiate du DELETE en base via {@code dao.flush()}.</li>
 	 * <li>Ne rien faire si l'objet n'existe pas en stockage.</li>
 	 * </ul>
 	 * </div>
@@ -1275,7 +1276,7 @@ public interface ProduitGatewayIService {
 	 * <div>
 	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
 	 * <ul>
-	 * <li>L'objet est retiré du stockage.</li>
+	 * <li>L'objet est retiré du stockage (suppression physique forcée par flush).</li>
 	 * <li>Aucune information utilisateur n'est produite à ce niveau.</li>
 	 * </ul>
 	 * </div>
@@ -1291,7 +1292,7 @@ public interface ProduitGatewayIService {
 	 * @throws Exception toute autre exception levée par l'implémentation.
 	 */
 	void delete(Produit pObject) throws Exception;
-
+	
 
 
 	/**

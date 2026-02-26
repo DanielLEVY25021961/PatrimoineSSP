@@ -24,8 +24,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import levy.daniel.application.model.metier.produittype.Produit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduitI;
@@ -130,17 +128,8 @@ public class ProduitGatewayJPAService
 	* </div>
 	*/
 	private final SousTypeProduitDaoJPA sousTypeProduitDaoJPA;
-	
-	/**
-	 * <div>
-	 * <p>EntityManager pour la gestion du cache Hibernate.</p>
-	 * <p>Permet de vider explicitement le cache de premier niveau
-	 * après des opérations critiques comme la suppression.</p>
-	 * </div>
-	 */
-	@PersistenceContext
-	private EntityManager entityManager;
-	
+
+	// ===================================================================
 	
 	/**
 	 * <style>p, ul, li {line-height : 1em;}</style>
@@ -938,8 +927,10 @@ public class ProduitGatewayJPAService
 					modifie = true;
 				}
 
-				final SousTypeProduitI ancienParent = persiste.getSousTypeProduit();
-				final SousTypeProduitI nouveauParent = pObject.getSousTypeProduit();
+				final SousTypeProduitI ancienParent 
+					= persiste.getSousTypeProduit();
+				final SousTypeProduitI nouveauParent 
+					= pObject.getSousTypeProduit();
 
 				if (ancienParent == null && nouveauParent == null) {
 					/* Pas de changement de parent. */
@@ -1002,54 +993,6 @@ public class ProduitGatewayJPAService
 	
 	
 	
-	/**
-	* {@inheritDoc}
-	* 
-	* <div>
-	* <p style="font-weight:bold;">
-	* INTENTION TECHNIQUE (scénario nominal) :</p>
-	* <ul>
-	* <li><span style="font-weight:bold;">Supprimer</span> 
-	* une {@link SousTypeProduitJPA}
-	* persistée dans le stockage.</li>
-	* <li><span style="font-weight:bold;">Garantir</span> 
-	* que la suppression est
-	* <span style="font-weight:bold;">persistée immédiatement</span>
-	* (pas de rollback implicite).</li>
-	* <li><span style="font-weight:bold;">
-	* Jeter une Exception</span> en cas d'erreur
-	* technique (alignement avec le PORT 
-	* {@link SousTypeProduitGatewayIService}).</li>
-	* </ul>
-	* </div>
-	*
-	* <div>
-	* <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-	* <ul>
-	* <li>delete(null) jette {@link ExceptionAppliParamNull}
-	* avec {@link #MESSAGE_DELETE_KO_PARAM_NULL}.</li>
-	* <li>delete(id null) jette {@link ExceptionAppliParamNonPersistent}
-	* avec {@link #MESSAGE_DELETE_KO_ID_NULL}.</li>
-	* <li>delete(absent) ne fait rien (pas d'Exception).</li>
-	* <li>delete(nominal) <span style="font-weight:bold;">
-	* supprime l'Entity</span>
-	* et la rend introuvable.</li>
-	* </ul>
-	* </div>
-	*
-	* <div>
-	* <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-	* <ul>
-	* <li>La suppression est <span style="font-weight:bold;">
-	* persistée en base</span>
-	* (pas de cache Hibernate masquant les changements).</li>
-	* <li>La transaction est <span style="font-weight:bold;">isolée</span>
-	* (pas d'interférence avec d'autres opérations).</li>
-	* <li>Les Exceptions sont <span style="font-weight:bold;">
-	* alignées sur le PORT</span>.</li>
-	* </ul>
-	* </div>
-	*/
 	@Override
 	public void delete(final Produit pObject) throws Exception {
 		
@@ -1099,27 +1042,12 @@ public class ProduitGatewayJPAService
 	            return;
 	        }
 
-	        /* Suppression immédiate via EntityManager 
-	         * pour forcer l'exécution.
-	         * Cela évite les problèmes de cache Hibernate 
-	         * et garantit que la suppression est persistée en base. */
+	        /* Détruit l'Entity JPA persistée dans le stockage via le DAO. */
 	        final ProduitJPA entityToDelete = optEntity.get();
-	        this.entityManager.remove(entityToDelete);
-	        
-	        /* Force l'exécution immédiate du DELETE */
-	        this.entityManager.flush(); 
+	        this.produitDaoJPA.delete(entityToDelete);
 
-	        /* Vérification post-suppression pour confirmer 
-	         * que l'objet a bien été supprimé.
-	         * Cela permet de détecter les échecs de suppression en base. */
-	        final Optional<ProduitJPA> optEntityAfterDelete 
-	        	= this.produitDaoJPA.findById(id);
-	        
-	        if (optEntityAfterDelete.isPresent()) {
-	            throw new ExceptionTechniqueGateway(
-	                "Échec de la suppression en base pour ID = " + id
-	            );
-	        }
+	        /* Force l'exécution immédiate du DELETE en base. */
+	        this.produitDaoJPA.flush();
 	        
 	    } catch (final ExceptionTechniqueGateway e) {
 
@@ -1141,8 +1069,7 @@ public class ProduitGatewayJPAService
 	        throw new ExceptionTechniqueGateway(message, e);
 	        
 	    }
-	}
-	
+	}	
 
 	
 	/**
@@ -1168,20 +1095,6 @@ public class ProduitGatewayJPAService
 			throw new ExceptionTechniqueGateway(message, e);
 			
 		}
-	}
-
-
-	// *************************** OUTILS *********************************/
-	
-	/**
-	 * <div>
-	 * <p>Setter pour l'EntityManager (nécessaire pour les tests).</p>
-	 * </div>
-	 *
-	 * @param pEntityManager : EntityManager
-	 */
-	public void setEntityManager(final EntityManager pEntityManager) {
-	    this.entityManager = pEntityManager;
 	}
 
 	
