@@ -1803,7 +1803,9 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         // Vérification de la persistance de l'objet créé
         assertThat(cree).isNotNull();
         assertThat(cree.getIdSousTypeProduit()).isNotNull();
+        /* Debug ponctuel de diagnostic local : à laisser désactivé pour garder les tests silencieux.
         System.out.println("[DEBUG] ID créé : " + cree.getIdSousTypeProduit());
+        */
 
         // Vérification directe via JdbcTemplate avant suppression
         final Integer countAvant = jdbcTemplate.queryForObject(

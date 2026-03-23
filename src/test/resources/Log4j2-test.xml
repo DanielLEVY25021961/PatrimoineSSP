@@ -1,107 +1,238 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Log4j2-test.xml situé dans src/test/resources/ -->
-<!-- status="WARN" : Niveau de log interne de Log4j2
-(pour ses propres messages).
-WARN est un bon compromis pour éviter le bruit
-tout en capturant les problèmes. -->
-<!-- includeLocation="true" permet de faire apparaitre
-la méthode (%M)dans le pattern du LOG -->
-<Configuration status="WARN" includeLocation="true">
-	<Properties>
+<Configuration status="WARN">
 
-		<!-- %d : Date/heure (format yyyy-MM-dd HH:mm:ss.SSS). -->
-		<!-- %-5level : Niveau de log (aligné à gauche sur 5 caractères). -->
-		<!-- %t : Nom du thread. -->
-		<!-- %c{1} : Nom de la classe (raccourci à 1 segment). -->
-		<!-- %msg%n : Message + saut de ligne. -->
-		<Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %c{1} %M - %msg%n</Property>
+    <!--
+        =====================================================================
+        CONFIGURATION LOG4J2 POUR LES TESTS
+        =====================================================================
+        Objectif :
+        - conserver une console lisible pour voir clairement Maven ;
+        - désactiver l'écriture disque des rolling files sans supprimer la
+          configuration d'origine ;
+        - garder un fichier pédagogique, multi-lignes, clair et modifiable ;
+        - réduire au maximum le bruit Spring / JPA / Hibernate côté logs.
 
-		<!-- LOG_DIR : Dossier logs/ pour stocker les logs
-		relatif au répertoire de travail).  -->
-		<!-- 		<Property name="LOG_DIR">logs</Property> -->
-		<!-- Chemin absolu : Pour éviter les problèmes de permissions,
-		utiliser un chemin absolu (ex : ${sys:user.dir}/logs). -->
-		<Property name="LOG_DIR">${sys:user.dir}/logs</Property>
+        IMPORTANT :
+        - les lignes "Hibernate: ..." émises par "spring.jpa.show-sql=true"
+          ne sont PAS pilotées par Log4j2 ;
+        - elles doivent être coupées dans application-test.properties.
+    -->
 
-		<!-- Overridable via -DLOG_LEVEL=INFO -->
-		<!-- IA : Par défaut en tests, on force ERROR pour éviter l’inondation (surcharge possible par -DLOG_LEVEL=DEBUG/INFO/WARN/ERROR). -->
-		<Property name="LOG_LEVEL">${sys:LOG_LEVEL:-ERROR}</Property>
+    <Properties>
 
-	</Properties>
+        <!--
+            Niveau racine volontairement explicite pour éviter la boucle :
+            "Infinite loop in property interpolation of LOG_LEVEL->sys:LOG_LEVEL".
+        -->
+        <Property name="ROOT_LEVEL">ERROR</Property>
 
-	<!-- Appenders (Destinations des Logs) -->
-	<Appenders>
+        <!--
+            Niveau du code applicatif du projet pendant les tests.
+            OFF = silence total.
+            ERROR = seulement les erreurs.
+            WARN = avertissements + erreurs.
+            INFO = plus bavard.
+            DEBUG = très bavard (à éviter ici).
+            TRACE = maximal.
+        -->
+        <Property name="APP_LEVEL">OFF</Property>
 
-		<!-- SYSTEM_OUT : Affiche les logs dans la console standard. -->
-		<Console name="Console" target="SYSTEM_OUT">
-			<PatternLayout pattern="${LOG_PATTERN}" />
-		</Console>
+        <!--
+            Niveau Spring global.
+            ERROR recommandé pour les tests silencieux.
+        -->
+        <Property name="SPRING_LEVEL">ERROR</Property>
 
-		<!-- RollingFile (Fichiers Tournants) -->
-		<!-- IA : RollingFile désactivé pour les tests : pas d'écriture disque, console uniquement. -->
-		<!-- Fichier principal : application.log
-			(écrasé à chaque redémarrage
-			si TimeBasedTriggeringPolicy est seul). -->
-		<!-- <RollingFile name="RollingFile"
-			fileName="${LOG_DIR}/application.log"
-			filePattern="${LOG_DIR}/application-%d{yyyy-MM-dd_HH-mm-ss}-%i.log.gz">
+        <!--
+            Niveau Hibernate global.
+            ERROR recommandé pour les tests silencieux.
+        -->
+        <Property name="HIBERNATE_LEVEL">ERROR</Property>
 
-			<PatternLayout pattern="${LOG_PATTERN}" />
+        <!--
+            Pattern lisible, détaillé, proche de l'esprit conservé dans le chat.
+            %M = méthode appelante.
+        -->
+        <Property name="CONSOLE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %c{1} %M - %msg%n</Property>
 
-			<Policies> -->
-				<!-- TimeBasedTriggeringPolicy :
-				Nouveau fichier chaque jour
-				(application-YYYY-MM-DD.log.gz). -->
-				<!-- Compression : Les fichiers archivés
-				sont compressés en .gz. -->
-				<!-- <TimeBasedTriggeringPolicy interval="1" modulate="true" /> -->
-				<!-- <TimeBasedTriggeringPolicy /> -->
+        <!--
+            Exemple pédagogique :
+            on peut piloter un niveau depuis la ligne de commande Maven avec :
+            -DAPP_TEST_LOG_LEVEL=INFO
 
-				<!-- SizeBasedTriggeringPolicy :
-				Rotation si le fichier dépasse 10 Mo. -->
-				<!-- <SizeBasedTriggeringPolicy size="10MB" /> -->
+            MAIS on le laisse COMMENTÉ pour éviter toute ambiguïté ou boucle
+            d'interpolation dans cette version de test.
 
-			<!-- </Policies> -->
-			<!-- max="20" : Garde jusqu’à 20 fichiers archivés. -->
-			<!-- <DefaultRolloverStrategy max="20" /> -->
+            <Property name="APP_LEVEL">${sys:APP_TEST_LOG_LEVEL:-OFF}</Property>
+        -->
+    </Properties>
 
-		<!-- </RollingFile> -->
+    <Appenders>
 
-	</Appenders>
+        <!--
+            Console principale conservée active.
+            C'est l'unique sortie de logs voulue pendant les tests.
+        -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}"/>
+        </Console>
 
-	<!-- Loggers (Configuration des Niveaux de Log) -->
-	<Loggers>
+        <!--
+            =================================================================
+            ROLLING FILE DÉSACTIVÉ
+            =================================================================
+            On ne supprime rien : on commente simplement tout le bloc pour
+            empêcher l'écriture disque pendant les tests Maven.
 
-		<!-- name="levy.daniel" : Cible tous les logs du package
-		levy.daniel et ses sous-packages. -->
-		<!-- level="DEBUG" : Niveau détaillé pour le débogage. -->
-		<!-- additivity="false" : Empêche la propagation des logs
-		au Root Logger (évite la duplication). -->
-		<!-- IA : En tests, le niveau est piloté par LOG_LEVEL (défaut ERROR). -->
-		<Logger name="levy.daniel" level="${LOG_LEVEL}" additivity="false">
-			<AppenderRef ref="Console" />
-			<!-- IA : Appender RollingFile désactivé (pas d'écriture disque en tests). -->
-			<!-- <AppenderRef ref="RollingFile" /> -->
-		</Logger>
+            Pour le réactiver plus tard :
+            1) décommenter ce bloc ;
+            2) décommenter les AppenderRef correspondants plus bas.
+        -->
+        <!--
+        <RollingFile
+            name="RollingFile"
+            fileName="logs/tests.log"
+            filePattern="logs/tests-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout
+                pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %c %M - %msg%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+        -->
 
-		<!-- Débogage JPA (optionnel) -->
-		<!-- IA : Désactivé par défaut (trop verbeux). Réactiver en lançant les tests avec -DLOG_LEVEL=DEBUG et en décommentant ces 2 lignes si besoin. -->
-		<!-- <Logger name="org.hibernate.SQL" level="DEBUG" /> -->
-		<!-- <Logger name="org.hibernate.type.descriptor.sql" level="TRACE" /> -->
+    </Appenders>
 
-		<!-- Réduire le bruit Hibernate si tu veux -->
-		<!-- IA : Niveau global Hibernate en tests : ERROR (surcharge possible via -DLOG_LEVEL). -->
-		<Logger name="org.hibernate" level="ERROR" />
-		<!-- IA : Niveau global Spring en tests : ERROR (surcharge possible via -DLOG_LEVEL). -->
-		<Logger name="org.springframework" level="ERROR" />
+    <Loggers>
 
-		<!-- IA : Root = LOG_LEVEL (défaut ERROR) pour ne voir que l'essentiel en mvn -q test. -->
-		<Root level="${LOG_LEVEL}">
-			<AppenderRef ref="Console" />
-			<!-- IA : Appender RollingFile désactivé (pas d'écriture disque en tests). -->
-			<!-- <AppenderRef ref="RollingFile" /> -->
-		</Root>
+        <!--
+            =================================================================
+            LOGGER APPLICATIF DU PROJET
+            =================================================================
+            OFF pour éviter les FATAL / DEBUG parasites pendant les tests
+            négatifs ou les objets proxy.
+        -->
+        <Logger name="levy.daniel" level="${APP_LEVEL}" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!--
+                RollingFile volontairement désactivé.
+                Décommenter seulement si l'on souhaite réécrire sur disque.
+            -->
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
 
-	</Loggers>
+        <!--
+            =================================================================
+            SPRING
+            =================================================================
+            On garde un niveau haut pour ne pas noyer la console Maven.
+        -->
+        <Logger name="org.springframework" level="${SPRING_LEVEL}" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
 
+        <!--
+            Transactions Spring :
+            OFF recommandé pour supprimer les traces du type
+            JpaTransactionManager getTransaction / doBegin / doCommit / rollback.
+        -->
+        <Logger name="org.springframework.transaction" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            JPA Spring :
+            OFF recommandé pour supprimer le détail transactionnel ORM.
+        -->
+        <Logger name="org.springframework.orm.jpa" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            =================================================================
+            HIBERNATE
+            =================================================================
+            Niveau global Hibernate : ERROR.
+        -->
+        <Logger name="org.hibernate" level="${HIBERNATE_LEVEL}" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            SQL Hibernate via logger :
+            OFF pour empêcher les logs SQL lorsqu'ils passent par Log4j2.
+
+            ATTENTION :
+            si spring.jpa.show-sql=true, Hibernate peut encore écrire
+            directement "Hibernate: ..." dans la console hors Log4j2.
+        -->
+        <Logger name="org.hibernate.SQL" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Hibernate 6+ : valeurs bindées JDBC.
+            OFF pour supprimer le détail des paramètres SQL.
+        -->
+        <Logger name="org.hibernate.orm.jdbc.bind" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Ancien canal Hibernate de détail SQL / types JDBC.
+            Gardé à titre didactique, désactivé.
+        -->
+        <Logger name="org.hibernate.type.descriptor.sql" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Génération de schéma Hibernate.
+            OFF pour éviter les create table / drop table si ces messages
+            transitent par le système de logs.
+        -->
+        <Logger name="org.hibernate.tool.schema" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Loggers possibles à activer ponctuellement pour diagnostic fin.
+            Conservés COMMENTÉS pour apprentissage.
+        -->
+        <!--
+        <Logger name="org.springframework.test" level="INFO" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        -->
+
+        <!--
+        <Logger name="org.hibernate.stat" level="DEBUG" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        -->
+
+        <!--
+            =================================================================
+            ROOT LOGGER
+            =================================================================
+            ERROR pour ne laisser remonter que l'essentiel non catégorisé.
+        -->
+        <Root level="${ROOT_LEVEL}">
+            <AppenderRef ref="Console"/>
+            <!--
+                Référence RollingFile conservée mais désactivée par commentaire.
+            -->
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Root>
+
+    </Loggers>
 </Configuration>
