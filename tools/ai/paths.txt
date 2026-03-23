@@ -1,0 +1,8 @@
+# tools/ai/paths.txt (exemple)
+# Vous pouvez y mettre des paths OU des URLs raw refs/heads OU raw SHA.
+
+
+
+src/main/java/levy/daniel/application/model/services/produittype/gateway/TypeProduitGatewayIService.java
+https://raw.githubusercontent.com/DanielLEVY25021961/PatrimoineSSP/refs/heads/feature/gateway/src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAService.java
+https://raw.githubusercontent.com/DanielLEVY25021961/PatrimoineSSP/refs/heads/feature/gateway/src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java

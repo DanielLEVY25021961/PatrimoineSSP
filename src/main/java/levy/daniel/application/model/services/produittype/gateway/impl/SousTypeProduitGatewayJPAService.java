@@ -1,0 +1,1808 @@
+/* ********************************************************************* */
+/* *********************** ADAPTER GATEWAY ***************************** */
+/* ********************************************************************* */
+package levy.daniel.application.model.services.produittype.gateway.impl; // NOPMD by danyl on 26/01/2026 00:16
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import levy.daniel.application.model.metier.produittype.SousTypeProduit;
+import levy.daniel.application.model.metier.produittype.TypeProduit;
+import levy.daniel.application.model.metier.produittype.TypeProduitI;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionAppliLibelleBlank;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionAppliParamNonPersistent;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionAppliParamNull;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionAppliParentNull;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionTechniqueGateway;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionTechniqueGatewayNonPersistent;
+import levy.daniel.application.model.services.produittype.gateway.SousTypeProduitGatewayIService;
+import levy.daniel.application.model.services.produittype.pagination.DirectionTri;
+import levy.daniel.application.model.services.produittype.pagination.RequetePage;
+import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
+import levy.daniel.application.model.services.produittype.pagination.TriSpec;
+import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.SousTypeProduitDaoJPA;
+import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.TypeProduitDaoJPA;
+import levy.daniel.application.persistence.metier.produittype.entities.entitiesJPA.ConvertisseurJPAToMetier;
+import levy.daniel.application.persistence.metier.produittype.entities.entitiesJPA.ConvertisseurMetierToJPA;
+import levy.daniel.application.persistence.metier.produittype.entities.entitiesJPA.SousTypeProduitJPA;
+import levy.daniel.application.persistence.metier.produittype.entities.entitiesJPA.TypeProduitJPA;
+
+/**
+ * <style>p, ul, li, h1 {line-height : 1em;}</style>
+ * <style>h1 {text-decoration: underline;}</style>
+ *
+ * <div>
+ * <p style="font-weight:bold;">
+ * CLASSE SousTypeProduitGatewayJPAService.java :
+ * </p>
+ * <p style="font-weight:bold;">ADAPTER SERVICE GATEWAY</p>
+ *
+ * <p>
+ * Cette classe modélise :
+ * un <span style="font-weight:bold;">SERVICE</span> chargé de :
+ * </p>
+ * <ul>
+ * <li>transformer un <span style="font-weight:bold;">
+ * objet métier</span>
+ * {@link SousTypeProduit}
+ * en <span style="font-weight:bold;">Entity JPA</span>
+ *  {@link SousTypeProduitJPA}.</li>
+ * <li>Manipuler (Sauvegarder, Modifier, ...) l'
+ * <span style="font-weight:bold;">Entity JPA</span>
+ * au moyen d'un <span style="font-weight:bold;">
+ * Repository (DAO) JPA</span>.</li>
+ * </ul>
+ *
+ * <p>
+ * ADAPTER GATEWAY JPA implémentant le PORT GATEWAY
+ * {@link SousTypeProduitGatewayIService}.
+ * </p>
+ *
+ * <p>
+ * Stratégie : en cas de problème dans la couche stockage,
+ * jeter une Exception circonstanciée conforme
+ * aux constantes contractuelles décrites dans le PORT GATEWAY.
+ * </p>
+ * </div>
+ *
+ * @author Daniel Lévy
+ * @version 2.2
+ * @since 25 janvier 2026
+ */
+@Service("SousTypeProduitGatewayJPAService")
+@Transactional
+public class SousTypeProduitGatewayJPAService 
+					implements SousTypeProduitGatewayIService {
+
+	// ************************ATTRIBUTS************************************/
+
+	/**
+	 * <div>
+	 * <p>Repository (DAO) pour {@link SousTypeProduit} (enfant).</p>
+	 * <p>Injecté via le constructeur par Spring.</p>
+	 * </div>
+	 */
+	private final SousTypeProduitDaoJPA sousTypeProduitDaoJPA;
+
+	/**
+	 * <div>
+	 * <p>Repository (DAO) pour {@link TypeProduit} (parent)</p>
+	 * <p>Utilisé notamment pour vérifier la persistance du parent.</p>
+	 * <p>Injecté via le constructeur par Spring.</p>
+	 * </div>
+	 */
+	private final TypeProduitDaoJPA typeProduitDaoJPA;
+	
+	/**
+	 * <div>
+	 * <p>EntityManager pour la gestion du cache Hibernate.</p>
+	 * <p>Permet de vider explicitement le cache de premier niveau
+	 * après des opérations critiques comme la suppression.</p>
+	 * </div>
+	 */
+	@PersistenceContext
+	private EntityManager entityManager;
+	
+	
+	/**
+	 * <style>p, ul, li {line-height : 1em;}</style>
+	 * <div>
+	 * <p>LOG : Logger : </p>
+	 * <p>Logger pour Log4j (utilisant org.apache.logging.log4j).</p>
+	 * <p>dépendances : </p>
+	 * <ul>
+	 * <li><code>org.apache.logging.log4j.Logger</code></li>
+	 * <li><code>org.apache.logging.log4j.LogManager</code></li>
+	 * </ul>
+	 * </div>
+	 */
+	@SuppressWarnings("unused")
+	private static final Logger LOG 
+		= LogManager.getLogger(SousTypeProduitGatewayJPAService.class);
+
+	// *************************** CONSTRUCTEURS *************************/
+
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * CONSTRUCTEUR COMPLET appelé automatiquement par SPRING
+	 * pour injecter : </p>
+	 * <ul>
+	 * <li>un DAO SousTypeProduitDaoJPA pour la
+	 * persistance de l'enfant {@link SousTypeProduit}.</li>
+	 * <li>un DAO TypeProduitDaoJPA pour la
+	 * persistance du parent {@link TypeProduit}.</li>
+	 * </ul>
+	 * <p>ATTENTION : Ne surtout pas créer de Constructeur d'arité nulle
+	 * dans cette classe, faute de quoi SPRING ne pourra plus injecter.</p>
+	 * </div>
+	 *
+	 * @param pSousTypeProduitDaoJPA : SousTypeProduitDaoJPA
+	 * @param pTypeProduitDaoJPA : TypeProduitDaoJPA
+	 */
+	public SousTypeProduitGatewayJPAService(
+			@Qualifier("SousTypeProduitDaoJPA") 
+			final SousTypeProduitDaoJPA pSousTypeProduitDaoJPA,
+			@Qualifier("TypeProduitDaoJPA") 
+			final TypeProduitDaoJPA pTypeProduitDaoJPA) {
+		super();
+		this.sousTypeProduitDaoJPA = pSousTypeProduitDaoJPA;
+		this.typeProduitDaoJPA = pTypeProduitDaoJPA;
+	}
+
+	// ***************************** METHODES ****************************/
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public SousTypeProduit creer(final SousTypeProduit pObject) 
+			throws Exception {
+
+		/* 
+		 * si pObject == null : 
+		 * jette une ExceptionAppliParamNull 
+		 * avec un message 
+		 * MESSAGE_CREER_KO_PARAM_NULL. 
+		 */
+		if (pObject == null) {
+			throw new ExceptionAppliParamNull(
+					MESSAGE_CREER_KO_PARAM_NULL);
+		}
+
+		/* 
+		 * si le libellé est blank : 
+		 * jette une ExceptionAppliLibelleBlank 
+		 * avec un message 
+		 * MESSAGE_CREER_KO_LIBELLE_BLANK. 
+		 */
+		if (StringUtils.isBlank(pObject.getSousTypeProduit())) {
+			throw new ExceptionAppliLibelleBlank(
+					MESSAGE_CREER_KO_LIBELLE_BLANK);
+		}
+
+		/* Récupère le parent de l'objet métier. */
+		final TypeProduitI parent = pObject.getTypeProduit();
+
+		 /* 
+		  * récupère le parent persisté si il existe.
+		  * ATTENTION : cette méthode peut jeter des Exceptions.
+		  * Vérifie la persistance du parent (contrat PORT) :
+	      * - parent null → ExceptionAppliParentNull
+	      * - libellé parent blank → ExceptionAppliLibelleBlank
+	      * - parent non persistant → ExceptionTechniqueGatewayNonPersistent
+	      */
+		final TypeProduitJPA parentPersistant 
+			= verifierPersistanceParent(parent, PREFIX_MESSAGE_CREER);
+
+		try {
+
+			/* convertit l'objet métier à stocker en Entity JPA. */
+			final SousTypeProduitJPA entity 
+				= ConvertisseurMetierToJPA
+					.sousTypeProduitMETIERToJPA(pObject);
+
+			/* injecte le parent persistant
+			 * dans l'Entity à persister. */
+			entity.setTypeProduit(parentPersistant);
+
+			/* délègue au DAO la création dans le stockage. */
+			/* récupère l'Entity JPA créée dans le stockage. */
+			final SousTypeProduitJPA sauvegarde 
+				= this.sousTypeProduitDaoJPA.save(entity);
+
+			/* Si le DAO répond null :
+			 * jette une ExceptionTechniqueGateway
+			 * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE. */
+			if (sauvegarde == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* convertit l'Entity JPA créée en objet métier. */
+			final SousTypeProduit reponse 
+				= ConvertisseurJPAToMetier
+					.sousTypeProduitJPAToMetier(sauvegarde);
+
+			/* retourne l'objet métier stocké dans le stockage. */
+			return reponse;
+
+		} catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/* jette une ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause. */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<SousTypeProduit> rechercherTous() throws Exception {
+		
+	    try {
+	    	
+	        /* récupère la liste complète des Entities auprès du DAO. */
+	        final List<SousTypeProduitJPA> entities
+	        	= this.sousTypeProduitDaoJPA.findAll();
+
+	        /*
+	         * si this.sousTypeProduitDaoJPA.findAll() retourne null :
+	         * jette une ExceptionTechniqueGateway
+	         * avec un message ERREUR_TECHNIQUE_KO_STOCKAGE.
+	         */
+	        if (entities == null) {
+	            throw new ExceptionTechniqueGateway(
+	            		ERREUR_TECHNIQUE_KO_STOCKAGE);
+	        }
+
+	        /*
+	         * retourne une liste vide si
+	         * this.sousTypeProduitDaoJPA.findAll()
+	         * retourne une liste vide.
+	         */
+	        if (entities.isEmpty()) {
+	            return new ArrayList<SousTypeProduit>();
+	        }
+
+	        /* Applique le traitement standard des listes :
+	         * 1. Filtrage des null
+	         * 2. Tri par parent puis libellé 
+	         * (via construireComparateurSousTypeProduit)
+	         * 3. Dédoublonnage tout en conservant l'ordre (LinkedHashSet)
+	         * 4. Conversion en objets métier. */
+	        final List<SousTypeProduit> reponse 
+	        	= this.filtrerTrierDedoublonner(entities);
+
+	        /* retourne la liste d'objets métier. */
+	        return reponse;
+
+	    } catch (final ExceptionTechniqueGateway e) {
+	    	
+	        /* Préserve le message contractuel 
+	         * (messages techniques déjà construits). */
+	        throw e;
+	        
+	    } catch (final Exception e) {
+	    	
+	        final String message 
+	        	= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+	        
+	        /* jette une ExceptionTechniqueGateway 
+	         * avec un message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+	         * et propage l'Exception technique cause. */
+	        throw new ExceptionTechniqueGateway(message, e);
+	        
+	    }
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ResultatPage<SousTypeProduit> rechercherTousParPage(
+			final RequetePage pRequetePage) throws Exception {
+
+		/* Choisit la requêtePage par défaut si pRequetePage == null. */
+		final RequetePage requete = (pRequetePage != null) 
+				? pRequetePage : new RequetePage();
+
+		try {
+
+			/* convertit une RequetePage neutre en Pageable Spring. */
+			final Pageable pageable 
+				= convertirRequetePageEnPageable(requete);
+
+			/* récupère la page des Entities auprès du DAO. */
+			/* Page Spring -> conversion du contenu + total. */
+			final Page<SousTypeProduitJPA> pageJPA 
+				= this.sousTypeProduitDaoJPA.findAll(pageable);
+
+			/* si pageJPA == null : jette une
+			 * ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_KO_STOCKAGE. */
+			if (pageJPA == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			final List<SousTypeProduitJPA> contenuJPA = pageJPA.getContent();
+
+			/* si contenuJPA == null : jette une
+			 * ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_KO_STOCKAGE. */
+			if (contenuJPA == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* convertit la page d'Entities en page d'objets métier. */
+			/* Optimisation : Construction directe du ResultatPage 
+	         * sans copie intermédiaire.
+	         * 1. Filtre les nulls
+	         * 2. Convertit en objets métier
+	         * 3. Construit le ResultatPage en une seule étape */
+			final List<SousTypeProduit> contenu = contenuJPA.stream()
+					.filter(e -> e != null)
+					.map(ConvertisseurJPAToMetier::sousTypeProduitJPAToMetier)
+					.filter(o -> o != null)
+					.collect(Collectors.toList());
+
+			/* Construit le ResultatPage avec :
+			 * - contenu : liste d'objets métier (filtrée et convertie).
+			 * - pageNumber : numéro de la page (0-based).
+			 * - pageSize : taille de la page.
+			 * - totalElements : nombre total d'éléments 
+			 * (pour la pagination). */
+			final ResultatPage<SousTypeProduit> resultat 
+				= new ResultatPage<SousTypeProduit>(
+					contenu,
+					pageJPA.getNumber(),
+					pageJPA.getSize(),
+					pageJPA.getTotalElements());
+
+			/* retourne le ResultatPage. */
+			return resultat;
+
+		} catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/* jette une ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause. */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public SousTypeProduit findByObjetMetier(
+	        final SousTypeProduit pObject) throws Exception {
+
+	    /*
+	     * si pObject == null :
+	     * jette une ExceptionAppliParamNull
+	     * avec un message
+	     * MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL.
+	     */
+	    if (pObject == null) {
+	        throw new ExceptionAppliParamNull(
+	                MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
+	    }
+
+	    /*
+	     * si le libellé est blank :
+	     * jette une ExceptionAppliLibelleBlank
+	     * avec un message
+	     * MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK.
+	     */
+	    if (StringUtils.isBlank(pObject.getSousTypeProduit())) {
+	        throw new ExceptionAppliLibelleBlank(
+	                MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
+	    }
+
+	    final TypeProduitI parentI = pObject.getTypeProduit();
+
+	    /* récupère le parent persisté si il existe.
+	     * ATTENTION : cette méthode peut jeter des Exceptions. */
+	    final TypeProduitJPA parentPersistant
+	        = verifierPersistanceParent(
+	        		parentI, PREFIX_MESSAGE_FINDBYOBJETMETIER);
+
+	    try {
+	    	
+	        /* délègue la recherche au DAO. */
+	        final List<SousTypeProduitJPA> entities
+	            = this.sousTypeProduitDaoJPA
+	            	.findAllByTypeProduit(parentPersistant);
+
+	        /* si le DAO retourne null : 
+	         * jette une ExceptionTechniqueGateway 
+	         * avec le message 
+	         * ERREUR_TECHNIQUE_KO_STOCKAGE. */
+	        if (entities == null) {
+	            throw new ExceptionTechniqueGateway(
+	            		ERREUR_TECHNIQUE_KO_STOCKAGE);
+	        }
+
+	        /* Recherche l'Entity dont le libellé correspond 
+	         * à aChercher (insensible à la casse).
+	         * Retourne null si aucun résultat n'est trouvé 
+	         * (conforme au contrat implicite). */
+	        SousTypeProduitJPA reponseEntity = null;
+	        final String aChercher = pObject.getSousTypeProduit();
+
+	        for (final SousTypeProduitJPA entity : entities) {
+	        	
+	            if (entity == null) {
+	                continue;
+	            }
+
+	            if (Strings.CI.equals(
+	            		aChercher, entity.getSousTypeProduit())) {
+	                reponseEntity = entity;
+	                break;
+	            }
+	        }
+
+	        /* retourne null si l'objet n'est pas trouvé. */
+	        if (reponseEntity == null) {
+	            return null;
+	        }
+
+	        /* convertit l'Entity trouvée en objet métier. */
+	        final SousTypeProduit reponse
+	            = ConvertisseurJPAToMetier
+	            	.sousTypeProduitJPAToMetier(reponseEntity);
+
+	        /* retourne la réponse. */
+	        return reponse;
+
+	    } catch (final ExceptionTechniqueGateway e) {
+	    	
+	        /* Préserve le message contractuel 
+	         * (messages techniques déjà construits). */
+	        throw e;
+	        
+	    } catch (final Exception e) {
+	    	
+	        final String message 
+	        	= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+	        
+	        /* jette une ExceptionTechniqueGateway 
+	         * avec un message 
+	         * ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+	         * et propage l'Exception technique cause. */
+	        throw new ExceptionTechniqueGateway(message, e);
+	        
+	    }
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<SousTypeProduit> findByLibelle(
+			final String pLibelle) throws Exception {
+
+		/* 
+		 * si pLibelle est blank : 
+		 * jette une ExceptionAppliLibelleBlank 
+		 * avec un message 
+		 * MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK. 
+		 */
+		if (StringUtils.isBlank(pLibelle)) {
+			throw new ExceptionAppliLibelleBlank(
+					MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK);
+		}
+
+		try {
+
+			/* tente de récupérer une collection d'Entities
+			 * JPA par le libellé
+			 * dans le stockage via le DAO. */
+			/* Recherche insensible à la casse via 
+			 * findBySousTypeProduitIgnoreCase.
+	         * Cette méthode est alignée sur 
+	         * le contrat implicite du PORT. */
+			final List<SousTypeProduitJPA> entities 
+				= this.sousTypeProduitDaoJPA
+					.findBySousTypeProduitIgnoreCase(pLibelle);
+
+			/*
+			 * si this.sousTypeProduitDaoJPA
+			 * .findBySousTypeProduitIgnoreCase(pLibelle) retourne null : 
+			 * jette une ExceptionTechniqueGateway
+			 * avec un message 
+			 * ERREUR_TECHNIQUE_KO_STOCKAGE.
+			 */
+			if (entities == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* retourne une liste vide si aucune Entity JPA n'est
+			 * trouvée dans le stockage (UC possible). */
+			if (entities.isEmpty()) {
+				return new ArrayList<SousTypeProduit>();
+			}
+
+			/* filtre, trie, dédoublonne
+			 * et convertit la liste d'Entities. */
+			final List<SousTypeProduit> reponse 
+				= this.filtrerTrierDedoublonner(entities);
+
+			/* retourne la liste d'objets métier. */
+			return reponse;
+
+		} catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/* jette une ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause. */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<SousTypeProduit> findByLibelleRapide(
+			final String pContenu) throws Exception {
+
+		/* 
+		 * si pContenu est null : 
+		 * jette une ExceptionAppliParamNull 
+		 * avec un message 
+		 * MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL. 
+		 */
+		if (pContenu == null) {
+			throw new ExceptionAppliParamNull(
+					MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL);
+		}
+
+		/* Comportement spécifique : si pContenu est blank,
+	     * retourne tous les enregistrements (via rechercherTous()).
+	     * Cela permet une recherche "tout afficher" 
+	     * si l'utilisateur ne saisit rien. */
+		if (isBlank(pContenu)) {
+			return rechercherTous();
+		}
+
+		try {
+
+			/* Délègue au composant technique (DAO)
+			 * la recherche dans le stockage. */
+			final List<SousTypeProduitJPA> entities =
+					this.sousTypeProduitDaoJPA
+					.findBySousTypeProduitContainingIgnoreCase(pContenu);
+
+			/*
+			 * si this.sousTypeProduitDaoJPA
+			 * .findBySousTypeProduitContainingIgnoreCase(pContenu) 
+			 * retourne null : 
+			 * jette une ExceptionTechniqueGateway
+			 * avec un message 
+			 * ERREUR_TECHNIQUE_KO_STOCKAGE.
+			 */
+			if (entities == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* retourne une liste vide si le contenu n'est pas trouvé. */
+			if (entities.isEmpty()) {
+				return new ArrayList<SousTypeProduit>();
+			}
+
+			/* filtre, trie, dédoublonne
+			 * et convertit la liste d'Entities. */
+			final List<SousTypeProduit> reponse 
+				= this.filtrerTrierDedoublonner(entities);
+
+			/* retourne la liste d'objets métier. */
+			return reponse;
+
+		} catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/* jette une ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause. */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<SousTypeProduit> findAllByParent(
+			final TypeProduit pParent) throws Exception {
+
+		/* Recherche tous les SousTypeProduit enfants d'un parent donné.
+	     * Le parent doit être persistant 
+	     * (vérifié via verifierPersistanceParent).
+	     * Retourne une liste vide si aucun enfant n'est trouvé. */
+		
+		/* récupère le parent persisté si il existe.*/
+		/* ATTENTION : cette méthode peut jeter des Exceptions. */
+		final TypeProduitJPA parentPersistant 
+			= verifierPersistanceParent(
+					pParent, PREFIX_MESSAGE_FINDALLBYPARENT);
+
+		try {
+
+			/* délègue la recherche au DAO. */
+			final List<SousTypeProduitJPA> entities 
+				= this.sousTypeProduitDaoJPA
+					.findAllByTypeProduit(parentPersistant);
+
+			/*
+			 * si this.sousTypeProduitDaoJPA
+			 * .findAllByTypeProduit() retourne null : 
+			 * jette une ExceptionTechniqueGateway
+			 * avec un message 
+			 * ERREUR_TECHNIQUE_KO_STOCKAGE.
+			 */
+			if (entities == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* retourne une liste vide si le contenu n'est pas trouvé. */
+			if (entities.isEmpty()) {
+				return new ArrayList<SousTypeProduit>();
+			}
+
+			/* filtre, trie, dédoublonne
+			 * et convertit la liste d'Entities. */
+			final List<SousTypeProduit> reponse 
+				= this.filtrerTrierDedoublonner(entities);
+
+			/* retourne la liste d'objets métier. */
+			return reponse;
+
+		} catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/* jette une ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause. */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public SousTypeProduit findById(
+			final Long pId) throws Exception {
+
+		/* 
+		 * si pId est null : 
+		 * jette une ExceptionAppliParamNull 
+		 * avec un message MESSAGE_FINDBYID_KO_PARAM_NULL. 
+		 */
+		if (pId == null) {
+			throw new ExceptionAppliParamNull(
+					MESSAGE_FINDBYID_KO_PARAM_NULL);
+		}
+
+		try {
+
+			/* délègue au composant technique (DAO) la recherche. */
+			final Optional<SousTypeProduitJPA> optEntity 
+				= this.sousTypeProduitDaoJPA.findById(pId);
+
+			/* Si le DAO répond null :
+			 * jette une ExceptionTechniqueGateway
+			 * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE. */
+			if (optEntity == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* si le DAO retourne vide, retourne null.*/
+			/* Retourne null si l'objet n'est pas trouvé 
+			 * (conforme au contrat implicite).
+			 * Cela permet de distinguer un objet introuvable 
+			 * d'une erreur technique. */
+			if (optEntity.isEmpty()) {
+				return null;
+			}
+
+			/* convertit l'Entity retournée en objet métier. */
+			final SousTypeProduit reponse 
+				= ConvertisseurJPAToMetier
+					.sousTypeProduitJPAToMetier(optEntity.get());
+
+			/* retourne l'objet métier trouvé.*/
+			return reponse;
+
+		} catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/* jette une ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause. */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public SousTypeProduit update(
+			final SousTypeProduit pObject) throws Exception {
+
+		/* 
+		 * si pObject == null : 
+		 * jette une ExceptionAppliParamNull 
+		 * avec un message 
+		 * MESSAGE_UPDATE_KO_PARAM_NULL. 
+		 */
+		if (pObject == null) {
+			throw new ExceptionAppliParamNull(
+					MESSAGE_UPDATE_KO_PARAM_NULL);
+		}
+
+		/* 
+		 * si le libellé est blank : 
+		 * jette une ExceptionAppliLibelleBlank 
+		 * avec un message 
+		 * MESSAGE_UPDATE_KO_LIBELLE_BLANK. 
+		 */
+		if (StringUtils.isBlank(pObject.getSousTypeProduit())) {
+			throw new ExceptionAppliLibelleBlank(
+					MESSAGE_UPDATE_KO_LIBELLE_BLANK);
+		}
+
+		final Long id = pObject.getIdSousTypeProduit();
+
+		/* 
+		 * si l'objet passé en paramètre n'a pas d'ID : 
+		 * jette une ExceptionAppliParamNonPersistent 
+		 * avec un message 
+		 * MESSAGE_UPDATE_KO_NON_PERSISTENT
+		 * + pObject.getSousTypeProduit(). 
+		 */
+		if (id == null) {
+			throw new ExceptionAppliParamNonPersistent(
+					MESSAGE_UPDATE_KO_NON_PERSISTENT 
+					+ safeMessage(pObject.getSousTypeProduit()));
+		}
+
+		/* Récupération du parent dans l'objet métier. */
+		final TypeProduitI parent = pObject.getTypeProduit();
+
+		/* récupère le parent persisté si il existe.*/
+		/* ATTENTION : cette méthode peut jeter des Exceptions. */
+		final TypeProduitJPA parentPersistant 
+			= verifierPersistanceParent(parent, PREFIX_MESSAGE_UPDATE);
+
+		try {
+
+			/* Recherche l'Entity JPA persistée
+			 * à modifier par ID via le DAO. */
+			final Optional<SousTypeProduitJPA> optEntity 
+				= this.sousTypeProduitDaoJPA.findById(id);
+
+			/* Si le DAO répond null :
+			 * jette une ExceptionTechniqueGateway
+			 * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE. */
+			if (optEntity == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* retourne null si le DAO retourne vide. */
+			if (optEntity.isEmpty()) {
+				return null;
+			}
+
+			final SousTypeProduitJPA persiste = optEntity.get();
+
+			/* applique les modifications. */
+			/* Optimisation : vérifie si des modifications 
+			 * ont été appliquées avant de sauvegarder.
+			 * Cela évite une opération de sauvegarde inutile 
+			 * si l'objet n'a pas changé. */
+			final boolean modifie 
+				= appliquerModifications(
+						persiste, pObject, parentPersistant);
+
+			/* si il n'y a eu aucune modification :
+			 * retourne l'Entity non modifiée convertie en objet metier. */
+			if (!modifie) {
+				return ConvertisseurJPAToMetier
+						.sousTypeProduitJPAToMetier(persiste);
+			}
+
+			/* sauvegarde l'Entity JPA modifiée. */
+			final SousTypeProduitJPA sauvegarde 
+				= this.sousTypeProduitDaoJPA.save(persiste);
+
+			/* Si le DAO répond null :
+			 * jette une ExceptionTechniqueGateway
+			 * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE. */
+			if (sauvegarde == null) {
+				throw new ExceptionTechniqueGateway(
+						ERREUR_TECHNIQUE_KO_STOCKAGE);
+			}
+
+			/* convertit l'Entity modifiée sauvegardée en objet métier. */
+			final SousTypeProduit reponse 
+				= ConvertisseurJPAToMetier
+					.sousTypeProduitJPAToMetier(sauvegarde);
+
+			/* retourne l'objet métier modifié. */
+			return reponse;
+
+		} catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/* jette une ExceptionTechniqueGateway avec un
+			 * message ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause. */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * INTENTION TECHNIQUE (scénario nominal) :</p>
+	 * <ul>
+	 * <li><span style="font-weight:bold;">Supprimer</span> 
+	 * une {@link SousTypeProduitJPA}
+	 * persistée dans le stockage.</li>
+	 * <li><span style="font-weight:bold;">Garantir</span> 
+	 * que la suppression est
+	 * <span style="font-weight:bold;">persistée immédiatement</span>
+	 * (pas de rollback implicite).</li>
+	 * <li><span style="font-weight:bold;">
+	 * Jeter une Exception</span> en cas d'erreur
+	 * technique (alignement avec le PORT 
+	 * {@link SousTypeProduitGatewayIService}).</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+	 * <ul>
+	 * <li>delete(null) jette {@link ExceptionAppliParamNull}
+	 * avec {@link #MESSAGE_DELETE_KO_PARAM_NULL}.</li>
+	 * <li>delete(id null) jette {@link ExceptionAppliParamNonPersistent}
+	 * avec {@link #MESSAGE_DELETE_KO_ID_NULL}.</li>
+	 * <li>delete(absent) ne fait rien (pas d'Exception).</li>
+	 * <li>delete(nominal) <span style="font-weight:bold;">
+	 * supprime l'Entity</span>
+	 * et la rend introuvable.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+	 * <ul>
+	 * <li>La suppression est <span style="font-weight:bold;">
+	 * persistée en base</span>
+	 * (pas de cache Hibernate masquant les changements).</li>
+	 * <li>La transaction est <span style="font-weight:bold;">isolée</span>
+	 * (pas d'interférence avec d'autres opérations).</li>
+	 * <li>Les Exceptions sont <span style="font-weight:bold;">
+	 * alignées sur le PORT</span>.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Override
+	public void delete(final SousTypeProduit pObject) throws Exception {
+		
+	    /* 
+	     * si pObject == null : 
+	     * jette une ExceptionAppliParamNull 
+	     * avec un message 
+	     * MESSAGE_DELETE_KO_PARAM_NULL. 
+	     */
+	    if (pObject == null) {
+	        throw new ExceptionAppliParamNull(
+	        		MESSAGE_DELETE_KO_PARAM_NULL);
+	    }
+
+	    final Long id = pObject.getIdSousTypeProduit();
+
+	    /* 
+	     * si l'ID est null : 
+	     * jette une ExceptionAppliParamNonPersistent 
+	     * avec un message 
+	     * MESSAGE_DELETE_KO_ID_NULL. 
+	     */
+	    if (id == null) {
+	        throw new ExceptionAppliParamNonPersistent(
+	        		MESSAGE_DELETE_KO_ID_NULL);
+	    }
+
+	    try {
+	    	
+	        /* Recherche préalable de l'Entity persistée par ID */
+	        final Optional<SousTypeProduitJPA> optEntity 
+	        	= this.sousTypeProduitDaoJPA.findById(id);
+
+	        /* 
+	         * Si le DAO retourne null : 
+	         * jette une ExceptionTechniqueGateway 
+	         * avec un message 
+	         * ERREUR_TECHNIQUE_KO_STOCKAGE. 
+	         */
+	        if (optEntity == null) {
+	            throw new ExceptionTechniqueGateway(
+	            		ERREUR_TECHNIQUE_KO_STOCKAGE);
+	        }
+
+	        /* Si l'objet n'existe pas en stockage : return. */
+	        if (optEntity.isEmpty()) {
+	            return;
+	        }
+
+	        /* Suppression immédiate via EntityManager 
+	         * pour forcer l'exécution.
+	         * Cela évite les problèmes de cache Hibernate 
+	         * et garantit que la suppression est persistée en base. */
+	        final SousTypeProduitJPA entityToDelete = optEntity.get();
+	        this.entityManager.remove(entityToDelete);
+	        
+	        /* Force l'exécution immédiate du DELETE */
+	        this.entityManager.flush(); 
+
+	        /* Vérification post-suppression pour confirmer 
+	         * que l'objet a bien été supprimé.
+	         * Cela permet de détecter les échecs de suppression en base. */
+	        final Optional<SousTypeProduitJPA> optEntityAfterDelete 
+	        	= this.sousTypeProduitDaoJPA.findById(id);
+	        
+	        if (optEntityAfterDelete.isPresent()) {
+	            throw new ExceptionTechniqueGateway(
+	                "Échec de la suppression en base pour ID = " + id
+	            );
+	        }
+
+	    } catch (final ExceptionTechniqueGateway e) {
+
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+
+	    } catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/*
+			 * jette une ExceptionTechniqueGateway 
+			 * avec un message
+			 * ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause.
+			 */
+			throw new ExceptionTechniqueGateway(message, e);
+
+	    }
+	}
+
+
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long count() throws Exception {
+
+		try {
+
+			return this.sousTypeProduitDaoJPA.count();
+
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+
+			/*
+			 * jette une ExceptionTechniqueGateway avec un message
+			 * ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e)
+			 * et propage l'Exception technique cause.
+			 */
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	// *************************** OUTILS *********************************/
+	
+	/**
+	 * <div>
+	 * <p>Setter pour l'EntityManager (nécessaire pour les tests).</p>
+	 * </div>
+	 *
+	 * @param pEntityManager : EntityManager
+	 */
+	public void setEntityManager(final EntityManager pEntityManager) {
+	    this.entityManager = pEntityManager;
+	}
+	
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">Vérifie que le parent
+	 * {@link TypeProduit}
+	 * est persistant et existe dans le stockage.</p>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE
+	 * (scénario nominal) :</p>
+	 * <ul>
+	 * <li><span style="font-weight:bold;">
+	 * Garantit que le parent n'est pas null</span>
+	 * (contrat applicatif du PORT).
+	 * Si pParent == null :
+	 * jette une ExceptionAppliParentNull
+	 * avec un message résolu par
+	 * {@link #resoudreMessageParentNull(String)}.</li>
+	 * <li><span style="font-weight:bold;">
+	 * Garantit que le parent n' a pas un libelle blank</span>
+	 * (contrat applicatif du PORT).
+	 * Si pParent a un libelle blank : jette une
+	 * ExceptionAppliLibelleBlank avec un message résolu par
+	 * {@link #resoudreMessageLibelleParentBlank(String)}.</li>
+	 * <li><span style="font-weight:bold;">
+	 * Garantit que le parent a un ID</span> (contrat applicatif du PORT).
+	 * Si pParent n'a pas d'ID :
+	 * jette une ExceptionTechniqueGatewayNonPersistent
+	 * avec un message construit à partir de
+	 * {@link #resoudreMessageParentNonPersistent(String)}.</li>
+	 * <li>Délègue à un composant technique (DAO)
+	 * la tâche de <span style="font-weight:bold;">
+	 * vérifier que le parent est persisté dans le stockage</span>.</li>
+	 * <li><span style="font-weight:bold;">
+	 * Garantit que le parent est persisté dans le stockage</span>.
+	 * Si pParent est non persistant :
+	 * jette une ExceptionTechniqueGatewayNonPersistent
+	 * avec un message construit à partir de
+	 * {@link #resoudreMessageParentNonPersistent(String)}.</li>
+	 * <li>Si il existe : <span style="font-weight:bold;">
+	 * retourne le parent persisté</span>.</li>
+	 * <li>Propage une exception technique remontant du stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pParent : TypeProduitI :
+	 * Parent de l'objet métier dont on veut savoir si il est persistant.
+	 * @param pMethode : String :
+	 * préfixe d'un message d'une méthode appelante
+	 * comme "MESSAGE_CREER" ou "MESSAGE_UPDATE".
+	 * @return TypeProduitJPA : parent persistant (entity).
+	 *
+	 * @throws ExceptionAppliParentNull
+	 * si pParent null.
+	 * @throws ExceptionAppliLibelleBlank
+	 * si pParent avec libellé blank.
+	 * @throws ExceptionTechniqueGatewayNonPersistent
+	 * si pParent sans id ou si pParent absent dans le stockage.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de l'accès au stockage.
+	 * @throws Exception toute autre exception levée par l'implémentation.
+	 */
+	private TypeProduitJPA verifierPersistanceParent(
+			final TypeProduitI pParent, final String pMethode) 
+					throws Exception {
+
+		/* Si pParent == null : jette une ExceptionAppliParentNull
+		 * avec un message résolu par
+		 * resoudreMessageParentNull(String). */
+		/* exemples : MESSAGE_CREER_KO_PARENT_NULL
+		 * , MESSAGE_UPDATE_KO_PARENT_NULL.*/
+		if (pParent == null) {
+			throw new ExceptionAppliParentNull(
+					resoudreMessageParentNull(pMethode));
+		}
+
+		/* Si pParent a un libelle blank :
+		 * jette une ExceptionAppliLibelleBlank
+		 * avec un message résolu par
+		 * resoudreMessageLibelleParentBlank(String). */
+		if (StringUtils.isBlank(pParent.getTypeProduit())) {
+			throw new ExceptionAppliLibelleBlank(
+					resoudreMessageLibelleParentBlank(pMethode));
+		}
+
+		/* Si pParent n'a pas d'ID :
+		 * jette une ExceptionTechniqueGatewayNonPersistent
+		 * avec un message construit à partir de
+		 * resoudreMessageParentNonPersistent(String). */
+		if (pParent.getIdTypeProduit() == null) {
+			throw new ExceptionTechniqueGatewayNonPersistent(
+					construireMessageParentNonPersistent(
+							pMethode, pParent.getTypeProduit()));
+		}
+
+		try {
+
+			/* Délègue à un composant technique (DAO)
+			 * la tâche de vérifier que le parent
+			 * est persisté dans le stockage. */
+			final Optional<TypeProduitJPA> opt 
+				= this.typeProduitDaoJPA.findById(
+						pParent.getIdTypeProduit());
+
+			if (opt == null || opt.isEmpty()) {
+				/* Si pParent est non persistant :
+				 * jette une ExceptionTechniqueGatewayNonPersistent
+				 * avec un message construit à partir de
+				 * resoudreMessageParentNonPersistent(String). */
+				throw new ExceptionTechniqueGatewayNonPersistent(
+						construireMessageParentNonPersistent(
+								pMethode, pParent.getTypeProduit()));
+			}
+
+			final TypeProduitJPA reponse = opt.get();
+
+			/* Si il existe : retourne le parent persisté. */
+			return reponse;
+
+		} catch (final ExceptionTechniqueGatewayNonPersistent e) {
+			
+			/* Préserve le message contractuel
+			 * (messages techniques déjà construits). */
+			throw e;
+			
+		} catch (final Exception e) {
+
+			final String message 
+				= ERREUR_TECHNIQUE_STOCKAGE + safeMessage(e);
+			
+			/* propage une exception technique remontant du stockage
+			 * avec un message ERREUR_TECHNIQUE_STOCKAGE
+			 * + safeMessage(e) et propage l'Exception cause.*/
+			throw new ExceptionTechniqueGateway(message, e);
+
+		}
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Filtre (retire les null), trie, Dédoublonne
+	 * , et convertit une liste d'entities en liste d'objets métier.</p>
+	 * <ul>
+	 * <li>retourne une liste vide si pListe == null.</li>
+	 * <li>retourne une liste vide si pListe.isEmpty().</li>
+	 * <li>alimente la liste réponse en filtrant les null.</li>
+	 * <li>trie la liste réponse.</li>
+	 * <li>utilise un {@code LinkedHashSet} pour dédoublonner
+	 * tout en conservant l'ordre.</li>
+	 * <li>convertit chaque Entity de la liste
+	 * pListe traitée en objet métier.</li>
+	 * <li>retourne la réponse.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pEntities : List&lt;SousTypeProduitJPA&gt; :
+	 * liste d'Entities à filter, trier, dédoublonner et convertir.
+	 * @return List&lt;SousTypeProduit&gt; :
+	 * liste d'objets métier. Jamais null.
+	 */
+	private List<SousTypeProduit> filtrerTrierDedoublonner(
+	        final List<SousTypeProduitJPA> pEntities) {
+	
+	    /* retourne une liste vide si pListe == null. */
+	    if (pEntities == null) {
+	        return new ArrayList<SousTypeProduit>();
+	    }
+	
+	    /* retourne une liste vide si pListe.isEmpty(). */
+	    if (pEntities.isEmpty()) {
+	        return new ArrayList<SousTypeProduit>();
+	    }
+	
+	    /* Filtre les null et convertit en stream 
+	     * pour optimiser les opérations. */
+	    final List<SousTypeProduitJPA> listeNonNull = pEntities.stream()
+	            .filter(Objects::nonNull)
+	            .collect(Collectors.toList());
+	
+	    /* Trie la liste des Entities avec le comparateur dédié. */
+	    listeNonNull.sort(construireComparateurSousTypeProduit());
+	
+	    /*
+	     * Convertit chaque Entity triée en objet métier.
+	     */
+	    final List<SousTypeProduit> listeConvertie = listeNonNull.stream()
+	            .map(ConvertisseurJPAToMetier::sousTypeProduitJPAToMetier)
+	            .filter(Objects::nonNull)
+	            .collect(Collectors.toList());
+	
+	    /*
+	     * Dédoublonnage en O(n) basé sur l'égalité Objet Métier
+	     * tout en conservant l'ordre grâce à LinkedHashSet.
+	     */
+	    final Set<SousTypeProduit> uniques 
+	    	= new LinkedHashSet<>(listeConvertie);
+	
+	    /* Retourne la réponse sous forme de liste. */
+	    return new ArrayList<>(uniques);
+	}
+
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Construit et retourne un {@link Comparator} pour trier les
+	 * {@link SousTypeProduitJPA} selon les règles suivantes :
+	 * </p>
+	 * <ol>
+	 * <li style="font-weight:bold;">
+	 * Trie d'abord par le <strong>libellé du TypeProduit parent</strong>
+	 * (ordre naturel, insensible à la casse).</li>
+	 * <li style="font-weight:bold;">
+	 * Puis par le <strong>libellé du SousTypeProduit</strong>
+	 * (ordre naturel, insensible à la casse).</li>
+	 * </ol>
+	 * <p>
+	 * Ce comparateur est utilisé pour garantir un ordre cohérent
+	 * dans les listes retournées par les méthodes de recherche
+	 * (ex: {@link #rechercherTous()}, {@link #findAllByParent(TypeProduit)}).
+	 * </p>
+	 * <p>
+	 * <span style="font-weight:bold;">Exemple d'ordre :</span>
+	 * </p>
+	 * <ul>
+	 * <li>"bazar" &lt; "logiciel" &lt; "outillage" &lt; "tourisme" &lt; "vêtement"</li>
+	 * <li>Pour un même parent "vêtement" :
+	 * "vêtement pour enfant" &lt; "vêtement pour femme" &lt; "vêtement pour homme"</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return Comparator&lt;SousTypeProduitJPA&gt; :
+	 * Comparateur prêt à l'emploi pour trier les SousTypeProduitJPA.
+	 */
+	private static Comparator<SousTypeProduitJPA> 
+							construireComparateurSousTypeProduit() {
+		
+	    return (stp1, stp2) -> {
+	    	
+	        /* Gestion des nullités (défensive). */
+	        if (stp1 == stp2) {
+	            return 0;
+	        }
+	        if (stp1 == null) {
+	            return 1; /* null après. */
+	        }
+	        if (stp2 == null) {
+	            return -1; /* null avant. */
+	        }
+
+	        /* 1. Comparaison par le libellé du TypeProduit parent 
+	         * (insensible à la casse).*/
+	        final TypeProduitI parent1 = stp1.getTypeProduit();
+	        final TypeProduitI parent2 = stp2.getTypeProduit();
+
+	        final String libelleParent1 
+	        	= (parent1 != null) ? parent1.getTypeProduit() : null;
+	        final String libelleParent2 
+	        	= (parent2 != null) ? parent2.getTypeProduit() : null;
+
+	        /* Comparaison des parents (null après). */
+	        if (libelleParent1 == null) {
+	            return (libelleParent2 == null) ? 0 : 1;
+	        }
+	        if (libelleParent2 == null) {
+	            return -1;
+	        }
+
+	        final int comparaisonParents 
+	        	= Strings.CI.compare(libelleParent1, libelleParent2);
+	        
+	        if (comparaisonParents != 0) {
+	            return comparaisonParents;
+	        }
+
+	        /* 2. Comparaison par le libellé du SousTypeProduit 
+	         * (insensible à la casse). */
+	        final String libelleSTP1 = stp1.getSousTypeProduit();
+	        final String libelleSTP2 = stp2.getSousTypeProduit();
+
+	        if (libelleSTP1 == null) {
+	            return (libelleSTP2 == null) ? 0 : 1;
+	        }
+	        if (libelleSTP2 == null) {
+	            return -1;
+	        }
+
+	        return Strings.CI.compare(libelleSTP1, libelleSTP2);
+	    };
+	}
+	
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Applique les modifications sur l'Entity persistée.</p>
+	 * <ul>
+	 * <li>Si l'objet persistant à modifier
+	 * ou l'objet portant les modifications est null : retourne false.</li>
+	 * <li>modifie les libellés si les libellés actuels
+	 * et futurs sont différents.</li>
+	 * <li>modifie le parent de l'Entité modifiée
+	 * si pParentPersistant est différent de l'ancien.</li>
+	 * <li>retourne true si une modification a été appliquée.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pPersistant : SousTypeProduitJPA :
+	 * Entity à modifier.
+	 * @param pObject : SousTypeProduit :
+	 * Objet métier portant les modifications.
+	 * @param pParentPersistant : TypeProduitJPA :
+	 * Parent persistant à attacher à l'Entity modifiée.
+	 * @return boolean : true si modification effectuée.
+	 */
+	private static boolean appliquerModifications(
+	        final SousTypeProduitJPA pPersistant,
+	        final SousTypeProduit pObject,
+	        final TypeProduitJPA pParentPersistant) {
+
+	    /* Si l'objet persistant à modifier ou l'objet
+	     * portant les modifications est null : retourne false. */
+	    if (pPersistant == null || pObject == null) {
+	        return false;
+	    }
+
+	    boolean modifie = false;
+
+	    /* 1. Comparaison et mise à jour du libellé */
+	    final String nouveauLibelle = pObject.getSousTypeProduit();
+	    final String ancienLibelle = pPersistant.getSousTypeProduit();
+
+	    if (!safeEquals(ancienLibelle, nouveauLibelle)) {
+	        pPersistant.setSousTypeProduit(nouveauLibelle);
+	        modifie = true;
+	    }
+
+	    /* 2. Comparaison et mise à jour du parent */
+	    final TypeProduitI ancienParent = pPersistant.getTypeProduit();
+	    final Long idAncienParent 
+	    	= (ancienParent != null) 
+	    	? ancienParent.getIdTypeProduit() : null;
+	    final Long idNouveauParent 
+	    	= (pParentPersistant != null) 
+	    	? pParentPersistant.getIdTypeProduit() : null;
+
+	    if (!safeEquals(idAncienParent, idNouveauParent)) {
+	        pPersistant.setTypeProduit(pParentPersistant);
+	        modifie = true;
+	    }
+
+	    return modifie;
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Convertit une RequetePage neutre en Pageable Spring.
+	 * Construit un {@link Pageable} à partir d'une {@link RequetePage}.
+	 * </p>
+	 * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
+	 * <ul>
+	 * <li>Utilise des valeurs par défaut si la requête est null.</li>
+	 * <li>Extrait le numéro de page et la taille de page de la requête.</li>
+	 * <li>Applique un tri par défaut sur le libellé du produit.</li>
+	 * <li>Retourne un {@link Pageable} prêt à être utilisé 
+	 * par Spring Data.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pRequete : RequetePage :
+	 * Requête de pagination à convertir.
+	 * @return Pageable :
+	 * Objet Pageable configuré pour Spring Data.
+	 */
+	private static Pageable convertirRequetePageEnPageable(
+	        final RequetePage pRequetePage) {
+
+	    /* Utilise une requête par défaut si pRequetePage == null. */
+	    final RequetePage requete = (pRequetePage != null)
+	            ? pRequetePage
+	            : new RequetePage();
+
+	    /* Récupère les paramètres de pagination. */
+	    final int pageNumber = requete.getPageNumber();
+	    final int pageSize = requete.getPageSize();
+	    final List<TriSpec> tris = requete.getTris();
+
+	    /* Si pas de tris spécifiés, retourne un Pageable simple. */
+	    if ((tris == null) || tris.isEmpty()) {
+	        return PageRequest.of(pageNumber, pageSize);
+	    }
+
+	    /* Construit le tri à partir des spécifications. */
+	    Sort sort = Sort.unsorted();
+
+	    for (final TriSpec tri : tris) {
+	        /* Ignore les tris invalides. */
+	        if ((tri == null)
+	                || (tri.getPropriete() == null)
+	                || tri.getPropriete().isBlank()) {
+	            continue;
+	        }
+
+	        /* Détermine la direction du tri. */
+	        final Sort.Direction direction 
+	        	= DirectionTri.DESC.equals(tri.getDirection())
+	                ? Sort.Direction.DESC
+	                : Sort.Direction.ASC;
+
+	        /* Ajoute le tri au sort global. */
+	        sort = sort.and(Sort.by(direction, tri.getPropriete()));
+	    }
+
+	    /* Retourne le Pageable avec tri. */
+	    return PageRequest.of(pageNumber, pageSize, sort);
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Résout le message contractuel "parent null"
+	 * en fonction de la méthode appelante.</p>
+	 * </div>
+	 *
+	 * @param pMethode : String :
+	 * préfixe ("MESSAGE_CREER", "MESSAGE_UPDATE", ...).
+	 * @return String :
+	 * message contractuel (PORT) si connu, sinon clé technique.
+	 */
+	private static String resoudreMessageParentNull(
+			final String pMethode) {
+
+		if (PREFIX_MESSAGE_CREER.equals(pMethode)) {
+			return MESSAGE_CREER_KO_PARENT_NULL;
+		}
+
+		if (PREFIX_MESSAGE_FINDBYOBJETMETIER.equals(pMethode)) {
+			return MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL;
+		}
+
+		if (PREFIX_MESSAGE_FINDALLBYPARENT.equals(pMethode)) {
+			return MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL;
+		}
+
+		if (PREFIX_MESSAGE_UPDATE.equals(pMethode)) {
+			return MESSAGE_UPDATE_KO_PARENT_NULL;
+		}
+
+		/* fallback défensif */
+		return pMethode + SUFFIXE_KO_PARENT_NULL;
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Résout le message contractuel "libellé parent blank"
+	 * en fonction de la méthode appelante.</p>
+	 * </div>
+	 *
+	 * @param pMethode : String : 
+	 * préfixe ("MESSAGE_CREER", "MESSAGE_UPDATE", ...).
+	 * @return String : 
+	 * message contractuel (PORT) si connu, sinon clé technique.
+	 */
+	private static String resoudreMessageLibelleParentBlank(
+			final String pMethode) {
+
+		if (PREFIX_MESSAGE_CREER.equals(pMethode)) {
+			return MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK;
+		}
+
+		if (PREFIX_MESSAGE_FINDBYOBJETMETIER.equals(pMethode)) {
+			return MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK;
+		}
+
+		if (PREFIX_MESSAGE_FINDALLBYPARENT.equals(pMethode)) {
+			return MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK;
+		}
+
+		if (PREFIX_MESSAGE_UPDATE.equals(pMethode)) {
+			return MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK;
+		}
+
+		/* fallback défensif 
+		 * (le PORT ne définit pas partout un message humain). */
+		return pMethode + SUFFIXE_KO_LIBELLE_PARENT_BLANK;
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Résout le préfixe contractuel "parent non persistant"
+	 * (message humain du PORT) en fonction de la méthode appelante.</p>
+	 * <p>
+	 * Permet à {@link #verifierPersistanceParent(TypeProduitI, String)}
+	 * de rester factorisée tout en produisant des messages alignés
+	 * sur le PORT {@link SousTypeProduitGatewayIService}.
+	 * </p>
+	 * </div>
+	 *
+	 * @param pMethode : String :
+	 * préfixe ("MESSAGE_CREER", "MESSAGE_UPDATE", ...).
+	 * @return String :
+	 * préfixe contractuel (PORT) si connu, sinon clé technique.
+	 */
+	private static String resoudreMessageParentNonPersistent(
+			final String pMethode) {
+
+		if (PREFIX_MESSAGE_CREER.equals(pMethode)) {
+			return MESSAGE_CREER_KO_PARENT_NON_PERSISTENT;
+		}
+
+		if (PREFIX_MESSAGE_FINDBYOBJETMETIER.equals(pMethode)) {
+			return MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT;
+		}
+
+		if (PREFIX_MESSAGE_FINDALLBYPARENT.equals(pMethode)) {
+			return MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT;
+		}
+
+		if (PREFIX_MESSAGE_UPDATE.equals(pMethode)) {
+			return MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT;
+		}
+
+		/* fallback défensif */
+		return pMethode + SUFFIXE_KO_PARENT_NON_PERSISTENT;
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Construit le message final "parent non persistant"
+	 * (préfixe contractuel + libellé du parent).</p>
+	 * </div>
+	 *
+	 * @param pMethode : String :
+	 * préfixe ("MESSAGE_CREER", "MESSAGE_UPDATE", ...).
+	 * @param pLibelleParent : String :
+	 * libellé parent (peut être null).
+	 * @return String : message final.
+	 */
+	private static String construireMessageParentNonPersistent(
+			final String pMethode, final String pLibelleParent) {
+
+		final String prefixe = resoudreMessageParentNonPersistent(pMethode);
+		return prefixe + safeMessage(pLibelleParent);
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Fournit une représentation textuelle sûre d'un objet
+	 * sans jamais retourner {@code null}.
+	 * </p>
+	 * </div>
+	 *
+	 * <div>
+	 * <p>
+	 * Cette méthode est un utilitaire défensif destiné à la
+	 * <span style="font-weight:bold;">construction de messages</span>
+	 * (notamment messages d'erreur contractuels ou techniques),
+	 * afin de garantir qu'aucune concaténation ou propagation
+	 * de message ne provoque de {@link NullPointerException}.
+	 * </p>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">COMPORTEMENT :</p>
+	 * <ul>
+	 * <li>Si {@code p == null} : retourne une {@link String} vide.</li>
+	 * <li>Sinon : invoque {@code p.toString()}.</li>
+	 * <li>Si {@code p.toString()} retourne {@code null}
+	 * (cas anormal mais défensivement géré) :
+	 * retourne une {@link String} vide.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES :</p>
+	 * <ul>
+	 * <li>Ne retourne <strong>jamais {@code null}</strong>.</li>
+	 * <li>Ne lève aucune Exception.</li>
+	 * <li>Peut être utilisée en toute sécurité dans
+	 * la construction de messages contractuels ou techniques.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param p : Object :
+	 * objet à convertir en représentation textuelle
+	 * (peut être {@code null}).
+	 * @return String :
+	 * représentation textuelle sûre de {@code p},
+	 * jamais {@code null} (chaîne vide si absence de valeur).
+	 */
+	private static String safeMessage(final Object p) {
+
+		if (p == null) {
+			return "";
+		}
+
+		final String s = p.toString();
+		return (s != null) ? s : "";
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Compare deux objets de manière sûre
+	 * sans jamais provoquer de {@link NullPointerException}.
+	 * </p>
+	 * </div>
+	 *
+	 * @param p1 : Object : premier objet à comparer (peut être {@code null}).
+	 * @param p2 : Object : second objet à comparer (peut être {@code null}).
+	 * @return boolean : {@code true} si égaux, {@code false} sinon.
+	 */
+	private static boolean safeEquals(final Object p1, final Object p2) {
+
+		if (p1 == p2) {
+			return true;
+		}
+
+		if (p1 == null || p2 == null) {
+			return false;
+		}
+
+		return p1.equals(p2);
+	}
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold">
+	 * Détermine si un libellé (ou tout texte fonctionnel)
+	 * est inexploitable du point de vue métier.</p>
+	 * </div>
+	 *
+	 * @param pString : String
+	 * texte à évaluer (ex : libellé saisi ou contenu de recherche).
+	 * @return boolean : {@code true}
+	 * si {@code pString} est {@code null} ou blank,
+	 * {@code false} sinon.
+	 */
+	private static boolean isBlank(final String pString) {
+		return pString == null || pString.isBlank();
+	}
+
+}

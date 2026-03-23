@@ -1,0 +1,69 @@
+# docs/ai/MANIFEST_IA.yaml
+# *********************************************************************
+# *********************** MANIFEST IA — UNIQUE ************************
+# *********************************************************************
+#
+# OBJECTIF :
+# Permettre un workflow industriel où l’Utilisateur ne fournit
+# QUE le SHA Git, et l’IA retrouve automatiquement tout le périmètre.
+#
+# FICHIER ANCRE :
+# Ce fichier doit exister à ce chemin EXACT dans toutes les branches :
+# docs/ai/MANIFEST_IA.yaml
+#
+# SOURCE DE VERITE :
+# GitHub au SHA fourni (lecture via Raw SHA uniquement)
+#
+# ALGORITHME OBLIGATOIRE POUR L’IA :
+#
+# 1) Construire l’URL :
+#    https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/docs/ai/MANIFEST_IA.yaml
+#
+# 2) Lire ce MANIFEST
+#
+# 3) Lire ensuite docs/ai/perimetre.yaml au même SHA
+#
+# 4) Reconstruire toutes les URLs Raw SHA :
+#    https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
+#
+# 5) Lire les fichiers nécessaires AVANT toute analyse ou code
+#
+# INTERDICTIONS :
+# - Ne jamais utiliser refs/heads comme source de vérité
+# - Ne jamais dépendre de la mémoire interne
+# - Ne jamais deviner des chemins
+#
+# INTEGRATION CONTRAT_IA.md :
+# Ce MANIFEST est la racine opérationnelle décrite dans
+# docs/ai/CONTRAT_IA.md (sections Source de vérité, SHA unique,
+# Méthode de lecture).
+#
+# *********************************************************************
+
+version: 1
+
+repo:
+  owner: DanielLEVY25021961
+  name: PatrimoineSSP
+
+ai:
+  contrat: docs/ai/CONTRAT_IA.md
+  perimetre: docs/ai/perimetre.yaml
+
+workflow:
+  mode: sha_only
+  url_mode: raw_sha_only
+  discover_from_manifest: true
+  require_pre_read: true
+  forbid_branch_urls_as_truth: true
+
+lecture:
+  method: raw_sha_binary
+  verify_generics: true
+  max_retries: 3
+  on_failure: "incident de lecture"
+
+garantie:
+  reproducible: true
+  memory_independent: true
+  deterministic: true
