@@ -125,6 +125,8 @@ public class NormalizerUtilsTest {
         super();
     }
 
+    
+    
     /**
      * <div>
      * <p>Teste la méthode <code>normalize(String)</code>.</p>
@@ -140,10 +142,11 @@ public class NormalizerUtilsTest {
     @Tag("normalize")
     @Test
     public final void testNormalizeDefault() {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
-        final boolean affichage = false;
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
 
         /*
          * AFFICHAGE A LA CONSOLE.
@@ -182,8 +185,11 @@ public class NormalizerUtilsTest {
         assertEquals(HOTEL_NAIVE_ACCENT_MINUSCULE, resultHotelNaive, "La normalisation de \"Hôtel Naïve\" doit retourner \"hôtel naïve\".");
         assertEquals(CHAINE_VIDE, resultNull, "La normalisation de null doit retourner une chaîne vide.");
         assertEquals(CHAINE_VIDE, resultVide, "La normalisation d'une chaîne vide doit retourner une chaîne vide.");
-    }
+        
+    } // __________________________________________________________________
 
+    
+    
     /**
      * <div>
      * <p>Teste la méthode <code>normalize(String, boolean, Locale)</code>.</p>
@@ -199,10 +205,11 @@ public class NormalizerUtilsTest {
     @Tag("normalize")
     @Test
     public final void testNormalizeWithOptions() {
-        /*
-         * AFFICHAGE DANS LE TEST ou NON
-         */
-        final boolean affichage = true;
+		
+		// **********************************
+		// AFFICHAGE DANS LE TEST ou NON
+		final boolean affichage = false;
+		// **********************************
 
         /*
          * AFFICHAGE A LA CONSOLE.
@@ -250,5 +257,8 @@ public class NormalizerUtilsTest {
         assertEquals(CHAINE_DIACRITIQUES.toLowerCase(Locale.FRENCH), resultAvecDiacritiques, "La normalisation avec conservation des diacritiques doit retourner la chaîne en minuscules.");
         assertEquals(CAFE_SANS_ACCENT_MINUSCULE, resultCafeAvecDiacritiques, "La normalisation de \"Café\" avec conservation des diacritiques doit retourner \"café\".");
         assertEquals(HOTEL_NAIVE_ACCENT_MINUSCULE, resultHotelNaiveAvecDiacritiques, "La normalisation de \"Hôtel Naïve\" avec conservation des diacritiques doit retourner \"hôtel naïve\".");
-    }
+        
+    } // __________________________________________________________________
+    
+    
 }
