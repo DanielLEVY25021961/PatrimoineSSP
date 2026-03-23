@@ -12,10 +12,15 @@ Entrées :
 - --sha : SHA unique (obligatoire)
 - --lot : pack (ai|docs_contrats|metier|persistance|gateway|all)
 - --perimetre : chemin du perimetre.yaml (optionnel)
+- --out-dir : répertoire de sortie (zip ou dossier, selon --no-zip)
 
-Sorties (par défaut) :
-- ./AI_OFFLINE/ ... (dossier)
-- ./AI_OFFLINE_<sha>_<lot>.zip (zip)
+Sorties :
+- Mode ZIP (défaut) :
+  - <out-dir>/AI_OFFLINE_<sha>_<lot>.zip  (zip à transmettre)
+  - (aucun dossier AI_OFFLINE n'est conservé sur disque : staging en répertoire temporaire)
+- Mode NO-ZIP (--no-zip) :
+  - <out-dir>/AI_OFFLINE/ ... (dossier) si out-dir n'est pas déjà "AI_OFFLINE"
+  - <out-dir>/ ... (dossier) si out-dir est déjà "AI_OFFLINE"
 
 Stratégie d’extraction :
 - Priorité 1 : git show <sha>:<path> (si git dispo et sha résolvable)
@@ -32,7 +37,6 @@ from __future__ import annotations
 import argparse
 import datetime
 import hashlib
-import os
 import platform
 import shutil
 import subprocess
@@ -55,12 +59,6 @@ def _read_text(path: Path) -> str:
 def _write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
-
-
-def _sha256_bytes(data: bytes) -> str:
-    h = hashlib.sha256()
-    h.update(data)
-    return h.hexdigest()
 
 
 def _sha256_file(path: Path) -> str:
@@ -147,7 +145,7 @@ def _get_pack_paths(perimetre: Dict, lot: str) -> List[str]:
         raise ValueError("perimetre.yaml : packs manquant ou invalide.")
 
     if lot == "all":
-        selected = []
+        selected: List[str] = []
         for _, pack in packs.items():
             if isinstance(pack, dict):
                 paths = pack.get("paths")
@@ -173,6 +171,23 @@ def _zip_dir(src_dir: Path, zip_path: Path) -> None:
                 z.write(str(file_path), arcname)
 
 
+def _compute_ai_offline_dir(out_dir: Path, do_zip: bool) -> Path:
+    """
+    Détermine le dossier AI_OFFLINE à écrire.
+
+    - En mode ZIP : on stage en répertoire temporaire (pas de pollution du repo).
+    - En mode NO-ZIP : on écrit sur disque dans out_dir, sans créer AI_OFFLINE/AI_OFFLINE.
+    """
+    if do_zip:
+        tmp_root = Path(tempfile.mkdtemp(prefix="AI_OFFLINE_BUILD_"))
+        return tmp_root / "AI_OFFLINE"
+
+    # --no-zip : écrit durablement
+    if out_dir.name.lower() == "ai_offline":
+        return out_dir
+    return out_dir / "AI_OFFLINE"
+
+
 def build_bundle(
     repo_root: Path,
     sha: str,
@@ -183,7 +198,7 @@ def build_bundle(
 ) -> Path:
     """
     Construit AI_OFFLINE/ + CHECKSUMS + INDEX + PROVENANCE.
-    Retourne le chemin du zip si do_zip, sinon le dossier out_dir.
+    Retourne le chemin du zip si do_zip, sinon le dossier AI_OFFLINE.
     """
     perimetre = _load_perimetre_yaml(perimetre_path)
     raw_paths = _get_pack_paths(perimetre, lot)
@@ -196,11 +211,10 @@ def build_bundle(
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    bundle_root = out_dir
-    ai_offline_dir = bundle_root / "AI_OFFLINE"
+    ai_offline_dir = _compute_ai_offline_dir(out_dir=out_dir, do_zip=do_zip)
     files_dir = ai_offline_dir / "FILES"
 
-    if ai_offline_dir.exists():
+    if ai_offline_dir.exists() and ai_offline_dir.is_dir():
         shutil.rmtree(ai_offline_dir)
     files_dir.mkdir(parents=True, exist_ok=True)
 
@@ -229,8 +243,7 @@ def build_bundle(
         target.write_bytes(data)
         extracted.append(rel_path)
 
-    index_lines = extracted[:]
-    index_content = "\n".join(index_lines) + ("\n" if index_lines else "")
+    index_content = "\n".join(extracted) + ("\n" if extracted else "")
     _write_text(ai_offline_dir / "INDEX.txt", index_content)
 
     provenance = textwrap.dedent(
@@ -265,10 +278,18 @@ def build_bundle(
 
     if do_zip:
         zip_name = f"AI_OFFLINE_{sha}_{lot}.zip"
-        zip_path = bundle_root / zip_name
+        zip_path = out_dir / zip_name
         if zip_path.exists():
             zip_path.unlink()
-        _zip_dir(ai_offline_dir, zip_path)
+
+        try:
+            _zip_dir(ai_offline_dir, zip_path)
+        finally:
+            # Nettoie le staging temporaire (évite de laisser les fichiers constitutifs du zip).
+            tmp_root = ai_offline_dir.parent
+            if tmp_root.exists() and tmp_root.is_dir() and tmp_root.name.startswith("AI_OFFLINE_BUILD_"):
+                shutil.rmtree(tmp_root, ignore_errors=True)
+
         return zip_path
 
     return ai_offline_dir
@@ -295,12 +316,18 @@ def main() -> int:
     parser.add_argument(
         "--out-dir",
         default=".",
-        help="Répertoire de sortie (par défaut: .).",
+        help=(
+            "Répertoire de sortie.\n"
+            "- Mode ZIP (défaut) : le zip est écrit dans ce répertoire.\n"
+            "- Mode --no-zip : le dossier AI_OFFLINE est écrit dans ce répertoire.\n"
+            "Astuce : passe --out-dir AI_OFFLINE pour obtenir AI_OFFLINE/AI_OFFLINE_<sha>_<lot>.zip "
+            "sans créer AI_OFFLINE/AI_OFFLINE/."
+        ),
     )
     parser.add_argument(
         "--no-zip",
         action="store_true",
-        help="Ne pas zipper (garde seulement AI_OFFLINE/).",
+        help="Ne pas zipper (garde le dossier AI_OFFLINE sur disque).",
     )
 
     args = parser.parse_args()
@@ -312,6 +339,9 @@ def main() -> int:
         return 2
 
     out_dir = (repo_root / args.out_dir).resolve()
+    if out_dir.exists() and not out_dir.is_dir():
+        _eprint(f"--out-dir n'est pas un dossier : {out_dir}")
+        return 2
 
     try:
         result_path = build_bundle(
