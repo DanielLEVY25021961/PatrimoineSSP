@@ -23,10 +23,13 @@
 #
 # 3) Lire ensuite docs/ai/perimetre.yaml au même SHA
 #
-# 4) Reconstruire toutes les URLs Raw SHA :
+# 4) Résoudre le périmètre de lecture à partir de perimetre.yaml
+#    selon le mode déclaré par ce MANIFEST
+#
+# 5) Reconstruire toutes les URLs Raw SHA :
 #    https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
 #
-# 5) Lire les fichiers nécessaires AVANT toute analyse ou code
+# 6) Lire les fichiers nécessaires AVANT toute analyse ou code
 #
 # INTERDICTIONS :
 # - Ne jamais utiliser refs/heads comme source de vérité
@@ -35,12 +38,11 @@
 #
 # INTEGRATION CONTRAT_IA.md :
 # Ce MANIFEST est la racine opérationnelle décrite dans
-# docs/ai/CONTRAT_IA.md (sections Source de vérité, SHA unique,
-# Méthode de lecture).
+# docs/ai/CONTRAT_IA.md.
 #
 # *********************************************************************
 
-version: 1
+version: 2
 
 repo:
   owner: DanielLEVY25021961
@@ -50,9 +52,17 @@ ai:
   contrat: docs/ai/CONTRAT_IA.md
   perimetre: docs/ai/perimetre.yaml
 
+tools:
+  resolver: tools/ai/perimetre_resolver.py
+  pack_reading_list: tools/ai/pack_reading_list.py
+  resolve_raw_sha: tools/ai/resolve_raw_sha.py
+  make_offline_bundle: tools/ai/make_offline_bundle.py
+
 workflow:
   mode: sha_only
   url_mode: raw_sha_only
+  discovery_mode: hybrid
+  perimetre_format: paths_and_roots
   discover_from_manifest: true
   require_pre_read: true
   forbid_branch_urls_as_truth: true
@@ -67,3 +77,4 @@ garantie:
   reproducible: true
   memory_independent: true
   deterministic: true
+  pack_resolution_shared: true
