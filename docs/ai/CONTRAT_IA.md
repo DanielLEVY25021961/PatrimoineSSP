@@ -104,16 +104,48 @@ Lecture autorisée exclusivement :
 
 Sacralisation RT-LECTURE-GITHUB-02 :
 
-La lecture GitHub est exclusivement RT-LECTURE-GITHUB-02 (Raw SHA + téléchargement binaire + lecture locale). Toute autre forme de lecture (rendu texte, HTML, extraction) est interdite et doit déclencher “incident de lecture” puis bascule OFFLINE si échec persistant.
+La lecture autorisée sur le dépôt GitHub ou dans le Bundle est exclusivement :
+
+- URL Raw au SHA : `https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}`
+- SHA unique fourni par l’Utilisateur
+- téléchargement binaire du fichier
+- lecture locale du fichier téléchargé (octets bruts)
+- vérification stricte des génériques
+
+Les génériques doivent impérativement être correctement lus.  
+Aucun Raw Type ne doit être toléré comme effet d’une mauvaise lecture.
+
+Ordre préférentiel des techniques de lecture GitHub@SHA :
+
+1. lecture par **container**
+2. si la lecture par **container** ne fonctionne pas, bascule automatique vers le **web tool**
+
+Si une technique de lecture échoue, l’IA doit changer d’elle-même de technique,
+sans attendre une nouvelle instruction de l’Utilisateur, tout en conservant
+strictement la même méthode contractuelle de lecture :
+
+- URL Raw au SHA
+- téléchargement binaire
+- lecture locale des octets bruts
+- vérification des génériques
+
+Toute autre forme de lecture (rendu texte, HTML, extraction non binaire,
+lecture indirecte d’une page GitHub) est interdite et doit être considérée
+comme non contractuelle.
 
 Règles :
 
 - Relancer automatiquement en cas d’échec (max 3 tentatives)
 - Toute lecture doit être traçable
 - Interdiction d’utiliser des contenus mémorisés non vérifiés
+- Si les génériques ne peuvent pas être lus correctement : demander confirmation
+- Aucune mémorisation, aucune consolidation de baseline, aucune analyse,
+  aucun diagnostic, aucun code ne doivent être produits tant que la lecture
+  conforme à RT-LECTURE-GITHUB-02 n’a pas réussi
 
 En cas d’échec persistant :
 
+➡️ Signaler explicitement **"incident de lecture"**  
 ➡️ Passer en MODE OFFLINE
 
 ---
@@ -805,19 +837,21 @@ Objectif : éviter tout faux “incident de lecture” dû à l’échec d’un 
 
 Règle prioritaire invariante :
 
-- Lors d’une lecture GitHub@SHA (RT-LECTURE-GITHUB-02), l’IA DOIT sélectionner un canal technique de téléchargement binaire (octets bruts) et, en cas d’échec, DOIT basculer sur un second canal technique distinct avant de conclure à un “incident de lecture”.
-- Les deux canaux doivent produire un **téléchargement binaire** (octets bruts) depuis l’URL Raw@SHA. Exemples de canaux distincts (non exhaustif) : client HTTP “A” / client HTTP “B” (ex. `curl` et un autre mécanisme de téléchargement binaire).
-- L’IA DOIT effectuer au maximum **3 tentatives au total**, en garantissant **au moins une tentative sur chacun des deux canaux**.
+- Lors d’une lecture GitHub@SHA (RT-LECTURE-GITHUB-02), l’IA DOIT tenter en priorité la lecture par **container**.
+- Si la lecture par **container** échoue, l’IA DOIT basculer d’elle-même sur la lecture par **web tool**, sans attendre une nouvelle instruction de l’Utilisateur.
+- Les deux techniques doivent strictement respecter la même méthode contractuelle : URL Raw@SHA + téléchargement binaire (octets bruts) + lecture locale du fichier téléchargé + vérification stricte des génériques (aucun Raw Type).
+- L’IA DOIT effectuer au maximum **3 tentatives au total**, en garantissant **au moins une tentative par container** et, si nécessaire, **au moins une tentative par web tool** avant de conclure à un “incident de lecture”.
 - L’IA NE DOIT déclarer **"incident de lecture"** que si :
-  - les deux canaux ont été testés,
+  - la technique **container** a été tentée,
+  - la technique **web tool** a été tentée si la lecture par **container** n’a pas réussi,
   - et les tentatives ont échoué,
-  - et que, pour chacune des tentatives, tout contenu manifestement invalide (HTML d’erreur, contenu vide, tronqué, incohérent) est traité comme un échec de tentative ; l’autre canal doit donc être testé au moins une fois avant de conclure à un “incident de lecture”.
+  - et que, pour chacune des tentatives, tout contenu manifestement invalide (HTML d’erreur, contenu vide, tronqué, incohérent) est traité comme un échec de tentative.
 
-En cas de succès (sur l’un des canaux) :
+En cas de succès (par **container** ou par **web tool**) :
 
 - L’IA poursuit la procédure RT-LECTURE-GITHUB-02 : lecture locale du fichier téléchargé + vérification de cohérence + vérification stricte des génériques (aucun Raw Type).
 - Si les génériques sont illisibles/douteux : l’IA DOIT demander confirmation avant toute conclusion.
 
 Fallback :
 
-- Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) n’est autorisé qu’après un **incident de lecture** établi selon la présente règle (deux canaux testés, ≤3 tentatives).
+- Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) n’est autorisé qu’après un **incident de lecture** établi selon la présente règle (container tenté, web tool tenté si nécessaire, ≤3 tentatives).

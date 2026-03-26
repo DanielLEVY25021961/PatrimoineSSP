@@ -6,7 +6,11 @@ tools/ai/make_offline_bundle.py
 
 But :
 - Construire un bundle OFFLINE reproductible au SHA donné, sans dépendre de GitHub
-  dans le chat. Le bundle contient les fichiers du périmètre, + INDEX + CHECKSUMS.
+  dans le chat.
+- Le bundle contient :
+  * les fichiers du périmètre,
+  * les fichiers des packages DTO produittype demandés,
+  * INDEX + CHECKSUMS + PROVENANCE.
 
 Entrées :
 - --sha : SHA unique (obligatoire)
@@ -25,6 +29,12 @@ Sorties :
 Stratégie d’extraction :
 - Priorité 1 : git show <sha>:<path> (si git dispo et sha résolvable)
 - Priorité 2 : copie depuis working tree (si fichier existe localement)
+
+Collecte des fichiers :
+- Fichiers du périmètre issus de docs/ai/perimetre.yaml
+- Fichiers additionnels issus récursivement des packages DTO :
+  * src/main/java/levy/daniel/application/model/dto/produittype
+  * src/test/java/levy/daniel/application/model/dto/produittype
 
 Contrats :
 - Génère AI_OFFLINE/INDEX.txt (liste triée des paths)
@@ -46,6 +56,20 @@ import textwrap
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+# ----------------------------------------------------------------------
+# Packages DTO additionnels à embarquer automatiquement dans le bundle.
+# Les chemins sont exprimés relativement à la racine du dépôt, afin de
+# rester portables et compatibles avec _safe_relpath(...).
+#
+# Correspondance avec les chemins Windows demandés :
+# - D:\Donnees\eclipse\eclipseworkspace\patrimoineSSP\src\main\java\...
+# - D:\Donnees\eclipse\eclipseworkspace\patrimoineSSP\src\test\java\...
+# ----------------------------------------------------------------------
+EXTRA_PACKAGE_ROOTS: Tuple[str, str] = (
+    "src/main/java/levy/daniel/application/model/dto/produittype",
+    "src/test/java/levy/daniel/application/model/dto/produittype",
+)
 
 
 def _eprint(msg: str) -> None:
@@ -162,6 +186,106 @@ def _get_pack_paths(perimetre: Dict, lot: str) -> List[str]:
     return [str(p) for p in paths]
 
 
+def _decode_git_output(output: bytes) -> str:
+    """
+    Décode la sortie git en UTF-8 strict, pour conserver un comportement
+    explicite en cas de nom de fichier inattendu.
+    """
+    return output.decode("utf-8")
+
+
+def _git_list_files_under(repo_root: Path, sha: str, rel_dir: str) -> List[str]:
+    """
+    Liste récursivement les fichiers présents sous un répertoire donné
+    au SHA fourni, en utilisant git ls-tree.
+
+    Retourne une liste vide si git échoue ou si le répertoire ne contient
+    aucun fichier à ce SHA.
+    """
+    code, out, _ = _run_git(
+        ["ls-tree", "-r", "--name-only", sha, "--", rel_dir],
+        repo_root,
+    )
+    if code != 0:
+        return []
+
+    decoded = _decode_git_output(out)
+    result: List[str] = []
+
+    for line in decoded.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        result.append(_safe_relpath(stripped))
+
+    return sorted(set(result))
+
+
+def _list_local_files_under(repo_root: Path, rel_dir: str) -> List[str]:
+    """
+    Liste récursivement les fichiers présents localement sous un
+    répertoire relatif au repo.
+
+    Retourne une liste vide si le répertoire n'existe pas.
+    """
+    base_dir = repo_root / rel_dir
+    if not base_dir.exists() or not base_dir.is_dir():
+        return []
+
+    result: List[str] = []
+    for file_path in sorted(base_dir.rglob("*")):
+        if file_path.is_file():
+            rel_path = file_path.relative_to(repo_root).as_posix()
+            result.append(_safe_relpath(rel_path))
+
+    return sorted(set(result))
+
+
+def _get_additional_dto_paths(
+    repo_root: Path,
+    sha: str,
+    git_ok: bool,
+) -> Tuple[List[str], List[str]]:
+    """
+    Récupère récursivement les fichiers des packages DTO additionnels.
+
+    Priorité :
+    1) lecture au SHA via git ls-tree
+    2) fallback sur le working tree local
+
+    Retourne :
+    - la liste des fichiers additionnels trouvés
+    - la liste des racines de packages restées introuvables
+    """
+    additional_paths: List[str] = []
+    missing_roots: List[str] = []
+
+    for rel_root in EXTRA_PACKAGE_ROOTS:
+        normalized_root = _safe_relpath(rel_root)
+
+        root_files: List[str] = []
+        if git_ok:
+            root_files = _git_list_files_under(
+                repo_root=repo_root,
+                sha=sha,
+                rel_dir=normalized_root,
+            )
+
+        if not root_files:
+            root_files = _list_local_files_under(
+                repo_root=repo_root,
+                rel_dir=normalized_root,
+            )
+
+        if not root_files:
+            missing_roots.append(normalized_root)
+            continue
+
+        additional_paths.extend(root_files)
+
+    return sorted(set(additional_paths)), sorted(set(missing_roots))
+
+
 def _zip_dir(src_dir: Path, zip_path: Path) -> None:
     zip_path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(str(zip_path), "w", compression=zipfile.ZIP_DEFLATED) as z:
@@ -203,12 +327,6 @@ def build_bundle(
     perimetre = _load_perimetre_yaml(perimetre_path)
     raw_paths = _get_pack_paths(perimetre, lot)
 
-    normalized_paths: List[str] = []
-    for p in raw_paths:
-        normalized_paths.append(_safe_relpath(p))
-
-    normalized_paths = sorted(set(normalized_paths))
-
     out_dir.mkdir(parents=True, exist_ok=True)
 
     ai_offline_dir = _compute_ai_offline_dir(out_dir=out_dir, do_zip=do_zip)
@@ -220,7 +338,22 @@ def build_bundle(
 
     git_ok = _git_is_available(repo_root) and _git_has_object(repo_root, sha)
 
-    missing: List[str] = []
+    additional_paths, missing_roots = _get_additional_dto_paths(
+        repo_root=repo_root,
+        sha=sha,
+        git_ok=git_ok,
+    )
+
+    all_raw_paths: List[str] = list(raw_paths)
+    all_raw_paths.extend(additional_paths)
+
+    normalized_paths: List[str] = []
+    for path_str in all_raw_paths:
+        normalized_paths.append(_safe_relpath(path_str))
+
+    normalized_paths = sorted(set(normalized_paths))
+
+    missing: List[str] = list(missing_roots)
     extracted: List[str] = []
 
     for rel_path in normalized_paths:
@@ -243,8 +376,15 @@ def build_bundle(
         target.write_bytes(data)
         extracted.append(rel_path)
 
+    extracted = sorted(set(extracted))
+    missing = sorted(set(missing))
+
     index_content = "\n".join(extracted) + ("\n" if extracted else "")
     _write_text(ai_offline_dir / "INDEX.txt", index_content)
+
+    additional_roots_yaml = "\n".join(
+        [f'  - "{root}"' for root in EXTRA_PACKAGE_ROOTS]
+    )
 
     provenance = textwrap.dedent(
         f"""\
@@ -258,6 +398,9 @@ def build_bundle(
         repo_root: "{repo_root.resolve().as_posix()}"
         perimetre_path: "{perimetre_path.as_posix()}"
         git_used: {str(git_ok).lower()}
+        additional_package_roots:
+        {additional_roots_yaml}
+        additional_file_count: {len(additional_paths)}
         missing_count: {len(missing)}
         """
     )
@@ -287,7 +430,11 @@ def build_bundle(
         finally:
             # Nettoie le staging temporaire (évite de laisser les fichiers constitutifs du zip).
             tmp_root = ai_offline_dir.parent
-            if tmp_root.exists() and tmp_root.is_dir() and tmp_root.name.startswith("AI_OFFLINE_BUILD_"):
+            if (
+                tmp_root.exists()
+                and tmp_root.is_dir()
+                and tmp_root.name.startswith("AI_OFFLINE_BUILD_")
+            ):
                 shutil.rmtree(tmp_root, ignore_errors=True)
 
         return zip_path
