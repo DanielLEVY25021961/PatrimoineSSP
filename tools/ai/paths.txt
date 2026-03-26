@@ -1,8 +1,16 @@
-# tools/ai/paths.txt (exemple)
-# Vous pouvez y mettre des paths OU des URLs raw refs/heads OU raw SHA.
+# tools/ai/paths.txt
+# Bootstrap minimal des fichiers IA et contrats pivots.
+# Ce fichier ne doit PAS lister tout le code métier du projet.
+# La découverte du code métier doit passer par docs/ai/perimetre.yaml.
+# Utilisation typique :
+#   python tools/ai/resolve_raw_sha.py --sha <SHA> --input tools/ai/paths.txt
 
-
-
-src/main/java/levy/daniel/application/model/services/produittype/gateway/TypeProduitGatewayIService.java
-https://raw.githubusercontent.com/DanielLEVY25021961/PatrimoineSSP/refs/heads/feature/gateway/src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAService.java
-https://raw.githubusercontent.com/DanielLEVY25021961/PatrimoineSSP/refs/heads/feature/gateway/src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java
+docs/ai/MANIFEST_IA.yaml
+docs/ai/CONTRAT_IA.md
+docs/ai/perimetre.yaml
+tools/ai/perimetre_resolver.py
+tools/ai/pack_reading_list.py
+tools/ai/paths.txt
+tools/ai/resolve_raw_sha.py
+tools/ai/make_offline_bundle.py
+docs/contrats/gateway/TypeProduitGatewayJPAService.md
