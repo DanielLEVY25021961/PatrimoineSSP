@@ -1,7 +1,6 @@
 package levy.daniel.application.model.dto.produittype;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,13 +40,13 @@ public final class ConvertisseurMetierToOutputDTOSousTypeProduit {
 	 */
 	private ConvertisseurMetierToOutputDTOSousTypeProduit() {
 		super();
-	}
+	} // __________________________________________________________________
+	
+	
 
-	
-	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Convertit un {@link SousTypeProduit} 
+	 * <p style="font-weight:bold;">Convertit un {@link SousTypeProduit}
 	 * métier en
 	 * {@link SousTypeProduitDTO.OutputDTO}.</p>
 	 * </div>
@@ -74,14 +73,14 @@ public final class ConvertisseurMetierToOutputDTOSousTypeProduit {
 				pSousTypeProduit.getSousTypeProduit(),
 				produits
 		);
-	}
-
-
+	} // __________________________________________________________________
 	
+	
+
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Convertit un List&lt;{@link SousTypeProduit}&gt; 
+	 * Convertit un List&lt;{@link SousTypeProduit}&gt;
 	 * métier en
 	 * List&lt;{@link SousTypeProduitDTO.OutputDTO}&gt;.
 	 * </p>
@@ -93,41 +92,42 @@ public final class ConvertisseurMetierToOutputDTOSousTypeProduit {
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pList : List&lt;SousTypeProduit&gt; : 
+	 * @param pList : List&lt;SousTypeProduit&gt; :
 	 * Liste à convertir.
-	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; : 
+	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; :
 	 * Liste convertie.
 	 */
 	public static List<SousTypeProduitDTO.OutputDTO> convertList(
 			final List<SousTypeProduit> pList) {
-		
+
 		/* return null si pList == null. */
 		if (pList == null) {
 			return null;
 		}
-		
+
 		/* utilise un LinkedHashSet pour garantir l'unicité. */
-		final Set<SousTypeProduitDTO.OutputDTO> uniques 
+		final Set<SousTypeProduitDTO.OutputDTO> uniques
 			= new LinkedHashSet<SousTypeProduitDTO.OutputDTO>();
-		
+
 		for (final SousTypeProduit tp : pList) {
-			
+
 			if (tp == null) {
 				continue;
 			}
-			
+
 			/* convertit chaque objet métier en DTO. */
 			final SousTypeProduitDTO.OutputDTO dto = convert(tp);
-			
-			uniques.add(dto);			
+
+			uniques.add(dto);
 		}
-		
+
 		/* retourne une Liste convertie. */
 		return new ArrayList<SousTypeProduitDTO.OutputDTO>(uniques);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
-	
-	
 	/**
 	 * <div>
 	 * <p>Extrait le libellé du TypeProduit parent.</p>
@@ -152,32 +152,36 @@ public final class ConvertisseurMetierToOutputDTOSousTypeProduit {
 		}
 
 		return tp.getTypeProduit();
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
-	
-	
 	/**
 	 * <div>
 	 * <p>Extrait la liste des libellés des Produits petits-enfants.</p>
+	 *
+	 * <p>La liste retournée est toujours non {@code null} et mutable.</p>
 	 *
 	 * <p>Lazy-safe : n'accède qu'aux getters publics.</p>
 	 * </div>
 	 *
 	 * @param pSousTypeProduit : SousTypeProduit
-	 * @return List&lt;String&gt; jamais {@code null}
+	 * @return List&lt;String&gt; jamais {@code null} et toujours mutable
 	 */
 	private static List<String> extractProduits(
 			final SousTypeProduitI pSousTypeProduit) {
 
+		/* Toujours retourner une liste homogène, mutable et non nulle. */
+		final List<String> result = new ArrayList<String>();
+
 		if (pSousTypeProduit == null) {
-			return Collections.emptyList();
+			return result;
 		}
 
 		if (pSousTypeProduit.getProduits() == null) {
-			return Collections.emptyList();
+			return result;
 		}
-
-		final List<String> result = new ArrayList<>();
 
 		for (final ProduitI produit : pSousTypeProduit.getProduits()) {
 			if (produit != null && produit.getProduit() != null) {
@@ -186,5 +190,9 @@ public final class ConvertisseurMetierToOutputDTOSousTypeProduit {
 		}
 
 		return result;
-	}
-}
+		
+	} // __________________________________________________________________
+	
+	
+	
+} // FIN DE LA CLASSE ConvertisseurMetierToOutputDTOSousTypeProduit.-------

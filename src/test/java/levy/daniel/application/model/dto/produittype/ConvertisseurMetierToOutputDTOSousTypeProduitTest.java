@@ -1,6 +1,7 @@
 package levy.daniel.application.model.dto.produittype;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ import levy.daniel.application.model.metier.produittype.TypeProduit;
  * <li>extraction du TypeProduit parent (lazy-safe)</li>
  * <li>extraction des Produits (libellés) petits-enfants</li>
  * <li>tolérance aux listes null / éléments null</li>
+ * <li>homogénéité de mutabilité de la liste des produits du DTO</li>
  * </ul>
  * </div>
  *
@@ -64,6 +66,9 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 	/** "sweat-shirt pour homme" */
 	public static final String SWEAT_SHIRT_HOMME = "sweat-shirt pour homme";
 
+	/** "blouson pour homme" */
+	public static final String BLOUSON_HOMME = "blouson pour homme";
+
 	/** "Le DTO retourné doit être null." */
 	public static final String MSG_DTO_NULL = "Le DTO retourné doit être null.";
 
@@ -88,6 +93,8 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 	/** "La liste des produits doit être vide quand la liste métier est null." */
 	public static final String MSG_PRODUITS_VIDE = "La liste des produits doit être vide quand la liste métier est null.";
 
+	/** "La liste des produits du DTO doit rester mutable." */
+	public static final String MSG_PRODUITS_MUTABLE = "La liste des produits du DTO doit rester mutable.";
 
 	// *************************METHODES************************************/
 
@@ -102,9 +109,12 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 		super();
 	} // Fin du CONSTRUCTEUR D'ARITE NULLE.________________________________
 
-
+	
+	
 	/* ============================== TESTS ============================== */
 
+	
+	
 	/**
 	 * <div>
 	 * <p>
@@ -123,12 +133,20 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 		assertThat(dto)
 			.as(MSG_DTO_NULL)
 			.isNull();
-	}
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
 	 * <p>
-	 * Vérifie la conversion nominale : id, typeProduit parent, sousTypeProduit et produits.
+	 * Vérifie la conversion nominale : id, typeProduit parent,
+	 * sousTypeProduit et produits.
+	 * </p>
+	 *
+	 * <p>
+	 * Verrouille également la mutabilité homogène de la liste de produits
+	 * du DTO en sortie.
 	 * </p>
 	 * </div>
 	 */
@@ -142,7 +160,8 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 
 		// WHEN
 		final SousTypeProduitDTO.OutputDTO dto =
-				ConvertisseurMetierToOutputDTOSousTypeProduit.convert(scenario.stpHomme);
+				ConvertisseurMetierToOutputDTOSousTypeProduit
+					.convert(scenario.stpHomme);
 
 		// THEN
 		assertThat(dto)
@@ -167,24 +186,54 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 
 		assertThat(dto.getProduits())
 			.as(MSG_PRODUITS_CONTENU)
-			.containsExactly(CHEMISES_MANCHES_LONGUES_HOMME, TEE_SHIRT_HOMME, SWEAT_SHIRT_HOMME);
-	}
+			.containsExactly(
+					CHEMISES_MANCHES_LONGUES_HOMME,
+					TEE_SHIRT_HOMME,
+					SWEAT_SHIRT_HOMME);
+
+		/*
+		 * Verrouille le point critique :
+		 * la liste exposée par le DTO doit rester mutable
+		 * même dans le cas nominal.
+		 */
+		assertThatCode(() -> dto.getProduits().add(BLOUSON_HOMME))
+			.as(MSG_PRODUITS_MUTABLE)
+			.doesNotThrowAnyException();
+
+		assertThat(dto.getProduits())
+			.as(MSG_PRODUITS_CONTENU)
+			.containsExactly(
+					CHEMISES_MANCHES_LONGUES_HOMME,
+					TEE_SHIRT_HOMME,
+					SWEAT_SHIRT_HOMME,
+					BLOUSON_HOMME);
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
 	 * <p>
-	 * Vérifie la tolérance quand la liste des produits est null : le DTO retourne une liste vide.
+	 * Vérifie la tolérance quand la liste des produits est null :
+	 * le DTO retourne une liste vide.
+	 * </p>
+	 *
+	 * <p>
+	 * Verrouille également l'homogénéité de mutabilité :
+	 * même dans ce cas, la liste retournée doit rester mutable.
 	 * </p>
 	 * </div>
 	 */
 	@Tag(TAG_METIER_TO_OUTPUT_DTO)
-	@DisplayName("Tolérance : produits null -> liste vide")
+	@DisplayName("Tolérance : produits null -> liste vide et mutable")
 	@Test
 	public void testConvertProduitsNull() {
 
 		// GIVEN
 		final TypeProduit tp = new TypeProduit(VETEMENT);
-		final SousTypeProduit stp = new SousTypeProduit(VETEMENT_POUR_HOMME, tp, null);
+		final SousTypeProduit stp 
+			= new SousTypeProduit(VETEMENT_POUR_HOMME, tp, null);
 
 		// WHEN
 		final SousTypeProduitDTO.OutputDTO dto =
@@ -199,7 +248,23 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 			.as(MSG_PRODUITS_VIDE)
 			.isNotNull()
 			.isEmpty();
-	}
+
+		/*
+		 * Verrouille le point critique :
+		 * la liste vide produite par le convertisseur
+		 * doit rester mutable.
+		 */
+		assertThatCode(() -> dto.getProduits().add(CHEMISES_MANCHES_LONGUES_HOMME))
+			.as(MSG_PRODUITS_MUTABLE)
+			.doesNotThrowAnyException();
+
+		assertThat(dto.getProduits())
+			.as(MSG_PRODUITS_CONTENU)
+			.containsExactly(CHEMISES_MANCHES_LONGUES_HOMME);
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -216,11 +281,16 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 		// GIVEN
 		final TypeProduit tp = new TypeProduit(VETEMENT);
 
-		// Créer une liste MODIFIABLE de ProduitI, puis la passer au constructeur.
+		/*
+		 * Créer une liste MODIFIABLE de ProduitI, puis la passer au constructeur.
+		 */
 		final List<ProduitI> produits = new ArrayList<ProduitI>();
 		final SousTypeProduit stp = new SousTypeProduit(VETEMENT_POUR_HOMME, tp, produits);
 
-		// Alimenter la liste via la référence PRODUITS (pas via stp.getProduits()).
+		/*
+		 * Alimenter la liste via la référence PRODUITS
+		 * (pas via stp.getProduits()).
+		 */
 		produits.add(null);
 		produits.add(new Produit(CHEMISES_MANCHES_LONGUES_HOMME, stp));
 		produits.add(new Produit(null, stp));
@@ -237,11 +307,15 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 
 		assertThat(dto.getProduits())
 			.as(MSG_PRODUITS_CONTENU)
-			.containsExactly(CHEMISES_MANCHES_LONGUES_HOMME, TEE_SHIRT_HOMME);
-	}
+			.containsExactly(
+					CHEMISES_MANCHES_LONGUES_HOMME,
+					TEE_SHIRT_HOMME);
+		
+	} // __________________________________________________________________
 
-
-	/* ============================== SCENARIO ============================== */
+	
+	
+	/* ========================= SCENARIO ============================ */
 
 	/**
 	 * <div>
@@ -260,9 +334,10 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 		/** ScenarioMetier. */
 		private ScenarioMetier(final SousTypeProduit pStp) {
 			this.stpHomme = pStp;
-		}
-
+		} // ______________________________________________________________
 		
+		
+
 		/**
 		 * <div>
 		 * <p>crée le scénario.</p>
@@ -274,13 +349,19 @@ public class ConvertisseurMetierToOutputDTOSousTypeProduitTest {
 
 			final TypeProduit tp = new TypeProduit(VETEMENT);
 			final List<ProduitI> produits = new ArrayList<ProduitI>();
-			final SousTypeProduit stp = new SousTypeProduit(VETEMENT_POUR_HOMME, tp, produits);
+			final SousTypeProduit stp =
+					new SousTypeProduit(VETEMENT_POUR_HOMME, tp, produits);
 
 			produits.add(new Produit(CHEMISES_MANCHES_LONGUES_HOMME, stp));
 			produits.add(new Produit(TEE_SHIRT_HOMME, stp));
 			produits.add(new Produit(SWEAT_SHIRT_HOMME, stp));
 
 			return new ScenarioMetier(stp);
-		}
-	}
+			
+		} // ______________________________________________________________
+		
+		
+	} // __________________________________________________________________
+	
+	
 }

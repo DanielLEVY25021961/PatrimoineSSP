@@ -454,20 +454,29 @@ public final class ProduitDTO {
 
 		// ********************METHODES*****************************/
 
+		
+		
 		/**
-		* {@inheritDoc}
-		*/
+		 * {@inheritDoc}
+		 */
 		@Override
 		public int hashCode() {
 
 			/* ID. */
 			final Long id = this.getIdProduit();
 
+			/*
+			 * Priorité à l'identifiant technique
+			 * lorsqu'il est présent.
+			 */
 			if (id != null) {
 				return Objects.hash(id);
 			}
 
-			/* Fallback “business key” vers le métier si pas d'ID. */
+			/*
+			 * Fallback sur la clé métier
+			 * uniquement si l'ID est absent.
+			 */
 			final String p = this.getProduit();
 			final String stp = this.getSousTypeProduit();
 			final String tp = this.getTypeProduit();
@@ -476,9 +485,10 @@ public final class ProduitDTO {
 		}
 
 
+		
 		/**
-		* {@inheritDoc}
-		*/
+		 * {@inheritDoc}
+		 */
 		@Override
 		public boolean equals(final Object pObject) {
 
@@ -494,19 +504,38 @@ public final class ProduitDTO {
 			final Long id = this.getIdProduit();
 			final Long otherId = other.getIdProduit();
 
+			/*
+			 * Si les deux IDs sont présents,
+			 * l'égalité repose exclusivement sur l'ID technique.
+			 */
 			if ((id != null) && (otherId != null)) {
 				return Objects.equals(id, otherId);
 			}
 
-			/* Fallback “business key” vers le métier si pas d'ID. */
+			/*
+			 * Si un seul des deux IDs est présent,
+			 * les objets doivent être considérés comme différents
+			 * pour rester cohérents avec hashCode().
+			 */
+			if ((id == null) ^ (otherId == null)) {
+				return false;
+			}
+
+			/*
+			 * Fallback sur la clé métier
+			 * uniquement si les deux IDs sont absents.
+			 */
 			return Objects.equals(this.getProduit(), other.getProduit())
-					&& Objects.equals(this.getSousTypeProduit()
-							, other.getSousTypeProduit())
-					&& Objects.equals(this.getTypeProduit()
-							, other.getTypeProduit());
+					&& Objects.equals(
+							this.getSousTypeProduit(),
+							other.getSousTypeProduit())
+					&& Objects.equals(
+							this.getTypeProduit(),
+							other.getTypeProduit());
 		}
 
-
+		
+		
 		/**
 		* {@inheritDoc}
 		*/

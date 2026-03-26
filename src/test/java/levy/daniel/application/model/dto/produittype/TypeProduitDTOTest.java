@@ -23,11 +23,20 @@ import org.junit.jupiter.api.Test;
  * 
  * <p>
  * Cette classe teste la classe java pur DTO : 
- * <span style="font-weight:bold;">TypeProduitDTO</span> 
+ * <span style="font-weight:bold;">TypeProduitDTO</span>.
  * </p>
  * 
- * </div>
+ * <p>
+ * Elle vérifie :
+ * </p>
+ * <ul>
+ * <li>la structure utilitaire de la classe englobante ;</li>
+ * <li>le comportement de <code>InputDTO</code> ;</li>
+ * <li>le comportement de <code>OutputDTO</code> ;</li>
+ * <li>la cohérence de <code>equals/hashCode/toString</code>.</li>
+ * </ul>
  * 
+ * </div>
  *
  * @author Daniel Lévy
  * @version 1.0
@@ -37,30 +46,45 @@ import org.junit.jupiter.api.Test;
 public class TypeProduitDTOTest {
 
 	// ************************ATTRIBUTS************************************/
-	
+
 	/**
 	 * "Vetement"
 	 */
 	public static final String VETEMENT = "Vetement";
-	
+
 	/**
 	 * "Peche"
 	 */
 	public static final String PECHE = "Peche";
-	
+
 	/**
 	 * "Outillage"
 	 */
 	public static final String OUTILLAGE = "Outillage";
-	
+
+	/**
+	 * "Homme"
+	 */
+	public static final String HOMME = "Homme";
+
+	/**
+	 * "Femme"
+	 */
+	public static final String FEMME = "Femme";
+
+	/**
+	 * "Enfant"
+	 */
+	public static final String ENFANT = "Enfant";
+
 	/* ------------------------------------------------------------------ */
 
 	/**
 	 * <style>p, ul, li {line-height : 1em;}</style>
 	 * <div>
-	 * <p>LOG : Logger : </p>
+	 * <p>LOG : Logger :</p>
 	 * <p>Logger pour Log4j (utilisant org.apache.logging.log4j).</p>
-	 * <p>dépendances : </p>
+	 * <p>dépendances :</p>
 	 * <ul>
 	 * <li><code>org.apache.logging.log4j.Logger</code></li>
 	 * <li><code>org.apache.logging.log4j.LogManager</code></li>
@@ -71,10 +95,10 @@ public class TypeProduitDTOTest {
 			.getLogger(TypeProduitDTOTest.class);
 
 	// *************************METHODES************************************/
-	
+
 	/**
 	 * <div>
-	 * <p>constructeur d'arité nulle par défaut.</p>
+	 * <p>Constructeur d'arité nulle par défaut.</p>
 	 * </div>
 	 */
 	public TypeProduitDTOTest() {
@@ -84,9 +108,17 @@ public class TypeProduitDTOTest {
 	
 	
 	/**
-	 *  .
+	 * <div>
+	 * <p>Vérifie que <code>TypeProduitDTO</code> est bien une classe
+	 * utilitaire :</p>
+	 * <ul>
+	 * <li>la classe est <code>final</code> ;</li>
+	 * <li>elle expose un unique constructeur ;</li>
+	 * <li>ce constructeur est <code>private</code>.</li>
+	 * </ul>
+	 * </div>
 	 *
-	 * @throws Exception
+	 * @throws Exception en cas d'échec de réflexion.
 	 */
 	@Test
 	@DisplayName("TypeProduitDTO : classe utilitaire final + constructeur privé")
@@ -101,16 +133,29 @@ public class TypeProduitDTOTest {
 		final Constructor<?> ctor = ctors[0];
 		assertThat(Modifier.isPrivate(ctor.getModifiers())).isTrue();
 
+		/* 
+		 * Vérifie qu'il est toujours possible d'instancier
+		 * la classe par réflexion pour couvrir le constructeur privé.
+		 */
 		ctor.setAccessible(true); // NOPMD by danyl on 17/01/2026 21:41
 		final Object instance = ctor.newInstance();
 		assertThat(instance).isNotNull();
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
-	
-	
 	/**
-	 *  .
-	 *
+	 * <div>
+	 * <p>Vérifie le comportement nominal de <code>InputDTO</code> :</p>
+	 * <ul>
+	 * <li>constructeur par défaut ;</li>
+	 * <li>constructeur complet ;</li>
+	 * <li>getter / setter ;</li>
+	 * <li>cohérence de <code>equals/hashCode</code> ;</li>
+	 * <li>présence des informations utiles dans <code>toString()</code>.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Test
 	@DisplayName("TypeProduitDTO.InputDTO : constructeurs + getters/setters + equals/hashCode/toString")
@@ -137,26 +182,39 @@ public class TypeProduitDTOTest {
 		final String toString = dto1.toString();
 		assertThat(toString).contains("InputDTO");
 		assertThat(toString).contains(PECHE);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
-	
-	
 	/**
-	 *  .
-	 *
+	 * <div>
+	 * <p>Vérifie le comportement nominal de <code>OutputDTO</code> :</p>
+	 * <ul>
+	 * <li>priorité de l'ID dans <code>equals/hashCode</code> ;</li>
+	 * <li>fallback sur <code>typeProduit</code> quand les deux IDs sont nuls ;</li>
+	 * <li>inégalité quand les deux objets n'ont pas le même libellé métier ;</li>
+	 * <li>mutabilité via les setters ;</li>
+	 * <li>présence des informations utiles dans <code>toString()</code>.</li>
+	 * </ul>
+	 * </div>
 	 */
 	@Test
 	@DisplayName("TypeProduitDTO.OutputDTO : equals/hashCode ID-first puis fallback typeProduit + toString + liste")
 	public void testOutputDTOBeton() {
 
 		final List<String> stp1 = new ArrayList<String>();
-		stp1.add("Homme");
-		stp1.add("Femme");
+		stp1.add(HOMME);
+		stp1.add(FEMME);
 
 		final List<String> stp2 = new ArrayList<String>();
-		stp2.add("Enfant");
+		stp2.add(ENFANT);
 
-		// --- Cas ID-first (même ID => equals true même si contenu diff)
+		/*
+		 * Cas ID-first :
+		 * même ID => égalité vraie,
+		 * même si les autres champs diffèrent.
+		 */
 		final TypeProduitDTO.OutputDTO o1 = new TypeProduitDTO.OutputDTO(1L, VETEMENT, stp1);
 		final TypeProduitDTO.OutputDTO o2 = new TypeProduitDTO.OutputDTO(1L, PECHE, stp2);
 
@@ -164,17 +222,30 @@ public class TypeProduitDTOTest {
 		assertThat(o2).isEqualTo(o1);
 		assertThat(o1.hashCode()).isEqualTo(o2.hashCode());
 
-		// --- Cas ID non null vs ID null : doit retomber sur fallback
+		/*
+		 * Cas fallback métier :
+		 * les deux IDs sont nuls,
+		 * l'égalité repose donc sur typeProduit.
+		 */
 		final TypeProduitDTO.OutputDTO o3 = new TypeProduitDTO.OutputDTO(null, VETEMENT, stp1);
 		final TypeProduitDTO.OutputDTO o4 = new TypeProduitDTO.OutputDTO(null, VETEMENT, stp2);
 
 		assertThat(o3).isEqualTo(o4);
+		assertThat(o4).isEqualTo(o3);
 		assertThat(o3.hashCode()).isEqualTo(o4.hashCode());
 
+		/*
+		 * Toujours en fallback métier :
+		 * libellé différent => inégalité.
+		 */
 		final TypeProduitDTO.OutputDTO o5 = new TypeProduitDTO.OutputDTO(null, PECHE, stp1);
 		assertThat(o3).isNotEqualTo(o5);
+		assertThat(o5).isNotEqualTo(o3);
 
-		// --- Mutabilité via setters
+		/*
+		 * Vérifie la mutabilité via les setters
+		 * et l'exposition directe de la liste.
+		 */
 		final TypeProduitDTO.OutputDTO o6 = new TypeProduitDTO.OutputDTO();
 		o6.setIdTypeProduit(2L);
 		o6.setTypeProduit(OUTILLAGE);
@@ -184,14 +255,67 @@ public class TypeProduitDTOTest {
 		assertThat(o6.getTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(o6.getSousTypeProduits()).isSameAs(stp1);
 
-		// --- toString
+		/*
+		 * Vérifie la forme minimale utile de toString().
+		 */
 		final String toString = o6.toString();
 		assertThat(toString).contains("OutputDTO");
 		assertThat(toString).contains(OUTILLAGE);
 
-		// --- null safety equals
+		/*
+		 * Robustesse minimale de equals(...).
+		 */
 		assertThat(o6).isNotEqualTo(null);
 		assertThat(o6).isNotEqualTo(OUTILLAGE);
-	}
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>Vérifie le cas critique corrigé dans <code>OutputDTO.equals(...)</code> :</p>
+	 * <ul>
+	 * <li>si un objet possède un ID non nul ;</li>
+	 * <li>et l'autre un ID nul ;</li>
+	 * <li>alors les deux objets doivent être inégaux,</li>
+	 * <li>même si <code>typeProduit</code> est identique.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * Ce test verrouille la cohérence entre
+	 * <code>equals(...)</code> et <code>hashCode()</code>.
+	 * </p>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("TypeProduitDTO.OutputDTO : id non null vs id null => inégalité même si typeProduit identique")
+	public void testOutputDTOIdNonNullVsIdNullDoitEtreInegal() {
+
+		final List<String> stp1 = new ArrayList<String>();
+		stp1.add(HOMME);
+		stp1.add(FEMME);
+
+		final List<String> stp2 = new ArrayList<String>();
+		stp2.add(ENFANT);
+
+		/*
+		 * Même typeProduit, mais asymétrie de présence d'ID :
+		 * o1 a un ID technique,
+		 * o2 n'en a pas.
+		 */
+		final TypeProduitDTO.OutputDTO o1 = new TypeProduitDTO.OutputDTO(1L, VETEMENT, stp1);
+		final TypeProduitDTO.OutputDTO o2 = new TypeProduitDTO.OutputDTO(null, VETEMENT, stp2);
+
+		/*
+		 * Le contrat attendu est l'inégalité stricte
+		 * pour préserver la cohérence avec hashCode().
+		 */
+		assertThat(o1).isNotEqualTo(o2);
+		assertThat(o2).isNotEqualTo(o1);
+		
+	} // __________________________________________________________________
+	
+	
 
 }
