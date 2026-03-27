@@ -4,9 +4,15 @@
 """
 tools/ai/make_offline_bundle.py
 
-Construit un bundle OFFLINE à partir du périmètre hybride défini dans
-`docs/ai/perimetre.yaml`, en utilisant `tools/ai/perimetre_resolver.py`
-comme API canonique de résolution.
+Construit un bundle OFFLINE à partir du dépôt au SHA demandé.
+
+Règle forte :
+- si --lot all, le bundle doit être IDENTIQUE au contenu tracké sur GitHub au SHA
+  (donc tous les fichiers trackés du repo au SHA)
+- si --lot != all, le bundle est construit à partir du périmètre hybride
+  résolu par tools/ai/perimetre_resolver.py, complété par le bootstrap IA
+
+Ce script s'appuie sur tools/ai/perimetre_resolver.py comme API canonique.
 """
 
 from __future__ import annotations
@@ -16,22 +22,24 @@ import datetime
 import hashlib
 import platform
 import shutil
+import subprocess
 import sys
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import yaml
 
 from perimetre_resolver import (
     BootstrapResolution,
+    PackResolution,
+    collect_bootstrap_paths,
     git_can_read_sha,
     list_pack_names,
     load_perimetre,
     read_bytes_from_repo,
     resolve_pack,
-    collect_bootstrap_paths,
 )
 
 
@@ -61,6 +69,46 @@ def _sha256_file(path: Path) -> str:
             digest.update(chunk)
 
     return digest.hexdigest()
+
+
+def _run_git(args: Sequence[str], cwd: Path) -> Tuple[int, bytes, bytes]:
+    """
+    Exécute git et retourne (returncode, stdout, stderr).
+    """
+    try:
+        completed = subprocess.run(
+            ["git", *args],
+            cwd=str(cwd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        return completed.returncode, completed.stdout, completed.stderr
+    except FileNotFoundError:
+        return 127, b"", b"git introuvable"
+
+
+def _git_list_all_tracked_files_at_sha(repo_root: Path, sha: str) -> List[str]:
+    """
+    Retourne TOUS les fichiers trackés dans le commit SHA.
+
+    Cette liste est la source de vérité pour construire un bundle `--lot all`
+    strictement identique à GitHub au SHA.
+    """
+    code, out, err = _run_git(["ls-tree", "-r", "--name-only", sha], repo_root)
+    if code != 0:
+        raise RuntimeError(
+            "Impossible de lister tous les fichiers trackés au SHA via git ls-tree : "
+            + err.decode("utf-8", errors="replace").strip()
+        )
+
+    result: List[str] = []
+    for line in out.decode("utf-8").splitlines():
+        stripped = line.strip()
+        if stripped:
+            result.append(stripped.replace("\\", "/"))
+
+    return sorted(set(result))
 
 
 def _zip_dir(src_dir: Path, zip_path: Path) -> None:
@@ -103,16 +151,18 @@ def _build_provenance_content(
     repo_root: Path,
     perimetre_path: Path,
     git_ok: bool,
+    bundle_mode: str,
     selected_packs: List[str],
-    pack_resolution,
-    bootstrap_resolution: BootstrapResolution,
     extracted: List[str],
     missing_files: List[str],
+    pack_resolution: Optional[PackResolution],
+    bootstrap_resolution: Optional[BootstrapResolution],
+    tracked_repository_file_count: Optional[int],
 ) -> str:
     """
     Construit un PROVENANCE.yaml valide.
     """
-    provenance = {
+    provenance: Dict[str, object] = {
         "sha": sha,
         "lot": lot,
         "generated_at_utc": _current_utc_iso_z(),
@@ -123,29 +173,113 @@ def _build_provenance_content(
         "repo_root": repo_root.resolve().as_posix(),
         "perimetre_path": perimetre_path.as_posix(),
         "git_used": git_ok,
-        "perimetre_mode": "hybrid",
+        "bundle_mode": bundle_mode,
         "selected_packs": selected_packs,
-        "bootstrap_manifest_path": bootstrap_resolution.manifest_path,
-        "bootstrap_paths_txt_path": bootstrap_resolution.paths_txt_path,
-        "bootstrap_paths": list(bootstrap_resolution.files),
-        "bootstrap_missing_files": list(bootstrap_resolution.missing_files),
-        "explicit_paths_count": len(pack_resolution.explicit_paths),
-        "root_files_count": len(pack_resolution.root_files),
-        "resolved_roots_count": len(pack_resolution.resolved_roots),
-        "bootstrap_paths_count": len(bootstrap_resolution.files),
         "extracted_count": len(extracted),
-        "missing_roots_count": len(pack_resolution.missing_roots),
         "missing_files_count": len(missing_files),
-        "missing_count": len(pack_resolution.missing_roots) + len(missing_files),
-        "missing_roots": list(pack_resolution.missing_roots),
         "missing_files": missing_files,
     }
+
+    if tracked_repository_file_count is not None:
+        provenance["tracked_repository_file_count"] = tracked_repository_file_count
+
+    if pack_resolution is not None:
+        provenance["perimetre_mode"] = "hybrid"
+        provenance["explicit_paths_count"] = len(pack_resolution.explicit_paths)
+        provenance["root_files_count"] = len(pack_resolution.root_files)
+        provenance["resolved_roots_count"] = len(pack_resolution.resolved_roots)
+        provenance["missing_roots_count"] = len(pack_resolution.missing_roots)
+        provenance["missing_roots"] = list(pack_resolution.missing_roots)
+        provenance["missing_count"] = len(pack_resolution.missing_roots) + len(missing_files)
+    else:
+        provenance["perimetre_mode"] = "repository_full"
+        provenance["missing_roots_count"] = 0
+        provenance["missing_roots"] = []
+        provenance["missing_count"] = len(missing_files)
+
+    if bootstrap_resolution is not None:
+        provenance["bootstrap_manifest_path"] = bootstrap_resolution.manifest_path
+        provenance["bootstrap_paths_txt_path"] = bootstrap_resolution.paths_txt_path
+        provenance["bootstrap_paths"] = list(bootstrap_resolution.files)
+        provenance["bootstrap_missing_files"] = list(bootstrap_resolution.missing_files)
+        provenance["bootstrap_paths_count"] = len(bootstrap_resolution.files)
 
     return yaml.safe_dump(
         provenance,
         allow_unicode=True,
         sort_keys=False,
         default_flow_style=False,
+    )
+
+
+def _resolve_bundle_paths(
+    *,
+    repo_root: Path,
+    sha: str,
+    lot: str,
+    perimetre_path: Path,
+) -> Tuple[
+    List[str],
+    str,
+    List[str],
+    Optional[PackResolution],
+    Optional[BootstrapResolution],
+    Optional[int],
+]:
+    """
+    Résout la liste finale des fichiers à embarquer.
+
+    Retourne :
+    - all_paths
+    - bundle_mode
+    - selected_packs
+    - pack_resolution
+    - bootstrap_resolution
+    - tracked_repository_file_count
+    """
+    perimetre = load_perimetre(perimetre_path)
+    git_ok = git_can_read_sha(repo_root, sha)
+
+    if lot == "all":
+        if not git_ok:
+            raise RuntimeError(
+                "Impossible de construire un bundle identique à GitHub pour --lot all : "
+                "le SHA n'est pas lisible via git."
+            )
+
+        tracked_files = _git_list_all_tracked_files_at_sha(repo_root, sha)
+        selected_packs = list_pack_names(perimetre)
+
+        return (
+            tracked_files,
+            "github_full_repository_at_sha",
+            selected_packs,
+            None,
+            None,
+            len(tracked_files),
+        )
+
+    pack_resolution = resolve_pack(
+        perimetre_path=perimetre_path,
+        repo_root=repo_root,
+        pack_name=lot,
+        sha=sha,
+    )
+
+    bootstrap_resolution = collect_bootstrap_paths(
+        repo_root=repo_root,
+        sha=sha,
+    )
+
+    all_paths = sorted(set(pack_resolution.files + bootstrap_resolution.files))
+
+    return (
+        all_paths,
+        "hybrid_perimetre_plus_bootstrap",
+        [lot],
+        pack_resolution,
+        bootstrap_resolution,
+        None,
     )
 
 
@@ -162,9 +296,6 @@ def build_bundle(
     Construit AI_OFFLINE/ + CHECKSUMS + INDEX + PROVENANCE.
     Retourne le chemin du zip si do_zip, sinon le dossier AI_OFFLINE.
     """
-    perimetre = load_perimetre(perimetre_path)
-    selected_packs = list_pack_names(perimetre) if lot == "all" else [lot]
-
     out_dir.mkdir(parents=True, exist_ok=True)
 
     ai_offline_dir = _compute_ai_offline_dir(out_dir=out_dir, do_zip=do_zip)
@@ -176,19 +307,19 @@ def build_bundle(
 
     git_ok = git_can_read_sha(repo_root, sha)
 
-    pack_resolution = resolve_pack(
+    (
+        all_paths,
+        bundle_mode,
+        selected_packs,
+        pack_resolution,
+        bootstrap_resolution,
+        tracked_repository_file_count,
+    ) = _resolve_bundle_paths(
+        repo_root=repo_root,
+        sha=sha,
+        lot=lot,
         perimetre_path=perimetre_path,
-        repo_root=repo_root,
-        pack_name=lot,
-        sha=sha,
     )
-
-    bootstrap_resolution = collect_bootstrap_paths(
-        repo_root=repo_root,
-        sha=sha,
-    )
-
-    all_paths = sorted(set(pack_resolution.files + bootstrap_resolution.files))
 
     extracted: List[str] = []
     missing_files: List[str] = []
@@ -213,7 +344,10 @@ def build_bundle(
     extracted = sorted(set(extracted))
     missing_files = sorted(set(missing_files))
 
-    _write_text(ai_offline_dir / "INDEX.txt", "\n".join(extracted) + ("\n" if extracted else ""))
+    _write_text(
+        ai_offline_dir / "INDEX.txt",
+        "\n".join(extracted) + ("\n" if extracted else ""),
+    )
 
     checksums_lines = [
         f"{_sha256_file(files_dir / rel_path)}  FILES/{rel_path}"
@@ -232,29 +366,32 @@ def build_bundle(
             repo_root=repo_root,
             perimetre_path=perimetre_path,
             git_ok=git_ok,
+            bundle_mode=bundle_mode,
             selected_packs=selected_packs,
-            pack_resolution=pack_resolution,
-            bootstrap_resolution=bootstrap_resolution,
             extracted=extracted,
             missing_files=missing_files,
+            pack_resolution=pack_resolution,
+            bootstrap_resolution=bootstrap_resolution,
+            tracked_repository_file_count=tracked_repository_file_count,
         ),
     )
 
-    all_missing_files = sorted(set(missing_files + list(bootstrap_resolution.missing_files)))
+    missing_lines: List[str] = []
 
-    if pack_resolution.missing_roots or all_missing_files:
-        missing_lines: List[str] = []
+    if pack_resolution is not None and pack_resolution.missing_roots:
+        missing_lines.append("# Roots obligatoires manquantes")
+        missing_lines.extend(list(pack_resolution.missing_roots))
+        missing_lines.append("")
 
-        if pack_resolution.missing_roots:
-            missing_lines.append("# Roots obligatoires manquantes")
-            missing_lines.extend(list(pack_resolution.missing_roots))
-            missing_lines.append("")
+    if missing_files:
+        missing_lines.append("# Fichiers introuvables")
+        missing_lines.extend(missing_files)
 
-        if all_missing_files:
-            missing_lines.append("# Fichiers introuvables")
-            missing_lines.extend(all_missing_files)
-
-        _write_text(ai_offline_dir / "MISSING.txt", "\n".join(missing_lines).rstrip() + "\n")
+    if missing_lines:
+        _write_text(
+            ai_offline_dir / "MISSING.txt",
+            "\n".join(missing_lines).rstrip() + "\n",
+        )
 
     if do_zip:
         zip_name = f"AI_OFFLINE_{sha}_{lot}.zip"
@@ -266,7 +403,11 @@ def build_bundle(
             _zip_dir(ai_offline_dir, zip_path)
         finally:
             tmp_root = ai_offline_dir.parent
-            if tmp_root.exists() and tmp_root.is_dir() and tmp_root.name.startswith("AI_OFFLINE_BUILD_"):
+            if (
+                tmp_root.exists()
+                and tmp_root.is_dir()
+                and tmp_root.name.startswith("AI_OFFLINE_BUILD_")
+            ):
                 shutil.rmtree(tmp_root, ignore_errors=True)
 
         return zip_path
@@ -282,8 +423,9 @@ def main() -> int:
         prog="make_offline_bundle.py",
         formatter_class=argparse.RawTextHelpFormatter,
         description=(
-            "Construit un bundle OFFLINE (AI_OFFLINE) au SHA donné, "
-            "en incluant le périmètre hybride et le bootstrap IA minimal."
+            "Construit un bundle OFFLINE (AI_OFFLINE) au SHA donné.\n"
+            "- --lot all : bundle identique aux fichiers trackés de GitHub au SHA\n"
+            "- autre lot : bundle construit depuis le périmètre hybride + bootstrap IA"
         ),
     )
     parser.add_argument("--sha", required=True, help="SHA unique (commit).")
