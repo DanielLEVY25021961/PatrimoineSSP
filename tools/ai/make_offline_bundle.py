@@ -15,31 +15,23 @@ import argparse
 import datetime
 import hashlib
 import platform
-import re
 import shutil
-import subprocess
 import sys
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Set, Tuple
+from typing import List, Optional
 
 import yaml
 
 from perimetre_resolver import (
+    BootstrapResolution,
+    git_can_read_sha,
     list_pack_names,
     load_perimetre,
+    read_bytes_from_repo,
     resolve_pack,
-)
-
-RAW_REFS_HEADS_PREFIX = re.compile(
-    r"^https://raw\.githubusercontent\.com/"
-    r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/refs/heads/(?P<branch>[^/]+)/(?P<path>.+)$"
-)
-
-RAW_SHA_PREFIX = re.compile(
-    r"^https://raw\.githubusercontent\.com/"
-    r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/(?P<sha>[0-9a-fA-F]{7,40})/(?P<path>.+)$"
+    collect_bootstrap_paths,
 )
 
 
@@ -71,196 +63,6 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _run_git(args: Sequence[str], cwd: Path) -> Tuple[int, bytes, bytes]:
-    """
-    Exécute git et retourne (returncode, stdout, stderr).
-    """
-    try:
-        completed = subprocess.run(
-            ["git", *args],
-            cwd=str(cwd),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
-        return completed.returncode, completed.stdout, completed.stderr
-    except FileNotFoundError:
-        return 127, b"", b"git introuvable"
-
-
-def _git_is_available(repo_root: Path) -> bool:
-    """
-    Indique si git est disponible.
-    """
-    code, _, _ = _run_git(["--version"], repo_root)
-    return code == 0
-
-
-def _git_has_object(repo_root: Path, sha: str) -> bool:
-    """
-    Indique si le SHA est résolvable localement.
-    """
-    code, _, _ = _run_git(["cat-file", "-e", f"{sha}^{{commit}}"], repo_root)
-    return code == 0
-
-
-def _git_show_file(repo_root: Path, sha: str, rel_path: str) -> Optional[bytes]:
-    """
-    Retourne le contenu binaire de sha:path, ou None si échec.
-    """
-    code, out, _ = _run_git(["show", f"{sha}:{rel_path}"], repo_root)
-    if code != 0:
-        return None
-    return out
-
-
-def _safe_relpath(path_str: str) -> str:
-    """
-    Normalise un path relatif au dépôt et interdit les paths absolus
-    et les sorties du dépôt.
-    """
-    normalized = path_str.replace("\\", "/").strip()
-    if not normalized:
-        raise ValueError("Path vide interdit.")
-
-    path_obj = Path(normalized)
-
-    if path_obj.is_absolute():
-        raise ValueError(f"Path absolu interdit : {path_str}")
-
-    parts = [part for part in path_obj.parts if part not in ("", ".")]
-    if any(part == ".." for part in parts):
-        raise ValueError(f"Path parent '..' interdit : {path_str}")
-
-    return str(Path(*parts)).replace("\\", "/")
-
-
-def _extract_path_from_bootstrap_line(line: str) -> Optional[str]:
-    """
-    Extrait un path normalisé depuis une ligne de bootstrap.
-    Supporte :
-    - paths relatifs
-    - URLs Raw refs/heads
-    - URLs Raw SHA
-    """
-    stripped = line.strip()
-    if not stripped or stripped.startswith("#"):
-        return None
-
-    match_ref = RAW_REFS_HEADS_PREFIX.match(stripped)
-    if match_ref:
-        return _safe_relpath(match_ref.group("path"))
-
-    match_sha = RAW_SHA_PREFIX.match(stripped)
-    if match_sha:
-        return _safe_relpath(match_sha.group("path"))
-
-    return _safe_relpath(stripped)
-
-
-def _read_text_from_git_or_local(
-    repo_root: Path,
-    sha: str,
-    rel_path: str,
-    git_ok: bool,
-) -> Optional[str]:
-    """
-    Lit un fichier texte depuis git au SHA si possible, sinon localement.
-    """
-    content_bytes: Optional[bytes] = None
-
-    if git_ok:
-        content_bytes = _git_show_file(repo_root, sha, rel_path)
-    else:
-        local_file = repo_root / rel_path
-        if local_file.exists() and local_file.is_file():
-            content_bytes = local_file.read_bytes()
-
-    if content_bytes is None:
-        return None
-
-    return content_bytes.decode("utf-8")
-
-
-def _collect_manifest_bootstrap_paths(
-    repo_root: Path,
-    sha: str,
-    git_ok: bool,
-) -> List[str]:
-    """
-    Collecte les paths bootstrap dérivés du MANIFEST.
-    """
-    manifest_rel_path = "docs/ai/MANIFEST_IA.yaml"
-    manifest_text = _read_text_from_git_or_local(
-        repo_root=repo_root,
-        sha=sha,
-        rel_path=manifest_rel_path,
-        git_ok=git_ok,
-    )
-
-    if manifest_text is None:
-        return [manifest_rel_path]
-
-    manifest_data = yaml.safe_load(manifest_text)
-    if not isinstance(manifest_data, dict):
-        return [manifest_rel_path]
-
-    result: Set[str] = {manifest_rel_path}
-
-    for section_name in ("ai", "tools"):
-        section = manifest_data.get(section_name)
-        if not isinstance(section, dict):
-            continue
-        for value in section.values():
-            if isinstance(value, str) and value.strip():
-                result.add(_safe_relpath(value))
-
-    return sorted(result)
-
-
-def _collect_paths_txt_bootstrap_paths(
-    repo_root: Path,
-    sha: str,
-    git_ok: bool,
-) -> List[str]:
-    """
-    Collecte les paths bootstrap à partir de tools/ai/paths.txt.
-    """
-    paths_rel_path = "tools/ai/paths.txt"
-    paths_text = _read_text_from_git_or_local(
-        repo_root=repo_root,
-        sha=sha,
-        rel_path=paths_rel_path,
-        git_ok=git_ok,
-    )
-
-    if paths_text is None:
-        return [paths_rel_path]
-
-    result: Set[str] = {paths_rel_path}
-
-    for line in paths_text.splitlines():
-        extracted = _extract_path_from_bootstrap_line(line)
-        if extracted:
-            result.add(extracted)
-
-    return sorted(result)
-
-
-def _collect_bootstrap_paths(
-    repo_root: Path,
-    sha: str,
-    git_ok: bool,
-) -> List[str]:
-    """
-    Construit le bootstrap minimal du bundle.
-    """
-    result: Set[str] = set()
-    result.update(_collect_manifest_bootstrap_paths(repo_root, sha, git_ok))
-    result.update(_collect_paths_txt_bootstrap_paths(repo_root, sha, git_ok))
-    return sorted(result)
-
-
 def _zip_dir(src_dir: Path, zip_path: Path) -> None:
     """
     Zippe un dossier complet.
@@ -285,6 +87,15 @@ def _compute_ai_offline_dir(out_dir: Path, do_zip: bool) -> Path:
     return out_dir / "AI_OFFLINE"
 
 
+def _current_utc_iso_z() -> str:
+    """
+    Retourne un horodatage UTC ISO-8601 suffixé par Z,
+    sans utiliser datetime.utcnow().
+    """
+    now_utc = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+    return now_utc.isoformat().replace("+00:00", "Z")
+
+
 def _build_provenance_content(
     *,
     sha: str,
@@ -293,8 +104,8 @@ def _build_provenance_content(
     perimetre_path: Path,
     git_ok: bool,
     selected_packs: List[str],
-    resolution,
-    bootstrap_paths: List[str],
+    pack_resolution,
+    bootstrap_resolution: BootstrapResolution,
     extracted: List[str],
     missing_files: List[str],
 ) -> str:
@@ -304,7 +115,7 @@ def _build_provenance_content(
     provenance = {
         "sha": sha,
         "lot": lot,
-        "generated_at_utc": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+        "generated_at_utc": _current_utc_iso_z(),
         "hostname": platform.node(),
         "system": platform.system(),
         "release": platform.release(),
@@ -314,16 +125,19 @@ def _build_provenance_content(
         "git_used": git_ok,
         "perimetre_mode": "hybrid",
         "selected_packs": selected_packs,
-        "bootstrap_paths": bootstrap_paths,
-        "explicit_paths_count": len(resolution.explicit_paths),
-        "root_files_count": len(resolution.root_files),
-        "resolved_roots_count": len(resolution.resolved_roots),
-        "bootstrap_paths_count": len(bootstrap_paths),
+        "bootstrap_manifest_path": bootstrap_resolution.manifest_path,
+        "bootstrap_paths_txt_path": bootstrap_resolution.paths_txt_path,
+        "bootstrap_paths": list(bootstrap_resolution.files),
+        "bootstrap_missing_files": list(bootstrap_resolution.missing_files),
+        "explicit_paths_count": len(pack_resolution.explicit_paths),
+        "root_files_count": len(pack_resolution.root_files),
+        "resolved_roots_count": len(pack_resolution.resolved_roots),
+        "bootstrap_paths_count": len(bootstrap_resolution.files),
         "extracted_count": len(extracted),
-        "missing_roots_count": len(resolution.missing_roots),
+        "missing_roots_count": len(pack_resolution.missing_roots),
         "missing_files_count": len(missing_files),
-        "missing_count": len(resolution.missing_roots) + len(missing_files),
-        "missing_roots": list(resolution.missing_roots),
+        "missing_count": len(pack_resolution.missing_roots) + len(missing_files),
+        "missing_roots": list(pack_resolution.missing_roots),
         "missing_files": missing_files,
     }
 
@@ -360,35 +174,32 @@ def build_bundle(
         shutil.rmtree(ai_offline_dir)
     files_dir.mkdir(parents=True, exist_ok=True)
 
-    git_ok = _git_is_available(repo_root) and _git_has_object(repo_root, sha)
+    git_ok = git_can_read_sha(repo_root, sha)
 
-    resolution = resolve_pack(
+    pack_resolution = resolve_pack(
         perimetre_path=perimetre_path,
         repo_root=repo_root,
         pack_name=lot,
         sha=sha,
     )
 
-    bootstrap_paths = _collect_bootstrap_paths(
+    bootstrap_resolution = collect_bootstrap_paths(
         repo_root=repo_root,
         sha=sha,
-        git_ok=git_ok,
     )
 
-    all_paths = sorted(set(resolution.files + tuple(bootstrap_paths)))
+    all_paths = sorted(set(pack_resolution.files + bootstrap_resolution.files))
 
     extracted: List[str] = []
     missing_files: List[str] = []
 
     for rel_path in all_paths:
-        content_bytes: Optional[bytes] = None
-
-        if git_ok:
-            content_bytes = _git_show_file(repo_root, sha, rel_path)
-        else:
-            local_file = repo_root / rel_path
-            if local_file.exists() and local_file.is_file():
-                content_bytes = local_file.read_bytes()
+        content_bytes: Optional[bytes] = read_bytes_from_repo(
+            repo_root=repo_root,
+            rel_path=rel_path,
+            sha=sha,
+            git_ok=git_ok,
+        )
 
         if content_bytes is None:
             missing_files.append(rel_path)
@@ -422,24 +233,26 @@ def build_bundle(
             perimetre_path=perimetre_path,
             git_ok=git_ok,
             selected_packs=selected_packs,
-            resolution=resolution,
-            bootstrap_paths=bootstrap_paths,
+            pack_resolution=pack_resolution,
+            bootstrap_resolution=bootstrap_resolution,
             extracted=extracted,
             missing_files=missing_files,
         ),
     )
 
-    if resolution.missing_roots or missing_files:
+    all_missing_files = sorted(set(missing_files + list(bootstrap_resolution.missing_files)))
+
+    if pack_resolution.missing_roots or all_missing_files:
         missing_lines: List[str] = []
 
-        if resolution.missing_roots:
+        if pack_resolution.missing_roots:
             missing_lines.append("# Roots obligatoires manquantes")
-            missing_lines.extend(list(resolution.missing_roots))
+            missing_lines.extend(list(pack_resolution.missing_roots))
             missing_lines.append("")
 
-        if missing_files:
+        if all_missing_files:
             missing_lines.append("# Fichiers introuvables")
-            missing_lines.extend(missing_files)
+            missing_lines.extend(all_missing_files)
 
         _write_text(ai_offline_dir / "MISSING.txt", "\n".join(missing_lines).rstrip() + "\n")
 

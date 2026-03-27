@@ -14,9 +14,11 @@ Responsabilités :
 - Dédupliquer et trier les paths
 - Travailler au SHA via git quand possible
 - Rebasculer localement si le SHA n'est pas disponible localement
+- Résoudre le bootstrap minimal IA à partir de :
+  * docs/ai/MANIFEST_IA.yaml
+  * tools/ai/paths.txt
 
-Ce module est destiné à devenir la source unique de vérité
-pour la résolution des packs IA.
+Ce module est la source unique de vérité pour la résolution des packs IA.
 """
 
 from __future__ import annotations
@@ -25,9 +27,20 @@ import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import yaml
+
+
+RAW_REFS_HEADS_PREFIX = re.compile(
+    r"^https://raw\.githubusercontent\.com/"
+    r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/refs/heads/(?P<branch>[^/]+)/(?P<path>.+)$"
+)
+
+RAW_SHA_PREFIX = re.compile(
+    r"^https://raw\.githubusercontent\.com/"
+    r"(?P<owner>[^/]+)/(?P<repo>[^/]+)/(?P<sha>[0-9a-fA-F]{7,40})/(?P<path>.+)$"
+)
 
 
 @dataclass(frozen=True)
@@ -55,6 +68,18 @@ class PackResolution:
     root_files: Tuple[str, ...]
     resolved_roots: Tuple[str, ...]
     missing_roots: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class BootstrapResolution:
+    """
+    Résultat de résolution du bootstrap IA.
+    """
+
+    manifest_path: str
+    paths_txt_path: str
+    files: Tuple[str, ...]
+    missing_files: Tuple[str, ...]
 
 
 def _read_text(path: Path) -> str:
@@ -97,10 +122,71 @@ def _git_has_object(repo_root: Path, sha: str) -> bool:
     return code == 0
 
 
+def git_can_read_sha(repo_root: Path, sha: Optional[str]) -> bool:
+    """
+    Indique si git peut lire le SHA fourni.
+    """
+    return bool(sha) and _git_is_available(repo_root) and _git_has_object(repo_root, sha)
+
+
+def _git_show_file(repo_root: Path, sha: str, rel_path: str) -> Optional[bytes]:
+    """
+    Retourne le contenu binaire de sha:path, ou None si échec.
+    """
+    code, out, _ = _run_git(["show", f"{sha}:{rel_path}"], repo_root)
+    if code != 0:
+        return None
+    return out
+
+
+def read_bytes_from_repo(
+    *,
+    repo_root: Path,
+    rel_path: str,
+    sha: Optional[str] = None,
+    git_ok: Optional[bool] = None,
+) -> Optional[bytes]:
+    """
+    Lit un fichier depuis git au SHA si possible, sinon localement.
+    """
+    effective_git_ok = git_can_read_sha(repo_root, sha) if git_ok is None else git_ok
+
+    if effective_git_ok and sha:
+        content = _git_show_file(repo_root, sha, rel_path)
+        if content is not None:
+            return content
+
+    local_file = repo_root / rel_path
+    if local_file.exists() and local_file.is_file():
+        return local_file.read_bytes()
+
+    return None
+
+
+def read_text_from_repo(
+    *,
+    repo_root: Path,
+    rel_path: str,
+    sha: Optional[str] = None,
+    git_ok: Optional[bool] = None,
+) -> Optional[str]:
+    """
+    Lit un fichier texte UTF-8 depuis git au SHA si possible, sinon localement.
+    """
+    content_bytes = read_bytes_from_repo(
+        repo_root=repo_root,
+        rel_path=rel_path,
+        sha=sha,
+        git_ok=git_ok,
+    )
+    if content_bytes is None:
+        return None
+    return content_bytes.decode("utf-8")
+
+
 def _safe_relpath(path_str: str) -> str:
     """
-    Normalise un path de repo.
-    Interdit les paths absolus et les sorties du dépôt.
+    Normalise un path de repo et interdit toute sortie du dépôt.
     """
     normalized = path_str.replace("\\", "/").strip()
     if not normalized:
@@ -404,7 +490,7 @@ def resolve_pack(
             raise ValueError(f"Pack introuvable : {pack_name}")
         selected_pack_names = [pack_name]
 
-    git_ok = bool(sha) and _git_is_available(repo_root) and _git_has_object(repo_root, sha)
+    git_ok = git_can_read_sha(repo_root, sha)
 
     explicit_paths: List[str] = []
     root_files: List[str] = []
@@ -416,20 +502,14 @@ def resolve_pack(
         if not isinstance(pack, dict):
             raise ValueError(f"Pack invalide : {selected_name}")
 
-        pack_paths = pack.get("paths", [])
-        if pack_paths is None:
-            pack_paths = []
-
+        pack_paths = pack.get("paths", []) or []
         if not isinstance(pack_paths, list):
             raise ValueError(f"Pack '{selected_name}' : 'paths' invalide.")
 
         for item in pack_paths:
             explicit_paths.append(_safe_relpath(str(item)))
 
-        pack_roots = pack.get("roots", [])
-        if pack_roots is None:
-            pack_roots = []
-
+        pack_roots = pack.get("roots", []) or []
         if not isinstance(pack_roots, list):
             raise ValueError(f"Pack '{selected_name}' : 'roots' invalide.")
 
@@ -462,4 +542,101 @@ def resolve_pack(
         root_files=tuple(sorted(set(root_files))),
         resolved_roots=tuple(sorted(set(resolved_roots))),
         missing_roots=tuple(sorted(set(missing_roots))),
+    )
+
+
+def _extract_path_from_bootstrap_line(line: str) -> Optional[str]:
+    """
+    Extrait un path normalisé depuis une ligne de bootstrap.
+    Supporte :
+    - paths relatifs
+    - URLs Raw refs/heads
+    - URLs Raw SHA
+    """
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        return None
+
+    match_ref = RAW_REFS_HEADS_PREFIX.match(stripped)
+    if match_ref:
+        return _safe_relpath(match_ref.group("path"))
+
+    match_sha = RAW_SHA_PREFIX.match(stripped)
+    if match_sha:
+        return _safe_relpath(match_sha.group("path"))
+
+    return _safe_relpath(stripped)
+
+
+def collect_bootstrap_paths(
+    *,
+    repo_root: Path,
+    sha: Optional[str] = None,
+    manifest_rel_path: str = "docs/ai/MANIFEST_IA.yaml",
+    paths_txt_rel_path: str = "tools/ai/paths.txt",
+) -> BootstrapResolution:
+    """
+    Résout le bootstrap minimal IA à partir de MANIFEST_IA.yaml et paths.txt.
+    """
+    git_ok = git_can_read_sha(repo_root, sha)
+
+    result: Set[str] = set()
+    missing_files: Set[str] = set()
+
+    manifest_rel_path = _safe_relpath(manifest_rel_path)
+    paths_txt_rel_path = _safe_relpath(paths_txt_rel_path)
+
+    result.add(manifest_rel_path)
+    result.add(paths_txt_rel_path)
+
+    manifest_text = read_text_from_repo(
+        repo_root=repo_root,
+        rel_path=manifest_rel_path,
+        sha=sha,
+        git_ok=git_ok,
+    )
+    if manifest_text is None:
+        missing_files.add(manifest_rel_path)
+    else:
+        manifest_data = yaml.safe_load(manifest_text)
+        if isinstance(manifest_data, dict):
+            for section_name in ("ai", "tools"):
+                section = manifest_data.get(section_name)
+                if not isinstance(section, dict):
+                    continue
+                for value in section.values():
+                    if isinstance(value, str) and value.strip():
+                        result.add(_safe_relpath(value))
+
+    paths_text = read_text_from_repo(
+        repo_root=repo_root,
+        rel_path=paths_txt_rel_path,
+        sha=sha,
+        git_ok=git_ok,
+    )
+    if paths_text is None:
+        missing_files.add(paths_txt_rel_path)
+    else:
+        for line in paths_text.splitlines():
+            extracted = _extract_path_from_bootstrap_line(line)
+            if extracted:
+                result.add(extracted)
+
+    existing_missing: Set[str] = set()
+
+    for rel_path in result:
+        content = read_bytes_from_repo(
+            repo_root=repo_root,
+            rel_path=rel_path,
+            sha=sha,
+            git_ok=git_ok,
+        )
+        if content is None:
+            existing_missing.add(rel_path)
+
+    return BootstrapResolution(
+        manifest_path=manifest_rel_path,
+        paths_txt_path=paths_txt_rel_path,
+        files=tuple(sorted(result)),
+        missing_files=tuple(sorted(existing_missing | missing_files)),
     )
