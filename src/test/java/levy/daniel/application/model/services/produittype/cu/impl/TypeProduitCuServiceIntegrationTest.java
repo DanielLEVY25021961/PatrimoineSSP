@@ -1211,50 +1211,143 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <p>findByDTO(null) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL} (contrat CU)</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL}</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByDTO(null) : retourne null, message 'objet null'")
+	@DisplayName("findByDTO(null) : retourne null + message exact MESSAGE_RECHERCHE_OBJ_NULL")
 	public void testFindByDTONull() throws Exception {
 
 		final OutputDTO dto = this.service.findByDTO(null);
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
 
+	} // __________________________________________________________________
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>findByDTO(ok) : test "béton" de la recherche via DTO (délégation attendue au libellé).</p>
+	 * <p>findByDTO(blank) : délégation exacte au scénario blank
+	 * de findByLibelle(...).</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByDTO(ok) : retourne OutputDTO cohérent après création")
-	public void testFindByDTOOk() throws Exception {
+	@DisplayName("findByDTO(blank) : retourne null + message exact MESSAGE_PARAM_BLANK")
+	public void testFindByDTOBlank() throws Exception {
 
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_ALPHA));
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) FROM TYPES_PRODUIT",
+				Long.class);
 
-		final InputDTO input = new TypeProduitDTO.InputDTO(IT_ALPHA);
+		final OutputDTO dto = this.service.findByDTO(new TypeProduitDTO.InputDTO(ESPACES));
+
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) FROM TYPES_PRODUIT",
+				Long.class);
+
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(introuvable) : délégation exacte au scénario
+	 * d'introuvabilité de findByLibelle(...).</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>prouve physiquement l'absence en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
+	public void testFindByDTOIntrouvable() throws Exception {
+
+		final String libelleAbsent = "IT_FIND_BY_DTO_ABSENT_BD_01";
+		final InputDTO input = new TypeProduitDTO.InputDTO(libelleAbsent);
 
 		final OutputDTO dto = this.service.findByDTO(input);
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getTypeProduit()).isEqualTo(IT_ALPHA);
-		
-	}// __________________________________________________________________
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelleAbsent);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelleAbsent))
+				.isEqualTo(0L);
+
+	} // __________________________________________________________________
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(ok) : test béton de la recherche via DTO.</p>
+	 * <ul>
+	 * <li>crée d'abord un TypeProduit réel</li>
+	 * <li>recherche ensuite cet objet via un InputDTO portant le même libellé</li>
+	 * <li>retourne un OutputDTO cohérent</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>prouve physiquement la présence unique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(ok) : OutputDTO cohérent + message exact + preuve BD")
+	public void testFindByDTOOkAvecPreuveBd() throws Exception {
+
+		final String libelle = "IT_FIND_BY_DTO_OK_BD_01";
+
+		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(libelle));
+
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(libelle);
+
+		final InputDTO input = new TypeProduitDTO.InputDTO(libelle);
+		final OutputDTO dto = this.service.findByDTO(input);
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
+		assertThat(dto.getTypeProduit()).isEqualTo(libelle);
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(libelle);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelle))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
 	 * <p>findById(null) : erreur utilisateur bénigne.</p>

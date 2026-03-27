@@ -1464,7 +1464,7 @@ public class TypeProduitCuServiceMockTest {
 
 		final String contenu = "QA_FIND_RAPIDE_TECH_01";
 		final IllegalStateException panneTechnique
-				= new IllegalStateException("lecture technique KO");
+				= new IllegalStateException(LECTURE_TECHNIQUE_KO);
 
 		when(gateway.findByLibelleRapide(contenu)).thenThrow(panneTechnique);
 
@@ -1476,7 +1476,7 @@ public class TypeProduitCuServiceMockTest {
 				.isEqualTo(
 						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
 						+ TypeProduitICuService.TIRET_ESPACE
-						+ "lecture technique KO");
+						+ LECTURE_TECHNIQUE_KO);
 
 		verify(gateway, times(1)).findByLibelleRapide(contenu);
 		verify(gateway, never()).rechercherTous();
@@ -1655,9 +1655,16 @@ public class TypeProduitCuServiceMockTest {
 	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
-	 * <p>findByDTO(null) : null + message MESSAGE_RECHERCHE_OBJ_NULL.</p>
+	 * <p>findByDTO(null) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL}</li>
+	 * <li>n'appelle pas le Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -1667,64 +1674,222 @@ public class TypeProduitCuServiceMockTest {
 	@DisplayName("findByDTO(null) : null + message MESSAGE_RECHERCHE_OBJ_NULL")
 	public void testFindByDTONull() throws Exception {
 
-		// ===================== ARRANGE =====================
-
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
-		// ===================== ACT =====================
 
 		final OutputDTO retour = service.findByDTO(null);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
 		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
+
 		verifyNoInteractions(gateway);
-		
+
 	} // __________________________________________________________________
 	
 	
-
+	
 	/**
 	 * <div>
-	 * <p>findByDTO(ok) : délègue à findByLibelle(libellé).</p>
+	 * <p>findByDTO(blank) : délégation exacte au scénario blank
+	 * de findByLibelle(...).</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'appelle pas le Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findByDTO(ok) : délègue à findByLibelle(libellé)")
-	public void testFindByDTODelegueFindByLibelle() throws Exception {
-
-		// ===================== ARRANGE =====================
+	@DisplayName("findByDTO(blank) : null + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
+	public void testFindByDTOBlank() throws Exception {
 
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(ESPACES);
 
+		final OutputDTO retour = service.findByDTO(dto);
+		final String message = service.getMessage();
+
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(introuvable) : délégation exacte au scénario
+	 * d'introuvabilité de findByLibelle(...).</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(introuvable) : null + message MESSAGE_OBJ_INTROUVABLE + libellé")
+	public void testFindByDTOIntrouvable() throws Exception {
+
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final String libelleAbsent = "IT_FIND_BY_DTO_ABSENT_01";
+		final InputDTO dto = new TypeProduitDTO.InputDTO(libelleAbsent);
+
+		when(gateway.findByLibelle(libelleAbsent)).thenReturn(null);
+
+		final OutputDTO retour = service.findByDTO(dto);
+		final String message = service.getMessage();
+
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelleAbsent);
+
+		verify(gateway, times(1)).findByLibelle(libelleAbsent);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(KO technique avec message) : délégation exacte
+	 * au scénario technique de findByLibelle(...).</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>rationalise le message utilisateur</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(KO technique avec message) : propage l'exception + message technique rationalisé")
+	public void testFindByDTOTechniqueKoAvecMessage() throws Exception {
+
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final String libelle = "IT_FIND_BY_DTO_TECH_KO_01";
+		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
+		final IllegalStateException panneTechnique =
+				new IllegalStateException(LECTURE_TECHNIQUE_KO);
+
+		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ TypeProduitICuService.TIRET_ESPACE
+								+ LECTURE_TECHNIQUE_KO);
+
+		verify(gateway, times(1)).findByLibelle(libelle);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(KO technique sans message) : délégation exacte
+	 * au scénario technique sans message de findByLibelle(...).</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>utilise le fallback
+	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testFindByDTOTechniqueKoSansMessage() throws Exception {
+
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final String libelle = "IT_FIND_BY_DTO_TECH_KO_02";
+		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ TypeProduitICuService.TIRET_ESPACE
+								+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findByLibelle(libelle);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(ok) : délégation exacte au scénario nominal
+	 * de findByLibelle(...).</p>
+	 * <ul>
+	 * <li>retourne un OutputDTO cohérent</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(ok) : retourne OutputDTO cohérent + message exact de succès")
+	public void testFindByDTOOk() throws Exception {
+
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 		final InputDTO dto = new TypeProduitDTO.InputDTO(TOURISME);
-
 		final TypeProduit tp = new TypeProduit(TOURISME);
+
 		tp.setIdTypeProduit(9L);
 
 		when(gateway.findByLibelle(TOURISME)).thenReturn(tp);
 
-		// ===================== ACT =====================
-
 		final OutputDTO retour = service.findByDTO(dto);
-
-		// ===================== ASSERT =====================
+		final String message = service.getMessage();
 
 		assertThat(retour).isNotNull();
+		assertThat(retour.getIdTypeProduit()).isEqualTo(9L);
 		assertThat(retour.getTypeProduit()).isEqualTo(TOURISME);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
 		verify(gateway, times(1)).findByLibelle(TOURISME);
-		
-	} // __________________________________________________________________
-	
+
+	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
 	 * <p>findById(null) : null + message MESSAGE_PARAM_NULL.</p>
