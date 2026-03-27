@@ -673,8 +673,108 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(libelles).isNotNull();
 		assertThat(libelles).contains(IT_EPSILON, IT_ZETA);
-	}
+		
+	}// __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : scénario nominal béton avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>contient les libellés créés</li>
+	 * <li>n'expose aucun doublon</li>
+	 * <li>reste cohérent avec la présence physique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTousString(ok) : message exact + contient les créations + sans doublon + preuve BD")
+	public void testRechercherTousStringOkAvecPreuveBd() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
+		final OutputDTO creeEpsilon = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_EPSILON));
+		final OutputDTO creeZeta = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_ZETA));
+
+		assertThat(creeEpsilon).isNotNull();
+		assertThat(creeZeta).isNotNull();
+
+		/* ======================= ACT ======================= */
+		final List<String> libelles = this.service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).contains(IT_EPSILON, IT_ZETA);
+		assertThat(libelles).doesNotHaveDuplicates();
+		assertThat(libelles).allMatch(libelle -> libelle != null && !libelle.isBlank());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* preuve BD : les lignes créées existent physiquement. */
+		assertThat(this.compterTypeProduitEnBase(creeEpsilon.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(creeEpsilon.getIdTypeProduit()))
+				.isEqualTo(IT_EPSILON);
+
+		assertThat(this.compterTypeProduitEnBase(creeZeta.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(creeZeta.getIdTypeProduit()))
+				.isEqualTo(IT_ZETA);
+
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_EPSILON))
+				.isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ZETA))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : stockage vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>reste cohérent avec une base physiquement vide</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName("rechercherTousString(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + base vide")
+	public void testRechercherTousStringVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		assertThat(this.service.count()).isEqualTo(0L);
+
+		/* ======================= ACT ======================= */
+		final List<String> libelles = this.service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).isEmpty();
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>rechercherTousParPage(null) : violation de contrat.</p>
@@ -693,7 +793,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_PAGEABLE_NULL);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -731,7 +834,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(rp.getTotalElements()).isEqualTo(attendu);
 		assertThat(rp.getContent()).isNotNull();
 		assertThat(rp.getContent().size()).isLessThanOrEqualTo(2);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -753,7 +859,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_PARAM_BLANK);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -775,7 +884,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -794,7 +906,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(dto).isNotNull();
 		assertThat(dto.getTypeProduit()).isEqualTo(IT_DELTA);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -814,7 +929,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_PARAM_NULL);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -837,7 +955,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
 				.contains(IT_RAPIDE_A, IT_RAPIDE_B);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -859,7 +980,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
 				.contains(IT_SEARCH_ABC, IT_SEARCH_ABD);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -881,7 +1005,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -902,7 +1029,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(dto).isNotNull();
 		assertThat(dto.getTypeProduit()).isEqualTo(IT_ALPHA);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -921,7 +1051,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		final OutputDTO dto = this.service.findById(null);
 
 		assertThat(dto).isNull();
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -946,7 +1079,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -966,7 +1102,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_PARAM_NULL);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -988,7 +1127,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_PARAM_BLANK);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1012,7 +1154,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1042,7 +1187,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(relu).isNotNull();
 		assertThat(relu.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
 		assertThat(relu.getTypeProduit()).isEqualTo(IT_UPDATE_OK);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1062,7 +1210,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_PARAM_NULL);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1084,7 +1235,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_PARAM_BLANK);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1109,7 +1263,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1134,7 +1291,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		final OutputDTO apresSuppression = this.service.findByLibelle(IT_DELETE_OK);
 
 		assertThat(apresSuppression).isNull();
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1161,7 +1321,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		final long apresSuppression = this.service.count();
 
 		assertThat(apresSuppression).isEqualTo(baseline + 1L);
-	}
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>

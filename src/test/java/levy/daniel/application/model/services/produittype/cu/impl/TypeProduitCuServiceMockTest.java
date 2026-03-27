@@ -693,6 +693,213 @@ public class TypeProduitCuServiceMockTest {
 		verify(gateway, times(1)).rechercherTous();
 		
 	} // __________________________________________________________________
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : stockage null.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
+	 * <li>délègue une seule fois à {@code gateway.rechercherTous()}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : gateway retourne null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
+	public void testRechercherTousStringStockageNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		when(gateway.rechercherTous()).thenReturn(null);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousString())
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		verify(gateway, times(1)).rechercherTous();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : recherche technique KO avec message.</p>
+	 * <ul>
+	 * <li>propage l'exception du Gateway</li>
+	 * <li>rationalise le message utilisateur avec
+	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : gateway KO avec message -> propage l'exception + message technique rationalisé")
+	public void testRechercherTousStringTechniqueKoAvecMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousString())
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		verify(gateway, times(1)).rechercherTous();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : recherche technique KO sans message.</p>
+	 * <ul>
+	 * <li>propage l'exception du Gateway</li>
+	 * <li>utilise le fallback
+	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : gateway KO sans message -> fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testRechercherTousStringTechniqueKoSansMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousString())
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).rechercherTous();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : résultats vides après filtrage.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : résultats vides après filtrage -> liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testRechercherTousStringVideApresFiltrage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final List<TypeProduit> records = new ArrayList<>();
+		records.add(null);
+
+		when(gateway.rechercherTous()).thenReturn(records);
+
+		/* ======================= ACT ======================= */
+		final List<String> retour = service.rechercherTousString();
+		final String message = service.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).rechercherTous();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>filtre les {@code null}</li>
+	 * <li>trie les objets métier</li>
+	 * <li>dédoublonne les libellés</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : filtre nulls + trie + dédoublonne + message MESSAGE_RECHERCHE_OK")
+	public void testRechercherTousStringOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final TypeProduit tpTourisme = new TypeProduit(TOURISME);
+		tpTourisme.setIdTypeProduit(2L);
+
+		final TypeProduit tpBazar = new TypeProduit(BAZAR);
+		tpBazar.setIdTypeProduit(1L);
+
+		when(gateway.rechercherTous())
+				.thenReturn(Arrays.asList(tpTourisme, null, tpBazar, tpTourisme));
+
+		/* ======================= ACT ======================= */
+		final List<String> retour = service.rechercherTousString();
+		final String message = service.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).containsExactly(BAZAR, TOURISME);
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(gateway, times(1)).rechercherTous();
+
+	} // __________________________________________________________________
 	
 	
 
