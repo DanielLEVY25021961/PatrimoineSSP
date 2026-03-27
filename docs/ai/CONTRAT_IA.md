@@ -96,56 +96,47 @@ Objectif :
 ## 5) Méthode de lecture GitHub autorisée
 
 Lecture autorisée exclusivement :
-
-1. URL Raw SHA  
-2. Téléchargement binaire (octets bruts)  
-3. Lecture locale  
+1. URL Raw SHA
+2. Téléchargement binaire (octets bruts)
+3. Lecture locale
 4. Vérification stricte des génériques (aucun Raw Type)
 
 Sacralisation RT-LECTURE-GITHUB-02 :
-
 La lecture autorisée sur le dépôt GitHub ou dans le Bundle est exclusivement :
-
 - URL Raw au SHA : `https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}`
 - SHA unique fourni par l’Utilisateur
 - téléchargement binaire du fichier
 - lecture locale du fichier téléchargé (octets bruts)
 - vérification stricte des génériques
 
-Les génériques doivent impérativement être correctement lus.  
+Les génériques doivent impérativement être correctement lus.
 Aucun Raw Type ne doit être toléré comme effet d’une mauvaise lecture.
 
 Ordre préférentiel des techniques de lecture GitHub@SHA :
-
-1. lecture par **container**
-2. si la lecture par **container** ne fonctionne pas, bascule automatique vers le **web tool**
+1. lecture par **web tool**
+2. si la lecture par **web tool** ne fonctionne pas, bascule automatique vers le **container**
 
 Si une technique de lecture échoue, l’IA doit changer d’elle-même de technique,
-sans attendre une nouvelle instruction de l’Utilisateur, tout en conservant
-strictement la même méthode contractuelle de lecture :
-
+sans attendre une nouvelle instruction de l’Utilisateur,
+tout en conservant strictement la même méthode contractuelle de lecture :
 - URL Raw au SHA
 - téléchargement binaire
 - lecture locale des octets bruts
 - vérification des génériques
 
-Toute autre forme de lecture (rendu texte, HTML, extraction non binaire,
-lecture indirecte d’une page GitHub) est interdite et doit être considérée
-comme non contractuelle.
+Toute autre forme de lecture
+(rendu texte, HTML, extraction non binaire, lecture indirecte d’une page GitHub)
+est interdite et doit être considérée comme non contractuelle.
 
 Règles :
-
 - Relancer automatiquement en cas d’échec (max 3 tentatives)
 - Toute lecture doit être traçable
 - Interdiction d’utiliser des contenus mémorisés non vérifiés
 - Si les génériques ne peuvent pas être lus correctement : demander confirmation
-- Aucune mémorisation, aucune consolidation de baseline, aucune analyse,
-  aucun diagnostic, aucun code ne doivent être produits tant que la lecture
-  conforme à RT-LECTURE-GITHUB-02 n’a pas réussi
+- Aucune mémorisation, aucune consolidation de baseline, aucune analyse, aucun diagnostic, aucun code ne doivent être produits tant que la lecture conforme à RT-LECTURE-GITHUB-02 n’a pas réussi
 
 En cas d’échec persistant :
-
-➡️ Signaler explicitement **"incident de lecture"**  
+➡️ Signaler explicitement **"incident de lecture"**
 ➡️ Passer en MODE OFFLINE
 
 ---
