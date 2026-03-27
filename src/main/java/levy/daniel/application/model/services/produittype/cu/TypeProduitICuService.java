@@ -631,38 +631,80 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche un {@link TypeProduit}
-	 * dans le stockage par libellé exact.</p>
+	 * Recherche un {@link TypeProduitDTO.OutputDTO}
+	 * à partir de son libellé exact
+	 * en pilotant un scénario complet de SERVICE UC.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>retourne null si pTypeProduit est blank (null ou espaces).</li>
-	 * <li>retourne null si aucun objet n'est trouvé.</li>
+	 * <li>recevoir un libellé exact provenant de la couche appelante ;</li>
+	 * <li>valider le caractère exploitable du libellé transmis ;</li>
+	 * <li>déléguer au composant GATEWAY la recherche exacte
+	 * du {@link TypeProduit} correspondant dans le stockage ;</li>
+	 * <li>convertir l'objet métier trouvé
+	 * en {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pLibelle} est Blank, retourne 
-	 * {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK} 
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si aucun objet n'est trouvé en stockage
-	 * , retourne {@code null} et positionne
-	 * {@link #getMessage()} à 
-	 * {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Sinon, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_SUCCES_RECHERCHE} 
-	 * et retourne l'OutputDTO correspondant à l'objet trouvé.</li>
+	 * <li>Si {@code pLibelle} est blank, retourne {@code null},
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Sinon, délègue la recherche exacte au composant GATEWAY.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage,
+	 * retourne {@code null} et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
+	 * <li>Si un objet est trouvé, retourne l'{@link TypeProduitDTO.OutputDTO}
+	 * correspondant.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pLibelle : String : libellé exact à rechercher.
-	 * @return TypeProduitDTO.OutputDTO : DTO résultat ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pLibelle : String :
+	 * libellé exact du TypeProduit recherché.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO correspondant à l'objet trouvé ;
+	 * retourne {@code null} si le libellé est blank
+	 * ou si aucun objet n'est trouvé.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * via le GATEWAY.
+	 * @throws IllegalStateException
+	 * si la conversion finale en {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
-	TypeProduitDTO.OutputDTO findByLibelle(
-			String pLibelle) throws Exception;
-
+	TypeProduitDTO.OutputDTO findByLibelle(String pLibelle) throws Exception;
+	
 	
 	
 	/**

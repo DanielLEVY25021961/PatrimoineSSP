@@ -585,33 +585,93 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public OutputDTO findByLibelle(
-			final String pLibelle) throws Exception {
+	public OutputDTO findByLibelle(final String pLibelle) throws Exception {
 
+		/*
+		 * Retourne null avec un message observable
+		 * si le libellé transmis n'est pas exploitable.
+		 * Si StringUtils.isBlank(pLibelle) : 
+		 * émet un message MESSAGE_PARAM_BLANK et retourne null.
+		 */
 		if (StringUtils.isBlank(pLibelle)) {
-			/* message KO paramètre blanc. */
 			this.message.set(MESSAGE_PARAM_BLANK);
 			return null;
 		}
 
-		/* recherche déléguée au gateway. */
-		final TypeProduit tp
-			= this.gateway.findByLibelle(pLibelle);
+		/*
+		 * Délègue au GATEWAY la recherche exacte dans le stockage.
+		 * Toute anomalie technique de recherche est transformée
+		 * en message utilisateur rationalisé côté UC.
+		 */
+		final TypeProduit typeProduit;
 
-		if (tp == null) {
-			/* message KO objet introuvable. */
+		try {
+			
+			/* Délègue au GATEWAY la recherche exacte dans le stockage.*/
+			typeProduit = this.gateway.findByLibelle(pLibelle);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Retourne null avec un message observable
+		 * si aucun objet n'est trouvé en stockage.
+		 * Si typeProduit == null : 
+		 * émet un message MESSAGE_OBJ_INTROUVABLE + pLibelle 
+		 * et retourne null.
+		 */
+		if (typeProduit == null) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + pLibelle);
 			return null;
 		}
 
-		/* conversion en OutputDTO */
-		final TypeProduitDTO.OutputDTO dto
-			= ConvertisseurMetierToOutputDTOTypeProduit.convert(tp);
+		/*
+		 * Prépare la réponse utilisateur finale
+		 * à partir de l'objet métier trouvé.
+		 */
+		final TypeProduitDTO.OutputDTO dto;
 
-		/* message de succès. */
+		try {
+			
+			/* Convertir l'objet métier retourné par le GATEWAY en OutputDTO. */
+			dto = ConvertisseurMetierToOutputDTOTypeProduit.convert(typeProduit);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Sécurise le contrat observable du UC :
+		 * un DTO null après conversion est une rupture technique.
+		 * Si dto == null : émet un meassage + LOG + IllegalStateException
+		 */
+		if (dto == null) {
+			final String messageTechnique = KO_TECHNIQUE_RECHERCHE
+					+ TIRET_ESPACE
+					+ MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					messageTechnique,
+					new IllegalStateException(messageTechnique));
+		}
+
+		/*
+		 * Le message de succès MESSAGE_SUCCES_RECHERCHE n'est positionné
+		 * qu'après préparation complète de la réponse utilisateur.
+		 */
 		this.message.set(MESSAGE_SUCCES_RECHERCHE);
 
-		/* retourne l'OutputDTO resultat. */
+		/* Retourne l'OutputDTO résultat. */
 		return dto;
 	}
 
