@@ -827,22 +827,36 @@ Commande : “mémoriser. baseline. Pas analyser. Pas coder”
 Objectif : éviter tout faux “incident de lecture” dû à l’échec d’un canal technique unique alors qu’un autre canal de téléchargement binaire est fonctionnel.
 
 Règle prioritaire invariante :
+- Lors d’une lecture GitHub@SHA (RT-LECTURE-GITHUB-02), l’IA DOIT tenter en priorité la lecture par **web tool**.
+- Si la lecture par **web tool** échoue, l’IA DOIT basculer d’elle-même sur la lecture par **container**, sans attendre une nouvelle instruction de l’Utilisateur.
+- Les deux techniques doivent strictement respecter la même méthode contractuelle :
+  - URL Raw@SHA
+  - téléchargement binaire (octets bruts)
+  - lecture locale du fichier téléchargé
+  - vérification stricte des génériques (aucun Raw Type)
 
-- Lors d’une lecture GitHub@SHA (RT-LECTURE-GITHUB-02), l’IA DOIT tenter en priorité la lecture par **container**.
-- Si la lecture par **container** échoue, l’IA DOIT basculer d’elle-même sur la lecture par **web tool**, sans attendre une nouvelle instruction de l’Utilisateur.
-- Les deux techniques doivent strictement respecter la même méthode contractuelle : URL Raw@SHA + téléchargement binaire (octets bruts) + lecture locale du fichier téléchargé + vérification stricte des génériques (aucun Raw Type).
-- L’IA DOIT effectuer au maximum **3 tentatives au total**, en garantissant **au moins une tentative par container** et, si nécessaire, **au moins une tentative par web tool** avant de conclure à un “incident de lecture”.
+Règles de tentative :
+- L’IA DOIT effectuer au maximum **3 tentatives au total**.
+- L’IA DOIT garantir **au moins une tentative par web tool**.
+- Si nécessaire, l’IA DOIT garantir **au moins une tentative par container** avant de conclure à un “incident de lecture”.
+
+Règle de déclaration d’incident :
 - L’IA NE DOIT déclarer **"incident de lecture"** que si :
-  - la technique **container** a été tentée,
-  - la technique **web tool** a été tentée si la lecture par **container** n’a pas réussi,
-  - et les tentatives ont échoué,
+  - la technique **web tool** a été tentée,
+  - la technique **container** a été tentée si la lecture par **web tool** n’a pas réussi,
+  - les tentatives ont échoué,
   - et que, pour chacune des tentatives, tout contenu manifestement invalide (HTML d’erreur, contenu vide, tronqué, incohérent) est traité comme un échec de tentative.
 
-En cas de succès (par **container** ou par **web tool**) :
-
-- L’IA poursuit la procédure RT-LECTURE-GITHUB-02 : lecture locale du fichier téléchargé + vérification de cohérence + vérification stricte des génériques (aucun Raw Type).
-- Si les génériques sont illisibles/douteux : l’IA DOIT demander confirmation avant toute conclusion.
+En cas de succès (par **web tool** ou par **container**) :
+- L’IA poursuit la procédure RT-LECTURE-GITHUB-02 :
+  - lecture locale du fichier téléchargé,
+  - vérification de cohérence,
+  - vérification stricte des génériques (aucun Raw Type).
+- Si les génériques sont illisibles/douteux :
+  - l’IA DOIT demander confirmation avant toute conclusion.
 
 Fallback :
-
-- Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) n’est autorisé qu’après un **incident de lecture** établi selon la présente règle (container tenté, web tool tenté si nécessaire, ≤3 tentatives).
+- Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) n’est autorisé qu’après un **incident de lecture** établi selon la présente règle :
+  - web tool tenté,
+  - container tenté si nécessaire,
+  - ≤ 3 tentatives.
