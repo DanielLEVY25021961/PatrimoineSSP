@@ -836,9 +836,113 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(rp.getContent().size()).isLessThanOrEqualTo(2);
 		
 	}// __________________________________________________________________
-	
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(ok) : test béton avec pagination cohérente
+	 * et preuve BD.</p>
+	 * <ul>
+	 * <li>retourne un {@link ResultatPage} non {@code null}</li>
+	 * <li>reprend le numéro de page</li>
+	 * <li>reprend la taille de page</li>
+	 * <li>reprend le total d'éléments</li>
+	 * <li>retourne un contenu DTO cohérent avec les créations du test</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}</li>
+	 * <li>prouve physiquement l'existence en base
+	 * des objets créés</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTousParPage(ok) : ResultatPage cohérent + message exact + preuve BD")
+	public void testRechercherTousParPageOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.service.count();
+
+		final OutputDTO cree01 = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_PAGE_01));
+		final OutputDTO cree02 = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_PAGE_02));
+		final OutputDTO cree03 = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_PAGE_03));
+		final OutputDTO cree04 = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_PAGE_04));
+		final OutputDTO cree05 = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_PAGE_05));
+
+		final long attendu = baseline + 5L;
+
+		final RequetePage requete = new RequetePage(0, 100);
+
+		/* ======================= ACT ======================= */
+		final ResultatPage<OutputDTO> rp = this.service.rechercherTousParPage(requete);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(rp).isNotNull();
+		assertThat(rp.getPageNumber()).isEqualTo(0);
+		assertThat(rp.getPageSize()).isEqualTo(100);
+		assertThat(rp.getTotalElements()).isEqualTo(attendu);
+
+		assertThat(rp.getContent()).isNotNull();
+		assertThat(rp.getContent().size()).isLessThanOrEqualTo(100);
+
+		assertThat(rp.getContent())
+				.extracting(OutputDTO::getTypeProduit)
+				.contains(
+						IT_PAGE_01,
+						IT_PAGE_02,
+						IT_PAGE_03,
+						IT_PAGE_04,
+						IT_PAGE_05);
+
+		assertThat(rp.getContent())
+				.extracting(OutputDTO::getIdTypeProduit)
+				.contains(
+						cree01.getIdTypeProduit(),
+						cree02.getIdTypeProduit(),
+						cree03.getIdTypeProduit(),
+						cree04.getIdTypeProduit(),
+						cree05.getIdTypeProduit());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* preuve BD : les 5 créations existent physiquement. */
+		assertThat(this.compterTypeProduitEnBase(cree01.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree01.getIdTypeProduit()))
+				.isEqualTo(IT_PAGE_01);
+
+		assertThat(this.compterTypeProduitEnBase(cree02.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree02.getIdTypeProduit()))
+				.isEqualTo(IT_PAGE_02);
+
+		assertThat(this.compterTypeProduitEnBase(cree03.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree03.getIdTypeProduit()))
+				.isEqualTo(IT_PAGE_03);
+
+		assertThat(this.compterTypeProduitEnBase(cree04.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree04.getIdTypeProduit()))
+				.isEqualTo(IT_PAGE_04);
+
+		assertThat(this.compterTypeProduitEnBase(cree05.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree05.getIdTypeProduit()))
+				.isEqualTo(IT_PAGE_05);
+
+	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
 	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
