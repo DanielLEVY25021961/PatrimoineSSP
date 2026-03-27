@@ -459,45 +459,79 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Retourne tous les libellés des
-	 * <code>{@link TypeProduit}</code>
-	 * présents dans le stockage sous forme de 
-	 * <code>String</code>.
+	 * Retourne tous les libellés des {@link TypeProduit}
+	 * disponibles en pilotant un scénario complet de SERVICE UC.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>demande au SERVICE GATEWAY la liste de tous les 
-	 * enregistrements dans le stockage.</li>
-	 * <li>émet un message, LOG et jette une ExceptionStockageVide 
-	 * si la liste retournée est null.</li>
-	 * <li>convertit les objets métier retournés en String  
-	 * , fabrique la liste et la retourne.</li>
+	 * <li>demander au composant GATEWAY la liste complète
+	 * des {@link TypeProduit} présents dans le stockage ;</li>
+	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
+	 * <li>filtrer les éventuels éléments {@code null},
+	 * trier les objets métier,
+	 * extraire les libellés non blank
+	 * et dédoublonner la réponse côté UC si nécessaire ;</li>
+	 * <li>retourner une liste de {@link String}
+	 * exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si le stockage retourne {@code null}
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_STOCKAGE_NULL}, LOG et lève une exception.</li>
-	 * <li>Sinon, retourne la liste des libellés 
-	 * non blank des objets du stockage
-	 * (dédoublonnés côté CU si nécessaire).</li>
-	 * <ul>
-	 * <li>si la liste résultat est vide, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>si la liste résultat n'est pas vide, positionne 
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}</li>
-	 * </ul>
+	 * <li>Délègue la recherche exhaustive au composant GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne une {@link List} de {@link String}
+	 * jamais {@code null}, éventuellement vide.</li>
+	 * <li>La liste retournée ne contient que des libellés non blank,
+	 * dédoublonnés côté UC si nécessaire.</li>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return List&lt;String&gt; : 
-	 * Liste de tous les libellés des objets métier dans le stockage.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>La liste retournée correspond, si elle n'est pas vide,
+	 * à l'état métier effectivement accessible dans le stockage
+	 * via le GATEWAY, exprimé sous forme de libellés.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return List&lt;String&gt; :
+	 * liste des libellés des objets métier présents dans le stockage ;
+	 * jamais {@code null}, éventuellement vide.
+	 * @throws ExceptionStockageVide
+	 * si le stockage retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * exhaustive via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation de la réponse utilisateur.
 	 */
 	List<String> rechercherTousString() throws Exception;
-
+	
 
 
 	/**
