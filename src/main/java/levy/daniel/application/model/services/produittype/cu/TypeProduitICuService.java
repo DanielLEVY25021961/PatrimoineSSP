@@ -804,25 +804,74 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche un TypeProduit dans 
-	 * le stockage à partir d'un InputDTO.</p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * Recherche un {@link TypeProduitDTO.OutputDTO}
+	 * à partir d'un {@link TypeProduitDTO.InputDTO}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null} 
-	 * et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OBJ_NULL} 
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>délègue la recherche de l'objet métier 
-	 * à {@link #findByLibelle(String)}</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO}
+	 * provenant de la couche appelante ;</li>
+	 * <li>vérifier que le DTO de recherche est exploitable ;</li>
+	 * <li>extraire son libellé métier ;</li>
+	 * <li>déléguer la recherche exacte
+	 * à {@link #findByLibelle(String)} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : TypeProduitDTO.InputDTO : DTO de recherche.
-	 * @return TypeProduitDTO.OutputDTO : DTO résultat ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null}, retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OBJ_NULL}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Sinon, délègue la recherche exacte
+	 * à {@link #findByLibelle(String)}
+	 * avec {@code pInputDTO.getTypeProduit()}.</li>
+	 * <li>Le comportement observable sur le libellé transmis
+	 * (blank, introuvable, succès, erreur technique)
+	 * est alors celui de {@link #findByLibelle(String)}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur déléguée.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via la recherche exacte par libellé.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * DTO de recherche.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO résultat ; retourne {@code null}
+	 * si {@code pInputDTO == null}
+	 * ou si la recherche exacte déléguée ne trouve aucun objet.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche exacte
+	 * déléguée à {@link #findByLibelle(String)}.
+	 * @throws IllegalStateException
+	 * si la conversion finale en {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}
+	 * dans le scénario délégué à {@link #findByLibelle(String)}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * via {@link #findByLibelle(String)}.
 	 */
 	TypeProduitDTO.OutputDTO findByDTO(
 			TypeProduitDTO.InputDTO pInputDTO) throws Exception;

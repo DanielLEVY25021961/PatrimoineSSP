@@ -790,18 +790,29 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	*/
 	@Override
 	public OutputDTO findByDTO(final InputDTO pInputDTO) throws Exception {
-	
-		/* émet un message et retourne null. */
+
+		/*
+		 * Si pInputDTO == null :
+		 * émet MESSAGE_RECHERCHE_OBJ_NULL
+		 * et retourne null.
+		 */
 		if (pInputDTO == null) {
 			this.message.set(MESSAGE_RECHERCHE_OBJ_NULL);
 			return null;
 		}
-		
-		/* délègue à this.findByLibelle(libelle). */
-		return this.findByLibelle(pInputDTO.getTypeProduit());
-	
-	}
 
+		/*
+		 * Sinon :
+		 * délègue la recherche exacte
+		 * à findByLibelle(pInputDTO.getTypeProduit()).
+		 *
+		 * Les messages, retours et exceptions observables
+		 * de la recherche déléguée
+		 * restent ceux de findByLibelle(...).
+		 */
+		return this.findByLibelle(pInputDTO.getTypeProduit());
+	}
+	
 
 	
 	/**
