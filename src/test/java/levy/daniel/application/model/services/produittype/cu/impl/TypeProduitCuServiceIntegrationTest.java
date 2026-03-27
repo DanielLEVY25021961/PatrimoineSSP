@@ -1047,78 +1047,165 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(null) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * </ul>
+	 * <p>findByLibelleRapide(null) :
+	 * émet MESSAGE_PARAM_NULL + IllegalStateException.</p>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("findByLibelleRapide(null) : positionne message + lève IllegalStateException")
+	@DisplayName("findByLibelleRapide(null) : IllegalStateException + message MESSAGE_PARAM_NULL")
 	public void testFindByLibelleRapideNull() {
 
 		assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_PARAM_NULL);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(blank) : délègue au comportement "rechercherTous".</p>
-	 * <p>Test "béton" : garantit que la liste retournée contient les créations du test.</p>
+	 * <p>Si pContenu est blank :
+	 * délègue au scénario complet de rechercherTous().</p>
+	 * <ul>
+	 * <li>retourne tous les objets présents</li>
+	 * <li>positionne le message observable de rechercherTous()</li>
+	 * <li>reste cohérent avec la présence physique en base</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous et retourne une liste non nulle")
+	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous() + message MESSAGE_RECHERCHE_OK")
 	public void testFindByLibelleRapideBlank() throws Exception {
 
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_RAPIDE_A));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_RAPIDE_B));
+		final String libelle1 = "IT_FRAPIDE_BLANK_01";
+		final String libelle2 = "IT_FRAPIDE_BLANK_02";
+
+		final OutputDTO cree1 = this.service.creer(new TypeProduitDTO.InputDTO(libelle1));
+		final OutputDTO cree2 = this.service.creer(new TypeProduitDTO.InputDTO(libelle2));
 
 		final List<OutputDTO> dtos = this.service.findByLibelleRapide(ESPACES);
 
 		assertThat(dtos).isNotNull();
 		assertThat(dtos)
-				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
-				.contains(IT_RAPIDE_A, IT_RAPIDE_B);
-		
-	}// __________________________________________________________________
-	
-	
+				.extracting(OutputDTO::getTypeProduit)
+				.contains(libelle1, libelle2);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdTypeProduit)
+				.contains(cree1.getIdTypeProduit(), cree2.getIdTypeProduit());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(this.compterTypeProduitEnBase(cree1.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.compterTypeProduitEnBase(cree2.getIdTypeProduit()))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(non blank) : recherche "like" (selon implémentation) sans exception.</p>
+	 * <p>Si aucun libellé ne correspond :
+	 * retourne une liste vide + MESSAGE_RECHERCHE_VIDE.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelleRapide(non blank) : retourne liste (éventuellement vide) sans exception")
-	public void testFindByLibelleRapideNonBlank() throws Exception {
+	@DisplayName("findByLibelleRapide(introuvable) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindByLibelleRapideIntrouvable() throws Exception {
 
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_SEARCH_ABC));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_SEARCH_ABD));
-
-		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_SEARCH_PREFIXE_AB);
+		final List<OutputDTO> dtos = this.service.findByLibelleRapide("ZZZ_AUCUN_RESULTAT_FRAPIDE_01");
 
 		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>Si des libellés correspondent :
+	 * retourne une liste DTO cohérente, sans doublon,
+	 * et émet MESSAGE_RECHERCHE_OK.</p>
+	 * <ul>
+	 * <li>les objets correspondants existent physiquement en base</li>
+	 * <li>les objets hors cible ne doivent pas être attendus dans le résultat</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelleRapide(ok) : liste DTO cohérente + sans doublon + message exact + preuve BD")
+	public void testFindByLibelleRapideOkAvecPreuveBd() throws Exception {
+
+		final String fragment = "UC_QA_A1";
+		final String libelleMatch1 = "IT_FRAPIDE_" + fragment + "_X";
+		final String libelleMatch2 = "IT_FRAPIDE_" + fragment + "_Y";
+		final String libelleHorsCible = "IT_FRAPIDE_UC_QA_B2_Z";
+
+		final OutputDTO cree1 = this.service.creer(new TypeProduitDTO.InputDTO(libelleMatch1));
+		final OutputDTO cree2 = this.service.creer(new TypeProduitDTO.InputDTO(libelleMatch2));
+		final OutputDTO creeHorsCible = this.service.creer(new TypeProduitDTO.InputDTO(libelleHorsCible));
+
+		final List<OutputDTO> dtos = this.service.findByLibelleRapide(fragment);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).doesNotHaveDuplicates();
+
 		assertThat(dtos)
-				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
-				.contains(IT_SEARCH_ABC, IT_SEARCH_ABD);
-		
-	}// __________________________________________________________________
-	
+				.extracting(OutputDTO::getTypeProduit)
+				.contains(libelleMatch1, libelleMatch2)
+				.doesNotContain(libelleHorsCible);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdTypeProduit)
+				.contains(cree1.getIdTypeProduit(), cree2.getIdTypeProduit())
+				.doesNotContain(creeHorsCible.getIdTypeProduit());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(this.compterTypeProduitEnBase(cree1.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree1.getIdTypeProduit()))
+				.isEqualTo(libelleMatch1);
+
+		assertThat(this.compterTypeProduitEnBase(cree2.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree2.getIdTypeProduit()))
+				.isEqualTo(libelleMatch2);
+
+		assertThat(this.compterTypeProduitEnBase(creeHorsCible.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(creeHorsCible.getIdTypeProduit()))
+				.isEqualTo(libelleHorsCible);
+
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelleMatch1))
+				.isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelleMatch2))
+				.isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelleHorsCible))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
 	 * <p>findByDTO(null) : erreur utilisateur bénigne.</p>
