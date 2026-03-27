@@ -1,0 +1,465 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+tools/ai/perimetre_resolver.py
+
+Résolveur canonique du périmètre IA.
+
+Responsabilités :
+- Charger docs/ai/perimetre.yaml
+- Résoudre un pack hybride :
+  * paths explicites
+  * roots récursifs filtrés par globs
+- Dédupliquer et trier les paths
+- Travailler au SHA via git quand possible
+- Rebasculer localement si le SHA n'est pas disponible localement
+
+Ce module est destiné à devenir la source unique de vérité
+pour la résolution des packs IA.
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+
+import yaml
+
+
+@dataclass(frozen=True)
+class RootSelector:
+    """
+    Décrit une racine à explorer.
+    """
+
+    path: str
+    recursive: bool
+    include_globs: Tuple[str, ...]
+    exclude_globs: Tuple[str, ...]
+    allow_missing: bool
+
+
+@dataclass(frozen=True)
+class PackResolution:
+    """
+    Résultat d'une résolution de pack.
+    """
+
+    pack_name: str
+    files: Tuple[str, ...]
+    explicit_paths: Tuple[str, ...]
+    root_files: Tuple[str, ...]
+    resolved_roots: Tuple[str, ...]
+    missing_roots: Tuple[str, ...]
+
+
+def _read_text(path: Path) -> str:
+    """
+    Lit un fichier texte UTF-8.
+    """
+    return path.read_text(encoding="utf-8")
+
+
+def _run_git(args: Sequence[str], cwd: Path) -> Tuple[int, bytes, bytes]:
+    """
+    Exécute git et retourne (returncode, stdout, stderr).
+    """
+    try:
+        completed = subprocess.run(
+            ["git", *args],
+            cwd=str(cwd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        return completed.returncode, completed.stdout, completed.stderr
+    except FileNotFoundError:
+        return 127, b"", b"git introuvable"
+
+
+def _git_is_available(repo_root: Path) -> bool:
+    """
+    Indique si git est disponible.
+    """
+    code, _, _ = _run_git(["--version"], repo_root)
+    return code == 0
+
+
+def _git_has_object(repo_root: Path, sha: str) -> bool:
+    """
+    Indique si le SHA est résolvable localement.
+    """
+    code, _, _ = _run_git(["cat-file", "-e", f"{sha}^{{commit}}"], repo_root)
+    return code == 0
+
+
+def _safe_relpath(path_str: str) -> str:
+    """
+    Normalise un path de repo.
+    Interdit les paths absolus et les sorties du dépôt.
+    """
+    normalized = path_str.replace("\\", "/").strip()
+    if not normalized:
+        raise ValueError("Path vide interdit.")
+
+    path_obj = Path(normalized)
+
+    if path_obj.is_absolute():
+        raise ValueError(f"Path absolu interdit : {path_str}")
+
+    parts = [part for part in path_obj.parts if part not in ("", ".")]
+    if any(part == ".." for part in parts):
+        raise ValueError(f"Path parent '..' interdit : {path_str}")
+
+    return str(Path(*parts)).replace("\\", "/")
+
+
+def _load_yaml(path: Path) -> Dict:
+    """
+    Charge un fichier YAML.
+    """
+    raw = _read_text(path)
+    data = yaml.safe_load(raw)
+
+    if not isinstance(data, dict):
+        raise ValueError(f"YAML invalide : {path}")
+
+    return data
+
+
+def load_perimetre(perimetre_path: Path) -> Dict:
+    """
+    Charge docs/ai/perimetre.yaml.
+    """
+    return _load_yaml(perimetre_path)
+
+
+def get_project_owner_repo(perimetre: Dict) -> Tuple[str, str]:
+    """
+    Retourne (owner, repo) à partir de perimetre.yaml.
+    """
+    project = perimetre.get("project")
+    if not isinstance(project, dict):
+        raise ValueError("perimetre.yaml : section 'project' manquante ou invalide.")
+
+    owner = str(project.get("owner", "")).strip()
+    repo = str(project.get("repo", "")).strip()
+
+    if not owner or not repo:
+        raise ValueError("perimetre.yaml : owner/repo manquants.")
+
+    return owner, repo
+
+
+def make_raw_sha_url(owner: str, repo: str, sha: str, path: str) -> str:
+    """
+    Construit une URL Raw SHA canonique.
+    """
+    return f"https://raw.githubusercontent.com/{owner}/{repo}/{sha}/{path}"
+
+
+def list_pack_names(perimetre: Dict) -> List[str]:
+    """
+    Liste les packs déclarés.
+    """
+    packs = perimetre.get("packs")
+    if not isinstance(packs, dict):
+        raise ValueError("perimetre.yaml : section 'packs' manquante ou invalide.")
+
+    return list(packs.keys())
+
+
+def _glob_to_regex(pattern: str) -> re.Pattern[str]:
+    """
+    Convertit un glob POSIX simplifié en regex.
+    Supporte :
+    - **
+    - **/
+    - *
+    - ?
+    """
+    i = 0
+    regex = "^"
+
+    while i < len(pattern):
+        if pattern[i:i + 3] == "**/":
+            regex += "(?:.*/)?"
+            i += 3
+            continue
+
+        if pattern[i:i + 2] == "**":
+            regex += ".*"
+            i += 2
+            continue
+
+        char = pattern[i]
+
+        if char == "*":
+            regex += "[^/]*"
+        elif char == "?":
+            regex += "[^/]"
+        else:
+            regex += re.escape(char)
+
+        i += 1
+
+    regex += "$"
+    return re.compile(regex)
+
+
+def _matches_globs(
+    rel_path_from_root: str,
+    include_globs: Sequence[str],
+    exclude_globs: Sequence[str],
+) -> bool:
+    """
+    Vérifie si un path relatif à une root doit être retenu.
+    """
+    include_patterns = list(include_globs) if include_globs else ["**/*"]
+
+    included = any(
+        _glob_to_regex(pattern).match(rel_path_from_root)
+        for pattern in include_patterns
+    )
+    if not included:
+        return False
+
+    excluded = any(
+        _glob_to_regex(pattern).match(rel_path_from_root)
+        for pattern in exclude_globs
+    )
+
+    return not excluded
+
+
+def _parse_root_selector(item: Dict) -> RootSelector:
+    """
+    Parse une entrée de roots.
+    """
+    if not isinstance(item, dict):
+        raise ValueError("Root selector invalide (attendu : dict).")
+
+    raw_path = item.get("path")
+    if raw_path is None:
+        raise ValueError("Root selector invalide : 'path' manquant.")
+
+    include_globs = item.get("include_globs") or ["**/*"]
+    exclude_globs = item.get("exclude_globs") or []
+
+    if not isinstance(include_globs, list):
+        raise ValueError("Root selector invalide : include_globs doit être une liste.")
+    if not isinstance(exclude_globs, list):
+        raise ValueError("Root selector invalide : exclude_globs doit être une liste.")
+
+    return RootSelector(
+        path=_safe_relpath(str(raw_path)),
+        recursive=bool(item.get("recursive", True)),
+        include_globs=tuple(str(x) for x in include_globs),
+        exclude_globs=tuple(str(x) for x in exclude_globs),
+        allow_missing=bool(item.get("allow_missing", False)),
+    )
+
+
+def _git_list_files_under(
+    repo_root: Path,
+    sha: str,
+    rel_root: str,
+    recursive: bool,
+) -> List[str]:
+    """
+    Liste les fichiers présents sous une root au SHA demandé.
+    """
+    args: List[str] = ["ls-tree"]
+    if recursive:
+        args.append("-r")
+    args.extend(["--name-only", sha, "--", rel_root])
+
+    code, out, _ = _run_git(args, repo_root)
+    if code != 0:
+        return []
+
+    result: List[str] = []
+
+    for line in out.decode("utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        normalized = _safe_relpath(stripped)
+        rel_from_root = Path(normalized).relative_to(Path(rel_root)).as_posix()
+
+        if not recursive and "/" in rel_from_root:
+            continue
+
+        result.append(normalized)
+
+    return sorted(set(result))
+
+
+def _list_local_files_under(
+    repo_root: Path,
+    rel_root: str,
+    recursive: bool,
+) -> List[str]:
+    """
+    Liste les fichiers présents localement sous une root.
+    """
+    base_dir = repo_root / rel_root
+    if not base_dir.exists() or not base_dir.is_dir():
+        return []
+
+    iterator: Iterable[Path]
+    if recursive:
+        iterator = base_dir.rglob("*")
+    else:
+        iterator = base_dir.iterdir()
+
+    result: List[str] = []
+
+    for file_path in iterator:
+        if not file_path.is_file():
+            continue
+
+        rel_path = file_path.relative_to(repo_root).as_posix()
+        result.append(_safe_relpath(rel_path))
+
+    return sorted(set(result))
+
+
+def _resolve_root_files(
+    repo_root: Path,
+    sha: Optional[str],
+    git_ok: bool,
+    selector: RootSelector,
+) -> Tuple[List[str], bool]:
+    """
+    Résout les fichiers d'une root.
+
+    Retourne :
+    - la liste filtrée des fichiers
+    - un booléen indiquant si la root a réellement été trouvée
+    """
+    candidates: List[str] = []
+
+    if git_ok and sha:
+        candidates = _git_list_files_under(
+            repo_root=repo_root,
+            sha=sha,
+            rel_root=selector.path,
+            recursive=selector.recursive,
+        )
+    else:
+        candidates = _list_local_files_under(
+            repo_root=repo_root,
+            rel_root=selector.path,
+            recursive=selector.recursive,
+        )
+
+    if not candidates:
+        return [], False
+
+    filtered: List[str] = []
+
+    for candidate in candidates:
+        rel_from_root = Path(candidate).relative_to(Path(selector.path)).as_posix()
+
+        if _matches_globs(
+            rel_path_from_root=rel_from_root,
+            include_globs=selector.include_globs,
+            exclude_globs=selector.exclude_globs,
+        ):
+            filtered.append(candidate)
+
+    return sorted(set(filtered)), True
+
+
+def resolve_pack(
+    *,
+    perimetre_path: Path,
+    repo_root: Path,
+    pack_name: str,
+    sha: Optional[str] = None,
+) -> PackResolution:
+    """
+    Résout un pack donné.
+
+    `pack_name` peut être :
+    - le nom exact d'un pack
+    - "all"
+    """
+    perimetre = load_perimetre(perimetre_path)
+    packs = perimetre.get("packs")
+
+    if not isinstance(packs, dict):
+        raise ValueError("perimetre.yaml : section 'packs' manquante ou invalide.")
+
+    if pack_name == "all":
+        selected_pack_names = list(packs.keys())
+    else:
+        if pack_name not in packs:
+            raise ValueError(f"Pack introuvable : {pack_name}")
+        selected_pack_names = [pack_name]
+
+    git_ok = bool(sha) and _git_is_available(repo_root) and _git_has_object(repo_root, sha)
+
+    explicit_paths: List[str] = []
+    root_files: List[str] = []
+    resolved_roots: List[str] = []
+    missing_roots: List[str] = []
+
+    for selected_name in selected_pack_names:
+        pack = packs.get(selected_name)
+        if not isinstance(pack, dict):
+            raise ValueError(f"Pack invalide : {selected_name}")
+
+        pack_paths = pack.get("paths", [])
+        if pack_paths is None:
+            pack_paths = []
+
+        if not isinstance(pack_paths, list):
+            raise ValueError(f"Pack '{selected_name}' : 'paths' invalide.")
+
+        for item in pack_paths:
+            explicit_paths.append(_safe_relpath(str(item)))
+
+        pack_roots = pack.get("roots", [])
+        if pack_roots is None:
+            pack_roots = []
+
+        if not isinstance(pack_roots, list):
+            raise ValueError(f"Pack '{selected_name}' : 'roots' invalide.")
+
+        for root_item in pack_roots:
+            selector = _parse_root_selector(root_item)
+
+            resolved_files, root_found = _resolve_root_files(
+                repo_root=repo_root,
+                sha=sha,
+                git_ok=git_ok,
+                selector=selector,
+            )
+
+            if root_found:
+                resolved_roots.append(selector.path)
+
+            if not resolved_files:
+                if not selector.allow_missing:
+                    missing_roots.append(selector.path)
+                continue
+
+            root_files.extend(resolved_files)
+
+    final_files = sorted(set(explicit_paths + root_files))
+
+    return PackResolution(
+        pack_name=pack_name,
+        files=tuple(final_files),
+        explicit_paths=tuple(sorted(set(explicit_paths))),
+        root_files=tuple(sorted(set(root_files))),
+        resolved_roots=tuple(sorted(set(resolved_roots))),
+        missing_roots=tuple(sorted(set(missing_roots))),
+    )

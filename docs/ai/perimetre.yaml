@@ -47,6 +47,7 @@ packs:
       - "docs/ai/MANIFEST_IA.yaml"
       - "docs/ai/CONTRAT_IA.md"
       - "docs/ai/perimetre.yaml"
+      - "tools/ai/perimetre_resolver.py"
       - "tools/ai/pack_reading_list.py"
       - "tools/ai/paths.txt"
       - "tools/ai/resolve_raw_sha.py"
