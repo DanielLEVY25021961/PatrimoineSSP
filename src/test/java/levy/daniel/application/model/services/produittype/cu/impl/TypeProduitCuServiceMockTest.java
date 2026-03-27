@@ -71,6 +71,11 @@ public class TypeProduitCuServiceMockTest {
 
 	/** Chaine blank : "   ". */
 	public static final String ESPACES = "   ";
+	
+	/**
+	 * "lecture technique KO"
+	 */
+	public static final String LECTURE_TECHNIQUE_KO = "lecture technique KO";
 
 	/** Message mock gateway : "message gateway". */
 	public static final String MESSAGE_GATEWAY = "message gateway";
@@ -224,7 +229,7 @@ public class TypeProduitCuServiceMockTest {
 		final InputDTO dto = new TypeProduitDTO.InputDTO(BAZAR);
 
 		final IllegalStateException panneTechnique
-			= new IllegalStateException("lecture technique KO");
+			= new IllegalStateException(LECTURE_TECHNIQUE_KO);
 
 		when(gateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
 
@@ -235,7 +240,7 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
-						+ "lecture technique KO");
+						+ LECTURE_TECHNIQUE_KO);
 
 		verify(gateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, never()).creer(any(TypeProduit.class));
@@ -1150,7 +1155,7 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>findByLibelle(blank) : retourne null et message MESSAGE_PARAM_BLANK.</p>
+	 * <p>findByLibelle(blank) : retourne {@code null} et message exact.</p>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -1165,24 +1170,26 @@ public class TypeProduitCuServiceMockTest {
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-		// ===================== ACT =====================
+		// ======================= ACT =======================
 
 		final OutputDTO retour = service.findByLibelle(ESPACES);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		// ===================== ASSERT ======================
 
 		assertThat(retour).isNull();
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+
 		verifyNoInteractions(gateway);
-		
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(introuvable) : null + message MESSAGE_OBJ_INTROUVABLE + libellé.</p>
+	 * <p>findByLibelle(introuvable) : retourne {@code null}
+	 * et message exact "introuvable".</p>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -1197,27 +1204,112 @@ public class TypeProduitCuServiceMockTest {
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-		when(gateway.findByLibelle(VETEMENT)).thenReturn(null);
+		final String libelleAbsent = "IT_FIND_BY_LIBELLE_ABSENT_01";
 
-		// ===================== ACT =====================
+		when(gateway.findByLibelle(libelleAbsent)).thenReturn(null);
 
-		final OutputDTO retour = service.findByLibelle(VETEMENT);
+		// ======================= ACT =======================
+
+		final OutputDTO retour = service.findByLibelle(libelleAbsent);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		// ===================== ASSERT ======================
 
 		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + VETEMENT);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelleAbsent);
 
-		verify(gateway, times(1)).findByLibelle(VETEMENT);
-		
+		verify(gateway, times(1)).findByLibelle(libelleAbsent);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : OutputDTO + message MESSAGE_SUCCES_RECHERCHE.</p>
+	 * <p>findByLibelle(KO technique avec message) :
+	 * propage l'exception et rationalise le message utilisateur.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(KO technique avec message) : propage l'exception + message technique rationalisé")
+	public void testFindByLibelleTechniqueKoAvecMessage() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final String libelle = "IT_FIND_BY_LIBELLE_TECH_KO_01";
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(LECTURE_TECHNIQUE_KO);
+
+		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findByLibelle(libelle))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ LECTURE_TECHNIQUE_KO);
+
+		verify(gateway, times(1)).findByLibelle(libelle);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(KO technique sans message) :
+	 * fallback sur MSG_ERREUR_NON_SPECIFIEE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testFindByLibelleTechniqueKoSansMessage() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final String libelle = "IT_FIND_BY_LIBELLE_TECH_KO_02";
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findByLibelle(libelle))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findByLibelle(libelle);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(ok) : retourne un DTO cohérent
+	 * et positionne le message exact de succès.</p>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -1232,28 +1324,30 @@ public class TypeProduitCuServiceMockTest {
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-		final TypeProduit tp = new TypeProduit(VETEMENT);
+		final String libelle = "IT_FIND_BY_LIBELLE_OK_01";
+		final TypeProduit tp = new TypeProduit(libelle);
 		tp.setIdTypeProduit(7L);
 
-		when(gateway.findByLibelle(VETEMENT)).thenReturn(tp);
+		when(gateway.findByLibelle(libelle)).thenReturn(tp);
 
-		// ===================== ACT =====================
+		// ======================= ACT =======================
 
-		final OutputDTO retour = service.findByLibelle(VETEMENT);
+		final OutputDTO retour = service.findByLibelle(libelle);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		// ===================== ASSERT ======================
 
 		assertThat(retour).isNotNull();
-		assertThat(retour.getTypeProduit()).isEqualTo(VETEMENT);
+		assertThat(retour.getIdTypeProduit()).isEqualTo(7L);
+		assertThat(retour.getTypeProduit()).isEqualTo(libelle);
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
 
-		verify(gateway, times(1)).findByLibelle(VETEMENT);
-		
-	} // __________________________________________________________________
-	
+		verify(gateway, times(1)).findByLibelle(libelle);
+
+	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
 	 * <p>findByLibelleRapide(null) : IllegalStateException + message MESSAGE_PARAM_NULL.</p>

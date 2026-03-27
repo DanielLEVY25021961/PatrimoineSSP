@@ -948,70 +948,100 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(blank) : erreur utilisateur bénigne -> retourne null, message utilisateur, aucune exception")
+	@DisplayName("findByLibelle(blank) : retourne null + message exact MESSAGE_PARAM_BLANK")
 	public void testFindByLibelleBlank() throws Exception {
 
 		final OutputDTO dto = this.service.findByLibelle(ESPACES);
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_PARAM_BLANK);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
 	 * <p>findByLibelle(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findByLibelle(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testFindByLibelleIntrouvable() throws Exception {
 
-		final OutputDTO dto = this.service.findByLibelle(IT_INEXISTANT_XYZ);
+		final String libelleAbsent = "IT_FIND_BY_LIBELLE_ABSENT_BD_01";
+
+		final OutputDTO dto = this.service.findByLibelle(libelleAbsent);
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelleAbsent);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : retourne un DTO non nul après création.</p>
+	 * <p>findByLibelle(ok) : test béton avec preuve BD.</p>
+	 * <ul>
+	 * <li>crée d'abord un TypeProduit réel</li>
+	 * <li>retrouve ensuite exactement ce même objet par son libellé</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>prouve physiquement la présence en base</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(ok) : retourne OutputDTO après création")
-	public void testFindByLibelleOk() throws Exception {
+	@DisplayName("findByLibelle(ok) : OutputDTO cohérent + message exact + preuve BD")
+	public void testFindByLibelleOkAvecPreuveBd() throws Exception {
 
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_DELTA));
+		final String libelle = "IT_FIND_BY_LIBELLE_OK_BD_01";
 
-		final OutputDTO dto = this.service.findByLibelle(IT_DELTA);
+		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(libelle));
+
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(libelle);
+
+		final OutputDTO dto = this.service.findByLibelle(libelle);
 
 		assertThat(dto).isNotNull();
-		assertThat(dto.getTypeProduit()).isEqualTo(IT_DELTA);
-		
-	}// __________________________________________________________________
+		assertThat(dto.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
+		assertThat(dto.getTypeProduit()).isEqualTo(libelle);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(libelle);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelle))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________
 	
 	
 
