@@ -78,14 +78,14 @@ packs:
         allow_missing: true
 
   application_racine:
-    description: "Classes racine de l'application (bootstrap, package-info, lanceurs) hors sous-packages métier/controllers/views/persistence."
+    description: "Classes racine de l'application (bootstrap, package-info, lanceurs) hors sous-packages métier/controllers/views/persistence. Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
     roots:
       - path: "src/main/java/levy/daniel/application"
         recursive: false
         include_globs:
           - "*.java"
         exclude_globs: []
-        allow_missing: false
+        allow_missing: true
       - path: "src/test/java/levy/daniel/application"
         recursive: false
         include_globs:
@@ -212,14 +212,14 @@ packs:
         allow_missing: true
 
   controllers:
-    description: "Couche controllers réelle du projet (desktop, mobile, web)."
+    description: "Couche controllers réelle du projet (desktop, mobile, web). Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
     roots:
       - path: "src/main/java/levy/daniel/application/controllers"
         recursive: true
         include_globs:
           - "**/*.java"
         exclude_globs: []
-        allow_missing: false
+        allow_missing: true
       - path: "src/test/java/levy/daniel/application/controllers"
         recursive: true
         include_globs:
@@ -228,14 +228,14 @@ packs:
         allow_missing: true
 
   views:
-    description: "Couche views réelle du projet (desktop, mobile, web)."
+    description: "Couche views réelle du projet (desktop, mobile, web). Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
     roots:
       - path: "src/main/java/levy/daniel/application/views"
         recursive: true
         include_globs:
           - "**/*.java"
         exclude_globs: []
-        allow_missing: false
+        allow_missing: true
       - path: "src/test/java/levy/daniel/application/views"
         recursive: true
         include_globs:
