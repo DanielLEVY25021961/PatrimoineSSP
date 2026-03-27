@@ -533,7 +533,127 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
 				.contains(IT_GAMMA, IT_DELTA);
-	}
+		
+	}// __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTous() : scénario nominal béton avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>reste cohérent avec {@link TypeProduitICuService#count()}</li>
+	 * <li>contient les créations du test</li>
+	 * <li>permet de relier les DTO retournés à des lignes réellement présentes
+	 * en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTous(ok) : message exact + cohérence count + présence des créations + preuve BD")
+	public void testRechercherTousOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final OutputDTO creeGamma = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_GAMMA));
+		final OutputDTO creeDelta = this.service.creer(
+				new TypeProduitDTO.InputDTO(IT_DELTA));
+
+		final long attendu = this.service.count();
+
+		/* ======================= ACT ======================= */
+		final List<TypeProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos.size()).isEqualTo((int) attendu);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
+				.contains(IT_GAMMA, IT_DELTA);
+
+		final OutputDTO dtoGamma = dtos.stream()
+				.filter(dto -> IT_GAMMA.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		final OutputDTO dtoDelta = dtos.stream()
+				.filter(dto -> IT_DELTA.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoGamma).isNotNull();
+		assertThat(dtoGamma.getIdTypeProduit())
+				.isEqualTo(creeGamma.getIdTypeProduit());
+
+		assertThat(dtoDelta).isNotNull();
+		assertThat(dtoDelta.getIdTypeProduit())
+				.isEqualTo(creeDelta.getIdTypeProduit());
+
+		/* preuve BD : les lignes existent physiquement et portent le bon libellé. */
+		assertThat(this.compterTypeProduitEnBase(creeGamma.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(creeGamma.getIdTypeProduit()))
+				.isEqualTo(IT_GAMMA);
+
+		assertThat(this.compterTypeProduitEnBase(creeDelta.getIdTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(creeDelta.getIdTypeProduit()))
+				.isEqualTo(IT_DELTA);
+
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_GAMMA))
+				.isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_DELTA))
+				.isEqualTo(1L);
+		
+	}// __________________________________________________________________
+
+	
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : stockage vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>reste cohérent avec une base physiquement vide</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName("rechercherTous(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + base vide")
+	public void testRechercherTousVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		assertThat(this.service.count()).isEqualTo(0L);
+
+		/* ======================= ACT ======================= */
+		final List<TypeProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		
+	}// __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>

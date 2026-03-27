@@ -34,8 +34,6 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreNull;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionStockageVide;
 import levy.daniel.application.model.services.produittype.gateway.TypeProduitGatewayIService;
-import levy.daniel.application.model.services.produittype.pagination.RequetePage;
-import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
 /**
  * <div>
@@ -481,62 +479,157 @@ public class TypeProduitCuServiceMockTest {
 
 	/**
 	 * <div>
-	 * <p>rechercherTous() : stockage null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL.</p>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTous() : gateway retourne null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
-	public void testRechercherTousStockageNull() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
-		when(gateway.rechercherTous()).thenReturn(null);
-
-		// ===================== ACT & ASSERT =====================
-
-		assertThatThrownBy(() -> service.rechercherTous())
-				.isInstanceOf(ExceptionStockageVide.class);
-
-		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
-
-		verify(gateway, times(1)).rechercherTous();
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>rechercherTous() : retourne une liste vide après filtrage -> message MESSAGE_RECHERCHE_VIDE.</p>
+	 * <p>rechercherTous() : stockage null.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
+	 * <li>délègue une seule fois à {@code gateway.rechercherTous()}</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("rechercherTous() : résultats vides -> liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testRechercherTousVide() throws Exception {
+	@DisplayName("rechercherTous() : gateway retourne null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
+	public void testRechercherTousStockageNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-		final List<TypeProduit> records = new ArrayList<TypeProduit>();
+		when(gateway.rechercherTous()).thenReturn(null);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTous())
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		verify(gateway, times(1)).rechercherTous();
+		
+	} // __________________________________________________________________
+
+	
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : recherche technique KO avec message.</p>
+	 * <ul>
+	 * <li>propage l'exception du Gateway</li>
+	 * <li>rationalise le message utilisateur avec
+	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : gateway KO avec message -> propage l'exception + message technique rationalisé")
+	public void testRechercherTousTechniqueKoAvecMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+
+		verify(gateway, times(1)).rechercherTous();
+		
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>rechercherTous() : recherche technique KO sans message.</p>
+	 * <ul>
+	 * <li>propage l'exception du Gateway</li>
+	 * <li>utilise le fallback
+	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : gateway KO sans message -> fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testRechercherTousTechniqueKoSansMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).rechercherTous();
+		
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : résultats vides après filtrage.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : résultats vides après filtrage -> liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testRechercherTousVideApresFiltrage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final List<TypeProduit> records = new ArrayList<>();
 		records.add(null);
+
 		when(gateway.rechercherTous()).thenReturn(records);
 
-		// ===================== ACT =====================
-
-		final List<OutputDTO> retour = service.rechercherTous();
+		/* ======================= ACT ======================= */
+		final List<TypeProduitDTO.OutputDTO> retour = service.rechercherTous();
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
+		/* ===================== ASSERT ====================== */
 		assertThat(retour).isNotNull();
 		assertThat(retour).isEmpty();
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
@@ -544,166 +637,60 @@ public class TypeProduitCuServiceMockTest {
 		verify(gateway, times(1)).rechercherTous();
 		
 	} // __________________________________________________________________
-	
-	
 
+	
+	
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : retourne des libellés uniques non blank, triés, message OK si non vide.</p>
+	 * <p>rechercherTous() : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>filtre les {@code null}</li>
+	 * <li>trie les objets métier</li>
+	 * <li>dédoublonne la réponse DTO</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("rechercherTousString() : dédoublonne + retire blanks + message MESSAGE_RECHERCHE_OK")
-	public void testRechercherTousStringOk() throws Exception {
+	@DisplayName("rechercherTous() : filtre nulls + trie + dédoublonne + message MESSAGE_RECHERCHE_OK")
+	public void testRechercherTousOk() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-		final TypeProduit tp1 = new TypeProduit(TOURISME);
-		tp1.setIdTypeProduit(2L);
+		final TypeProduit tpTourisme = new TypeProduit(TOURISME);
+		tpTourisme.setIdTypeProduit(2L);
 
-		final TypeProduit tp2 = new TypeProduit(ESPACES);
-		tp2.setIdTypeProduit(3L);
+		final TypeProduit tpBazar = new TypeProduit(BAZAR);
+		tpBazar.setIdTypeProduit(1L);
 
-		final TypeProduit tp3 = new TypeProduit(TOURISME);
-		tp3.setIdTypeProduit(4L);
+		when(gateway.rechercherTous())
+				.thenReturn(Arrays.asList(tpTourisme, null, tpBazar, tpTourisme));
 
-		final TypeProduit tp4 = new TypeProduit(BAZAR);
-		tp4.setIdTypeProduit(1L);
-
-		when(gateway.rechercherTous()).thenReturn(Arrays.asList(tp1, tp2, tp3, tp4, null));
-
-		// ===================== ACT =====================
-
-		final List<String> retour = service.rechercherTousString();
+		/* ======================= ACT ======================= */
+		final List<TypeProduitDTO.OutputDTO> retour = service.rechercherTous();
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
+		/* ===================== ASSERT ====================== */
 		assertThat(retour).isNotNull();
-		assertThat(retour).contains(BAZAR, TOURISME);
-		assertThat(retour).doesNotContain(ESPACES);
+		assertThat(retour).hasSize(2);
+
+		assertThat(retour)
+				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR, TOURISME);
+
+		assertThat(retour)
+				.extracting(TypeProduitDTO.OutputDTO::getIdTypeProduit)
+				.containsExactly(1L, 2L);
+
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		verify(gateway, times(1)).rechercherTous();
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>rechercherTousParPage(null) : IllegalStateException + message MESSAGE_PAGEABLE_NULL.</p>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage(null) : IllegalStateException + message MESSAGE_PAGEABLE_NULL + aucune interaction gateway")
-	public void testRechercherTousParPageNull() {
-
-		// ===================== ARRANGE =====================
-
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
-		// ===================== ACT & ASSERT =====================
-
-		assertThatThrownBy(() -> service.rechercherTousParPage(null))
-				.isInstanceOf(IllegalStateException.class);
-
-		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_PAGEABLE_NULL);
-
-		verifyNoInteractions(gateway);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>rechercherTousParPage() : gateway retourne null -> retourne null et message MESSAGE_RECHERCHE_PAGINEE_KO.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage() : résultat gateway null -> null + message MESSAGE_RECHERCHE_PAGINEE_KO")
-	public void testRechercherTousParPageGatewayNull() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
-		final RequetePage pageable = new RequetePage(0, 10);
-
-		when(gateway.rechercherTousParPage(pageable)).thenReturn(null);
-
-		// ===================== ACT =====================
-
-		final ResultatPage<OutputDTO> retour = service.rechercherTousParPage(pageable);
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
-
-		verify(gateway, times(1)).rechercherTousParPage(pageable);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>rechercherTousParPage() : ok -> retourne ResultatPage, message MESSAGE_RECHERCHE_PAGINEE_OK.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage() : OK -> ResultatPage + message MESSAGE_RECHERCHE_PAGINEE_OK")
-	public void testRechercherTousParPageOk() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
-		final RequetePage pageable = new RequetePage(0, 2);
-
-		final TypeProduit tp1 = new TypeProduit(BAZAR);
-		tp1.setIdTypeProduit(1L);
-
-		final TypeProduit tp2 = new TypeProduit(TOURISME);
-		tp2.setIdTypeProduit(2L);
-
-		final ResultatPage<TypeProduit> resultatGateway = new ResultatPage<TypeProduit>(
-				Arrays.asList(tp2, tp1, null), 0, 2, 2L);
-
-		when(gateway.rechercherTousParPage(pageable)).thenReturn(resultatGateway);
-
-		// ===================== ACT =====================
-
-		final ResultatPage<OutputDTO> retour = service.rechercherTousParPage(pageable);
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(retour).isNotNull();
-		assertThat(retour.getContent()).isNotNull();
-		assertThat(retour.getContent().size()).isEqualTo(2);
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
-
-		verify(gateway, times(1)).rechercherTousParPage(pageable);
 		
 	} // __________________________________________________________________
 	
