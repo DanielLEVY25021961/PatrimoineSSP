@@ -681,52 +681,109 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public List<TypeProduitDTO.OutputDTO> findByLibelleRapide(
+	public List<OutputDTO> findByLibelleRapide(
 			final String pContenu) throws Exception {
 
-		/* émet un message, LOG et jette une Exception
-		 * si pContenu == null. */
+		/*
+		 * Le contrat UC refuse un contenu de recherche null.
+		 * si pContenu == null : 
+		 * émet un message observable MESSAGE_PARAM_NULL 
+		 * + LOG + exception IllegalStateException.
+		 */
 		if (pContenu == null) {
 			return this.traiterErreur(
 					MESSAGE_PARAM_NULL,
 					new IllegalStateException(MESSAGE_PARAM_NULL));
 		}
 
+		/*
+		 * Le contrat UC délègue le cas blank
+		 * au scénario complet de recherche exhaustive.
+		 * Si StringUtils.isBlank(pContenu) : 
+		 * retourne tous les enregistrements du stockage.
+		 */
 		if (StringUtils.isBlank(pContenu)) {
-			/* retourne tous les enregistrements si pContenu est blank. */
 			return this.rechercherTous();
 		}
 
-		/* délègue au Gateway le recherche des résultats. */
-		final List<TypeProduit> reponses
-			= this.gateway.findByLibelleRapide(pContenu);
-
-		/* trie et filtre les réponses. */
-		final List<TypeProduit> recordsNonNullTries
-			= this.filtrerEtTrier(reponses);
-
-		/* convertit en OutputDTO. */
-		final List<TypeProduitDTO.OutputDTO> rep
-			= ConvertisseurMetierToOutputDTOTypeProduit
-				.convertList(recordsNonNullTries);
-
 		/*
-		 * Contrat observable :
-		 * le message reflète la liste effectivement retournée.
+		 * Délègue au GATEWAY la recherche rapide dans le stockage.
+		 * Toute anomalie technique de recherche est transformée
+		 * en message utilisateur rationalisé côté UC.
 		 */
-		if (rep.isEmpty()) {
-			/* message recherche vide si pas de résultats. */
-			message.set(MESSAGE_RECHERCHE_VIDE);
-		} else {
-			/* message recherche OK si résultats. */
-			message.set(MESSAGE_RECHERCHE_OK);
+		final List<TypeProduit> records;
+
+		try {
+			
+			/* Délègue au GATEWAY la recherche rapide dans le stockage. */
+			records = this.gateway.findByLibelleRapide(pContenu);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
 		}
 
-		/* retourne la réponse. */
-		return rep;
+		/*
+		 * Sécurise le contrat observable du UC :
+		 * le stockage ne doit pas retourner null.
+		 * Si records == null : 
+		 * émet un message observable MESSAGE_STOCKAGE_NULL 
+		 * + LOG + exception applicative ExceptionStockageVide.
+		 */
+		if (records == null) {
+			return this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+		}
+
+		/*
+		 * Prépare la réponse utilisateur complète :
+		 * retrait des nulls, tri métier,
+		 * puis conversion en OutputDTO avec dédoublonnage.
+		 */
+		final List<OutputDTO> dtos;
+
+		try {
+			
+			/* filtre les null et trie la réponse du stockage. */
+			final List<TypeProduit> recordsNonNullTries
+					= this.filtrerEtTrier(records);
+
+			/* dédoublonne, conserve l'ordre et 
+			 * convertit la réponse du stockage filtrée en OutputDTOs. */
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Le message observable n'est positionné
+		 * qu'après préparation complète de la réponse utilisateur.
+		 */
+		if (dtos.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
+		}
+
+		/*
+		 * Retourne toujours une liste d'OutputDTO non null
+		 * et éventuellement vide.
+		 */
+		return dtos;
 	}
 
-
+	
 	
 	/**
 	* {@inheritDoc}
