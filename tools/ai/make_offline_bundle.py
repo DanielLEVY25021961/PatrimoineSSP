@@ -4,40 +4,9 @@
 """
 tools/ai/make_offline_bundle.py
 
-But :
-- Construire un bundle OFFLINE reproductible au SHA donné.
-- Le bundle contient tous les fichiers lisibles au SHA GitHub pour le lot demandé,
-  selon le périmètre hybride défini dans docs/ai/perimetre.yaml.
-- Le bundle ajoute aussi le bootstrap IA minimal dérivé de :
-  * docs/ai/MANIFEST_IA.yaml
-  * tools/ai/paths.txt
-- Générer des métadonnées cohérentes et un PROVENANCE.yaml valide.
-
-Entrées :
-- --sha : SHA unique (obligatoire)
-- --lot : pack (ou all)
-- --perimetre : chemin du perimetre.yaml (optionnel)
-- --out-dir : répertoire de sortie (zip ou dossier, selon --no-zip)
-
-Sorties :
-- Mode ZIP (défaut) :
-  - <out-dir>/AI_OFFLINE_<sha>_<lot>.zip
-- Mode NO-ZIP (--no-zip) :
-  - <out-dir>/AI_OFFLINE/...
-
-Stratégie d'extraction :
-- Si git est disponible et que le SHA est résolvable localement :
-  * résolution des roots via git ls-tree au SHA
-  * extraction des fichiers via git show <sha>:<path>
-  * aucun fallback local, afin de garantir la fidélité au SHA GitHub
-- Sinon :
-  * fallback local sur le working tree
-
-Contrats :
-- Génère AI_OFFLINE/INDEX.txt (liste triée des paths extraits)
-- Génère AI_OFFLINE/CHECKSUMS.sha256 (sha256 pour chaque fichier extrait)
-- Génère AI_OFFLINE/PROVENANCE.yaml valide (YAML)
-- Génère AI_OFFLINE/MISSING.txt si certains fichiers/racines sont introuvables
+Construit un bundle OFFLINE à partir du périmètre hybride défini dans
+`docs/ai/perimetre.yaml`, en utilisant `tools/ai/perimetre_resolver.py`
+comme API canonique de résolution.
 """
 
 from __future__ import annotations
@@ -52,10 +21,16 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from pathlib import Path, PurePosixPath
-from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from pathlib import Path
+from typing import Iterable, List, Optional, Sequence, Set, Tuple
 
 import yaml
+
+from perimetre_resolver import (
+    list_pack_names,
+    load_perimetre,
+    resolve_pack,
+)
 
 RAW_REFS_HEADS_PREFIX = re.compile(
     r"^https://raw\.githubusercontent\.com/"
@@ -70,14 +45,14 @@ RAW_SHA_PREFIX = re.compile(
 
 def _eprint(message: str) -> None:
     """
-    Ecrit un message sur stderr.
+    Écrit un message sur stderr.
     """
     print(message, file=sys.stderr)
 
 
 def _write_text(path: Path, content: str) -> None:
     """
-    Ecrit un fichier texte UTF-8.
+    Écrit un fichier texte UTF-8.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
@@ -148,7 +123,7 @@ def _safe_relpath(path_str: str) -> str:
     if not normalized:
         raise ValueError("Path vide interdit.")
 
-    path_obj = PurePosixPath(normalized)
+    path_obj = Path(normalized)
 
     if path_obj.is_absolute():
         raise ValueError(f"Path absolu interdit : {path_str}")
@@ -157,305 +132,7 @@ def _safe_relpath(path_str: str) -> str:
     if any(part == ".." for part in parts):
         raise ValueError(f"Path parent '..' interdit : {path_str}")
 
-    return str(PurePosixPath(*parts))
-
-
-def _load_yaml_file(path: Path) -> Dict:
-    """
-    Charge un fichier YAML depuis le disque.
-    """
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise ValueError(f"YAML invalide : {path}")
-    return data
-
-
-def _get_pack_names(perimetre: Dict) -> List[str]:
-    """
-    Retourne la liste des packs déclarés.
-    """
-    packs = perimetre.get("packs")
-    if not isinstance(packs, dict):
-        raise ValueError("perimetre.yaml : section 'packs' manquante ou invalide.")
-    return list(packs.keys())
-
-
-def _get_selected_pack_names(perimetre: Dict, lot: str) -> List[str]:
-    """
-    Retourne la liste des packs à résoudre.
-    """
-    pack_names = _get_pack_names(perimetre)
-    if lot == "all":
-        return pack_names
-    if lot not in pack_names:
-        raise ValueError(f"Pack inconnu : {lot}")
-    return [lot]
-
-
-def _glob_to_regex(pattern: str) -> re.Pattern[str]:
-    """
-    Convertit un glob POSIX simplifié en regex.
-    """
-    i = 0
-    regex = "^"
-
-    while i < len(pattern):
-        if pattern[i:i + 3] == "**/":
-            regex += "(?:.*/)?"
-            i += 3
-            continue
-
-        if pattern[i:i + 2] == "**":
-            regex += ".*"
-            i += 2
-            continue
-
-        char = pattern[i]
-
-        if char == "*":
-            regex += "[^/]*"
-        elif char == "?":
-            regex += "[^/]"
-        else:
-            regex += re.escape(char)
-
-        i += 1
-
-    regex += "$"
-    return re.compile(regex)
-
-
-def _matches_globs(
-    rel_path_from_root: str,
-    include_globs: Sequence[str],
-    exclude_globs: Sequence[str],
-) -> bool:
-    """
-    Indique si un path relatif à une root doit être retenu.
-    """
-    include_patterns = list(include_globs) if include_globs else ["**/*"]
-
-    included = any(
-        _glob_to_regex(pattern).match(rel_path_from_root)
-        for pattern in include_patterns
-    )
-    if not included:
-        return False
-
-    excluded = any(
-        _glob_to_regex(pattern).match(rel_path_from_root)
-        for pattern in exclude_globs
-    )
-    return not excluded
-
-
-def _git_list_files_under(
-    repo_root: Path,
-    sha: str,
-    rel_root: str,
-    recursive: bool,
-) -> List[str]:
-    """
-    Liste les fichiers présents sous une root au SHA demandé.
-    """
-    args: List[str] = ["ls-tree"]
-    if recursive:
-        args.append("-r")
-    args.extend(["--name-only", sha, "--", rel_root])
-
-    code, out, _ = _run_git(args, repo_root)
-    if code != 0:
-        return []
-
-    result: List[str] = []
-
-    for line in out.decode("utf-8").splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-
-        normalized = _safe_relpath(stripped)
-        rel_from_root = PurePosixPath(normalized).relative_to(PurePosixPath(rel_root)).as_posix()
-
-        if not recursive and "/" in rel_from_root:
-            continue
-
-        result.append(normalized)
-
-    return sorted(set(result))
-
-
-def _list_local_files_under(
-    repo_root: Path,
-    rel_root: str,
-    recursive: bool,
-) -> List[str]:
-    """
-    Liste les fichiers présents localement sous une root.
-    """
-    root_dir = repo_root / rel_root
-    if not root_dir.exists() or not root_dir.is_dir():
-        return []
-
-    iterator: Iterable[Path]
-    if recursive:
-        iterator = root_dir.rglob("*")
-    else:
-        iterator = root_dir.glob("*")
-
-    result: List[str] = []
-
-    for file_path in iterator:
-        if not file_path.is_file():
-            continue
-        rel_path = file_path.relative_to(repo_root).as_posix()
-        result.append(_safe_relpath(rel_path))
-
-    return sorted(set(result))
-
-
-def _resolve_root_files(
-    repo_root: Path,
-    sha: str,
-    git_ok: bool,
-    rel_root: str,
-    recursive: bool,
-    include_globs: Sequence[str],
-    exclude_globs: Sequence[str],
-) -> Tuple[List[str], bool]:
-    """
-    Résout les fichiers d'une root.
-
-    Si git_ok est vrai, la résolution est strictement basée sur Git au SHA.
-    Sinon, fallback local.
-    """
-    candidates: List[str] = []
-
-    if git_ok:
-        candidates = _git_list_files_under(
-            repo_root=repo_root,
-            sha=sha,
-            rel_root=rel_root,
-            recursive=recursive,
-        )
-    else:
-        candidates = _list_local_files_under(
-            repo_root=repo_root,
-            rel_root=rel_root,
-            recursive=recursive,
-        )
-
-    if not candidates:
-        return [], False
-
-    retained: List[str] = []
-
-    for candidate in candidates:
-        rel_from_root = PurePosixPath(candidate).relative_to(PurePosixPath(rel_root)).as_posix()
-
-        if _matches_globs(
-            rel_path_from_root=rel_from_root,
-            include_globs=include_globs,
-            exclude_globs=exclude_globs,
-        ):
-            retained.append(candidate)
-
-    return sorted(set(retained)), True
-
-
-def _resolve_pack_paths(
-    *,
-    perimetre: Dict,
-    repo_root: Path,
-    sha: str,
-    lot: str,
-    git_ok: bool,
-) -> Tuple[List[str], List[str], List[str], List[str], List[str]]:
-    """
-    Résout un lot hybride.
-
-    Retourne :
-    - paths finaux
-    - explicit_paths
-    - root_files
-    - resolved_roots
-    - missing_roots
-    """
-    packs = perimetre.get("packs")
-    if not isinstance(packs, dict):
-        raise ValueError("perimetre.yaml : section 'packs' manquante ou invalide.")
-
-    selected_pack_names = _get_selected_pack_names(perimetre, lot)
-
-    explicit_paths: List[str] = []
-    root_files: List[str] = []
-    resolved_roots: List[str] = []
-    missing_roots: List[str] = []
-
-    for selected_name in selected_pack_names:
-        pack = packs.get(selected_name)
-        if not isinstance(pack, dict):
-            raise ValueError(f"Pack invalide : {selected_name}")
-
-        pack_paths = pack.get("paths", []) or []
-        if not isinstance(pack_paths, list):
-            raise ValueError(f"Pack '{selected_name}' : 'paths' invalide.")
-
-        for item in pack_paths:
-            explicit_paths.append(_safe_relpath(str(item)))
-
-        pack_roots = pack.get("roots", []) or []
-        if not isinstance(pack_roots, list):
-            raise ValueError(f"Pack '{selected_name}' : 'roots' invalide.")
-
-        for root_item in pack_roots:
-            if not isinstance(root_item, dict):
-                raise ValueError(f"Pack '{selected_name}' : root invalide.")
-
-            rel_root = _safe_relpath(str(root_item.get("path", "")))
-            recursive = bool(root_item.get("recursive", True))
-            include_globs = root_item.get("include_globs") or ["**/*"]
-            exclude_globs = root_item.get("exclude_globs") or []
-            allow_missing = bool(root_item.get("allow_missing", False))
-
-            if not isinstance(include_globs, list):
-                raise ValueError(
-                    f"Pack '{selected_name}' / root '{rel_root}' : include_globs invalide."
-                )
-            if not isinstance(exclude_globs, list):
-                raise ValueError(
-                    f"Pack '{selected_name}' / root '{rel_root}' : exclude_globs invalide."
-                )
-
-            resolved_files, root_found = _resolve_root_files(
-                repo_root=repo_root,
-                sha=sha,
-                git_ok=git_ok,
-                rel_root=rel_root,
-                recursive=recursive,
-                include_globs=[str(x) for x in include_globs],
-                exclude_globs=[str(x) for x in exclude_globs],
-            )
-
-            if root_found:
-                resolved_roots.append(rel_root)
-
-            if not resolved_files:
-                if not allow_missing:
-                    missing_roots.append(rel_root)
-                continue
-
-            root_files.extend(resolved_files)
-
-    final_paths = sorted(set(explicit_paths + root_files))
-
-    return (
-        final_paths,
-        sorted(set(explicit_paths)),
-        sorted(set(root_files)),
-        sorted(set(resolved_roots)),
-        sorted(set(missing_roots)),
-    )
+    return str(Path(*parts)).replace("\\", "/")
 
 
 def _extract_path_from_bootstrap_line(line: str) -> Optional[str]:
@@ -592,8 +269,7 @@ def _zip_dir(src_dir: Path, zip_path: Path) -> None:
     with zipfile.ZipFile(str(zip_path), "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for file_path in src_dir.rglob("*"):
             if file_path.is_file():
-                arcname = file_path.relative_to(src_dir).as_posix()
-                archive.write(str(file_path), arcname)
+                archive.write(str(file_path), file_path.relative_to(src_dir).as_posix())
 
 
 def _compute_ai_offline_dir(out_dir: Path, do_zip: bool) -> Path:
@@ -617,10 +293,7 @@ def _build_provenance_content(
     perimetre_path: Path,
     git_ok: bool,
     selected_packs: List[str],
-    explicit_paths: List[str],
-    root_files: List[str],
-    resolved_roots: List[str],
-    missing_roots: List[str],
+    resolution,
     bootstrap_paths: List[str],
     extracted: List[str],
     missing_files: List[str],
@@ -642,15 +315,15 @@ def _build_provenance_content(
         "perimetre_mode": "hybrid",
         "selected_packs": selected_packs,
         "bootstrap_paths": bootstrap_paths,
-        "explicit_paths_count": len(explicit_paths),
-        "root_files_count": len(root_files),
-        "resolved_roots_count": len(resolved_roots),
+        "explicit_paths_count": len(resolution.explicit_paths),
+        "root_files_count": len(resolution.root_files),
+        "resolved_roots_count": len(resolution.resolved_roots),
         "bootstrap_paths_count": len(bootstrap_paths),
         "extracted_count": len(extracted),
-        "missing_roots_count": len(missing_roots),
+        "missing_roots_count": len(resolution.missing_roots),
         "missing_files_count": len(missing_files),
-        "missing_count": len(missing_roots) + len(missing_files),
-        "missing_roots": missing_roots,
+        "missing_count": len(resolution.missing_roots) + len(missing_files),
+        "missing_roots": list(resolution.missing_roots),
         "missing_files": missing_files,
     }
 
@@ -675,8 +348,8 @@ def build_bundle(
     Construit AI_OFFLINE/ + CHECKSUMS + INDEX + PROVENANCE.
     Retourne le chemin du zip si do_zip, sinon le dossier AI_OFFLINE.
     """
-    perimetre = _load_yaml_file(perimetre_path)
-    selected_packs = _get_selected_pack_names(perimetre, lot)
+    perimetre = load_perimetre(perimetre_path)
+    selected_packs = list_pack_names(perimetre) if lot == "all" else [lot]
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -689,18 +362,11 @@ def build_bundle(
 
     git_ok = _git_is_available(repo_root) and _git_has_object(repo_root, sha)
 
-    (
-        resolved_paths,
-        explicit_paths,
-        root_files,
-        resolved_roots,
-        missing_roots,
-    ) = _resolve_pack_paths(
-        perimetre=perimetre,
+    resolution = resolve_pack(
+        perimetre_path=perimetre_path,
         repo_root=repo_root,
+        pack_name=lot,
         sha=sha,
-        lot=lot,
-        git_ok=git_ok,
     )
 
     bootstrap_paths = _collect_bootstrap_paths(
@@ -709,7 +375,7 @@ def build_bundle(
         git_ok=git_ok,
     )
 
-    all_paths = sorted(set(resolved_paths + bootstrap_paths))
+    all_paths = sorted(set(resolution.files + tuple(bootstrap_paths)))
 
     extracted: List[str] = []
     missing_files: List[str] = []
@@ -734,53 +400,48 @@ def build_bundle(
         extracted.append(rel_path)
 
     extracted = sorted(set(extracted))
-    missing_roots = sorted(set(missing_roots))
     missing_files = sorted(set(missing_files))
 
-    index_content = "\n".join(extracted) + ("\n" if extracted else "")
-    _write_text(ai_offline_dir / "INDEX.txt", index_content)
+    _write_text(ai_offline_dir / "INDEX.txt", "\n".join(extracted) + ("\n" if extracted else ""))
 
-    checksums_lines: List[str] = []
-    for rel_path in extracted:
-        checksum = _sha256_file(files_dir / rel_path)
-        checksums_lines.append(f"{checksum}  FILES/{rel_path}")
-
-    checksums_content = "\n".join(checksums_lines) + ("\n" if checksums_lines else "")
-    _write_text(ai_offline_dir / "CHECKSUMS.sha256", checksums_content)
-
-    provenance_content = _build_provenance_content(
-        sha=sha,
-        lot=lot,
-        repo_root=repo_root,
-        perimetre_path=perimetre_path,
-        git_ok=git_ok,
-        selected_packs=selected_packs,
-        explicit_paths=explicit_paths,
-        root_files=root_files,
-        resolved_roots=resolved_roots,
-        missing_roots=missing_roots,
-        bootstrap_paths=bootstrap_paths,
-        extracted=extracted,
-        missing_files=missing_files,
+    checksums_lines = [
+        f"{_sha256_file(files_dir / rel_path)}  FILES/{rel_path}"
+        for rel_path in extracted
+    ]
+    _write_text(
+        ai_offline_dir / "CHECKSUMS.sha256",
+        "\n".join(checksums_lines) + ("\n" if checksums_lines else ""),
     )
-    _write_text(ai_offline_dir / "PROVENANCE.yaml", provenance_content)
 
-    if missing_roots or missing_files:
+    _write_text(
+        ai_offline_dir / "PROVENANCE.yaml",
+        _build_provenance_content(
+            sha=sha,
+            lot=lot,
+            repo_root=repo_root,
+            perimetre_path=perimetre_path,
+            git_ok=git_ok,
+            selected_packs=selected_packs,
+            resolution=resolution,
+            bootstrap_paths=bootstrap_paths,
+            extracted=extracted,
+            missing_files=missing_files,
+        ),
+    )
+
+    if resolution.missing_roots or missing_files:
         missing_lines: List[str] = []
 
-        if missing_roots:
+        if resolution.missing_roots:
             missing_lines.append("# Roots obligatoires manquantes")
-            for rel_root in missing_roots:
-                missing_lines.append(rel_root)
+            missing_lines.extend(list(resolution.missing_roots))
             missing_lines.append("")
 
         if missing_files:
             missing_lines.append("# Fichiers introuvables")
-            for rel_path in missing_files:
-                missing_lines.append(rel_path)
+            missing_lines.extend(missing_files)
 
-        missing_content = "\n".join(missing_lines).rstrip() + "\n"
-        _write_text(ai_offline_dir / "MISSING.txt", missing_content)
+        _write_text(ai_offline_dir / "MISSING.txt", "\n".join(missing_lines).rstrip() + "\n")
 
     if do_zip:
         zip_name = f"AI_OFFLINE_{sha}_{lot}.zip"
@@ -792,11 +453,7 @@ def build_bundle(
             _zip_dir(ai_offline_dir, zip_path)
         finally:
             tmp_root = ai_offline_dir.parent
-            if (
-                tmp_root.exists()
-                and tmp_root.is_dir()
-                and tmp_root.name.startswith("AI_OFFLINE_BUILD_")
-            ):
+            if tmp_root.exists() and tmp_root.is_dir() and tmp_root.name.startswith("AI_OFFLINE_BUILD_"):
                 shutil.rmtree(tmp_root, ignore_errors=True)
 
         return zip_path
@@ -825,7 +482,7 @@ def main() -> int:
     parser.add_argument(
         "--perimetre",
         default="docs/ai/perimetre.yaml",
-        help="Chemin du perimetre.yaml (par défaut : docs/ai/perimetre.yaml).",
+        help="Chemin du perimetre.yaml (défaut : docs/ai/perimetre.yaml).",
     )
     parser.add_argument(
         "--out-dir",
@@ -859,8 +516,8 @@ def main() -> int:
         return 2
 
     try:
-        perimetre = _load_yaml_file(perimetre_path)
-        valid_packs = _get_pack_names(perimetre) + ["all"]
+        perimetre = load_perimetre(perimetre_path)
+        valid_packs = list_pack_names(perimetre) + ["all"]
 
         if args.lot.strip() not in valid_packs:
             _eprint(
