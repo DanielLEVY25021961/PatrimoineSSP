@@ -297,37 +297,75 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public List<TypeProduitDTO.OutputDTO> rechercherTous() 
-			throws Exception {
+	public List<TypeProduitDTO.OutputDTO> rechercherTous() throws Exception {
 
-		/* délègue au Gateway la recherche des résultats. */
-		final List<TypeProduit> records = this.gateway.rechercherTous();
+		/*
+		 * Délègue au GATEWAY la recherche exhaustive dans le stockage.
+		 * Toute anomalie technique de recherche est transformée
+		 * en message utilisateur rationalisé côté UC.
+		 */
+		final List<TypeProduit> records;
+		
+		try {
+			
+			records = this.gateway.rechercherTous();
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
 
-		/* émet un message, LOG et jette une Exception
-		 * si le stockage ne retourne rien. */
+		/*
+		 * Sécurise le contrat observable du UC :
+		 * le stockage ne doit pas retourner null.
+		 */
 		if (records == null) {
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
-		/* retire les null et trie. */
-		final List<TypeProduit> recordsNonNullTries
+		/*
+		 * Sécurise la réponse côté UC :
+		 * retrait des nulls, tri métier,
+		 * puis conversion en OutputDTO avec dédoublonnage.
+		 */
+		final List<TypeProduit> recordsNonNullTries 
 			= this.filtrerEtTrier(records);
 
-		/* convertit la réponse en OutputDTO. */
-		final List<TypeProduitDTO.OutputDTO> dtos
-			= this.convertirEtDedoublonner(recordsNonNullTries);
-
-		if (dtos.isEmpty()) {
-			/* message recherche vide si pas de résultats. */
-			message.set(MESSAGE_RECHERCHE_VIDE);
-		} else {
-			/* message recherche OK si résultats. */
-			message.set(MESSAGE_RECHERCHE_OK);
+		final List<TypeProduitDTO.OutputDTO> dtos;
+		
+		try {
+			
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
 		}
 
-		/* retourne les résultats sous forme d'OutputDTOs. */
+		/*
+		 * Le message observable n'est positionné
+		 * qu'après préparation complète de la réponse utilisateur.
+		 */
+		if (dtos.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
+		}
+
+		/*
+		 * Retourne toujours une liste d'OutputDTO non null
+		 * (éventuellement vide).
+		 */
 		return dtos;
 	}
 
