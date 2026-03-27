@@ -37,3 +37,7 @@ build/
 /temp/
 *.log
 /AI_OFFLINE/
+
+### Python ###
+__pycache__/
+*.pyc
