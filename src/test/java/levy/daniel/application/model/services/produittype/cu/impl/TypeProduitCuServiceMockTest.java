@@ -93,9 +93,16 @@ public class TypeProduitCuServiceMockTest {
 
 	// *************************** METHODES *******************************/
 
+	// ---------------------- Creer(...) -------------------------------//
+	
 	/**
 	 * <div>
 	 * <p>creer(null) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>n'interagit jamais avec le Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -105,26 +112,32 @@ public class TypeProduitCuServiceMockTest {
 	@DisplayName("creer(null) : retourne null, message utilisateur, aucune interaction gateway")
 	public void testCreerNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-		// ===================== ACT =====================
-
+		/* ======================= ACT ======================= */
 		final OutputDTO retour = service.creer(null);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
+		/* ===================== ASSERT ====================== */
 		assertThat(retour).isNull();
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
-	 * <p>creer(blank) : jette ExceptionParametreBlank, message = MESSAGE_CREER_NOM_BLANK.</p>
+	 * <p>creer(blank) : violation de contrat applicatif.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionParametreBlank}</li>
+	 * <li>positionne {@link TypeProduitICuService#MESSAGE_CREER_NOM_BLANK}</li>
+	 * <li>n'interagit jamais avec le Gateway</li>
+	 * </ul>
 	 * </div>
 	 */
 	@Test
@@ -132,26 +145,32 @@ public class TypeProduitCuServiceMockTest {
 	@DisplayName("creer(blank) : ExceptionParametreBlank + message MESSAGE_CREER_NOM_BLANK + aucune interaction gateway")
 	public void testCreerBlank() {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
 		final InputDTO dto = new TypeProduitDTO.InputDTO(ESPACES);
 
-		// ===================== ACT & ASSERT =====================
-
+		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(ExceptionParametreBlank.class);
 
-		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
 
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
-	 * <p>creer(doublon) : jette ExceptionDoublon, message = MESSAGE_DOUBLON + libellé.</p>
+	 * <p>creer(doublon) : refus métier d'unicité.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionDoublon}</li>
+	 * <li>positionne {@link TypeProduitICuService#MESSAGE_DOUBLON} + libellé</li>
+	 * <li>ne délègue jamais {@code gateway.creer(...)}</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -161,30 +180,255 @@ public class TypeProduitCuServiceMockTest {
 	@DisplayName("creer(doublon) : ExceptionDoublon + message MESSAGE_DOUBLON + libellé + aucune création gateway")
 	public void testCreerDoublon() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
 		final InputDTO dto = new TypeProduitDTO.InputDTO(VETEMENT);
 
 		/* doublon si gateway.findByLibelle(libelle) != null. */
 		when(gateway.findByLibelle(VETEMENT)).thenReturn(new TypeProduit(VETEMENT));
 
-		// ===================== ACT & ASSERT =====================
-
+		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(ExceptionDoublon.class);
 
-		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_DOUBLON + VETEMENT);
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_DOUBLON + VETEMENT);
 
 		verify(gateway, times(1)).findByLibelle(VETEMENT);
 		verify(gateway, never()).creer(any(TypeProduit.class));
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
-	 * <p>creer(ok) : délègue au gateway, retourne un OutputDTO, message = MESSAGE_CREER_OK.</p>
+	 * <p>creer(contrôle technique KO avec message) :</p>
+	 * <ul>
+	 * <li>l'exception technique du contrôle d'unicité est propagée</li>
+	 * <li>le message utilisateur est rationalisé avec
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER}</li>
+	 * <li>aucune création n'est tentée</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(controle technique KO avec message) : propage l'exception et rationalise le message utilisateur")
+	public void testCreerControleTechniqueKoAvecMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(BAZAR);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException("lecture technique KO");
+
+		when(gateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+						+ "lecture technique KO");
+
+		verify(gateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, never()).creer(any(TypeProduit.class));
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>creer(contrôle technique KO sans message) :</p>
+	 * <ul>
+	 * <li>l'exception technique du contrôle d'unicité est propagée</li>
+	 * <li>le message utilisateur retombe sur
+	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * <li>aucune création n'est tentée</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(controle technique KO sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testCreerControleTechniqueKoSansMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(TOURISME);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.findByLibelle(TOURISME)).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findByLibelle(TOURISME);
+		verify(gateway, never()).creer(any(TypeProduit.class));
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>creer(création technique KO avec message) :</p>
+	 * <ul>
+	 * <li>l'exception du Gateway est propagée</li>
+	 * <li>le message utilisateur est rationalisé avec
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(creation technique KO avec message) : propage l'exception du gateway et rationalise le message")
+	public void testCreerCreationTechniqueKoAvecMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
+
+		when(gateway.findByLibelle(OUTILLAGE)).thenReturn(null);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException("écriture technique KO");
+
+		when(gateway.creer(any(TypeProduit.class))).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+						+ "écriture technique KO");
+
+		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).creer(any(TypeProduit.class));
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>creer(création technique KO sans message) :</p>
+	 * <ul>
+	 * <li>l'exception du Gateway est propagée</li>
+	 * <li>le message utilisateur retombe sur
+	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(creation technique KO sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testCreerCreationTechniqueKoSansMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
+
+		when(gateway.findByLibelle(OUTILLAGE)).thenReturn(null);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.creer(any(TypeProduit.class))).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).creer(any(TypeProduit.class));
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>creer(gateway retourne null) :</p>
+	 * <ul>
+	 * <li>sécurise le contrat observable du CU</li>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne
+	 * {@link TypeProduitICuService#MESSAGE_CREATION_TECHNIQUE_KO_CREER}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(gateway retourne null) : IllegalStateException + message MESSAGE_CREATION_TECHNIQUE_KO_CREER")
+	public void testCreerGatewayRetourneNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
+
+		when(gateway.findByLibelle(OUTILLAGE)).thenReturn(null);
+		when(gateway.creer(any(TypeProduit.class))).thenReturn(null);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+
+		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).creer(any(TypeProduit.class));
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>creer(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>contrôle d'unicité</li>
+	 * <li>délégation à {@code gateway.creer(...)}</li>
+	 * <li>retour d'un {@link OutputDTO}</li>
+	 * <li>message final
+	 * {@link TypeProduitICuService#MESSAGE_CREER_OK}</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -194,11 +438,9 @@ public class TypeProduitCuServiceMockTest {
 	@DisplayName("creer(ok) : délégation gateway.creer + OutputDTO + message MESSAGE_CREER_OK")
 	public void testCreerOk() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
 		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
 
 		/* pas doublon => findByLibelle retourne null. */
@@ -206,27 +448,36 @@ public class TypeProduitCuServiceMockTest {
 
 		final TypeProduit cree = new TypeProduit(OUTILLAGE);
 		cree.setIdTypeProduit(1L);
+
 		when(gateway.creer(any(TypeProduit.class))).thenReturn(cree);
 
-		// ===================== ACT =====================
-
+		/* ======================= ACT ======================= */
 		final OutputDTO retour = service.creer(dto);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
+		/* ===================== ASSERT ====================== */
 		assertThat(retour).isNotNull();
+		assertThat(retour.getIdTypeProduit()).isEqualTo(1L);
 		assertThat(retour.getTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_CREER_OK);
 
 		final ArgumentCaptor<TypeProduit> captor = ArgumentCaptor.forClass(TypeProduit.class);
+
 		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
 		verify(gateway, times(1)).creer(captor.capture());
 
 		final TypeProduit envoye = captor.getValue();
+
 		assertThat(envoye).isNotNull();
+		assertThat(envoye.getIdTypeProduit()).isNull();
 		assertThat(envoye.getTypeProduit()).isEqualTo(OUTILLAGE);
-	}
+		
+	} // __________________________________________________________________
+
+	
+
+	// -------------------- Rechercher(...) -----------------------------//
+
 
 	/**
 	 * <div>
@@ -253,7 +504,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		verify(gateway, times(1)).rechercherTous();
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -288,7 +542,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
 		verify(gateway, times(1)).rechercherTous();
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -334,7 +591,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		verify(gateway, times(1)).rechercherTous();
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -359,7 +619,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_PAGEABLE_NULL);
 
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -393,7 +656,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
 
 		verify(gateway, times(1)).rechercherTousParPage(pageable);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -438,7 +704,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
 
 		verify(gateway, times(1)).rechercherTousParPage(pageable);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -467,7 +736,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(retour).isNull();
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -499,7 +771,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + VETEMENT);
 
 		verify(gateway, times(1)).findByLibelle(VETEMENT);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -535,7 +810,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
 
 		verify(gateway, times(1)).findByLibelle(VETEMENT);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -560,7 +838,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -591,7 +872,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(retour).isNotNull();
 		verify(gateway, times(1)).rechercherTous();
 		verify(gateway, never()).findByLibelleRapide(any(String.class));
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -620,7 +904,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(retour).isNull();
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -655,7 +942,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(retour).isNotNull();
 		assertThat(retour.getTypeProduit()).isEqualTo(TOURISME);
 		verify(gateway, times(1)).findByLibelle(TOURISME);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -684,7 +974,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(retour).isNull();
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -718,7 +1011,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
 
 		verify(gateway, times(1)).findById(id);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -755,7 +1051,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
 
 		verify(gateway, times(1)).findById(id);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -780,7 +1079,10 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(service.getMessage()).isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
 		verifyNoInteractions(gateway);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>

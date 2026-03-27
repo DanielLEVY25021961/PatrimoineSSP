@@ -21,6 +21,7 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -213,6 +214,14 @@ public class TypeProduitCuServiceIntegrationTest {
 	 */
 	@Autowired
 	private TypeProduitICuService service;
+	
+	/**
+	 * JdbcTemplate (Spring) pour lire la base directement
+	 * et prouver physiquement les écritures du CU.
+	 */
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+	
 
 	// ************************* CONFIGURATION *****************************/
 
@@ -267,12 +276,17 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	// *************************** METHODES *******************************/
 
+	// ---------------------- Creer(...) -------------------------------//
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>creer(null) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne le message {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>positionne
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
 	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
@@ -280,7 +294,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("creer(null) : erreur utilisateur bénigne -> retourne null, message utilisateur, aucune exception")
+	@DisplayName("creer(null) : retourne null, message utilisateur, aucune exception")
 	public void testCreerNull() throws Exception {
 
 		final OutputDTO dto = this.service.creer(null);
@@ -288,19 +302,23 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
-	 * <p>creer(blank) : violation de contrat.</p>
+	 * <p>creer(blank) : violation de contrat applicatif.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_CREER_NOM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NOM_BLANK}</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("creer(blank) : positionne message + lève ExceptionParametreBlank")
+	@DisplayName("creer(blank) : positionne message exact + lève ExceptionParametreBlank")
 	public void testCreerBlank() {
 
 		final InputDTO input = new TypeProduitDTO.InputDTO(ESPACES);
@@ -309,8 +327,120 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isInstanceOf(ExceptionParametreBlank.class);
 
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
-	}
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>creer(ok) : test béton avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne un {@link OutputDTO} persistant</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_CREER_OK}</li>
+	 * <li>augmente le comptage de 1</li>
+	 * <li>prouve physiquement l'écriture en base via SQL direct</li>
+	 * <li>reste retrouvable par libellé puis par ID</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("creer(ok) : preuve BD + message exact + round-trip findByLibelle/findById")
+	public void testCreerOkAvecPreuveBdEtRoundTrip() throws Exception {
+
+		final long baseline = this.service.count();
+		final InputDTO input = new TypeProduitDTO.InputDTO(IT_ALPHA);
+
+		final OutputDTO cree = this.service.creer(input);
+
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(IT_ALPHA);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_OK);
+
+		assertThat(this.service.count()).isEqualTo(baseline + 1L);
+
+		/* preuve BD : l'ID créé existe réellement en base. */
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(1L);
+
+		/* preuve BD : la colonne TYPE_PRODUIT porte bien le libellé créé. */
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(IT_ALPHA);
+
+		/* round-trip complet côté CU. */
+		final OutputDTO trouveParLibelle = this.service.findByLibelle(IT_ALPHA);
+
+		assertThat(trouveParLibelle).isNotNull();
+		assertThat(trouveParLibelle.getIdTypeProduit())
+				.isEqualTo(cree.getIdTypeProduit());
+		assertThat(trouveParLibelle.getTypeProduit())
+				.isEqualTo(IT_ALPHA);
+
+		final OutputDTO trouveParId = this.service.findById(cree.getIdTypeProduit());
+
+		assertThat(trouveParId).isNotNull();
+		assertThat(trouveParId.getIdTypeProduit())
+				.isEqualTo(cree.getIdTypeProduit());
+		assertThat(trouveParId.getTypeProduit())
+				.isEqualTo(IT_ALPHA);
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>creer(doublon) : test béton d'unicité observable et physique.</p>
+	 * <ul>
+	 * <li>la première création réussit</li>
+	 * <li>la seconde lève {@link ExceptionDoublon}</li>
+	 * <li>le message utilisateur exact est
+	 * {@link TypeProduitICuService#MESSAGE_DOUBLON} + libellé</li>
+	 * <li>la base reste physiquement avec une seule ligne pour ce libellé</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("creer(doublon) : ExceptionDoublon + message exact + preuve BD d'unicité")
+	public void testCreerDoublonAvecPreuveBd() throws Exception {
+
+		final InputDTO input = new TypeProduitDTO.InputDTO(IT_BETA);
+
+		final OutputDTO cree = this.service.creer(input);
+
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(IT_BETA);
+
+		/* preuve BD après la première création. */
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_BETA))
+				.isEqualTo(1L);
+
+		assertThatThrownBy(() -> this.service.creer(input))
+				.isInstanceOf(ExceptionDoublon.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_DOUBLON + IT_BETA);
+
+		/* preuve BD : aucun doublon physique n'a été créé. */
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_BETA))
+				.isEqualTo(1L);
+
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(1L);
+		
+	} // __________________________________________________________________		
+		
+	
 
 	/**
 	 * <div>
@@ -343,7 +473,10 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(trouveParId).isNotNull();
 		assertThat(trouveParId.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
 		assertThat(trouveParId.getTypeProduit()).isEqualTo(IT_ALPHA);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -371,7 +504,14 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(TypeProduitICuService.MESSAGE_DOUBLON);
-	}
+		
+	} // __________________________________________________________________
+	
+	
+
+	// -------------------- Rechercher(...) -----------------------------//
+
+
 
 	/**
 	 * <div>
@@ -932,10 +1072,15 @@ public class TypeProduitCuServiceIntegrationTest {
 		/* Règle projet : toujours préciser une Locale pour toUpperCase. */
 		final String dummy = messageApres.toUpperCase(Locale.getDefault());
 		assertThat(dummy).isNotBlank();
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	// *************************** METHODES UTILITAIRES ********************/
 
+	
+	
 	/**
 	 * <div>
 	 * <p>Méthode utilitaire "béton" : vérifie la cohérence d'un ResultatPage.</p>
@@ -954,6 +1099,70 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(0L);
 		assertThat(page.getContent()).isNotNull();
 		assertThat(page.getContent().size()).isLessThanOrEqualTo(page.getPageSize());
-	}
+		
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Lit physiquement en base la colonne TYPE_PRODUIT
+	 * pour un ID donné.</p>
+	 * </div>
+	 *
+	 * @param pId : Long : ID_TYPE_PRODUIT.
+	 * @return String : valeur de TYPE_PRODUIT.
+	 */
+	private String lireLibelleTypeProduitEnBase(final Long pId) {
+
+		return this.jdbcTemplate.queryForObject(
+				"SELECT TYPE_PRODUIT FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+				String.class,
+				pId);
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>Compte physiquement en base le nombre de lignes
+	 * portant un ID donné.</p>
+	 * </div>
+	 *
+	 * @param pId : Long : ID_TYPE_PRODUIT.
+	 * @return Long : nombre de lignes.
+	 */
+	private Long compterTypeProduitEnBase(final Long pId) {
+
+		return this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+				Long.class,
+				pId);
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>Compte physiquement en base le nombre de lignes
+	 * portant un libellé donné.</p>
+	 * </div>
+	 *
+	 * @param pLibelle : String : TYPE_PRODUIT.
+	 * @return Long : nombre de lignes.
+	 */
+	private Long compterTypeProduitParLibelleEnBase(
+			final String pLibelle) {
+
+		return this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = ?",
+				Long.class,
+				pLibelle);
+		
+	} // __________________________________________________________________
+	
+	
 
 }

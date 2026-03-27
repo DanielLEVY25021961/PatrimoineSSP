@@ -153,15 +153,15 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	
 	/**
 	* {@inheritDoc}
-	*/
+	*/	
 	@Override
 	public TypeProduitDTO.OutputDTO creer(
 			final TypeProduitDTO.InputDTO pInputDTO) throws Exception {
 
 		/* REGLES METIER. */
-
 		/*
 		 * ERREUR UTILISATEUR BENIGNE :
+		 * si pInputDTO == null : 
 		 * aucun traitement, aucun LOG, aucune Exception.
 		 * Retourne null avec un message utilisateur.
 		 */
@@ -171,43 +171,123 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		/*
-		 * émet un message, LOG et jette une
-		 * ExceptionParametreBlank si le libellé dans le DTO est blank.
+		 * Récupère le libellé dans l'InputDTO.
 		 */
-		if (StringUtils.isBlank(pInputDTO.getTypeProduit())) {
+		final String libelle = pInputDTO.getTypeProduit();
+
+		/*
+		 * si le libellé dans le DTO est blank : 
+		 * émet un Message, LOG et jette une Exception applicative 
+		 * ExceptionParametreBlank.
+		 */
+		if (StringUtils.isBlank(libelle)) {
 			return this.traiterErreur(
 					MESSAGE_CREER_NOM_BLANK,
 					new ExceptionParametreBlank(MESSAGE_CREER_NOM_BLANK));
 		}
 
 		/*
-		 * émet un message, LOG et jette une ExceptionDoublon si le DTO
-		 * est un doublon.
+		 * Vérifie le doublon fonctionnel.
+		 * Toute anomalie technique lors de ce contrôle
+		 * est transformée en message utilisateur rationalisé.
 		 */
-		if (this.isDoublon(pInputDTO)) {
-			final String messageDoublon
-				= MESSAGE_DOUBLON + pInputDTO.getTypeProduit();
+		final boolean doublon;
+		
+		try {
+			
+			doublon = this.isDoublon(pInputDTO);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER + messageSecurise,
+					e);
+		}
+
+		/*
+		 * si le DTO représente un doublon : 
+		 * émet un message, LOG et jette une Exception applicative 
+		 * ExceptionDoublon.
+		 */
+		if (doublon) {
+			
+			final String messageDoublon = MESSAGE_DOUBLON + libelle;
+			
 			return this.traiterErreur(
 					messageDoublon,
 					new ExceptionDoublon(messageDoublon));
 		}
 
-		/* convertit l'Input DTO en Objet métier. */
-		final TypeProduit typeProduit
+		/*
+		 * Convertit l'InputDTO en objet métier
+		 * puis délègue la création au Gateway.
+		 */
+		final TypeProduit typeProduit 
 			= this.convertirInputDTOEnMetier(pInputDTO);
 
-		/* appelle le SERVICE GATEWAY pour l'opération sur le stockage. */
-		/* récupère l'objet métier retourné par GATEWAY. */
-		final TypeProduit cree = this.gateway.creer(typeProduit);
+		final TypeProduit cree;
+		
+		try {
+			
+			/* appelle le SERVICE GATEWAY pour l'opération 
+			 * sur le stockage et récupère l'objet métier 
+			 * retourné par GATEWAY. */
+			cree = this.gateway.creer(typeProduit);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER 
+					+ messageSecurise, e);
+		}
+
+		/*
+		 * Sécurise le contrat observable du UC :
+		 * le Gateway ne doit pas conduire à un succès
+		 * si aucun objet créé n'est réellement disponible.
+		 */
+		if (cree == null) {
+			return this.traiterErreur(
+					MESSAGE_CREATION_TECHNIQUE_KO_CREER,
+					new IllegalStateException(
+							MESSAGE_CREATION_TECHNIQUE_KO_CREER));
+		}
+
+		/*
+		 * Prépare la réponse utilisateur finale.
+		 * Le message de succès n'est posé qu'après conversion réussie.
+		 */
+		final TypeProduitDTO.OutputDTO dto;
+		
+		try {
+			
+			/* convertit l'objet métier -> OutputDTO. */
+			dto = ConvertisseurMetierToOutputDTOTypeProduit.convert(cree);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER + messageSecurise,
+					e);
+		}
+
+		if (dto == null) {
+			return this.traiterErreur(
+					MESSAGE_CONVERSION_TECHNIQUE_KO_CREER,
+					new IllegalStateException(
+							MESSAGE_CONVERSION_TECHNIQUE_KO_CREER));
+		}
 
 		/* émet le message de création OK. */
-		message.set(MESSAGE_CREER_OK);
+		this.message.set(MESSAGE_CREER_OK);
 
-		/* convertit l'objet métier -> OutputDTO. */
-		final TypeProduitDTO.OutputDTO dto
-			= ConvertisseurMetierToOutputDTOTypeProduit.convert(cree);
-
-		/* retourne OutputDTO. */
+		/* retourne l'OutputDTO. */
 		return dto;
 	}
 
