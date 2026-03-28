@@ -821,30 +821,92 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	@Override
 	public OutputDTO findById(final Long pId) throws Exception {
 
-		/* message paramètre null et retourne null si pId == null. */
+		/*
+		 * Retourne null avec un message observable
+		 * si l'identifiant transmis n'est pas exploitable.
+		 * Si pId == null :
+		 * émet MESSAGE_PARAM_NULL et retourne null.
+		 */
 		if (pId == null) {
 			this.message.set(MESSAGE_PARAM_NULL);
 			return null;
 		}
 
-		/* délègue au Gateway la recherche du résultat. */
-		final TypeProduit res = this.gateway.findById(pId);
+		/*
+		 * Délègue au GATEWAY la recherche par identifiant persistant.
+		 * Toute anomalie technique de recherche est transformée
+		 * en message utilisateur rationalisé côté UC.
+		 */
+		final TypeProduit typeProduit;
 
-		/* message "introuvable" et
-		 * retourne null si l'objet métier n'est pas trouvé. */
-		if (res == null) {
+		try {
+
+			/* Délègue au GATEWAY la recherche exacte par identifiant. */
+			typeProduit = this.gateway.findById(pId);
+
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Retourne null avec un message observable
+		 * si aucun objet n'est trouvé en stockage.
+		 * Si typeProduit == null :
+		 * émet MESSAGE_OBJ_INTROUVABLE + pId
+		 * et retourne null.
+		 */
+		if (typeProduit == null) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + pId);
 			return null;
 		}
 
-		/* convertit la réponse en DTO et le retourne. */
-		final TypeProduitDTO.OutputDTO dto
-			= ConvertisseurMetierToOutputDTOTypeProduit.convert(res);
+		/*
+		 * Prépare la réponse utilisateur finale
+		 * à partir de l'objet métier trouvé.
+		 */
+		final TypeProduitDTO.OutputDTO dto;
 
-		/* émet un message de succès. */
+		try {
+
+			/* Convertit l'objet métier retourné par le GATEWAY en OutputDTO. */
+			dto = ConvertisseurMetierToOutputDTOTypeProduit.convert(typeProduit);
+
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Sécurise le contrat observable du UC :
+		 * un DTO null après conversion est une rupture technique.
+		 * Si dto == null :
+		 * émet un message + LOG + IllegalStateException.
+		 */
+		if (dto == null) {
+			final String messageTechnique = KO_TECHNIQUE_RECHERCHE
+					+ TIRET_ESPACE
+					+ MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					messageTechnique,
+					new IllegalStateException(messageTechnique));
+		}
+
+		/*
+		 * Le message de succès MESSAGE_SUCCES_RECHERCHE n'est positionné
+		 * qu'après préparation complète de la réponse utilisateur.
+		 */
 		this.message.set(MESSAGE_SUCCES_RECHERCHE);
 
-		/* retourne l'OutputDTO. */
+		/* Retourne l'OutputDTO résultat. */
 		return dto;
 	}
 
