@@ -1892,39 +1892,47 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>findById(null) : null + message MESSAGE_PARAM_NULL.</p>
+	 * <p>findById(null) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'appelle pas le Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findById(null) : null + message MESSAGE_PARAM_NULL + aucune interaction gateway")
+	@DisplayName("findById(null) : null + message MESSAGE_PARAM_NULL")
 	public void testFindByIdNull() throws Exception {
-
-		// ===================== ARRANGE =====================
 
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-		// ===================== ACT =====================
-
 		final OutputDTO retour = service.findById(null);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
 		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
+
 		verifyNoInteractions(gateway);
-		
+
 	} // __________________________________________________________________
 	
 	
-
+	
 	/**
 	 * <div>
-	 * <p>findById(introuvable) : null + message MESSAGE_OBJ_INTROUVABLE + id.</p>
+	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -1934,8 +1942,6 @@ public class TypeProduitCuServiceMockTest {
 	@DisplayName("findById(introuvable) : null + message MESSAGE_OBJ_INTROUVABLE + id")
 	public void testFindByIdIntrouvable() throws Exception {
 
-		// ===================== ARRANGE =====================
-
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
@@ -1943,35 +1949,120 @@ public class TypeProduitCuServiceMockTest {
 
 		when(gateway.findById(id)).thenReturn(null);
 
-		// ===================== ACT =====================
-
 		final OutputDTO retour = service.findById(id);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
 		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
 
 		verify(gateway, times(1)).findById(id);
-		
+
 	} // __________________________________________________________________
 	
 	
-
+	
 	/**
 	 * <div>
-	 * <p>findById(ok) : OutputDTO + message MESSAGE_SUCCES_RECHERCHE.</p>
+	 * <p>findById(KO technique avec message) : panne technique remontée
+	 * par le Gateway.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>rationalise le message utilisateur</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findById(ok) : OutputDTO + message MESSAGE_SUCCES_RECHERCHE")
-	public void testFindByIdOk() throws Exception {
+	@DisplayName("findById(KO technique avec message) : propage l'exception + message technique rationalisé")
+	public void testFindByIdTechniqueKoAvecMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final Long id = 21L;
+		final IllegalStateException panneTechnique =
+				new IllegalStateException(LECTURE_TECHNIQUE_KO);
+
+		when(gateway.findById(id)).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> service.findById(id))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ TypeProduitICuService.TIRET_ESPACE
+								+ LECTURE_TECHNIQUE_KO);
+
+		verify(gateway, times(1)).findById(id);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findById(KO technique sans message) : panne technique sans message
+	 * remontée par le Gateway.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>utilise le fallback
+	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testFindByIdTechniqueKoSansMessage() throws Exception {
+
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		final Long id = 22L;
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.findById(id)).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> service.findById(id))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ TypeProduitICuService.TIRET_ESPACE
+								+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findById(id);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findById(ok) : succès nominal de recherche par identifiant.</p>
+	 * <ul>
+	 * <li>retourne un OutputDTO cohérent</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(ok) : retourne OutputDTO cohérent + message exact de succès")
+	public void testFindByIdOk() throws Exception {
 
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
@@ -1982,23 +2073,21 @@ public class TypeProduitCuServiceMockTest {
 
 		when(gateway.findById(id)).thenReturn(tp);
 
-		// ===================== ACT =====================
-
 		final OutputDTO retour = service.findById(id);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
 		assertThat(retour).isNotNull();
+		assertThat(retour.getIdTypeProduit()).isEqualTo(id);
 		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
 
 		verify(gateway, times(1)).findById(id);
-		
-	} // __________________________________________________________________
-	
+
+	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
 	 * <p>update(null) : ExceptionParametreNull + message MESSAGE_PARAM_NULL.</p>

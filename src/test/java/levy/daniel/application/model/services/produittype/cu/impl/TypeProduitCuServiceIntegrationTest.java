@@ -1353,51 +1353,105 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <p>findById(null) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(null) : retourne null")
+	@DisplayName("findById(null) : retourne null + message exact MESSAGE_PARAM_NULL")
 	public void testFindByIdNull() throws Exception {
 
 		final OutputDTO dto = this.service.findById(null);
 
 		assertThat(dto).isNull();
-		
-	}// __________________________________________________________________
-	
-	
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
+	} // __________________________________________________________________
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
+	 * <li>prouve physiquement l'absence en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findById(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + id")
 	public void testFindByIdIntrouvable() throws Exception {
 
-		/* Identifiant improbable (ne dépend pas du dataset SQL). */
 		final Long idInexistant = Long.valueOf(Long.MAX_VALUE);
 
 		final OutputDTO dto = this.service.findById(idInexistant);
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
-	}// __________________________________________________________________
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + idInexistant);
+		assertThat(this.compterTypeProduitEnBase(idInexistant))
+				.isEqualTo(0L);
+
+	} // __________________________________________________________________
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>findById(ok) : test béton de la recherche par identifiant.</p>
+	 * <ul>
+	 * <li>crée d'abord un TypeProduit réel</li>
+	 * <li>recherche ensuite cet objet via son identifiant persistant</li>
+	 * <li>retourne un OutputDTO cohérent</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>prouve physiquement la présence unique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findById(ok) : OutputDTO cohérent + message exact + preuve BD")
+	public void testFindByIdOkAvecPreuveBd() throws Exception {
+
+		final String libelle = "IT_FIND_BY_ID_OK_BD_01";
+
+		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(libelle));
+
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(libelle);
+
+		final Long id = cree.getIdTypeProduit();
+
+		final OutputDTO dto = this.service.findById(id);
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.getIdTypeProduit()).isEqualTo(id);
+		assertThat(dto.getTypeProduit()).isEqualTo(libelle);
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		assertThat(this.compterTypeProduitEnBase(id))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(id))
+				.isEqualTo(libelle);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelle))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________	
 	
 
+	
 	/**
 	 * <div>
 	 * <p>update(null) : violation de contrat.</p>
