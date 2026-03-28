@@ -880,37 +880,89 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Retourne un {@link TypeProduit}
-	 * sous forme de OutputDTO déterminé par son ID dans le stockage.</p>
+	 * <p style="font-weight:bold;">
+	 * Recherche un {@link TypeProduitDTO.OutputDTO}
+	 * à partir de son identifiant persistant.</p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>retourne null si pId == null.</li>
-	 * <li>retourne null si l'objet métier n'est pas trouvé.</li>
-	 * <li>convertit la réponse en DTO et le retourne.</li>
+	 * <li>recevoir un identifiant persistant
+	 * provenant de la couche appelante ;</li>
+	 * <li>vérifier que cet identifiant est exploitable ;</li>
+	 * <li>déléguer la recherche de l'objet métier
+	 * au composant de stockage GATEWAY;</li>
+	 * <li>préparer une réponse utilisateur complète
+	 * à partir de l'objet effectivement trouvé ;</li>
+	 * <li>retourner un {@link TypeProduitDTO.OutputDTO}
+	 * exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :
+	 * </p>
 	 * <ul>
-	 * <li>Si {@code pId == null}, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL} 
-	 * (aucun LOG, aucune exception).</li>
- 	 * <li>Si aucun objet n'est trouvé en stockage, positionne 
- 	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} + pId
- 	 * , et retourne {@code null}.</li>
- 	 * <li>Sinon, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_SUCCES_RECHERCHE} 
-	 * et retourne l'OutputDTO correspondant à l'objet trouvé.</li>
+	 * <li>Si {@code pId == null}, retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Sinon, délègue la recherche de l'objet métier
+	 * portant cet identifiant persistant
+	 * au composant de stockage.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + pId.</li>
+	 * <li>Si un objet est trouvé,
+	 * prépare un {@link TypeProduitDTO.OutputDTO}
+	 * correspondant à cet objet métier.</li>
+	 * <li>En cas de succès,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_SUCCES_RECHERCHE}
+	 * après préparation complète de la réponse utilisateur.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pId : Long : ID dans le stockage.
-	 * @return TypeProduitDTO.OutputDTO : 
-	 * l'objet métier qui possède pId, ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'objet métier effectivement trouvé
+	 * en stockage pour l'identifiant demandé.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pId : Long :
+	 * identifiant persistant recherché dans le stockage.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO résultat ; retourne {@code null}
+	 * si {@code pId == null}
+	 * ou si aucun objet ne correspond à cet identifiant.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors de la recherche par identifiant
+	 * via le composant de stockage.
+	 * @throws IllegalStateException
+	 * si la conversion finale en {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}
+	 * après récupération d'un objet métier trouvé.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
 	TypeProduitDTO.OutputDTO findById(Long pId) throws Exception;
-
+	
 	
 	
 	/**
