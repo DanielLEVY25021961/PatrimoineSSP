@@ -1088,34 +1088,104 @@ public interface SousTypeProduitICuService {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Retourne un {@link SousTypeProduit}
-	 * sous forme de OutputDTO déterminé par son ID dans le stockage.</p>
+	 * <p>Recherche un {@link SousTypeProduit}
+	 * par son identifiant persistant
+	 * et le retourne sous forme
+	 * de {@link SousTypeProduitDTO.OutputDTO}.</p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>retourne null si pId == null.</li>
-	 * <li>retourne null si l'objet métier n'est pas trouvé.</li>
-	 * <li>convertit la réponse en DTO et le retourne.</li>
+	 * <li>recevoir un identifiant persistant
+	 * transmis par la couche appelante ;</li>
+	 * <li>vérifier que cet identifiant
+	 * est exploitable côté UC ;</li>
+	 * <li>déléguer au composant GATEWAY
+	 * la recherche technique
+	 * du {@link SousTypeProduit}
+	 * correspondant ;</li>
+	 * <li>récupérer l'objet métier
+	 * effectivement trouvé en stockage ;</li>
+	 * <li>convertir cet objet métier
+	 * en {@link SousTypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pId == null}, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL} 
-	 * (aucun LOG, aucune exception).</li>
- 	 * <li>Si aucun objet n'est trouvé en stockage, positionne 
- 	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} + pId
- 	 * , et retourne {@code null}.</li>
- 	 * <li>Sinon, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_SUCCES_RECHERCHE} 
-	 * et retourne l'OutputDTO correspondant à l'objet trouvé.</li>
+	 * <li>Si {@code pId == null}, retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL}
+	 * et n'émet ni LOG ni exception.</li>
+	 * <li>Sinon, délègue la recherche
+	 * par identifiant persistant
+	 * au composant GATEWAY.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + pId.</li>
+	 * <li>Si un objet est trouvé,
+	 * prépare un {@link SousTypeProduitDTO.OutputDTO}
+	 * correspondant à cet objet métier.</li>
+	 * <li>En cas d'échec technique remonté
+	 * par la recherche GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne {@link #getMessage()}
+	 * à {@link #KO_TECHNIQUE_RECHERCHE}
+	 * + {@link #TIRET_ESPACE}
+	 * + le message technique disponible,
+	 * émet un LOG
+	 * et propage une exception cohérente
+	 * avec l'implémentation.</li>
+	 * <li>En cas de succès,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_SUCCES_RECHERCHE}
+	 * après préparation complète
+	 * de la réponse utilisateur.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pId : Long : ID dans le stockage.
-	 * @return SousTypeProduitDTO.OutputDTO : 
-	 * l'objet métier qui possède pId, ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'objet métier effectivement trouvé
+	 * en stockage pour l'identifiant demandé.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pId : Long :
+	 * identifiant persistant recherché dans le stockage.
+	 * @return SousTypeProduitDTO.OutputDTO :
+	 * DTO résultat ; retourne {@code null}
+	 * si {@code pId == null}
+	 * ou si aucun objet ne correspond
+	 * à cet identifiant.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors de la recherche par identifiant
+	 * via le composant de stockage.
+	 * @throws IllegalStateException
+	 * si la conversion finale
+	 * en {@link SousTypeProduitDTO.OutputDTO}
+	 * retourne {@code null}
+	 * après récupération d'un objet métier trouvé.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
 	SousTypeProduitDTO.OutputDTO findById(Long pId) throws Exception;
 

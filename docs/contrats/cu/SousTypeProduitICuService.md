@@ -813,8 +813,57 @@ Le scénario nominal de `findByDTO(...)` est :
 - aucun résultat partiel incohérent ne doit être exposé à l’appelant ;
 - un même libellé enfant pouvant exister sur plusieurs parents, la méthode doit restituer le couple effectivement demandé.
 
-## 18) Règle de synchronisation PORT / ADAPTER / tests
-Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)` ou `findByDTO(...)` doit rester synchronisée entre :
+## 18) Contrat spécifique de `findById(...)`
+Signature cible :
+- `SousTypeProduitDTO.OutputDTO findById(Long pId) throws Exception;`
+
+### 18.1 Scénario nominal attendu
+Le scénario nominal de `findById(...)` est :
+1. recevoir un identifiant persistant transmis par la couche appelante ;
+2. vérifier que cet identifiant est exploitable côté UC ;
+3. déléguer au `GATEWAY` la recherche technique du `SousTypeProduit` correspondant ;
+4. récupérer l'objet métier effectivement trouvé en stockage ;
+5. convertir cet objet métier en `OutputDTO` ;
+6. positionner le message observable ;
+7. retourner la réponse finale.
+
+### 18.2 Cas observables attendus
+- si `pId == null` :
+  - retourne `null`,
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL`,
+  - n'émet ni LOG ni exception ;
+- si la recherche technique par identifiant lève une exception avec message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+- si la recherche technique par identifiant lève une exception sans message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+- si aucun objet n'est trouvé en stockage :
+  - retourne `null`,
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + pId` ;
+- si la conversion finale lève une exception technique avec message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+- si la conversion finale lève une exception technique sans message, ou si la conversion retourne `null` :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage une exception cohérente avec l'implémentation ;
+- en cas de succès :
+  - retourne un `SousTypeProduitDTO.OutputDTO` non `null`,
+  - positionne `getMessage()` à `MESSAGE_SUCCES_RECHERCHE` uniquement après préparation complète de la réponse.
+
+### 18.3 Garanties spécifiques de `findById(...)`
+- le message observable doit refléter l'issue réelle de l'opération ;
+- le message de succès ne doit être positionné qu'après préparation complète de la réponse ;
+- le DTO retourné, s'il n'est pas `null`, doit correspondre à l'objet métier effectivement trouvé pour l'identifiant demandé ;
+- aucun résultat partiel incohérent ne doit être exposé à l'appelant ;
+- l'identifiant relu doit permettre de retrouver de manière stable le couple métier `[parent, libellé]` effectivement stocké.
+
+## 19) Règle de synchronisation PORT / ADAPTER / tests
+Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)` ou `findById(...)` doit rester synchronisée entre :
 1. le PORT `SousTypeProduitICuService` ;
 2. l’ADAPTER `SousTypeProduitCuService` ;
 3. les tests Mock ;
@@ -891,6 +940,13 @@ Pour `findByDTO(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas vide / introuvable pour le couple `[parent, libellé]` ;
 - le cas nominal sur le couple `[parent, libellé]`.
 
+Pour `findById(...)`, les tests Mock doivent verrouiller au minimum :
+- le cas `pId == null` ;
+- le cas `gateway.findById(...) == null` ;
+- le cas exception technique avec message ;
+- le cas exception technique sans message ;
+- le cas nominal avec `MESSAGE_SUCCES_RECHERCHE`.
+
 ### Point de vigilance pour les tests d’Intégration
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
 - la création effective en base ;
@@ -946,4 +1002,11 @@ Pour `findByDTO(...)`, le test d’intégration cible doit, à terme, prouver :
 - qu’un couple `[parent, libellé]` introuvable retourne `null` avec `MESSAGE_RECHERCHE_VIDE` ;
 - que la recherche s’appuie bien sur le couple `[parent, libellé]` lorsque le même libellé existe sur plusieurs parents ;
 - que le DTO retourné correspond physiquement au couple demandé en base ;
+- que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès.
+
+Pour `findById(...)`, le test d’intégration cible doit, à terme, prouver :
+- qu’un `pId` null retourne `null` avec `MESSAGE_PARAM_NULL` ;
+- qu’un identifiant inexistant retourne `null` avec `MESSAGE_OBJ_INTROUVABLE + pId` ;
+- que l’objet relu correspond physiquement à l’enregistrement créé en base ;
+- que le parent et le libellé relus sont cohérents ;
 - que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès.

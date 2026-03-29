@@ -3190,118 +3190,231 @@ public class SousTypeProduitCuServiceMockTest {
 		
 	
 	// ======================== TESTS findById(...) ========================
-	
-	
 
+	
+	
 	/**
 	 * <div>
-	 * <p>findById(null) : retourne null + message MESSAGE_PARAM_NULL.</p>
+	 * <p>findById(null) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'appelle pas le Gateway</li>
+	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findById(null) : retourne null + message MESSAGE_PARAM_NULL")
+	@DisplayName("findById(null) : null + message MESSAGE_PARAM_NULL")
 	public void testFindByIdNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		// ===================== ACT =====================
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
 
 		final OutputDTO retour = service.findById(null);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
 		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
 
 		verifyNoInteractions(gateway);
-		
-	} // __________________________________________________________________
-	
-	
+		verifyNoInteractions(typeProduitGateway);
 
+	} // __________________________________________________________________
+
+
+	
 	/**
 	 * <div>
-	 * <p>findById(introuvable) : retourne null + message MESSAGE_OBJ_INTROUVABLE + id.</p>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findById(introuvable) : retourne null + message MESSAGE_OBJ_INTROUVABLE")
-	public void testFindByIdIntrouvable() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		when(gateway.findById(1L)).thenReturn(null);
-
-		// ===================== ACT =====================
-
-		final OutputDTO retour = service.findById(1L);
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + 1L);
-
-		verify(gateway, times(1)).findById(1L);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findById(ok) : OutputDTO + message MESSAGE_SUCCES_RECHERCHE.</p>
+	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @throws Exception si une erreur survient
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findById(ok) : OutputDTO + message MESSAGE_SUCCES_RECHERCHE")
+	@DisplayName("findById(introuvable) : null + message MESSAGE_OBJ_INTROUVABLE + id")
+	public void testFindByIdIntrouvable() throws Exception {
+
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final Long id = 12L;
+
+		when(gateway.findById(id)).thenReturn(null);
+
+		final OutputDTO retour = service.findById(id);
+		final String message = service.getMessage();
+
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
+
+		verify(gateway, times(1)).findById(id);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findById(KO technique avec message) : panne technique remontée
+	 * par le Gateway.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>rationalise le message utilisateur</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(KO technique avec message) : RuntimeException + message rationalisé")
+	public void testFindByIdErreurTechniqueAvecMessage() throws Exception {
+
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final Long id = 13L;
+
+		when(gateway.findById(id))
+				.thenThrow(new RuntimeException(MESSAGE_GATEWAY));
+
+		assertThatThrownBy(() -> service.findById(id))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessage(MESSAGE_GATEWAY);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ SousTypeProduitICuService.TIRET_ESPACE
+								+ MESSAGE_GATEWAY);
+
+		verify(gateway, times(1)).findById(id);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findById(KO technique sans message) : panne technique remontée
+	 * par le Gateway.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>rationalise le message utilisateur avec
+	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(KO technique sans message) : RuntimeException + message rationalisé")
+	public void testFindByIdErreurTechniqueSansMessage() throws Exception {
+
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final Long id = 14L;
+
+		when(gateway.findById(id)).thenThrow(new RuntimeException());
+
+		assertThatThrownBy(() -> service.findById(id))
+				.isInstanceOf(RuntimeException.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ SousTypeProduitICuService.TIRET_ESPACE
+								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findById(id);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findById(ok) : succès nominal de recherche par identifiant.</p>
+	 * <ul>
+	 * <li>retourne un OutputDTO cohérent</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>délègue une fois au Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(ok) : retourne OutputDTO cohérent + message exact de succès")
 	public void testFindByIdOk() throws Exception {
 
-	    // ===================== ARRANGE =====================
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final Long id = 3L;
 
-	    final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-	    final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-	    final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final TypeProduit parent = new TypeProduit(BAZAR);
+		parent.setIdTypeProduit(1L);
 
-	    final TypeProduit parent = new TypeProduit(BAZAR);
-	    parent.setIdTypeProduit(1L);
+		final SousTypeProduit stp = new SousTypeProduit(OUTILLAGE, parent);
+		stp.setIdSousTypeProduit(id);
 
-	    final SousTypeProduit stp = new SousTypeProduit(OUTILLAGE, parent);
-	    stp.setIdSousTypeProduit(1L);
+		when(gateway.findById(id)).thenReturn(stp);
 
-	    when(gateway.findById(1L)).thenReturn(stp);
+		final OutputDTO retour = service.findById(id);
+		final String message = service.getMessage();
 
-	    // ===================== ACT =====================
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdSousTypeProduit()).isEqualTo(id);
+		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
 
-	    final OutputDTO retour = service.findById(1L);
-	    final String message = service.getMessage();
+		verify(gateway, times(1)).findById(id);
+		verifyNoInteractions(typeProduitGateway);
 
-	    // ===================== ASSERT =====================
+	} // __________________________________________________________________	
 
-	    assertThat(retour).isNotNull();
-	    assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-	    assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-	    assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
-
-	    verify(gateway, times(1)).findById(1L);
-	    verifyNoInteractions(typeProduitGateway);
-	    
-	} // __________________________________________________________________
-	
 	
 	
 	// ========================= TESTS update(...) =========================

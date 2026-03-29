@@ -1813,44 +1813,60 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	
 	// ======================== TESTS findById(...) ========================
-	
-	
 
+	
+	
 	/**
 	 * <div>
 	 * <p>findById(null) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(null) : retourne null")
+	@DisplayName("findById(null) : retourne null + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
 	public void testFindByIdNull() throws Exception {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
 		final OutputDTO dto = this.service.findById(null);
 
-		assertThat(dto).isNull();
-		
-	} // __________________________________________________________________
-	
-	
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
+	
 	/**
 	 * <div>
 	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
+	 * <li>prouve physiquement l'absence en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findById(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + id")
 	public void testFindByIdIntrouvable() throws Exception {
 
 		final Long idInexistant = Long.valueOf(Long.MAX_VALUE);
@@ -1859,37 +1875,69 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
-	} // __________________________________________________________________
-	
-	
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE
+								+ idInexistant);
+		assertThat(this.compterSousTypeProduitEnBase(idInexistant))
+				.isEqualTo(0L);
 
+	} // __________________________________________________________________
+
+
+	
 	/**
 	 * <div>
-	 * <p>findById(ok) : round-trip création puis lecture par ID.</p>
+	 * <p>findById(ok) : test béton de la recherche par identifiant.</p>
+	 * <ul>
+	 * <li>crée d'abord un SousTypeProduit réel</li>
+	 * <li>recherche ensuite cet objet
+	 * via son identifiant persistant</li>
+	 * <li>retourne un OutputDTO cohérent</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>prouve physiquement la présence unique en base</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(ok) : retourne OutputDTO après création")
-	public void testFindByIdOk() throws Exception {
+	@DisplayName("findById(ok) : OutputDTO cohérent + message exact + preuve BD")
+	public void testFindByIdOkAvecPreuveBd() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
 
-		final OutputDTO cree = this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_GAMMA));
+		final OutputDTO cree = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_GAMMA));
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdSousTypeProduit()).isNotNull();
+		assertThat(cree.getSousTypeProduit()).isEqualTo(IT_STP_GAMMA);
+		assertThat(cree.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 
-		final OutputDTO relu = this.service.findById(cree.getIdSousTypeProduit());
+		final Long id = cree.getIdSousTypeProduit();
 
-		assertThat(relu).isNotNull();
-		assertThat(relu.getIdSousTypeProduit()).isEqualTo(cree.getIdSousTypeProduit());
-		assertThat(relu.getSousTypeProduit()).isEqualTo(IT_STP_GAMMA);
-		assertThat(relu.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		
+		final OutputDTO dto = this.service.findById(id);
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.getIdSousTypeProduit()).isEqualTo(id);
+		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_GAMMA);
+		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		assertThat(this.compterSousTypeProduitEnBase(id)).isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(id))
+				.isEqualTo(IT_STP_GAMMA);
+		assertThat(this.lireParentSousTypeProduitEnBase(id))
+				.isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_GAMMA))
+				.isEqualTo(1L);
+
 	} // __________________________________________________________________
 	
 	
