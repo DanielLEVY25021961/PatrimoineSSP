@@ -981,34 +981,109 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche un SousTypeProduit dans 
-	 * le stockage à partir d'un InputDTO.</p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * Recherche un {@link SousTypeProduitDTO.OutputDTO}
+	 * à partir du couple [parent, libellé]
+	 * porté par un {@link SousTypeProduitDTO.InputDTO}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null} 
-	 * et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OBJ_NULL} 
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si {@code pInputDTO.getTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PAS_PARENT} et lève une exception.</li>
-	 * <li>Si aucun objet n'est trouvé, retourne {@code null}
-	 *  et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
-	 * <li>Sinon, retourne l'OutputDTO correspondant.</li>
+	 * <li>recevoir un {@link SousTypeProduitDTO.InputDTO}
+	 * depuis la couche appelante ;</li>
+	 * <li>vérifier que le parent de recherche est exploitable ;</li>
+	 * <li>retrouver le {@link TypeProduit} parent persistant
+	 * correspondant au libellé porté par le DTO ;</li>
+	 * <li>déléguer au composant GATEWAY la recherche
+	 * des {@link SousTypeProduit} rattachés à ce parent ;</li>
+	 * <li>identifier, dans cette collection,
+	 * le {@link SousTypeProduit} correspondant
+	 * au libellé enfant porté par le DTO ;</li>
+	 * <li>convertir l'objet métier trouvé
+	 * en {@link SousTypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : SousTypeProduitDTO.InputDTO : DTO de recherche.
-	 * @return SousTypeProduitDTO.OutputDTO : DTO résultat ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null}, retourne {@code null},
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OBJ_NULL}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
+	 * et lève une {@link IllegalStateException}.</li>
+	 * <li>Sinon, recherche d'abord le parent persistant
+	 * correspondant au libellé porté par le DTO.</li>
+	 * <li>Si le parent est absent du stockage
+	 * ou non persistant, retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Sinon, délègue la recherche des enfants
+	 * rattachés à ce parent au composant GATEWAY.</li>
+	 * <li>Si aucun enfant n'est disponible pour ce parent
+	 * ou si aucun enfant ne correspond au libellé demandé,
+	 * retourne {@code null} et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si un objet est trouvé pour le couple
+	 * [parent, libellé], retourne l'{@link SousTypeProduitDTO.OutputDTO}
+	 * correspondant et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * <li>En cas d'échec technique remonté par la recherche
+	 * du parent, par la recherche des enfants
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne {@link #getMessage()}
+	 * à {@link #KO_TECHNIQUE_RECHERCHE}
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage pour le couple [parent, libellé]
+	 * porté par le DTO de recherche.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * <li>Le libellé d'un {@link SousTypeProduit}
+	 * n'étant pas unique seul,
+	 * la recherche s'appuie sur le couple
+	 * [parent, libellé].</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : SousTypeProduitDTO.InputDTO :
+	 * DTO de recherche portant le parent
+	 * et le libellé enfant à retrouver.
+	 * @return SousTypeProduitDTO.OutputDTO :
+	 * DTO correspondant à l'objet trouvé pour le couple
+	 * [parent, libellé] ; retourne {@code null}
+	 * si {@code pInputDTO == null},
+	 * si le parent est absent / non persistant
+	 * ou si aucun enfant correspondant n'est trouvé.
+	 * @throws IllegalStateException
+	 * si {@code pInputDTO.getTypeProduit()} est blank.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * du parent ou des enfants via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
 	SousTypeProduitDTO.OutputDTO findByDTO(
 			SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;
-
 
 
 	/**

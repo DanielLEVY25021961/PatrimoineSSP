@@ -1546,115 +1546,272 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		
 	} // __________________________________________________________________	
 
+
 	
 	// ========================== TESTS findByDTO(...) =====================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>findByDTO(null) : erreur utilisateur bénigne.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL}</li>
+	 * <li>Retourne {@code null}.</li>
+	 * <li>Positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL}.</li>
+	 * <li>N'écrit rien en base.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByDTO(null) : retourne null, message 'objet null'")
+	@DisplayName("findByDTO(null) : retourne null + message exact MESSAGE_RECHERCHE_OBJ_NULL + aucune écriture BD")
 	public void testFindByDTONull() throws Exception {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
 		final OutputDTO dto = this.service.findByDTO(null);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
-		
-	} // __________________________________________________________________
-	
-	
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
 
+	} // __________________________________________________________________
+
+
+	
 	/**
 	 * <div>
-	 * <p>findByDTO(parent blank) : violation de contrat (PORT).</p>
+	 * <p>findByDTO(parent blank) : violation de contrat.</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>Lève {@link IllegalStateException}.</li>
+	 * <li>Positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}.</li>
+	 * <li>N'écrit rien en base.</li>
 	 * </ul>
 	 * </div>
-	 *
-	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByDTO(parent blank) : positionne MESSAGE_PAS_PARENT + lève IllegalStateException")
-	public void testFindByDTOParentBlank() throws Exception {
+	@DisplayName("findByDTO(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testFindByDTOParentBlank() {
 
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(ESPACES, IT_STP_ALPHA);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				ESPACES,
+				IT_STP_ALPHA);
 
 		assertThatThrownBy(() -> this.service.findByDTO(dto))
 				.isInstanceOf(IllegalStateException.class);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
-		
-	} // __________________________________________________________________
-	
-	
+		assertThat(nombreApres).isEqualTo(nombreAvant);
 
+	} // __________________________________________________________________
+
+
+	
 	/**
 	 * <div>
 	 * <p>findByDTO(parent absent) : aucun parent persistant en stockage.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>Retourne {@code null}.</li>
+	 * <li>Positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>N'écrit rien en base.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByDTO(parent absent) : retourne null + message MESSAGE_RECHERCHE_VIDE")
+	@DisplayName("findByDTO(parent absent) : retourne null + message exact MESSAGE_RECHERCHE_VIDE + aucune écriture BD")
 	public void testFindByDTOParentAbsent() throws Exception {
 
-		/* Parent non créé. */
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_ALPHA);
 
 		final OutputDTO trouve = this.service.findByDTO(dto);
+
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
 		assertThat(trouve).isNull();
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
-		
-	} // __________________________________________________________________
-	
-	
+		assertThat(nombreApres).isEqualTo(nombreAvant);
 
+	} // __________________________________________________________________
+
+
+	
 	/**
 	 * <div>
-	 * <p>findByDTO(ok) : test "béton" de la recherche via DTO.</p>
+	 * <p>findByDTO(couple introuvable) : 
+	 * parent existant mais aucun enfant correspondant.</p>
+	 * <ul>
+	 * <li>Retourne {@code null}.</li>
+	 * <li>Positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Prouve en base que le couple demandé est absent.</li>
+	 * <li>Prouve en base que l'objet voisin déjà créé reste présent.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByDTO(ok) : retourne OutputDTO cohérent après création")
-	public void testFindByDTOOk() throws Exception {
+	@DisplayName("findByDTO(couple introuvable) : retourne null + message exact MESSAGE_RECHERCHE_VIDE + preuve BD")
+	public void testFindByDTOCoupleIntrouvableAvecPreuveBd() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
 
-		final InputDTO input = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA);
+		final OutputDTO cree = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_ALPHA));
 
-		final OutputDTO dto = this.service.findByDTO(input);
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdSousTypeProduit()).isNotNull();
+
+		final InputDTO inputRecherche = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_BETA);
+
+		final OutputDTO dto = this.service.findByDTO(inputRecherche);
+
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_BETA))
+				.isEqualTo(0L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitEnBase(
+				cree.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(
+				cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(
+				cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(ok) : 
+	 * preuve béton de la recherche sur le couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>Retourne un {@link OutputDTO} non {@code null}.</li>
+	 * <li>Positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * <li>Retrouve le bon objet quand le même libellé existe sur plusieurs parents.</li>
+	 * <li>Prouve physiquement en base les deux couples distincts.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(ok) : retrouve le bon couple [parent, libellé] + message exact + preuve BD")
+	public void testFindByDTOOkAvecPreuveCoupleParentLibelle() throws Exception {
+
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
+
+		final OutputDTO creeParentA = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_ALPHA));
+
+		final OutputDTO creeParentB = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_ALPHA));
+
+		assertThat(creeParentA).isNotNull();
+		assertThat(creeParentB).isNotNull();
+		assertThat(creeParentA.getIdSousTypeProduit()).isNotNull();
+		assertThat(creeParentB.getIdSousTypeProduit()).isNotNull();
+
+		final InputDTO inputRecherche = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_B,
+				IT_STP_ALPHA);
+
+		final OutputDTO dto = this.service.findByDTO(inputRecherche);
 
 		assertThat(dto).isNotNull();
 		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_ALPHA);
-		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		
-	} // __________________________________________________________________
-	
+		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_B);
+		assertThat(dto.getIdSousTypeProduit())
+				.isEqualTo(creeParentB.getIdSousTypeProduit());
+		assertThat(dto.getIdSousTypeProduit())
+				.isNotEqualTo(creeParentA.getIdSousTypeProduit());
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		assertThat(this.compterSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(
+				creeParentB.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(
+				creeParentB.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(
+				creeParentB.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_B);
+
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_B,
+				IT_STP_ALPHA))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________	
 	
 
+	
 	// ======================== TESTS findById(...) ========================
 	
 	

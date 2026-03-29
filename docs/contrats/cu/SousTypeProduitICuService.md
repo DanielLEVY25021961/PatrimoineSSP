@@ -747,14 +747,74 @@ Le scénario nominal de `findAllByParent(...)` est :
   avec `equals/hashCode` des `OutputDTO` ;
 - aucun résultat partiel incohérent ne doit être exposé.
 
-## 17) Règle de synchronisation PORT / ADAPTER / tests
+## 17) Contrat spécifique de `findByDTO(...)`
+Signature cible :
+- `SousTypeProduitDTO.OutputDTO findByDTO(SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 
-Toute correction de `creer(...)`, `rechercherTous()`,
-`rechercherTousString()`, `rechercherTousParPage(...)`,
-`findByLibelle(...)`, `findByLibelleRapide(...)`
-ou `findAllByParent(...)`
-doit rester synchronisée entre :
+### 17.1 Scénario nominal attendu
+Le scénario nominal de `findByDTO(...)` est :
+1. recevoir un `SousTypeProduitDTO.InputDTO` transmis par la couche appelante ;
+2. valider que le parent de recherche est exploitable ;
+3. retrouver le `TypeProduit` parent persistant dans le stockage ;
+4. demander au `GATEWAY` tous les `SousTypeProduit` rattachés à ce parent ;
+5. retirer les éventuels éléments `null` et parcourir les résultats exploitables ;
+6. identifier l’enfant correspondant au couple `[parent, libellé]` porté par le DTO ;
+7. convertir l’objet métier trouvé en `OutputDTO` ;
+8. positionner le message observable ;
+9. retourner la réponse finale.
 
+### 17.2 Cas observables attendus
+- si `pInputDTO == null` :
+  - retourne `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OBJ_NULL`,
+  - n’émet ni LOG ni exception ;
+- si `pInputDTO.getTypeProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+- si la recherche technique du parent lève une exception avec message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+- si la recherche technique du parent lève une exception sans message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+- si le parent est absent du stockage ou non persistant :
+  - retourne `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+- si la recherche technique des enfants lève une exception avec message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+- si la recherche technique des enfants lève une exception sans message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+- si aucun enfant exploitable n’est disponible pour ce parent, ou si aucun enfant ne correspond au libellé demandé :
+  - retourne `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+- si la conversion finale lève une exception technique avec message :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+- si la conversion finale lève une exception technique sans message, ou si la conversion retourne `null` :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage une exception cohérente avec l’implémentation ;
+- en cas de succès :
+  - retourne un `SousTypeProduitDTO.OutputDTO` non `null`,
+  - positionne `getMessage()` à `MESSAGE_SUCCES_RECHERCHE` uniquement après préparation complète de la réponse.
+
+### 17.3 Garanties spécifiques de `findByDTO(...)`
+- la recherche s’appuie sur le couple `[parent, libellé]` et non sur le seul libellé enfant ;
+- le DTO retourné, s’il n’est pas `null`, doit correspondre à l’état métier effectivement accessible dans le stockage pour ce couple ;
+- le message observable doit être positionné après traitement complet de la réponse ;
+- aucun résultat partiel incohérent ne doit être exposé à l’appelant ;
+- un même libellé enfant pouvant exister sur plusieurs parents, la méthode doit restituer le couple effectivement demandé.
+
+## 18) Règle de synchronisation PORT / ADAPTER / tests
+Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)` ou `findByDTO(...)` doit rester synchronisée entre :
 1. le PORT `SousTypeProduitICuService` ;
 2. l’ADAPTER `SousTypeProduitCuService` ;
 3. les tests Mock ;
@@ -764,18 +824,13 @@ doit rester synchronisée entre :
 Aucune de ces cinq pièces ne doit diverger durablement des autres.
 
 ### Point de vigilance pour les tests Mock
-
-Pour `creer(...)`, l’absence de doublon côté GATEWAY
-doit être simulée par :
-
-- une `List<SousTypeProduit>` vide,
+Pour `creer(...)`, l’absence de doublon côté GATEWAY doit être simulée par :
+- une `List` vide,
 - ou, à défaut, une liste ne contenant aucun élément exploitable.
 
-Le contrat réel du GATEWAY ne doit pas être simulé
-par un `get(0)` non sécurisé.
+Le contrat réel du GATEWAY ne doit pas être simulé par un `get(0)` non sécurisé.
 
 Pour `rechercherTous()`, les tests Mock doivent verrouiller au minimum :
-
 - le cas `gateway.rechercherTous() == null` ;
 - le cas exception technique avec message ;
 - le cas exception technique sans message ;
@@ -783,35 +838,28 @@ Pour `rechercherTous()`, les tests Mock doivent verrouiller au minimum :
 - le cas nominal avec filtrage, tri et dédoublonnage.
 
 Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
-
 - le cas `gateway.rechercherTous() == null` ;
 - le cas exception technique avec message ;
 - le cas exception technique sans message ;
 - le cas résultats vides après filtrage ;
-- le cas nominal avec filtrage, tri, suppression des blank
-  et dédoublonnage.
+- le cas nominal avec filtrage, tri, suppression des blank et dédoublonnage.
 
 Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
-
 - le cas `pRequetePage == null` ;
 - le cas exception technique avec message ;
 - le cas exception technique sans message ;
 - le cas `gateway.rechercherTousParPage(...) == null` ;
-- le cas nominal avec reprise de la pagination,
-  filtrage des `null`, tri et dédoublonnage.
+- le cas nominal avec reprise de la pagination, filtrage des `null`, tri et dédoublonnage.
 
 Pour `findByLibelle(...)`, les tests Mock doivent verrouiller au minimum :
-
 - le cas `pLibelle` blank ;
 - le cas `gateway.findByLibelle(...) == null` ;
 - le cas exception technique avec message ;
 - le cas exception technique sans message ;
 - le cas introuvable ;
-- le cas nominal avec plusieurs résultats exacts possibles,
-  tri et dédoublonnage.
+- le cas nominal avec plusieurs résultats exacts possibles, tri et dédoublonnage.
 
 Pour `findByLibelleRapide(...)`, les tests Mock doivent verrouiller au minimum :
-
 - le cas `pContenu == null` ;
 - le cas `pContenu` blank ;
 - le cas `gateway.findByLibelleRapide(...) == null` ;
@@ -821,40 +869,42 @@ Pour `findByLibelleRapide(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas nominal avec filtrage, tri et dédoublonnage.
 
 Pour `findAllByParent(...)`, les tests Mock doivent verrouiller au minimum :
-
 - le cas `pTypeProduit == null` ;
 - le cas parent blank ;
-- le cas exception technique de recherche du parent
-  avec message ;
-- le cas exception technique de recherche du parent
-  sans message ;
+- le cas exception technique de recherche du parent avec message ;
+- le cas exception technique de recherche du parent sans message ;
 - le cas parent absent ou non persistant ;
-- le cas exception technique de recherche des enfants
-  avec message ;
-- le cas exception technique de recherche des enfants
-  sans message ;
+- le cas exception technique de recherche des enfants avec message ;
+- le cas exception technique de recherche des enfants sans message ;
 - le cas `gateway.findAllByParent(...) == null` ;
 - le cas vide ;
 - le cas nominal avec filtrage, tri et dédoublonnage.
 
+Pour `findByDTO(...)`, les tests Mock doivent verrouiller au minimum :
+- le cas `pInputDTO == null` ;
+- le cas parent blank ;
+- le cas exception technique de recherche du parent avec message ;
+- le cas exception technique de recherche du parent sans message ;
+- le cas parent absent ou non persistant ;
+- le cas exception technique de recherche des enfants avec message ;
+- le cas exception technique de recherche des enfants sans message ;
+- le cas vide / introuvable pour le couple `[parent, libellé]` ;
+- le cas nominal sur le couple `[parent, libellé]`.
+
 ### Point de vigilance pour les tests d’Intégration
-
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
-
 - la création effective en base ;
 - le rattachement effectif au parent ;
 - l’absence de doublon ;
 - la cohérence du message observable.
 
 Pour `rechercherTous()`, le test d’intégration cible doit, à terme, prouver :
-
 - la cohérence entre la liste retournée et `count()` ;
 - la présence réelle en base des lignes retournées ;
 - la cohérence du parent pour chaque sous-type vérifié ;
 - le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
 
 Pour `rechercherTousString()`, le test d’intégration cible doit, à terme, prouver :
-
 - la présence des libellés créés dans la réponse ;
 - l’absence de doublon dans la réponse ;
 - l’absence de libellé blank dans la réponse ;
@@ -862,7 +912,6 @@ Pour `rechercherTousString()`, le test d’intégration cible doit, à terme, pr
 - le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
 
 Pour `rechercherTousParPage(...)`, le test d’intégration cible doit, à terme, prouver :
-
 - la cohérence entre la pagination retournée et `count()` ;
 - la cohérence de `pageNumber`, `pageSize` et `totalElements` ;
 - la présence réelle en base des lignes correspondant aux DTO paginés vérifiés ;
@@ -870,35 +919,31 @@ Pour `rechercherTousParPage(...)`, le test d’intégration cible doit, à terme
 - le message exact `MESSAGE_RECHERCHE_PAGINEE_OK` en cas de succès.
 
 Pour `findByLibelle(...)`, le test d’intégration cible doit, à terme, prouver :
-
 - qu’un même libellé exact peut remonter plusieurs DTO ;
 - que ces DTO peuvent appartenir à des parents distincts ;
 - que les couples parent / sous-type existent physiquement en base ;
-- que le message exact `MESSAGE_SUCCES_RECHERCHE`
-  est positionné en cas de succès ;
-- qu’un libellé introuvable retourne une liste vide
-  avec `MESSAGE_OBJ_INTROUVABLE + libellé`.
+- que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès ;
+- qu’un libellé introuvable retourne une liste vide avec `MESSAGE_OBJ_INTROUVABLE + libellé`.
 
 Pour `findByLibelleRapide(...)`, le test d’intégration cible doit, à terme, prouver :
-
 - que la recherche blank délègue à `rechercherTous()` ;
-- que la recherche introuvable retourne une liste vide
-  avec `MESSAGE_RECHERCHE_VIDE` ;
-- que les DTO correspondant au fragment recherché
-  existent physiquement en base ;
+- que la recherche introuvable retourne une liste vide avec `MESSAGE_RECHERCHE_VIDE` ;
+- que les DTO correspondant au fragment recherché existent physiquement en base ;
 - que les objets hors cible ne sont pas attendus dans le résultat ;
-- que le message exact `MESSAGE_RECHERCHE_OK`
-  est positionné en cas de succès.
+- que le message exact `MESSAGE_RECHERCHE_OK` est positionné en cas de succès.
 
 Pour `findAllByParent(...)`, le test d’intégration cible doit, à terme, prouver :
-
 - qu’un parent blank est refusé ;
 - qu’un parent absent est refusé ;
-- qu’un parent existant sans enfant retourne une liste vide
-  avec `MESSAGE_RECHERCHE_VIDE` ;
-- que seuls les enfants du parent demandé
-  sont retournés ;
-- que les couples parent / sous-type retournés
-  existent physiquement en base ;
-- que le message exact `MESSAGE_RECHERCHE_OK`
-  est positionné en cas de succès.
+- qu’un parent existant sans enfant retourne une liste vide avec `MESSAGE_RECHERCHE_VIDE` ;
+- que seuls les enfants du parent demandé sont retournés ;
+- que les couples parent / sous-type retournés existent physiquement en base ;
+- que le message exact `MESSAGE_RECHERCHE_OK` est positionné en cas de succès.
+
+Pour `findByDTO(...)`, le test d’intégration cible doit, à terme, prouver :
+- qu’un parent blank est refusé ;
+- qu’un parent absent retourne `null` avec `MESSAGE_RECHERCHE_VIDE` ;
+- qu’un couple `[parent, libellé]` introuvable retourne `null` avec `MESSAGE_RECHERCHE_VIDE` ;
+- que la recherche s’appuie bien sur le couple `[parent, libellé]` lorsque le même libellé existe sur plusieurs parents ;
+- que le DTO retourné correspond physiquement au couple demandé en base ;
+- que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès.

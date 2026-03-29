@@ -1039,96 +1039,205 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	
 
 	/**
-	* {@inheritDoc}
-	*/
+	 * {@inheritDoc}
+	 */
 	@Override
-	public OutputDTO findByDTO(
-	        final InputDTO pInputDTO) throws Exception {
+	public OutputDTO findByDTO(final InputDTO pInputDTO) throws Exception {
 
-	    /* REGLES METIER. */
+		/*
+		 * Si pInputDTO == null :
+		 * retourne null avec un message utilisateur 
+		 * MESSAGE_RECHERCHE_OBJ_NULL, sans LOG et sans exception.
+		 */
+		if (pInputDTO == null) {
+			this.message.set(MESSAGE_RECHERCHE_OBJ_NULL);
+			return null;
+		}
 
-	    /*
-	     * ERREUR UTILISATEUR BENIGNE :
-	     * aucun traitement, aucun LOG, aucune Exception.
-	     * Retourne null avec un message utilisateur si pInputDTO == null.
-	     */
-	    if (pInputDTO == null) {
-	        this.message.set(MESSAGE_RECHERCHE_OBJ_NULL);
-	        return null;
-	    }
+		/*
+		 * Si le parent n'est pas exploitable :
+		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 */
+		final String libelleParent = pInputDTO.getTypeProduit();
 
-	    /* CONTRAT (PORT) :
-	     * Si pInputDTO.getTypeProduit() est Blank,
-	     * positionne getMessage() à MESSAGE_PAS_PARENT et lève une exception.
-	     *
-	     * IMPORTANT : ce contrôle doit être fait AVANT le try/catch technique,
-	     * sinon l'exception est catchée et le message est écrasé par
-	     * KO_TECHNIQUE_RECHERCHE (violation du contrat).
-	     */
-	    final String libelleTP = pInputDTO.getTypeProduit();
-	    if (StringUtils.isBlank(libelleTP)) {
-	        this.message.set(MESSAGE_PAS_PARENT);
-	        throw new IllegalStateException(MESSAGE_PAS_PARENT);
-	    }
+		if (StringUtils.isBlank(libelleParent)) {
+			return this.traiterErreur(
+					MESSAGE_PAS_PARENT,
+					new IllegalStateException(MESSAGE_PAS_PARENT));
+		}
 
-	    try {
+		/*
+		 * Recherche le parent persistant.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final TypeProduit parentPersistant;
 
-	        final String libelleSTP = pInputDTO.getSousTypeProduit();
+		try {
+			
+			/* Délègue au GATEWAY la recherche du parent par libellé. */
+			parentPersistant 
+				= this.typeProduitGateway.findByLibelle(libelleParent);
+			
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
 
-	        /* ============= RATTACHEMENT PARENT PERSISTÉ =============== */
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+		}
 
-	        final TypeProduit parentPersistant
-	            = this.typeProduitGateway.findByLibelle(libelleTP);
+		/*
+		 * Si le parent est absent du stockage
+		 * ou non persistant :
+		 * retourne null avec MESSAGE_RECHERCHE_VIDE.
+		 */
+		if (parentPersistant == null
+				|| parentPersistant.getIdTypeProduit() == null) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+			return null;
+		}
 
-	        /*
-	         * Si le parent n'existe pas / pas d'ID, la recherche ne peut pas aboutir :
-	         * retourne null avec MESSAGE_RECHERCHE_VIDE.
-	         */
-	        if (parentPersistant == null
-	                || parentPersistant.getIdTypeProduit() == null) {
-	            this.message.set(MESSAGE_RECHERCHE_VIDE);
-	            return null;
-	        }
+		/*
+		 * Recherche les SousTypeProduit rattachés au parent persistant.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final List<SousTypeProduit> records;
 
-	        /* délègue au Gateway la recherche de la liste d'objets métier attachés au parent. */
-	        final List<SousTypeProduit> possibles
-	            = this.gateway.findAllByParent(parentPersistant);
+		try {
+			
+			/* Délègue au Gateway la recherche de la 
+			 * collection d'enfants du parent. */
+			records = this.gateway.findAllByParent(parentPersistant);
+			
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
 
-	        /* émet un message et retourne null si la recherche ne retourne rien. */
-	        if (possibles.isEmpty()) {
-	            this.message.set(MESSAGE_RECHERCHE_VIDE);
-	            return null;
-	        }
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+		}
 
-	        SousTypeProduit resultat = null;
+		/*
+		 * Si aucun enfant n'est disponible pour ce parent :
+		 * retourne null avec MESSAGE_RECHERCHE_VIDE.
+		 */
+		if (records == null || records.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+			return null;
+		}
 
-	        /* recherche l'objet métier dans la liste des possibles. */
-	        for (final SousTypeProduit stp : possibles) {
-	            if (Strings.CI.equals(stp.getSousTypeProduit(), libelleSTP)) {
-	                resultat = stp;
-	                break;
-	            }
-	        }
+		/*
+		 * Recherche dans la liste filtrée et triée
+		 * l'enfant correspondant au couple [parent, libellé].
+		 */
+		final String libelleSousType = pInputDTO.getSousTypeProduit();
+		final SousTypeProduit resultat;
 
-	        /* émet un message et retourne null si la recherche ne retourne rien. */
-	        if (resultat == null) {
-	            this.message.set(MESSAGE_RECHERCHE_VIDE);
-	            return null;
-	        }
+		try {
+			
+			final List<SousTypeProduit> recordsNonNullTries =
+					this.filtrerEtTrier(records);
 
-	        /* convertit l'objet métier en OutputDTO. */
-	        final SousTypeProduitDTO.OutputDTO stpDTO
-	            = ConvertisseurMetierToOutputDTOSousTypeProduit.convert(resultat);
+			SousTypeProduit trouve = null;
 
-	        /* émet un message. */
-	        this.message.set(MESSAGE_SUCCES_RECHERCHE);
+			for (final SousTypeProduit sousTypeProduit : recordsNonNullTries) {
+				if (Strings.CI.equals(
+						sousTypeProduit.getSousTypeProduit(),
+						libelleSousType)) {
+					trouve = sousTypeProduit;
+					break;
+				}
+			}
 
-	        /* retourne le OutputDTO. */
-	        return stpDTO;
+			resultat = trouve;
 
-	    } catch (Exception e) {
-	        return this.traiterErreur(KO_TECHNIQUE_RECHERCHE, e);
-	    }
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si aucun enfant correspondant n'est trouvé :
+		 * retourne null avec MESSAGE_RECHERCHE_VIDE.
+		 */
+		if (resultat == null) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+			return null;
+		}
+
+		/*
+		 * Prépare la réponse utilisateur finale.
+		 * Toute anomalie technique de conversion
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final OutputDTO dto;
+
+		try {
+			
+			/* convertit l'objet trouvé en OutputDTO. */
+			dto 
+			= ConvertisseurMetierToOutputDTOSousTypeProduit.convert(resultat);
+			
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si la conversion finale retourne null :
+		 * émet un message technique cohérent + LOG + IllegalStateException.
+		 */
+		if (dto == null) {
+			final String messageTechnique =
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					messageTechnique,
+					new IllegalStateException(messageTechnique));
+		}
+
+		/*
+		 * Le message observable de succès
+		 * n'est positionné qu'après préparation complète
+		 * de la réponse utilisateur.
+		 */
+		this.message.set(MESSAGE_SUCCES_RECHERCHE);
+
+		/*
+		 * Retourne l'OutputDTO correspondant
+		 * au couple [parent, libellé].
+		 */
+		return dto;
 	}
 	
 	
