@@ -435,45 +435,79 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Retourne tous les
-	 * <code>{@link SousTypeProduit}</code>
-	 * présents dans le stockage sous forme de DTOs
-	 * <code>OutputDTO</code>.
+	 * Retourne tous les {@link SousTypeProduitDTO.OutputDTO}
+	 * accessibles dans le stockage.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>demande au SERVICE GATEWAY la liste de tous les
-	 * enregistrements présents dans le stockage.</li>
-	 * <li>émet un message, Log.info et jette une ExceptionStockageVide 
-	 * si la liste retournée est null.</li>
-	 * <li>convertit les objets métier retournés en OutputDTO  
-	 * , fabrique la liste et la retourne.</li>
+	 * <li>demander au composant GATEWAY la liste complète
+	 * des {@link SousTypeProduit} présents dans le stockage ;</li>
+	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
+	 * <li>retirer les éventuels éléments {@code null},
+	 * trier les objets métier
+	 * puis dédoublonner la réponse côté UC si nécessaire ;</li>
+	 * <li>convertir la liste métier en
+	 * {@link SousTypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une liste exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si le stockage retourne {@code null}, positionne 
-	 * {@link #getMessage()}
-	 * à {@link #MESSAGE_STOCKAGE_NULL}, LOG et lève une exception.</li>
-	 * <li>Sinon, retourne la liste des OutputDTO correspondant 
-	 * à tous les enregistrements
-	 * du stockage (dédoublonnés côté CU si nécessaire).</li>
-	 * <ul>
-	 * <li>si la liste résultat est vide, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>si la liste résultat n'est pas vide, positionne 
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}</li>
-	 * </ul>
+	 * <li>Délègue la recherche exhaustive au composant GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne une {@link List} de
+	 * {@link SousTypeProduitDTO.OutputDTO} jamais {@code null}
+	 * (éventuellement vide).</li>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; :
-	 * liste de tous les SousTypes de Produit sous forme de DTO.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>La liste retournée, si elle n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY,
+	 * exprimé sous forme de DTO.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return List<SousTypeProduitDTO.OutputDTO> :
+	 * liste de tous les objets métier présents dans le stockage ;
+	 * jamais {@code null}, éventuellement vide.
+	 * @throws ExceptionStockageVide
+	 * si le stockage retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * exhaustive via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation de la réponse utilisateur.
 	 */
 	List<SousTypeProduitDTO.OutputDTO> rechercherTous() throws Exception;
-
+	
 
 
 	/**

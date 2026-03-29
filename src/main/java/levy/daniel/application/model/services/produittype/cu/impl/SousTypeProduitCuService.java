@@ -397,40 +397,83 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public List<SousTypeProduitDTO.OutputDTO> rechercherTous() 
+	public List<SousTypeProduitDTO.OutputDTO> rechercherTous()
 									throws Exception {
 
-		/* délègue au Gateway la recherche des résultats. */
-		final List<SousTypeProduit> records = this.gateway.rechercherTous();
+		/*
+		 * Appelle le GATEWAY pour lire tous les SousTypeProduit.
+		 */
+		final List<SousTypeProduit> records;
 
-		/* émet un message, LOG et jette une Exception 
-		 * si le stockage ne retourne rien. */
+		try {
+
+			records = this.gateway.rechercherTous();
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le stockage retourne null :
+		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 */
 		if (records == null) {
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
-		/* retire les null et trie. */
+		/*
+		 * Retire les null et trie les objets métier.
+		 */
 		final List<SousTypeProduit> recordsNonNullTries
 			= this.filtrerEtTrier(records);
 
-		/* convertit la réponse en OutputDTO. */
-		final List<SousTypeProduitDTO.OutputDTO> dtos
-			= this.convertirEtDedoublonner(recordsNonNullTries);
+		/*
+		 * Convertit la liste métier en OutputDTO
+		 * puis dédoublonne la réponse.
+		 */
+		final List<SousTypeProduitDTO.OutputDTO> dtos;
 
-		if (dtos.isEmpty()) {
-			/* message recherche vide si pas de résultats. */
-			message.set(MESSAGE_RECHERCHE_VIDE);
-		} else {
-			/* message recherche OK si résultats. */
-			message.set(MESSAGE_RECHERCHE_OK);
+		try {
+
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
 		}
 
-		/* retourne les résultats sous forme d'OutputDTOs. */
+		/*
+		 * Positionne le message observable
+		 * après préparation complète de la réponse.
+		 */
+		if (dtos.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
+		}
+
+		/*
+		 * Retourne toujours une liste d'OutputDTO non null
+		 * (éventuellement vide).
+		 */
 		return dtos;
 	}
-
+	
 
 
 	/**

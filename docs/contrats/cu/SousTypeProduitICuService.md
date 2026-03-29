@@ -323,9 +323,69 @@ Le scénario nominal de `creer(...)` est :
 - le DTO retourné doit représenter l’état réellement créé dans le stockage ;
 - le message utilisateur doit être lisible, stable et testable.
 
-## 11) Règle de synchronisation PORT / ADAPTER / tests
+## 11) Contrat spécifique de `rechercherTous()`
 
-Toute correction de `creer(...)` doit rester synchronisée entre :
+Signature cible :
+
+- `List<SousTypeProduitDTO.OutputDTO> rechercherTous() throws Exception;`
+
+### 11.1 Scénario nominal attendu
+
+Le scénario nominal de `rechercherTous()` est :
+
+1. demander au `GATEWAY` la liste complète des `SousTypeProduit` ;
+2. sécuriser le retour technique du stockage ;
+3. retirer les éventuels éléments `null` ;
+4. trier les objets métier ;
+5. convertir les objets métier en `OutputDTO` ;
+6. dédoublonner les `OutputDTO` si nécessaire ;
+7. positionner le message observable ;
+8. retourner une liste exploitable par la couche appelante.
+
+### 11.2 Cas observables attendus
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si la liste retournée devient vide après filtrage / conversion :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si la liste retournée contient des résultats :
+  - retourne une liste non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 11.3 Garanties spécifiques de `rechercherTous()`
+
+- la méthode ne doit jamais retourner `null`
+  quand le stockage est exploitable ;
+- le message observable doit être positionné
+  après préparation complète de la réponse ;
+- les `null` techniques issus du stockage
+  ne doivent jamais fuiter jusqu’à l’appelant ;
+- les `OutputDTO` retournés doivent correspondre
+  à des objets métier réellement accessibles via le `GATEWAY` ;
+- le dédoublonnage éventuel doit rester cohérent
+  avec `equals/hashCode` des `OutputDTO`.
+
+## 12) Règle de synchronisation PORT / ADAPTER / tests
+
+Toute correction de `creer(...)` ou de `rechercherTous()`
+doit rester synchronisée entre :
 
 1. le PORT `SousTypeProduitICuService` ;
 2. l’ADAPTER `SousTypeProduitCuService` ;
@@ -346,6 +406,14 @@ doit être simulée par :
 Le contrat réel du GATEWAY ne doit pas être simulé
 par un `get(0)` non sécurisé.
 
+Pour `rechercherTous()`, les tests Mock doivent verrouiller au minimum :
+
+- le cas `gateway.rechercherTous() == null` ;
+- le cas exception technique avec message ;
+- le cas exception technique sans message ;
+- le cas résultats vides après filtrage ;
+- le cas nominal avec filtrage, tri et dédoublonnage.
+
 ### Point de vigilance pour les tests d’Intégration
 
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -354,3 +422,10 @@ Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
 - le rattachement effectif au parent ;
 - l’absence de doublon ;
 - la cohérence du message observable.
+
+Pour `rechercherTous()`, le test d’intégration cible doit, à terme, prouver :
+
+- la cohérence entre la liste retournée et `count()` ;
+- la présence réelle en base des lignes retournées ;
+- la cohérence du parent pour chaque sous-type vérifié ;
+- le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
