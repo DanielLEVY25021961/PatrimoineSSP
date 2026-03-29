@@ -206,6 +206,12 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * TypeProduit IT : "IT-TP-COUNT-02".
 	 */
 	public static final String IT_COUNT_02 = "IT-TP-COUNT-02";
+	
+	/**
+	 * "SELECT COUNT(*) FROM TYPES_PRODUIT"
+	 */
+	public static final String SELECT_COUNT_FROM_TYPES_PRODUIT 
+		= "SELECT COUNT(*) FROM TYPES_PRODUIT";
 
 	// *************************** ATTRIBUTS *******************************/
 
@@ -1251,13 +1257,13 @@ public class TypeProduitCuServiceIntegrationTest {
 	public void testFindByDTOBlank() throws Exception {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
-				"SELECT COUNT(*) FROM TYPES_PRODUIT",
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
 				Long.class);
 
 		final OutputDTO dto = this.service.findByDTO(new TypeProduitDTO.InputDTO(ESPACES));
 
 		final Long nombreApres = this.jdbcTemplate.queryForObject(
-				"SELECT COUNT(*) FROM TYPES_PRODUIT",
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
 				Long.class);
 
 		assertThat(dto).isNull();
@@ -1452,114 +1458,190 @@ public class TypeProduitCuServiceIntegrationTest {
 	
 
 	
+	// ---------------------- update(...) -------------------------------//
+
+	
+	
 	/**
 	 * <div>
 	 * <p>update(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("update(null) : positionne message + lève ExceptionParametreNull")
+	@DisplayName("update(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
 	public void testUpdateNull() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		assertThatThrownBy(() -> this.service.update(null))
 				.isInstanceOf(ExceptionParametreNull.class);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_PARAM_NULL);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
 	 * <p>update(blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("update(blank) : positionne message + lève ExceptionParametreBlank")
+	@DisplayName("update(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
 	public void testUpdateBlank() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		final InputDTO input = new TypeProduitDTO.InputDTO(ESPACES);
 
 		assertThatThrownBy(() -> this.service.update(input))
 				.isInstanceOf(ExceptionParametreBlank.class);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_PARAM_BLANK);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>update(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>update(introuvable) : aucun objet persistant
+	 * ne correspond au libellé exact transmis.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne crée aucune ligne en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("update(introuvable) : null + message exact MESSAGE_OBJ_INTROUVABLE + libellé + aucune création BD")
 	public void testUpdateIntrouvable() throws Exception {
 
-		final InputDTO input = new TypeProduitDTO.InputDTO(IT_INEXISTANT_UPDATE);
+		final String libelleAbsent = "IT_UPDATE_INTR_BD_01";
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
+		final InputDTO input = new TypeProduitDTO.InputDTO(libelleAbsent);
 		final OutputDTO dto = this.service.update(input);
+
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelleAbsent);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelleAbsent))
+				.isEqualTo(0L);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>update(ok) : met à jour et conserve l'ID persistant.</p>
-	 * <p>Test "béton" : round-trip création puis modification puis re-lecture.</p>
+	 * <p>update(ok) : test béton du scénario nominal réel.</p>
+	 * <ul>
+	 * <li>crée d'abord un TypeProduit réel</li>
+	 * <li>met ensuite à jour ce même objet
+	 * via un {@link InputDTO} portant le même libellé exact</li>
+	 * <li>retourne un {@link OutputDTO} cohérent</li>
+	 * <li>conserve exactement le même identifiant persistant</li>
+	 * <li>ne crée aucun doublon et n'altère pas le volume total</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_MODIF_OK} + libellé</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(ok) : retourne OutputDTO avec le même ID persistant")
-	public void testUpdateOk() throws Exception {
+	@DisplayName("update(ok) : OutputDTO cohérent + ID conservé + message exact + absence de doublon")
+	public void testUpdateOkAvecPreuveBdEtIdConserve() throws Exception {
 
-		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(IT_UPDATE_OK));
+		final String libelle = "IT_UPDATE_OK_BD_01";
+
+		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(libelle));
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(libelle);
 
-		final OutputDTO modifie = this.service.update(new TypeProduitDTO.InputDTO(IT_UPDATE_OK));
+		final Long idAvantUpdate = cree.getIdTypeProduit();
+		final Long nombreAvantUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		final OutputDTO modifie = this.service.update(new TypeProduitDTO.InputDTO(libelle));
+		final String message = this.service.getMessage();
+
+		final Long nombreApresUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		assertThat(modifie).isNotNull();
-		assertThat(modifie.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
-		assertThat(modifie.getTypeProduit()).isEqualTo(IT_UPDATE_OK);
+		assertThat(modifie.getIdTypeProduit()).isEqualTo(idAvantUpdate);
+		assertThat(modifie.getTypeProduit()).isEqualTo(libelle);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_MODIF_OK + libelle);
 
-		final OutputDTO relu = this.service.findById(cree.getIdTypeProduit());
+		assertThat(nombreApresUpdate).isEqualTo(nombreAvantUpdate);
+		assertThat(this.compterTypeProduitEnBase(idAvantUpdate))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(idAvantUpdate))
+				.isEqualTo(libelle);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelle))
+				.isEqualTo(1L);
+
+		final OutputDTO relu = this.service.findById(idAvantUpdate);
 
 		assertThat(relu).isNotNull();
-		assertThat(relu.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
-		assertThat(relu.getTypeProduit()).isEqualTo(IT_UPDATE_OK);
-		
-	}// __________________________________________________________________
-	
+		assertThat(relu.getIdTypeProduit()).isEqualTo(idAvantUpdate);
+		assertThat(relu.getTypeProduit()).isEqualTo(libelle);
+
+	} // __________________________________________________________________	
 	
 
+	
+	// ---------------------- detete(...) -------------------------------//
+
+	
+	
 	/**
 	 * <div>
 	 * <p>delete(null) : violation de contrat.</p>
