@@ -3027,41 +3027,209 @@ public class TypeProduitCuServiceMockTest {
 	
 
 	
-	// ---------------------- count(...) -------------------------------//
-	
+	// ------------------------- count() ---------------------------------//
+
 	
 	
 	/**
 	 * <div>
-	 * <p>count() : délègue au gateway.count().</p>
+	 * <p>count(KO technique avec message) :
+	 * le Gateway échoue pendant le comptage
+	 * avec un message exploitable.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + détail technique</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("count() : délègue gateway.count()")
-	public void testCount() throws Exception {
+	@DisplayName("count(KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE + détail")
+	public void testCountTechniqueKoAvecMessage() throws Exception {
 
 		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final IllegalStateException panneTechnique =
+				new IllegalStateException(LECTURE_TECHNIQUE_KO);
 
+		when(gateway.count()).thenThrow(panneTechnique);
+
+		// ===================== ACT & ASSERT =====================
+		assertThatThrownBy(() -> service.count())
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ TypeProduitICuService.TIRET_ESPACE
+								+ LECTURE_TECHNIQUE_KO);
+
+		verify(gateway, times(1)).count();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>count(KO technique sans message) :
+	 * le Gateway échoue pendant le comptage
+	 * sans message exploitable.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>utilise le fallback
+	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("count(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testCountTechniqueKoSansMessage() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.count()).thenThrow(panneTechnique);
+
+		// ===================== ACT & ASSERT =====================
+		assertThatThrownBy(() -> service.count())
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ TypeProduitICuService.TIRET_ESPACE
+								+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).count();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>count(retour négatif) :
+	 * le Gateway retourne une valeur incohérente
+	 * pour un comptage observable.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne un message technique explicite</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("count(retour négatif) : IllegalStateException + message technique explicite")
+	public void testCountRetourNegatifIncoherent() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		when(gateway.count()).thenReturn(-1L);
+
+		// ===================== ACT & ASSERT =====================
+		assertThatThrownBy(() -> service.count())
+				.isInstanceOf(IllegalStateException.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ TypeProduitICuService.TIRET_ESPACE
+								+ "comptage négatif incohérent : -1");
+
+		verify(gateway, times(1)).count();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>count(0) : aucun résultat en stockage.</p>
+	 * <ul>
+	 * <li>retourne {@code 0}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("count(0) : retourne 0 + message MESSAGE_RECHERCHE_VIDE")
+	public void testCountZero() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		when(gateway.count()).thenReturn(0L);
+
+		// ===================== ACT =====================
+		final long retour = service.count();
+
+		// ===================== ASSERT =====================
+		assertThat(retour).isZero();
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).count();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>count(positif) : succès nominal du comptage.</p>
+	 * <ul>
+	 * <li>retourne le comptage exact</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("count(positif) : retourne le comptage exact + message MESSAGE_RECHERCHE_OK")
+	public void testCountPositif() throws Exception {
+
+		// ===================== ARRANGE =====================
 		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
 		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
 		when(gateway.count()).thenReturn(42L);
 
 		// ===================== ACT =====================
-
 		final long retour = service.count();
 
 		// ===================== ASSERT =====================
-
 		assertThat(retour).isEqualTo(42L);
-		verify(gateway, times(1)).count();
-		
-	} // __________________________________________________________________
-	
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		verify(gateway, times(1)).count();
+
+	} // __________________________________________________________________	
+
+	
 	
 	// ------------------------ getMessage() ----------------------------//
 	
