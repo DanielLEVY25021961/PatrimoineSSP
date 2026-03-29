@@ -1951,115 +1951,329 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <p>update(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("update(null) : positionne message + lève ExceptionParametreNull")
+	@DisplayName("update(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
 	public void testUpdateNull() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
 		assertThatThrownBy(() -> this.service.update(null))
 				.isInstanceOf(ExceptionParametreNull.class);
 
-		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
-		
-	} // __________________________________________________________________
-	
-	
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
 	 * <p>update(blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("update(blank) : positionne message + lève ExceptionParametreBlank")
+	@DisplayName("update(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
 	public void testUpdateBlank() {
 
-		final InputDTO input = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, ESPACES);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				ESPACES);
 
 		assertThatThrownBy(() -> this.service.update(input))
 				.isInstanceOf(ExceptionParametreBlank.class);
 
-		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
-		
-	} // __________________________________________________________________
-	
-	
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
-	 * <p>update(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>update(parent blank) : violation de contrat structurel.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testUpdateParentBlank() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(
+				ESPACES,
+				IT_STP_ALPHA);
+
+		assertThatThrownBy(() -> this.service.update(input))
+				.isInstanceOf(IllegalStateException.class);
+
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>update(parent absent) : le parent requis n'existe pas en stockage.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(introuvable) : retourne null, message 'introuvable'")
-	public void testUpdateIntrouvable() throws Exception {
+	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testUpdateParentAbsent() throws Exception {
 
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
-		final InputDTO input = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_INEXISTANT_UPDATE);
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_ALPHA);
 
-		final OutputDTO dto = this.service.update(input);
+		assertThatThrownBy(() -> this.service.update(input))
+				.isInstanceOf(IllegalStateException.class);
 
-		assertThat(dto).isNull();
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
 		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
-	} // __________________________________________________________________
-	
-	
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
 
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
-	 * <p>update(ok) : met à jour et conserve l'ID persistant.</p>
-	 * <p>Test "béton" : round-trip création puis modification puis re-lecture.</p>
+	 * <p>update(introuvable) : aucun objet persistant
+	 * ne correspond au couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne crée aucun doublon</li>
+	 * <li>conserve l'objet voisin déjà présent en base</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(ok) : retourne OutputDTO avec le même ID persistant")
-	public void testUpdateOk() throws Exception {
+	@DisplayName("update(introuvable) : null + message exact MESSAGE_OBJ_INTROUVABLE + libellé + aucune création BD")
+	public void testUpdateIntrouvable() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
 
-		final OutputDTO cree = this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_UPDATE_OK));
+		final OutputDTO cree = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_ALPHA));
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdSousTypeProduit()).isNotNull();
 
-		final OutputDTO modifie = this.service.update(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_UPDATE_OK));
+		final Long nombreAvantUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_BETA);
+
+		final OutputDTO dto = this.service.update(input);
+
+		final Long nombreApresUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE
+								+ IT_STP_BETA);
+		assertThat(nombreApresUpdate).isEqualTo(nombreAvantUpdate);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_BETA))
+				.isEqualTo(0L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitEnBase(
+				cree.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(
+				cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(
+				cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>update(ok) : preuve béton de la ré-identification
+	 * par le couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>crée d'abord deux parents réels</li>
+	 * <li>crée ensuite deux sous-types portant le même libellé
+	 * sur deux parents différents</li>
+	 * <li>met à jour le couple ciblé
+	 * sans créer de doublon</li>
+	 * <li>retourne un {@link OutputDTO} cohérent</li>
+	 * <li>conserve exactement le même identifiant persistant
+	 * pour le couple ciblé</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_OK} + libellé</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("update(ok) : OutputDTO cohérent + ID conservé + message exact + preuve du couple [parent, libellé]")
+	public void testUpdateOkAvecPreuveCoupleParentLibelleEtIdConserve()
+			throws Exception {
+
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
+
+		final OutputDTO creeParentA = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_ALPHA));
+
+		final OutputDTO creeParentB = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_ALPHA));
+
+		assertThat(creeParentA).isNotNull();
+		assertThat(creeParentB).isNotNull();
+		assertThat(creeParentA.getIdSousTypeProduit()).isNotNull();
+		assertThat(creeParentB.getIdSousTypeProduit()).isNotNull();
+
+		final Long nombreAvantUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final OutputDTO modifie = this.service.update(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_ALPHA));
+
+		final String message = this.service.getMessage();
+
+		final Long nombreApresUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
 		assertThat(modifie).isNotNull();
-		assertThat(modifie.getIdSousTypeProduit()).isEqualTo(cree.getIdSousTypeProduit());
-		assertThat(modifie.getSousTypeProduit()).isEqualTo(IT_STP_UPDATE_OK);
-		assertThat(modifie.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(modifie.getIdSousTypeProduit())
+				.isEqualTo(creeParentB.getIdSousTypeProduit());
+		assertThat(modifie.getIdSousTypeProduit())
+				.isNotEqualTo(creeParentA.getIdSousTypeProduit());
+		assertThat(modifie.getSousTypeProduit()).isEqualTo(IT_STP_ALPHA);
+		assertThat(modifie.getTypeProduit()).isEqualTo(IT_TP_PARENT_B);
+		assertThat(message)
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_MODIF_OK
+								+ IT_STP_ALPHA);
 
-		final OutputDTO relu = this.service.findById(cree.getIdSousTypeProduit());
+		assertThat(nombreApresUpdate).isEqualTo(nombreAvantUpdate);
+		assertThat(this.compterSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitEnBase(
+				creeParentB.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(
+				creeParentB.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.lireParentSousTypeProduitEnBase(
+				creeParentB.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_B);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_B,
+				IT_STP_ALPHA))
+				.isEqualTo(1L);
 
-		assertThat(relu).isNotNull();
-		assertThat(relu.getIdSousTypeProduit()).isEqualTo(cree.getIdSousTypeProduit());
-		assertThat(relu.getSousTypeProduit()).isEqualTo(IT_STP_UPDATE_OK);
-		assertThat(relu.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		final OutputDTO reluParentB = this.service.findById(
+				creeParentB.getIdSousTypeProduit());
 
-		/* Règle projet : toujours préciser une Locale pour toUpperCase. */
-		final String dummy = relu.getSousTypeProduit().toUpperCase(Locale.getDefault());
-		assertThat(dummy).isNotBlank();
-		
+		assertThat(reluParentB).isNotNull();
+		assertThat(reluParentB.getIdSousTypeProduit())
+				.isEqualTo(creeParentB.getIdSousTypeProduit());
+		assertThat(reluParentB.getSousTypeProduit()).isEqualTo(IT_STP_ALPHA);
+		assertThat(reluParentB.getTypeProduit()).isEqualTo(IT_TP_PARENT_B);
+
 	} // __________________________________________________________________
 	
 	

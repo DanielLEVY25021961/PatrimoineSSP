@@ -1193,61 +1193,208 @@ public interface SousTypeProduitICuService {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Modifie un {@link SousTypeProduit}
-	 * déjà existant dans le stockage.</p>
-	 * <p>Cette méthode ne s'applique qu'à un objet déjà persistant.</p>
+	 * <p>Modifie un {@link SousTypeProduit} déjà persistant identifié
+	 * par le couple [parent, libellé]
+	 * et retourne le résultat sous forme
+	 * de {@link SousTypeProduitDTO.OutputDTO}.</p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>doit jeter une Exception si pInputDTO == null.</li>
-	 * <li>doit jeter une Exception 
-	 * si le libellé est Blank.</li>
-	 * <li>doit jeter une ExceptionNonPersistant si l'ID est null.</li>
-	 * <li>retourne null si l'objet n'existe pas en stockage.</li>
-	 * <li>retourne l'objet modifié 
-	 * si une modification est effectuée.</li>
-	 * <li>sinon retourne l'objet inchangé 
-	 * et fournit un message utilisateur.</li>
+	 * <li>recevoir un {@link SousTypeProduitDTO.InputDTO}
+	 * transmis par la couche appelante ;</li>
+	 * <li>valider les préconditions observables
+	 * sur le DTO, sur le libellé enfant
+	 * et sur le parent ;</li>
+	 * <li>retrouver le {@link TypeProduit} parent persistant
+	 * correspondant au libellé porté par le DTO ;</li>
+	 * <li>demander au composant GATEWAY
+	 * tous les {@link SousTypeProduit}
+	 * rattachés à ce parent ;</li>
+	 * <li>identifier, dans cette collection,
+	 * le {@link SousTypeProduit} effectivement persistant
+	 * correspondant au couple [parent, libellé] ;</li>
+	 * <li>reconstruire l'objet métier
+	 * à partir du DTO de modification ;</li>
+	 * <li>réinjecter l'identifiant persistant retrouvé
+	 * et rattacher explicitement le parent persistant ;</li>
+	 * <li>déléguer la modification technique
+	 * au composant GATEWAY ;</li>
+	 * <li>convertir l'objet métier modifié
+	 * en {@link SousTypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pTypeProduit == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL}, LOG et lève une exception.</li>
-	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
-	 * , LOG et lève une exception.</li>
-	 * <li>Si l'objet n'existe pas dans le stockage 
-	 * (recherche par libellé exact), retourne {@code null} et positionne
-	 * {@link #getMessage()} à 
-	 * {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Si l'objet existe mais n'est pas persistant (ID {@code null})
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé
-	 * , LOG et lève une exception.</li>
-	 * <li>Sinon, délègue la modification au Gateway.</li> 
-	 * <li>retourne l'OutputDTO correspondant à l'objet modifié
-	 * (ou {@code null} si le Gateway retourne {@code null}).</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_MODIF_KO} + pTypeProduit.getTypeProduit()
-	 * , et retourne null si le Gateway retourne {@code null}.</li>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_MODIF_OK} + pTypeProduit.getTypeProduit()
-	 * , et retourne l'OutputDTO modifié en cas de succès.</li>
-	 * </ul>
+	 * <li>Si {@code pInputDTO == null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG
+	 * et lève une {@link ExceptionParametreNull}.</li>
+	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est blank,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_BLANK},
+	 * émet un LOG
+	 * et lève une {@link ExceptionParametreBlank}.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG
+	 * et lève une {@link IllegalStateException}.</li>
+	 * <li>Si la recherche technique du parent
+	 * ou des enfants lève une exception avec message,
+	 * positionne {@link #getMessage()}
+	 * à {@link #KO_TECHNIQUE_RECHERCHE}
+	 * + {@link #TIRET_ESPACE}
+	 * + le message technique,
+	 * émet un LOG
+	 * et propage l'exception.</li>
+	 * <li>Si la recherche technique du parent
+	 * ou des enfants lève une exception sans message,
+	 * positionne {@link #getMessage()}
+	 * à {@link #KO_TECHNIQUE_RECHERCHE}
+	 * + {@link #TIRET_ESPACE}
+	 * + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG
+	 * et propage l'exception.</li>
+	 * <li>Si le parent est absent du stockage
+	 * ou non persistant,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG
+	 * et lève une {@link IllegalStateException}.</li>
+	 * <li>Si la recherche des enfants du parent
+	 * retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG
+	 * et lève une {@link ExceptionStockageVide}.</li>
+	 * <li>Si aucun enfant persistant
+	 * ne correspond au couple [parent, libellé],
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE}
+	 * + le libellé enfant.</li>
+	 * <li>Si l'objet retrouvé existe
+	 * mais n'est pas persistant,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE}
+	 * + le libellé enfant,
+	 * émet un LOG
+	 * et lève une {@link ExceptionNonPersistant}.</li>
+	 * <li>Si la modification technique
+	 * ou la préparation de la réponse utilisateur
+	 * lève une exception avec message,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO}
+	 * + le libellé enfant
+	 * + {@link #TIRET_ESPACE}
+	 * + le message technique,
+	 * émet un LOG
+	 * et propage l'exception.</li>
+	 * <li>Si la modification technique
+	 * ou la préparation de la réponse utilisateur
+	 * lève une exception sans message,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO}
+	 * + le libellé enfant
+	 * + {@link #TIRET_ESPACE}
+	 * + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG
+	 * et propage l'exception.</li>
+	 * <li>Si le GATEWAY retourne {@code null}
+	 * après modification,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO}
+	 * + le libellé enfant.</li>
+	 * <li>Si l'objet retourné après modification
+	 * n'est plus persistant,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE}
+	 * + le libellé enfant,
+	 * émet un LOG
+	 * et lève une {@link IllegalStateException}.</li>
+	 * <li>Si la conversion finale
+	 * en {@link SousTypeProduitDTO.OutputDTO}
+	 * retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO}
+	 * + le libellé enfant
+	 * + {@link #TIRET_ESPACE}
+	 * + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG
+	 * et lève une {@link IllegalStateException}.</li>
+	 * <li>En cas de succès,
+	 * retourne un {@link SousTypeProduitDTO.OutputDTO}
+	 * non {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_OK}
+	 * + le libellé enfant
+	 * uniquement après préparation complète
+	 * de la réponse utilisateur.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : SousTypeProduitDTO.InputDTO : 
-	 * Objet métier portant les modifications (hors ID).
-	 * @return SousTypeProduitDTO.OutputDTO : 
-	 * OutputDTO de même ID que pTypeProduit, modifié ou inchangé, ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>La ré-identification de l'objet à modifier
+	 * s'appuie sur le couple [parent, libellé]
+	 * et jamais sur le seul libellé enfant.</li>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable réelle de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur finale.</li>
+	 * <li>L'identifiant persistant retrouvé
+	 * est réinjecté dans l'objet envoyé au GATEWAY.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'objet métier effectivement modifié
+	 * dans le stockage.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : SousTypeProduitDTO.InputDTO :
+	 * DTO de modification portant le parent
+	 * et le libellé enfant
+	 * de l'objet persistant à ré-identifier puis modifier.
+	 * @return SousTypeProduitDTO.OutputDTO :
+	 * DTO de l'objet persistant modifié ;
+	 * retourne {@code null}
+	 * si aucun objet ne correspond au couple [parent, libellé]
+	 * ou si le GATEWAY retourne {@code null}
+	 * après modification.
+	 * @throws ExceptionParametreNull
+	 * si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si {@code pInputDTO.getSousTypeProduit()} est blank.
+	 * @throws ExceptionStockageVide
+	 * si la recherche des enfants du parent
+	 * retourne {@code null}.
+	 * @throws ExceptionNonPersistant
+	 * si l'objet retrouvé pour le couple [parent, libellé]
+	 * n'est pas persistant.
+	 * @throws IllegalStateException
+	 * si le parent est absent ou non persistant,
+	 * si l'objet modifié retourné n'est plus persistant
+	 * ou si la conversion finale retourne {@code null}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors des recherches techniques,
+	 * de la délégation de modification
+	 * ou de la préparation de la réponse utilisateur.
 	 */
 	SousTypeProduitDTO.OutputDTO update(
 			SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;
-
 
 
 	/**

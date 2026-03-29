@@ -862,8 +862,139 @@ Le scénario nominal de `findById(...)` est :
 - aucun résultat partiel incohérent ne doit être exposé à l'appelant ;
 - l'identifiant relu doit permettre de retrouver de manière stable le couple métier `[parent, libellé]` effectivement stocké.
 
-## 19) Règle de synchronisation PORT / ADAPTER / tests
-Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)` ou `findById(...)` doit rester synchronisée entre :
+## 19) Contrat spécifique de `update(...)`
+
+Signature cible :
+
+- `SousTypeProduitDTO.OutputDTO update(SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+
+### 19.1 Scénario nominal attendu
+
+Le scénario nominal de `update(...)` est :
+
+1. recevoir un `SousTypeProduitDTO.InputDTO` transmis par la couche appelante ;
+2. valider les préconditions observables sur le DTO, sur le libellé enfant et sur le parent ;
+3. retrouver le `TypeProduit` parent persistant correspondant au libellé porté par le DTO ;
+4. demander au `GATEWAY` tous les `SousTypeProduit` rattachés à ce parent ;
+5. identifier, dans cette collection, l'objet effectivement persistant correspondant au couple `[parent, libellé]` ;
+6. reconstruire l'objet métier à partir du DTO ;
+7. réinjecter l'identifiant persistant retrouvé et rattacher explicitement le parent persistant ;
+8. déléguer la modification technique au `GATEWAY` ;
+9. convertir l'objet métier modifié en `OutputDTO` ;
+10. positionner le message observable ;
+11. retourner la réponse finale.
+
+### 19.2 Cas observables attendus
+
+- si `pInputDTO == null` :
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionParametreNull` ;
+
+- si `pInputDTO.getSousTypeProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK`,
+  - émet un LOG,
+  - lève une `ExceptionParametreBlank` ;
+
+- si `pInputDTO.getTypeProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la recherche technique du parent lève une exception avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la recherche technique du parent lève une exception sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si le parent est absent du stockage ou non persistant :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la recherche technique des enfants du parent lève une exception avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la recherche technique des enfants du parent lève une exception sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la recherche des enfants du parent retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si aucun objet persistant ne correspond au couple `[parent, libellé]` :
+  - retourne `null`,
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + libellé` ;
+
+- si l'objet retrouvé existe mais n'est pas persistant :
+  - positionne `getMessage()` à `MESSAGE_OBJ_NON_PERSISTE + libellé`,
+  - émet un LOG,
+  - lève une `ExceptionNonPersistant` ;
+
+- si la modification technique lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_MODIF_KO + libellé + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la modification technique lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_MODIF_KO + libellé + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si le `GATEWAY` retourne `null` après modification :
+  - retourne `null`,
+  - positionne `getMessage()` à `MESSAGE_MODIF_KO + libellé` ;
+
+- si l'objet retourné après modification n'est plus persistant :
+  - positionne `getMessage()` à `MESSAGE_OBJ_NON_PERSISTE + libellé`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la conversion finale lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_MODIF_KO + libellé + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la conversion finale lève une exception sans message, ou retourne `null` :
+  - positionne `getMessage()` à
+    `MESSAGE_MODIF_KO + libellé + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage une exception cohérente avec l'implémentation ;
+
+- en cas de succès :
+  - retourne un `SousTypeProduitDTO.OutputDTO` non `null`,
+  - positionne `getMessage()` à `MESSAGE_MODIF_OK + libellé`
+    uniquement après préparation complète de la réponse.
+
+### 19.3 Garanties spécifiques de `update(...)`
+
+- la ré-identification de l'objet à modifier s'appuie sur le couple `[parent, libellé]`
+  et jamais sur le seul libellé enfant ;
+- l'identifiant persistant retrouvé doit être réinjecté dans l'objet envoyé au `GATEWAY` ;
+- le parent persistant exact doit être réinjecté dans l'objet envoyé au `GATEWAY` ;
+- le DTO retourné, s'il n'est pas `null`, doit correspondre à l'objet métier effectivement modifié dans le stockage ;
+- le message observable doit être positionné après traitement complet de la réponse ;
+- aucun résultat partiel incohérent ne doit être exposé à l'appelant.
+
+## 20) Règle de synchronisation PORT / ADAPTER / tests
+
+Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)`, `findById(...)` ou `update(...)` doit rester synchronisée entre :
 1. le PORT `SousTypeProduitICuService` ;
 2. l’ADAPTER `SousTypeProduitCuService` ;
 3. les tests Mock ;
@@ -873,6 +1004,7 @@ Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, 
 Aucune de ces cinq pièces ne doit diverger durablement des autres.
 
 ### Point de vigilance pour les tests Mock
+
 Pour `creer(...)`, l’absence de doublon côté GATEWAY doit être simulée par :
 - une `List` vide,
 - ou, à défaut, une liste ne contenant aucun élément exploitable.
@@ -947,7 +1079,26 @@ Pour `findById(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas exception technique sans message ;
 - le cas nominal avec `MESSAGE_SUCCES_RECHERCHE`.
 
+Pour `update(...)`, les tests Mock doivent verrouiller au minimum :
+- le cas `pInputDTO == null` ;
+- le cas libellé enfant blank ;
+- le cas parent blank ;
+- le cas exception technique de recherche du parent avec message ;
+- le cas exception technique de recherche du parent sans message ;
+- le cas parent absent ou non persistant ;
+- le cas exception technique de recherche des enfants avec message ;
+- le cas exception technique de recherche des enfants sans message ;
+- le cas `gateway.findAllByParent(...) == null` pendant la ré-identification ;
+- le cas introuvable sur le couple `[parent, libellé]` ;
+- le cas objet retrouvé non persistant ;
+- le cas exception technique de modification avec message ;
+- le cas exception technique de modification sans message ;
+- le cas `gateway.update(...) == null` ;
+- le cas objet modifié retourné non persistant ;
+- le cas nominal avec réinjection de l'ID persistant et du parent persistant exact.
+
 ### Point de vigilance pour les tests d’Intégration
+
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
 - la création effective en base ;
 - le rattachement effectif au parent ;
@@ -1010,3 +1161,17 @@ Pour `findById(...)`, le test d’intégration cible doit, à terme, prouver :
 - que l’objet relu correspond physiquement à l’enregistrement créé en base ;
 - que le parent et le libellé relus sont cohérents ;
 - que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès.
+
+Pour `update(...)`, le test d’intégration cible doit, à terme, prouver :
+- qu’un `pInputDTO` null est refusé ;
+- qu’un libellé enfant blank est refusé ;
+- qu’un parent blank est refusé ;
+- qu’un parent absent est refusé ;
+- qu’un couple `[parent, libellé]` introuvable retourne `null`
+  avec `MESSAGE_OBJ_INTROUVABLE + libellé` ;
+- que la ré-identification s’appuie bien sur le couple `[parent, libellé]`
+  lorsque le même libellé existe sur plusieurs parents ;
+- que l’identifiant persistant du couple ciblé est conservé ;
+- qu’aucun doublon n’est créé par l’opération ;
+- que le message exact `MESSAGE_MODIF_OK + libellé`
+  est positionné en cas de succès.
