@@ -2014,11 +2014,10 @@ public class SousTypeProduitCuServiceMockTest {
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		verify(gateway, times(1)).rechercherTous();
-		verify(gateway, never()).findByLibelleRapide(anyString());
+		verify(gateway, never()).findByLibelleRapide(any(String.class));
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
 
 
 	/**
