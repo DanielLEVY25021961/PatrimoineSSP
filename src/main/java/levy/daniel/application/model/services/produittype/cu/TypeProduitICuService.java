@@ -967,50 +967,59 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Modifie un {@link TypeProduit}
-	 * déjà persistant à partir d'un {@link TypeProduitDTO.InputDTO}.
-	 * </p>
-	 * <p style="font-weight:bold;">
-	 * INTENTION DE SERVICE UC (scénario nominal) :
-	 * </p>
+	 * <p>Modifie un {@link TypeProduit} déjà persistant à partir d'un
+	 * {@link TypeProduitDTO.InputDTO}.</p>
+	 *
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
 	 * <ul>
-	 * <li>recevoir un {@link TypeProduitDTO.InputDTO} comportant les 
-	 * modifications à appliquer provenant de la couche appelante ;</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO}
+	 * provenant de la couche appelante ;</li>
 	 * <li>valider les préconditions applicatives observables
-	 * sur le InputDTO et sur son libellé ;</li>
-	 * <li>vérifier qu'un {@link TypeProduitDTO.InputDTO} passé en paramètre 
-	 * ne portant aucun identifiant persistant ni aucune ancienne 
-	 * valeur métier pour son libéllé ne peut engendrer de modification ;</li>
-	 * <li>identifier l'objet métier déjà persistant par une recherche exacte 
-	 * sur le même libellé que celui porté par l'InpuDTO 
-	 * passé en paramètre ;</li>
+	 * sur le DTO et sur son libellé ;</li>
+	 * <li>clarifier qu'un {@link TypeProduitDTO.InputDTO}
+	 * ne portant aucun identifiant persistant
+	 * ni aucune ancienne valeur métier,
+	 * la méthode n'exprime pas un renommage
+	 * ni un changement de clé métier ;</li>
+	 * <li>ré-identifier l'objet déjà persistant
+	 * par une recherche exacte
+	 * sur ce même libellé ;</li>
 	 * <li>réinjecter l'identifiant persistant retrouvé
-	 * dans l'objet métier reconstruit à partir du InputDTO ;</li>
+	 * dans l'objet métier reconstruit
+	 * à partir du DTO ;</li>
 	 * <li>déléguer la modification technique
 	 * au composant GATEWAY ;</li>
-	 * <li>convertir l'objet métier modifié en
-	 * {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>convertir l'objet métier modifié
+	 * en {@link TypeProduitDTO.OutputDTO} ;</li>
 	 * <li>retourner une réponse exploitable
 	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL},
-	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Si {@code pInputDTO == null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
 	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK},
-	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Si pInputDTO passé en paramètre ne porte ni ID 
-	 * ni ancienne valeur métier en libellé, retourne null.</li>
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_BLANK},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Le {@link TypeProduitDTO.InputDTO}
+	 * ne portant ni identifiant persistant
+	 * ni ancienne valeur métier,
+	 * cette méthode ne peut pas exprimer
+	 * un renommage
+	 * ni distinguer un "avant"
+	 * d'un "après".</li>
 	 * <li>En conséquence,
 	 * cette méthode s'applique uniquement
-	 * à un objet déjà persistant retrouvé
-	 * par le même libellé exact
+	 * à un objet déjà persistant
+	 * retrouvé par le même libellé exact
 	 * que celui porté par {@code pInputDTO}.</li>
 	 * <li>Si aucun objet n'est trouvé en stockage
 	 * via cette recherche exacte,
@@ -1049,9 +1058,7 @@ public interface TypeProduitICuService {
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
-	 * </p>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
 	 * <ul>
 	 * <li>Le message retourné par {@link #getMessage()}
 	 * reflète l'issue observable de l'opération.</li>

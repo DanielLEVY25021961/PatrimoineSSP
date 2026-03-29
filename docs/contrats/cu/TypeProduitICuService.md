@@ -61,6 +61,7 @@ dans le PORT `TypeProduitICuService` :
 - `List<TypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
 - `TypeProduitDTO.OutputDTO findByDTO(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `TypeProduitDTO.OutputDTO findById(Long pId) throws Exception;`
+- `TypeProduitDTO.OutputDTO update(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 
 **Règle absolue :**
 toute nouvelle remise au carré du PORT UC doit s’aligner
@@ -70,7 +71,6 @@ sur le formalisme de ces méthodes déjà normalisées.
 Les méthodes suivantes ne doivent **pas** servir de référence de style
 tant qu’elles n’ont pas été remises au niveau du formalisme UC complet :
 
-- `TypeProduitDTO.OutputDTO update(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `long count() throws Exception;`
 
