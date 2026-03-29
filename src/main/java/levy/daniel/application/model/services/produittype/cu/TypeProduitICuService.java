@@ -1320,17 +1320,71 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Getter du message à l'attention de l'Utilisateur 
-	 * généré en cas de problème lors des opérations de stockage.</p>
-	 * <p>ATTENTION : ne jamais finaliser cette méthode sinon SPRING 
-	 * échoue à fournir le message dans le Proxy de TypeProduitCuService 
-	 * injecté dans le CONTROLLER.</p>
+	 * <p>Retourne le message utilisateur courant
+	 * porté localement par le SERVICE METIER UC.</p>
+	 *
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
+	 * <ul>
+	 * <li>exposer à la couche appelante
+	 * le message observable le plus récent
+	 * produit par le SERVICE UC ;</li>
+	 * <li>permettre la consultation de ce message
+	 * après une opération nominale,
+	 * une absence de résultat,
+	 * une erreur bénigne,
+	 * une erreur métier
+	 * ou une erreur technique ;</li>
+	 * <li>retourner ce message
+	 * sans recalcul,
+	 * sans délégation technique
+	 * et sans altération de l'état courant du service.</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @return String : 
-	 * message à l'attention de l'Utilisateur (peut être null).
+	 * <div>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
+	 * <ul>
+	 * <li>Peut retourner {@code null}
+	 * tant qu'aucune opération UC
+	 * n'a encore positionné de message observable.</li>
+	 * <li>Retourne ensuite le dernier message local
+	 * effectivement positionné
+	 * par l'opération UC la plus récente.</li>
+	 * <li>Le message retourné peut correspondre
+	 * à un succès,
+	 * à une absence de résultat,
+	 * à une erreur bénigne,
+	 * à une erreur métier
+	 * ou à une erreur technique.</li>
+	 * <li>Ne délègue jamais au composant GATEWAY.</li>
+	 * <li>Ne modifie aucun état métier
+	 * ni aucun état technique du service.</li>
+	 * <li>N'émet aucun LOG
+	 * et ne lève aucune exception.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
+	 * <ul>
+	 * <li>Le message retourné reflète l'issue observable
+	 * de l'opération UC la plus récente.</li>
+	 * <li>Le getter retourne un état local déjà établi ;
+	 * il ne recalcule pas le message.</li>
+	 * <li>Le getter reste appelable
+	 * avant comme après les opérations UC.</li>
+	 * <li>Aucune interaction technique supplémentaire
+	 * n'est déclenchée par sa consultation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return String :
+	 * message utilisateur courant du SERVICE UC ;
+	 * peut valoir {@code null}
+	 * avant toute opération ayant positionné un message.
 	 */
 	String getMessage();
-
+	
+	
+	
 }

@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
-import java.util.Locale;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -1911,39 +1910,135 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	
 	// ----------------------- getMessage() ------------------------------//
-	
+
 	
 	
 	/**
 	 * <div>
-	 * <p>getMessage() : reste appelable en toutes circonstances.</p>
-	 * <p>Test "béton" : message initial potentiellement {@code null} acceptable,
-	 * puis message fixé après une erreur utilisateur bénigne.</p>
+	 * <p>getMessage(initial) : état initial du service intégré.</p>
+	 * <ul>
+	 * <li>retourne {@code null} avant toute opération,
+	 * ce qui est acceptable</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("getMessage() : reste appelable en toutes circonstances (test béton)")
-	public void testGetMessageBeton() throws Exception {
+	@DisplayName("getMessage(initial) : retourne null avant toute opération")
+	public void testGetMessageInitialNull() throws Exception {
 
-		final String messageAvant = this.service.getMessage();
+		final String message = this.service.getMessage();
 
-		/* messageAvant peut être null : c'est acceptable. */
-		assertThat(messageAvant).isIn(null, messageAvant);
+		assertThat(message).isNull();
 
-		/* Provoque une erreur utilisateur bénigne pour positionner un message local. */
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après succès réel) :
+	 * retourne le message courant
+	 * positionné par le comptage réel de la base.</p>
+	 * <ul>
+	 * <li>si le comptage réel vaut 0,
+	 * le message est
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>sinon,
+	 * le message est
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(après succès réel) : retourne le message observable exact du count()")
+	public void testGetMessageApresSuccesReel() throws Exception {
+
+		final long retour = this.service.count();
+		final String message = this.service.getMessage();
+
+		if (retour == 0L) {
+			assertThat(message)
+					.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(message)
+					.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après erreur locale) :
+	 * retourne le message courant
+	 * positionné par une erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>après {@code creer(null)},
+	 * retourne exactement
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL")
+	public void testGetMessageApresErreurLocale() throws Exception {
+
 		this.service.creer(null);
 
-		final String messageApres = this.service.getMessage();
+		final String message = this.service.getMessage();
 
-		assertThat(messageApres)
+		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
 
-		/* Règle projet : toujours préciser une Locale pour toUpperCase. */
-		final String dummy = messageApres.toUpperCase(Locale.getDefault());
-		assertThat(dummy).isNotBlank();
-		
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(dernier message gagne) :
+	 * une opération réelle plus récente
+	 * écrase bien le message précédent.</p>
+	 * <ul>
+	 * <li>après une erreur locale,
+	 * le message vaut d'abord
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>après un {@code count()} réel,
+	 * le message courant devient le message observable
+	 * du comptage réel</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(dernier message gagne) : le message réel le plus récent écrase le précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		this.service.creer(null);
+		final String messageErreur = this.service.getMessage();
+
+		final long retour = this.service.count();
+		final String messageFinal = this.service.getMessage();
+
+		assertThat(messageErreur)
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+
+		if (retour == 0L) {
+			assertThat(messageFinal)
+					.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(messageFinal)
+					.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
 	} // __________________________________________________________________
 	
 	

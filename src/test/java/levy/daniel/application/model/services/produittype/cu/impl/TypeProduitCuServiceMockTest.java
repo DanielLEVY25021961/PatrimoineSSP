@@ -3,6 +3,7 @@ package levy.daniel.application.model.services.produittype.cu.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -14,7 +15,6 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.mockito.ArgumentMatchers.anyString;
 
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
@@ -3232,43 +3231,202 @@ public class TypeProduitCuServiceMockTest {
 	
 	
 	// ------------------------ getMessage() ----------------------------//
-	
+
 	
 	
 	/**
 	 * <div>
-	 * <p>getMessage() : retourne le message courant.</p>
+	 * <p>getMessage(initial) : état initial du service Mock.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>n'interagit jamais avec le Gateway</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(initial) : retourne null + aucune interaction gateway")
+	public void testGetMessageInitialNull() {
+
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		// ======================= ACT =======================
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(message).isNull();
+
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après erreur locale) :
+	 * retourne le message courant
+	 * positionné par une erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>après {@code creer(null)},
+	 * retourne exactement
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>n'interagit jamais avec le Gateway</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("getMessage() : retourne le message courant")
-	public void testGetMessage() throws Exception {
+	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL")
+	public void testGetMessageApresErreurLocale() throws Exception {
 
-	    // ===================== ARRANGE =====================
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
 
-	    final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-	    final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		// ======================= ACT =======================
+		service.creer(null);
+		final String message = service.getMessage();
 
-	    // ===================== ACT =====================
+		// ===================== ASSERT ======================
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
 
-	    /* On positionne le message local via une erreur utilisateur bénigne
-	     * (sans interaction gateway). */
-	    service.creer(null);
+		verifyNoInteractions(gateway);
 
-	    final String message = service.getMessage();
+	} // __________________________________________________________________
 
-	    /* Exemple d'usage de toUpperCase avec Locale (règle projet). */
-	    final String dummy = MESSAGE_GATEWAY_BIS.toUpperCase(Locale.getDefault());
-	    assertThat(dummy).isNotBlank();
 
-	    // ===================== ASSERT =====================
 
-	    assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
-	    verifyNoInteractions(gateway);
-	    
+	/**
+	 * <div>
+	 * <p>getMessage(après succès vide) :
+	 * retourne le message courant
+	 * positionné par un comptage à zéro.</p>
+	 * <ul>
+	 * <li>après {@code count() == 0},
+	 * retourne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après succès vide) : retourne MESSAGE_RECHERCHE_VIDE")
+	public void testGetMessageApresCountZero() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		when(gateway.count()).thenReturn(0L);
+
+		// ======================= ACT =======================
+		final long retour = service.count();
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(retour).isZero();
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).count();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après succès positif) :
+	 * retourne le message courant
+	 * positionné par un comptage positif.</p>
+	 * <ul>
+	 * <li>après {@code count() > 0},
+	 * retourne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après succès positif) : retourne MESSAGE_RECHERCHE_OK")
+	public void testGetMessageApresCountPositif() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		when(gateway.count()).thenReturn(42L);
+
+		// ======================= ACT =======================
+		final long retour = service.count();
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(retour).isEqualTo(42L);
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(gateway, times(1)).count();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(dernier message gagne) :
+	 * une opération plus récente
+	 * écrase bien le message précédent.</p>
+	 * <ul>
+	 * <li>après une erreur locale,
+	 * le message vaut d'abord
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>après un {@code count()} positif,
+	 * le message courant devient
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(dernier message gagne) : le message le plus récent écrase le précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+
+		when(gateway.count()).thenReturn(1L);
+
+		// ======================= ACT =======================
+		service.creer(null);
+		final String messageErreur = service.getMessage();
+
+		final long retour = service.count();
+		final String messageFinal = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(messageErreur)
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+
+		assertThat(retour).isEqualTo(1L);
+		assertThat(messageFinal)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(gateway, times(1)).count();
+
 	} // __________________________________________________________________
 	
 	

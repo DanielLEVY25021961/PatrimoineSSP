@@ -1285,7 +1285,9 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	*/
 	@Override
 	public String getMessage() {
+		
 		return this.message.get();
+		
 	}
 
 

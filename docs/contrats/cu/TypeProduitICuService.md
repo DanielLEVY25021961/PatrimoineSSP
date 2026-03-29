@@ -64,6 +64,7 @@ dans le PORT `TypeProduitICuService` :
 - `TypeProduitDTO.OutputDTO update(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `long count() throws Exception;`
+- `String getMessage();`
 
 **Règle absolue :**
 toute nouvelle remise au carré du PORT UC doit s’aligner
@@ -283,3 +284,33 @@ Il est interdit :
  * @throws Exception
  * toute autre exception levée par l’implémentation.
  */
+ 
+### 15) Règle spécifique à `getMessage()`
+
+La méthode `getMessage()` est un **getter du message courant local**
+du SERVICE METIER UC.
+
+Contrat spécifique :
+- `getMessage()` peut retourner `null`
+  avant toute opération ayant positionné un message ;
+- `getMessage()` retourne ensuite
+  le **dernier message observable**
+  posé par l'opération UC la plus récente ;
+- ce message peut correspondre :
+  - à un succès,
+  - à une absence de résultat,
+  - à une erreur bénigne,
+  - à une erreur métier,
+  - à une erreur technique ;
+- `getMessage()` ne délègue jamais au `GATEWAY` ;
+- `getMessage()` ne modifie aucun état métier ;
+- `getMessage()` n'émet aucun LOG ;
+- `getMessage()` ne doit lever aucune exception.
+
+Conséquence de test :
+- les tests Mock et Intégration doivent verrouiller
+  à la fois :
+  - l'état initial potentiellement `null`,
+  - la restitution d'un message d'erreur,
+  - la restitution d'un message de succès,
+  - la règle **"le dernier message gagne"**.
