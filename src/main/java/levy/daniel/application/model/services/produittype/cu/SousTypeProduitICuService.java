@@ -779,53 +779,96 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Retourne la List&lt;SousTypeProduitDTO.OutputDTO&gt; 
-	 * des {@link SousTypeProduit}
-	 * dont le libellé contient pContenu.
+	 * Recherche rapidement tous les {@link SousTypeProduitDTO.OutputDTO}
+	 * dont le libellé contient un contenu donné.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>doit jeter une Exception si pContenu est null.</li>
-	 * <li>doit retourner tous les enregistrements 
-	 * si pContenu est blank.</li>
-	 * <li>doit retourner une liste vide si aucun résultat.</li>
+	 * <li>recevoir un contenu partiel de recherche
+	 * provenant de la couche appelante ;</li>
+	 * <li>valider le caractère exploitable du contenu transmis ;</li>
+	 * <li>déléguer au composant GATEWAY
+	 * la recherche rapide des {@link SousTypeProduit}
+	 * dans le stockage ;</li>
+	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
+	 * <li>retirer les éventuels éléments {@code null},
+	 * trier les objets métier et dédoublonner la réponse
+	 * côté UC si nécessaire ;</li>
+	 * <li>convertir la liste métier en
+	 * {@link SousTypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une liste exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pContenu == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL}, LOG et lève une exception.</li>
-	 * <li>Si {@code pContenu} est Blank, délègue 
-	 * à {@link #rechercherTous()} et retourne 
-	 * tous les enregistrements.</li>
-	 * <li>si {@link #rechercherTous()} retourne null (anomalie technique)
-	 * , positionne {@link #getMessage()} à {@link #KO_TECHNIQUE_RECHERCHE}
-	 * , LOG et lève une exception.</li>
-	 * <li>Si {@code pContenu} n'est pas Blank,  
-	 * retourne la liste des objets dont le libellé 
-	 * contient {@code pContenu}
-	 * (liste vide si aucun résultat).</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_RECHERCHE_VIDE} si la 
-	 * liste de résultats est vide.</li>
-	 * <li>positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_OK} si la 
-	 * liste de résultats n'est pas vide.</li>
-	 * </ul>
+	 * <li>Si {@code pContenu == null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Si {@code pContenu} est blank, délègue à
+	 * {@link #rechercherTous()} et retourne tous les enregistrements
+	 * selon le contrat observable de cette méthode.</li>
+	 * <li>Sinon, délègue la recherche rapide au composant GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne une {@link List} de
+	 * {@link SousTypeProduitDTO.OutputDTO} jamais {@code null},
+	 * éventuellement vide.</li>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pContenu : String : 
-	 * contenu partiel du libellé (recherche rapide).
-	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; : 
-	 * Liste de tous les objets métier dont le libellé contient pContenu.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>La liste retournée, si elle n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY,
+	 * exprimé sous forme de DTO.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pContenu : String :
+	 * contenu partiel du libellé recherché.
+	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; :
+	 * liste des DTO dont le libellé contient {@code pContenu} ;
+	 * jamais {@code null}, éventuellement vide.
+	 * @throws IllegalStateException
+	 * si {@code pContenu == null}.
+	 * @throws ExceptionStockageVide
+	 * si le stockage retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
-	List<SousTypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) 
+	List<SousTypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu)
 			throws Exception;
-
+	
 
 
 	/**

@@ -792,54 +792,105 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public List<SousTypeProduitDTO.OutputDTO> findByLibelleRapide(
+	public List<OutputDTO> findByLibelleRapide(
 			final String pContenu) throws Exception {
 
-		/* émet un message, LOG et jette une Exception 
-		 * si pContenu == null. */
+		/*
+		 * Si pContenu == null :
+		 * émet MESSAGE_PARAM_NULL + LOG + IllegalStateException.
+		 */
 		if (pContenu == null) {
 			return this.traiterErreur(
 					MESSAGE_PARAM_NULL,
 					new IllegalStateException(MESSAGE_PARAM_NULL));
 		}
 
-		if (StringUtils.isBlank(pContenu)) {			
-			/* retourne tous les enregistrements si pContenu est blank. */
-			return this.rechercherTous();			
-		} 
-
-		/* délègue au Gateway le recherche des résultats. */
-		final List<SousTypeProduit> reponses 
-			= this.gateway.findByLibelleRapide(pContenu);
-
-		/* émet un message, LOG et jette une Exception 
-		 * si le Gateway retourne null. */
-		if (reponses == null) {
-			return this.traiterErreur(KO_TECHNIQUE_RECHERCHE
-					, new RuntimeException(KO_TECHNIQUE_RECHERCHE));
+		/*
+		 * Si pContenu est blank :
+		 * délègue au scénario complet de rechercherTous().
+		 */
+		if (StringUtils.isBlank(pContenu)) {
+			return this.rechercherTous();
 		}
 
-		if (reponses.isEmpty()) {
-			/* message recherche vide si pas de résultats. */
-			message.set(MESSAGE_RECHERCHE_VIDE);
+		/*
+		 * Délègue au GATEWAY la recherche rapide dans le stockage.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final List<SousTypeProduit> records;
+
+		try {
+
+			/* Délègue au GATEWAY la recherche rapide dans le stockage. */
+			records = this.gateway.findByLibelleRapide(pContenu);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le stockage retourne null :
+		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 */
+		if (records == null) {
+			return this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+		}
+
+		/*
+		 * Prépare la réponse utilisateur complète :
+		 * retrait des nulls, tri métier,
+		 * puis conversion en OutputDTO avec dédoublonnage.
+		 */
+		final List<OutputDTO> dtos;
+
+		try {
+
+			/* Filtre les null et trie la réponse du stockage. */
+			final List<SousTypeProduit> recordsNonNullTries
+					= this.filtrerEtTrier(records);
+
+			/* Dédoublonne, conserve l'ordre
+			 * et convertit en OutputDTO. */
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Le message observable n'est positionné
+		 * qu'après préparation complète de la réponse utilisateur.
+		 */
+		if (dtos.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
 		} else {
-			/* message recherche OK si résultats. */
-			message.set(MESSAGE_RECHERCHE_OK);
+			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
-		/* trie et filtre les réponses. */
-		final List<SousTypeProduit> recordsNonNullTries
-			= this.filtrerEtTrier(reponses);
-
-		/* convertit en OutputDTO. */
-		final List<SousTypeProduitDTO.OutputDTO> rep
-			= ConvertisseurMetierToOutputDTOSousTypeProduit
-				.convertList(recordsNonNullTries);
-
-		/* retourne la réponse. */
-		return rep;
+		/*
+		 * Retourne toujours une liste d'OutputDTO non null
+		 * et éventuellement vide.
+		 */
+		return dtos;
 	}
-
+	
 
 
 	/**

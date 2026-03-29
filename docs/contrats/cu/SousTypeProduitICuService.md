@@ -582,11 +582,84 @@ Le scénario nominal de `findByLibelle(...)` est :
   à des objets métier réellement accessibles via le `GATEWAY` ;
 - aucun résultat partiel incohérent ne doit être exposé.
 
-## 15) Règle de synchronisation PORT / ADAPTER / tests
+## 15) Contrat spécifique de `findByLibelleRapide(...)`
+
+Signature cible :
+
+- `List<SousTypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
+
+### 15.1 Scénario nominal attendu
+
+Le scénario nominal de `findByLibelleRapide(...)` est :
+
+1. recevoir un contenu partiel transmis par la couche appelante ;
+2. valider que ce contenu est exploitable ;
+3. si le contenu est blank, déléguer au scénario complet de `rechercherTous()` ;
+4. sinon, demander au `GATEWAY` tous les `SousTypeProduit`
+   dont le libellé contient ce contenu ;
+5. sécuriser le retour technique du stockage ;
+6. retirer les éventuels éléments `null` ;
+7. trier les objets métier ;
+8. convertir les objets métier en `OutputDTO` ;
+9. dédoublonner les `OutputDTO` si nécessaire ;
+10. positionner le message observable ;
+11. retourner la liste finale.
+
+### 15.2 Cas observables attendus
+
+- si `pContenu == null` :
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si `pContenu` est blank :
+  - délègue à `rechercherTous()`,
+  - retourne alors le comportement observable de `rechercherTous()` ;
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si aucun résultat exploitable n’est trouvé :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si un ou plusieurs résultats exploitables sont trouvés :
+  - retourne une liste non vide de DTO,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 15.3 Garanties spécifiques de `findByLibelleRapide(...)`
+
+- la méthode ne doit jamais retourner `null`
+  quand le stockage est exploitable ;
+- le message observable doit être positionné
+  après préparation complète de la réponse ;
+- les `null` techniques issus du stockage
+  ne doivent jamais fuiter jusqu’à l’appelant ;
+- les DTO retournés doivent correspondre
+  à des objets métier réellement accessibles via le `GATEWAY` ;
+- le dédoublonnage éventuel doit rester cohérent
+  avec `equals/hashCode` des `OutputDTO` ;
+- aucun résultat partiel incohérent ne doit être exposé.
+
+## 16) Règle de synchronisation PORT / ADAPTER / tests
 
 Toute correction de `creer(...)`, `rechercherTous()`,
-`rechercherTousString()`, `rechercherTousParPage(...)`
-ou `findByLibelle(...)`
+`rechercherTousString()`, `rechercherTousParPage(...)`,
+`findByLibelle(...)` ou `findByLibelleRapide(...)`
 doit rester synchronisée entre :
 
 1. le PORT `SousTypeProduitICuService` ;
@@ -625,7 +698,7 @@ Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
 - le cas nominal avec filtrage, tri, suppression des blank
   et dédoublonnage.
 
-Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
+For `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
 
 - le cas `pRequetePage == null` ;
 - le cas exception technique avec message ;
@@ -643,6 +716,16 @@ Pour `findByLibelle(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas introuvable ;
 - le cas nominal avec plusieurs résultats exacts possibles,
   tri et dédoublonnage.
+
+Pour `findByLibelleRapide(...)`, les tests Mock doivent verrouiller au minimum :
+
+- le cas `pContenu == null` ;
+- le cas `pContenu` blank ;
+- le cas `gateway.findByLibelleRapide(...) == null` ;
+- le cas exception technique avec message ;
+- le cas exception technique sans message ;
+- le cas vide après filtrage ;
+- le cas nominal avec filtrage, tri et dédoublonnage.
 
 ### Point de vigilance pour les tests d’Intégration
 
@@ -685,3 +768,14 @@ Pour `findByLibelle(...)`, le test d’intégration cible doit, à terme, prouve
   est positionné en cas de succès ;
 - qu’un libellé introuvable retourne une liste vide
   avec `MESSAGE_OBJ_INTROUVABLE + libellé`.
+
+Pour `findByLibelleRapide(...)`, le test d’intégration cible doit, à terme, prouver :
+
+- que la recherche blank délègue à `rechercherTous()` ;
+- que la recherche introuvable retourne une liste vide
+  avec `MESSAGE_RECHERCHE_VIDE` ;
+- que les DTO correspondant au fragment recherché
+  existent physiquement en base ;
+- que les objets hors cible ne sont pas attendus dans le résultat ;
+- que le message exact `MESSAGE_RECHERCHE_OK`
+  est positionné en cas de succès.

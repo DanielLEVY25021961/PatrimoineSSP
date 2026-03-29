@@ -1193,78 +1193,69 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	public void testFindByLibelleRapideNull() {
 
 		assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
 
 		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
-		
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(blank) : délègue au comportement "rechercherTous".</p>
-	 * <p>Test "béton" : garantit que la liste retournée contient les créations du test.</p>
+	 * <p>Si pContenu est blank :
+	 * délègue au scénario complet de rechercherTous().</p>
+	 * <ul>
+	 * <li>retourne une liste non nulle</li>
+	 * <li>contient les créations du test</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>reste cohérent avec la présence physique en base</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous et retourne une liste non nulle")
+	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous() + message MESSAGE_RECHERCHE_OK")
 	public void testFindByLibelleRapideBlank() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
 
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_GAMMA));
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_DELTA));
+		final OutputDTO cree1 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_GAMMA));
+		final OutputDTO cree2 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_DELTA));
 
 		final List<OutputDTO> dtos = this.service.findByLibelleRapide(ESPACES);
 
 		assertThat(dtos).isNotNull();
 		assertThat(dtos)
-				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.extracting(OutputDTO::getSousTypeProduit)
 				.contains(IT_STP_GAMMA, IT_STP_DELTA);
-		
-	} // __________________________________________________________________
-	
-	
 
-	/**
-	 * <div>
-	 * <p>findByLibelleRapide(non blank) : retourne une liste non nulle sans exception.</p>
-	 * <p>Test "béton" : crée deux STP partageant un préfixe puis recherche ce préfixe.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findByLibelleRapide(non blank) : retourne liste non nulle contenant les créations du test")
-	public void testFindByLibelleRapideNonBlank() throws Exception {
-
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
-
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_SEARCH_ABC));
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_SEARCH_ABD));
-
-		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_STP_SEARCH_PREFIXE_AB);
-
-		assertThat(dtos).isNotNull();
 		assertThat(dtos)
-				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
-				.contains(IT_STP_SEARCH_ABC, IT_STP_SEARCH_ABD);
-		
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.contains(cree1.getIdSousTypeProduit(), cree2.getIdSousTypeProduit());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(this.compterSousTypeProduitEnBase(cree1.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitEnBase(cree2.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(introuvable) : retourne une liste vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * </ul>
+	 * <p>Si aucun libellé ne correspond :
+	 * retourne une liste vide + MESSAGE_RECHERCHE_VIDE.</p>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -1275,14 +1266,92 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_STP_SEARCH_PREFIXE_QQ);
 
-		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
-		
+
 	} // __________________________________________________________________
-	
+
+
+
+	/**
+	 * <div>
+	 * <p>Si des libellés correspondent :
+	 * retourne une liste DTO cohérente, sans doublon,
+	 * et émet MESSAGE_RECHERCHE_OK.</p>
+	 * <ul>
+	 * <li>les objets correspondants existent physiquement en base</li>
+	 * <li>les objets hors cible ne doivent pas être attendus dans le résultat</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelleRapide(ok) : liste DTO cohérente + sans doublon + message exact + preuve BD")
+	public void testFindByLibelleRapideOkAvecPreuveBd() throws Exception {
+
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
+
+		final String fragment = IT_STP_SEARCH_PREFIXE_AB;
+
+		final OutputDTO cree1 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_SEARCH_ABC));
+		final OutputDTO cree2 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_SEARCH_ABD));
+		final OutputDTO creeHorsCible = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
+
+		final List<OutputDTO> dtos = this.service.findByLibelleRapide(fragment);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).doesNotHaveDuplicates();
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getSousTypeProduit)
+				.contains(IT_STP_SEARCH_ABC, IT_STP_SEARCH_ABD)
+				.doesNotContain(IT_STP_ALPHA);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.contains(cree1.getIdSousTypeProduit(), cree2.getIdSousTypeProduit())
+				.doesNotContain(creeHorsCible.getIdSousTypeProduit());
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getTypeProduit)
+				.contains(IT_TP_PARENT_A, IT_TP_PARENT_B);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(this.compterSousTypeProduitEnBase(cree1.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree1.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_SEARCH_ABC);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree1.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(cree2.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree2.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_SEARCH_ABD);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree2.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_B);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeHorsCible.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeHorsCible.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeHorsCible.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________	
 	
 
+	
 	// ========================== TESTS findByDTO(...) =====================
 
 	/**
