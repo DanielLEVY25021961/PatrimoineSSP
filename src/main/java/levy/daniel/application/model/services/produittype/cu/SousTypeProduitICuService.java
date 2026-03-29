@@ -61,6 +61,8 @@ public interface SousTypeProduitICuService {
 	 */
 	String TIRET_ESPACE = " - ";
 
+	/* --------------------------- Creer(...) ---------------------------*/
+	
 	/**
 	 * <div>
 	 * <p>"vous ne pouvez pas sauvegarder un Sous-Type de Produit null."</p>
@@ -71,32 +73,90 @@ public interface SousTypeProduitICuService {
 
 	/**
 	 * <div>
-	 * <p>"vous ne pouvez pas sauvegarder un Sous-Type de Produit 
-	 * dont le libellé est blank (null ou que des espaces)."</p>
+	 * <p>"vous ne pouvez pas sauvegarder un Sous-Type de Produit
+	 * dont le libellé est blank."</p>
 	 * </div>
 	 */
 	String MESSAGE_CREER_NOM_BLANK
 		= "vous ne pouvez pas sauvegarder un Sous-Type de Produit "
 			+ "dont le libellé est blank.";
-	
+
+	/**
+	 * <div>
+	 * <p>"Impossible de vérifier l'unicité
+	 * du Sous-Type de Produit dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER =
+			"Impossible de vérifier l'unicité "
+			+ "du Sous-Type de Produit dans le stockage : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de vérifier le Type de Produit parent
+	 * dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER =
+			"Impossible de vérifier le Type de Produit parent "
+			+ "dans le stockage : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de créer le Sous-Type de Produit dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER =
+			"Impossible de créer le Sous-Type de Produit dans le stockage : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de créer le Sous-Type de Produit -
+	 * le stockage n'a retourné aucun objet créé."</p>
+	 * </div>
+	 */
+	String MESSAGE_CREATION_TECHNIQUE_KO_CREER =
+			"Impossible de créer le Sous-Type de Produit - "
+					+ "le stockage n'a retourné aucun objet créé.";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de préparer la réponse utilisateur
+	 * après la création du Sous-Type de Produit : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER =
+			"Impossible de préparer la réponse utilisateur "
+					+ "après la création du Sous-Type de Produit : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de préparer la réponse utilisateur
+	 * après la création du Sous-Type de Produit."</p>
+	 * </div>
+	 */
+	String MESSAGE_CONVERSION_TECHNIQUE_KO_CREER =
+			"Impossible de préparer la réponse utilisateur "
+					+ "après la création du Sous-Type de Produit.";
+
 	/**
 	 * <div>
 	 * <p>"OK - La création de l'objet s'est bien déroulée."</p>
 	 * </div>
 	 */
-	String MESSAGE_CREER_OK 
+	String MESSAGE_CREER_OK
 		= "OK - La création de l'objet s'est bien déroulée.";
 
 	/**
 	 * <div>
-	 * <p>"Vous ne pouvez pas sauvegarder un Sous-Type de Produit 
+	 * <p>"Vous ne pouvez pas sauvegarder un Sous-Type de Produit
 	 * déjà existant dans le stockage : "</p>
 	 * </div>
 	 */
-	String MESSAGE_DOUBLON 
+	String MESSAGE_DOUBLON
 		= "Vous ne pouvez pas sauvegarder un Sous-Type de Produit "
 				+ "déjà existant dans le stockage : ";
-
+	
 	/**
 	 * <div>
 	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>
@@ -273,43 +333,99 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Stocke un {@link SousTypeProduit}
-	 * dans le stockage en déléguant à un composant technique GATEWAY 
-	 * et le retourne sous forme d'OutputDTO.
+	 * Stocke un {@link SousTypeProduitDTO.InputDTO},
+	 * puis retourne la réponse sous forme de
+	 * {@link SousTypeProduitDTO.OutputDTO}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>reçoit un InputDTO.</li>
-	 * <li>convertit l'InputDTO -> Objet métier.</li>
-	 * <li>appelle le SERVICE GATEWAY pour l'opération sur le stockage.</li>
-	 * <li>récupère l'objet métier retourné par le GATEWAY.</li>
-	 * <li>convertit l'objet métier -> OutputDTO.</li>
-	 * <li>retourne OutputDTO.</li>
+	 * <li>recevoir un {@link SousTypeProduitDTO.InputDTO}
+	 * provenant de la couche de présentation ;</li>
+	 * <li>valider les préconditions applicatives observables
+	 * par l'utilisateur ;</li>
+	 * <li>vérifier l'absence de doublon fonctionnel ;</li>
+	 * <li>récupérer le {@link TypeProduit} parent persistant
+	 * nécessaire au rattachement métier ;</li>
+	 * <li>convertir l'InputDTO en objet métier {@link SousTypeProduit} ;</li>
+	 * <li>déléguer l'écriture au composant technique GATEWAY ;</li>
+	 * <li>récupérer l'objet métier effectivement stocké ;</li>
+	 * <li>convertir l'objet métier retourné en
+	 * {@link SousTypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable par le CONTROLLER appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL} 
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_CREER_NOM_BLANK}, LOG et lève une exception.</li>
-	 * <li>Si le DTO est un doublon, positionne {@link #getMessage()} à
-	 * {@link #MESSAGE_DOUBLON} + libellé et lève une exception.</li>
-	 * <li>Sinon, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_CREER_OK}, délègue la création 
-	 * au composant technique GATEWAY et retourne
-	 * l'OutputDTO correspondant à l'objet stocké.</li>
+	 * <li>Si {@code pInputDTO == null}, retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est blank, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NOM_BLANK},
+	 * émet un LOG de service et lève une exception de validation.</li>
+	 * <li>Si le libellé du parent est blank,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
+	 * <li>Si le DTO correspond à un doublon fonctionnel, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_DOUBLON} + libellé,
+	 * émet un LOG de service et lève une exception métier.</li>
+	 * <li>Si le parent {@link TypeProduit} n'existe pas dans le stockage
+	 * ou n'est pas persistant, positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
+	 * <li>Sinon, délègue la création au composant GATEWAY, puis retourne
+	 * l'{@link SousTypeProduitDTO.OutputDTO} correspondant à l'objet réellement
+	 * stocké et rattaché à son parent persistant.</li>
+	 * <li>En cas d'échec remonté par la vérification d'unicité,
+	 * par la vérification du parent,
+	 * par le GATEWAY ou par une étape interne du SERVICE UC,
+	 * propage une exception circonstanciée conforme à l'implémentation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()} reflète l'issue
+	 * observable de l'opération pour l'appelant.</li>
+	 * <li>En cas de succès, {@link #getMessage()} est positionné à
+	 * {@link #MESSAGE_CREER_OK} uniquement après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>En cas d'échec métier, applicatif ou technique,
+	 * le SERVICE UC produit un message utilisateur déterministe et traçable.</li>
+	 * <li>Le résultat retourné, s'il est non {@code null},
+	 * correspond à l'état métier effectivement créé dans le stockage
+	 * avec rattachement à un parent persistant.</li>
+	 * <li>Le SERVICE UC conserve son rôle d'orchestration applicative entre
+	 * couche de présentation, métier, GATEWAY et message utilisateur.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pInputDTO : SousTypeProduitDTO.InputDTO :
-	 * le Sous-Type de Produit à stocker.
+	 * le Sous-Type de Produit à créer via le SERVICE UC.
 	 * @return SousTypeProduitDTO.OutputDTO :
-	 * le Sous-Type de Produit sauvegardé dans le stockage.
+	 * le Sous-Type de Produit créé et retourné à la couche appelante ;
+	 * peut être {@code null} si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si le libellé du Sous-Type de Produit porté par {@code pInputDTO} est blank.
+	 * @throws ExceptionDoublon
+	 * si {@code pInputDTO} correspond à un doublon fonctionnel.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors du contrôle d'unicité,
+	 * lors de la vérification du parent
+	 * ou lors de la création via le GATEWAY.
+	 * @throws IllegalStateException
+	 * si le parent est absent, non persistant,
+	 * si le GATEWAY retourne {@code null}
+	 * ou si la conversion finale en {@link SousTypeProduitDTO.OutputDTO}
+	 * retourne {@code null}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
 	SousTypeProduitDTO.OutputDTO creer(
 			SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;
