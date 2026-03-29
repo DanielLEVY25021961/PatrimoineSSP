@@ -1122,153 +1122,237 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : OK.</p>
+	 * <p>rechercherTousString() : stockage null.</p>
+	 * <ul>
+	 * <li>délègue une seule fois à {@code gateway.rechercherTous()}</li>
+	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
+	 * <li>n'interagit jamais avec le gateway TypeProduit</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @throws Exception si une erreur survient
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousString(ok) : liste non vide + message MESSAGE_RECHERCHE_OK")
-	public void testRechercherTousStringOk() throws Exception {
-
-	    // ===================== ARRANGE =====================
-
-	    final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-	    final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-	    final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-	    final TypeProduit parent = new TypeProduit(BAZAR);
-	    parent.setIdTypeProduit(1L);
-
-	    final SousTypeProduit stp1 = new SousTypeProduit(OUTILLAGE, parent);
-	    stp1.setIdSousTypeProduit(1L);
-
-	    final SousTypeProduit stp2 = new SousTypeProduit(VETEMENT, parent);
-	    stp2.setIdSousTypeProduit(2L);
-
-	    when(gateway.rechercherTous()).thenReturn(Arrays.asList(stp1, stp2));
-
-	    // ===================== ACT =====================
-
-	    final List<String> retour = service.rechercherTousString();
-	    final String message = service.getMessage();
-
-	    // ===================== ASSERT =====================
-
-	    assertThat(retour).isNotNull().hasSize(2);
-	    assertThat(retour).contains(OUTILLAGE, VETEMENT);
-	    assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
-
-	    verify(gateway, times(1)).rechercherTous();
-	    verifyNoInteractions(typeProduitGateway);
-	    
-	} // __________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>rechercherTousString() : stockage null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL.</p>
-	 * </div>
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
 	@DisplayName("rechercherTousString() : gateway retourne null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
 	public void testRechercherTousStringStockageNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
 		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
 		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
 
 		when(gateway.rechercherTous()).thenReturn(null);
 
-		// ===================== ACT =====================
-
+		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> service.rechercherTousString())
 			.isInstanceOf(ExceptionStockageVide.class);
 
-		final String message = service.getMessage();
+		assertThat(service.getMessage())
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
-		// ===================== ASSERT =====================
-
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 		verify(gateway, times(1)).rechercherTous();
-		
+		verifyNoInteractions(typeProduitGateway);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : liste vide -> retourne liste vide + message MESSAGE_RECHERCHE_VIDE.</p>
+	 * <p>rechercherTousString() : recherche technique KO avec message.</p>
+	 * <ul>
+	 * <li>propage exactement l'exception du gateway</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + {@link SousTypeProduitICuService#TIRET_ESPACE}
+	 * + message gateway</li>
+	 * <li>n'interagit jamais avec le gateway TypeProduit</li>
+	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("rechercherTousString() : liste vide -> liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testRechercherTousStringVide() throws Exception {
+	@DisplayName("rechercherTousString() : gateway KO avec message -> propage l'exception + message technique rationalisé")
+	public void testRechercherTousStringKoTechniqueAvecMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
 		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
 		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.rechercherTous()).thenReturn(new ArrayList<SousTypeProduit>());
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(MESSAGE_GATEWAY);
 
-		// ===================== ACT =====================
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
 
-		final List<String> retour = service.rechercherTousString();
-		final String message = service.getMessage();
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousString())
+			.isSameAs(panneTechnique);
 
-		// ===================== ASSERT =====================
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ MESSAGE_GATEWAY);
 
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 		verify(gateway, times(1)).rechercherTous();
-		
+		verifyNoInteractions(typeProduitGateway);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : libellés blank ignorés -> liste vide + message MESSAGE_RECHERCHE_VIDE.</p>
+	 * <p>rechercherTousString() : recherche technique KO sans message.</p>
+	 * <ul>
+	 * <li>propage exactement l'exception du gateway</li>
+	 * <li>retombe sur
+	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * <li>n'interagit jamais avec le gateway TypeProduit</li>
+	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("rechercherTousString() : libellés blank ignorés -> liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testRechercherTousStringLibellesBlank() throws Exception {
+	@DisplayName("rechercherTousString() : gateway KO sans message -> fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testRechercherTousStringKoTechniqueSansMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousString())
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : résultats vides après filtrage.</p>
+	 * <ul>
+	 * <li>le gateway retourne uniquement des éléments {@code null}</li>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>n'interagit jamais avec le gateway TypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : résultats vides après filtrage -> liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testRechercherTousStringVideApresFiltrage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final List<SousTypeProduit> records = Arrays.asList(null, null);
+
+		when(gateway.rechercherTous()).thenReturn(records);
+
+		/* ======================= ACT ======================= */
+		final List<String> retour = service.rechercherTousString();
+		final String message = service.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>retire les éléments {@code null}</li>
+	 * <li>trie les objets métier</li>
+	 * <li>ignore les libellés blank</li>
+	 * <li>dédoublonne les libellés</li>
+	 * <li>retourne une liste cohérente</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : filtre nulls + trie + ignore blank + dédoublonne + message MESSAGE_RECHERCHE_OK")
+	public void testRechercherTousStringOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
 		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
 		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
 		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
 
 		final TypeProduit parent = new TypeProduit(BAZAR);
+		parent.setIdTypeProduit(1L);
+
+		final SousTypeProduit stpVetement = new SousTypeProduit(VETEMENT, parent);
+		stpVetement.setIdSousTypeProduit(1L);
+
+		final SousTypeProduit stpOutillage = new SousTypeProduit(OUTILLAGE, parent);
+		stpOutillage.setIdSousTypeProduit(2L);
+
+		final SousTypeProduit stpOutillageDoublon = new SousTypeProduit(OUTILLAGE, parent);
+		stpOutillageDoublon.setIdSousTypeProduit(3L);
 
 		final SousTypeProduit stpBlank = new SousTypeProduit(ESPACES, parent);
-		final SousTypeProduit stpNull = new SousTypeProduit(null, parent);
+		stpBlank.setIdSousTypeProduit(4L);
 
-		when(gateway.rechercherTous()).thenReturn(Arrays.asList(stpBlank, stpNull));
+		when(gateway.rechercherTous())
+			.thenReturn(Arrays.asList(stpVetement, null, stpOutillage, stpOutillageDoublon, stpBlank));
 
-		// ===================== ACT =====================
-
+		/* ======================= ACT ======================= */
 		final List<String> retour = service.rechercherTousString();
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
+		assertThat(retour).containsExactly(OUTILLAGE, VETEMENT);
 
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
 		verify(gateway, times(1)).rechercherTous();
-		
-	} // __________________________________________________________________
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________	
 	
 	
 

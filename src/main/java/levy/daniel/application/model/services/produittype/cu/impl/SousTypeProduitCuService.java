@@ -482,48 +482,98 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	@Override
 	public List<String> rechercherTousString() throws Exception {
 
-		/* délègue au Gateway la recherche des résultats. */
-		final List<SousTypeProduit> records = this.gateway.rechercherTous();
+		/*
+		 * Appelle le GATEWAY pour lire tous les SousTypeProduit.
+		 */
+		final List<SousTypeProduit> records;
 
-		/* émet un message, LOG et jette 
-		 * une Exception si records == null. */
+		try {
+
+			records = this.gateway.rechercherTous();
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le stockage retourne null :
+		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 */
 		if (records == null) {
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
-		/* purifie et trie les résultats. */
-		final List<SousTypeProduit> recordsNonNullTries
-			= this.filtrerEtTrier(records);
+		/*
+		 * Prépare la liste finale des libellés :
+		 * retrait des null, tri métier,
+		 * extraction des libellés non blank,
+		 * puis dédoublonnage en conservant l'ordre.
+		 */
+		final List<String> libelles;
 
-		/* Set pour le dédoublonnage en O(n). */
-		final Set<String> uniques = new LinkedHashSet<String>();
+		try {
 
-		for (final SousTypeProduit stp : recordsNonNullTries) {
+			final List<SousTypeProduit> recordsNonNullTries
+				= this.filtrerEtTrier(records);
 
-			/* recordsNonNullTries ne contient pas de null
-			 * (filtrage préalable). */
-			final String libelle = stp.getSousTypeProduit();
+			final Set<String> uniques = new LinkedHashSet<String>();
 
-			/* n'ajoute que les éléments avec des libellés non blank.*/
-			if (!StringUtils.isBlank(libelle)) {
-				uniques.add(libelle);
+			for (final SousTypeProduit stp : recordsNonNullTries) {
+
+				/*
+				 * recordsNonNullTries ne contient pas de null
+				 * après filtrage préalable.
+				 */
+				final String libelle = stp.getSousTypeProduit();
+
+				/*
+				 * N'ajoute que les libellés réellement exploitables
+				 * pour la couche appelante.
+				 */
+				if (!StringUtils.isBlank(libelle)) {
+					uniques.add(libelle);
+				}
 			}
+
+			libelles = new ArrayList<String>(uniques);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
 		}
 
-		if (uniques.isEmpty()) {
-			/* message recherche vide si pas de résultats. */
-			message.set(MESSAGE_RECHERCHE_VIDE);
+		/*
+		 * Positionne le message observable
+		 * après préparation complète de la réponse.
+		 */
+		if (libelles.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
 		} else {
-			/* message recherche OK si résultats. */
-			message.set(MESSAGE_RECHERCHE_OK);
+			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
-		/* retourne la liste des résultats sous forme d'OutputDTOs. */
-		return new ArrayList<String>(uniques);
+		/*
+		 * Retourne toujours une liste de libellés non null
+		 * et éventuellement vide.
+		 */
+		return libelles;
 	}
-
+	
 
 
 	/**

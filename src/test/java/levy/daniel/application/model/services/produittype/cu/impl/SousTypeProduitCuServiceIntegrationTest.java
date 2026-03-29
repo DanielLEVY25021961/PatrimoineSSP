@@ -765,7 +765,114 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(libelles).isNotNull();
 		assertThat(libelles).contains(IT_STP_EPSILON, IT_STP_ZETA);
-		
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : scénario nominal béton avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>contient les libellés créés</li>
+	 * <li>n'expose aucun doublon</li>
+	 * <li>n'expose aucun libellé blank</li>
+	 * <li>reste cohérent avec la présence physique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTousString(ok) : message exact + contient les créations + sans doublon + preuve BD")
+	public void testRechercherTousStringOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+
+		final OutputDTO creeEpsilon = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_EPSILON));
+		final OutputDTO creeZeta = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ZETA));
+
+		assertThat(creeEpsilon).isNotNull();
+		assertThat(creeZeta).isNotNull();
+
+		/* ======================= ACT ======================= */
+		final List<String> libelles = this.service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).contains(IT_STP_EPSILON, IT_STP_ZETA);
+		assertThat(libelles).doesNotHaveDuplicates();
+		assertThat(libelles).allMatch(libelle -> libelle != null && !libelle.isBlank());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* preuve BD : les lignes créées existent physiquement. */
+		assertThat(this.compterSousTypeProduitEnBase(creeEpsilon.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeEpsilon.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_EPSILON);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeEpsilon.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeZeta.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeZeta.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ZETA);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeZeta.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_EPSILON))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ZETA))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : stockage vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>reste cohérent avec une base physiquement vide</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName("rechercherTousString(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + base vide")
+	public void testRechercherTousStringVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		assertThat(this.service.count()).isEqualTo(0L);
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class)).isEqualTo(0L);
+
+		/* ======================= ACT ======================= */
+		final List<String> libelles = this.service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).isEmpty();
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
 	} // __________________________________________________________________
 	
 	

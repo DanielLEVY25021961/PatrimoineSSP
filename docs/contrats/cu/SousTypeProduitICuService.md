@@ -382,9 +382,76 @@ Le scénario nominal de `rechercherTous()` est :
 - le dédoublonnage éventuel doit rester cohérent
   avec `equals/hashCode` des `OutputDTO`.
 
-## 12) Règle de synchronisation PORT / ADAPTER / tests
+## 12) Contrat spécifique de `rechercherTousString()`
 
-Toute correction de `creer(...)` ou de `rechercherTous()`
+Signature cible :
+
+- `List<String> rechercherTousString() throws Exception;`
+
+### 12.1 Scénario nominal attendu
+
+Le scénario nominal de `rechercherTousString()` est :
+
+1. demander au `GATEWAY` la liste complète des `SousTypeProduit` ;
+2. sécuriser le retour technique du stockage ;
+3. retirer les éventuels éléments `null` ;
+4. trier les objets métier ;
+5. extraire les libellés exploitables ;
+6. retirer les libellés blank ;
+7. dédoublonner les libellés en conservant l’ordre utile ;
+8. positionner le message observable ;
+9. retourner une liste exploitable par la couche appelante.
+
+### 12.2 Cas observables attendus
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si la liste retournée devient vide après filtrage / extraction :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si la liste retournée contient des résultats :
+  - retourne une liste non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK` ;
+
+- la liste retournée ne doit contenir
+  ni élément `null`,
+  ni libellé blank,
+  ni doublon observable côté appelant.
+
+### 12.3 Garanties spécifiques de `rechercherTousString()`
+
+- la méthode ne doit jamais retourner `null`
+  quand le stockage est exploitable ;
+- le message observable doit être positionné
+  après préparation complète de la réponse ;
+- les `null` techniques issus du stockage
+  ne doivent jamais fuiter jusqu’à l’appelant ;
+- les libellés retournés doivent correspondre
+  à des objets métier réellement accessibles via le `GATEWAY` ;
+- le dédoublonnage doit conserver un ordre stable
+  pour la couche appelante ;
+- aucun libellé blank ne doit être exposé.
+
+## 13) Règle de synchronisation PORT / ADAPTER / tests
+
+Toute correction de `creer(...)`, `rechercherTous()`
+ou `rechercherTousString()`
 doit rester synchronisée entre :
 
 1. le PORT `SousTypeProduitICuService` ;
@@ -414,6 +481,15 @@ Pour `rechercherTous()`, les tests Mock doivent verrouiller au minimum :
 - le cas résultats vides après filtrage ;
 - le cas nominal avec filtrage, tri et dédoublonnage.
 
+Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
+
+- le cas `gateway.rechercherTous() == null` ;
+- le cas exception technique avec message ;
+- le cas exception technique sans message ;
+- le cas résultats vides après filtrage ;
+- le cas nominal avec filtrage, tri, suppression des blank
+  et dédoublonnage.
+
 ### Point de vigilance pour les tests d’Intégration
 
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -428,4 +504,12 @@ Pour `rechercherTous()`, le test d’intégration cible doit, à terme, prouver 
 - la cohérence entre la liste retournée et `count()` ;
 - la présence réelle en base des lignes retournées ;
 - la cohérence du parent pour chaque sous-type vérifié ;
+- le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
+
+Pour `rechercherTousString()`, le test d’intégration cible doit, à terme, prouver :
+
+- la présence des libellés créés dans la réponse ;
+- l’absence de doublon dans la réponse ;
+- l’absence de libellé blank dans la réponse ;
+- la présence physique en base des lignes correspondant aux libellés vérifiés ;
 - le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
