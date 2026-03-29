@@ -1744,8 +1744,12 @@ public class TypeProduitCuServiceIntegrationTest {
 		
 	}// __________________________________________________________________
 	
-	
 
+	
+	// ------------------------- count() ---------------------------------//
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>count() : cohérence (baseline + créations - suppressions).</p>
@@ -1774,8 +1778,12 @@ public class TypeProduitCuServiceIntegrationTest {
 		
 	}// __________________________________________________________________
 	
-	
 
+	
+	// ----------------------- getMessage() ------------------------------//
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>getMessage() : reste appelable en toutes circonstances.</p>

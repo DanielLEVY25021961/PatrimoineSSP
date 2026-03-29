@@ -1120,52 +1120,118 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Détruit un {@link TypeProduit}
-	 * déjà existant dans le stockage.</p>
+	 * <p>Détruit un {@link TypeProduit} déjà persistant
+	 * à partir d'un {@link TypeProduitDTO.InputDTO}.</p>
+	 *
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
 	 * <ul>
-	 * <li>doit jeter une Exception 
-	 * si pInputDTO == null.</li>
-	 * <li>doit jeter une Exception 
-	 * si pInputDTO.getTypeProduit() est blank.</li>
-	 * <li>doit déléguer la suppression à la couche technique.</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO}
+	 * provenant de la couche appelante ;</li>
+	 * <li>valider les préconditions applicatives observables
+	 * sur le DTO et sur son libellé ;</li>
+	 * <li>clarifier que pour un {@link TypeProduitDTO.InputDTO}
+	 * ne portant aucun identifiant persistant,
+	 * la méthode ré-identifie l'objet à détruire
+	 * par une recherche exacte sur le libellé métier ;</li>
+	 * <li>vérifier que l'objet retrouvé
+	 * est bien persistant ;</li>
+	 * <li>déléguer la destruction technique
+	 * au composant GATEWAY ;</li>
+	 * <li>retourner un message de suppression
+	 * observable et exploitable
+	 * par la couche appelante si la suppression s'est bien déroulée.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, positionne
-	 *  {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL}, LOG
-	 *   et lève une exception (violation de contrat).</li>
-	 * <li>Si {@code pInputDTO.getTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
-	 * , LOG et lève une exception.</li>
-	 * <li>Si l'objet n'existe pas en stockage 
-	 * (recherche par libellé exact)
-	 * , ne supprime rien
-	 * , retourne, et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} 
-	 * + libellé.</li>
-	 * <li>Sinon, délègue la suppression au Gateway.</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_DELETE_OK} + libelle 
-	 * si la destruction aboutit.</li>
-	 * <li>alimente {@link #getMessage()} 
-	 * à {@link #MESSAGE_DELETE_KO} + libelle 
-	 * , LOG et jette une Exception si la destruction a échoué</li>
-	 * </ul>
+	 * <li>Si {@code pInputDTO == null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_BLANK},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Si {@link TypeProduitDTO.InputDTO}
+	 * ne porte aucun identifiant persistant,
+	 * la destruction cible l'objet déjà persistant
+	 * retrouvé par le même libellé exact
+	 * que celui porté par {@code pInputDTO}.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage
+	 * via cette recherche exacte,
+	 * ne détruit rien
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
+	 * <li>Si l'objet retrouvé existe
+	 * mais n'est pas persistant
+	 * (identifiant {@code null}),
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé,
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Sinon, délègue la destruction
+	 * au composant GATEWAY.</li>
+	 * <li>En cas de succès,
+	 * ne retourne aucune valeur
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_DELETE_OK} + libellé
+	 * seulement après destruction effective
+	 * de l'objet persistant.</li>
+	 * <li>En cas d'échec technique
+	 * lors de la recherche de l'existant
+	 * ou lors de la destruction,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : TypeProduitDTO.InputDTO : 
-	 * l'objet métier à détruire.
+	 * <div>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après destruction effective
+	 * de l'objet persistant ciblé.</li>
+	 * <li>Si aucun objet ne correspond au libellé transmis,
+	 * aucune suppression n'est exécutée.</li>
+	 * <li>Aucune destruction incohérente
+	 * d'objet non persistant
+	 * ne doit être tentée.</li>
+	 * <li>L'absence d'identifiant
+	 * dans le {@link TypeProduitDTO.InputDTO}
+	 * est explicitement compensée
+	 * par une phase préalable
+	 * de ré-identification par libellé exact.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * DTO portant le libellé métier
+	 * de l'objet déjà persistant
+	 * à ré-identifier puis à détruire ;
+	 * ce DTO ne porte aucun identifiant persistant.
+	 * @throws ExceptionParametreNull
+	 * si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si {@code pInputDTO.getTypeProduit()} est blank.
+	 * @throws ExceptionNonPersistant
+	 * si l'objet retrouvé avant destruction
+	 * n'est pas persistant.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors de la recherche de l'existant
+	 * ou lors de la destruction via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
-	void delete(TypeProduitDTO.InputDTO pInputDTO) 
-			throws Exception;
-
+	void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;
+	
 	
 	
 	/**

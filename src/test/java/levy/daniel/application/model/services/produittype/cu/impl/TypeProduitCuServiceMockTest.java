@@ -2807,8 +2807,12 @@ public class TypeProduitCuServiceMockTest {
 		
 	} // __________________________________________________________________
 	
-	
 
+	
+	// ---------------------- count(...) -------------------------------//
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>count() : délègue au gateway.count().</p>
@@ -2839,8 +2843,12 @@ public class TypeProduitCuServiceMockTest {
 		
 	} // __________________________________________________________________
 	
-	
 
+	
+	// ------------------------ getMessage() ----------------------------//
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>getMessage() : retourne le message courant.</p>

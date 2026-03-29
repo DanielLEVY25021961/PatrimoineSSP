@@ -1087,14 +1087,16 @@ public class TypeProduitCuService implements TypeProduitICuService {
 
 	
 	/**
-	* {@inheritDoc}
-	*/
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void delete(final TypeProduitDTO.InputDTO pInputDTO)
-			throws Exception {
+	public void delete(final TypeProduitDTO.InputDTO pInputDTO) throws Exception {
 
-		/* alimente this.message, LOG et jette une
-		 * Exception si pTypeProduit est null.*/
+		/*
+		 * Le contrat UC refuse un DTO de suppression null.
+		 * Si pInputDTO == null :
+		 * émet MESSAGE_PARAM_NULL + LOG + ExceptionParametreNull.
+		 */
 		if (pInputDTO == null) {
 			this.traiterErreur(
 					MESSAGE_PARAM_NULL,
@@ -1102,43 +1104,112 @@ public class TypeProduitCuService implements TypeProduitICuService {
 			return;
 		}
 
-		/* alimente this.message, LOG et jette une
-		 * Exception si le libellé est blank. */
-		if (StringUtils.isBlank(pInputDTO.getTypeProduit())) {
+		/*
+		 * Extrait le libellé métier porté par le DTO.
+		 */
+		final String libelle = pInputDTO.getTypeProduit();
+
+		/*
+		 * Le contrat UC refuse un libellé blank.
+		 * Si StringUtils.isBlank(libelle) :
+		 * émet MESSAGE_PARAM_BLANK + LOG + ExceptionParametreBlank.
+		 */
+		if (StringUtils.isBlank(libelle)) {
 			this.traiterErreur(
 					MESSAGE_PARAM_BLANK,
 					new ExceptionParametreBlank(MESSAGE_PARAM_BLANK));
 			return;
 		}
 
-		final String libelle = pInputDTO.getTypeProduit();
+		/*
+		 * Ré-identifie l'objet déjà persistant
+		 * par une recherche exacte sur le libellé.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur
+		 * technique cohérent côté UC.
+		 */
+		final TypeProduit existant;
 
-		/* délègue au Gateway la recherche par libellé dans le stockage. */
-		final TypeProduit tp = this.gateway.findByLibelle(libelle);
+		try {
 
-		/* émet un message KO et ne fait rien
-		 * si l'objet est introuvable par libellé. */
-		if (tp == null) {
+			/* Délègue au GATEWAY la recherche exacte par libellé. */
+			existant = this.gateway.findByLibelle(libelle);
+
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+			return;
+		}
+
+		/*
+		 * Si aucun objet n'est retrouvé par libellé exact :
+		 * ne supprime rien et positionne
+		 * MESSAGE_OBJ_INTROUVABLE + libellé.
+		 * Si existant == null : émet MESSAGE_OBJ_INTROUVABLE + libelle 
+		 * et ne fait rien.
+		 */
+		if (existant == null) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + libelle);
 			return;
 		}
 
+		/*
+		 * L'objet retrouvé avant destruction
+		 * doit être réellement persistant.
+		 * Si son ID est null :
+		 * émet MESSAGE_OBJ_NON_PERSISTE + libellé
+		 * + LOG + ExceptionNonPersistant.
+		 */
+		if (existant.getIdTypeProduit() == null) {
+			
+			final String messageUtil = MESSAGE_OBJ_NON_PERSISTE + libelle;
+
+			this.traiterErreur(
+					messageUtil,
+					new ExceptionNonPersistant(messageUtil));
+			return;
+		}
+
+		/*
+		 * Délègue ensuite la destruction au GATEWAY.
+		 * Toute anomalie technique de destruction
+		 * est transformée en message utilisateur
+		 * technique cohérent côté UC.
+		 */
 		try {
 
-			/* délègue au Gateway la tâche de la destruction de l'objet. */
-			this.gateway.delete(tp);
+			/* Délègue au GATEWAY la destruction de l'objet persistant. */
+			this.gateway.delete(existant);
 
-			/* alimente un message. */
-			this.message.set(MESSAGE_DELETE_OK + libelle);
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
 
-		} catch (Exception e) {
-
-			/* alimente this.message, LOG et jette
-			 * une Exception si la destruction a échoué. */
-			this.traiterErreur(MESSAGE_DELETE_KO + libelle, e);
+			this.traiterErreur(
+					MESSAGE_DELETE_KO
+							+ libelle
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+			return;
 		}
-	}
 
+		/*
+		 * Le message de succès MESSAGE_DELETE_OK + libellé
+		 * n'est positionné qu'après destruction effective.
+		 */
+		this.message.set(MESSAGE_DELETE_OK + libelle);
+
+	}
+	
 
 	
 	/**
