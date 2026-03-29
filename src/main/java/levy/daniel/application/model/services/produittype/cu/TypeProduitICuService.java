@@ -1236,21 +1236,83 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Compte le nombre de {@link TypeProduit}
-	 * dans le stockage.
-	 * </p>
-	 * </div>
+	 * <p>Compte le nombre de {@link TypeProduit}
+	 * accessibles dans le stockage
+	 * en pilotant un scénario complet de SERVICE UC.</p>
 	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
 	 * <ul>
-	 * <li>Délègue au Gateway le comptage et retourne le résultat.</li>
+	 * <li>demander au composant GATEWAY
+	 * le nombre total de {@link TypeProduit}
+	 * présents dans le stockage ;</li>
+	 * <li>sécuriser la valeur numérique
+	 * retournée par le GATEWAY ;</li>
+	 * <li>retourner un résultat de comptage
+	 * exploitable par la couche appelante ;</li>
+	 * <li>positionner un message utilisateur
+	 * cohérent avec l'issue observable du comptage.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return long : nombre d'enregistrements dans le stockage.
+	 * <div>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
+	 * <ul>
+	 * <li>Délègue le comptage
+	 * au composant GATEWAY.</li>
+	 * <li>Retourne un {@code long}
+	 * représentant le nombre total
+	 * d'objets présents dans le stockage.</li>
+	 * <li>Si le comptage retourné vaut {@code 0},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si le comptage retourné est strictement positif,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>Si le composant GATEWAY retourne
+	 * une valeur négative,
+	 * positionne un message utilisateur technique cohérent
+	 * et lève une exception,
+	 * car un tel résultat est incohérent
+	 * pour un comptage observable.</li>
+	 * <li>En cas d'échec technique
+	 * lors du comptage via le GATEWAY,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès ou d'absence de résultat
+	 * n'est positionné qu'après récupération effective
+	 * du comptage retourné par le GATEWAY.</li>
+	 * <li>Le résultat retourné correspond
+	 * au nombre total d'objets
+	 * effectivement accessibles dans le stockage
+	 * via le GATEWAY.</li>
+	 * <li>Aucune valeur de comptage incohérente
+	 * ne doit être exposée à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return long :
+	 * nombre total d'enregistrements présents
+	 * dans le stockage ;
+	 * peut valoir {@code 0},
+	 * mais ne doit jamais être négatif.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors du comptage via le GATEWAY.
+	 * @throws IllegalStateException
+	 * si le comptage retourné
+	 * est incohérent
+	 * (par exemple strictement négatif).
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
 	long count() throws Exception;
 	
