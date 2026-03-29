@@ -1989,6 +1989,29 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
+	 * <p>Compte le nombre de lignes physiques pour un libellé exact
+	 * de SousTypeProduit, tous parents confondus.</p>
+	 * </div>
+	 *
+	 * @param pSousType : String : libellé exact du SousTypeProduit.
+	 * @return Long : nombre de lignes trouvées pour ce libellé.
+	 */
+	private Long compterSousTypeProduitParLibelleEnBase(
+			final String pSousType) {
+
+		return this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) "
+				+ "FROM SOUS_TYPES_PRODUIT "
+				+ "WHERE SOUS_TYPE_PRODUIT = ?",
+				Long.class,
+				pSousType);
+
+	} // __________________________________________________________________	
+	
+
+	
+	/**
+	 * <div>
 	 * <p>Méthode utilitaire "béton" : vérifie la cohérence d'un ResultatPage.</p>
 	 * <p>
 	 * NOTE : Cette méthode est volontairement simple et n'introduit aucun "magic string".

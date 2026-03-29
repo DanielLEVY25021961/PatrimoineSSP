@@ -23,6 +23,7 @@ import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.OutputDT
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
+import levy.daniel.application.model.metier.produittype.TypeProduitI;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionNonPersistant;
@@ -1204,42 +1205,91 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Détermine si un Objet métier existe déjà dans le stockage.</p>
-	 * <p>retourne true si c'est le cas.</p>
+	 * Détermine si un doublon métier existe déjà dans le stockage.</p>
+	 * <p>Le doublon d'un {@link SousTypeProduit} se contrôle
+	 * sur le couple [parent, libellé] et non sur le seul libellé.</p>
 	 * </div>
 	 *
-	 * @param pInputDTO : SousTypeProduitDTO.InputDTO
-	 * @return boolean : true si doublon
+	 * @param pInputDTO : SousTypeProduitDTO.InputDTO :
+	 * DTO de création à contrôler.
+	 * @return boolean : true si un SousTypeProduit portant
+	 * le même libellé sous le même parent existe déjà.
 	 * @throws Exception
 	 */
 	private boolean isDoublon(
 			final SousTypeProduitDTO.InputDTO pInputDTO) throws Exception {
 
 		/*
-		 * Le contrat du GATEWAY retourne une List<SousTypeProduit>.
-		 * L'absence de résultat doit être lue comme
-		 * liste null ou liste vide, jamais via get(0) non sécurisé.
+		 * Sécurise le cas pInputDTO == null.
+		 * Le contrat appelant traite ce cas en amont.
+		 */
+		if (pInputDTO == null) {
+			return false;
+		}
+
+		/*
+		 * Récupère les 2 composantes du couple métier à contrôler :
+		 * [parent, libellé].
+		 */
+		final String libelleRecherche = pInputDTO.getSousTypeProduit();
+		final String parentRecherche = pInputDTO.getTypeProduit();
+
+		/*
+		 * Si le parent n'est pas exploitable :
+		 * ne conclut pas à un doublon ici.
+		 * Le contrôle du parent est traité ensuite par creer(...).
+		 */
+		if (StringUtils.isBlank(parentRecherche)) {
+			return false;
+		}
+
+		/*
+		 * Le GATEWAY sait rechercher par libellé exact.
+		 * Le filtrage final du doublon se fait ici
+		 * sur le couple [parent, libellé].
 		 */
 		final List<SousTypeProduit> sousTypesProduitsExistants
-				= this.gateway.findByLibelle(pInputDTO.getSousTypeProduit());
+				= this.gateway.findByLibelle(libelleRecherche);
 
+		/*
+		 * Absence de résultats exploitables :
+		 * pas de doublon.
+		 */
 		if (sousTypesProduitsExistants == null
 				|| sousTypesProduitsExistants.isEmpty()) {
 			return false;
 		}
 
 		/*
-		 * Retourne true dès qu'un élément non null est présent.
+		 * Retourne true uniquement si un enregistrement existant
+		 * porte le même libellé sous le même parent.
 		 */
 		for (final SousTypeProduit existant : sousTypesProduitsExistants) {
-			if (existant != null) {
+
+			if (existant == null) {
+				continue;
+			}
+
+			final String libelleExistant = existant.getSousTypeProduit();
+
+			final TypeProduitI parentExistantObjet = existant.getTypeProduit();
+
+			final String parentExistant = parentExistantObjet != null
+					? parentExistantObjet.getTypeProduit()
+					: null;
+
+			if (Strings.CI.equals(libelleRecherche, libelleExistant)
+					&& Strings.CI.equals(parentRecherche, parentExistant)) {
 				return true;
 			}
 		}
 
+		/*
+		 * Aucun enregistrement ne matche le couple [parent, libellé].
+		 */
 		return false;
 	}
-
+	
 
 	
 	/**
