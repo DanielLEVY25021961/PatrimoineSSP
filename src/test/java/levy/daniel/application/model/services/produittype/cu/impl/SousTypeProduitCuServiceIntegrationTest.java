@@ -879,6 +879,8 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	// ================== TESTS rechercherTousParPage(...) =================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>rechercherTousParPage(null) : violation de contrat.</p>
@@ -897,10 +899,10 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.contains(SousTypeProduitICuService.MESSAGE_PAGEABLE_NULL);
-		
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
@@ -939,9 +941,128 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(rp.getPageNumber()).isEqualTo(0);
 		assertThat(rp.getPageSize()).isEqualTo(2);
 		assertThat(rp.getTotalElements()).isEqualTo(attendu);
-		
+
 	} // __________________________________________________________________
-	
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(ok) : test béton avec pagination cohérente
+	 * et preuve BD.</p>
+	 * <ul>
+	 * <li>retourne un {@link ResultatPage} non {@code null}</li>
+	 * <li>reprend le numéro de page</li>
+	 * <li>reprend la taille de page</li>
+	 * <li>reprend le total d'éléments</li>
+	 * <li>retourne un contenu DTO cohérent avec les créations du test</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}</li>
+	 * <li>prouve physiquement l'existence en base
+	 * des objets créés</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTousParPage(ok) : ResultatPage cohérent + message exact + preuve BD")
+	public void testRechercherTousParPageOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+
+		final long baseline = this.service.count();
+
+		final OutputDTO cree01 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PAGE_01));
+		final OutputDTO cree02 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PAGE_02));
+		final OutputDTO cree03 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PAGE_03));
+		final OutputDTO cree04 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PAGE_04));
+		final OutputDTO cree05 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PAGE_05));
+
+		final long attendu = baseline + 5L;
+
+		final RequetePage requete = new RequetePage(0, 100);
+
+		/* ======================= ACT ======================= */
+		final ResultatPage<OutputDTO> rp = this.service.rechercherTousParPage(requete);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(rp).isNotNull();
+		assertThat(rp.getPageNumber()).isEqualTo(0);
+		assertThat(rp.getPageSize()).isEqualTo(100);
+		assertThat(rp.getTotalElements()).isEqualTo(attendu);
+
+		assertThat(rp.getContent()).isNotNull();
+		assertThat(rp.getContent().size()).isLessThanOrEqualTo(100);
+
+		assertThat(rp.getContent())
+				.extracting(OutputDTO::getSousTypeProduit)
+				.contains(
+						IT_STP_PAGE_01,
+						IT_STP_PAGE_02,
+						IT_STP_PAGE_03,
+						IT_STP_PAGE_04,
+						IT_STP_PAGE_05);
+
+		assertThat(rp.getContent())
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.contains(
+						cree01.getIdSousTypeProduit(),
+						cree02.getIdSousTypeProduit(),
+						cree03.getIdSousTypeProduit(),
+						cree04.getIdSousTypeProduit(),
+						cree05.getIdSousTypeProduit());
+
+		assertThat(rp.getContent())
+				.extracting(OutputDTO::getTypeProduit)
+				containsOnly(IT_TP_PARENT_A);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* preuve BD : les 5 créations existent physiquement. */
+		assertThat(this.compterSousTypeProduitEnBase(cree01.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree01.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_01);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree01.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(cree02.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree02.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_02);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree02.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(cree03.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree03.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_03);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree03.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(cree04.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree04.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_04);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree04.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(cree05.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree05.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_05);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree05.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________	
 	
 
 	// ======================= TESTS findByLibelle(...) ====================

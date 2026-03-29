@@ -448,10 +448,75 @@ Le scénario nominal de `rechercherTousString()` est :
   pour la couche appelante ;
 - aucun libellé blank ne doit être exposé.
 
-## 13) Règle de synchronisation PORT / ADAPTER / tests
+## 13) Contrat spécifique de `rechercherTousParPage(...)`
 
-Toute correction de `creer(...)`, `rechercherTous()`
-ou `rechercherTousString()`
+Signature cible :
+
+- `ResultatPage<SousTypeProduitDTO.OutputDTO> rechercherTousParPage(RequetePage pRequetePage) throws Exception;`
+
+### 13.1 Scénario nominal attendu
+
+Le scénario nominal de `rechercherTousParPage(...)` est :
+
+1. recevoir une `RequetePage` transmise par la couche appelante ;
+2. valider que la requête de pagination est exploitable ;
+3. demander au `GATEWAY` la page d’objets métier correspondante ;
+4. sécuriser le résultat paginé technique retourné ;
+5. retirer les éventuels éléments `null` ;
+6. trier les objets métier ;
+7. convertir les objets métier en `OutputDTO` ;
+8. dédoublonner les `OutputDTO` si nécessaire ;
+9. reconstruire un `ResultatPage` cohérent pour la couche appelante ;
+10. positionner le message observable ;
+11. retourner la réponse paginée finale.
+
+### 13.2 Cas observables attendus
+
+- si `pRequetePage == null` :
+  - positionne `getMessage()` à `MESSAGE_PAGEABLE_NULL`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le résultat paginé retourné par le `GATEWAY` est `null` :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la réponse paginée est correctement préparée :
+  - retourne un `ResultatPage` non `null`,
+  - reprend une pagination cohérente,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_OK`.
+
+### 13.3 Garanties spécifiques de `rechercherTousParPage(...)`
+
+- la méthode ne doit jamais retourner `null`
+  quand le scénario se termine avec succès ;
+- le message observable doit être positionné
+  après préparation complète de la réponse paginée ;
+- les `null` techniques issus du stockage
+  ne doivent jamais fuiter jusqu’à l’appelant ;
+- les `OutputDTO` retournés doivent correspondre
+  à des objets métier réellement accessibles via le `GATEWAY` ;
+- la pagination reconstruite doit rester cohérente
+  avec `pageNumber`, `pageSize` et `totalElements` du résultat technique sécurisé ;
+- aucun résultat paginé partiel incohérent ne doit être exposé.
+
+## 14) Règle de synchronisation PORT / ADAPTER / tests
+
+Toute correction de `creer(...)`, `rechercherTous()`,
+`rechercherTousString()` ou `rechercherTousParPage(...)`
 doit rester synchronisée entre :
 
 1. le PORT `SousTypeProduitICuService` ;
@@ -490,6 +555,15 @@ Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
 - le cas nominal avec filtrage, tri, suppression des blank
   et dédoublonnage.
 
+Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
+
+- le cas `pRequetePage == null` ;
+- le cas exception technique avec message ;
+- le cas exception technique sans message ;
+- le cas `gateway.rechercherTousParPage(...) == null` ;
+- le cas nominal avec reprise de la pagination,
+  filtrage des `null`, tri et dédoublonnage.
+
 ### Point de vigilance pour les tests d’Intégration
 
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -513,3 +587,11 @@ Pour `rechercherTousString()`, le test d’intégration cible doit, à terme, pr
 - l’absence de libellé blank dans la réponse ;
 - la présence physique en base des lignes correspondant aux libellés vérifiés ;
 - le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
+
+Pour `rechercherTousParPage(...)`, le test d’intégration cible doit, à terme, prouver :
+
+- la cohérence entre la pagination retournée et `count()` ;
+- la cohérence de `pageNumber`, `pageSize` et `totalElements` ;
+- la présence réelle en base des lignes correspondant aux DTO paginés vérifiés ;
+- la cohérence du parent pour les sous-types vérifiés ;
+- le message exact `MESSAGE_RECHERCHE_PAGINEE_OK` en cas de succès.
