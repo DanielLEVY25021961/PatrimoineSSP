@@ -68,7 +68,7 @@ dans le PORT `SousTypeProduitICuService` :
 - `List<SousTypeProduitDTO.OutputDTO> rechercherTous() throws Exception;`
 - `List<String> rechercherTousString() throws Exception;`
 - `ResultatPage<SousTypeProduitDTO.OutputDTO> rechercherTousParPage(RequetePage pRequetePage) throws Exception;`
-- `SousTypeProduitDTO.OutputDTO findByLibelle(String pLibelle) throws Exception;`
+- `List<SousTypeProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;`
 - `List<SousTypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
 - `List<SousTypeProduitDTO.OutputDTO> findAllByParent(TypeProduitDTO.InputDTO pTypeProduit) throws Exception;`
 - `SousTypeProduitDTO.OutputDTO findByDTO(SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;`
@@ -513,10 +513,80 @@ Le scénario nominal de `rechercherTousParPage(...)` est :
   avec `pageNumber`, `pageSize` et `totalElements` du résultat technique sécurisé ;
 - aucun résultat paginé partiel incohérent ne doit être exposé.
 
-## 14) Règle de synchronisation PORT / ADAPTER / tests
+## 14) Contrat spécifique de `findByLibelle(...)`
+
+Signature cible :
+
+- `List<SousTypeProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;`
+
+### 14.1 Scénario nominal attendu
+
+Le scénario nominal de `findByLibelle(...)` est :
+
+1. recevoir un libellé exact transmis par la couche appelante ;
+2. valider que ce libellé est exploitable ;
+3. demander au `GATEWAY` tous les `SousTypeProduit`
+   correspondant exactement à ce libellé ;
+4. sécuriser le retour technique du stockage ;
+5. retirer les éventuels éléments `null` ;
+6. trier les objets métier ;
+7. convertir les objets métier en `OutputDTO` ;
+8. dédoublonner les `OutputDTO` si nécessaire ;
+9. positionner le message observable ;
+10. retourner la liste finale.
+
+### 14.2 Cas observables attendus
+
+- si `pLibelle` est blank :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK`,
+  - n’émet ni LOG ni exception ;
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si aucun résultat exploitable n’est trouvé :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + pLibelle` ;
+
+- si un ou plusieurs résultats exploitables sont trouvés :
+  - retourne une liste non vide de DTO,
+  - positionne `getMessage()` à `MESSAGE_SUCCES_RECHERCHE`.
+
+### 14.3 Garanties spécifiques de `findByLibelle(...)`
+
+- le libellé exact d’un `SousTypeProduit` n’étant pas unique,
+  la méthode doit retourner une collection
+  et jamais un DTO unitaire ;
+- la méthode ne doit jamais retourner `null`
+  quand le stockage est exploitable ;
+- le message observable doit être positionné
+  après préparation complète de la réponse ;
+- les `null` techniques issus du stockage
+  ne doivent jamais fuiter jusqu’à l’appelant ;
+- les DTO retournés doivent correspondre
+  à des objets métier réellement accessibles via le `GATEWAY` ;
+- aucun résultat partiel incohérent ne doit être exposé.
+
+## 15) Règle de synchronisation PORT / ADAPTER / tests
 
 Toute correction de `creer(...)`, `rechercherTous()`,
-`rechercherTousString()` ou `rechercherTousParPage(...)`
+`rechercherTousString()`, `rechercherTousParPage(...)`
+ou `findByLibelle(...)`
 doit rester synchronisée entre :
 
 1. le PORT `SousTypeProduitICuService` ;
@@ -564,6 +634,16 @@ Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum
 - le cas nominal avec reprise de la pagination,
   filtrage des `null`, tri et dédoublonnage.
 
+Pour `findByLibelle(...)`, les tests Mock doivent verrouiller au minimum :
+
+- le cas `pLibelle` blank ;
+- le cas `gateway.findByLibelle(...) == null` ;
+- le cas exception technique avec message ;
+- le cas exception technique sans message ;
+- le cas introuvable ;
+- le cas nominal avec plusieurs résultats exacts possibles,
+  tri et dédoublonnage.
+
 ### Point de vigilance pour les tests d’Intégration
 
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -595,3 +675,13 @@ Pour `rechercherTousParPage(...)`, le test d’intégration cible doit, à terme
 - la présence réelle en base des lignes correspondant aux DTO paginés vérifiés ;
 - la cohérence du parent pour les sous-types vérifiés ;
 - le message exact `MESSAGE_RECHERCHE_PAGINEE_OK` en cas de succès.
+
+Pour `findByLibelle(...)`, le test d’intégration cible doit, à terme, prouver :
+
+- qu’un même libellé exact peut remonter plusieurs DTO ;
+- que ces DTO peuvent appartenir à des parents distincts ;
+- que les couples parent / sous-type existent physiquement en base ;
+- que le message exact `MESSAGE_SUCCES_RECHERCHE`
+  est positionné en cas de succès ;
+- qu’un libellé introuvable retourne une liste vide
+  avec `MESSAGE_OBJ_INTROUVABLE + libellé`.

@@ -1625,113 +1625,276 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>findByLibelle(blank) : retourne null + message MESSAGE_PARAM_BLANK.</p>
+	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
+	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findByLibelle(blank) : retourne null + message MESSAGE_PARAM_BLANK")
+	@DisplayName("findByLibelle(blank) : liste vide + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
 	public void testFindByLibelleBlank() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
 		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
 		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		// ===================== ACT =====================
-
-		final OutputDTO retour = service.findByLibelle(ESPACES);
+		/* ======================= ACT ======================= */
+		final List<OutputDTO> retour = service.findByLibelle(ESPACES);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-
-		assertThat(retour).isNull();
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull().isEmpty();
 		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
 
 		verifyNoInteractions(gateway);
-		
+		verifyNoInteractions(typeProduitGateway);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(introuvable) : retourne null + message MESSAGE_OBJ_INTROUVABLE + libellé.</p>
+	 * <p>findByLibelle(stockage null) : anomalie technique.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
+	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findByLibelle(introuvable) : retourne null + message MESSAGE_OBJ_INTROUVABLE")
-	public void testFindByLibelleIntrouvable() throws Exception {
+	@DisplayName("findByLibelle(stockage null) : ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
+	public void testFindByLibelleStockageNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-
+		/* ===================== ARRANGE ===================== */
 		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
 		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
 		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
 
 		when(gateway.findByLibelle(OUTILLAGE)).thenReturn(null);
 
-		// ===================== ACT =====================
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.findByLibelle(OUTILLAGE))
+			.isInstanceOf(ExceptionStockageVide.class)
+			.hasMessage(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
-		final OutputDTO retour = service.findByLibelle(OUTILLAGE);
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + OUTILLAGE);
+		assertThat(service.getMessage())
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
-		
+		verifyNoInteractions(typeProduitGateway);
+
 	} // __________________________________________________________________
 
-	
-	
+
+
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : retourne OutputDTO + message MESSAGE_SUCCES_RECHERCHE.</p>
+	 * <p>findByLibelle(KO technique avec message) : panne de lecture du gateway.</p>
+	 * <ul>
+	 * <li>propage exactement l'exception du gateway</li>
+	 * <li>positionne le message utilisateur technique rationalisé</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @throws Exception si une erreur survient
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("findByLibelle(ok) : OutputDTO + message MESSAGE_SUCCES_RECHERCHE")
+	@DisplayName("findByLibelle(KO technique avec message) : propage l'exception + message technique rationalisé")
+	public void testFindByLibelleTechniqueKoAvecMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(gateway.findByLibelle(OUTILLAGE)).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.findByLibelle(OUTILLAGE))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ MESSAGE_GATEWAY);
+
+		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(KO technique sans message) : fallback technique.</p>
+	 * <ul>
+	 * <li>propage exactement l'exception du gateway</li>
+	 * <li>retombe sur
+	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testFindByLibelleTechniqueKoSansMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.findByLibelle(OUTILLAGE)).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.findByLibelle(OUTILLAGE))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(introuvable) : aucun résultat exact exploitable.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(introuvable) : liste vide + message MESSAGE_OBJ_INTROUVABLE + libellé")
+	public void testFindByLibelleIntrouvable() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(gateway.findByLibelle(OUTILLAGE))
+			.thenReturn(new ArrayList<SousTypeProduit>());
+
+		/* ======================= ACT ======================= */
+		final List<OutputDTO> retour = service.findByLibelle(OUTILLAGE);
+		final String message = service.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(message)
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + OUTILLAGE);
+
+		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(ok) : plusieurs résultats exacts possibles.</p>
+	 * <ul>
+	 * <li>retire les {@code null}</li>
+	 * <li>trie les objets métier</li>
+	 * <li>dédoublonne les DTO</li>
+	 * <li>retourne une liste cohérente</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(ok) : liste DTO cohérente + plusieurs parents + message MESSAGE_SUCCES_RECHERCHE")
 	public void testFindByLibelleOk() throws Exception {
 
-	    // ===================== ARRANGE =====================
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-	    final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-	    final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-	    final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final TypeProduit parentA = new TypeProduit(BAZAR);
+		parentA.setIdTypeProduit(1L);
 
-	    final TypeProduit parent = new TypeProduit(BAZAR);
-	    parent.setIdTypeProduit(1L);
+		final TypeProduit parentB = new TypeProduit(VETEMENT);
+		parentB.setIdTypeProduit(2L);
 
-	    final SousTypeProduit stp = new SousTypeProduit(OUTILLAGE, parent);
-	    stp.setIdSousTypeProduit(1L);
+		final SousTypeProduit stpA = new SousTypeProduit(OUTILLAGE, parentA);
+		stpA.setIdSousTypeProduit(10L);
 
-	    when(gateway.findByLibelle(OUTILLAGE).get(0)).thenReturn(stp);
+		final SousTypeProduit stpB = new SousTypeProduit(OUTILLAGE, parentB);
+		stpB.setIdSousTypeProduit(20L);
 
-	    // ===================== ACT =====================
+		when(gateway.findByLibelle(OUTILLAGE))
+			.thenReturn(Arrays.asList(stpB, null, stpA, stpA));
 
-	    final OutputDTO retour = service.findByLibelle(OUTILLAGE);
-	    final String message = service.getMessage();
+		/* ======================= ACT ======================= */
+		final List<OutputDTO> retour = service.findByLibelle(OUTILLAGE);
+		final String message = service.getMessage();
 
-	    // ===================== ASSERT =====================
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
 
-	    assertThat(retour).isNotNull();
-	    assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-	    assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-	    assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		assertThat(retour)
+			.extracting(OutputDTO::getSousTypeProduit)
+			.containsExactly(OUTILLAGE, OUTILLAGE);
 
-	    verify(gateway, times(1)).findByLibelle(OUTILLAGE);
-	    verifyNoInteractions(typeProduitGateway);
-	    
-	} // __________________________________________________________________
-	
+		assertThat(retour)
+			.extracting(OutputDTO::getTypeProduit)
+			.containsExactly(BAZAR, VETEMENT);
+
+		assertThat(retour)
+			.extracting(OutputDTO::getIdSousTypeProduit)
+			.containsExactly(10L, 20L);
+
+		assertThat(message)
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________	
+
 	
 	
 	// ===================== TESTS findByLibelleRapide(...) =================

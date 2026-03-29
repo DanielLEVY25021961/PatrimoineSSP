@@ -503,14 +503,16 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
 				.isEqualTo(1L);
 
-		final OutputDTO trouveParLibelle = this.service.findByLibelle(IT_STP_ALPHA);
+		final List<OutputDTO> trouvesParLibelle = this.service.findByLibelle(IT_STP_ALPHA);
 
-		assertThat(trouveParLibelle).isNotNull();
-		assertThat(trouveParLibelle.getIdSousTypeProduit())
+		assertThat(trouvesParLibelle).isNotNull();
+		assertThat(trouvesParLibelle).hasSize(1);
+
+		assertThat(trouvesParLibelle.get(0).getIdSousTypeProduit())
 				.isEqualTo(cree.getIdSousTypeProduit());
-		assertThat(trouveParLibelle.getSousTypeProduit())
+		assertThat(trouvesParLibelle.get(0).getSousTypeProduit())
 				.isEqualTo(IT_STP_ALPHA);
-		assertThat(trouveParLibelle.getTypeProduit())
+		assertThat(trouvesParLibelle.get(0).getTypeProduit())
 				.isEqualTo(IT_TP_PARENT_A);
 
 		final OutputDTO trouveParId = this.service.findById(cree.getIdSousTypeProduit());
@@ -1050,72 +1052,125 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <div>
 	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(blank) : erreur utilisateur bénigne -> retourne null, message utilisateur, aucune exception")
+	@DisplayName("findByLibelle(blank) : liste vide + message exact MESSAGE_PARAM_BLANK")
 	public void testFindByLibelleBlank() throws Exception {
 
-		final OutputDTO dto = this.service.findByLibelle(ESPACES);
+		final List<OutputDTO> dtos = this.service.findByLibelle(ESPACES);
 
-		assertThat(dto).isNull();
+		assertThat(dtos).isNotNull().isEmpty();
 		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
-		
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
+
 	} // __________________________________________________________________
 	
 	
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>findByLibelle(introuvable) : aucun résultat exact en stockage.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>prouve physiquement l'absence en base pour ce libellé</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findByLibelle(introuvable) : liste vide + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testFindByLibelleIntrouvable() throws Exception {
 
-		final OutputDTO dto = this.service.findByLibelle(IT_STP_INEXISTANT_XYZ);
+		final List<OutputDTO> dtos = this.service.findByLibelle(IT_STP_INEXISTANT_XYZ);
 
-		assertThat(dto).isNull();
+		assertThat(dtos).isNotNull().isEmpty();
 		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + IT_STP_INEXISTANT_XYZ);
+		assertThat(this.compterSousTypeProduitParLibelleEnBase(IT_STP_INEXISTANT_XYZ))
+				.isEqualTo(0L);
+
 	} // __________________________________________________________________
 	
 	
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : retourne un DTO non nul après création.</p>
+	 * <p>findByLibelle(ok) : le même libellé peut exister sous plusieurs parents.</p>
+	 * <ul>
+	 * <li>crée deux parents persistants distincts</li>
+	 * <li>crée le même libellé de SousTypeProduit sous ces deux parents</li>
+	 * <li>retourne une liste DTO de taille 2</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>prouve physiquement l'existence des deux couples en base</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(ok) : retourne OutputDTO après création")
+	@DisplayName("findByLibelle(ok) : retourne 2 DTO sur 2 parents distincts + message exact + preuve BD")
 	public void testFindByLibelleOk() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_DELTA));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
 
-		final OutputDTO dto = this.service.findByLibelle(IT_STP_DELTA);
+		final OutputDTO creeA = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_DELTA));
+		final OutputDTO creeB = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_DELTA));
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_DELTA);
-		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		
+		final List<OutputDTO> dtos = this.service.findByLibelle(IT_STP_DELTA);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(IT_STP_DELTA, IT_STP_DELTA);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getTypeProduit)
+				.containsExactly(IT_TP_PARENT_A, IT_TP_PARENT_B);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.containsExactly(
+						creeA.getIdSousTypeProduit(),
+						creeB.getIdSousTypeProduit());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeA.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeA.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_DELTA);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeA.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeB.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeB.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_DELTA);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeB.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_B);
+
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_DELTA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_B, IT_STP_DELTA))
+				.isEqualTo(1L);
+
 	} // __________________________________________________________________
 	
 	
@@ -1751,9 +1806,9 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		this.service.delete(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_DELETE_OK));
 
-		final OutputDTO apresSuppression = this.service.findByLibelle(IT_STP_DELETE_OK);
+		final List<OutputDTO> apresSuppression = this.service.findByLibelle(IT_STP_DELETE_OK);
 
-		assertThat(apresSuppression).isNull();
+		assertThat(apresSuppression).isNotNull().isEmpty();
 		
 	} // __________________________________________________________________
 	

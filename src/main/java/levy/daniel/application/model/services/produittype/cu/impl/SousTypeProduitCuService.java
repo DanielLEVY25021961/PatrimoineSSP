@@ -690,36 +690,101 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public OutputDTO findByLibelle(
+	public List<OutputDTO> findByLibelle(
 			final String pLibelle) throws Exception {
 
+		/*
+		 * Si le libellé transmis n'est pas exploitable :
+		 * retourne une liste vide avec un message observable,
+		 * sans LOG et sans exception.
+		 * Si StringUtils.isBlank(pLibelle) : 
+		 * émet un message MESSAGE_PARAM_BLANK et 
+		 * retourne une nouvelle ArrayList vide.
+		 */
 		if (StringUtils.isBlank(pLibelle)) {
-			/* message KO paramètre blanc. */
 			this.message.set(MESSAGE_PARAM_BLANK);
-			return null;
+			return new ArrayList<OutputDTO>();
 		}
 
-		/* recherche déléguée au gateway. */
-		final SousTypeProduit stp 
-			= this.gateway.findByLibelle(pLibelle).get(0);
+		/*
+		 * Délègue au GATEWAY la recherche exacte
+		 * de tous les SousTypeProduit portant ce libellé.
+		 */
+		final List<SousTypeProduit> records;
 
-		if (stp == null) {
-			/* message KO objet introuvable. */
+		try {
+
+			records = this.gateway.findByLibelle(pLibelle);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le stockage retourne null :
+		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 */
+		if (records == null) {
+			return this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+		}
+
+		/*
+		 * Prépare la réponse utilisateur :
+		 * retrait des null, tri métier,
+		 * conversion en OutputDTO,
+		 * puis dédoublonnage en conservant l'ordre.
+		 */
+		final List<OutputDTO> dtos;
+
+		try {
+
+			final List<SousTypeProduit> recordsNonNullTries
+					= this.filtrerEtTrier(records);
+
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si aucun résultat exploitable n'est trouvé :
+		 * retourne une liste vide et 
+		 * émet un MESSAGE_OBJ_INTROUVABLE + libellé.
+		 */
+		if (dtos.isEmpty()) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + pLibelle);
-			return null;
+			return dtos;
 		}
 
-		/* conversion en OutputDTO */
-		final SousTypeProduitDTO.OutputDTO dto
-			= ConvertisseurMetierToOutputDTOSousTypeProduit.convert(stp);
-
-		/* message de succès. */
+		/*
+		 * Positionne le message observable de succès
+		 * après préparation complète de la réponse.
+		 */
 		this.message.set(MESSAGE_SUCCES_RECHERCHE);
 
-		/* retourne l'OutputDTO resultat. */
-		return dto;
+		/*
+		 * Retourne toujours une liste non null.
+		 */
+		return dtos;
 	}
-
+	
 
 
 	/**
