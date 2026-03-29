@@ -3,14 +3,17 @@
 # Contrat comportemental — TypeProduitICuService (SERVICE METIER UC)
 
 ## 1) Port concerné
+
 - `levy.daniel.application.model.services.produittype.cu.TypeProduitICuService`
 
-## 2) Objectif
+## 2) Objet du contrat
+
 Décrire le **comportement réel attendu et observable** du SERVICE METIER UC
 rattaché au port `TypeProduitICuService`.
 
 Ce document ne décrit pas la technique de persistance.
 Il décrit le comportement **côté UC** :
+
 - orchestration applicative ;
 - messages utilisateur ;
 - exceptions observables ;
@@ -19,37 +22,45 @@ Il décrit le comportement **côté UC** :
 - cohérence avec les tests Mock et Intégration.
 
 ## 3) Rôle du SERVICE UC
+
 Le SERVICE METIER UC :
+
 - reçoit des `InputDTO` depuis la couche appelante ;
 - valide les préconditions applicatives observables ;
-- convertit les `InputDTO` en objets métier ;
+- convertit les `InputDTO` en objets métier lorsque nécessaire ;
 - délègue les opérations techniques au `GATEWAY` ;
-- convertit les objets métier retournés en `OutputDTO` ;
+- convertit les objets métier retournés en `OutputDTO` lorsque nécessaire ;
 - produit des messages utilisateur via `getMessage()` ;
 - émet les LOGs nécessaires à la traçabilité ;
-- retourne un résultat exploitable par le caller.
+- retourne un résultat exploitable par la couche appelante.
 
-**Important :**
+### Règles structurantes
+
 - le `GATEWAY` ne produit pas de message utilisateur ;
 - le `SERVICE UC` est responsable du **message observable** côté appelant ;
-- les messages récurrents doivent être **factorisés dans le PORT**.
+- les messages récurrents doivent être **factorisés dans le PORT** ;
+- le comportement observable décrit dans le PORT doit rester cohérent avec l’ADAPTER et avec les tests.
 
 ## 4) Source de vérité de ce contrat
+
 Ce contrat est rattaché explicitement au port `TypeProduitICuService`.
 
 Ordre d’interprétation :
+
 1. `docs/ai/CONTRAT_IA.md`
-2. présent contrat `TypeProduitICuService.md`
-3. code du PORT `TypeProduitICuService`
-4. code de l’ADAPTER `TypeProduitCuService`
-5. tests JUnit Mock et Intégration
+2. le présent contrat `docs/contrats/cu/TypeProduitICuService.md`
+3. le code du PORT `TypeProduitICuService`
+4. le code de l’ADAPTER `TypeProduitCuService`
+5. les tests JUnit Mock et Intégration
 
 En cas d’ambiguïté :
+
 - priorité au **comportement réellement verrouillé par les tests** ;
 - puis au **présent contrat** ;
 - puis au code.
 
 ## 5) Méthodes PORT déjà normalisées servant de référence
+
 Les méthodes suivantes sont considérées comme **références de formalisme UC**
 dans le PORT `TypeProduitICuService` :
 
@@ -66,21 +77,26 @@ dans le PORT `TypeProduitICuService` :
 - `long count() throws Exception;`
 - `String getMessage();`
 
-**Règle absolue :**
-toute nouvelle remise au carré du PORT UC doit s’aligner
+### Règle absolue
+
+Toute nouvelle remise au carré du PORT UC doit s’aligner
 sur le formalisme de ces méthodes déjà normalisées.
 
-## 6) Méthodes encore en formalisme legacy
-Aucune méthode ne doit désormais être considérée comme legacy
-dans le PORT `TypeProduitICuService`.
+## 6) Statut des méthodes du PORT
 
-Toutes les méthodes du PORT doivent être considérées
-comme **références de formalisme UC**
-et ne doivent subir aucune régression documentaire.
+Aucune méthode du PORT `TypeProduitICuService`
+ne doit désormais être considérée comme **legacy**.
 
-## 7) Règles de lecture avant toute modification documentaire ou code
-Avant toute rédaction ou correction concernant une méthode UC,
-l’IA doit relire, dans cet ordre :
+Conséquence :
+
+- toutes les méthodes du PORT sont désormais des **références de formalisme UC** ;
+- aucune régression documentaire ou comportementale n’est acceptable ;
+- toute correction future doit maintenir l’homogénéité entre méthodes.
+
+## 7) Séquence de lecture obligatoire avant toute correction
+
+Avant toute rédaction, analyse, correction ou génération de code
+concernant une méthode UC, l’IA doit relire, dans cet ordre :
 
 1. `docs/ai/CONTRAT_IA.md`
 2. le présent contrat `docs/contrats/cu/TypeProduitICuService.md`
@@ -90,30 +106,33 @@ l’IA doit relire, dans cet ordre :
 6. les tests Mock
 7. les tests d’Intégration
 
-**Interdiction absolue :**
+### Interdictions absolues
+
 - ne jamais inventer un nouveau style ;
 - ne jamais dégrader une méthode déjà normalisée ;
-- ne jamais prendre une méthode legacy comme modèle
-  si une méthode déjà normalisée couvre le même type de scénario.
+- ne jamais se baser sur une ancienne réponse de chat plutôt que sur les fichiers relus ;
+- ne jamais contourner le contrat local au motif qu’une méthode “semble simple”.
 
 ## 8) Formalisme javadoc obligatoire dans le PORT UC
 
 ### 8.1 Structure obligatoire
-Toute méthode UC remise au carré dans le PORT doit comporter,
-dans sa javadoc, **dans cet ordre exact** :
 
-1. une **phrase d’ouverture** qui résume la finalité de la méthode ;
+Toute méthode UC du PORT doit comporter, dans sa javadoc,
+**dans cet ordre exact** :
+
+1. une **phrase d’ouverture** ;
 2. une rubrique **INTENTION DE SERVICE UC (scénario nominal)** ;
 3. une rubrique **CONTRAT DE SERVICE UC** ;
 4. une rubrique **GARANTIES METIER, UTILISATEUR et TRAÇABILITE** ;
-5. un bloc détaillé `@param / @return / @throws`.
+5. un bloc détaillé `@param / @return / @throws` lorsque applicable.
 
 Aucune de ces rubriques ne doit manquer.
 
 ### 8.2 Habillage HTML obligatoire pour la lisibilité
+
 Afin d’éviter les rubriques invisibles
 et d’obtenir un rendu homogène dans la javadoc,
-la partie descriptive de la javadoc doit être encapsulée
+la partie descriptive doit être encapsulée
 dans une structure HTML explicite :
 
 - un bloc racine `<div> ... </div>` ;
@@ -123,45 +142,47 @@ dans une structure HTML explicite :
 - des listes `<ul><li>...</li></ul>`
   pour les points de scénario, de contrat et de garanties.
 
-**Règle absolue :**
-les titres de rubrique ne doivent jamais être laissés
-sous forme de texte nu perdu au milieu de la javadoc.
-
 ### 8.3 Phrase d’ouverture
+
 La phrase d’ouverture doit :
+
 - commencer par un verbe d’action clair ;
-- nommer le type principal manipulé (`InputDTO`, `OutputDTO`, `ResultatPage`, etc.) ;
+- nommer le type principal manipulé lorsque c’est pertinent ;
 - résumer la finalité observable de la méthode ;
 - rester courte et descriptive.
 
 ### 8.4 Rubrique INTENTION DE SERVICE UC (scénario nominal)
+
 Cette rubrique décrit le **déroulé nominal**
 du point de vue orchestration UC.
 
 Elle doit :
-- être rédigée sous forme de liste ordonnée logique ;
-- partir de ce que reçoit la couche UC ;
+
+- partir de ce que reçoit ou fait la couche UC ;
 - expliciter les validations utiles ;
 - expliciter la délégation au `GATEWAY` ou à une autre méthode UC ;
-- expliciter la conversion finale en réponse appelante ;
+- expliciter la préparation de la réponse finale ;
 - se terminer par la restitution d’une réponse exploitable.
 
 Elle ne doit pas :
+
 - détailler les exceptions une première fois ;
 - mélanger nominal et cas d’erreur ;
 - parler de bas niveau de persistance.
 
 ### 8.5 Rubrique CONTRAT DE SERVICE UC
+
 Cette rubrique décrit les **cas observables**.
 
 Elle doit :
-- énumérer les cas d’entrée problématique (`null`, `blank`, etc.) ;
+
+- énumérer les cas d’entrée problématique lorsque la méthode a des paramètres ;
 - préciser, pour chaque cas, le triplet :
   - retour observable,
   - message utilisateur,
   - LOG / exception / absence de LOG / absence d’exception ;
 - expliciter la délégation lorsqu’elle existe ;
-- expliciter les cas métier (introuvable, doublon, vide, etc.) ;
+- expliciter les cas métier ;
 - expliciter le cas nominal de succès ;
 - expliciter le comportement en cas de panne technique remontée.
 
@@ -170,33 +191,36 @@ chaque point écrit ici doit pouvoir être vérifié
 dans les tests Mock et/ou Intégration.
 
 ### 8.6 Rubrique GARANTIES METIER, UTILISATEUR et TRAÇABILITE
+
 Cette rubrique décrit ce que la méthode garantit
 sur la qualité de la réponse.
 
 Elle doit comporter, selon le cas,
 des garanties du type :
+
 - le message retourné par `getMessage()` reflète l’issue observable ;
-- le message de succès n’est positionné qu’après préparation complète ;
+- le message de succès n’est positionné qu’après traitement complet ;
 - le DTO ou la liste retournée correspond à l’état métier effectivement accessible ;
 - aucun résultat partiel incohérent n’est exposé à l’appelant ;
-- la réponse paginée est cohérente ;
-- la réponse déléguée reste alignée sur la méthode appelée.
-
-Cette rubrique ne doit pas être supprimée,
-même lorsqu’elle semble répétitive :
-elle fait partie du formalisme contractuel.
+- la réponse déléguée reste alignée sur la méthode appelée ;
+- le getter `getMessage()` reste un pur reflet d’état local.
 
 ### 8.7 Bloc `@param / @return / @throws`
+
 Le bloc de tags doit être complet et détaillé.
 
 #### `@param`
+
 Chaque paramètre doit préciser :
+
 - son type ;
 - son rôle métier/technique ;
 - ce qu’il représente dans le scénario UC.
 
 #### `@return`
+
 Le retour doit préciser :
+
 - le type réellement retourné ;
 - le cas nominal ;
 - les cas où `null` est autorisé ;
@@ -204,19 +228,17 @@ Le retour doit préciser :
   pour les listes et résultats paginés.
 
 #### `@throws`
+
 Les exceptions doivent être détaillées par catégorie :
+
 - exception de validation observable ;
 - exception métier ;
 - exception technique ;
 - `IllegalStateException` en cas d’incohérence finale de réponse ;
 - `Exception` de garde si l’implémentation le prévoit encore.
 
-**Règle absolue :**
-ne jamais laisser un simple `@throws Exception`
-si des catégories plus précises sont déjà connues
-par les méthodes de référence du §5.
-
 ### 8.8 Règles rédactionnelles obligatoires
+
 La rédaction javadoc du PORT UC doit respecter les règles suivantes :
 
 - français clair et homogène ;
@@ -224,23 +246,26 @@ La rédaction javadoc du PORT UC doit respecter les règles suivantes :
 - même intitulé exact de rubrique d’une méthode à l’autre ;
 - mêmes conventions d’écriture pour `null`, `blank`, `GATEWAY`, `DTO` ;
 - références `{@link ...}` sur les types, constantes et méthodes citées ;
+- formulations observables et testables ;
 - pas de formule vague du type
-  « fait le nécessaire », « traite la demande », « gère le cas » ;
-- préférer des formulations observables et testables.
+  « fait le nécessaire », « traite la demande », « gère le cas ».
 
 ### 8.9 Interdictions absolues dans la javadoc du PORT
+
 Il est interdit :
+
 - d’enlever le bloc `<div>` ;
 - d’enlever les `<p>` portant les titres de rubriques ;
-- de fusionner les 3 rubriques en un texte libre ;
+- de fusionner les rubriques en un texte libre ;
 - de remplacer `CONTRAT DE SERVICE UC`
   par `CONTRAT (métier / observable)` sur une méthode remise au carré ;
 - de supprimer la rubrique `GARANTIES ...` ;
 - de livrer une javadoc réduite à quelques puces techniques ;
 - de produire une javadoc plus pauvre qu’une méthode déjà normalisée ;
-- de documenter une méthode legacy comme si elle était une référence.
+- de dégrader les signatures documentées en types bruts.
 
 ### 8.10 Gabarit canonique à reproduire
+
 ```java
 /**
  * <div>
@@ -248,17 +273,17 @@ Il est interdit :
  *
  * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
  * <ul>
- * <li>décrire la réception de l’entrée par la couche UC ;</li>
+ * <li>décrire la réception ou le déclenchement côté UC ;</li>
  * <li>décrire les validations utiles ;</li>
  * <li>décrire la délégation au GATEWAY ou à une autre méthode UC ;</li>
- * <li>décrire la conversion finale ;</li>
+ * <li>décrire la préparation de la réponse ;</li>
  * <li>décrire la restitution d’une réponse exploitable.</li>
  * </ul>
  *
  * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
  * <ul>
- * <li>cas {@code null} / {@code blank} : retour, message, LOG, exception ;</li>
- * <li>cas métier : introuvable, vide, doublon, etc. ;</li>
+ * <li>cas d’entrée problématique : retour, message, LOG, exception ;</li>
+ * <li>cas métier ;</li>
  * <li>cas nominal de succès ;</li>
  * <li>cas d’échec technique remonté par le GATEWAY
  * ou par la préparation de la réponse.</li>
@@ -267,7 +292,7 @@ Il est interdit :
  * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
  * <ul>
  * <li>le message reflète l’issue observable ;</li>
- * <li>le succès n’est positionné qu’après préparation complète ;</li>
+ * <li>le succès n’est positionné qu’après traitement complet ;</li>
  * <li>la réponse retournée correspond à l’état métier réellement accessible ;</li>
  * <li>aucun résultat partiel incohérent n’est exposé à l’appelant.</li>
  * </ul>
@@ -284,33 +309,3 @@ Il est interdit :
  * @throws Exception
  * toute autre exception levée par l’implémentation.
  */
- 
-### 15) Règle spécifique à `getMessage()`
-
-La méthode `getMessage()` est un **getter du message courant local**
-du SERVICE METIER UC.
-
-Contrat spécifique :
-- `getMessage()` peut retourner `null`
-  avant toute opération ayant positionné un message ;
-- `getMessage()` retourne ensuite
-  le **dernier message observable**
-  posé par l'opération UC la plus récente ;
-- ce message peut correspondre :
-  - à un succès,
-  - à une absence de résultat,
-  - à une erreur bénigne,
-  - à une erreur métier,
-  - à une erreur technique ;
-- `getMessage()` ne délègue jamais au `GATEWAY` ;
-- `getMessage()` ne modifie aucun état métier ;
-- `getMessage()` n'émet aucun LOG ;
-- `getMessage()` ne doit lever aucune exception.
-
-Conséquence de test :
-- les tests Mock et Intégration doivent verrouiller
-  à la fois :
-  - l'état initial potentiellement `null`,
-  - la restitution d'un message d'erreur,
-  - la restitution d'un message de succès,
-  - la règle **"le dernier message gagne"**.
