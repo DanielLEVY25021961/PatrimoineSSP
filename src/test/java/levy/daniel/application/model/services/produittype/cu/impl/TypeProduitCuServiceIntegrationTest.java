@@ -1638,7 +1638,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	
 
 	
-	// ---------------------- detete(...) -------------------------------//
+	// ---------------------- delete(...) -------------------------------//
 
 	
 	
@@ -1647,103 +1647,161 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <p>delete(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(null) : violation de contrat -> ExceptionParametreNull")
+	@DisplayName("delete(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
 	public void testDeleteNull() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		assertThatThrownBy(() -> this.service.delete(null))
 				.isInstanceOf(ExceptionParametreNull.class);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_PARAM_NULL);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
 	 * <p>delete(blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(blank) : positionne message + lève ExceptionParametreBlank")
+	@DisplayName("delete(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
 	public void testDeleteBlank() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		final InputDTO input = new TypeProduitDTO.InputDTO(ESPACES);
 
 		assertThatThrownBy(() -> this.service.delete(input))
 				.isInstanceOf(ExceptionParametreBlank.class);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_PARAM_BLANK);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>delete(introuvable) : ne supprime rien.</p>
+	 * <p>delete(introuvable) : aucun objet persistant
+	 * ne correspond au libellé exact transmis.</p>
 	 * <ul>
-	 * <li>le {@code count()} reste inchangé</li>
-	 * <li>le message contient {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>ne supprime rien</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>la base reste strictement inchangée</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("delete(introuvable) : ne supprime rien, retourne, message 'introuvable'")
+	@DisplayName("delete(introuvable) : aucune suppression + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testDeleteIntrouvable() throws Exception {
 
-		final long baseline = this.service.count();
+		final String libelleAbsent = IT_INEXISTANT_DELETE;
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
-		this.service.delete(new TypeProduitDTO.InputDTO(IT_INEXISTANT_DELETE));
+		this.service.delete(new TypeProduitDTO.InputDTO(libelleAbsent));
 
-		assertThat(this.service.count()).isEqualTo(baseline);
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
-	}// __________________________________________________________________
-	
-	
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelleAbsent);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelleAbsent))
+				.isEqualTo(0L);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>delete(ok) : supprime effectivement.</p>
+	 * <p>delete(ok) : test béton du scénario nominal réel.</p>
 	 * <ul>
-	 * <li>après suppression, {@code findByLibelle(libelle)} retourne {@code null}</li>
+	 * <li>crée d'abord un TypeProduit réel</li>
+	 * <li>supprime ensuite cet objet via un {@link InputDTO}
+	 * portant le même libellé exact</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
+	 * <li>prouve physiquement la disparition en base</li>
+	 * <li>prouve la baisse du volume total en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("delete(ok) : supprime effectivement (findByLibelle -> null)")
-	public void testDeleteOk() throws Exception {
+	@DisplayName("delete(ok) : suppression physique + message exact + preuve BD")
+	public void testDeleteOkAvecPreuveBd() throws Exception {
 
-		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(IT_DELETE_OK));
+		final String libelle = IT_DELETE_OK;
+
+		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(libelle));
 
 		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(libelle);
 
-		this.service.delete(new TypeProduitDTO.InputDTO(IT_DELETE_OK));
+		final Long id = cree.getIdTypeProduit();
+		final Long nombreAvantDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
-		final OutputDTO apresSuppression = this.service.findByLibelle(IT_DELETE_OK);
+		this.service.delete(new TypeProduitDTO.InputDTO(libelle));
+
+		final Long nombreApresDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_DELETE_OK + libelle);
+		assertThat(nombreApresDelete).isEqualTo(nombreAvantDelete - 1L);
+		assertThat(this.compterTypeProduitEnBase(id)).isEqualTo(0L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelle)).isEqualTo(0L);
+
+		final OutputDTO apresSuppression = this.service.findByLibelle(libelle);
 
 		assertThat(apresSuppression).isNull();
-		
-	}// __________________________________________________________________
-	
+
+	} // __________________________________________________________________	
+
 
 	
 	// ------------------------- count() ---------------------------------//

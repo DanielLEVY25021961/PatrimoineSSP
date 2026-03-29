@@ -62,6 +62,7 @@ dans le PORT `TypeProduitICuService` :
 - `TypeProduitDTO.OutputDTO findByDTO(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `TypeProduitDTO.OutputDTO findById(Long pId) throws Exception;`
 - `TypeProduitDTO.OutputDTO update(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 
 **Règle absolue :**
 toute nouvelle remise au carré du PORT UC doit s’aligner
@@ -71,7 +72,6 @@ sur le formalisme de ces méthodes déjà normalisées.
 Les méthodes suivantes ne doivent **pas** servir de référence de style
 tant qu’elles n’ont pas été remises au niveau du formalisme UC complet :
 
-- `void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `long count() throws Exception;`
 
 Leur comportement peut rester exploitable,
@@ -132,11 +132,6 @@ La phrase d’ouverture doit :
 - nommer le type principal manipulé (`InputDTO`, `OutputDTO`, `ResultatPage`, etc.) ;
 - résumer la finalité observable de la méthode ;
 - rester courte et descriptive.
-
-Exemples de style attendu :
-- « Recherche un `OutputDTO` à partir de son libellé exact. »
-- « Retourne tous les `OutputDTO` disponibles sous forme paginée. »
-- « Stocke un `InputDTO` puis retourne la réponse sous forme de `OutputDTO`. »
 
 ### 8.4 Rubrique INTENTION DE SERVICE UC (scénario nominal)
 Cette rubrique décrit le **déroulé nominal**
