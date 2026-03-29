@@ -909,8 +909,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		/* Retourne l'OutputDTO résultat. */
 		return dto;
 	}
-
-
+	
+	
 	
 	/**
 	* {@inheritDoc}
@@ -919,17 +919,28 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	public TypeProduitDTO.OutputDTO update(
 			final TypeProduitDTO.InputDTO pInputDTO) throws Exception {
 
-		/* alimente this.message, LOG et jette une Exception
-		 * si pInputDTO == null. */
+		/*
+		 * Le contrat UC refuse un DTO de modification null.
+		 * Si pInputDTO == null :
+		 * émet MESSAGE_PARAM_NULL + LOG + ExceptionParametreNull.
+		 */
 		if (pInputDTO == null) {
 			return this.traiterErreur(
 					MESSAGE_PARAM_NULL,
 					new ExceptionParametreNull(MESSAGE_PARAM_NULL));
 		}
 
-		/* alimente this.message, LOG et jette une
-		 * Exception si le libellé est blank. */
-		if (StringUtils.isBlank(pInputDTO.getTypeProduit())) {
+		/*
+		 * Extrait le libellé métier porté par le DTO.
+		 */
+		final String libelle = pInputDTO.getTypeProduit();
+
+		/*
+		 * Le contrat UC refuse un libellé blank.
+		 * Si StringUtils.isBlank(libelle) :
+		 * émet MESSAGE_PARAM_BLANK + LOG + ExceptionParametreBlank.
+		 */
+		if (StringUtils.isBlank(libelle)) {
 			return this.traiterErreur(
 					MESSAGE_PARAM_BLANK,
 					new ExceptionParametreBlank(MESSAGE_PARAM_BLANK));
@@ -941,63 +952,140 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 * On récupère donc l'objet existant via une recherche
 		 * (par libellé exact), afin d'obtenir l'ID persistant.
 		 */
-		/* délègue au Gateway la recherche par libellé. */
-		final TypeProduit existant = this.gateway.findByLibelle(
-				pInputDTO.getTypeProduit());
+		final TypeProduit existant;
 
-		/* émet un message et retourne null si le Gateway
-		 * ne trouve pas d'objet par libellé. */
+		try {
+
+			/* délègue au Gateway la recherche par libellé. */
+			existant = this.gateway.findByLibelle(libelle);
+
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si aucun objet n'est retrouvé par le GATEWAY via libellé exact :
+		 * retourne null + message observable d'introuvabilité 
+		 * MESSAGE_OBJ_INTROUVABLE.
+		 */
 		if (existant == null) {
-			this.message.set(MESSAGE_OBJ_INTROUVABLE
-					+ pInputDTO.getTypeProduit());
+			this.message.set(MESSAGE_OBJ_INTROUVABLE + libelle);
 			return null;
 		}
 
-		/* alimente this.message, LOG et jette une Exception
-		 * si l'objet métier n'est pas persisté. */
+		/* 
+		 * Si l'objet existant n'est pas persistant (id == null) :  
+		 * émet un message (MESSAGE_OBJ_NON_PERSISTE + libelle) 
+		 * + LOG + jette une Exception applicative ExceptionNonPersistant.
+		 */
 		if (existant.getIdTypeProduit() == null) {
-
-			final String messageUtil
-				= MESSAGE_OBJ_NON_PERSISTE
-					+ pInputDTO.getTypeProduit();
-
+			final String messageUtil = MESSAGE_OBJ_NON_PERSISTE + libelle;
 			return this.traiterErreur(
 					messageUtil,
 					new ExceptionNonPersistant(messageUtil));
 		}
 
-		/* convertit l'InputDTO en objet métier. */
-		final TypeProduit tp
-			= this.convertirInputDTOEnMetier(pInputDTO);
-
-		/* réinjecte l'ID persistant récupéré. */
+		/*
+		 * Reconstruit l'objet métier à partir du DTO,
+		 * puis réinjecte l'ID persistant retrouvé.
+		 */
+		final TypeProduit tp = this.convertirInputDTOEnMetier(pInputDTO);
+		
+		/* Réinjecte l'ID persistant récupéré. */
 		tp.setIdTypeProduit(existant.getIdTypeProduit());
 
-		/* MODIFICATION - applique la modification - fait par le Gateway. */
+		/*
+		 * Délègue ensuite la modification au GATEWAY.
+		 * Toute anomalie technique est transformée
+		 * en message utilisateur technique cohérent.
+		 */
+		final TypeProduit modifie;
 
-		/* Délègue au Gateway la tâche de modifier dans le stockage. */
-		final TypeProduit modifie = this.gateway.update(tp);
+		try {
 
-		/* émet un message et retourne null si modifie == null. */
+			/* Délègue au Gateway la tâche de modifier dans le stockage. */
+			modifie = this.gateway.update(tp);
+
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					MESSAGE_MODIF_KO + libelle + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le GATEWAY retourne null :
+		 * retourne null + MESSAGE_MODIF_KO + libellé.
+		 */
 		if (modifie == null) {
-			this.message.set(MESSAGE_MODIF_KO
-					+ pInputDTO.getTypeProduit());
+			this.message.set(MESSAGE_MODIF_KO + libelle);
 			return null;
 		}
 
-		/* message de succès. */
-		this.message.set(MESSAGE_MODIF_OK + pInputDTO.getTypeProduit());
+		/*
+		 * L'objet retourné après modification
+		 * doit rester persistant.
+		 * Un ID null à ce stade constitue une rupture technique.
+		 */
+		if (modifie.getIdTypeProduit() == null) {
+			final String messageTechnique = MESSAGE_OBJ_NON_PERSISTE + libelle;
+			return this.traiterErreur(
+					messageTechnique,
+					new IllegalStateException(messageTechnique));
+		}
 
-		/* convertit l'objet métier modifié en DTO. */
-		final TypeProduitDTO.OutputDTO dto
-			= ConvertisseurMetierToOutputDTOTypeProduit.convert(modifie);
+		/*
+		 * Prépare la réponse utilisateur finale
+		 * à partir de l'objet métier modifié.
+		 */
+		final TypeProduitDTO.OutputDTO dto;
 
-		/* retourne l'OutputDTO modifié. */
+		try {
+
+			dto = ConvertisseurMetierToOutputDTOTypeProduit.convert(modifie);
+
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					MESSAGE_MODIF_KO + libelle + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Un DTO null après conversion est une rupture technique.
+		 */
+		if (dto == null) {
+			final String messageTechnique = MESSAGE_MODIF_KO
+					+ libelle
+					+ TIRET_ESPACE
+					+ MSG_ERREUR_NON_SPECIFIEE;
+			return this.traiterErreur(
+					messageTechnique,
+					new IllegalStateException(messageTechnique));
+		}
+
+		/*
+		 * Le message de succès MESSAGE_MODIF_OK + libellé
+		 * n'est positionné qu'après préparation complète
+		 * de la réponse utilisateur finale.
+		 */
+		this.message.set(MESSAGE_MODIF_OK + libelle);
+
+		/* Retourne l'OutputDTO modifié. */
 		return dto;
 	}
-
 	
 
+	
 	/**
 	* {@inheritDoc}
 	*/

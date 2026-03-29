@@ -967,62 +967,149 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Modifie un {@link TypeProduit}
-	 * déjà existant dans le stockage.</p>
-	 * <p>Cette méthode ne s'applique qu'à un objet déjà persistant.</p>
+	 * <p style="font-weight:bold;">
+	 * Modifie un {@link TypeProduit}
+	 * déjà persistant à partir d'un {@link TypeProduitDTO.InputDTO}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>doit jeter une Exception si pTypeProduit == null.</li>
-	 * <li>doit jeter une Exception 
-	 * si le libellé est Blank.</li>
-	 * <li>doit jeter une ExceptionNonPersistant si l'ID est null.</li>
-	 * <li>retourne null si l'objet n'existe pas en stockage.</li>
-	 * <li>retourne l'objet modifié 
-	 * si une modification est effectuée.</li>
-	 * <li>sinon retourne l'objet inchangé 
-	 * et fournit un message utilisateur.</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO} comportant les 
+	 * modifications à appliquer provenant de la couche appelante ;</li>
+	 * <li>valider les préconditions applicatives observables
+	 * sur le InputDTO et sur son libellé ;</li>
+	 * <li>vérifier qu'un {@link TypeProduitDTO.InputDTO} passé en paramètre 
+	 * ne portant aucun identifiant persistant ni aucune ancienne 
+	 * valeur métier pour son libéllé ne peut engendrer de modification ;</li>
+	 * <li>identifier l'objet métier déjà persistant par une recherche exacte 
+	 * sur le même libellé que celui porté par l'InpuDTO 
+	 * passé en paramètre ;</li>
+	 * <li>réinjecter l'identifiant persistant retrouvé
+	 * dans l'objet métier reconstruit à partir du InputDTO ;</li>
+	 * <li>déléguer la modification technique
+	 * au composant GATEWAY ;</li>
+	 * <li>convertir l'objet métier modifié en
+	 * {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pTypeProduit == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL}, LOG et lève une exception.</li>
-	 * <li>Si {@code pTypeProduit.getTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
-	 * , LOG et lève une exception.</li>
-	 * <li>Si l'objet n'existe pas dans le stockage 
-	 * (recherche par libellé exact), retourne {@code null} et positionne
-	 * {@link #getMessage()} à 
-	 * {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Si l'objet existe mais n'est pas persistant (ID {@code null})
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé
-	 * , LOG et lève une exception.</li>
-	 * <li>Sinon, délègue la modification au Gateway.</li> 
-	 * <li>retourne l'OutputDTO correspondant à l'objet modifié
-	 * (ou {@code null} si le Gateway retourne {@code null}).</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_MODIF_KO} + pTypeProduit.getTypeProduit()
-	 * , et retourne null si le Gateway retourne {@code null}.</li>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_MODIF_OK} + pTypeProduit.getTypeProduit()
-	 * , et retourne l'OutputDTO modifié en cas de succès.</li>
-	 * </ul>
+	 * <li>Si {@code pInputDTO == null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Si pInputDTO passé en paramètre ne porte ni ID 
+	 * ni ancienne valeur métier en libellé, retourne null.</li>
+	 * <li>En conséquence,
+	 * cette méthode s'applique uniquement
+	 * à un objet déjà persistant retrouvé
+	 * par le même libellé exact
+	 * que celui porté par {@code pInputDTO}.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage
+	 * via cette recherche exacte,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
+	 * <li>Si l'objet retrouvé existe
+	 * mais n'est pas persistant
+	 * (identifiant {@code null}),
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé,
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Sinon, réinjecte l'identifiant persistant retrouvé
+	 * dans l'objet métier reconstruit à partir du DTO,
+	 * puis délègue la modification au GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null},
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO} + libellé.</li>
+	 * <li>En cas de succès,
+	 * retourne un {@link TypeProduitDTO.OutputDTO}
+	 * correspondant à l'objet modifié
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_OK} + libellé
+	 * seulement après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>En cas d'échec technique
+	 * lors de la recherche de l'existant,
+	 * de la délégation de modification
+	 * ou de la préparation finale de la réponse,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : TypeProduitDTO.InputDTO : 
-	 * Objet métier portant les modifications (hors ID).
-	 * @return TypeProduitDTO.OutputDTO : 
-	 * OutputDTO de même ID que pTypeProduit, modifié ou inchangé, ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'objet déjà persistant
+	 * retrouvé par libellé exact,
+	 * puis modifié via le GATEWAY.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * <li>L'absence d'identifiant
+	 * dans le {@link TypeProduitDTO.InputDTO}
+	 * est explicitement compensée
+	 * par une phase préalable
+	 * de ré-identification de l'objet persistant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * DTO portant le libellé métier
+	 * de l'objet déjà persistant
+	 * à ré-identifier puis à modifier ;
+	 * ce DTO ne porte ni ID
+	 * ni ancienne valeur métier.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO de l'objet persistant modifié ;
+	 * retourne {@code null}
+	 * si aucun objet n'est trouvé
+	 * par libellé exact
+	 * ou si le GATEWAY retourne {@code null}.
+	 * @throws ExceptionParametreNull
+	 * si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si {@code pInputDTO.getTypeProduit()} est blank.
+	 * @throws ExceptionNonPersistant
+	 * si l'objet retrouvé avant modification
+	 * n'est pas persistant.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors de la recherche de l'existant,
+	 * de la délégation de modification
+	 * ou de la préparation finale
+	 * de la réponse utilisateur.
+	 * @throws IllegalStateException
+	 * si l'objet retourné après modification
+	 * n'est plus persistant
+	 * ou si la conversion finale en
+	 * {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
 	TypeProduitDTO.OutputDTO update(
 			TypeProduitDTO.InputDTO pInputDTO) throws Exception;
-
 	
+
 	
 	/**
 	 * <div>
