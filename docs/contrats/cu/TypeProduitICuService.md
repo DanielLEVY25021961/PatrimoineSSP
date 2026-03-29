@@ -309,3 +309,138 @@ Il est interdit :
  * @throws Exception
  * toute autre exception levée par l’implémentation.
  */
+```
+
+## 9) Règles obligatoires dans l’ADAPTER UC
+
+L’implémentation de l’ADAPTER UC doit :
+
+- consommer les constantes de messages définies dans le PORT ;
+- rationaliser les messages utilisateur techniques ;
+- distinguer clairement :
+  - erreur bénigne,
+  - erreur métier,
+  - erreur technique ;
+- ne positionner le message de succès **qu’en fin de scénario complet** ;
+- aligner strictement le comportement observable
+  sur le contrat décrit dans la javadoc du PORT ;
+- comporter des **commentaires de bloc factuels et opérationnels**.
+
+### Règles de style additionnelles
+
+- les commentaires de bloc doivent être quasi-contractuels ;
+- éviter les formulations prétentieuses ou floues ;
+- ne jamais appeler `IllegalStateException`
+  une « exception applicative » ;
+- préférer des formulations du type :
+  `Si pXxx == null : positionne MESSAGE_X + LOG + exception`
+  quand c’est effectivement le comportement.
+
+## 10) Règles obligatoires dans les tests Mock
+
+Les tests Mock doivent couvrir, selon le contrat de la méthode :
+
+- scénario nominal ;
+- violation de contrat ;
+- erreur bénigne ;
+- erreur métier ;
+- erreur technique ;
+- message utilisateur final ;
+- délégation correcte vers le `GATEWAY`
+  ou vers une autre méthode UC ;
+- absence d’interaction technique
+  lorsqu’aucune interaction ne doit avoir lieu.
+
+Le nom des tests doit rendre visible
+le cas contractuel couvert.
+
+## 11) Règles obligatoires dans les tests d’Intégration
+
+Les tests d’Intégration doivent couvrir, selon le contrat de la méthode :
+
+- comportement observable ;
+- message final exact ;
+- exceptions exactes lorsque c’est intégrablement testable ;
+- cohérence du DTO ou de la liste retournée ;
+- **preuve BD physique** lorsque la méthode écrit ou détruit en stockage ;
+- absence d’effet de bord lorsqu’aucune écriture ne doit se produire.
+
+Pour une méthode de lecture ou d’agrégation pure,
+la preuve d’intégration doit au minimum démontrer :
+
+- la réalité du résultat ;
+- ou l’absence réelle de donnée correspondante ;
+- et la cohérence du message final.
+
+## 12) Règle spécifique à `getMessage()`
+
+La méthode `getMessage()` est un **getter du message courant local**
+du SERVICE METIER UC.
+
+### Contrat spécifique
+
+- `getMessage()` peut retourner `null`
+  avant toute opération ayant positionné un message ;
+- `getMessage()` retourne ensuite
+  le **dernier message observable**
+  posé par l’opération UC la plus récente ;
+- ce message peut correspondre :
+  - à un succès,
+  - à une absence de résultat,
+  - à une erreur bénigne,
+  - à une erreur métier,
+  - à une erreur technique ;
+- `getMessage()` ne délègue jamais au `GATEWAY` ;
+- `getMessage()` ne modifie aucun état métier ;
+- `getMessage()` n’émet aucun LOG ;
+- `getMessage()` ne doit lever aucune exception.
+
+### Conséquence de test
+
+Les tests Mock et Intégration doivent verrouiller :
+
+- l’état initial potentiellement `null` ;
+- la restitution d’un message d’erreur ;
+- la restitution d’un message de succès ;
+- la règle **« le dernier message gagne »**.
+
+## 13) Ordre de traitement contractuel d’une méthode UC
+
+Pour toute méthode UC,
+l’ordre de travail obligatoire est :
+
+1. PORT UC
+2. ADAPTER UC
+3. tests Mock
+4. tests d’Intégration
+5. mise à jour du contrat local si nécessaire
+
+Aucune étape ultérieure ne doit être engagée
+si l’étape précédente n’est pas stabilisée.
+
+## 14) Règle de non-régression documentaire
+
+Dès qu’une méthode UC a été remise au carré :
+
+- sa javadoc du PORT devient une **référence stable** ;
+- toute méthode ultérieure de même nature
+  doit s’y aligner ;
+- aucune nouvelle correction ne doit réintroduire
+  un formalisme plus pauvre ;
+- aucune signature documentée ne doit être redégradée
+  en type brut ou en forme abrégée.
+
+## 15) Objectif de cette sacralisation
+
+L’objectif n’est pas seulement de documenter les méthodes,
+mais de rendre impossible :
+
+- la régression de style ;
+- la disparition visuelle des rubriques ;
+- la perte de traçabilité des cas observables ;
+- la dérive entre PORT, ADAPTER et tests ;
+- les réponses d’IA “à peu près correctes” mais non conformes.
+
+Ce document est donc le **référentiel opérationnel**
+à relire avant toute correction
+sur `TypeProduitICuService`.
