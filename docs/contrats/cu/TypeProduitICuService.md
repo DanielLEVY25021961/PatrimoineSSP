@@ -63,19 +63,19 @@ dans le PORT `TypeProduitICuService` :
 - `TypeProduitDTO.OutputDTO findById(Long pId) throws Exception;`
 - `TypeProduitDTO.OutputDTO update(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `long count() throws Exception;`
 
 **Règle absolue :**
 toute nouvelle remise au carré du PORT UC doit s’aligner
 sur le formalisme de ces méthodes déjà normalisées.
 
 ## 6) Méthodes encore en formalisme legacy
-Les méthodes suivantes ne doivent **pas** servir de référence de style
-tant qu’elles n’ont pas été remises au niveau du formalisme UC complet :
+Aucune méthode ne doit désormais être considérée comme legacy
+dans le PORT `TypeProduitICuService`.
 
-- `long count() throws Exception;`
-
-Leur comportement peut rester exploitable,
-mais leur **javadoc n’est pas encore au niveau du formalisme cible**.
+Toutes les méthodes du PORT doivent être considérées
+comme **références de formalisme UC**
+et ne doivent subir aucune régression documentaire.
 
 ## 7) Règles de lecture avant toute modification documentaire ou code
 Avant toute rédaction ou correction concernant une méthode UC,
