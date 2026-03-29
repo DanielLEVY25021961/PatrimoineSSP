@@ -1350,6 +1350,201 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	} // __________________________________________________________________	
 	
+	
+
+	// ===================== TESTS findAllByParent(...) ====================
+
+	
+	
+	/**
+	 * <div>
+	 * <p>findAllByParent(null) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne {@link SousTypeProduitICuService#RECHERCHE_TYPEPRODUIT_NULL}</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("findAllByParent(null) : positionne message + lève IllegalStateException")
+	public void testFindAllByParentNull() {
+
+		assertThatThrownBy(() -> this.service.findAllByParent(null))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent blank) : parent non exploitable.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("findAllByParent(parent blank) : positionne MESSAGE_PAS_PARENT + lève IllegalStateException")
+	public void testFindAllByParentParentBlank() {
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(ESPACES);
+
+		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent absent) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("findAllByParent(parent absent) : positionne MESSAGE_PAS_PARENT + lève IllegalStateException")
+	public void testFindAllByParentPasParent() {
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(IT_TP_PARENT_B);
+
+		/* Parent non créé. */
+		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(vide) : parent existant mais aucun STP attaché.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindAllByParentVide() throws Exception {
+
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
+
+		final List<OutputDTO> dtos = this.service.findAllByParent(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
+
+		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(ok) : test béton avec preuve BD
+	 * et rattachement exclusif au parent demandé.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>ne retourne que les enfants du parent demandé</li>
+	 * <li>prouve physiquement en base les couples parent / sous-type créés</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(ok) : retourne uniquement les enfants du parent demandé + message exact + preuve BD")
+	public void testFindAllByParentOkAvecPreuveBd() throws Exception {
+
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
+
+		final OutputDTO creeA1 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PAGE_01));
+		final OutputDTO creeA2 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PAGE_02));
+		final OutputDTO creeB1 = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PAGE_03));
+
+		final List<OutputDTO> dtos = this.service.findAllByParent(
+				new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(IT_STP_PAGE_01, IT_STP_PAGE_02);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getTypeProduit)
+				.containsOnly(IT_TP_PARENT_A);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.containsExactly(
+						creeA1.getIdSousTypeProduit(),
+						creeA2.getIdSousTypeProduit());
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.doesNotContain(creeB1.getIdSousTypeProduit());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeA1.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeA1.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_01);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeA1.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeA2.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeA2.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_02);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeA2.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeB1.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeB1.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_PAGE_03);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeB1.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_B);
+
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_PAGE_01))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_PAGE_02))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_B, IT_STP_PAGE_03))
+				.isEqualTo(1L);
+		
+	} // __________________________________________________________________	
 
 	
 	// ========================== TESTS findByDTO(...) =====================
@@ -1455,113 +1650,6 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNotNull();
 		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_ALPHA);
 		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		
-	} // __________________________________________________________________
-	
-	
-
-	// ===================== TESTS findAllByParent(...) ====================
-
-	
-	
-	/**
-	 * <div>
-	 * <p>findAllByParent(null) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link RuntimeException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#RECHERCHE_TYPEPRODUIT_NULL}</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@DisplayName("findAllByParent(null) : positionne message + lève RuntimeException")
-	public void testFindAllByParentNull() {
-
-		assertThatThrownBy(() -> this.service.findAllByParent(null))
-				.isInstanceOf(RuntimeException.class);
-
-		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(parent absent) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@DisplayName("findAllByParent(parent absent) : positionne MESSAGE_PAS_PARENT + lève IllegalStateException")
-	public void testFindAllByParentPasParent() {
-
-		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(IT_TP_PARENT_B);
-
-		/* Parent non créé. */
-		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
-				.isInstanceOf(IllegalStateException.class);
-
-		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(vide) : parent existant mais aucun STP attaché.</p>
-	 * <ul>
-	 * <li>retourne une liste vide</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findAllByParent(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testFindAllByParentVide() throws Exception {
-
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
-
-		final List<OutputDTO> dtos = this.service.findAllByParent(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
-
-		assertThat(dtos).isNotNull().isEmpty();
-		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(ok) : test "béton" de la récupération de tous les STP d'un parent.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findAllByParent(ok) : retourne une liste non nulle contenant les créations du test")
-	public void testFindAllByParentOk() throws Exception {
-
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
-
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_GAMMA));
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_DELTA));
-
-		final List<OutputDTO> dtos = this.service.findAllByParent(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos)
-				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
-				.contains(IT_STP_GAMMA, IT_STP_DELTA);
 		
 	} // __________________________________________________________________
 	

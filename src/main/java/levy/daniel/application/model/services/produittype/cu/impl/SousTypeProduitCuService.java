@@ -901,27 +901,57 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			final TypeProduitDTO.InputDTO pTypeProduit)
 			throws Exception {
 
-		/* émet un message, LOG et jette une Exception 
-		 * si pTypeProduit == null. */
+		/*
+		 * Si pTypeProduit == null :
+		 * émet RECHERCHE_TYPEPRODUIT_NULL + LOG + IllegalStateException.
+		 */
 		if (pTypeProduit == null) {
 			return this.traiterErreur(
 					RECHERCHE_TYPEPRODUIT_NULL,
-					new RuntimeException(RECHERCHE_TYPEPRODUIT_NULL));
+					new IllegalStateException(RECHERCHE_TYPEPRODUIT_NULL));
 		}
 
-		/* ==========RATTACHEMENT PARENT PERSISTÉ ===================== */
-
-		/* IMPORTANT :
-		 * On doit récupérer le TypeProduit PERSISTÉ (avec ID) depuis la base,
-		 * puis l'utiliser comme parent pour la recherche des SousTypeProduit.
-		 *
-		 * => nécessite un accès au TypeProduitGatewayIService depuis ce CU Service.
+		/*
+		 * Si le libellé du parent n'est pas exploitable :
+		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
 		 */
 		final String libelleParent = pTypeProduit.getTypeProduit();
 
-		final TypeProduit parentPersistant
-			= this.typeProduitGateway.findByLibelle(libelleParent);
+		if (StringUtils.isBlank(libelleParent)) {
+			return this.traiterErreur(
+					MESSAGE_PAS_PARENT,
+					new IllegalStateException(MESSAGE_PAS_PARENT));
+		}
 
+		/*
+		 * Recherche le parent persistant.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final TypeProduit parentPersistant;
+
+		try {
+
+			/* Délègue au GATEWAY la recherche du parent persisté. */
+			parentPersistant 
+				= this.typeProduitGateway.findByLibelle(libelleParent);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le parent est absent du stockage
+		 * ou non persistant :
+		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdTypeProduit() == null) {
 			return this.traiterErreur(
@@ -929,33 +959,84 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
+		/*
+		 * Recherche tous les SousTypeProduit rattachés au parent persistant.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final List<SousTypeProduit> records;
+
 		try {
 
-			/* essaie de récupérer la liste des enfants 
-			 * auprès du service Gateway. */
-			final List<SousTypeProduit> listStp
-				= this.gateway.findAllByParent(parentPersistant);
+			/* Délègue au GATEWAY la recherche des enfants persistants. */
+			records = this.gateway.findAllByParent(parentPersistant);
 
-			if (listStp.isEmpty()) {
-				/* message recherche vide si pas de résultats. */
-				message.set(MESSAGE_RECHERCHE_VIDE);
-			} else {
-				/* message recherche OK si résultats. */
-				message.set(MESSAGE_RECHERCHE_OK);
-			}
+		} catch (final Exception e) {
 
-			/* convertit en OutputDTO, dédoublonne et trie la réponse. */
-			final List<SousTypeProduitDTO.OutputDTO> reponse
-				= this.convertirEtDedoublonner(listStp);
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
 
-			/* retourne la réponse sous forme de Liste d'OutputDTO. */
-			return reponse;
-
-		} catch (Exception e) {
-			return this.traiterErreur(KO_TECHNIQUE_RECHERCHE, e);
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
 		}
-	}
 
+		/*
+		 * Si le stockage retourne null :
+		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 */
+		if (records == null) {
+			return this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+		}
+
+		/*
+		 * Prépare la réponse utilisateur complète :
+		 * retrait des nulls, tri métier,
+		 * puis conversion en OutputDTO avec dédoublonnage.
+		 */
+		final List<SousTypeProduitDTO.OutputDTO> dtos;
+
+		try {
+
+			/* filtre les null et trie. */
+			final List<SousTypeProduit> recordsNonNullTries
+					= this.filtrerEtTrier(records);
+
+			/* convertit et dédoublonne. */
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Le message observable n'est positionné
+		 * qu'après préparation complète de la réponse utilisateur.
+		 */
+		if (dtos.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
+		}
+
+		/*
+		 * Retourne toujours une liste d'OutputDTO non null
+		 * et éventuellement vide.
+		 */
+		return dtos;
+	}
+	
+	
 
 	/**
 	* {@inheritDoc}

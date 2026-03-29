@@ -655,11 +655,104 @@ Le scénario nominal de `findByLibelleRapide(...)` est :
   avec `equals/hashCode` des `OutputDTO` ;
 - aucun résultat partiel incohérent ne doit être exposé.
 
-## 16) Règle de synchronisation PORT / ADAPTER / tests
+## 16) Contrat spécifique de `findAllByParent(...)`
+
+Signature cible :
+
+- `List<SousTypeProduitDTO.OutputDTO> findAllByParent(TypeProduitDTO.InputDTO pTypeProduit) throws Exception;`
+
+### 16.1 Scénario nominal attendu
+
+Le scénario nominal de `findAllByParent(...)` est :
+
+1. recevoir un `TypeProduitDTO.InputDTO` transmis par la couche appelante ;
+2. valider que ce parent est exploitable ;
+3. retrouver le `TypeProduit` parent persistant dans le stockage ;
+4. demander au `GATEWAY` tous les `SousTypeProduit`
+   rattachés à ce parent ;
+5. sécuriser le retour technique du stockage ;
+6. retirer les éventuels éléments `null` ;
+7. trier les objets métier ;
+8. convertir les objets métier en `OutputDTO` ;
+9. dédoublonner les `OutputDTO` si nécessaire ;
+10. positionner le message observable ;
+11. retourner la liste finale.
+
+### 16.2 Cas observables attendus
+
+- si `pTypeProduit == null` :
+  - positionne `getMessage()` à `RECHERCHE_TYPEPRODUIT_NULL`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si `pTypeProduit.getTypeProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la recherche technique du parent lève une exception avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si la recherche technique du parent lève une exception sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le parent est absent du stockage ou non persistant :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la recherche technique des enfants lève une exception avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si la recherche technique des enfants lève une exception sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si aucun résultat exploitable n’est trouvé :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si un ou plusieurs résultats exploitables sont trouvés :
+  - retourne une liste non vide de DTO,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 16.3 Garanties spécifiques de `findAllByParent(...)`
+
+- la méthode ne doit jamais retourner `null`
+  quand le stockage est exploitable ;
+- le message observable doit être positionné
+  après préparation complète de la réponse ;
+- les `null` techniques issus du stockage
+  ne doivent jamais fuiter jusqu’à l’appelant ;
+- les DTO retournés doivent correspondre
+  à des objets métier réellement rattachés
+  au parent demandé ;
+- le dédoublonnage éventuel doit rester cohérent
+  avec `equals/hashCode` des `OutputDTO` ;
+- aucun résultat partiel incohérent ne doit être exposé.
+
+## 17) Règle de synchronisation PORT / ADAPTER / tests
 
 Toute correction de `creer(...)`, `rechercherTous()`,
 `rechercherTousString()`, `rechercherTousParPage(...)`,
-`findByLibelle(...)` ou `findByLibelleRapide(...)`
+`findByLibelle(...)`, `findByLibelleRapide(...)`
+ou `findAllByParent(...)`
 doit rester synchronisée entre :
 
 1. le PORT `SousTypeProduitICuService` ;
@@ -698,7 +791,7 @@ Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
 - le cas nominal avec filtrage, tri, suppression des blank
   et dédoublonnage.
 
-For `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
+Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
 
 - le cas `pRequetePage == null` ;
 - le cas exception technique avec message ;
@@ -725,6 +818,23 @@ Pour `findByLibelleRapide(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas exception technique avec message ;
 - le cas exception technique sans message ;
 - le cas vide après filtrage ;
+- le cas nominal avec filtrage, tri et dédoublonnage.
+
+Pour `findAllByParent(...)`, les tests Mock doivent verrouiller au minimum :
+
+- le cas `pTypeProduit == null` ;
+- le cas parent blank ;
+- le cas exception technique de recherche du parent
+  avec message ;
+- le cas exception technique de recherche du parent
+  sans message ;
+- le cas parent absent ou non persistant ;
+- le cas exception technique de recherche des enfants
+  avec message ;
+- le cas exception technique de recherche des enfants
+  sans message ;
+- le cas `gateway.findAllByParent(...) == null` ;
+- le cas vide ;
 - le cas nominal avec filtrage, tri et dédoublonnage.
 
 ### Point de vigilance pour les tests d’Intégration
@@ -777,5 +887,18 @@ Pour `findByLibelleRapide(...)`, le test d’intégration cible doit, à terme, 
 - que les DTO correspondant au fragment recherché
   existent physiquement en base ;
 - que les objets hors cible ne sont pas attendus dans le résultat ;
+- que le message exact `MESSAGE_RECHERCHE_OK`
+  est positionné en cas de succès.
+
+Pour `findAllByParent(...)`, le test d’intégration cible doit, à terme, prouver :
+
+- qu’un parent blank est refusé ;
+- qu’un parent absent est refusé ;
+- qu’un parent existant sans enfant retourne une liste vide
+  avec `MESSAGE_RECHERCHE_VIDE` ;
+- que seuls les enfants du parent demandé
+  sont retournés ;
+- que les couples parent / sous-type retournés
+  existent physiquement en base ;
 - que le message exact `MESSAGE_RECHERCHE_OK`
   est positionné en cas de succès.

@@ -874,36 +874,108 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche tous les SousTypes attachés au parent TypeProduit.</p>
+	 * Retourne tous les {@link SousTypeProduitDTO.OutputDTO}
+	 * rattachés au parent transmis.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>recevoir un parent
+	 * {@link TypeProduitDTO.InputDTO} depuis la couche appelante ;</li>
+	 * <li>valider que ce parent est exploitable ;</li>
+	 * <li>retrouver le {@link TypeProduit} parent persistant
+	 * dans le stockage ;</li>
+	 * <li>déléguer au composant GATEWAY
+	 * la recherche de tous les {@link SousTypeProduit}
+	 * rattachés à ce parent ;</li>
+	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
+	 * <li>retirer les éventuels éléments {@code null},
+	 * trier les objets métier et dédoublonner la réponse
+	 * côté UC si nécessaire ;</li>
+	 * <li>convertir la liste métier en
+	 * {@link SousTypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une liste exploitable
+	 * par la couche appelante.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pTypeProduit == null}, positionne {@link #getMessage()}
-	 * à {@link #RECHERCHE_TYPEPRODUIT_NULL} et lève une exception.</li>
-	 * <li>Sinon, délègue au GATEWAY la recherche des 
-	 * SousTypes attachés au parent,
-	 * puis retourne la liste des OutputDTO correspondants 
-	 * (dédoublonnés et triés).</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_RECHERCHE_VIDE} si la 
-	 * liste de résultats est vide.</li>
-	 * <li>positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_OK} si la 
-	 * liste de résultats n'est pas vide.</li>
-	 * </ul>
+	 * <li>Si {@code pTypeProduit == null}, positionne
+	 * {@link #getMessage()} à {@link #RECHERCHE_TYPEPRODUIT_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Si {@code pTypeProduit.getTypeProduit()} est blank,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Délègue ensuite la recherche du parent persistant
+	 * au composant GATEWAY {@code TypeProduit}.</li>
+	 * <li>Si le parent est absent du stockage
+	 * ou non persistant, positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Délègue ensuite la recherche des enfants
+	 * au composant GATEWAY {@code SousTypeProduit}.</li>
+	 * <li>Si le GATEWAY retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne une {@link List} de
+	 * {@link SousTypeProduitDTO.OutputDTO}
+	 * jamais {@code null}, éventuellement vide.</li>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>En cas d'échec technique remonté par la recherche
+	 * du parent, par la recherche des enfants
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pTypeProduit : TypeProduitDTO.InputDTO : parent.
-	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; : résultats.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>La liste retournée, si elle n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage pour le parent demandé,
+	 * exprimé sous forme de DTO.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pTypeProduit : TypeProduitDTO.InputDTO :
+	 * parent demandé par la couche appelante.
+	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; :
+	 * liste des SousTypeProduit rattachés au parent ;
+	 * jamais {@code null}, éventuellement vide.
+	 * @throws IllegalStateException
+	 * si {@code pTypeProduit == null},
+	 * si son libellé parent est blank,
+	 * ou si le parent est absent / non persistant.
+	 * @throws ExceptionStockageVide
+	 * si le stockage retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * du parent ou des enfants via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
 	List<SousTypeProduitDTO.OutputDTO> findAllByParent(
 			TypeProduitDTO.InputDTO pTypeProduit) throws Exception;
-
+	
 
 
 	/**

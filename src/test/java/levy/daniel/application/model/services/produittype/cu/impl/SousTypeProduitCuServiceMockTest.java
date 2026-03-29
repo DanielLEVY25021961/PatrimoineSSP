@@ -2251,9 +2251,497 @@ public class SousTypeProduitCuServiceMockTest {
 		verify(gateway, never()).rechercherTous();
 		verifyNoInteractions(typeProduitGateway);
 
+	} // __________________________________________________________________
+	
+	
+	
+	// ===================== TESTS findAllByParent(...) ====================
+
+	
+	
+	/**
+	 * <div>
+	 * <p>findAllByParent(null) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#RECHERCHE_TYPEPRODUIT_NULL}</li>
+	 * <li>n'interagit jamais avec les gateways</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(null) : IllegalStateException + message RECHERCHE_TYPEPRODUIT_NULL")
+	public void testFindAllByParentNull() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(null))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+
+		assertThat(service.getMessage())
+			.isEqualTo(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent blank) : le parent transmis n'est pas exploitable.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'interagit jamais avec les gateways</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(parent blank) : IllegalStateException + message MESSAGE_PAS_PARENT")
+	public void testFindAllByParentParentBlank() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(ESPACES);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(service.getMessage())
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent technique KO avec message) :
+	 * propage l'exception du gateway parent
+	 * et rationalise le message utilisateur.</p>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(parent technique KO avec message) : propage l'exception + message technique rationalisé")
+	public void testFindAllByParentParentTechniqueKoAvecMessage() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ MESSAGE_GATEWAY);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent technique KO sans message) :
+	 * utilise le fallback MSG_ERREUR_NON_SPECIFIEE.</p>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(parent technique KO sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testFindAllByParentParentTechniqueKoSansMessage() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent absent) : parent absent ou non persistant.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(parent absent) : IllegalStateException + message MESSAGE_PAS_PARENT")
+	public void testFindAllByParentPasParent() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(null);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(service.getMessage())
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, never()).findAllByParent(any(TypeProduit.class));
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent non persistant) : parent sans identifiant.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(parent non persistant) : IllegalStateException + message MESSAGE_PAS_PARENT")
+	public void testFindAllByParentParentNonPersistant() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final TypeProduit parent = new TypeProduit(BAZAR);
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(service.getMessage())
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, never()).findAllByParent(any(TypeProduit.class));
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(enfants technique KO avec message) :
+	 * propage l'exception du gateway enfants
+	 * et rationalise le message utilisateur.</p>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(enfants technique KO avec message) : propage l'exception + message technique rationalisé")
+	public void testFindAllByParentEnfantsTechniqueKoAvecMessage() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final TypeProduit parent = new TypeProduit(BAZAR);
+		parent.setIdTypeProduit(1L);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
+		when(gateway.findAllByParent(any(TypeProduit.class))).thenThrow(panneTechnique);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ MESSAGE_GATEWAY);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(enfants technique KO sans message) :
+	 * utilise le fallback MSG_ERREUR_NON_SPECIFIEE.</p>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(enfants technique KO sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testFindAllByParentEnfantsTechniqueKoSansMessage() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final TypeProduit parent = new TypeProduit(BAZAR);
+		parent.setIdTypeProduit(1L);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
+		when(gateway.findAllByParent(any(TypeProduit.class))).thenThrow(panneTechnique);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ SousTypeProduitICuService.TIRET_ESPACE
+					+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(stockage null) : le gateway enfants retourne null.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(stockage null) : ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
+	public void testFindAllByParentStockageNull() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final TypeProduit parent = new TypeProduit(BAZAR);
+		parent.setIdTypeProduit(1L);
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
+		when(gateway.findAllByParent(any(TypeProduit.class))).thenReturn(null);
+
+		// =================== ACT & ASSERT ==================
+
+		assertThatThrownBy(() -> service.findAllByParent(parentDto))
+			.isInstanceOf(ExceptionStockageVide.class)
+			.hasMessage(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		assertThat(service.getMessage())
+			.isEqualTo(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindAllByParentVide() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final TypeProduit parent = new TypeProduit(BAZAR);
+		parent.setIdTypeProduit(1L);
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
+		when(gateway.findAllByParent(any(TypeProduit.class))).thenReturn(new ArrayList<SousTypeProduit>());
+
+		// ======================= ACT =======================
+
+		final List<OutputDTO> retour = service.findAllByParent(parentDto);
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(ok) : filtre les nulls, trie, dédoublonne
+	 * et positionne MESSAGE_RECHERCHE_OK.</p>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(ok) : filtre nulls + trie + dédoublonne + message MESSAGE_RECHERCHE_OK")
+	public void testFindAllByParentOk() throws Exception {
+
+		// ===================== ARRANGE =====================
+
+		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final TypeProduit parent = new TypeProduit(BAZAR);
+		parent.setIdTypeProduit(1L);
+
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
+
+		final SousTypeProduit stp1 = new SousTypeProduit(OUTILLAGE, parent);
+		stp1.setIdSousTypeProduit(1L);
+
+		final SousTypeProduit stp2 = new SousTypeProduit(VETEMENT, parent);
+		stp2.setIdSousTypeProduit(2L);
+
+		final SousTypeProduit stp1Doublon = new SousTypeProduit(OUTILLAGE, parent);
+		stp1Doublon.setIdSousTypeProduit(1L);
+
+		when(gateway.findAllByParent(any(TypeProduit.class)))
+			.thenReturn(Arrays.asList(stp2, null, stp1, stp1Doublon));
+
+		// ======================= ACT =======================
+
+		final List<OutputDTO> retour = service.findAllByParent(parentDto);
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
+
+		assertThat(retour)
+			.extracting(OutputDTO::getSousTypeProduit)
+			.containsExactly(OUTILLAGE, VETEMENT);
+
+		assertThat(retour)
+			.extracting(OutputDTO::getTypeProduit)
+			.containsExactly(BAZAR, BAZAR);
+
+		assertThat(retour)
+			.extracting(OutputDTO::getIdSousTypeProduit)
+			.containsExactly(1L, 2L);
+
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+
 	} // __________________________________________________________________	
 	
 
+	
 	// ========================== TESTS findByDTO(...) =====================
 
 	
@@ -2538,163 +3026,6 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	
 
-	// ===================== TESTS findAllByParent(...) ====================
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(dto) : parent absent ou non persistant -> IllegalStateException + message MESSAGE_PAS_PARENT.</p>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(parent absent) : IllegalStateException + message MESSAGE_PAS_PARENT")
-	public void testFindAllByParentPasParent() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(null);
-
-		// ===================== ACT =====================
-
-		assertThatThrownBy(() -> service.findAllByParent(parentDto))
-			.isInstanceOf(IllegalStateException.class);
-
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
-		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, never()).findAllByParent(any(TypeProduit.class));
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(null) : RuntimeException + message RECHERCHE_TYPEPRODUIT_NULL.</p>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(null) : RuntimeException + message RECHERCHE_TYPEPRODUIT_NULL")
-	public void testFindAllByParentNull() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		// ===================== ACT =====================
-
-		assertThatThrownBy(() -> service.findAllByParent(null))
-			.isInstanceOf(RuntimeException.class);
-
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(message).isEqualTo(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
-		verifyNoInteractions(gateway);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE.</p>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testFindAllByParentVide() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
-		final TypeProduit parent = new TypeProduit(BAZAR);
-		parent.setIdTypeProduit(1L);
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
-
-		when(gateway.findAllByParent(any(TypeProduit.class))).thenReturn(new ArrayList<SousTypeProduit>());
-
-		// ===================== ACT =====================
-
-		final List<OutputDTO> retour = service.findAllByParent(parentDto);
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(ok) : liste non vide + message MESSAGE_RECHERCHE_OK.</p>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(ok) : liste non vide + message MESSAGE_RECHERCHE_OK")
-	public void testFindAllByParentOk() throws Exception {
-
-		// ===================== ARRANGE =====================
-
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
-		final TypeProduit parent = new TypeProduit(BAZAR);
-		parent.setIdTypeProduit(1L);
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parent);
-
-		final SousTypeProduit stp1 = new SousTypeProduit(OUTILLAGE, parent);
-		stp1.setIdSousTypeProduit(1L);
-
-		final SousTypeProduit stp2 = new SousTypeProduit(VETEMENT, parent);
-		stp2.setIdSousTypeProduit(2L);
-
-		when(gateway.findAllByParent(any(TypeProduit.class))).thenReturn(Arrays.asList(stp1, stp2));
-
-		// ===================== ACT =====================
-
-		final List<OutputDTO> retour = service.findAllByParent(parentDto);
-		final String message = service.getMessage();
-
-		// ===================== ASSERT =====================
-
-		assertThat(retour).isNotNull().hasSize(2);
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
-		
-	} // __________________________________________________________________
-	
 	
 
 	// ======================== TESTS findById(...) ========================
