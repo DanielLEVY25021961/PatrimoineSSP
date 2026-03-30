@@ -1222,7 +1222,232 @@ public class ProduitCuServiceMockTest {
 	
 	
 	// ===================== TESTS findByLibelleRapide(...) =================
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(null) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'interagit avec aucun gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(null) : IllegalStateException + message MESSAGE_PARAM_NULL + aucune interaction gateway")
+	public void testFindByLibelleRapideNull() throws Exception {
 
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		assertThatThrownBy(() -> service.findByLibelleRapide(null))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(ProduitICuService.MESSAGE_PARAM_NULL);
+
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(blank) : délègue à rechercherTous().</p>
+	 * <ul>
+	 * <li>retourne la liste préparée par rechercherTous()</li>
+	 * <li>conserve le message positionné par rechercherTous()</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous()")
+	public void testFindByLibelleRapideBlank() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = spy(new ProduitCuService(gateway, sousTypeGateway));
+
+		final OutputDTO dto = new ProduitDTO.OutputDTO();
+		dto.setIdProduit(1L);
+		dto.setTypeProduit(BAZAR);
+		dto.setSousTypeProduit(OUTILLAGE);
+		dto.setProduit(MARTEAU);
+
+		doReturn(Arrays.asList(dto)).when(service).rechercherTous();
+
+		final List<OutputDTO> retour = service.findByLibelleRapide(ESPACES);
+
+		assertThat(retour).isNotNull().hasSize(1);
+		assertThat(retour.get(0).getProduit()).isEqualTo(MARTEAU);
+
+		verify(service, times(1)).rechercherTous();
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(gateway retourne null) : anomalie technique.</p>
+	 * <ul>
+	 * <li>lève une exception technique</li>
+	 * <li>positionne {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(gateway retourne null) : RuntimeException + message KO_TECHNIQUE_RECHERCHE")
+	public void testFindByLibelleRapideGatewayRetourNull() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.findByLibelleRapide("mar")).thenReturn(null);
+
+		assertThatThrownBy(() -> service.findByLibelleRapide("mar"))
+			.isInstanceOf(RuntimeException.class);
+
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+		verify(gateway, times(1)).findByLibelleRapide("mar");
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(introuvable) : recherche vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(introuvable) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindByLibelleRapideIntrouvable() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.findByLibelleRapide("zzz")).thenReturn(Collections.emptyList());
+
+		final List<OutputDTO> dtos = service.findByLibelleRapide("zzz");
+
+		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).findByLibelleRapide("zzz");
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(ok) : recherche rapide non vide.</p>
+	 * <ul>
+	 * <li>retire les {@code null}</li>
+	 * <li>trie les objets métier</li>
+	 * <li>retourne une liste non nulle</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(ok) : liste non nulle + filtre nulls + message MESSAGE_RECHERCHE_OK")
+	public void testFindByLibelleRapideOk() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
+		parent.setIdSousTypeProduit(10L);
+
+		final Produit produitScie = new Produit(SCIE, parent);
+		produitScie.setIdProduit(2L);
+
+		final Produit produitMarteau = new Produit(MARTEAU, parent);
+		produitMarteau.setIdProduit(1L);
+
+		when(gateway.findByLibelleRapide("a"))
+			.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
+
+		final List<OutputDTO> dtos = service.findByLibelleRapide("a");
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+			.extracting(OutputDTO::getProduit)
+			.containsExactly(MARTEAU, SCIE);
+
+		verify(gateway, times(1)).findByLibelleRapide("a");
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	// ===================== TESTS findAllByParent(...) ====================
+	
+
+	
+	// ========================== TESTS findByDTO(...) =====================
+
+		
+	
+	// ======================== TESTS findById(...) ========================
+
+	
+	
+	// ========================= TESTS update(...) =========================
+	
+
+	
+	// ========================= TESTS delete(...) =========================
+	
+
+	
+	// ============================ TESTS count() ==========================
+	
+	
+
+	// ========================= TESTS getMessage() =======================
+	
 	
 	
 }

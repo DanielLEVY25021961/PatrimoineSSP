@@ -920,15 +920,19 @@ public class ProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-		
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(blank) : délègue au comportement "rechercherTous".</p>
-	 * <p>Test "béton" : garantit que la liste retournée contient les créations du test.</p>
+	 * <p>findByLibelleRapide(blank) : délègue au comportement rechercherTous().</p>
+	 * <ul>
+	 * <li>retourne une liste non nulle ;</li>
+	 * <li>retourne les créations du test ;</li>
+	 * <li>positionne le message observable de rechercherTous().</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -937,10 +941,12 @@ public class ProduitCuServiceIntegrationTest {
 	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous et retourne une liste non nulle")
 	public void testFindByLibelleRapideBlank() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELTA));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELTA));
 
 		final List<OutputDTO> dtos = this.service.findByLibelleRapide(ESPACES);
 
@@ -948,62 +954,80 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(ProduitDTO.OutputDTO::getProduit)
 				.contains(IT_PRD_GAMMA, IT_PRD_DELTA);
-		
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(non blank) : retourne une liste non nulle sans exception.</p>
-	 * <p>Test "béton" : crée deux Produits partageant un préfixe puis recherche ce préfixe.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findByLibelleRapide(non blank) : retourne liste non nulle contenant les créations du test")
-	public void testFindByLibelleRapideNonBlank() throws Exception {
-
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABC));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABD));
-
-		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_PRD_SEARCH_PREFIXE_AB);
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getProduit)
-				.contains(IT_PRD_SEARCH_ABC, IT_PRD_SEARCH_ABD);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findByLibelleRapide(introuvable) : retourne une liste vide.</p>
+	 * <p>findByLibelleRapide(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
-	 * <li>retourne une liste vide</li>
-	 * <li>positionne un message utilisateur (contrat observable)</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelleRapide(introuvable) : liste vide (contrat)")
+	@DisplayName("findByLibelleRapide(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
 	public void testFindByLibelleRapideIntrouvable() throws Exception {
 
 		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_PRD_SEARCH_PREFIXE_QQ);
 
 		assertThat(dtos).isNotNull().isEmpty();
-		
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
 	} // __________________________________________________________________
-	
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(ok) : retourne tous les DTO correspondant au préfixe demandé.</p>
+	 * <ul>
+	 * <li>crée le parent persistant requis ;</li>
+	 * <li>crée deux Produits correspondant au préfixe ;</li>
+	 * <li>retourne une liste non nulle ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelleRapide(ok) : retourne la liste des OutputDTO correspondant au préfixe")
+	public void testFindByLibelleRapideOk() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABC));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABD));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ZETA));
+
+		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_PRD_SEARCH_PREFIXE_AB);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.containsExactlyInAnyOrder(IT_PRD_SEARCH_ABC, IT_PRD_SEARCH_ABD);
+
+	} // __________________________________________________________________	
 	
 
+	
 	// ========================== TESTS findByDTO(...) =====================
 
 	/**

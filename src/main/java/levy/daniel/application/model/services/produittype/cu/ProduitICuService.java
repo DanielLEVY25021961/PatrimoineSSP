@@ -686,36 +686,80 @@ public interface ProduitICuService {
 	 * si une erreur technique survient lors de la recherche exacte
 	 * ou lors de la préparation de la réponse utilisateur.
 	 */
-	List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;
+	List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) 
+			throws Exception;
 
 	
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Recherche "rapide" des {@link Produit} dans le stockage à partir d'un préfixe de libellé.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p>Retourne tous les {@link ProduitDTO.OutputDTO}
+	 * dont le libellé contient rapidement le contenu demandé.</p>
+	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Si {@code pContenu} est {@code null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL} et lève une exception.</li>
-	 * <li>Si {@code pContenu} est Blank, délègue à {@link #rechercherTous()}
-	 * (mêmes messages/erreurs que {@code rechercherTous}).</li>
-	 * <li>Si la recherche retourne une liste vide, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_RECHERCHE_VIDE} et retourne la liste vide.</li>
-	 * <li>Sinon, positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}
-	 * et retourne la liste des résultats.</li>
+	 * <li>valider le contenu de recherche rapide ;</li>
+	 * <li>si le contenu est blank, déléguer à {@link #rechercherTous()} ;</li>
+	 * <li>sinon, déléguer la recherche rapide au GATEWAY Produit ;</li>
+	 * <li>retirer les éventuels objets métier {@code null} ;</li>
+	 * <li>trier les objets métier ;</li>
+	 * <li>convertir les résultats métier en {@link ProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une liste exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pContenu String : contenu (préfixe) de recherche rapide.
-	 * @return List&lt;ProduitDTO.OutputDTO&gt; : liste de DTOs résultats (non null).
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>si {@code pContenu == null},
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL}
+	 * puis lève une exception ;</li>
+	 * <li>si {@code pContenu} est blank,
+	 * délègue à {@link #rechercherTous()}
+	 * avec les mêmes messages et les mêmes erreurs ;</li>
+	 * <li>si le GATEWAY retourne {@code null},
+	 * positionne {@link #getMessage()} à
+	 * {@link #KO_TECHNIQUE_RECHERCHE}
+	 * puis propage une exception technique ;</li>
+	 * <li>si aucun objet n'est trouvé,
+	 * retourne une liste vide mais non {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>si au moins un objet est trouvé,
+	 * retourne une liste de {@link ProduitDTO.OutputDTO}
+	 * non {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération ;</li>
+	 * <li>le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur ;</li>
+	 * <li>la liste retournée, si elle n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY,
+	 * exprimé sous forme de DTO ;</li>
+	 * <li>aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pContenu : String :
+	 * contenu de recherche rapide sur le libellé Produit.
+	 * @return List<ProduitDTO.OutputDTO> :
+	 * liste des Produits correspondant à la recherche rapide ;
+	 * jamais {@code null} si le traitement aboutit.
 	 * @throws Exception
+	 * si une erreur technique survient lors de la recherche rapide
+	 * ou lors de la préparation de la réponse utilisateur.
 	 */
-	List<ProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;
+	List<ProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) 
+			throws Exception;
 
 	
 	

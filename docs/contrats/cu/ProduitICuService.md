@@ -424,3 +424,54 @@ Le scénario nominal de `findByLibelle(...)` est :
   qu'après préparation complète de la réponse utilisateur ;
 - la recherche exacte peut retourner plusieurs `OutputDTO`
   si plusieurs `Produit` distincts partagent le même libellé exact.
+
+## 14) Contrat spécifique de `findByLibelleRapide(...)`
+
+Signature cible :
+- `List<ProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
+
+### 14.1) Scénario nominal attendu
+
+Le scénario nominal de `findByLibelleRapide(...)` est :
+
+1. recevoir un contenu de recherche rapide ;
+2. valider le contenu demandé ;
+3. si le contenu est blank, déléguer à `rechercherTous()` ;
+4. sinon, déléguer la recherche rapide au `GATEWAY` Produit ;
+5. retirer les éventuels objets métier `null` ;
+6. trier les objets métier ;
+7. convertir les résultats métier en `ProduitDTO.OutputDTO` ;
+8. positionner le message observable ;
+9. retourner la liste finale.
+
+### 14.2) Cas observables attendus
+
+- si `pContenu == null` :
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
+  - lève une exception ;
+
+- si `pContenu` est blank :
+  - délègue à `rechercherTous()` ;
+  - conserve les mêmes messages et les mêmes erreurs que `rechercherTous()` ;
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE` ;
+  - propage une exception technique ;
+
+- si aucun objet n'est trouvé :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si au moins un objet est trouvé :
+  - retourne une liste non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 14.3) Garanties spécifiques de `findByLibelleRapide(...)`
+
+- la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
+- la liste retournée, si elle n'est pas vide,
+  doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
+- le message de succès ne doit être positionné
+  qu'après préparation complète de la réponse utilisateur ;
+- un contenu blank ne doit pas être traité comme une recherche technique,
+  mais comme une délégation explicite à `rechercherTous()`.

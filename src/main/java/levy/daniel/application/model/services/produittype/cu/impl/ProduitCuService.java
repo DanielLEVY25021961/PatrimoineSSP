@@ -611,41 +611,65 @@ public class ProduitCuService implements ProduitICuService {
 	public List<OutputDTO> findByLibelleRapide(
 			final String pContenu) throws Exception {
 
-		/* CONTRAT : null => exception ; 
-		 * blank => délègue rechercherTous(). */
+		/*
+		 * Si pContenu == null : 
+		 * émet un message MESSAGE_PARAM_NULL + LOG + IllegalStateException;
+		 */
 		if (pContenu == null) {
 			return this.traiterErreur(
 					MESSAGE_PARAM_NULL,
 					new IllegalStateException(MESSAGE_PARAM_NULL));
 		}
 
+		/* Si pContenu blank : retourne tous les éléments 
+		 * en délègant à rechercherTous().*/
 		if (StringUtils.isBlank(pContenu)) {
 			return this.rechercherTous();
 		}
 
-		final List<Produit> reponses 
+		/*
+		 * Délègue au GATEWAY la recherche rapide.
+		 */
+		final List<Produit> reponses
 			= this.gateway.findByLibelleRapide(pContenu);
 
+		/*
+		 * Une réponse technique null du GATEWAY
+		 * est une anomalie de recherche.
+		 * Si reponses == null : 
+		 * émet un message KO_TECHNIQUE_RECHERCHE + LOG + RuntimeException
+		 */
 		if (reponses == null) {
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE,
 					new RuntimeException(KO_TECHNIQUE_RECHERCHE));
 		}
 
-		if (reponses.isEmpty()) {
+		/*
+		 * Retire les null, trie les objets métier,
+		 * puis convertit la réponse en OutputDTO.
+		 */
+		final List<Produit> recordsNonNullTries
+			= this.filtrerEtTrier(reponses);
+
+		final List<OutputDTO> dtos
+			= ConvertisseurMetierToOutputDTOProduit
+				.convertList(recordsNonNullTries);
+
+		/*
+		 * Positionne le message observable
+		 * après préparation complète de la réponse.
+		 */
+		if (dtos.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
 		} else {
 			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
-		final List<Produit> recordsNonNullTries 
-			= this.filtrerEtTrier(reponses);
-
-		return ConvertisseurMetierToOutputDTOProduit
-						.convertList(recordsNonNullTries);
+		return dtos;
 	}
-
 	
+
 	
 	/**
 	 * {@inheritDoc}
