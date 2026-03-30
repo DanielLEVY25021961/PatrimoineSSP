@@ -1888,13 +1888,21 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 	
 	/**
-	* {@inheritDoc}
-	*/
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getMessage() {
+
+		/*
+		 * Retourne simplement le dernier message courant
+		 * stocké localement dans le ThreadLocal du service.
+		 * Aucun accès Gateway, aucun LOG, aucun recalcul.
+		 * Une valeur null reste acceptable
+		 * avant toute opération ayant positionné un message.
+		 */
 		return this.message.get();
 	}
-
+	
 
 
 	// ========================== METHODES PRIVEES =========================

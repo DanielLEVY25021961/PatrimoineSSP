@@ -1150,9 +1150,60 @@ Le scénario nominal de `count()` est :
   effectivement accessibles dans le stockage ;
 - aucune valeur de comptage incohérente ne doit être exposée à l'appelant.
 
-## 22) Règle de synchronisation PORT / ADAPTER / tests
+## 22) Contrat spécifique de `getMessage()`
 
-Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)`, `findById(...)`, `update(...)`, `delete(...)` ou `count()` doit rester synchronisée entre :
+Signature cible :
+
+- `String getMessage();`
+
+### 22.1 Scénario nominal attendu
+
+Le scénario nominal de `getMessage()` est :
+
+1. lire le dernier message localement positionné dans le SERVICE UC ;
+2. restituer ce message tel quel à la couche appelante ;
+3. ne déclencher aucune opération métier supplémentaire ;
+4. ne déléguer à aucun `GATEWAY` ;
+5. ne modifier aucun état métier ni aucun stockage.
+
+### 22.2 Cas observables attendus
+
+- avant toute opération ayant positionné un message :
+  - `getMessage()` peut retourner `null` ;
+
+- après une opération UC ayant positionné un message observable :
+  - `getMessage()` retourne exactement ce message courant ;
+
+- ce message peut correspondre :
+  - à un succès ;
+  - à une absence de résultat ;
+  - à une erreur bénigne ;
+  - à une erreur métier ;
+  - à une erreur technique ;
+
+- si une opération plus récente positionne un nouveau message :
+  - `getMessage()` retourne ce nouveau message ;
+  - la règle observable est : le dernier message gagne ;
+
+- `getMessage()` :
+  - ne délègue jamais au `GATEWAY` ;
+  - n’émet aucun LOG ;
+  - ne lève aucune exception ;
+  - ne modifie aucun état métier.
+
+### 22.3 Garanties spécifiques de `getMessage()`
+
+- le message retourné correspond au dernier message local effectivement positionné dans le SERVICE UC ;
+- la lecture du message est pure :
+  - aucun recalcul ;
+  - aucune mutation ;
+  - aucune délégation ;
+- une valeur `null` reste acceptable avant toute opération ayant positionné un message ;
+- la couche appelante peut relire ce message sans provoquer d’effet de bord.
+
+## 23) Règle de synchronisation PORT / ADAPTER / tests
+
+Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)`, `findById(...)`, `update(...)`, `delete(...)`, `count()` ou `getMessage()` doit rester synchronisée entre :
 1. le PORT `SousTypeProduitICuService` ;
 2. l’ADAPTER `SousTypeProduitCuService` ;
 3. les tests Mock ;
@@ -1278,6 +1329,14 @@ Pour `count()`, les tests Mock doivent verrouiller au minimum :
 - le cas `0` avec `MESSAGE_RECHERCHE_VIDE` ;
 - le cas strictement positif avec `MESSAGE_RECHERCHE_OK`.
 
+Pour `getMessage()`, les tests Mock doivent verrouiller au minimum :
+- l’état initial potentiellement `null` ;
+- la restitution d’un message d’erreur locale ;
+- la restitution d’un message de succès vide ;
+- la restitution d’un message de succès positif ;
+- la règle `le dernier message gagne` ;
+- l’absence totale de délégation au `GATEWAY`.
+
 ### Point de vigilance pour les tests d’Intégration
 
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -1376,3 +1435,10 @@ Pour `count()`, le test d’intégration cible doit, à terme, prouver :
 - que le message exact est `MESSAGE_RECHERCHE_OK` si le comptage est strictement positif ;
 - que deux créations font augmenter le comptage de `2` ;
 - que le nettoyage ramène exactement le comptage au niveau initial.
+
+Pour `getMessage()`, le test d’intégration cible doit, à terme, prouver :
+- que l’état initial peut valoir `null` ;
+- qu’une erreur utilisateur bénigne positionne un message relisible ;
+- qu’un succès réel positionne le message observable exact ;
+- que la règle `le dernier message gagne` reste vraie sur des opérations réelles ;
+- que la lecture du message ne nécessite aucune opération métier supplémentaire.

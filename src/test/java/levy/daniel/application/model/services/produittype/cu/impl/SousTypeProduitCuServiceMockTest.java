@@ -5330,36 +5330,234 @@ public class SousTypeProduitCuServiceMockTest {
 	
 
 	// ========================= TESTS getMessage() ========================
-	
-	
 
+	
+	
 	/**
 	 * <div>
-	 * <p>getMessage() : retourne le message thread-local.</p>
+	 * <p>getMessage(initial) : état initial du service Mock.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>n'interagit jamais avec le Gateway SousTypeProduit</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * </ul>
 	 * </div>
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("getMessage() : retourne le message courant")
-	public void testGetMessage() throws Exception {
+	@DisplayName("getMessage(initial) : retourne null + aucune interaction gateway")
+	public void testGetMessageInitialNull() {
 
 		// ===================== ARRANGE =====================
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		// ===================== ACT =====================
-
-		service.findByLibelle(ESPACES);
+		// ======================= ACT =======================
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		// ===================== ASSERT ======================
+		assertThat(message).isNull();
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(typeProduitGateway);
 
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
-		
 	} // __________________________________________________________________
+
 	
+	
+	/**
+	 * <div>
+	 * <p>getMessage(après erreur locale) :
+	 * retourne le message courant
+	 * positionné par une erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>après {@code creer(null)},
+	 * retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>n'interagit jamais avec le Gateway SousTypeProduit</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL")
+	public void testGetMessageApresErreurLocale() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		// ======================= ACT =======================
+		service.creer(null);
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage(après succès vide) :
+	 * retourne le message courant
+	 * positionné par un comptage à zéro.</p>
+	 * <ul>
+	 * <li>après {@code count() == 0},
+	 * retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>délègue une seule fois au Gateway SousTypeProduit</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après succès vide) : retourne MESSAGE_RECHERCHE_VIDE")
+	public void testGetMessageApresCountZero() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(gateway.count()).thenReturn(0L);
+
+		// ======================= ACT =======================
+		final long retour = service.count();
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(retour).isZero();
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).count();
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage(après succès positif) :
+	 * retourne le message courant
+	 * positionné par un comptage positif.</p>
+	 * <ul>
+	 * <li>après {@code count() > 0},
+	 * retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>délègue une seule fois au Gateway SousTypeProduit</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après succès positif) : retourne MESSAGE_RECHERCHE_OK")
+	public void testGetMessageApresCountPositif() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(gateway.count()).thenReturn(42L);
+
+		// ======================= ACT =======================
+		final long retour = service.count();
+		final String message = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(retour).isEqualTo(42L);
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(gateway, times(1)).count();
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage(dernier message gagne) :
+	 * une opération plus récente
+	 * écrase bien le message précédent.</p>
+	 * <ul>
+	 * <li>après une erreur locale,
+	 * le message vaut d'abord
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>après un {@code count()} positif,
+	 * le message courant devient
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>délègue une seule fois au Gateway SousTypeProduit</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(dernier message gagne) : le message le plus récent écrase le précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		// ===================== ARRANGE =====================
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(gateway.count()).thenReturn(1L);
+
+		// ======================= ACT =======================
+		service.creer(null);
+		final String messageErreur = service.getMessage();
+
+		final long retour = service.count();
+		final String messageFinal = service.getMessage();
+
+		// ===================== ASSERT ======================
+		assertThat(messageErreur)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+		assertThat(retour).isEqualTo(1L);
+		assertThat(messageFinal)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(gateway, times(1)).count();
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________	
+
 	
 
 }

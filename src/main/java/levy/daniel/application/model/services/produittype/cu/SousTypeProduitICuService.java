@@ -1651,14 +1651,67 @@ public interface SousTypeProduitICuService {
 
 	/**
 	 * <div>
+	 * <p>Retourne le message observable courant du SERVICE UC.</p>
 	 * <p style="font-weight:bold;">
-	 * Getter du message à l'attention de l'Utilisateur
-	 * généré en cas de problème lors des opérations de stockage.</p>
-	 * <p>ATTENTION : ne jamais finaliser la javadoc si non renseignée.</p>
+	 * INTENTION DE SERVICE UC :
+	 * </p>
+	 * <ul>
+	 * <li>exposer à la couche appelante
+	 * le dernier message localement positionné
+	 * par une opération du SERVICE UC ;</li>
+	 * <li>restituer ce message tel qu'il est
+	 * mémorisé dans l'état local du service ;</li>
+	 * <li>permettre à la couche appelante
+	 * de lire le dernier état observable
+	 * sans relancer d'opération métier.</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @return String : message utilisateur.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Peut retourner {@code null}
+	 * avant toute opération ayant positionné un message.</li>
+	 * <li>Retourne ensuite le dernier message observable
+	 * positionné par l'opération UC la plus récente.</li>
+	 * <li>Ce message peut correspondre :
+	 * à un succès,
+	 * à une absence de résultat,
+	 * à une erreur bénigne,
+	 * à une erreur métier
+	 * ou à une erreur technique.</li>
+	 * <li>Ne délègue jamais au composant GATEWAY.</li>
+	 * <li>N'émet aucun LOG.</li>
+	 * <li>Ne lève aucune exception.</li>
+	 * <li>Ne modifie aucun état métier
+	 * ni aucun stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné correspond
+	 * au dernier message local effectivement positionné
+	 * dans le SERVICE UC.</li>
+	 * <li>La règle observable est :
+	 * le dernier message gagne.</li>
+	 * <li>La lecture du message est pure :
+	 * aucune délégation,
+	 * aucun recalcul,
+	 * aucune mutation d'état.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return String :
+	 * message utilisateur courant du SERVICE UC ;
+	 * peut valoir {@code null}
+	 * avant toute opération ayant positionné un message.
 	 */
 	String getMessage();
+	
+	
 
 } // Fin de l'INTERFACE SousTypeProduitICuService.
