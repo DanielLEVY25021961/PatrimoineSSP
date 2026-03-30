@@ -311,33 +311,86 @@ public class ProduitCuService implements ProduitICuService {
 	
 	
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	*/
 	@Override
 	public List<OutputDTO> rechercherTous() throws Exception {
 
-		final List<Produit> reponses = this.gateway.rechercherTous();
+		/*
+		 * Appelle le GATEWAY pour lire tous les Produit.
+		 */
+		final List<Produit> records;
 
-		if (reponses == null) {
+		try {
+
+			records = this.gateway.rechercherTous();
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le stockage retourne null :
+		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 */
+		if (records == null) {
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
-		if (reponses.isEmpty()) {
-			this.message.set(MESSAGE_RECHERCHE_VIDE);
-			return new ArrayList<OutputDTO>();
+		/*
+		 * Retire les null et trie les objets métier.
+		 */
+		final List<Produit> recordsNonNullTries
+			= this.filtrerEtTrier(records);
+
+		/*
+		 * Convertit la liste métier en OutputDTO
+		 * puis dédoublonne la réponse.
+		 */
+		final List<OutputDTO> dtos;
+
+		try {
+
+			dtos = ConvertisseurMetierToOutputDTOProduit
+					.convertList(recordsNonNullTries);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
 		}
 
-		this.message.set(MESSAGE_RECHERCHE_OK);
+		/*
+		 * Positionne le message observable
+		 * après préparation complète de la réponse.
+		 */
+		if (dtos.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
+		}
 
-		final List<Produit> recordsNonNullTries 
-			= this.filtrerEtTrier(reponses);
-
-		return ConvertisseurMetierToOutputDTOProduit
-				.convertList(recordsNonNullTries);
+		/*
+		 * Retourne toujours une liste d'OutputDTO non null
+		 * (éventuellement vide).
+		 */
+		return dtos;
 	}
-
+	
 	
 	
 	/**

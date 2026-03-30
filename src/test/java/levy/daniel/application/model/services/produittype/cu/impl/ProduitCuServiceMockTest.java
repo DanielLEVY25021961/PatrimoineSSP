@@ -29,6 +29,7 @@ import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.ProduitICuService;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionStockageVide;
 import levy.daniel.application.model.services.produittype.gateway.ProduitGatewayIService;
 import levy.daniel.application.model.services.produittype.gateway.SousTypeProduitGatewayIService;
 
@@ -425,7 +426,262 @@ public class ProduitCuServiceMockTest {
 	
 	
 	// ========================= TESTS rechercherTous() ====================
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTous() : stockage null.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
+	 * <li>délègue une seule fois à {@code gateway.rechercherTous()}</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : gateway retourne null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
+	public void testRechercherTousStockageNull() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.rechercherTous()).thenReturn(null);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTous())
+			.isInstanceOf(ExceptionStockageVide.class)
+			.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		assertThat(service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : recherche technique KO avec message.</p>
+	 * <ul>
+	 * <li>propage l'exception du gateway</li>
+	 * <li>rationalise le message utilisateur avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : gateway KO avec message -> propage l'exception + message technique rationalisé")
+	public void testRechercherTousKoTechniqueAvecMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTous())
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				ProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ ProduitICuService.TIRET_ESPACE
+					+ MESSAGE_GATEWAY);
+
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : recherche technique KO sans message.</p>
+	 * <ul>
+	 * <li>propage exactement l'exception du gateway</li>
+	 * <li>retombe sur
+	 * {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : gateway KO sans message -> fallback MSG_ERREUR_NON_SPECIFIEE")
+	public void testRechercherTousKoTechniqueSansMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTous())
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				ProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ ProduitICuService.TIRET_ESPACE
+					+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : résultats vides après filtrage.</p>
+	 * <ul>
+	 * <li>le gateway retourne uniquement des éléments {@code null}</li>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : résultats vides après filtrage -> liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testRechercherTousVideApresFiltrage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.rechercherTous()).thenReturn(Arrays.asList(null, null));
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = service.rechercherTous();
+		final String message = service.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(message).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>retire les éléments {@code null}</li>
+	 * <li>trie les objets métier</li>
+	 * <li>dédoublonne les {@link OutputDTO}</li>
+	 * <li>retourne une liste cohérente</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous() : filtre nulls + trie + dédoublonne + message MESSAGE_RECHERCHE_OK")
+	public void testRechercherTousOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
+		parent.setIdSousTypeProduit(10L);
+
+		final Produit produitScie = new Produit("scie", parent);
+		produitScie.setIdProduit(2L);
+
+		final Produit produitMarteau = new Produit(MARTEAU, parent);
+		produitMarteau.setIdProduit(1L);
+
+		when(gateway.rechercherTous())
+			.thenReturn(Arrays.asList(
+				produitScie,
+				null,
+				produitMarteau,
+				produitScie));
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = service.rechercherTous();
+		final String message = service.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
+
+		assertThat(retour)
+			.extracting(ProduitDTO.OutputDTO::getProduit)
+			.containsExactly(MARTEAU, "scie");
+
+		assertThat(retour)
+			.extracting(ProduitDTO.OutputDTO::getIdProduit)
+			.containsExactly(1L, 2L);
+
+		assertThat(retour)
+			.extracting(ProduitDTO.OutputDTO::getSousTypeProduit)
+			.containsExactly(OUTILLAGE, OUTILLAGE);
+
+		assertThat(retour)
+			.extracting(ProduitDTO.OutputDTO::getTypeProduit)
+			.containsExactly(BAZAR, BAZAR);
+
+		assertThat(message).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	// ===================== TESTS rechercherTousString() ==================
+
+	
+	
 	
 	
 		

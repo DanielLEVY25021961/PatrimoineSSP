@@ -28,3 +28,53 @@
 - en cas d'échec métier, applicatif ou technique, le SERVICE UC produit un message utilisateur déterministe et traçable ;
 - le résultat retourné, s'il est non `null`, correspond à l'état métier effectivement créé dans le stockage avec rattachement à un parent persistant ;
 - le SERVICE UC conserve son rôle d'orchestration applicative entre couche de présentation, métier, GATEWAY et message utilisateur.
+
+## `List<ProduitDTO.OutputDTO> rechercherTous()`
+
+### Intention de service UC (scénario nominal)
+- demander au `GATEWAY` la liste complète des `Produit` présents dans le stockage ;
+- sécuriser le retour technique du stockage ;
+- retirer les éventuels éléments `null` ;
+- trier les objets métier ;
+- convertir les objets métier en `OutputDTO` ;
+- dédoublonner les `OutputDTO` si nécessaire ;
+- positionner le message observable ;
+- retourner une liste exploitable par la couche appelante.
+
+### Contrat de service UC
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si la liste retournée devient vide après filtrage / conversion :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si la liste retournée contient des résultats :
+  - retourne une liste non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### Garanties métier, utilisateur et traçabilité
+- la méthode ne doit jamais retourner `null`
+  quand le stockage est exploitable ;
+- le message observable doit être positionné
+  après préparation complète de la réponse ;
+- les `null` techniques issus du stockage
+  ne doivent jamais fuiter jusqu’à l’appelant ;
+- les `OutputDTO` retournés doivent correspondre
+  à des objets métier réellement accessibles via le `GATEWAY` ;
+- le dédoublonnage éventuel doit rester cohérent
+  avec `equals/hashCode` des `OutputDTO`.

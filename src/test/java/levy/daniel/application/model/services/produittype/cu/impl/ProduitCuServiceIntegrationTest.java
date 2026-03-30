@@ -475,15 +475,93 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(ProduitDTO.OutputDTO::getProduit)
 				.contains(IT_PRD_GAMMA, IT_PRD_DELTA);
-		
+
 	} // __________________________________________________________________
 
-	
-	
+
+
 	/**
 	 * <div>
-	 * <p>rechercherTous() : après truncate -> stockage vide -> liste vide + message MESSAGE_RECHERCHE_VIDE.</p>
-	 * <p>Test d'intégration : force un stockage vide malgré le dataset global.</p>
+	 * <p>rechercherTous() : scénario nominal béton avec cohérence count.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>reste cohérent avec {@link ProduitICuService#count()}</li>
+	 * <li>contient les créations du test</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTous(ok) : message exact + cohérence count + présence des créations")
+	public void testRechercherTousOkAvecCohherenceCount() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		final OutputDTO creeGamma = this.service.creer(
+				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
+		final OutputDTO creeDelta = this.service.creer(
+				new ProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_DELTA));
+
+		final long attendu = this.service.count();
+
+		/* ======================= ACT ======================= */
+		final List<ProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos.size()).isEqualTo((int) attendu);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.contains(IT_PRD_GAMMA, IT_PRD_DELTA);
+
+		final OutputDTO dtoGamma = dtos.stream()
+				.filter(dto -> IT_PRD_GAMMA.equals(dto.getProduit()))
+				.findFirst()
+				.orElse(null);
+
+		final OutputDTO dtoDelta = dtos.stream()
+				.filter(dto -> IT_PRD_DELTA.equals(dto.getProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoGamma).isNotNull();
+		assertThat(dtoGamma.getIdProduit())
+				.isEqualTo(creeGamma.getIdProduit());
+		assertThat(dtoGamma.getTypeProduit())
+				.isEqualTo(IT_TP_PARENT_A);
+		assertThat(dtoGamma.getSousTypeProduit())
+				.isEqualTo(IT_STP_PARENT_A);
+
+		assertThat(dtoDelta).isNotNull();
+		assertThat(dtoDelta.getIdProduit())
+				.isEqualTo(creeDelta.getIdProduit());
+		assertThat(dtoDelta.getTypeProduit())
+				.isEqualTo(IT_TP_PARENT_B);
+		assertThat(dtoDelta.getSousTypeProduit())
+				.isEqualTo(IT_STP_PARENT_B);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : stockage vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>reste cohérent avec une base physiquement vide</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -493,44 +571,23 @@ public class ProduitCuServiceIntegrationTest {
 			scripts = { "classpath:/truncate-test.sql" },
 			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 	)
-	@DisplayName("rechercherTous() : après truncate -> liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testRechercherTousStockageVide() throws Exception {
+	@DisplayName("rechercherTous(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + base vide")
+	public void testRechercherTousVide() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
+		assertThat(this.service.count()).isEqualTo(0L);
+
+		/* ======================= ACT ======================= */
 		final List<ProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
 
-		assertThat(dtos).isNotNull().isEmpty();
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-		
-	} // __________________________________________________________________
-	
 
-	
-	/**
-	 * <div>
-	 * <p>rechercherTous() : stockage null -> {@link ExceptionStockageVide} + message {@link ProduitICuService#MESSAGE_STOCKAGE_NULL}.</p>
-	 * </div>
-	 */
-//	@Test
-//	@DisplayName("rechercherTous(stockage null) : positionne message + lève ExceptionStockageVide")
-//	public void testRechercherTousStockageNull() {
-//
-//		/*
-//		 * Test d'intégration :
-//		 * ce cas dépend du comportement technique Gateway.
-//		 * On conserve néanmoins ce test pour contractualiser l'invariant CU
-//		 * (si gateway renvoie null => ExceptionStockageVide).
-//		 *
-//		 * NOTE : Si ce test échoue parce que le Gateway ne renvoie jamais null,
-//		 * il est acceptable de le désactiver au niveau projet, mais on le laisse ici
-//		 * pour suivre la structure des IT validés.
-//		 */
-//		assertThatThrownBy(() -> {
-//			/* Provoque le cas "stockage null" si la couche technique le permet. */
-//			this.service.rechercherTous();
-//		}).isInstanceOfAny(ExceptionStockageVide.class, RuntimeException.class);
-//	} // __________________________________________________________________
-	
+	} // __________________________________________________________________	
 	
 
 	// ===================== TESTS rechercherTousString() ==================
