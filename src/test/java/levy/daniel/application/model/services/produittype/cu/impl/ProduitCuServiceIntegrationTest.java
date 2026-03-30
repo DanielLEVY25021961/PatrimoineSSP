@@ -420,34 +420,63 @@ public class ProduitCuServiceIntegrationTest {
 
 	
 	/**
-	 * <div><p>creer(ok) : round-trip complet avec persistance effective.</p></div>
+	 * <div>
+	 * <p>creer(ok) : test béton avec comptage et round-trip par ID.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>retourne un {@link OutputDTO} persistant ;</li>
+	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_CREER_OK} ;</li>
+	 * <li>augmente le comptage de 1 ;</li>
+	 * <li>reste retrouvable par {@link ProduitICuService#findById(Long)}
+	 * après création.</li>
+	 * </ul>
+	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
 	@Test
-	@DisplayName("creer(ok) : round-trip complet avec persistance effective")
+	@DisplayName("creer(ok) : message exact + count + round-trip findById")
 	public void testCreerOk() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
 		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_BETA);
+		final long nombreAvant = this.service.count();
 
+		final InputDTO input
+			= new ProduitDTO.InputDTO(
+					IT_TP_PARENT_A,
+					IT_STP_PARENT_A,
+					IT_PRD_BETA);
+
+		/* ======================= ACT ======================= */
 		final OutputDTO cree = this.service.creer(input);
 
+		/* ===================== ASSERT ====================== */
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
 		assertThat(cree.getProduit()).isEqualTo(IT_PRD_BETA);
 		assertThat(cree.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(cree.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		assertThat(this.service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
 
-//		final OutputDTO trouveParLibelle = this.service.findByLibelle(IT_PRD_BETA);
-//		assertThat(trouveParLibelle).isNotNull();
-//		assertThat(trouveParLibelle.getIdProduit()).isEqualTo(cree.getIdProduit());
-		
+		final long nombreApres = this.service.count();
+
+		assertThat(nombreApres).isEqualTo(nombreAvant + 1L);
+
+		final OutputDTO trouveParId = this.service.findById(cree.getIdProduit());
+
+		assertThat(trouveParId).isNotNull();
+		assertThat(trouveParId.getIdProduit()).isEqualTo(cree.getIdProduit());
+		assertThat(trouveParId.getProduit()).isEqualTo(IT_PRD_BETA);
+		assertThat(trouveParId.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
+		assertThat(trouveParId.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+
 	} // __________________________________________________________________
-
 		
+	
 	
 	// ========================= TESTS rechercherTous() ====================
 
