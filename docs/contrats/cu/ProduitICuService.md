@@ -475,3 +475,59 @@ Le scénario nominal de `findByLibelleRapide(...)` est :
   qu'après préparation complète de la réponse utilisateur ;
 - un contenu blank ne doit pas être traité comme une recherche technique,
   mais comme une délégation explicite à `rechercherTous()`.
+  
+  ## 15) Contrat spécifique de `findAllByParent(...)`
+
+Signature cible :
+- `List<ProduitDTO.OutputDTO> findAllByParent(SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception;`
+
+### 15.1) Scénario nominal attendu
+
+Le scénario nominal de `findAllByParent(...)` est :
+
+1. recevoir un parent `SousTypeProduitDTO.InputDTO` ;
+2. valider que le parent demandé n'est pas `null` ;
+3. valider que le libellé du parent n'est pas blank ;
+4. retrouver le parent persistant correspondant ;
+5. déléguer au `GATEWAY` Produit la recherche de tous les Produits rattachés à ce parent ;
+6. retirer les éventuels objets métier `null` ;
+7. trier les objets métier ;
+8. convertir les résultats métier en `ProduitDTO.OutputDTO` ;
+9. positionner le message observable ;
+10. retourner la liste finale.
+
+### 15.2) Cas observables attendus
+
+- si `pSousTypeProduit == null` :
+  - positionne `getMessage()` à `RECHERCHE_SOUSTYPEPRODUIT_NULL` ;
+  - lève une exception ;
+
+- si le libellé du parent est blank :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT` ;
+  - lève une exception ;
+
+- si le parent n'est pas trouvé ou n'est pas persistant :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT` ;
+  - lève une exception ;
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE` ;
+  - propage une exception technique ;
+
+- si aucun objet n'est trouvé :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si au moins un objet est trouvé :
+  - retourne une liste non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 15.3) Garanties spécifiques de `findAllByParent(...)`
+
+- la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
+- la liste retournée, si elle n'est pas vide,
+  doit correspondre aux Produits effectivement accessibles
+  pour le parent persistant demandé ;
+- le message de succès ne doit être positionné
+  qu'après préparation complète de la réponse utilisateur ;
+- aucun résultat partiel incohérent ne doit être exposé à l'appelant.

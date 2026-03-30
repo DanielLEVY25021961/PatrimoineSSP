@@ -765,34 +765,79 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Retourne tous les {@link Produit} attachés à un parent {@link SousTypeProduit},
-	 * sous forme d'OutputDTO.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p>Retourne tous les {@link ProduitDTO.OutputDTO}
+	 * rattachés au parent {@link SousTypeProduitDTO.InputDTO} demandé.</p>
+	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Si {@code pSousTypeProduit == null}, positionne {@link #getMessage()}
-	 * à {@link #RECHERCHE_SOUSTYPEPRODUIT_NULL} et lève une exception.</li>
-	 * <li>Si le parent {@link SousTypeProduit} n'est pas trouvé/persistant,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
-	 * et lève une exception.</li>
-	 * <li>Si aucun {@link Produit} n'est trouvé, retourne une liste vide et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
-	 * <li>Sinon, retourne la liste des OutputDTO et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>valider le parent demandé ;</li>
+	 * <li>retrouver le parent persistant correspondant ;</li>
+	 * <li>déléguer au GATEWAY Produit la recherche de tous les
+	 * {@link Produit} rattachés à ce parent ;</li>
+	 * <li>retirer les éventuels objets métier {@code null} ;</li>
+	 * <li>trier les objets métier ;</li>
+	 * <li>convertir les résultats métier en {@link ProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une liste exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pSousTypeProduit SousTypeProduitDTO.InputDTO : parent.
-	 * @return List&lt;ProduitDTO.OutputDTO&gt; : liste des Produits (non null).
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>si {@code pSousTypeProduit == null},
+	 * positionne {@link #getMessage()} à
+	 * {@link #RECHERCHE_SOUSTYPEPRODUIT_NULL}
+	 * puis lève une exception ;</li>
+	 * <li>si le libellé du parent est blank,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
+	 * puis lève une exception ;</li>
+	 * <li>si le parent n'est pas trouvé ou n'est pas persistant,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
+	 * puis lève une exception ;</li>
+	 * <li>si le GATEWAY retourne {@code null},
+	 * positionne {@link #getMessage()} à
+	 * {@link #KO_TECHNIQUE_RECHERCHE}
+	 * puis propage une exception technique ;</li>
+	 * <li>si aucun objet n'est trouvé,
+	 * retourne une liste vide mais non {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>si au moins un objet est trouvé,
+	 * retourne une liste de {@link ProduitDTO.OutputDTO}
+	 * non {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération ;</li>
+	 * <li>le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur ;</li>
+	 * <li>la liste retournée, si elle n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY,
+	 * exprimé sous forme de DTO ;</li>
+	 * <li>aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pSousTypeProduit : SousTypeProduitDTO.InputDTO :
+	 * parent demandé.
+	 * @return List<ProduitDTO.OutputDTO> :
+	 * liste des Produits rattachés au parent ;
+	 * jamais {@code null} si le traitement aboutit.
 	 * @throws Exception
+	 * si une erreur survient lors de la recherche du parent,
+	 * de la recherche des Produits
+	 * ou de la préparation de la réponse utilisateur.
 	 */
 	List<ProduitDTO.OutputDTO> findAllByParent(
 			SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception;
-
+	
 
 
 	/**

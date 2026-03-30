@@ -1117,68 +1117,128 @@ public class ProduitCuServiceIntegrationTest {
 	 * <div>
 	 * <p>findAllByParent(null) : violation de contrat.</p>
 	 * <ul>
-	 * <li>lève une exception (contrat)</li>
+	 * <li>lève une exception ;</li>
+	 * <li>positionne {@link ProduitICuService#RECHERCHE_SOUSTYPEPRODUIT_NULL}.</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("findAllByParent(null) : lève une exception (contrat)")
+	@DisplayName("findAllByParent(null) : positionne message + lève RuntimeException")
 	public void testFindAllByParentNull() {
 
 		assertThatThrownBy(() -> this.service.findAllByParent(null))
-				.isInstanceOfAny(RuntimeException.class, IllegalStateException.class);
-		
+				.isInstanceOf(RuntimeException.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findAllByParent(parent absent) : violation de contrat (si parent requis persistant).</p>
+	 * <p>findAllByParent(parent absent) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève une exception ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}.</li>
+	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("findAllByParent(parent absent) : lève une exception ou retourne vide (contrat)")
+	@DisplayName("findAllByParent(parent absent) : positionne message + lève exception")
 	public void testFindAllByParentPasParent() {
 
-		final SousTypeProduitDTO.InputDTO parentDto = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B);
+		final SousTypeProduitDTO.InputDTO parentDto
+			= new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B);
 
 		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
 				.isInstanceOfAny(RuntimeException.class, IllegalStateException.class);
-		
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findAllByParent(ok) : test "béton" (si implémenté) de la récupération de tous les Produits d'un parent.</p>
+	 * <p>findAllByParent(introuvable) : aucun Produit rattaché au parent.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findAllByParent(ok) : retourne une liste non nulle contenant les créations du test (contrat)")
-	public void testFindAllByParentOk() throws Exception {
+	@DisplayName("findAllByParent(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindAllByParentIntrouvable() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
-
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_GAMMA));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_DELTA));
+		this.creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
 
 		final List<OutputDTO> dtos = this.service.findAllByParent(
 				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B));
 
-		/*
-		 * Si l'implémentation n'est pas encore finalisée, dtos peut être vide.
-		 * Le test deviendra strict une fois findAllByParent implémenté.
-		 */
-		assertThat(dtos).isNotNull();
-		
+		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
 	} // __________________________________________________________________
-	
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(ok) : retourne tous les Produits du parent demandé.</p>
+	 * <ul>
+	 * <li>crée d'abord le parent persistant requis ;</li>
+	 * <li>crée plusieurs Produits sous ce parent ;</li>
+	 * <li>retourne une liste non nulle ;</li>
+	 * <li>retourne uniquement les Produits de ce parent ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(ok) : retourne la liste non nulle des créations du parent")
+	public void testFindAllByParentOk() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_GAMMA));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_DELTA));
+
+		final List<OutputDTO> dtos = this.service.findAllByParent(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B));
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.containsExactlyInAnyOrder(IT_PRD_GAMMA, IT_PRD_DELTA);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactlyInAnyOrder(IT_STP_PARENT_B, IT_STP_PARENT_B);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactlyInAnyOrder(IT_TP_PARENT_B, IT_TP_PARENT_B);
+
+	} // __________________________________________________________________	
 	
 
+	
 	// ======================== TESTS findById(...) ========================
 
 	

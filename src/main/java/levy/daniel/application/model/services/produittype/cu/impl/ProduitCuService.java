@@ -750,54 +750,103 @@ public class ProduitCuService implements ProduitICuService {
 	 */
 	@Override
 	public List<OutputDTO> findAllByParent(
-			final SousTypeProduitDTO.InputDTO pSousTypeProduit) 
+			final SousTypeProduitDTO.InputDTO pSousTypeProduit)
 						throws Exception {
 
+		/*
+		 * Le parent demandé est une précondition observable.
+		 * Si pSousTypeProduit == null :
+		 * émet RECHERCHE_SOUSTYPEPRODUIT_NULL + LOG + RuntimeException.
+		 */
 		if (pSousTypeProduit == null) {
 			return this.traiterErreur(
 					RECHERCHE_SOUSTYPEPRODUIT_NULL,
 					new RuntimeException(RECHERCHE_SOUSTYPEPRODUIT_NULL));
 		}
 
+		/*
+		 * Le libellé du parent ne doit pas être blank.
+		 * Si blank :
+		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 */
 		if (StringUtils.isBlank(pSousTypeProduit.getSousTypeProduit())) {
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
-		final SousTypeProduit parentPersistant
+		/*
+		 * Recherche le parent persistant.
+		 */
+		final List<SousTypeProduit> parents
 			= this.sousTypeProduitGateway
-				.findByLibelle(pSousTypeProduit.getSousTypeProduit()).get(0);
+				.findByLibelle(pSousTypeProduit.getSousTypeProduit());
 
-		if (parentPersistant == null 
+		SousTypeProduit parentPersistant = null;
+
+		if (parents != null) {
+			for (final SousTypeProduit parent : parents) {
+				if (parent != null
+						&& parent.getIdSousTypeProduit() != null) {
+					parentPersistant = parent;
+					break;
+				}
+			}
+		}
+
+		/*
+		 * Refuse un parent absent ou non persistant.
+		 * Si parent null ou non persistant : 
+		 * émet un message MESSAGE_PAS_PARENT + LOG + IllegalStateException
+		 */
+		if (parentPersistant == null
 				|| parentPersistant.getIdSousTypeProduit() == null) {
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
-		final List<Produit> reponses 
+		/*
+		 * Délègue au GATEWAY Produit la recherche
+		 * de tous les Produits rattachés à ce parent.
+		 */
+		final List<Produit> reponses
 			= this.gateway.findAllByParent(parentPersistant);
 
+		/*
+		 * Une réponse technique null du GATEWAY
+		 * est une anomalie de recherche.
+		 * Si reponses == null : 
+		 * émet un message KO_TECHNIQUE_RECHERCHE + LOG + RuntimeException
+		 */
 		if (reponses == null) {
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE,
 					new RuntimeException(KO_TECHNIQUE_RECHERCHE));
 		}
 
+		/*
+		 * Positionne le message observable
+		 * puis prépare la réponse utilisateur.
+		 */
 		if (reponses.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
 		} else {
 			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
-		final List<Produit> recordsNonNullTries 
+		final List<OutputDTO> retours;
+		
+		final List<Produit> recordsNonNullTries
 			= this.filtrerEtTrier(reponses);
+		
+		retours = ConvertisseurMetierToOutputDTOProduit
+				.convertList(recordsNonNullTries);
 
-		return ConvertisseurMetierToOutputDTOProduit
-					.convertList(recordsNonNullTries);
+		/* retourne la liste d'OutputDTO. */
+		return retours;
 	}
-
+	
 	
 	
 	/**
