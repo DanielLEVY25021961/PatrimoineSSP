@@ -691,3 +691,87 @@ Le scénario nominal de `findById(...)` est :
 - en cas d'absence de résultat,
   la méthode doit retourner `null`
   avec un message observable explicite.
+  
+  ## 18) Contrat spécifique de `update(...)`
+
+Signature cible :
+- `ProduitDTO.OutputDTO update(ProduitDTO.InputDTO pInputDTO) throws Exception;`
+
+### 18.1) Scénario nominal attendu
+
+Le scénario nominal de `update(...)` est :
+
+1. recevoir un `ProduitDTO.InputDTO` transmis par la couche appelante ;
+2. valider les préconditions observables sur le DTO,
+   sur le libellé Produit et sur le parent ;
+3. retrouver le `SousTypeProduit` parent persistant correspondant au DTO ;
+4. demander au `GATEWAY` tous les `Produit` rattachés à ce parent ;
+5. identifier, dans cette collection,
+   le `Produit` effectivement persistant
+   correspondant au couple `[parent, libellé]` ;
+6. reconstruire l'objet métier à partir du DTO de modification ;
+7. réinjecter l'identifiant persistant retrouvé
+   et rattacher explicitement le parent persistant ;
+8. déléguer la modification technique au composant `GATEWAY` ;
+9. convertir l'objet métier modifié en `ProduitDTO.OutputDTO` ;
+10. positionner le message observable ;
+11. retourner la réponse finale.
+
+### 18.2) Cas observables attendus
+
+- si `pInputDTO == null` :
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
+  - lève une `ExceptionParametreNull` ;
+
+- si `pInputDTO.getProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK` ;
+  - lève une `ExceptionParametreBlank` ;
+
+- si le parent porté par le DTO est blank,
+  absent ou non persistant :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT` ;
+  - lève une `IllegalStateException` ;
+
+- si aucun `Produit` persistant
+  ne correspond au couple `[parent, libellé]` :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + libellé` ;
+
+- si l'objet retrouvé n'est pas persistant :
+  - positionne `getMessage()` à `MESSAGE_OBJ_NON_PERSISTE + libellé` ;
+  - lève une `ExceptionNonPersistant` ;
+
+- si la modification échoue techniquement :
+  - positionne un message utilisateur technique cohérent
+    construit à partir de `MESSAGE_MODIF_KO + libellé` ;
+  - propage une exception circonstanciée conforme à l'implémentation ;
+
+- si le `GATEWAY` retourne `null` :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_MODIF_KO + libellé` ;
+
+- si la conversion finale retourne `null` :
+  - positionne `getMessage()` à
+    `MESSAGE_MODIF_KO + libellé + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - lève une `IllegalStateException` ;
+
+- en cas de succès :
+  - retourne un `ProduitDTO.OutputDTO` non `null` ;
+  - positionne `getMessage()` à `MESSAGE_MODIF_OK + libellé`
+    uniquement après préparation complète
+    de la réponse utilisateur.
+
+### 18.3) Garanties spécifiques de `update(...)`
+
+- la ré-identification de l'objet à modifier
+  s'appuie sur le couple `[parent, libellé]`
+  et jamais sur le seul libellé Produit ;
+- le message retourné par `getMessage()`
+  reflète l'issue observable réelle de l'opération ;
+- le message de succès ne doit être positionné
+  qu'après préparation complète de la réponse utilisateur finale ;
+- l'identifiant persistant retrouvé
+  est réinjecté dans l'objet envoyé au `GATEWAY` ;
+- l'objet retourné, s'il n'est pas `null`,
+  correspond à un `Produit` effectivement modifié
+  dans le stockage et exprimé sous forme de DTO.

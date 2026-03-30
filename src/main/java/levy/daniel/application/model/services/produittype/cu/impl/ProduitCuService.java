@@ -6,7 +6,6 @@ package levy.daniel.application.model.services.produittype.cu.impl;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -974,57 +973,294 @@ public class ProduitCuService implements ProduitICuService {
 	public OutputDTO update(
 			final InputDTO pInputDTO) throws Exception {
 
+		/*
+		 * Le contrat UC refuse un DTO de modification null.
+		 * Si pInputDTO == null :
+		 * émet MESSAGE_PARAM_NULL + LOG + ExceptionParametreNull.
+		 */
 		if (pInputDTO == null) {
 			return this.traiterErreur(
 					MESSAGE_PARAM_NULL,
 					new ExceptionParametreNull(MESSAGE_PARAM_NULL));
 		}
 
-		if (StringUtils.isBlank(pInputDTO.getProduit())) {
+		/*
+		 * Récupère les libellés métier portés par le DTO.
+		 */
+		final String libelleProduit = pInputDTO.getProduit();
+		final String libelleSousType = pInputDTO.getSousTypeProduit();
+		final String libelleType = pInputDTO.getTypeProduit();
+
+		/*
+		 * Le contrat UC refuse un libellé Produit blank.
+		 * Si libelleProduit est blank :
+		 * émet MESSAGE_PARAM_BLANK + LOG + ExceptionParametreBlank.
+		 */
+		if (StringUtils.isBlank(libelleProduit)) {
 			return this.traiterErreur(
 					MESSAGE_PARAM_BLANK,
 					new ExceptionParametreBlank(MESSAGE_PARAM_BLANK));
 		}
 
-		final Produit existant 
-			= this.gateway.findByLibelle(pInputDTO.getProduit()).get(0);
+		/*
+		 * Le parent est une précondition observable du SERVICE UC.
+		 * Si le type parent ou le sous-type parent est blank :
+		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 */
+		if (StringUtils.isBlank(libelleType)
+				|| StringUtils.isBlank(libelleSousType)) {
+			return this.traiterErreur(
+					MESSAGE_PAS_PARENT,
+					new IllegalStateException(MESSAGE_PAS_PARENT));
+		}
 
-		if (existant == null) {
-			this.message.set(MESSAGE_OBJ_INTROUVABLE 
-					+ pInputDTO.getProduit());
+		/*
+		 * Recherche le parent persistant correspondant au DTO.
+		 * Toute anomalie technique de recherche est transformée
+		 * en message utilisateur rationalisé côté UC.
+		 */
+		final List<SousTypeProduit> parents;
+
+		try {
+			
+			/*Délègue la recherche du parent persistant au Gateway. */
+			parents 
+				= this.sousTypeProduitGateway.findByLibelle(libelleSousType);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		SousTypeProduit parentPersistant = null;
+
+		/* Recherche le bon parent dans la liste des parents 
+		 * possibles retournée. */
+		if (parents != null) {
+			for (final SousTypeProduit parent : parents) {
+				if (parent != null
+						&& parent.getIdSousTypeProduit() != null
+						&& parent.getTypeProduit() != null
+						&& Strings.CI.equals(
+								parent.getSousTypeProduit(),
+								libelleSousType)
+						&& Strings.CI.equals(
+								parent.getTypeProduit().getTypeProduit(),
+								libelleType)) {
+					parentPersistant = parent;
+					break;
+				}
+			}
+		}
+
+		/*
+		 * Si aucun parent persistant cohérent n'est retrouvé :
+		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 */
+		if (parentPersistant == null) {
+			return this.traiterErreur(
+					MESSAGE_PAS_PARENT,
+					new IllegalStateException(MESSAGE_PAS_PARENT));
+		}
+
+		/*
+		 * Recherche tous les Produits rattachés au parent persistant.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final List<Produit> records;
+
+		try {
+			
+			/* délègue au GATEWAY la recherche des enfants 
+			 * du parent persistant. */
+			records = this.gateway.findAllByParent(parentPersistant);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si aucun enfant n'est disponible pour ce parent :
+		 * retourne null avec MESSAGE_OBJ_INTROUVABLE + libellé.
+		 */
+		if (records == null || records.isEmpty()) {
+			this.message.set(MESSAGE_OBJ_INTROUVABLE + libelleProduit);
 			return null;
 		}
 
+		/*
+		 * Recherche dans la liste filtrée et triée
+		 * l'objet correspondant au couple [parent, libellé].
+		 */
+		final Produit existant;
+
+		try {
+			
+			/* filtre les null et trie la liste des enfants 
+			 * du parent persistant. */
+			final List<Produit> recordsNonNullTries 
+				= this.filtrerEtTrier(records);
+
+			Produit trouve = null;
+
+			/* recherche le produit à modifier parmi les enfants 
+			 * du parent persistant. */
+			for (final Produit produit : recordsNonNullTries) {
+				if (Strings.CI.equals(
+						produit.getProduit(),
+						libelleProduit)) {
+					
+					trouve = produit;
+					break;
+				}
+			}
+
+			existant = trouve;
+
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si aucun Produit persistant correspondant n'est trouvé :
+		 * retourne null avec MESSAGE_OBJ_INTROUVABLE + libellé.
+		 */
+		if (existant == null) {
+			this.message.set(MESSAGE_OBJ_INTROUVABLE + libelleProduit);
+			return null;
+		}
+
+		/*
+		 * L'objet retrouvé doit être persistant avant modification.
+		 * Si existant.getIdProduit() == null :
+		 * émet MESSAGE_OBJ_NON_PERSISTE + libellé
+		 * + LOG + ExceptionNonPersistant.
+		 */
 		if (existant.getIdProduit() == null) {
 			return this.traiterErreur(
-					MESSAGE_OBJ_NON_PERSISTE + pInputDTO.getProduit(),
+					MESSAGE_OBJ_NON_PERSISTE + libelleProduit,
 					new ExceptionNonPersistant(
-							MESSAGE_OBJ_NON_PERSISTE 
-								+ pInputDTO.getProduit()));
+							MESSAGE_OBJ_NON_PERSISTE + libelleProduit));
 		}
 
-		/* conserve l'ID, et remplace le libellé (ex : upper) 
-		 * selon la logique projet. */
-		final String nouveauLibelle 
-			= pInputDTO.getProduit().toUpperCase(Locale.getDefault());
+		/*
+		 * Reconstruit l'objet métier à modifier
+		 * en réinjectant l'identifiant persistant retrouvé
+		 * et le parent persistant.
+		 */
+		final Produit produitAModifier 
+			= new Produit(libelleProduit, parentPersistant);
+		
+		produitAModifier.setIdProduit(existant.getIdProduit());
 
-		final Produit aModifier 
-			= new Produit(nouveauLibelle, existant.getSousTypeProduit());
-		aModifier.setIdProduit(existant.getIdProduit());
+		/*
+		 * Délègue la modification technique au GATEWAY.
+		 * Toute anomalie technique de modification
+		 * est transformée en message utilisateur rationalisé côté UC.
+		 */
+		final Produit modifie;
 
-		final Produit modifie = this.gateway.update(aModifier);
+		try {
+			
+			/* Délègue la modification technique au GATEWAY. */
+			modifie = this.gateway.update(produitAModifier);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
 
+			return this.traiterErreur(
+					MESSAGE_MODIF_KO + libelleProduit + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si le GATEWAY retourne null :
+		 * retourne null + MESSAGE_MODIF_KO + libellé.
+		 */
 		if (modifie == null) {
-			this.message.set(MESSAGE_MODIF_KO + pInputDTO.getProduit());
+			this.message.set(MESSAGE_MODIF_KO + libelleProduit);
 			return null;
 		}
 
-		this.message.set(MESSAGE_MODIF_OK 
-				+ this.safeParentLibelle(modifie));
+		/*
+		 * L'objet retourné après modification
+		 * doit rester persistant.
+		 * Si modifie.getIdProduit() == null :
+		 * émet MESSAGE_OBJ_NON_PERSISTE + libellé
+		 * + LOG + ExceptionNonPersistant.
+		 */
+		if (modifie.getIdProduit() == null) {
+			
+			return this.traiterErreur(
+					MESSAGE_OBJ_NON_PERSISTE + libelleProduit,
+					new ExceptionNonPersistant(
+							MESSAGE_OBJ_NON_PERSISTE + libelleProduit));
+		}
 
-		return ConvertisseurMetierToOutputDTOProduit.convert(modifie);
+		final OutputDTO dto;
+
+		try {
+			
+			/*
+			 * Convertit l'objet métier modifié en OutputDTO final.
+			 */
+			dto = ConvertisseurMetierToOutputDTOProduit.convert(modifie);
+			
+		} catch (final Exception e) {
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					MESSAGE_MODIF_KO + libelleProduit + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Si dto == null :
+		 * message technique + LOG + IllegalStateException
+		 */
+		if (dto == null) {
+			final String messageTechnique =
+					MESSAGE_MODIF_KO + libelleProduit 
+					+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					messageTechnique,
+					new IllegalStateException(messageTechnique));
+		}
+
+		/*
+		 * Le message observable de succès
+		 * n'est positionné qu'après préparation complète
+		 * de la réponse utilisateur finale.
+		 */
+		this.message.set(MESSAGE_MODIF_OK + libelleProduit);
+
+		/* Retourne l'OutputDTO modifié. */
+		return dto;
 	}
-
+	
 	
 	
 	/**

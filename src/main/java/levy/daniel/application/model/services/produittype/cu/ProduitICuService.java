@@ -971,35 +971,128 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Met à jour un {@link Produit} existant à partir d'un InputDTO.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p>Modifie un {@link Produit} déjà persistant identifié
+	 * par le couple [parent, libellé]
+	 * et retourne le résultat sous forme
+	 * de {@link ProduitDTO.OutputDTO}.</p>
+	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC 
+	 * (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL} et lève une exception.</li>
-	 * <li>Si {@code pInputDTO.getProduit()} est Blank, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_BLANK} et lève une exception.</li>
-	 * <li>Si l'objet est introuvable, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Si l'objet est non persistant, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé et lève une exception.</li>
-	 * <li>Si la modification échoue, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_MODIF_KO} + libellé.</li>
-	 * <li>Sinon, retourne l'OutputDTO modifié et positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_MODIF_OK} + parent.</li>
+	 * <li>recevoir un {@link ProduitDTO.InputDTO}
+	 * transmis par la couche appelante ;</li>
+	 * <li>valider les préconditions observables
+	 * sur le DTO, sur le libellé Produit
+	 * et sur le parent ;</li>
+	 * <li>retrouver le {@link SousTypeProduit} parent persistant
+	 * correspondant au DTO ;</li>
+	 * <li>demander au composant GATEWAY
+	 * tous les {@link Produit}
+	 * rattachés à ce parent ;</li>
+	 * <li>identifier, dans cette collection,
+	 * le {@link Produit} effectivement persistant
+	 * correspondant au couple [parent, libellé] ;</li>
+	 * <li>reconstruire l'objet métier
+	 * à partir du DTO de modification ;</li>
+	 * <li>réinjecter l'identifiant persistant retrouvé
+	 * et rattacher explicitement le parent persistant ;</li>
+	 * <li>déléguer la modification technique
+	 * au composant GATEWAY ;</li>
+	 * <li>convertir l'objet métier modifié
+	 * en {@link ProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO ProduitDTO.InputDTO : DTO de modification.
-	 * @return ProduitDTO.OutputDTO : DTO modifié ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service
+	 * et lève une {@link ExceptionParametreNull} ;</li>
+	 * <li>Si {@code pInputDTO.getProduit()} est blank,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_BLANK},
+	 * émet un LOG de service
+	 * et lève une {@link ExceptionParametreBlank} ;</li>
+	 * <li>Si le parent porté par le DTO
+	 * est blank, absent ou non persistant,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG de service
+	 * et lève une {@link IllegalStateException} ;</li>
+	 * <li>Si aucun {@link Produit} persistant
+	 * ne correspond au couple [parent, libellé],
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé ;</li>
+	 * <li>Si l'objet retrouvé n'est pas persistant,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé,
+	 * émet un LOG de service
+	 * et lève une {@link ExceptionNonPersistant} ;</li>
+	 * <li>Si la modification échoue techniquement,
+	 * positionne un message utilisateur technique cohérent
+	 * construit à partir de
+	 * {@link #MESSAGE_MODIF_KO} + libellé
+	 * et propage une exception circonstanciée
+	 * conforme à l'implémentation ;</li>
+	 * <li>Si le GATEWAY retourne {@code null},
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO} + libellé ;</li>
+	 * <li>Si la conversion finale
+	 * en {@link ProduitDTO.OutputDTO}
+	 * retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO}
+	 * + libellé
+	 * + {@link #TIRET_ESPACE}
+	 * + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG
+	 * et lève une {@link IllegalStateException} ;</li>
+	 * <li>En cas de succès,
+	 * retourne un {@link ProduitDTO.OutputDTO}
+	 * non {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_OK} + libellé
+	 * uniquement après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>La ré-identification de l'objet à modifier
+	 * s'appuie sur le couple [parent, libellé]
+	 * et jamais sur le seul libellé Produit ;</li>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable réelle de l'opération ;</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur finale ;</li>
+	 * <li>L'identifiant persistant retrouvé
+	 * est réinjecté dans l'objet envoyé au GATEWAY ;</li>
+	 * <li>L'objet retourné, s'il n'est pas {@code null},
+	 * correspond à un {@link Produit} effectivement modifié
+	 * dans le stockage et exprimé sous forme de DTO.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : ProduitDTO.InputDTO :
+	 * DTO de modification.
+	 * @return ProduitDTO.OutputDTO :
+	 * DTO modifié ou {@code null}.
 	 * @throws Exception
+	 * toute exception levée par l'implémentation,
+	 * notamment lors des recherches techniques,
+	 * de la délégation de modification
+	 * ou de la préparation de la réponse utilisateur.
 	 */
 	ProduitDTO.OutputDTO update(ProduitDTO.InputDTO pInputDTO) throws Exception;
-
 	
 	
 	/**

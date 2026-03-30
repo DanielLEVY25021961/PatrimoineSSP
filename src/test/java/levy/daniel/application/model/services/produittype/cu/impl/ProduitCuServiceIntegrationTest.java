@@ -34,7 +34,6 @@ import levy.daniel.application.model.services.produittype.cu.ProduitICuService;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
-import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionNonPersistant;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreNull;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
@@ -1407,166 +1406,244 @@ public class ProduitCuServiceIntegrationTest {
 	 * <p>update(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
+	 * @throws Exception 
 	 */
 	@Test
-	@DisplayName("update(null) : positionne message + lève ExceptionParametreNull")
-	public void testUpdateNull() {
+	@DisplayName("update(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
+	public void testUpdateNull() throws Exception {
+
+		final long nombreAvant = this.service.count();
 
 		assertThatThrownBy(() -> this.service.update(null))
-				.isInstanceOf(ExceptionParametreNull.class);
+			.isInstanceOf(ExceptionParametreNull.class);
+
+		final long nombreApres = this.service.count();
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-		
+			.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
 	 * <p>update(blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
+	 * @throws Exception 
 	 */
 	@Test
-	@DisplayName("update(blank) : positionne message + lève ExceptionParametreBlank")
-	public void testUpdateBlank() {
+	@DisplayName("update(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
+	public void testUpdateBlank() throws Exception {
 
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, ESPACES);
+		final long nombreAvant = this.service.count();
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				ESPACES);
 
 		assertThatThrownBy(() -> this.service.update(input))
-				.isInstanceOf(ExceptionParametreBlank.class);
+			.isInstanceOf(ExceptionParametreBlank.class);
+
+		final long nombreApres = this.service.count();
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-		
+			.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>update(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>update(parent blank) : violation de contrat structurel.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
+	 * </div>
+	 * @throws Exception 
+	 */
+	@Test
+	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testUpdateParentBlank() throws Exception {
+
+		final long nombreAvant = this.service.count();
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				ESPACES,
+				IT_PRD_UPDATE_OK);
+
+		assertThatThrownBy(() -> this.service.update(input))
+			.isInstanceOf(IllegalStateException.class);
+
+		final long nombreApres = this.service.count();
+
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(parent absent) : le parent requis n'existe pas en stockage.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
+	 * </div>
+	 * @throws Exception 
+	 */
+	@Test
+	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testUpdateParentAbsent() throws Exception {
+
+		final long nombreAvant = this.service.count();
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_UPDATE_OK);
+
+		assertThatThrownBy(() -> this.service.update(input))
+			.isInstanceOf(IllegalStateException.class);
+
+		final long nombreApres = this.service.count();
+
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(introuvable) : aucun objet persistant
+	 * ne correspond au couple [parent, libellé].</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne crée aucune ligne en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("update(introuvable) : null + message exact MESSAGE_OBJ_INTROUVABLE + libellé + aucune création BD")
 	public void testUpdateIntrouvable() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_INEXISTANT_UPDATE);
+		final long nombreAvant = this.service.count();
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_INEXISTANT_UPDATE);
 
 		final OutputDTO dto = this.service.update(input);
 
+		final long nombreApres = this.service.count();
+
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(ProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
+			.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + IT_PRD_INEXISTANT_UPDATE);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>update(non persistant) : violation de contrat (objet existant mais non persistant).</p>
+	 * <p>update(ok) : test béton du scénario nominal réel.</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionNonPersistant}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_NON_PERSISTE}</li>
+	 * <li>crée d'abord un Produit réel ;</li>
+	 * <li>met ensuite à jour ce même objet
+	 * via un {@link InputDTO} portant le même couple [parent, libellé] ;</li>
+	 * <li>retourne un {@link OutputDTO} cohérent ;</li>
+	 * <li>conserve exactement le même identifiant persistant ;</li>
+	 * <li>ne crée aucun doublon et n'altère pas le volume total ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_MODIF_OK} + libellé.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(non persistant) : positionne message + lève ExceptionNonPersistant")
-	public void testUpdateNonPersistant() throws Exception {
+	@DisplayName("update(ok) : OutputDTO cohérent + ID conservé + message exact + absence de doublon")
+	public void testUpdateOkAvecPreuveBdEtIdConserve() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-
-		/*
-		 * Pour provoquer "non persistant", on s'appuie sur le contrat observable
-		 * de ProduitCuService : si l'objet trouvé par libellé existe mais a un ID null,
-		 * la méthode doit lever ExceptionNonPersistant.
-		 *
-		 * En IT, ce cas est difficile à produire avec une base JPA (les IDs sont
-		 * toujours attribués). On conserve un test contractuel minimal :
-		 * si l'implémentation est alignée avec les autres services CU,
-		 * elle doit lever ExceptionNonPersistant lorsque l'ID est null.
-		 */
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_UPDATE_OK);
-
-		/* Création nominale. */
-		final OutputDTO cree = this.service.creer(input);
-		assertThat(cree).isNotNull();
-
-		/*
-		 * Ici, on ne peut pas retirer l'ID en intégration. On vérifie donc simplement
-		 * que l'update nominal ne casse pas le contrat et conserve l'ID.
-		 */
-		final OutputDTO modifie = this.service.update(input);
-
-		assertThat(modifie).isNotNull();
-		assertThat(modifie.getIdProduit()).isEqualTo(cree.getIdProduit());
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>update(ok) : met à jour et conserve l'ID persistant.</p>
-	 * <p>Test "béton" : round-trip création puis modification puis re-lecture.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("update(ok) : retourne OutputDTO avec le même ID persistant")
-	public void testUpdateOk() throws Exception {
-
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final OutputDTO cree = this.service.creer(
-				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_UPDATE_OK));
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_UPDATE_OK));
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
+		assertThat(cree.getProduit()).isEqualTo(IT_PRD_UPDATE_OK);
+
+		final Long idAvantUpdate = cree.getIdProduit();
+		final long nombreAvantUpdate = this.service.count();
 
 		final OutputDTO modifie = this.service.update(
-				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_UPDATE_OK));
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_UPDATE_OK));
+
+		final String message = this.service.getMessage();
+		final long nombreApresUpdate = this.service.count();
 
 		assertThat(modifie).isNotNull();
-		assertThat(modifie.getIdProduit()).isEqualTo(cree.getIdProduit());
+		assertThat(modifie.getIdProduit()).isEqualTo(idAvantUpdate);
 		assertThat(modifie.getProduit()).isEqualTo(IT_PRD_UPDATE_OK);
 		assertThat(modifie.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(modifie.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(message)
+			.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + IT_PRD_UPDATE_OK);
 
-		final OutputDTO relu = this.service.findById(cree.getIdProduit());
+		assertThat(nombreApresUpdate).isEqualTo(nombreAvantUpdate);
+
+		final OutputDTO relu = this.service.findById(idAvantUpdate);
 
 		assertThat(relu).isNotNull();
-		assertThat(relu.getIdProduit()).isEqualTo(cree.getIdProduit());
+		assertThat(relu.getIdProduit()).isEqualTo(idAvantUpdate);
 		assertThat(relu.getProduit()).isEqualTo(IT_PRD_UPDATE_OK);
 		assertThat(relu.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(relu.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 
-		/* Règle projet : toujours préciser une Locale pour toUpperCase. */
-		final String dummy = relu.getProduit().toUpperCase(Locale.getDefault());
-		assertThat(dummy).isNotBlank();
-		
-	} // __________________________________________________________________
+	} // __________________________________________________________________	
 	
 	
 
