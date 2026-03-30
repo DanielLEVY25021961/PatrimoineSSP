@@ -1817,15 +1817,76 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 	
 	/**
-	* {@inheritDoc}
-	*/
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long count() throws Exception {
-		return this.gateway.count();
+
+		/*
+		 * Délègue le comptage au GATEWAY.
+		 * Toute anomalie technique est transformée
+		 * en message utilisateur technique cohérent.
+		 */
+		final long resultat;
+
+		try {
+			
+			/*
+			 * Délègue au GATEWAY le comptage exact
+			 * du nombre d'objets présents en stockage.
+			 */
+			resultat = this.gateway.count();
+			
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+		}
+
+		/*
+		 * Un comptage strictement négatif est incohérent
+		 * pour un résultat observable côté UC.
+		 * Si resultat < 0L :
+		 * émet un message technique
+		 * + LOG + IllegalStateException.
+		 */
+		if (resultat < 0L) {
+			final String messageTechnique =
+					KO_TECHNIQUE_RECHERCHE
+							+ TIRET_ESPACE
+							+ "comptage négatif incohérent : "
+							+ resultat;
+
+			return this.traiterErreur(
+					messageTechnique,
+					new IllegalStateException(messageTechnique));
+		}
+
+		/*
+		 * Positionne le message observable
+		 * seulement après récupération effective du comptage.
+		 * 0 -> MESSAGE_RECHERCHE_VIDE
+		 * > 0 -> MESSAGE_RECHERCHE_OK
+		 */
+		if (resultat == 0L) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
+		}
+
+		/* Retourne le comptage final validé. */
+		return resultat;
 	}
 
 
-
+	
 	/**
 	* {@inheritDoc}
 	*/

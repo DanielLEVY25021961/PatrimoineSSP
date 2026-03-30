@@ -2581,32 +2581,122 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>count() : cohérence (baseline + créations - suppressions).</p>
+	 * <p>count() : retourne le comptage réel de la base
+	 * et positionne le message observable correspondant.</p>
+	 * <ul>
+	 * <li>compare le résultat UC
+	 * au {@code SELECT COUNT(*)} physique</li>
+	 * <li>vérifie le message exact :
+	 * vide si {@code 0},
+	 * succès si strictement positif</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("count() : retourne un nombre cohérent (baseline + créations - suppressions)")
-	public void testCountCoherent() throws Exception {
+	@DisplayName("count() : résultat identique au COUNT(*) physique + message observable exact")
+	public void testCountRetourneLeNombrePhysiqueEtLeMessageObservable()
+			throws Exception {
 
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		final Long nombrePhysique = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final long retourUc = this.service.count();
+
+		assertThat(retourUc).isEqualTo(nombrePhysique.longValue());
+
+		if (retourUc == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>count() : cohérence renforcée
+	 * avant créations, après créations,
+	 * puis après suppressions de nettoyage.</p>
+	 * <ul>
+	 * <li>prouve la hausse exacte après deux créations</li>
+	 * <li>prouve le retour exact au niveau initial
+	 * après suppression des deux objets créés</li>
+	 * <li>vérifie à chaque étape
+	 * le message observable exact</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("count() : cohérence complète + messages exacts avant/après créations puis nettoyage")
+	public void testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage()
+			throws Exception {
 
 		final long baseline = this.service.count();
 
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_COUNT_01));
-		this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_COUNT_02));
+		if (baseline == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+		this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+
+		this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_COUNT_01));
+
+		this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_COUNT_02));
 
 		final long apresCreations = this.service.count();
 
 		assertThat(apresCreations).isEqualTo(baseline + 2L);
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
-		this.service.delete(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_COUNT_01));
+		this.service.delete(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_COUNT_01));
 
-		final long apresSuppression = this.service.count();
+		this.service.delete(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_COUNT_02));
 
-		assertThat(apresSuppression).isEqualTo(baseline + 1L);
-		
+		final long apresNettoyage = this.service.count();
+
+		assertThat(apresNettoyage).isEqualTo(baseline);
+
+		if (apresNettoyage == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+		final Long nombrePhysiqueFinal = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(apresNettoyage).isEqualTo(nombrePhysiqueFinal.longValue());
+
 	} // __________________________________________________________________
 
 	

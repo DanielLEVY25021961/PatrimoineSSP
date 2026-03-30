@@ -1098,9 +1098,61 @@ Le scénario nominal de `delete(...)` est :
 - le message de succès ne doit être positionné qu'après destruction effective ;
 - aucun résultat partiel incohérent ne doit être exposé à l'appelant.
 
-## 21) Règle de synchronisation PORT / ADAPTER / tests
+## 21) Contrat spécifique de `count(...)`
 
-Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)`, `findById(...)`, `update(...)` ou `delete(...)` doit rester synchronisée entre :
+Signature cible :
+
+- `long count() throws Exception;`
+
+### 21.1 Scénario nominal attendu
+
+Le scénario nominal de `count()` est :
+
+1. demander au `GATEWAY` le nombre total de `SousTypeProduit` présents dans le stockage ;
+2. sécuriser la valeur numérique retournée par le `GATEWAY` ;
+3. retourner un résultat de comptage exploitable par la couche appelante ;
+4. positionner un message utilisateur cohérent avec l'issue observable du comptage.
+
+### 21.2 Cas observables attendus
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si le `GATEWAY` retourne une valeur strictement négative :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + "comptage négatif incohérent : " + resultat`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si le comptage retourné vaut `0` :
+  - retourne `0`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si le comptage retourné est strictement positif :
+  - retourne ce comptage,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 21.3 Garanties spécifiques de `count(...)`
+
+- le message observable doit refléter l'issue réelle de l'opération ;
+- le message de succès ou d'absence de résultat ne doit être positionné
+  qu'après récupération effective du comptage ;
+- le résultat retourné doit correspondre au nombre total d'objets
+  effectivement accessibles dans le stockage ;
+- aucune valeur de comptage incohérente ne doit être exposée à l'appelant.
+
+## 22) Règle de synchronisation PORT / ADAPTER / tests
+
+Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)`, `findById(...)`, `update(...)`, `delete(...)` ou `count()` doit rester synchronisée entre :
 1. le PORT `SousTypeProduitICuService` ;
 2. l’ADAPTER `SousTypeProduitCuService` ;
 3. les tests Mock ;
@@ -1215,9 +1267,16 @@ Pour `delete(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas `gateway.findAllByParent(...) == null` pendant la ré-identification ;
 - le cas introuvable sur le couple `[parent, libellé]` ;
 - le cas objet retrouvé non persistant ;
-- le cas exception technique de destruction avec message ;
-- le cas exception technique de destruction sans message ;
-- le cas nominal avec destruction du bon couple `[parent, libellé]`.
+- le cas exception technique de suppression avec message ;
+- le cas exception technique de suppression sans message ;
+- le cas nominal avec ré-identification correcte sur le couple `[parent, libellé]`.
+
+Pour `count()`, les tests Mock doivent verrouiller au minimum :
+- le cas exception technique avec message ;
+- le cas exception technique sans message ;
+- le cas retour négatif incohérent ;
+- le cas `0` avec `MESSAGE_RECHERCHE_VIDE` ;
+- le cas strictement positif avec `MESSAGE_RECHERCHE_OK`.
 
 ### Point de vigilance pour les tests d’Intégration
 
@@ -1303,11 +1362,17 @@ Pour `delete(...)`, le test d’intégration cible doit, à terme, prouver :
 - qu’un libellé enfant blank est refusé ;
 - qu’un parent blank est refusé ;
 - qu’un parent absent est refusé ;
-- qu’un couple `[parent, libellé]` introuvable ne supprime rien
+- qu’un couple `[parent, libellé]` introuvable ne détruit rien
   et positionne `MESSAGE_OBJ_INTROUVABLE + libellé` ;
-- que la ré-identification s’appuie bien sur le couple `[parent, libellé]`
+- que la destruction s’appuie bien sur le couple `[parent, libellé]`
   lorsque le même libellé existe sur plusieurs parents ;
-- que seul le couple ciblé est physiquement détruit en base ;
-- que le couple homonyme rattaché à un autre parent reste présent ;
+- qu’aucun autre couple homonyme n’est détruit ;
 - que le message exact `MESSAGE_DELETE_OK + libellé`
   est positionné en cas de succès.
+
+Pour `count()`, le test d’intégration cible doit, à terme, prouver :
+- que le résultat UC est identique au `COUNT(*)` physique de la base ;
+- que le message exact est `MESSAGE_RECHERCHE_VIDE` si le comptage vaut `0` ;
+- que le message exact est `MESSAGE_RECHERCHE_OK` si le comptage est strictement positif ;
+- que deux créations font augmenter le comptage de `2` ;
+- que le nettoyage ramène exactement le comptage au niveau initial.
