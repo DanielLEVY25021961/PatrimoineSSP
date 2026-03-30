@@ -645,3 +645,49 @@ Le scénario nominal de `findByDTO(...)` est :
 - en cas d'absence de correspondance exacte,
   la méthode doit retourner `null`
   avec `MESSAGE_RECHERCHE_VIDE`.
+  
+  ## 17) Contrat spécifique de `findById(...)`
+
+Signature cible :
+- `ProduitDTO.OutputDTO findById(Long pId) throws Exception;`
+
+### 17.1) Scénario nominal attendu
+
+Le scénario nominal de `findById(...)` est :
+
+1. recevoir un identifiant technique de `Produit` ;
+2. déléguer la recherche au `GATEWAY` Produit ;
+3. récupérer l'objet métier correspondant ;
+4. convertir l'objet métier retrouvé en `ProduitDTO.OutputDTO` ;
+5. positionner le message observable ;
+6. retourner la réponse finale.
+
+### 17.2) Cas observables attendus
+
+- si `pId == null` :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
+  - ne lève aucune exception ;
+
+- si aucun objet n'est trouvé pour l'identifiant demandé :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + pId` ;
+
+- si un objet est trouvé :
+  - retourne un `ProduitDTO.OutputDTO` non `null` ;
+  - positionne `getMessage()` à `MESSAGE_SUCCES_RECHERCHE` ;
+
+- en cas d'erreur technique remontée par le `GATEWAY`
+  ou par la conversion finale :
+  - propage une exception conforme à l'implémentation.
+
+### 17.3) Garanties spécifiques de `findById(...)`
+
+- la méthode ne doit jamais exposer de résultat incohérent à l'appelant ;
+- l'objet retourné, s'il n'est pas `null`,
+  doit correspondre à un `Produit` effectivement retrouvé dans le stockage ;
+- le message de succès ne doit être positionné
+  qu'après préparation complète de la réponse utilisateur ;
+- en cas d'absence de résultat,
+  la méthode doit retourner `null`
+  avec un message observable explicite.

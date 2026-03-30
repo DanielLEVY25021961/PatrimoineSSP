@@ -1308,36 +1308,41 @@ public class ProduitCuServiceIntegrationTest {
 	 * <p>findById(null) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(null) : retourne null")
+	@DisplayName("findById(null) : retourne null + message MESSAGE_PARAM_NULL")
 	public void testFindByIdNull() throws Exception {
 
 		final OutputDTO dto = this.service.findById(null);
 
 		assertThat(dto).isNull();
-		
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
 	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findById(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + id")
 	public void testFindByIdIntrouvable() throws Exception {
 
 		final Long idInexistant = Long.valueOf(Long.MAX_VALUE);
@@ -1346,27 +1351,35 @@ public class ProduitCuServiceIntegrationTest {
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(ProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + idInexistant);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
 	 * <p>findById(ok) : round-trip création puis lecture par ID.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>retourne l'OutputDTO correspondant à l'identifiant demandé ;</li>
+	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(ok) : retourne OutputDTO après création")
+	@DisplayName("findById(ok) : retourne OutputDTO exact + message MESSAGE_SUCCES_RECHERCHE")
 	public void testFindByIdOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final OutputDTO cree = this.service.creer(
-				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_GAMMA));
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
@@ -1378,7 +1391,9 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(relu.getProduit()).isEqualTo(IT_PRD_GAMMA);
 		assertThat(relu.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(relu.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
 	} // __________________________________________________________________
 	
 	

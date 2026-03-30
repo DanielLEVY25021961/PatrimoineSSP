@@ -913,30 +913,60 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Recherche un {@link Produit} dans le stockage à partir de son identifiant.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p>Retourne un {@link ProduitDTO.OutputDTO}
+	 * recherché par son identifiant technique.</p>
+	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Si {@code pId == null}, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL}
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si aucun objet n'est trouvé, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} + id.</li>
-	 * <li>Sinon, retourne l'OutputDTO correspondant et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * <li>recevoir un identifiant technique de {@link Produit} ;</li>
+	 * <li>déléguer la recherche au composant GATEWAY ;</li>
+	 * <li>convertir l'objet métier retrouvé en {@link ProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pId Long : identifiant.
-	 * @return ProduitDTO.OutputDTO : DTO résultat ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>si {@code pId == null}, retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL}
+	 * et n'émet ni LOG ni exception ;</li>
+	 * <li>si aucun objet n'est trouvé pour l'identifiant demandé,
+	 * retourne {@code null} et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + id ;</li>
+	 * <li>si un objet est trouvé, retourne l'{@link ProduitDTO.OutputDTO}
+	 * correspondant et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_SUCCES_RECHERCHE} ;</li>
+	 * <li>en cas d'échec technique remonté par le GATEWAY
+	 * ou par la conversion finale,
+	 * propage une exception conforme à l'implémentation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération ;</li>
+	 * <li>le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur ;</li>
+	 * <li>l'objet retourné, s'il n'est pas {@code null},
+	 * correspond à un {@link Produit} effectivement retrouvé
+	 * dans le stockage et exprimé sous forme de DTO ;</li>
+	 * <li>aucun résultat incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pId : Long :
+	 * identifiant technique du Produit recherché.
+	 * @return ProduitDTO.OutputDTO :
+	 * DTO résultat ou {@code null}.
 	 * @throws Exception
+	 * si une erreur survient lors de la recherche
+	 * ou lors de la préparation de la réponse utilisateur.
 	 */
 	ProduitDTO.OutputDTO findById(Long pId) throws Exception;
-
+	
 	
 	
 	/**

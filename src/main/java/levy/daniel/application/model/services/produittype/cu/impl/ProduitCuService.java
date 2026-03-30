@@ -919,23 +919,52 @@ public class ProduitCuService implements ProduitICuService {
 	public OutputDTO findById(
 			final Long pId) throws Exception {
 
+		/*
+		 * Erreur utilisateur bénigne :
+		 * aucun traitement, aucun LOG, aucune Exception.
+		 * Si pId == null :
+		 * Retourne null avec un message utilisateur MESSAGE_PARAM_NULL.
+		 */
 		if (pId == null) {
 			this.message.set(MESSAGE_PARAM_NULL);
 			return null;
 		}
 
+		/*
+		 * Délègue au GATEWAY la recherche par identifiant.
+		 */
 		final Produit reponse = this.gateway.findById(pId);
 
+		/*
+		 * Si l'objet est introuvable :
+		 * Retourne null avec un message utilisateur
+		 * MESSAGE_OBJ_INTROUVABLE + pId.
+		 */
 		if (reponse == null) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + pId);
 			return null;
 		}
 
+		/*
+		 * Prépare la réponse utilisateur finale.
+		 * Le message de succès n'est positionné
+		 * qu'après conversion réussie.
+		 */
+		final OutputDTO dto
+			= ConvertisseurMetierToOutputDTOProduit.convert(reponse);
+
+		/*
+		 * Positionne le message observable seulement
+		 * après préparation complète de la réponse.
+		 */
 		this.message.set(MESSAGE_SUCCES_RECHERCHE);
 
-		return ConvertisseurMetierToOutputDTOProduit.convert(reponse);
+		/*
+		 * Retourne l'OutputDTO final.
+		 */
+		return dto;
 	}
-
+	
 	
 	
 	/**

@@ -1913,7 +1913,128 @@ public class ProduitCuServiceMockTest {
 
 	
 	// ======================== TESTS findById(...) ========================
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findById(null) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'interagit avec aucun gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(null) : retourne null + message MESSAGE_PARAM_NULL + aucune interaction gateway")
+	public void testFindByIdNull() throws Exception {
 
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final OutputDTO dto = service.findById(null);
+
+		assertThat(dto).isNull();
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + id")
+	public void testFindByIdIntrouvable() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final Long id = 999L;
+
+		when(gateway.findById(id)).thenReturn(null);
+
+		final OutputDTO dto = service.findById(id);
+
+		assertThat(dto).isNull();
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
+
+		verify(gateway, times(1)).findById(id);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findById(ok) : retourne l'OutputDTO exact correspondant à l'identifiant demandé.</p>
+	 * <ul>
+	 * <li>délègue au gateway Produit ;</li>
+	 * <li>convertit l'objet métier en OutputDTO ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(ok) : retourne OutputDTO exact + message MESSAGE_SUCCES_RECHERCHE")
+	public void testFindByIdOk() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
+		parent.setIdSousTypeProduit(10L);
+
+		final Produit produit = new Produit(MARTEAU, parent);
+		produit.setIdProduit(100L);
+
+		when(gateway.findById(100L)).thenReturn(produit);
+
+		final OutputDTO dto = service.findById(100L);
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.getIdProduit()).isEqualTo(100L);
+		assertThat(dto.getProduit()).isEqualTo(MARTEAU);
+		assertThat(dto.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(dto.getTypeProduit()).isEqualTo(BAZAR);
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		verify(gateway, times(1)).findById(100L);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+	
 	
 	
 	// ========================= TESTS update(...) =========================
