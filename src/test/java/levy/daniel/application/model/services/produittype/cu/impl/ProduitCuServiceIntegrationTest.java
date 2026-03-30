@@ -1447,25 +1447,39 @@ public class ProduitCuServiceIntegrationTest {
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
-	 * @throws Exception 
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@DisplayName("update(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
 	public void testUpdateNull() throws Exception {
 
-		final long nombreAvant = this.service.count();
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		assertThatThrownBy(() -> this.service.update(null))
-			.isInstanceOf(ExceptionParametreNull.class);
+				.isInstanceOf(ExceptionParametreNull.class);
 
-		final long nombreApres = this.service.count();
-
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
 		assertThat(this.service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
-
+	
 
 
 	/**
@@ -1478,13 +1492,16 @@ public class ProduitCuServiceIntegrationTest {
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
-	 * @throws Exception 
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@DisplayName("update(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
 	public void testUpdateBlank() throws Exception {
 
-		final long nombreAvant = this.service.count();
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		final InputDTO input = new ProduitDTO.InputDTO(
 				IT_TP_PARENT_A,
@@ -1492,16 +1509,27 @@ public class ProduitCuServiceIntegrationTest {
 				ESPACES);
 
 		assertThatThrownBy(() -> this.service.update(input))
-			.isInstanceOf(ExceptionParametreBlank.class);
+				.isInstanceOf(ExceptionParametreBlank.class);
 
-		final long nombreApres = this.service.count();
-
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
 		assertThat(this.service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
-
+	
 
 
 	/**
@@ -1514,13 +1542,16 @@ public class ProduitCuServiceIntegrationTest {
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
-	 * @throws Exception 
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
 	public void testUpdateParentBlank() throws Exception {
 
-		final long nombreAvant = this.service.count();
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		final InputDTO input = new ProduitDTO.InputDTO(
 				IT_TP_PARENT_A,
@@ -1528,16 +1559,27 @@ public class ProduitCuServiceIntegrationTest {
 				IT_PRD_UPDATE_OK);
 
 		assertThatThrownBy(() -> this.service.update(input))
-			.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class);
 
-		final long nombreApres = this.service.count();
-
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
 		assertThat(this.service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
-
+	
 
 
 	/**
@@ -1550,13 +1592,16 @@ public class ProduitCuServiceIntegrationTest {
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
-	 * @throws Exception 
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
 	public void testUpdateParentAbsent() throws Exception {
 
-		final long nombreAvant = this.service.count();
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		final InputDTO input = new ProduitDTO.InputDTO(
 				IT_TP_PARENT_A,
@@ -1564,16 +1609,27 @@ public class ProduitCuServiceIntegrationTest {
 				IT_PRD_UPDATE_OK);
 
 		assertThatThrownBy(() -> this.service.update(input))
-			.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class);
 
-		final long nombreApres = this.service.count();
-
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
 		assertThat(this.service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
-
+	
 
 
 	/**
@@ -1596,7 +1652,9 @@ public class ProduitCuServiceIntegrationTest {
 
 		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		final long nombreAvant = this.service.count();
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		final InputDTO input = new ProduitDTO.InputDTO(
 				IT_TP_PARENT_A,
@@ -1605,15 +1663,28 @@ public class ProduitCuServiceIntegrationTest {
 
 		final OutputDTO dto = this.service.update(input);
 
-		final long nombreApres = this.service.count();
-
+		/*
+		 * Vérifie immédiatement le résultat observable de update(...)
+		 * avant tout autre appel de service susceptible d'écraser le message.
+		 */
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + IT_PRD_INEXISTANT_UPDATE);
+				.isEqualTo(
+						ProduitICuService.MESSAGE_OBJ_INTROUVABLE
+								+ IT_PRD_INEXISTANT_UPDATE);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune création parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
-
+	
 
 
 	/**
