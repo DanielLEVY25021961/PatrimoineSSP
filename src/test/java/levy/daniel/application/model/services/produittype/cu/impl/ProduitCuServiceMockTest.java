@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -2388,7 +2389,538 @@ public class ProduitCuServiceMockTest {
 
 	
 	// ========================= TESTS delete(...) =========================
+
 	
+	
+	/**
+	 * <div>
+	 * <p>delete(null) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionParametreNull}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'interagit ni avec le Gateway enfant
+	 * ni avec le Gateway parent</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(null) : ExceptionParametreNull + message MESSAGE_PARAM_NULL + aucune interaction gateway")
+	public void testDeleteNull() {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		assertThatThrownBy(() -> service.delete(null))
+				.isInstanceOf(ExceptionParametreNull.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(blank) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionParametreBlank}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'interagit ni avec le Gateway enfant
+	 * ni avec le Gateway parent</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(blank) : ExceptionParametreBlank + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
+	public void testDeleteBlank() {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, ESPACES);
+
+		assertThatThrownBy(() -> service.delete(dto))
+				.isInstanceOf(ExceptionParametreBlank.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(parent blank) : violation de contrat structurel.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'interagit ni avec le Gateway enfant
+	 * ni avec le Gateway parent</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(parent blank) : IllegalStateException + message MESSAGE_PAS_PARENT + aucune interaction gateway")
+	public void testDeleteParentBlank() {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(ESPACES, OUTILLAGE, MARTEAU);
+
+		assertThatThrownBy(() -> service.delete(dto))
+				.isInstanceOf(IllegalStateException.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(recherche parent technique KO avec message) :
+	 * panne technique pendant la recherche du parent persistant.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + détail technique</li>
+	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(recherche parent KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE")
+	public void testDeleteRechercheParentTechniqueKoAvecMessage()
+			throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique =
+				new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> service.delete(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+								+ ProduitICuService.TIRET_ESPACE
+								+ MESSAGE_GATEWAY);
+
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(parent absent) : le parent requis
+	 * n'existe pas en stockage.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(parent absent) : IllegalStateException + message MESSAGE_PAS_PARENT")
+	public void testDeleteParentAbsent() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Collections.emptyList());
+
+		assertThatThrownBy(() -> service.delete(dto))
+				.isInstanceOf(IllegalStateException.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, never()).findAllByParent(any(SousTypeProduit.class));
+		verify(gateway, never()).delete(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(stockage null pendant ré-identification) :
+	 * le Gateway retourne {@code null}
+	 * pour la liste des enfants du parent persistant.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
+	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(stockage null) : ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
+	public void testDeleteStockageNull() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parentPersistant =
+				new SousTypeProduit(OUTILLAGE, typeProduit);
+		parentPersistant.setIdSousTypeProduit(10L);
+
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(null);
+
+		assertThatThrownBy(() -> service.delete(dto))
+				.isInstanceOf(ExceptionStockageVide.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, never()).delete(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(introuvable) : aucun objet persistant
+	 * ne correspond au couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}
+	 * + libellé</li>
+	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(introuvable) : aucune exception + message MESSAGE_OBJ_INTROUVABLE + libellé")
+	public void testDeleteIntrouvable() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parentPersistant =
+				new SousTypeProduit(OUTILLAGE, typeProduit);
+		parentPersistant.setIdSousTypeProduit(10L);
+
+		final Produit produitScie = new Produit(SCIE, parentPersistant);
+		produitScie.setIdProduit(2L);
+
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(produitScie));
+
+		service.delete(dto);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_OBJ_INTROUVABLE + MARTEAU);
+
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, never()).delete(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(non persisté) : l'objet ré-identifié
+	 * n'a pas d'identifiant persistant.</p>
+	 * <ul>
+	 * <li>lève {@link ExceptionNonPersistant}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_NON_PERSISTE}
+	 * + libellé</li>
+	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(non persisté) : ExceptionNonPersistant + message MESSAGE_OBJ_NON_PERSISTE + libellé")
+	public void testDeleteNonPersistant() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parentPersistant =
+				new SousTypeProduit(OUTILLAGE, typeProduit);
+		parentPersistant.setIdSousTypeProduit(10L);
+
+		final Produit produitSansId = new Produit(MARTEAU, parentPersistant);
+
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(produitSansId));
+
+		assertThatThrownBy(() -> service.delete(dto))
+				.isInstanceOf(ExceptionNonPersistant.class);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
+
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, never()).delete(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(KO technique de suppression avec message) :
+	 * la cible est correctement ré-identifiée
+	 * puis la destruction technique échoue.</p>
+	 * <ul>
+	 * <li>propage l'exception technique d'origine</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_DELETE_KO}
+	 * + libellé + tiret + détail technique</li>
+	 * <li>appelle exactement une fois {@code gateway.delete(...)}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(KO technique avec message) : exception relancée + message MESSAGE_DELETE_KO + détail technique")
+	public void testDeleteTechniqueKoAvecMessage() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parentPersistant =
+				new SousTypeProduit(OUTILLAGE, typeProduit);
+		parentPersistant.setIdSousTypeProduit(10L);
+
+		final Produit cible = new Produit(MARTEAU, parentPersistant);
+		cible.setIdProduit(100L);
+
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+
+		final IllegalStateException ex =
+				new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(cible));
+		doThrow(ex).when(gateway).delete(cible);
+
+		assertThatThrownBy(() -> service.delete(dto))
+				.isSameAs(ex);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_DELETE_KO
+								+ MARTEAU
+								+ ProduitICuService.TIRET_ESPACE
+								+ MESSAGE_GATEWAY);
+
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).delete(cible);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(ok) : succès nominal complet.</p>
+	 * <ul>
+	 * <li>ré-identifie d'abord le bon parent persistant
+	 * sur le couple [type parent, sous-type parent]</li>
+	 * <li>ré-identifie ensuite la bonne cible
+	 * sur le couple [parent, libellé]</li>
+	 * <li>ne détruit jamais l'homonyme rattaché
+	 * à l'autre parent</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(ok) : suppression déléguée + message MESSAGE_DELETE_OK + couple [parent, libellé]")
+	public void testDeleteOkAvecPreuveCoupleParentLibelle()
+			throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduitA = new TypeProduit(BAZAR);
+		typeProduitA.setIdTypeProduit(1L);
+
+		final TypeProduit typeProduitB = new TypeProduit(QUINCAILLERIE);
+		typeProduitB.setIdTypeProduit(2L);
+
+		final SousTypeProduit parentA =
+				new SousTypeProduit(OUTILLAGE, typeProduitA);
+		parentA.setIdSousTypeProduit(10L);
+
+		final SousTypeProduit parentB =
+				new SousTypeProduit(OUTILLAGE, typeProduitB);
+		parentB.setIdSousTypeProduit(20L);
+
+		final Produit homonymeAutreParent =
+				new Produit(MARTEAU, parentA);
+		homonymeAutreParent.setIdProduit(100L);
+
+		final Produit cible =
+				new Produit(MARTEAU, parentB);
+		cible.setIdProduit(200L);
+
+		final InputDTO dto =
+				new ProduitDTO.InputDTO(
+						QUINCAILLERIE,
+						OUTILLAGE,
+						MARTEAU);
+
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentA, parentB));
+		when(gateway.findAllByParent(parentB))
+				.thenReturn(Arrays.asList(cible));
+
+		service.delete(dto);
+
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_DELETE_OK + MARTEAU);
+
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, never()).findAllByParent(parentA);
+		verify(gateway, times(1)).findAllByParent(parentB);
+		verify(gateway, never()).delete(homonymeAutreParent);
+		verify(gateway, times(1)).delete(cible);
+
+	} // __________________________________________________________________	
+
 
 	
 	// ============================ TESTS count() ==========================

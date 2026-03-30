@@ -45,7 +45,7 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * via {@link #findByDTO(SousTypeProduitDTO.InputDTO)}</li>
  * <li>rechercher par ID 
  * via {@link #findById(Long)}</li>
- * <li>supprimer via {@link #delete(SousTypeProduitDTO.InputDTO)}</li>
+ * <li>supprimer via {@link #delete(ProduitDTO.InputDTO)}</li>
  * <li>compter via {@link #count()}</li>
  * <li>émettre des messages utilisateurs via {@link #getMessage()}</li>
  * </ul>
@@ -1094,32 +1094,129 @@ public interface ProduitICuService {
 	 */
 	ProduitDTO.OutputDTO update(ProduitDTO.InputDTO pInputDTO) throws Exception;
 	
+
 	
 	/**
 	 * <div>
+	 * <p>Supprime un {@link Produit}
+	 * à partir d'un {@link ProduitDTO.InputDTO}.</p>
 	 * <p style="font-weight:bold;">
-	 * Supprime un {@link Produit} à partir d'un InputDTO.
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL} et lève une exception.</li>
-	 * <li>Si {@code pInputDTO.getProduit()} est Blank, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_BLANK} et lève une exception.</li>
-	 * <li>Si l'objet est introuvable, ne supprime rien et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Si la suppression échoue, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_DELETE_KO} + libellé et lève une exception.</li>
-	 * <li>Sinon, supprime et positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_DELETE_OK} + libellé.</li>
+	 * <li>recevoir un DTO de suppression
+	 * transmis par la couche appelante ;</li>
+	 * <li>valider les préconditions observables
+	 * sur le DTO, sur le libellé Produit
+	 * et sur le parent ;</li>
+	 * <li>retrouver le {@link SousTypeProduit}
+	 * parent persistant correspondant au DTO ;</li>
+	 * <li>demander au composant GATEWAY
+	 * tous les {@link Produit}
+	 * rattachés à ce parent ;</li>
+	 * <li>ré-identifier, dans cette collection,
+	 * le {@link Produit} persistant exact
+	 * correspondant au couple [parent, libellé] ;</li>
+	 * <li>déléguer la destruction technique
+	 * au composant GATEWAY ;</li>
+	 * <li>positionner un message observable cohérent
+	 * avec l'issue réelle de l'opération.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO ProduitDTO.InputDTO : DTO de suppression.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL}
+	 * et lève une {@code ExceptionParametreNull}.</li>
+	 * <li>Si {@code pInputDTO.getProduit()} est blank,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_BLANK}
+	 * et lève une {@code ExceptionParametreBlank}.</li>
+	 * <li>Si le parent porté par le DTO
+	 * est blank, absent ou non persistant,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT}
+	 * et lève une {@code IllegalStateException}.</li>
+	 * <li>Si la recherche des enfants du parent
+	 * retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_STOCKAGE_NULL}
+	 * et lève une {@code ExceptionStockageVide}.</li>
+	 * <li>Si aucun {@link Produit} persistant
+	 * ne correspond au couple [parent, libellé],
+	 * ne supprime rien et positionne
+	 * {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
+	 * <li>Si l'objet retrouvé
+	 * n'est pas persistant,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé
+	 * et lève une {@code ExceptionNonPersistant}.</li>
+	 * <li>Si une recherche technique échoue,
+	 * positionne un message utilisateur technique cohérent
+	 * construit à partir de {@link #KO_TECHNIQUE_RECHERCHE},
+	 * de {@link #TIRET_ESPACE}
+	 * et d'un détail technique sécurisé,
+	 * puis propage l'exception circonstanciée.</li>
+	 * <li>Si la suppression technique échoue,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_DELETE_KO}
+	 * + libellé
+	 * + {@link #TIRET_ESPACE}
+	 * + détail technique sécurisé,
+	 * puis propage l'exception circonstanciée.</li>
+	 * <li>En cas de succès,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_DELETE_OK} + libellé
+	 * uniquement après destruction effective
+	 * de l'objet persistant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>La ré-identification de l'objet à détruire
+	 * s'appuie sur le couple [parent, libellé]
+	 * et jamais sur le seul libellé Produit.</li>
+	 * <li>Aucune suppression ne doit viser
+	 * un autre parent portant le même libellé Produit.</li>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable réelle
+	 * de l'opération.</li>
+	 * <li>Le message de succès
+	 * n'est positionné qu'après destruction effective
+	 * de l'objet persistant.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : ProduitDTO.InputDTO :
+	 * DTO de suppression portant le parent
+	 * et le libellé enfant
+	 * de l'objet persistant à ré-identifier puis détruire.
+	 * @throws ExceptionParametreNull
+	 * si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si {@code pInputDTO.getProduit()} est blank.
+	 * @throws ExceptionStockageVide
+	 * si la recherche des enfants du parent
+	 * retourne {@code null}.
+	 * @throws ExceptionNonPersistant
+	 * si l'objet retrouvé pour le couple [parent, libellé]
+	 * n'est pas persistant.
+	 * @throws IllegalStateException
+	 * si le parent est blank, absent ou non persistant.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors des recherches techniques
+	 * ou de la délégation de destruction.
 	 */
 	void delete(ProduitDTO.InputDTO pInputDTO) throws Exception;
 

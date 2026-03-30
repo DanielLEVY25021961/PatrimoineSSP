@@ -812,3 +812,86 @@ Le scénario nominal de `update(...)` est :
 - l'objet retourné, s'il n'est pas `null`,
   correspond à un `Produit` effectivement modifié
   dans le stockage et exprimé sous forme de DTO.
+  
+  ## 19) Contrat spécifique de `delete(...)`
+
+Signature cible :
+- `void delete(ProduitDTO.InputDTO pInputDTO) throws Exception;`
+
+### 19.1) Scénario nominal attendu
+
+Le scénario nominal de `delete(...)` est :
+
+1. recevoir un `ProduitDTO.InputDTO` transmis par la couche appelante ;
+2. valider les préconditions observables sur le DTO,
+   sur le libellé Produit et sur le parent ;
+3. retrouver le `SousTypeProduit` parent persistant correspondant au DTO ;
+4. demander au `GATEWAY` tous les `Produit` rattachés à ce parent ;
+5. identifier, dans cette collection,
+   le `Produit` effectivement persistant
+   correspondant au couple `[parent, libellé]` ;
+6. déléguer la destruction technique au composant `GATEWAY` ;
+7. positionner le message observable ;
+8. terminer sans exposer de résultat incohérent à la couche appelante.
+
+### 19.2) Cas observables attendus
+
+- si `pInputDTO == null` :
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
+  - lève une `ExceptionParametreNull` ;
+
+- si `pInputDTO.getProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK` ;
+  - lève une `ExceptionParametreBlank` ;
+
+- si le parent porté par le DTO est blank,
+  absent ou non persistant :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT` ;
+  - lève une `IllegalStateException` ;
+
+- si la recherche des enfants du parent
+  retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - lève une `ExceptionStockageVide` ;
+
+- si aucun `Produit` persistant
+  ne correspond au couple `[parent, libellé]` :
+  - ne supprime rien ;
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + libellé` ;
+
+- si l'objet retrouvé n'est pas persistant :
+  - positionne `getMessage()` à `MESSAGE_OBJ_NON_PERSISTE + libellé` ;
+  - lève une `ExceptionNonPersistant` ;
+
+- si une recherche technique échoue :
+  - positionne un message utilisateur technique cohérent
+    construit à partir de `KO_TECHNIQUE_RECHERCHE`,
+    de `TIRET_ESPACE`
+    et d'un détail technique sécurisé ;
+  - propage une exception circonstanciée conforme à l'implémentation ;
+
+- si la suppression technique échoue :
+  - positionne un message utilisateur technique cohérent
+    construit à partir de `MESSAGE_DELETE_KO + libellé` ;
+  - propage une exception circonstanciée conforme à l'implémentation ;
+
+- en cas de succès :
+  - détruit effectivement l'objet persistant ciblé ;
+  - positionne `getMessage()` à `MESSAGE_DELETE_OK + libellé`
+    uniquement après destruction effective.
+
+### 19.3) Garanties spécifiques de `delete(...)`
+
+- la ré-identification de l'objet à détruire
+  s'appuie sur le couple `[parent, libellé]`
+  et jamais sur le seul libellé Produit ;
+- aucune suppression ne doit viser
+  un autre parent portant le même libellé Produit ;
+- le message retourné par `getMessage()`
+  reflète l'issue observable réelle de l'opération ;
+- le message de succès
+  n'est positionné qu'après destruction effective
+  de l'objet persistant ;
+- les tests Mock et Intégration
+  doivent verrouiller explicitement
+  la preuve du couple `[parent, libellé]`.
