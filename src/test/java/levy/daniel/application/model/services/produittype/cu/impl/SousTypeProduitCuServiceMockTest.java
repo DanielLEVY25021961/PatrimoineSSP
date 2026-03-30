@@ -340,8 +340,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>ne cherche jamais le parent en stockage</li>
-	 * <li>ne délègue jamais la création</li>
+	 * <li>n'interagit ni avec le gateway SousTypeProduit
+	 * ni avec le gateway TypeProduit</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -349,27 +349,26 @@ public class SousTypeProduitCuServiceMockTest {
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("creer(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT")
+	@DisplayName("creer(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune interaction gateway")
 	public void testCreerParentBlank() throws Exception {
 
 		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(ESPACES, OUTILLAGE);
-
-		when(gateway.findByLibelle(OUTILLAGE))
-			.thenReturn(new ArrayList<SousTypeProduit>());
 
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> service.creer(dto))
-			.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class);
 
 		assertThat(service.getMessage())
-			.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
 
-		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).creer(any(SousTypeProduit.class));
+		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
@@ -1952,13 +1951,13 @@ public class SousTypeProduitCuServiceMockTest {
 
 	/**
 	 * <div>
-	 * <p>Si pContenu est blank : délègue à rechercherTous().</p>
+	 * <p>Si pContenu est blank :</p>
 	 * <ul>
-	 * <li>n'appelle jamais {@code gateway.findByLibelleRapide(...)}</li>
-	 * <li>appelle {@code gateway.rechercherTous()}</li>
-	 * <li>retourne la liste DTO issue de la recherche exhaustive</li>
+	 * <li>délègue à {@code rechercherTous()} ;</li>
+	 * <li>retourne la liste triée et dédoublonnée
+	 * selon l'ordre métier observable ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1970,9 +1969,12 @@ public class SousTypeProduitCuServiceMockTest {
 	public void testFindByLibelleRapideBlank() throws Exception {
 
 		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway = mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway = mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service = new SousTypeProduitCuService(gateway, typeProduitGateway);
+		final SousTypeProduitGatewayIService gateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway =
+				mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service =
+				new SousTypeProduitCuService(gateway, typeProduitGateway);
 
 		final TypeProduit parentA = new TypeProduit(BAZAR);
 		parentA.setIdTypeProduit(1L);
@@ -1980,10 +1982,12 @@ public class SousTypeProduitCuServiceMockTest {
 		final TypeProduit parentB = new TypeProduit(VETEMENT);
 		parentB.setIdTypeProduit(2L);
 
-		final SousTypeProduit stpGamma = new SousTypeProduit(IT_STP_GAMMA, parentA);
+		final SousTypeProduit stpGamma =
+				new SousTypeProduit(IT_STP_GAMMA, parentA);
 		stpGamma.setIdSousTypeProduit(1L);
 
-		final SousTypeProduit stpDelta = new SousTypeProduit(IT_STP_DELTA, parentB);
+		final SousTypeProduit stpDelta =
+				new SousTypeProduit(IT_STP_DELTA, parentB);
 		stpDelta.setIdSousTypeProduit(2L);
 
 		when(gateway.rechercherTous())
@@ -1999,15 +2003,15 @@ public class SousTypeProduitCuServiceMockTest {
 
 		assertThat(retour)
 				.extracting(OutputDTO::getSousTypeProduit)
-				.containsExactly(IT_STP_DELTA, IT_STP_GAMMA);
+				.containsExactly(IT_STP_GAMMA, IT_STP_DELTA);
 
 		assertThat(retour)
 				.extracting(OutputDTO::getTypeProduit)
-				.containsExactly(VETEMENT, BAZAR);
+				.containsExactly(BAZAR, VETEMENT);
 
 		assertThat(retour)
 				.extracting(OutputDTO::getIdSousTypeProduit)
-				.containsExactly(2L, 1L);
+				.containsExactly(1L, 2L);
 
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
@@ -2017,7 +2021,8 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
+	
 
 	/**
 	 * <div>
