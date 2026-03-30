@@ -285,3 +285,43 @@ Le scénario nominal de `creer(...)` est :
 - aucun succès ne doit être exposé si la conversion finale retourne `null` ;
 - le DTO retourné doit représenter l’état réellement créé dans le stockage ;
 - le message utilisateur doit être lisible, stable et testable.
+
+## 11) Contrat spécifique de `rechercherTousString()`
+
+Signature cible :
+- `List<String> rechercherTousString() throws Exception;`
+
+### 11.1) Scénario nominal attendu
+
+Le scénario nominal de `rechercherTousString()` est :
+
+1. déléguer la recherche exhaustive à `rechercherTous()` ;
+2. récupérer la liste de `ProduitDTO.OutputDTO` préparée par cette méthode ;
+3. extraire les libellés Produit exploitables ;
+4. retirer les éventuels libellés `null` ou blank ;
+5. positionner le message observable ;
+6. retourner la liste finale de `String`.
+
+### 11.2) Cas observables attendus
+
+- si `rechercherTous()` échoue :
+  - propage l'exception ;
+  - conserve le message déjà positionné par `rechercherTous()` ;
+
+- si aucun libellé exploitable n'est disponible :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si au moins un libellé exploitable est disponible :
+  - retourne une liste non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 11.3) Garanties spécifiques de `rechercherTousString()`
+
+- la méthode ne doit jamais retourner `null`
+  si la recherche exhaustive a abouti ;
+- aucun libellé `null` ou blank ne doit être exposé à l'appelant ;
+- le message de succès ne doit être positionné
+  qu'après préparation complète de la liste finale ;
+- les libellés retournés doivent correspondre
+  aux `ProduitDTO.OutputDTO` réellement préparés par `rechercherTous()`.

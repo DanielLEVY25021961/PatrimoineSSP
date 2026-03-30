@@ -619,37 +619,94 @@ public class ProduitCuServiceIntegrationTest {
 	} // __________________________________________________________________	
 	
 
+	
 	// ===================== TESTS rechercherTousString() ==================
 
 	
 	
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : doit retourner une liste non nulle contenant les libellés créés.</p>
+	 * <p>rechercherTousString() : scénario nominal.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>crée plusieurs Produit en base ;</li>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>retourne les libellés créés ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("rechercherTousString() : retourne une liste non nulle contenant les libellés créés")
-	public void testRechercherTousString() throws Exception {
+	@DisplayName("rechercherTousString(ok) : retourne les libellés créés + message MESSAGE_RECHERCHE_OK")
+	public void testRechercherTousStringOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		/* ===================== ARRANGE ===================== */
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_EPSILON));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ZETA));
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_GAMMA));
 
-		final List<String> libelles = this.service.rechercherTousString();
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_DELTA));
 
-		assertThat(libelles).isNotNull();
-		assertThat(libelles).contains(IT_PRD_EPSILON, IT_PRD_ZETA);
-		
+		/* ======================= ACT ======================= */
+		final List<String> retour = this.service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).contains(IT_PRD_GAMMA, IT_PRD_DELTA);
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
 	} // __________________________________________________________________
-	
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : stockage vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = { "classpath:/truncate-test.sql" },
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+	)
+	@DisplayName("rechercherTousString(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testRechercherTousStringVide() throws Exception {
+
+		/* ======================= ACT ======================= */
+		final List<String> retour = this.service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________	
 	
 
+	
 	// ================== TESTS rechercherTousParPage(...) =================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>rechercherTousParPage(null) : violation de contrat.</p>

@@ -5,10 +5,8 @@ package levy.daniel.application.model.services.produittype.cu.impl;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -399,30 +397,37 @@ public class ProduitCuService implements ProduitICuService {
 	@Override
 	public List<String> rechercherTousString() throws Exception {
 
+		/*
+		 * Délègue d'abord la recherche exhaustive
+		 * à rechercherTous().
+		 */
 		final List<OutputDTO> dtos = this.rechercherTous();
 
-		if (dtos == null || dtos.isEmpty()) {
-			/* message déjà positionné par rechercherTous(). */
-			return new ArrayList<String>();
-		}
+		/*
+		 * Extrait ensuite uniquement les libellés Produit exploitables.
+		 */
+		final List<String> retour = new ArrayList<>();
 
-		final Set<String> uniques = new LinkedHashSet<String>();
 		for (final OutputDTO dto : dtos) {
 			if (dto != null && StringUtils.isNotBlank(dto.getProduit())) {
-				uniques.add(dto.getProduit());
+				retour.add(dto.getProduit());
 			}
 		}
 
-		if (uniques.isEmpty()) {
+		/*
+		 * Positionne le message observable
+		 * après préparation complète de la réponse.
+		 */
+		if (retour.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
-			return new ArrayList<String>();
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
-		this.message.set(MESSAGE_RECHERCHE_OK);
-
-		return new ArrayList<String>(uniques);
+		/* Retourne la liste exhaustive des libellés. */
+		return retour;
 	}
-
+	
 	
 	
 	/**

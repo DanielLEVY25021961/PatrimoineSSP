@@ -501,31 +501,58 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Retourne tous les libellés des {@link Produit}
-	 * présents dans le stockage sous forme d'une liste de String.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p>Retourne tous les libellés de {@link Produit}
+	 * accessibles dans le stockage.</p>
+	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Si le stockage retourne {@code null}, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL}
-	 * et lève une exception.</li>
-	 * <li>Si aucun libellé non blank n'est trouvé, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}
-	 * et retourne une liste vide.</li>
-	 * <li>Sinon, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_RECHERCHE_OK} et retourne la liste des libellés.</li>
+	 * <li>déléguer la recherche exhaustive à {@link #rechercherTous()} ;</li>
+	 * <li>extraire de la réponse les libellés Produit exploitables ;</li>
+	 * <li>retirer les éventuels libellés {@code null} ou blank ;</li>
+	 * <li>retourner une liste de {@link String} exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return List&lt;String&gt; : liste des libellés.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>délègue la recherche exhaustive à {@link #rechercherTous()} ;</li>
+	 * <li>si {@link #rechercherTous()} échoue, propage l'exception
+	 * et conserve le message déjà positionné par cette méthode ;</li>
+	 * <li>si aucun libellé exploitable n'est disponible en sortie,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}
+	 * et retourne une liste vide mais non {@code null} ;</li>
+	 * <li>si au moins un libellé exploitable est disponible,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}
+	 * et retourne la liste des libellés ;</li>
+	 * <li>ne retourne jamais {@code null} lorsque la recherche aboutit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération ;</li>
+	 * <li>le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur ;</li>
+	 * <li>les libellés retournés correspondent aux
+	 * {@link ProduitDTO.OutputDTO} réellement préparés par
+	 * {@link #rechercherTous()} ;</li>
+	 * <li>aucun libellé {@code null} ou blank
+	 * n'est exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return List<String> :
+	 * liste de tous les libellés Produit accessibles ;
+	 * jamais {@code null}, éventuellement vide.
 	 * @throws Exception
+	 * si une erreur survient lors de la recherche exhaustive
+	 * ou lors de la préparation finale de la réponse.
 	 */
 	List<String> rechercherTousString() throws Exception;
-
+	
 	
 	
 	/**

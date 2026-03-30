@@ -3,8 +3,10 @@ package levy.daniel.application.model.services.produittype.cu.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -12,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -679,10 +682,111 @@ public class ProduitCuServiceMockTest {
 	
 	
 	// ===================== TESTS rechercherTousString() ==================
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : résultats vides.</p>
+	 * <ul>
+	 * <li>délègue à rechercherTous() ;</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testRechercherTousStringVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = spy(new ProduitCuService(gateway, sousTypeGateway));
+
+		doReturn(Collections.emptyList()).when(service).rechercherTous();
+
+		/* ======================= ACT ======================= */
+		final List<String> retour = service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(service, times(1)).rechercherTous();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : scénario nominal.</p>
+	 * <ul>
+	 * <li>délègue à rechercherTous() ;</li>
+	 * <li>extrait uniquement les libellés Produit exploitables ;</li>
+	 * <li>retire les éventuels {@code null} et blank ;</li>
+	 * <li>retourne une liste cohérente ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString() : extraction des libellés + filtre null/blank + message MESSAGE_RECHERCHE_OK")
+	public void testRechercherTousStringOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = spy(new ProduitCuService(gateway, sousTypeGateway));
+
+		final OutputDTO dto1 = new ProduitDTO.OutputDTO();
+		dto1.setIdProduit(1L);
+		dto1.setTypeProduit("MATERIEL");
+		dto1.setSousTypeProduit("OUTILLAGE");
+		dto1.setProduit("MARTEAU");
+
+		final OutputDTO dto2 = new ProduitDTO.OutputDTO();
+		dto2.setIdProduit(2L);
+		dto2.setTypeProduit("MATERIEL");
+		dto2.setSousTypeProduit("OUTILLAGE");
+		dto2.setProduit("SCIE");
+
+		final OutputDTO dto3 = new ProduitDTO.OutputDTO();
+		dto3.setIdProduit(3L);
+		dto3.setTypeProduit("MATERIEL");
+		dto3.setSousTypeProduit("OUTILLAGE");
+		dto3.setProduit("   ");
+
+		doReturn(Arrays.asList(dto1, null, dto2, dto3)).when(service).rechercherTous();
+
+		/* ======================= ACT ======================= */
+		final List<String> retour = service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).containsExactly("MARTEAU", "SCIE");
+		assertThat(service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(service, times(1)).rechercherTous();
+
+	} // __________________________________________________________________
+	
+	
+
+	// ================== TESTS rechercherTousParPage(...) =================
 
 	
 	
 	
 	
+		
 		
 }
