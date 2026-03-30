@@ -21,6 +21,7 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -228,8 +229,43 @@ public class ProduitCuServiceIntegrationTest {
 	 * "Creer"
 	 */
 	public static final String TAG_CREER = "Creer";
+	
+	/**
+	 * "SELECT COUNT(*) FROM PRODUITS"
+	 */
+	public static final String SELECT_COUNT_FROM_PRODUITS
+		= "SELECT COUNT(*) FROM PRODUITS";
+
+	/**
+	 * "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?"
+	 */
+	public static final String SELECT_COUNT_FROM_PRODUITS_BY_ID
+		= "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?";
+
+	/**
+	 * "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?"
+	 */
+	public static final String SELECT_PRODUIT_LIBELLE_BY_ID
+		= "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?";
+
+	/**
+	 * Parent SousTypeProduit d'un Produit par son ID.
+	 */
+	public static final String SELECT_PARENT_SOUS_TYPE_BY_ID_PRODUIT
+		= "SELECT stp.SOUS_TYPE_PRODUIT "
+		+ "FROM SOUS_TYPES_PRODUIT stp "
+		+ "INNER JOIN PRODUITS p "
+		+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
+		+ "WHERE p.ID_PRODUIT = ?";
+
 
 	// *************************** ATTRIBUTS *******************************/
+	
+	/**
+	 * SERVICE JDBC direct pour preuve BD.
+	 */
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	/**
 	 * SERVICE CU Produit sous test (PORT).
@@ -1582,25 +1618,26 @@ public class ProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>update(ok) : test béton du scénario nominal réel.</p>
+	 * <p>update(ok) : preuve BD directe avec JdbcTemplate.</p>
 	 * <ul>
-	 * <li>crée d'abord un Produit réel ;</li>
-	 * <li>met ensuite à jour ce même objet
-	 * via un {@link InputDTO} portant le même couple [parent, libellé] ;</li>
-	 * <li>retourne un {@link OutputDTO} cohérent ;</li>
+	 * <li>crée d'abord le parent persistant requis ;</li>
+	 * <li>crée un Produit réel ;</li>
+	 * <li>modifie ce même objet sans créer de doublon ;</li>
 	 * <li>conserve exactement le même identifiant persistant ;</li>
-	 * <li>ne crée aucun doublon et n'altère pas le volume total ;</li>
+	 * <li>prouve physiquement en base que la ligne existe toujours ;</li>
+	 * <li>prouve physiquement que le parent BD reste identique ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_MODIF_OK} + libellé.</li>
+	 * {@link ProduitICuService#MESSAGE_MODIF_OK} + parent.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(ok) : OutputDTO cohérent + ID conservé + message exact + absence de doublon")
-	public void testUpdateOkAvecPreuveBdEtIdConserve() throws Exception {
+	@DisplayName("update(ok) : preuve BD directe + ID conservé + message exact")
+	public void testUpdateOkAvecPreuveBdEtJdbcTemplate() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
 		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final OutputDTO cree = this.service.creer(
@@ -1611,29 +1648,50 @@ public class ProduitCuServiceIntegrationTest {
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
-		assertThat(cree.getProduit()).isEqualTo(IT_PRD_UPDATE_OK);
 
 		final Long idAvantUpdate = cree.getIdProduit();
-		final long nombreAvantUpdate = this.service.count();
 
+		final long totalAvantUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		/* ======================= ACT ======================= */
 		final OutputDTO modifie = this.service.update(
 				new ProduitDTO.InputDTO(
 						IT_TP_PARENT_A,
 						IT_STP_PARENT_A,
 						IT_PRD_UPDATE_OK));
 
-		final String message = this.service.getMessage();
-		final long nombreApresUpdate = this.service.count();
-
+		/* ===================== ASSERT ====================== */
 		assertThat(modifie).isNotNull();
 		assertThat(modifie.getIdProduit()).isEqualTo(idAvantUpdate);
 		assertThat(modifie.getProduit()).isEqualTo(IT_PRD_UPDATE_OK);
 		assertThat(modifie.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(modifie.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		assertThat(message)
-			.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + IT_PRD_UPDATE_OK);
 
-		assertThat(nombreApresUpdate).isEqualTo(nombreAvantUpdate);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + IT_PRD_UPDATE_OK);
+
+		final long totalApresUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(totalApresUpdate).isEqualTo(totalAvantUpdate);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS_BY_ID,
+				Long.class,
+				idAvantUpdate)).isEqualTo(1L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_PRODUIT_LIBELLE_BY_ID,
+				String.class,
+				idAvantUpdate)).isEqualTo(IT_PRD_UPDATE_OK);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_PARENT_SOUS_TYPE_BY_ID_PRODUIT,
+				String.class,
+				idAvantUpdate)).isEqualTo(IT_STP_PARENT_A);
 
 		final OutputDTO relu = this.service.findById(idAvantUpdate);
 
@@ -1643,7 +1701,7 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(relu.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(relu.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 
-	} // __________________________________________________________________	
+	} // __________________________________________________________________
 	
 	
 

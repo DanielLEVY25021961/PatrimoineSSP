@@ -392,6 +392,83 @@ Avant de livrer du code ADAPTER UC, l’IA doit vérifier explicitement que les 
 3. n’introduisent aucune formule nouvelle non lue dans les méthodes de référence ;
 4. restent homogènes avec les commentaires déjà validés dans les ADAPTER UC du projet.
 
+### 15.2) Règles sacrées anti-régression de génération de code
+
+Les règles suivantes sont absolues et doivent être relues avant toute génération de code.
+
+#### 15.2.1) Comparaisons de chaînes dans ce projet
+
+Interdiction absolue :
+- ne jamais générer `StringUtils.equalsIgnoreCase(...)`.
+
+Règle obligatoire :
+- utiliser exclusivement la convention du projet :
+  - `Strings.CI.equals(...)`
+  - `Strings.CI.compare(...)`
+
+Conséquence :
+- si une comparaison insensible à la casse apparaît dans une méthode générée,
+  l’IA doit vérifier qu’elle utilise bien `Strings.CI`.
+
+#### 15.2.2) Commentaires de bloc dans les ADAPTER UC
+
+Interdiction absolue :
+- ne jamais écrire un commentaire vague, décoratif, philosophique
+  ou détaché du bloc situé juste dessous.
+
+Règle obligatoire :
+- un commentaire de bloc doit décrire exactement le bloc immédiatement dessous ;
+- il doit employer les constantes, messages et exceptions réels du code ;
+- il doit reprendre le style déjà validé dans les ADAPTER UC du projet.
+
+Conséquence :
+- avant toute livraison, l’IA doit comparer ses commentaires générés
+  à ceux des méthodes déjà validées de l’ADAPTER concerné.
+
+#### 15.2.3) Mockito strict
+
+Interdiction absolue :
+- ne jamais laisser un `when(...)` qui ne correspond à aucun appel réellement exécuté.
+
+Règle obligatoire :
+- chaque stub Mockito doit être justifié par le scénario testé ;
+- aucun stub "au cas où" n’est toléré.
+
+Conséquence :
+- avant toute livraison de test Mock,
+  l’IA doit relire le scénario ligne à ligne
+  et supprimer tout stub inutilisé.
+
+#### 15.2.4) Constantes de tests
+
+Interdiction absolue :
+- ne jamais disperser des littéraux métier dans les tests
+  lorsque la classe suit déjà une convention de constantes.
+
+Règle obligatoire :
+- réutiliser les constantes déjà présentes dans la classe de test ;
+- si une nouvelle valeur métier est nécessaire,
+  la déclarer d’abord dans la zone des constantes de la classe.
+
+#### 15.2.5) Pureté de la preuve BD dans les tests d’intégration
+
+Interdiction absolue :
+- ne pas affaiblir les tests d’intégration Produit
+  à un simple contrôle par `service.count()` lorsque les classes de référence
+  valident la preuve BD avec `JdbcTemplate`.
+
+Règle obligatoire :
+- les scénarios importants de Produit
+  (`creer`, `update`, `delete`, absence d’écriture BD, absence de doublon, conservation d’ID)
+  doivent remonter au niveau de preuve BD de `TypeProduit` et `SousTypeProduit`,
+  avec lecture SQL directe via `JdbcTemplate`.
+
+Conséquence :
+- avant toute livraison d’un test d’intégration Produit,
+  l’IA doit relire les tests d’intégration validés de `TypeProduit`
+  et `SousTypeProduit`
+  et vérifier que le niveau de preuve BD n’est pas inférieur.
+  
 ---
 
 ## 16) Règles d’architecture

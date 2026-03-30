@@ -165,6 +165,30 @@ Dans `TypeProduitCuService`, il est interdit :
 - d’utiliser une formule qui n’est pas confirmée par les méthodes de référence relues ;
 - de commenter l’intention générale de la méthode au lieu du bloc concret réellement exécuté.
 
+## 7 ter) Règles anti-régression de génération
+
+Avant toute génération de code, l’IA doit aussi relire les règles sacrées du `CONTRAT_IA.md`
+sur les 5 points suivants :
+
+1. comparaisons de chaînes du projet :
+   ne jamais utiliser `StringUtils.equalsIgnoreCase(...)`,
+   utiliser `Strings.CI.equals(...)` / `Strings.CI.compare(...)` ;
+
+2. commentaires de bloc ADAPTER UC :
+   reproduire le style validé,
+   sans commentaire vague ni inventé ;
+
+3. Mockito strict :
+   aucun stub inutile n’est toléré ;
+
+4. constantes de tests :
+   réutiliser ou poser les constantes dans la zone des constantes,
+   jamais de littéraux métier dispersés ;
+
+5. preuve BD en intégration :
+   conserver le niveau de preuve SQL directe via `JdbcTemplate`
+   lorsque ce niveau de preuve est déjà validé dans le projet.
+
 ## 8) Formalisme javadoc obligatoire dans le PORT UC
 
 ### 8.1 Structure obligatoire

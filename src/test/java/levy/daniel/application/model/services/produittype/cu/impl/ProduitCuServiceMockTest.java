@@ -2311,14 +2311,14 @@ public class ProduitCuServiceMockTest {
 
 	/**
 	 * <div>
-	 * <p>update(ok) : test béton du scénario nominal réel.</p>
+	 * <p>update(ok) : scénario nominal sans stub inutile.</p>
 	 * <ul>
-	 * <li>retrouve l'objet persistant à modifier
-	 * par le couple [parent, libellé]</li>
-	 * <li>retourne un {@link OutputDTO} cohérent</li>
-	 * <li>conserve exactement le même identifiant persistant</li>
+	 * <li>retrouve le parent persistant ;</li>
+	 * <li>retrouve l'objet persistant par le couple [parent, libellé] ;</li>
+	 * <li>conserve l'identifiant persistant ;</li>
+	 * <li>délègue exactement une fois au gateway de modification ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_MODIF_OK} + libellé</li>
+	 * {@link ProduitICuService#MESSAGE_MODIF_OK} + parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2326,59 +2326,65 @@ public class ProduitCuServiceMockTest {
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("update(ok) : OutputDTO cohérent + ID conservé + message exact")
+	@DisplayName("update(ok) : OutputDTO cohérent + ID conservé + aucun stub inutile")
 	public void testUpdateOk() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
 		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
 		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
 
-		final TypeProduit typeProduitA = new TypeProduit(BAZAR);
-		typeProduitA.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistantA = new SousTypeProduit(OUTILLAGE, typeProduitA);
-		parentPersistantA.setIdSousTypeProduit(10L);
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
 
-		final TypeProduit typeProduitB = new TypeProduit(QUINCAILLERIE);
-		typeProduitB.setIdTypeProduit(2L);
-		final SousTypeProduit parentPersistantB = new SousTypeProduit(ATELIER, typeProduitB);
-		parentPersistantB.setIdSousTypeProduit(20L);
+		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
+		parentPersistant.setIdSousTypeProduit(10L);
 
-		final Produit produitParentA = new Produit(MARTEAU, parentPersistantA);
-		produitParentA.setIdProduit(100L);
+		final Produit existant = new Produit(MARTEAU, parentPersistant);
+		existant.setIdProduit(100L);
 
-		final Produit produitParentB = new Produit(MARTEAU, parentPersistantB);
-		produitParentB.setIdProduit(200L);
+		final Produit modifie = new Produit(MARTEAU, parentPersistant);
+		modifie.setIdProduit(100L);
 
-		when(sousTypeGateway.findByLibelle(MARTEAU))
-			.thenReturn(Collections.emptyList());
+		final InputDTO input = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
 
-		when(sousTypeGateway.findByLibelle(ATELIER))
-			.thenReturn(Arrays.asList(parentPersistantA, parentPersistantB));
+		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
 
-		when(gateway.findAllByParent(parentPersistantB))
-			.thenReturn(Arrays.asList(produitParentB));
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(existant));
 
-		when(gateway.update(org.mockito.ArgumentMatchers.any(Produit.class)))
-			.thenReturn(produitParentB);
+		when(gateway.update(any(Produit.class)))
+				.thenReturn(modifie);
 
-		final InputDTO input = new ProduitDTO.InputDTO(QUINCAILLERIE, ATELIER, MARTEAU);
+		final ArgumentCaptor<Produit> captor = ArgumentCaptor.forClass(Produit.class);
 
-		final OutputDTO modifie = service.update(input);
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = service.update(input);
 
-		assertThat(modifie).isNotNull();
-		assertThat(modifie.getIdProduit()).isEqualTo(200L);
-		assertThat(modifie.getProduit()).isEqualTo(MARTEAU);
-		assertThat(modifie.getSousTypeProduit()).isEqualTo(ATELIER);
-		assertThat(modifie.getTypeProduit()).isEqualTo(QUINCAILLERIE);
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdProduit()).isEqualTo(100L);
+		assertThat(retour.getProduit()).isEqualTo(MARTEAU);
+		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
+
 		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + MARTEAU);
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + MARTEAU);
 
-		verify(sousTypeGateway, times(1)).findByLibelle(ATELIER);
-		verify(gateway, times(1)).findAllByParent(parentPersistantB);
-		verify(gateway, times(1)).update(org.mockito.ArgumentMatchers.any(Produit.class));
+		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).update(captor.capture());
 
-	} // __________________________________________________________________	
+		final Produit passeAuGateway = captor.getValue();
 
+		assertThat(passeAuGateway).isNotNull();
+		assertThat(passeAuGateway.getIdProduit()).isEqualTo(100L);
+		assertThat(passeAuGateway.getProduit()).isEqualTo(MARTEAU);
+		assertThat(passeAuGateway.getSousTypeProduit()).isSameAs(parentPersistant);
+
+	} // __________________________________________________________________
+	
 
 	
 	// ========================= TESTS delete(...) =========================

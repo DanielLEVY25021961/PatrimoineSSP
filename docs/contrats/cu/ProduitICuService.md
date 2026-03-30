@@ -162,6 +162,43 @@ Avant toute livraison de code pour `ProduitCuService`, l’IA doit vérifier que
 3. n’introduisent aucune formule nouvelle non confirmée par les méthodes relues ;
 4. restent homogènes avec les méthodes déjà validées de `TypeProduitCuService` et `SousTypeProduitCuService` lorsque celles-ci servent de référence.
 
+## 7 ter) Règles anti-régression de génération
+
+Avant toute génération de code Produit, l’IA doit relire les règles sacrées du `CONTRAT_IA.md`
+sur les 5 points suivants :
+
+1. comparaisons de chaînes du projet :
+   ne jamais utiliser `StringUtils.equalsIgnoreCase(...)`,
+   utiliser `Strings.CI.equals(...)` / `Strings.CI.compare(...)` ;
+
+2. commentaires de bloc ADAPTER UC :
+   reproduire le style validé,
+   sans commentaire vague ni inventé ;
+
+3. Mockito strict :
+   aucun stub inutile n’est toléré ;
+
+4. constantes de tests :
+   réutiliser ou poser les constantes dans la zone des constantes,
+   jamais de littéraux métier dispersés ;
+
+5. preuve BD en intégration :
+   les tests d’intégration Produit doivent remonter
+   au niveau de preuve SQL directe via `JdbcTemplate`
+   déjà validé sur `TypeProduit` et `SousTypeProduit`.
+
+### 7 ter.1) Conséquence opérationnelle
+
+Avant toute livraison de code Produit, l’IA doit vérifier explicitement que :
+
+- aucune comparaison générée n’utilise `StringUtils.equalsIgnoreCase(...)` ;
+- aucun commentaire de bloc n’est plus faible
+  que ceux déjà validés dans `ProduitCuService` ;
+- aucun stub Mockito inutile ne subsiste ;
+- aucune constante métier n’est laissée sous forme de littéral dispersé ;
+- aucun test d’intégration important n’est livré
+  avec un niveau de preuve BD inférieur à celui des classes de référence.
+
 ## 8) Formalisme javadoc obligatoire dans le PORT UC
 
 ### 8.1 Structure obligatoire

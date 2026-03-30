@@ -1052,6 +1052,7 @@ public class ProduitCuService implements ProduitICuService {
 						&& Strings.CI.equals(
 								parent.getTypeProduit().getTypeProduit(),
 								libelleType)) {
+					
 					parentPersistant = parent;
 					break;
 				}
