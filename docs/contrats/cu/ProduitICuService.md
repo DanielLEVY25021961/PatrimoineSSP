@@ -101,6 +101,67 @@ une méthode UC Produit, l’IA doit relire, dans cet ordre :
 - ne jamais se baser sur une ancienne réponse de chat plutôt que sur les fichiers relus ;
 - ne jamais contourner le contrat local au motif qu’une méthode “semble simple”.
 
+## 7 bis) Formalisme obligatoire des commentaires de bloc dans l’ADAPTER UC
+
+Avant toute rédaction, analyse, correction ou génération de code concernant une méthode UC Produit dans l’ADAPTER `ProduitCuService`, l’IA doit relire, en plus de la séquence du §7 :
+
+1. la méthode cible dans `ProduitCuService` ;
+2. les méthodes déjà validées de `ProduitCuService` portant un scénario comparable ;
+3. si `ProduitCuService` ne fournit pas assez d’exemples stables, une ou plusieurs méthodes déjà validées de `TypeProduitCuService` ou `SousTypeProduitCuService` portant un scénario comparable.
+
+### 7 bis.1) Règle absolue
+
+Les commentaires de bloc dans l’ADAPTER UC ne doivent jamais être inventés.
+Ils doivent être déduits du code validé réellement relu.
+
+### 7 bis.2) Règles obligatoires
+
+Dans `ProduitCuService`, un commentaire de bloc doit :
+
+- annoncer exactement ce que fait le bloc situé juste dessous ;
+- rester factuel, concret et opérationnel ;
+- décrire le comportement observable côté UC ;
+- reprendre les constantes, messages et exceptions réellement utilisés quand ils structurent le comportement ;
+- distinguer explicitement :
+  - l’erreur utilisateur bénigne,
+  - la précondition bloquante,
+  - la délégation,
+  - la sécurisation technique,
+  - la préparation de la réponse,
+  - le positionnement du message observable,
+  - le retour final.
+
+### 7 bis.3) Formes attendues
+
+Lorsque le scénario s’y prête, les commentaires doivent reprendre des formes du type :
+
+- `Erreur utilisateur bénigne : ...`
+- `Si ... : émet MESSAGE_X + LOG + ExceptionY.`
+- `Délègue au GATEWAY ...`
+- `Une réponse technique null du GATEWAY est une anomalie ...`
+- `Retire les null, trie ...`
+- `Positionne le message observable ...`
+- `retourne ...`
+
+### 7 bis.4) Interdictions absolues
+
+Dans `ProduitCuService`, il est interdit :
+
+- d’inventer un nouveau style de commentaires ;
+- d’écrire des commentaires philosophiques, vagues ou décoratifs ;
+- d’écrire un commentaire plus faible que ceux des méthodes déjà validées ;
+- d’utiliser une formule qui n’est pas confirmée par les méthodes de référence relues ;
+- de commenter l’intention générale de la méthode au lieu du bloc concret réellement exécuté.
+
+### 7 bis.5) Conséquence opérationnelle
+
+Avant toute livraison de code pour `ProduitCuService`, l’IA doit vérifier que les commentaires générés :
+
+1. correspondent exactement au bloc situé juste dessous ;
+2. reprennent le vocabulaire déjà validé dans `ProduitCuService` ;
+3. n’introduisent aucune formule nouvelle non confirmée par les méthodes relues ;
+4. restent homogènes avec les méthodes déjà validées de `TypeProduitCuService` et `SousTypeProduitCuService` lorsque celles-ci servent de référence.
+
 ## 8) Formalisme javadoc obligatoire dans le PORT UC
 
 ### 8.1 Structure obligatoire

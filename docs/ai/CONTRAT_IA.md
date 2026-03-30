@@ -332,6 +332,66 @@ En cas d’ambiguïté :
 - Respect strict du style du projet
 - Commentaires de bloc uniquement
 
+### 15.1) Règles sacrées des commentaires de bloc dans les ADAPTER UC
+
+Principe :
+➡️ Dans un ADAPTER UC, les commentaires de bloc sont contractuels.
+➡️ Ils doivent être relus avant toute génération de code et reproduits sans improvisation.
+
+Précondition absolue avant toute génération de code dans un ADAPTER UC :
+L’IA doit relire, dans cet ordre :
+1. le contrat local UC concerné ;
+2. la méthode cible dans le PORT UC ;
+3. la méthode cible dans l’ADAPTER UC ;
+4. les méthodes déjà validées du même ADAPTER UC ;
+5. si le même ADAPTER UC ne fournit pas assez d’exemples stables, les méthodes déjà validées des autres ADAPTER UC du projet portant un scénario comparable.
+
+Objectif :
+➡️ L’IA doit déduire le formalisme de commentaires à partir du code validé réellement lu.
+➡️ L’IA ne doit jamais inventer un style de commentaires.
+
+Règles obligatoires de rédaction dans l’ADAPTER UC :
+- uniquement des commentaires de bloc ;
+- un commentaire = un bloc logique précis du code immédiatement situé dessous ;
+- le commentaire doit décrire ce que fait réellement le bloc ;
+- le commentaire doit être rédigé du point de vue du comportement observable côté UC ;
+- le commentaire doit citer les constantes réelles du code lorsqu’elles structurent le comportement observable ;
+- le commentaire doit citer le type exact d’exception lorsque ce type fait partie du comportement attendu ;
+- le commentaire doit distinguer explicitement :
+  - l’erreur utilisateur bénigne,
+  - la précondition bloquante,
+  - la délégation au GATEWAY,
+  - la sécurisation technique,
+  - la préparation de la réponse utilisateur,
+  - le positionnement du message observable,
+  - le retour final ;
+- le commentaire de succès ne doit apparaître qu’après préparation complète de la réponse utilisateur ;
+- les commentaires courts de fin de méthode doivent rester sobres et littéraux.
+
+Formes obligatoires à reproduire lorsque le scénario s’y prête :
+- `Erreur utilisateur bénigne : ...`
+- `Si ... : émet MESSAGE_X + LOG + ExceptionY.`
+- `Délègue au GATEWAY ...`
+- `Une réponse technique null du GATEWAY est une anomalie ...`
+- `Retire les null, trie ...`
+- `Positionne le message observable ...`
+- `retourne ...`
+
+Interdictions absolues :
+- inventer un nouveau style de commentaires ;
+- écrire des commentaires philosophiques, vagues ou décoratifs ;
+- écrire un commentaire qui n’annonce pas exactement ce que fait le bloc juste dessous ;
+- écrire un commentaire qui contredit les constantes, messages ou exceptions réellement utilisées ;
+- écrire un commentaire plus faible ou plus flou que ceux des méthodes déjà validées ;
+- commenter une intention générale de méthode au lieu du bloc concret réellement exécuté.
+
+Règle de contrôle :
+Avant de livrer du code ADAPTER UC, l’IA doit vérifier explicitement que les commentaires générés :
+1. correspondent au bloc situé juste dessous ;
+2. reprennent le vocabulaire déjà validé du projet ;
+3. n’introduisent aucune formule nouvelle non lue dans les méthodes de référence ;
+4. restent homogènes avec les commentaires déjà validés dans les ADAPTER UC du projet.
+
 ---
 
 ## 16) Règles d’architecture
