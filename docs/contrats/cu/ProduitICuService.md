@@ -895,3 +895,66 @@ Le scénario nominal de `delete(...)` est :
 - les tests Mock et Intégration
   doivent verrouiller explicitement
   la preuve du couple `[parent, libellé]`.
+  
+  ## 20) Contrat spécifique de `count()`
+
+Signature cible :
+- `long count() throws Exception;`
+
+### 20.1) Scénario nominal attendu
+
+Le scénario nominal de `count()` est :
+
+1. demander au `GATEWAY` le nombre total de `Produit` présents dans le stockage ;
+2. sécuriser la valeur numérique retournée par le `GATEWAY` ;
+3. retourner un résultat de comptage exploitable par la couche appelante ;
+4. positionner un message utilisateur cohérent avec l'issue observable du comptage.
+
+### 20.2) Cas observables attendus
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si le `GATEWAY` retourne une valeur strictement négative :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + "comptage négatif incohérent : " + resultat`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si le comptage retourné vaut `0` :
+  - retourne `0`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si le comptage retourné est strictement positif :
+  - retourne ce résultat,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 20.3) Garanties spécifiques de `count()`
+
+- le message retourné par `getMessage()`
+  reflète l'issue observable réelle du comptage ;
+- le message de succès ou d'absence de résultat
+  n'est positionné qu'après récupération effective
+  du comptage renvoyé par le `GATEWAY` ;
+- le résultat retourné correspond
+  au nombre total de `Produit`
+  effectivement accessibles dans le stockage ;
+- aucune valeur de comptage incohérente
+  ne doit être exposée à la couche appelante ;
+- les tests Mock et Intégration
+  doivent verrouiller explicitement :
+  - le KO technique avec message,
+  - le KO technique sans message,
+  - le retour négatif incohérent,
+  - le retour `0`,
+  - le retour strictement positif,
+  - la cohérence avec le `COUNT(*)` physique.
