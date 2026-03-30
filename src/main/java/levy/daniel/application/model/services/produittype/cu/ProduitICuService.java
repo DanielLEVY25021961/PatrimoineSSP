@@ -9,6 +9,9 @@ import levy.daniel.application.model.dto.produittype.ProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.Produit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionTechniqueGateway;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
@@ -76,8 +79,66 @@ public interface ProduitICuService {
 	 * </div>
 	 */
 	String MESSAGE_CREER_NOM_BLANK 
-	= "vous ne pouvez pas sauvegarder un Produit "
-			+ "dont le libellé est blank.";
+		= "vous ne pouvez pas sauvegarder un Produit "
+				+ "dont le libellé est blank.";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de vérifier l'unicité 
+	 * du Produit dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER =
+			"Impossible de vérifier l'unicité "
+					+ "du Produit dans le stockage : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de vérifier le Sous-Type de Produit parent 
+	 * dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER =
+			"Impossible de vérifier le Sous-Type de Produit parent "
+					+ "dans le stockage : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de créer le Produit dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER =
+			"Impossible de créer le Produit dans le stockage : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de créer le Produit - 
+	 * le stockage n'a retourné aucun objet créé."</p>
+	 * </div>
+	 */
+	String MESSAGE_CREATION_TECHNIQUE_KO_CREER =
+			"Impossible de créer le Produit - "
+					+ "le stockage n'a retourné aucun objet créé.";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * après la création du Produit : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER =
+			"Impossible de préparer la réponse utilisateur "
+					+ "après la création du Produit : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * après la création du Produit."</p>
+	 * </div>
+	 */
+	String MESSAGE_CONVERSION_TECHNIQUE_KO_CREER =
+			"Impossible de préparer la réponse utilisateur "
+					+ "après la création du Produit.";
 
 	/**
 	 * <div>
@@ -94,7 +155,7 @@ public interface ProduitICuService {
 	 * </div>
 	 */
 	String MESSAGE_DOUBLON 
-		= "Vous ne pouvez pas sauvegarder Produit "
+		= "Vous ne pouvez pas sauvegarder un Produit "
 				+ "déjà existant dans le stockage : ";
 
 	/**
@@ -129,6 +190,13 @@ public interface ProduitICuService {
 	 */
 	String MESSAGE_PARAM_BLANK = "Vous avez passé une chaine "
 			+ "de caractères blank (null ou que des espaces) en paramètre.";
+
+	/**
+	 * <div>
+	 * <p>"Erreur non spécifiée".</p>
+	 * </div>
+	 */
+	String MSG_ERREUR_NON_SPECIFIEE = "Erreur non spécifiée";
 
 	/**
 	 * <div>
@@ -254,50 +322,105 @@ public interface ProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Stocke un {@link Produit}
-	 * dans le stockage en déléguant à un composant technique GATEWAY
-	 * et le retourne sous forme d'OutputDTO.
+	 * Stocke un {@link ProduitDTO.InputDTO},
+	 * puis retourne la réponse sous forme de
+	 * {@link ProduitDTO.OutputDTO}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>reçoit un InputDTO.</li>
-	 * <li>convertit l'InputDTO -> Objet métier.</li>
-	 * <li>appelle le SERVICE GATEWAY pour l'opération sur le stockage.</li>
-	 * <li>récupère l'objet métier retourné par le GATEWAY.</li>
-	 * <li>convertit l'objet métier -> OutputDTO.</li>
-	 * <li>retourne OutputDTO.</li>
+	 * <li>recevoir un {@link ProduitDTO.InputDTO}
+	 * provenant de la couche de présentation ;</li>
+	 * <li>valider les préconditions applicatives observables
+	 * par l'utilisateur ;</li>
+	 * <li>vérifier l'absence de doublon fonctionnel ;</li>
+	 * <li>récupérer le {@link SousTypeProduit} parent persistant
+	 * nécessaire au rattachement métier ;</li>
+	 * <li>convertir l'InputDTO en objet métier {@link Produit} ;</li>
+	 * <li>déléguer l'écriture au composant technique GATEWAY ;</li>
+	 * <li>récupérer l'objet métier effectivement stocké ;</li>
+	 * <li>convertir l'objet métier retourné en
+	 * {@link ProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable par le CONTROLLER appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null} et positionne
+	 * <li>Si {@code pInputDTO == null}, retourne {@code null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL}
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si {@code pInputDTO.getProduit()} est Blank
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_CREER_NOM_BLANK}, LOG et lève une exception.</li>
-	 * <li>Si le DTO est un doublon, positionne {@link #getMessage()} à
-	 * {@link #MESSAGE_DOUBLON} + libellé et lève une exception.</li>
-	 * <li>Si le parent {@link SousTypeProduit} est manquant/absent,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
-	 * et lève une exception.</li>
-	 * <li>Sinon, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_CREER_OK}, délègue la création
-	 * au composant technique GATEWAY et retourne
-	 * l'OutputDTO correspondant à l'objet stocké.</li>
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Si {@code pInputDTO.getProduit()} est blank, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NOM_BLANK},
+	 * émet un LOG de service et lève une exception de validation.</li>
+	 * <li>Si le libellé du parent est blank,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
+	 * <li>Si le DTO correspond à un doublon fonctionnel, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_DOUBLON} + libellé,
+	 * émet un LOG de service et lève une exception métier.</li>
+	 * <li>Si le parent {@link SousTypeProduit} n'existe pas dans le stockage
+	 * ou n'est pas persistant, positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT},
+	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
+	 * <li>Sinon, délègue la création au composant GATEWAY, puis retourne
+	 * l'{@link ProduitDTO.OutputDTO} correspondant à l'objet réellement
+	 * stocké et rattaché à son parent persistant.</li>
+	 * <li>En cas d'échec remonté par la vérification d'unicité,
+	 * par la vérification du parent,
+	 * par le GATEWAY ou par une étape interne du SERVICE UC,
+	 * propage une exception circonstanciée conforme à l'implémentation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()} reflète l'issue
+	 * observable de l'opération pour l'appelant.</li>
+	 * <li>En cas de succès, {@link #getMessage()} est positionné à
+	 * {@link #MESSAGE_CREER_OK} uniquement après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>En cas d'échec métier, applicatif ou technique,
+	 * le SERVICE UC produit un message utilisateur déterministe et traçable.</li>
+	 * <li>Le résultat retourné, s'il est non {@code null},
+	 * correspond à l'état métier effectivement créé dans le stockage
+	 * avec rattachement à un parent persistant.</li>
+	 * <li>Le SERVICE UC conserve son rôle d'orchestration applicative entre
+	 * couche de présentation, métier, GATEWAY et message utilisateur.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pInputDTO : ProduitDTO.InputDTO :
-	 * le Produit à stocker.
+	 * le Produit à créer via le SERVICE UC.
 	 * @return ProduitDTO.OutputDTO :
-	 * le Produit sauvegardé dans le stockage.
+	 * le Produit créé et retourné à la couche appelante ;
+	 * peut être {@code null} si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si le libellé du Produit porté par {@code pInputDTO} est blank.
+	 * @throws ExceptionDoublon
+	 * si {@code pInputDTO} correspond à un doublon fonctionnel.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors du contrôle d'unicité,
+	 * lors de la vérification du parent
+	 * ou lors de la création via le GATEWAY.
+	 * @throws IllegalStateException
+	 * si le parent est absent, non persistant,
+	 * si le GATEWAY retourne {@code null}
+	 * ou si la conversion finale en {@link ProduitDTO.OutputDTO}
+	 * retourne {@code null}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
 	ProduitDTO.OutputDTO creer(
 			ProduitDTO.InputDTO pInputDTO) throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -335,6 +458,8 @@ public interface ProduitICuService {
 	 */
 	List<ProduitDTO.OutputDTO> rechercherTous() throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -362,6 +487,8 @@ public interface ProduitICuService {
 	 */
 	List<String> rechercherTousString() throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -390,6 +517,8 @@ public interface ProduitICuService {
 	ResultatPage<ProduitDTO.OutputDTO> rechercherTousParPage(
 			RequetePage pRequetePage) throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -414,8 +543,10 @@ public interface ProduitICuService {
 	 * @return ProduitDTO.OutputDTO : DTO résultat ou null.
 	 * @throws Exception
 	 */
-	ProduitDTO.OutputDTO findByLibelle(String pLibelle) throws Exception;
+	List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -443,35 +574,8 @@ public interface ProduitICuService {
 	 */
 	List<ProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;
 
-	/**
-	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Recherche un {@link Produit} dans le stockage à partir d'un InputDTO.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
-	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null}
-	 * et positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OBJ_NULL}
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est Blank,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
-	 * et lève une exception.</li>
-	 * <li>Si aucun objet n'est trouvé, retourne {@code null}
-	 * et positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
-	 * <li>Sinon, retourne l'OutputDTO correspondant et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_SUCCES_RECHERCHE}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @param pInputDTO ProduitDTO.InputDTO : DTO de recherche.
-	 * @return ProduitDTO.OutputDTO : DTO résultat ou null.
-	 * @throws Exception
-	 */
-	ProduitDTO.OutputDTO findByDTO(ProduitDTO.InputDTO pInputDTO) throws Exception;
-
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -502,6 +606,39 @@ public interface ProduitICuService {
 	List<ProduitDTO.OutputDTO> findAllByParent(
 			SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception;
 
+
+
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Recherche un {@link Produit} dans le stockage à partir d'un InputDTO.
+	 * </p>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null}, retourne {@code null}
+	 * et positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OBJ_NULL}
+	 * (aucun LOG, aucune exception).</li>
+	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est Blank,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
+	 * et lève une exception.</li>
+	 * <li>Si aucun objet n'est trouvé, retourne {@code null}
+	 * et positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Sinon, retourne l'OutputDTO correspondant et positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO ProduitDTO.InputDTO : DTO de recherche.
+	 * @return ProduitDTO.OutputDTO : DTO résultat ou null.
+	 * @throws Exception
+	 */
+	ProduitDTO.OutputDTO findByDTO(ProduitDTO.InputDTO pInputDTO) throws Exception;
+
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -528,6 +665,8 @@ public interface ProduitICuService {
 	 */
 	ProduitDTO.OutputDTO findById(Long pId) throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -559,6 +698,8 @@ public interface ProduitICuService {
 	 */
 	ProduitDTO.OutputDTO update(ProduitDTO.InputDTO pInputDTO) throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -587,6 +728,8 @@ public interface ProduitICuService {
 	 */
 	void delete(ProduitDTO.InputDTO pInputDTO) throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -599,6 +742,8 @@ public interface ProduitICuService {
 	 */
 	long count() throws Exception;
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -609,5 +754,7 @@ public interface ProduitICuService {
 	 * @return String : message courant (peut être null selon le contexte).
 	 */
 	String getMessage();
+	
+	
 
 }
