@@ -992,9 +992,115 @@ Le scénario nominal de `update(...)` est :
 - le message observable doit être positionné après traitement complet de la réponse ;
 - aucun résultat partiel incohérent ne doit être exposé à l'appelant.
 
-## 20) Règle de synchronisation PORT / ADAPTER / tests
+## 20) Contrat spécifique de `delete(...)`
 
-Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)`, `findById(...)` ou `update(...)` doit rester synchronisée entre :
+Signature cible :
+
+- `void delete(SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+
+### 20.1 Scénario nominal attendu
+
+Le scénario nominal de `delete(...)` est :
+
+1. recevoir un `SousTypeProduitDTO.InputDTO` transmis par la couche appelante ;
+2. valider les préconditions observables sur le DTO, sur le libellé enfant et sur le parent ;
+3. retrouver le `TypeProduit` parent persistant correspondant au libellé porté par le DTO ;
+4. demander au `GATEWAY` tous les `SousTypeProduit` rattachés à ce parent ;
+5. identifier, dans cette collection, l'objet effectivement persistant correspondant au couple `[parent, libellé]` ;
+6. déléguer la destruction technique au `GATEWAY` ;
+7. positionner le message observable ;
+8. retourner sans valeur.
+
+### 20.2 Cas observables attendus
+
+- si `pInputDTO == null` :
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionParametreNull` ;
+
+- si `pInputDTO.getSousTypeProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK`,
+  - émet un LOG,
+  - lève une `ExceptionParametreBlank` ;
+
+- si `pInputDTO.getTypeProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la recherche technique du parent lève une exception avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la recherche technique du parent lève une exception sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si le parent est absent du stockage ou non persistant :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - émet un LOG,
+  - lève une `IllegalStateException` ;
+
+- si la recherche technique des enfants du parent lève une exception avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la recherche technique des enfants du parent lève une exception sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la recherche des enfants du parent retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` ;
+
+- si aucun objet persistant ne correspond au couple `[parent, libellé]` :
+  - ne détruit rien,
+  - retourne,
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + libellé` ;
+
+- si l'objet retrouvé existe mais n'est pas persistant :
+  - positionne `getMessage()` à `MESSAGE_OBJ_NON_PERSISTE + libellé`,
+  - émet un LOG,
+  - lève une `ExceptionNonPersistant` ;
+
+- si la destruction technique lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_DELETE_KO + libellé + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- si la destruction technique lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_DELETE_KO + libellé + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l'exception ;
+
+- en cas de succès :
+  - ne retourne aucune valeur,
+  - positionne `getMessage()` à `MESSAGE_DELETE_OK + libellé`
+    uniquement après destruction effective de l'objet persistant.
+
+### 20.3 Garanties spécifiques de `delete(...)`
+
+- la ré-identification de l'objet à détruire s'appuie sur le couple `[parent, libellé]`
+  et jamais sur le seul libellé enfant ;
+- aucune suppression ne doit viser un autre parent portant le même libellé enfant ;
+- le message observable doit refléter l'issue réelle de l'opération ;
+- le message de succès ne doit être positionné qu'après destruction effective ;
+- aucun résultat partiel incohérent ne doit être exposé à l'appelant.
+
+## 21) Règle de synchronisation PORT / ADAPTER / tests
+
+Toute correction de `creer(...)`, `rechercherTous()`, `rechercherTousString()`, `rechercherTousParPage(...)`, `findByLibelle(...)`, `findByLibelleRapide(...)`, `findAllByParent(...)`, `findByDTO(...)`, `findById(...)`, `update(...)` ou `delete(...)` doit rester synchronisée entre :
 1. le PORT `SousTypeProduitICuService` ;
 2. l’ADAPTER `SousTypeProduitCuService` ;
 3. les tests Mock ;
@@ -1097,6 +1203,22 @@ Pour `update(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas objet modifié retourné non persistant ;
 - le cas nominal avec réinjection de l'ID persistant et du parent persistant exact.
 
+Pour `delete(...)`, les tests Mock doivent verrouiller au minimum :
+- le cas `pInputDTO == null` ;
+- le cas libellé enfant blank ;
+- le cas parent blank ;
+- le cas exception technique de recherche du parent avec message ;
+- le cas exception technique de recherche du parent sans message ;
+- le cas parent absent ou non persistant ;
+- le cas exception technique de recherche des enfants avec message ;
+- le cas exception technique de recherche des enfants sans message ;
+- le cas `gateway.findAllByParent(...) == null` pendant la ré-identification ;
+- le cas introuvable sur le couple `[parent, libellé]` ;
+- le cas objet retrouvé non persistant ;
+- le cas exception technique de destruction avec message ;
+- le cas exception technique de destruction sans message ;
+- le cas nominal avec destruction du bon couple `[parent, libellé]`.
+
 ### Point de vigilance pour les tests d’Intégration
 
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -1174,4 +1296,18 @@ Pour `update(...)`, le test d’intégration cible doit, à terme, prouver :
 - que l’identifiant persistant du couple ciblé est conservé ;
 - qu’aucun doublon n’est créé par l’opération ;
 - que le message exact `MESSAGE_MODIF_OK + libellé`
+  est positionné en cas de succès.
+
+Pour `delete(...)`, le test d’intégration cible doit, à terme, prouver :
+- qu’un `pInputDTO` null est refusé ;
+- qu’un libellé enfant blank est refusé ;
+- qu’un parent blank est refusé ;
+- qu’un parent absent est refusé ;
+- qu’un couple `[parent, libellé]` introuvable ne supprime rien
+  et positionne `MESSAGE_OBJ_INTROUVABLE + libellé` ;
+- que la ré-identification s’appuie bien sur le couple `[parent, libellé]`
+  lorsque le même libellé existe sur plusieurs parents ;
+- que seul le couple ciblé est physiquement détruit en base ;
+- que le couple homonyme rattaché à un autre parent reste présent ;
+- que le message exact `MESSAGE_DELETE_OK + libellé`
   est positionné en cas de succès.

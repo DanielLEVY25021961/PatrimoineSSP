@@ -1616,14 +1616,17 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	
 
 	/**
-	* {@inheritDoc}
-	*/
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void delete(final SousTypeProduitDTO.InputDTO pInputDTO) 
+	public void delete(final SousTypeProduitDTO.InputDTO pInputDTO)
 			throws Exception {
 
-		/* alimente this.message, LOG et jette une
-		 * Exception si pSousTypeProduit est null.*/
+		/*
+		 * Le contrat UC refuse un DTO de suppression null.
+		 * Si pInputDTO == null :
+		 * émet MESSAGE_PARAM_NULL + LOG + ExceptionParametreNull.
+		 */
 		if (pInputDTO == null) {
 			this.traiterErreur(
 					MESSAGE_PARAM_NULL,
@@ -1631,45 +1634,188 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			return;
 		}
 
-		/* alimente this.message, LOG et jette une
-		 * Exception si le libellé est blank. */
-		if (StringUtils.isBlank(pInputDTO.getSousTypeProduit())) {
+		/*
+		 * Extrait les libellés métier portés par le DTO.
+		 */
+		final String libelleParent = pInputDTO.getTypeProduit();
+		final String libelleSousType = pInputDTO.getSousTypeProduit();
+
+		/*
+		 * Le contrat UC refuse un libellé enfant blank.
+		 * Si StringUtils.isBlank(libelleSousType) :
+		 * émet MESSAGE_PARAM_BLANK + LOG + ExceptionParametreBlank.
+		 */
+		if (StringUtils.isBlank(libelleSousType)) {
 			this.traiterErreur(
 					MESSAGE_PARAM_BLANK,
 					new ExceptionParametreBlank(MESSAGE_PARAM_BLANK));
 			return;
 		}
 
-		final String libelle = pInputDTO.getSousTypeProduit();
-
-		/* délègue au Gateway la recherche par libellé dans le stockage. */
-		final SousTypeProduit stp = this.gateway.findByLibelle(libelle).get(0);
-
-		/* émet un message KO et ne fait rien 
-		 * si l'objet est introuvable par libellé. */
-		if (stp == null) {
-			this.message.set(MESSAGE_OBJ_INTROUVABLE + libelle);
+		/*
+		 * Le contrat UC refuse un parent blank.
+		 * Si StringUtils.isBlank(libelleParent) :
+		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 */
+		if (StringUtils.isBlank(libelleParent)) {
+			this.traiterErreur(
+					MESSAGE_PAS_PARENT,
+					new IllegalStateException(MESSAGE_PAS_PARENT));
 			return;
 		}
 
+		/*
+		 * Recherche d'abord le parent persistant.
+		 * Toute anomalie technique de recherche
+		 * est transformée en message utilisateur rationalisé.
+		 */
+		final TypeProduit parentPersistant;
+
 		try {
+			
+			/* Délègue au GATEWAY la recherche 
+			 * du parent persistant via libellé. */
+			parentPersistant 
+				= this.typeProduitGateway.findByLibelle(libelleParent);
+			
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
 
-			/* délègue au Gateway la tâche de la destruction de l'objet. */
-			this.gateway.delete(stp);
+			this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+			return;
+		}
 
-			/* alimente un message. */
-			this.message.set(MESSAGE_DELETE_OK + libelle);
+		/*
+		 * Le parent doit exister et être persistant :
+		 * sinon MESSAGE_PAS_PARENT + LOG + IllegalStateException
+		 */
+		if (parentPersistant == null
+				|| parentPersistant.getIdTypeProduit() == null) {
+			this.traiterErreur(
+					MESSAGE_PAS_PARENT,
+					new IllegalStateException(MESSAGE_PAS_PARENT));
+			return;
+		}
 
-		} catch (Exception e) {
+		/*
+		 * Recherche ensuite tous les enfants du parent persistant,
+		 * afin de ré-identifier la cible exacte sur le couple
+		 * [parent, libellé].
+		 */
+		final List<SousTypeProduit> records;
 
-			/* alimente this.message, LOG et jette 
-			 * une Exception si la destruction a échoué. */
-			this.traiterErreur(MESSAGE_DELETE_KO + libelle, e);
-		}		
+		try {
+			
+			/* Délègue au GATEWAY la recherche des 
+			 * enfants du parent persistant. */
+			records = this.gateway.findAllByParent(parentPersistant);
+			
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+			return;
+		}
+
+		/*
+		 * Un retour null du GATEWAY pendant cette ré-identification
+		 * constitue une anomalie technique de stockage :
+		 * émet un MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 */
+		if (records == null) {
+			this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+			return;
+		}
+
+		/*
+		 * Filtre les nulls, trie puis identifie la cible exacte
+		 * sur le couple [parent, libellé].
+		 */
+		final List<SousTypeProduit> recordsNonNullTries =
+				this.filtrerEtTrier(records);
+
+		SousTypeProduit existant = null;
+
+		for (final SousTypeProduit candidat : recordsNonNullTries) {
+			
+			if (Strings.CI.equals(
+					candidat.getSousTypeProduit(),
+					libelleSousType)) {
+				
+				existant = candidat;
+				break;
+			}
+		}
+
+		/*
+		 * Si aucun objet persistant n'est retrouvé pour ce couple :
+		 * ne détruit rien, retourne,
+		 * et positionne MESSAGE_OBJ_INTROUVABLE + libellé.
+		 */
+		if (existant == null) {
+			this.message.set(MESSAGE_OBJ_INTROUVABLE + libelleSousType);
+			return;
+		}
+
+		/*
+		 * L'objet ré-identifié doit être persistant :
+		 * sinon émet un MESSAGE_OBJ_NON_PERSISTE + libelleSousType 
+		 * + LOG + ExceptionNonPersistant
+		 */
+		if (existant.getIdSousTypeProduit() == null) {
+			final String messageUtil =
+					MESSAGE_OBJ_NON_PERSISTE + libelleSousType;
+
+			this.traiterErreur(
+					messageUtil,
+					new ExceptionNonPersistant(messageUtil));
+			return;
+		}
+
+		/*
+		 * Délègue ensuite la destruction au GATEWAY.
+		 * Toute anomalie technique de destruction
+		 * est transformée en message utilisateur cohérent.
+		 */
+		try {
+			this.gateway.delete(existant);
+		} catch (final Exception e) {
+			final String messageSecurise =
+					StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			this.traiterErreur(
+					MESSAGE_DELETE_KO
+							+ libelleSousType
+							+ TIRET_ESPACE
+							+ messageSecurise,
+					e);
+			return;
+		}
+
+		/*
+		 * Le message observable de succès
+		 * n'est positionné qu'après destruction effective
+		 * de l'objet persistant.
+		 */
+		this.message.set(MESSAGE_DELETE_OK + libelleSousType);
 	}
 
 
-
+	
 	/**
 	* {@inheritDoc}
 	*/

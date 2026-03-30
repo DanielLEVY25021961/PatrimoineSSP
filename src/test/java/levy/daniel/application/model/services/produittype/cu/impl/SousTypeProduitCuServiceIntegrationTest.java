@@ -2287,107 +2287,292 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <p>delete(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(null) : violation de contrat -> ExceptionParametreNull")
+	@DisplayName("delete(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
 	public void testDeleteNull() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
 		assertThatThrownBy(() -> this.service.delete(null))
 				.isInstanceOf(ExceptionParametreNull.class);
 
-		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
-		
-	} // __________________________________________________________________
-	
-	
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
 	 * <p>delete(blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(blank) : positionne message + lève ExceptionParametreBlank")
+	@DisplayName("delete(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
 	public void testDeleteBlank() {
 
-		final InputDTO input = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, ESPACES);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				ESPACES);
 
 		assertThatThrownBy(() -> this.service.delete(input))
 				.isInstanceOf(ExceptionParametreBlank.class);
 
-		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
-		
-	} // __________________________________________________________________
-	
-	
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(introuvable) : ne supprime rien.</p>
+	 * <p>delete(parent blank) : violation de contrat structurel.</p>
 	 * <ul>
-	 * <li>le {@code count()} reste inchangé</li>
-	 * <li>le message contient {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("delete(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testDeleteParentBlank() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(
+				ESPACES,
+				IT_STP_ALPHA);
+
+		assertThatThrownBy(() -> this.service.delete(input))
+				.isInstanceOf(IllegalStateException.class);
+
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(parent absent) : le parent requis n'existe pas en stockage.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("delete(introuvable) : ne supprime rien, retourne, message 'introuvable'")
+	@DisplayName("delete(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testDeleteParentAbsent() throws Exception {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_ALPHA);
+
+		assertThatThrownBy(() -> this.service.delete(input))
+				.isInstanceOf(IllegalStateException.class);
+
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(introuvable) : aucun objet persistant
+	 * ne correspond au couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>ne supprime rien</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>la base reste strictement inchangée</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(introuvable) : aucune suppression + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testDeleteIntrouvable() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
 
-		final long baseline = this.service.count();
+		final Long nombreAvantDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
-		this.service.delete(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_INEXISTANT_DELETE));
+		this.service.delete(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_INEXISTANT_DELETE));
 
-		assertThat(this.service.count()).isEqualTo(baseline);
+		final Long nombreApresDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
 		assertThat(this.service.getMessage())
-				.contains(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
-	} // __________________________________________________________________
-	
-	
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE
+								+ IT_STP_INEXISTANT_DELETE);
+		assertThat(nombreApresDelete).isEqualTo(nombreAvantDelete);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_INEXISTANT_DELETE))
+				.isEqualTo(0L);
 
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(ok) : supprime effectivement.</p>
+	 * <p>delete(ok) : preuve béton de la destruction
+	 * sur le couple [parent, libellé].</p>
 	 * <ul>
-	 * <li>après suppression, {@code findByLibelle(libelle)} retourne {@code null}</li>
+	 * <li>crée d'abord deux parents réels</li>
+	 * <li>crée ensuite deux sous-types portant le même libellé
+	 * sur deux parents différents</li>
+	 * <li>détruit uniquement le couple ciblé</li>
+	 * <li>ne détruit jamais le couple homonyme
+	 * rattaché à l'autre parent</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("delete(ok) : supprime effectivement (findByLibelle -> null)")
-	public void testDeleteOk() throws Exception {
+	@DisplayName("delete(ok) : détruit le bon couple [parent, libellé] + message exact + preuve BD")
+	public void testDeleteOkAvecPreuveCoupleParentLibelle() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_B));
 
-		final OutputDTO cree = this.service.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_DELETE_OK));
+		final OutputDTO creeParentA = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_DELETE_OK));
 
-		assertThat(cree).isNotNull();
+		final OutputDTO creeParentB = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_DELETE_OK));
 
-		this.service.delete(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_DELETE_OK));
+		assertThat(creeParentA).isNotNull();
+		assertThat(creeParentB).isNotNull();
+		assertThat(creeParentA.getIdSousTypeProduit()).isNotNull();
+		assertThat(creeParentB.getIdSousTypeProduit()).isNotNull();
 
-		final List<OutputDTO> apresSuppression = this.service.findByLibelle(IT_STP_DELETE_OK);
+		final Long nombreAvantDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
 
-		assertThat(apresSuppression).isNotNull().isEmpty();
-		
-	} // __________________________________________________________________
-	
+		this.service.delete(
+				new SousTypeProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_DELETE_OK));
+
+		final Long nombreApresDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_DELETE_OK
+								+ IT_STP_DELETE_OK);
+
+		assertThat(nombreApresDelete).isEqualTo(nombreAvantDelete - 1L);
+
+		assertThat(this.compterSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitEnBase(
+				creeParentB.getIdSousTypeProduit()))
+				.isEqualTo(0L);
+
+		assertThat(this.lireLibelleSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_DELETE_OK);
+		assertThat(this.lireParentSousTypeProduitEnBase(
+				creeParentA.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_DELETE_OK))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(
+				IT_TP_PARENT_B,
+				IT_STP_DELETE_OK))
+				.isEqualTo(0L);
+
+		final List<OutputDTO> reluParentA = this.service.findByLibelle(IT_STP_DELETE_OK);
+
+		assertThat(reluParentA).isNotNull();
+		assertThat(reluParentA).hasSize(1);
+		assertThat(reluParentA.get(0).getIdSousTypeProduit())
+				.isEqualTo(creeParentA.getIdSousTypeProduit());
+		assertThat(reluParentA.get(0).getTypeProduit())
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________	
+
 	
 
 	// ============================ TESTS count() ==========================
