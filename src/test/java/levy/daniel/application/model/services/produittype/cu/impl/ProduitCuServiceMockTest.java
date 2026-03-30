@@ -1055,12 +1055,174 @@ public class ProduitCuServiceMockTest {
 
 	
 	// ======================= TESTS findByLibelle(...) ====================
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'interagit avec aucun gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(blank) : retourne null + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
+	public void testFindByLibelleBlank() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final List<OutputDTO> dtos = service.findByLibelle(ESPACES);
+
+		assertThat(dtos).isNull();
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(gateway retourne null) : anomalie technique.</p>
+	 * <ul>
+	 * <li>lève une exception technique</li>
+	 * <li>positionne {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(gateway retourne null) : RuntimeException + message KO_TECHNIQUE_RECHERCHE")
+	public void testFindByLibelleGatewayRetourNull() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.findByLibelle(MARTEAU)).thenReturn(null);
+
+		assertThatThrownBy(() -> service.findByLibelle(MARTEAU))
+			.isInstanceOf(RuntimeException.class);
+
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(introuvable) : recherche vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(introuvable) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindByLibelleIntrouvable() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.findByLibelle(MARTEAU)).thenReturn(Collections.emptyList());
+
+		final List<OutputDTO> dtos = service.findByLibelle(MARTEAU);
+
+		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(ok) : recherche exacte non unique.</p>
+	 * <ul>
+	 * <li>retourne une liste non nulle</li>
+	 * <li>retire les {@code null}</li>
+	 * <li>conserve les deux parents distincts</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(ok) : liste non nulle + filtre nulls + message MESSAGE_RECHERCHE_OK")
+	public void testFindByLibelleOk() throws Exception {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final TypeProduit typeProduitA = new TypeProduit(BAZAR);
+		typeProduitA.setIdTypeProduit(1L);
+		final SousTypeProduit parentA = new SousTypeProduit(OUTILLAGE, typeProduitA);
+		parentA.setIdSousTypeProduit(10L);
+
+		final TypeProduit typeProduitB = new TypeProduit("quincaillerie");
+		typeProduitB.setIdTypeProduit(2L);
+		final SousTypeProduit parentB = new SousTypeProduit("atelier", typeProduitB);
+		parentB.setIdSousTypeProduit(20L);
+
+		final Produit produitA = new Produit(MARTEAU, parentA);
+		produitA.setIdProduit(100L);
+
+		final Produit produitB = new Produit(MARTEAU, parentB);
+		produitB.setIdProduit(200L);
+
+		when(gateway.findByLibelle(MARTEAU))
+			.thenReturn(Arrays.asList(produitA, null, produitB));
+
+		final List<OutputDTO> dtos = service.findByLibelle(MARTEAU);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+			.extracting(OutputDTO::getProduit)
+			.containsExactlyInAnyOrder(MARTEAU, MARTEAU);
+
+		assertThat(dtos)
+			.extracting(OutputDTO::getSousTypeProduit)
+			.containsExactlyInAnyOrder(OUTILLAGE, "atelier");
+
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
 
 	
 	
+	// ===================== TESTS findByLibelleRapide(...) =================
+
 	
 	
-	
-		
-		
 }

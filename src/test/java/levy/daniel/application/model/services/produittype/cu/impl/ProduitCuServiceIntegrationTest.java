@@ -790,12 +790,15 @@ public class ProduitCuServiceIntegrationTest {
 
 	// ======================= TESTS findByLibelle(...) ====================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
 	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -805,68 +808,100 @@ public class ProduitCuServiceIntegrationTest {
 	@DisplayName("findByLibelle(blank) : erreur utilisateur bénigne -> retourne null, message utilisateur, aucune exception")
 	public void testFindByLibelleBlank() throws Exception {
 
-//		final OutputDTO dto = this.service.findByLibelle(ESPACES);
-//
-//		assertThat(dto).isNull();
-//		assertThat(this.service.getMessage())
-//				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-		
+		final List<OutputDTO> dtos = this.service.findByLibelle(ESPACES);
+
+		assertThat(dtos).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
 	 * <p>findByLibelle(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findByLibelle(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
 	public void testFindByLibelleIntrouvable() throws Exception {
 
-//		final OutputDTO dto = this.service.findByLibelle(IT_PRD_INEXISTANT_XYZ);
-//
-//		assertThat(dto).isNull();
-//		assertThat(this.service.getMessage())
-//				.contains(ProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-		
+		final List<OutputDTO> dtos = this.service.findByLibelle(IT_PRD_INEXISTANT_XYZ);
+
+		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
 	} // __________________________________________________________________
-	
-	
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : retourne un DTO non nul après création.</p>
+	 * <p>findByLibelle(ok) : retourne tous les DTO correspondant exactement au libellé.</p>
+	 * <ul>
+	 * <li>crée deux parents persistants distincts ;</li>
+	 * <li>crée deux Produits de même libellé sous deux parents différents ;</li>
+	 * <li>retourne une liste non nulle de taille 2 ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(ok) : retourne OutputDTO après création")
+	@DisplayName("findByLibelle(ok) : retourne la liste des OutputDTO de même libellé exact")
 	public void testFindByLibelleOk() throws Exception {
 
-//		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-//		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELTA));
-//
-//		final OutputDTO dto = this.service.findByLibelle(IT_PRD_DELTA);
-//
-//		assertThat(dto).isNotNull();
-//		assertThat(dto.getProduit()).isEqualTo(IT_PRD_DELTA);
-//		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
-//		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		
-	} // __________________________________________________________________
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_DELTA));
+
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_PARENT_B,
+						IT_PRD_DELTA));
+
+		final List<OutputDTO> dtos = this.service.findByLibelle(IT_PRD_DELTA);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.containsExactlyInAnyOrder(IT_PRD_DELTA, IT_PRD_DELTA);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactlyInAnyOrder(IT_STP_PARENT_A, IT_STP_PARENT_B);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactlyInAnyOrder(IT_TP_PARENT_A, IT_TP_PARENT_B);
+
+	} // __________________________________________________________________	
 	
 	
 
 	// ===================== TESTS findByLibelleRapide(...) =================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>findByLibelleRapide(null) : violation de contrat.</p>

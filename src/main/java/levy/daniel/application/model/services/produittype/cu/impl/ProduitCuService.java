@@ -552,14 +552,56 @@ public class ProduitCuService implements ProduitICuService {
 	public List<ProduitDTO.OutputDTO> findByLibelle(
 			final String pLibelle) throws Exception {
 
+		/*
+		 * Erreur utilisateur bénigne :
+		 * libellé blank => null + MESSAGE_PARAM_BLANK, sans exception.
+		 */
 		if (StringUtils.isBlank(pLibelle)) {
 			this.message.set(MESSAGE_PARAM_BLANK);
 			return null;
 		}
 
-	return null;	
-	}
+		/*
+		 * Délègue au GATEWAY la recherche exacte par libellé.
+		 */
+		final List<Produit> reponses = this.gateway.findByLibelle(pLibelle);
 
+		/*
+		 * Une réponse technique null du GATEWAY
+		 * est une anomalie de recherche.
+		 * Si reponses == null : 
+		 * émet un message KO_TECHNIQUE_RECHERCHE + LOG + RuntimeException.
+		 */
+		if (reponses == null) {
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE,
+					new RuntimeException(KO_TECHNIQUE_RECHERCHE));
+		}
+
+		/*
+		 * Retire les null, trie les objets métier,
+		 * puis convertit la réponse en OutputDTO.
+		 */
+		final List<Produit> recordsNonNullTries
+				= this.filtrerEtTrier(reponses);
+
+		final List<ProduitDTO.OutputDTO> dtos
+				= ConvertisseurMetierToOutputDTOProduit
+						.convertList(recordsNonNullTries);
+
+		/*
+		 * Positionne le message observable
+		 * après préparation complète de la réponse.
+		 */
+		if (dtos.isEmpty()) {
+			this.message.set(MESSAGE_RECHERCHE_VIDE);
+		} else {
+			this.message.set(MESSAGE_RECHERCHE_OK);
+		}
+
+		return dtos;
+	}
+	
 	
 	
 	/**

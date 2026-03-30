@@ -377,3 +377,50 @@ Le scénario nominal de `rechercherTousParPage(...)` est :
 - le contenu paginé retourné doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
 - le message de succès ne doit être positionné qu'après conversion complète de la page résultat ;
 - `pageNumber`, `pageSize` et `totalElements` doivent rester cohérents avec la réponse technique paginée préparée par le service UC.
+
+## 13) Contrat spécifique de `findByLibelle(...)`
+
+Signature cible :
+- `List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;`
+
+### 13.1) Scénario nominal attendu
+
+Le scénario nominal de `findByLibelle(...)` est :
+
+1. recevoir un libellé exact ;
+2. valider le libellé demandé ;
+3. déléguer la recherche exacte au `GATEWAY` Produit ;
+4. retirer les éventuels objets métier `null` ;
+5. trier les objets métier ;
+6. convertir les résultats métier en `ProduitDTO.OutputDTO` ;
+7. positionner le message observable ;
+8. retourner la liste finale.
+
+### 13.2) Cas observables attendus
+
+- si `pLibelle` est blank :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK` ;
+  - ne lève aucune exception ;
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE` ;
+  - propage une exception technique ;
+
+- si aucun objet n'est trouvé :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si au moins un objet est trouvé :
+  - retourne une liste non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 13.3) Garanties spécifiques de `findByLibelle(...)`
+
+- la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
+- la liste retournée, si elle n'est pas vide,
+  doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
+- le message de succès ne doit être positionné
+  qu'après préparation complète de la réponse utilisateur ;
+- la recherche exacte peut retourner plusieurs `OutputDTO`
+  si plusieurs `Produit` distincts partagent le même libellé exact.
