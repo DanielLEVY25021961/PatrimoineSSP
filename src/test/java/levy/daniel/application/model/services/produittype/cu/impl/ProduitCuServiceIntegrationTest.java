@@ -1025,88 +1025,7 @@ public class ProduitCuServiceIntegrationTest {
 				.containsExactlyInAnyOrder(IT_PRD_SEARCH_ABC, IT_PRD_SEARCH_ABD);
 
 	} // __________________________________________________________________	
-	
-
-	
-	// ========================== TESTS findByDTO(...) =====================
-
-	/**
-	 * <div>
-	 * <p>findByDTO(null) : erreur utilisateur bénigne (contrat du PORT).</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findByDTO(null) : retourne null (contrat)")
-	public void testFindByDTONull() throws Exception {
-
-		final OutputDTO dto = this.service.findByDTO(null);
-
-		assertThat(dto).isNull();
 		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findByDTO(parent blank) : violation de contrat (PORT).</p>
-	 * <p>
-	 * NOTE : le message constant peut dépendre de l'implémentation finale
-	 * (ProduitICuService doit aligner ses constantes sur les autres PORTS).
-	 * </p>
-	 * </div>
-	 */
-	@Test
-	@DisplayName("findByDTO(parent blank) : lève une exception (contrat)")
-	public void testFindByDTOParentBlank() {
-
-		final InputDTO dto = new ProduitDTO.InputDTO(ESPACES, IT_STP_PARENT_A, IT_PRD_ALPHA);
-
-		assertThatThrownBy(() -> this.service.findByDTO(dto))
-				.isInstanceOfAny(IllegalStateException.class, RuntimeException.class);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>findByDTO(ok) : test "béton" (si implémenté) de la recherche via DTO.</p>
-	 * <p>
-	 * NOTE : cette méthode est déclarée dans le PORT mais l'implémentation
-	 * peut être en cours (TODO). Le test contractualise le comportement attendu.
-	 * </p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findByDTO(ok) : retourne OutputDTO cohérent après création (contrat)")
-	public void testFindByDTOOk() throws Exception {
-
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ALPHA));
-
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ALPHA);
-
-		final OutputDTO dto = this.service.findByDTO(input);
-
-		/*
-		 * Si l'implémentation n'est pas encore finalisée, dto peut être null.
-		 * Le test "béton" deviendra strict (dto non null) une fois findByDTO implémenté.
-		 */
-		if (dto != null) {
-			assertThat(dto.getProduit()).isEqualTo(IT_PRD_ALPHA);
-			assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
-			assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		}
-	} // __________________________________________________________________
-	
 	
 
 	// ===================== TESTS findAllByParent(...) ====================
@@ -1235,9 +1154,150 @@ public class ProduitCuServiceIntegrationTest {
 				.extracting(ProduitDTO.OutputDTO::getTypeProduit)
 				.containsExactlyInAnyOrder(IT_TP_PARENT_B, IT_TP_PARENT_B);
 
-	} // __________________________________________________________________	
+	} // __________________________________________________________________
 	
+	
+	
+	// ========================== TESTS findByDTO(...) =====================
 
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(null) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL}</li>
+	 * <li>ne lève aucune exception</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(null) : retourne null + message MESSAGE_RECHERCHE_OBJ_NULL")
+	public void testFindByDTONull() throws Exception {
+
+		final OutputDTO dto = this.service.findByDTO(null);
+
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(parent blank) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("findByDTO(parent blank) : positionne message + lève IllegalStateException")
+	public void testFindByDTOParentBlank() {
+
+		final InputDTO dto = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				ESPACES,
+				IT_PRD_ALPHA);
+
+		assertThatThrownBy(() -> this.service.findByDTO(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(introuvable) : aucun Produit exact trouvé.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(introuvable) : retourne null + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindByDTOIntrouvable() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_ALPHA));
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_BETA);
+
+		final OutputDTO dto = this.service.findByDTO(input);
+
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(ok) : retourne l'OutputDTO exact correspondant au DTO de recherche.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>crée un Produit persistant ;</li>
+	 * <li>retrouve ce Produit via le DTO de recherche ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(ok) : retourne OutputDTO cohérent + message MESSAGE_SUCCES_RECHERCHE")
+	public void testFindByDTOOk() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+
+		final OutputDTO cree = this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_ALPHA));
+
+		assertThat(cree).isNotNull();
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_ALPHA);
+
+		final OutputDTO dto = this.service.findByDTO(input);
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.getIdProduit()).isEqualTo(cree.getIdProduit());
+		assertThat(dto.getProduit()).isEqualTo(IT_PRD_ALPHA);
+		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
+		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+	} // __________________________________________________________________	
+
+	
 	
 	// ======================== TESTS findById(...) ========================
 

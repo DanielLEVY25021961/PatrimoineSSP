@@ -842,32 +842,72 @@ public interface ProduitICuService {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Recherche un {@link Produit} dans le stockage à partir d'un InputDTO.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p>Recherche un {@link ProduitDTO.OutputDTO}
+	 * à partir d'un {@link ProduitDTO.InputDTO}.</p>
+	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null}
-	 * et positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OBJ_NULL}
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est Blank,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
-	 * et lève une exception.</li>
-	 * <li>Si aucun objet n'est trouvé, retourne {@code null}
-	 * et positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
-	 * <li>Sinon, retourne l'OutputDTO correspondant et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * <li>valider le DTO de recherche ;</li>
+	 * <li>valider les informations de parent nécessaires à la recherche ;</li>
+	 * <li>retrouver le parent persistant correspondant ;</li>
+	 * <li>demander au GATEWAY Produit tous les {@link Produit}
+	 * rattachés à ce parent ;</li>
+	 * <li>rechercher dans cette liste l'objet correspondant exactement
+	 * au libellé demandé ;</li>
+	 * <li>convertir l'objet métier trouvé en {@link ProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO ProduitDTO.InputDTO : DTO de recherche.
-	 * @return ProduitDTO.OutputDTO : DTO résultat ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>si {@code pInputDTO == null}, retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OBJ_NULL}
+	 * sans lever d'exception ;</li>
+	 * <li>si le parent porté par {@code pInputDTO}
+	 * est blank, positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PAS_PARENT}
+	 * puis lève une exception ;</li>
+	 * <li>si aucun parent persistant n'est trouvé,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>si aucun {@link Produit} ne correspond,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>sinon, retourne l'{@link ProduitDTO.OutputDTO} correspondant
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération ;</li>
+	 * <li>le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur ;</li>
+	 * <li>l'objet retourné, s'il n'est pas {@code null},
+	 * correspond à un {@link Produit} effectivement retrouvé
+	 * dans le stockage et exprimé sous forme de DTO ;</li>
+	 * <li>aucun résultat incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : ProduitDTO.InputDTO :
+	 * DTO de recherche.
+	 * @return ProduitDTO.OutputDTO :
+	 * DTO résultat ou {@code null}.
 	 * @throws Exception
+	 * si une erreur survient lors de la recherche
+	 * ou lors de la préparation de la réponse utilisateur.
 	 */
-	ProduitDTO.OutputDTO findByDTO(ProduitDTO.InputDTO pInputDTO) throws Exception;
+	ProduitDTO.OutputDTO findByDTO(ProduitDTO.InputDTO pInputDTO) 
+			throws Exception;
 
 	
 	

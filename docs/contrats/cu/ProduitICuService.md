@@ -531,3 +531,56 @@ Le scénario nominal de `findAllByParent(...)` est :
 - le message de succès ne doit être positionné
   qu'après préparation complète de la réponse utilisateur ;
 - aucun résultat partiel incohérent ne doit être exposé à l'appelant.
+
+## 16) Contrat spécifique de `findByDTO(...)`
+
+Signature cible :
+- `ProduitDTO.OutputDTO findByDTO(ProduitDTO.InputDTO pInputDTO) throws Exception;`
+
+### 16.1) Scénario nominal attendu
+
+Le scénario nominal de `findByDTO(...)` est :
+
+1. recevoir un `ProduitDTO.InputDTO` ;
+2. valider le DTO de recherche ;
+3. valider les informations de parent nécessaires à la recherche ;
+4. retrouver le parent persistant correspondant ;
+5. demander au `GATEWAY` Produit tous les Produits rattachés à ce parent ;
+6. rechercher dans cette liste l'objet correspondant exactement au libellé demandé ;
+7. convertir l'objet métier trouvé en `ProduitDTO.OutputDTO` ;
+8. positionner le message observable ;
+9. retourner la réponse finale.
+
+### 16.2) Cas observables attendus
+
+- si `pInputDTO == null` :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OBJ_NULL` ;
+  - ne lève aucune exception ;
+
+- si le parent porté par `pInputDTO` est blank :
+  - positionne `getMessage()` à `MESSAGE_PAS_PARENT` ;
+  - lève une exception ;
+
+- si aucun parent persistant n'est trouvé :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si aucun `Produit` ne correspond :
+  - retourne `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si un `Produit` exact est trouvé :
+  - retourne un `ProduitDTO.OutputDTO` non `null` ;
+  - positionne `getMessage()` à `MESSAGE_SUCCES_RECHERCHE`.
+
+### 16.3) Garanties spécifiques de `findByDTO(...)`
+
+- la méthode ne doit jamais exposer de résultat incohérent à l'appelant ;
+- l'objet retourné, s'il n'est pas `null`,
+  doit correspondre à un `Produit` effectivement retrouvé dans le stockage ;
+- le message de succès ne doit être positionné
+  qu'après préparation complète de la réponse utilisateur ;
+- en cas d'absence de correspondance exacte,
+  la méthode doit retourner `null`
+  avec `MESSAGE_RECHERCHE_VIDE`.
