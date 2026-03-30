@@ -325,3 +325,55 @@ Le scénario nominal de `rechercherTousString()` est :
   qu'après préparation complète de la liste finale ;
 - les libellés retournés doivent correspondre
   aux `ProduitDTO.OutputDTO` réellement préparés par `rechercherTous()`.
+  
+  ## 12) Contrat spécifique de `rechercherTousParPage(...)`
+
+Signature cible :
+- `ResultatPage<ProduitDTO.OutputDTO> rechercherTousParPage(RequetePage pRequetePage) throws Exception;`
+
+### 12.1) Scénario nominal attendu
+
+Le scénario nominal de `rechercherTousParPage(...)` est :
+
+1. recevoir une `RequetePage` ;
+2. valider que la requête de pagination n'est pas `null` ;
+3. déléguer la recherche paginée au `GATEWAY` Produit ;
+4. récupérer la page métier correspondante ;
+5. retirer les éventuels éléments métier `null` ;
+6. trier les objets métier ;
+7. convertir le contenu métier en `ProduitDTO.OutputDTO` ;
+8. reconstruire un `ResultatPage<ProduitDTO.OutputDTO>` cohérent ;
+9. positionner le message observable ;
+10. retourner la page finale.
+
+### 12.2) Cas observables attendus
+
+- si `pRequetePage == null` :
+  - positionne `getMessage()` à `MESSAGE_PAGEABLE_NULL` ;
+  - lève une `IllegalStateException` ;
+
+- si le `GATEWAY` lève une exception technique avec message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + <message technique>` ;
+  - propage l'exception ;
+
+- si le `GATEWAY` lève une exception technique sans message :
+  - positionne `getMessage()` à
+    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - propage l'exception ;
+
+- si le `GATEWAY` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_KO` ;
+  - lève une `IllegalStateException` ;
+
+- si la recherche paginée aboutit :
+  - retourne un `ResultatPage<ProduitDTO.OutputDTO>` non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_OK`
+    uniquement après préparation complète de la réponse paginée.
+
+### 12.3) Garanties spécifiques de `rechercherTousParPage(...)`
+
+- la méthode ne doit jamais exposer une réponse paginée partielle incohérente ;
+- le contenu paginé retourné doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
+- le message de succès ne doit être positionné qu'après conversion complète de la page résultat ;
+- `pageNumber`, `pageSize` et `totalElements` doivent rester cohérents avec la réponse technique paginée préparée par le service UC.

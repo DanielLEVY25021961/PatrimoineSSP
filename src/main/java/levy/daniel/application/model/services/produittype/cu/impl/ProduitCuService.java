@@ -431,47 +431,118 @@ public class ProduitCuService implements ProduitICuService {
 	
 	
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	*/
 	@Override
 	public ResultatPage<OutputDTO> rechercherTousParPage(
 			final RequetePage pRequetePage) throws Exception {
 
+		/*
+		 * Le contrat UC refuse une requête de pagination null.
+		 * Si pRequetePage == null : émet MESSAGE_PAGEABLE_NULL
+		 * + LOG + IllegalStateException.
+		 */
 		if (pRequetePage == null) {
 			return this.traiterErreur(
 					MESSAGE_PAGEABLE_NULL,
 					new IllegalStateException(MESSAGE_PAGEABLE_NULL));
 		}
 
-		final ResultatPage<Produit> resultatPagine
-			= this.gateway.rechercherTousParPage(pRequetePage);
+		/*
+		 * Délègue au GATEWAY la recherche paginée.
+		 * Toute anomalie technique de recherche est transformée
+		 * en message utilisateur rationalisé côté UC.
+		 */
+		final ResultatPage<Produit> resultatPagine;
 
-		if (resultatPagine == null) {
-			this.message.set(MESSAGE_RECHERCHE_PAGINEE_KO);
-			return null;
+		try {
+
+			/* Délègue au GATEWAY la recherche paginée. */
+			resultatPagine = this.gateway.rechercherTousParPage(pRequetePage);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
 		}
 
-		final List<Produit> contenus = resultatPagine.getContent();
+		/*
+		 * Sécurise le contrat observable du UC :
+		 * une réponse paginée null du GATEWAY
+		 * est une rupture technique.
+		 * Si resultatPagine == null : émet MESSAGE_RECHERCHE_PAGINEE_KO
+		 * + LOG + IllegalStateException.
+		 */
+		if (resultatPagine == null) {
+			return this.traiterErreur(
+					MESSAGE_RECHERCHE_PAGINEE_KO,
+					new IllegalStateException(MESSAGE_RECHERCHE_PAGINEE_KO));
+		}
 
-		final List<Produit> recordsNonNullTries = this.filtrerEtTrier(contenus);
+		/*
+		 * Prépare la réponse paginée utilisateur complète :
+		 * retrait des nulls, tri métier,
+		 * conversion en OutputDTO avec dédoublonnage,
+		 * puis reconstruction d'un ResultatPage cohérent.
+		 */
+		final ResultatPage<OutputDTO> resultatUc;
 
-		final List<OutputDTO> dtos 
-			= ConvertisseurMetierToOutputDTOProduit
-					.convertList(recordsNonNullTries);
-		
+		try {
 
-		final int numeroPage = pRequetePage.getPageNumber();
-		final int pgSize = pRequetePage.getPageSize();
-		final long totalElements = this.safeTotalElements(resultatPagine);
+			/* Récupère la liste d'objets métier auprès du resultatPagine. */
+			final List<Produit> contenus = resultatPagine.getContent();
 
-		final ResultatPage<OutputDTO> rp = new ResultatPage<OutputDTO>(
-				dtos, numeroPage, pgSize, totalElements);
+			/* Retire les null, trie la liste d'objets métier. */
+			final List<Produit> recordsNonNullTries
+					= this.filtrerEtTrier(contenus);
 
+			/* Convertit la liste d'objets métier sans null
+			 * en dédoublonnant et en conservant l'ordre. */
+			final List<ProduitDTO.OutputDTO> dtos
+					= ConvertisseurMetierToOutputDTOProduit.convertList(
+							recordsNonNullTries);
+
+			final int numeroPage = resultatPagine.getPageNumber();
+			final int pageSize = resultatPagine.getPageSize();
+			final long totalElements = this.safeTotalElements(resultatPagine);
+
+			/* Reconstruit un ResultatPage cohérent. */
+			resultatUc = new ResultatPage<OutputDTO>(
+					dtos,
+					numeroPage,
+					pageSize,
+					totalElements);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					e);
+		}
+
+		/*
+		 * Le message observable de succès MESSAGE_RECHERCHE_PAGINEE_OK
+		 * n'est positionné qu'après préparation complète
+		 * de la réponse paginée utilisateur.
+		 */
 		this.message.set(MESSAGE_RECHERCHE_PAGINEE_OK);
 
-		return rp;
+		/*
+		 * Retourne toujours un ResultatPage non null
+		 * lorsque le scénario se termine avec succès.
+		 */
+		return resultatUc;
 	}
-
+	
 	
 	
 	/**

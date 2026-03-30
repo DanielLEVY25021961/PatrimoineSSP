@@ -557,32 +557,69 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Retourne tous les {@link Produit} présents dans le stockage
-	 * de manière paginée, sous forme de {@link ResultatPage} de OutputDTO.
-	 * </p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p>Retourne une page de {@link ProduitDTO.OutputDTO}
+	 * correspondant à la requête de pagination fournie.</p>
+	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
 	 * <ul>
-	 * <li>Si {@code pRequetePage == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PAGEABLE_NULL} et lève une exception.</li>
-	 * <li>Si le stockage retourne {@code null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_RECHERCHE_PAGINEE_KO} et retourne {@code null}.</li>
-	 * <li>Sinon, positionne {@link #getMessage()} à
-	 * {@link #MESSAGE_RECHERCHE_PAGINEE_OK} et retourne le {@link ResultatPage}
-	 * converti.</li>
+	 * <li>valider la requête de pagination reçue ;</li>
+	 * <li>déléguer la recherche paginée au GATEWAY Produit ;</li>
+	 * <li>convertir le contenu métier de la page
+	 * en {@link ProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse paginée exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pRequetePage RequetePage : requête de pagination.
-	 * @return ResultatPage&lt;ProduitDTO.OutputDTO&gt; : page de résultats.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>si {@code pRequetePage == null},
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAGEABLE_NULL}
+	 * puis lève une {@link IllegalStateException} ;</li>
+	 * <li>si la recherche paginée du GATEWAY échoue,
+	 * positionne un message technique construit à partir de
+	 * {@link #MESSAGE_RECHERCHE_PAGINEE_KO}
+	 * puis propage une exception circonstanciée ;</li>
+	 * <li>si le GATEWAY retourne {@code null},
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_RECHERCHE_PAGINEE_KO}
+	 * puis lève une {@link IllegalStateException} ;</li>
+	 * <li>sinon, retourne un {@link ResultatPage}
+	 * de {@link ProduitDTO.OutputDTO} non {@code null} ;</li>
+	 * <li>le message de succès
+	 * {@link #MESSAGE_RECHERCHE_PAGINEE_OK}
+	 * n'est positionné qu'après préparation complète
+	 * de la réponse paginée.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération ;</li>
+	 * <li>la réponse paginée retournée correspond
+	 * à l'état métier effectivement accessible
+	 * via le GATEWAY ;</li>
+	 * <li>aucune réponse paginée partielle incohérente
+	 * n'est exposée à l'appelant ;</li>
+	 * <li>le message de succès n'est positionné
+	 * qu'après conversion complète de la page résultat.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pRequetePage : {@link RequetePage}
+	 * décrivant la pagination demandée.
+	 * @return ResultatPage<ProduitDTO.OutputDTO> :
+	 * la page de résultat correspondant à la requête ;
+	 * jamais {@code null} si le traitement aboutit.
 	 * @throws Exception
+	 * si une erreur survient lors de la recherche paginée
+	 * ou lors de la préparation finale de la réponse.
 	 */
 	ResultatPage<ProduitDTO.OutputDTO> rechercherTousParPage(
 			RequetePage pRequetePage) throws Exception;
-
+	
 	
 	
 	/**

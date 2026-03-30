@@ -35,6 +35,8 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionStockageVide;
 import levy.daniel.application.model.services.produittype.gateway.ProduitGatewayIService;
 import levy.daniel.application.model.services.produittype.gateway.SousTypeProduitGatewayIService;
+import levy.daniel.application.model.services.produittype.pagination.RequetePage;
+import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
 /**
  * <div>
@@ -64,6 +66,11 @@ public class ProduitCuServiceMockTest {
 
 	/** Produit : "marteau". */
 	public static final String MARTEAU = "marteau";
+	
+	/**
+	 * "scie"
+	 */
+	public static final String SCIE = "scie";
 
 	/** Chaine blank : "   ". */
 	public static final String ESPACES = "   ";
@@ -635,7 +642,7 @@ public class ProduitCuServiceMockTest {
 		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
 		parent.setIdSousTypeProduit(10L);
 
-		final Produit produitScie = new Produit("scie", parent);
+		final Produit produitScie = new Produit(SCIE, parent);
 		produitScie.setIdProduit(2L);
 
 		final Produit produitMarteau = new Produit(MARTEAU, parent);
@@ -658,7 +665,7 @@ public class ProduitCuServiceMockTest {
 
 		assertThat(retour)
 			.extracting(ProduitDTO.OutputDTO::getProduit)
-			.containsExactly(MARTEAU, "scie");
+			.containsExactly(MARTEAU, SCIE);
 
 		assertThat(retour)
 			.extracting(ProduitDTO.OutputDTO::getIdProduit)
@@ -782,7 +789,274 @@ public class ProduitCuServiceMockTest {
 	
 
 	// ================== TESTS rechercherTousParPage(...) =================
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage() : requête null.</p>
+	 * <ul>
+	 * <li>refuse immédiatement le traitement ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAGEABLE_NULL} ;</li>
+	 * <li>n'appelle aucun GATEWAY.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage(null) : IllegalStateException + MESSAGE_PAGEABLE_NULL")
+	public void testRechercherTousParPageNull() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousParPage(null))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(ProduitICuService.MESSAGE_PAGEABLE_NULL);
+
+		assertThat(service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_PAGEABLE_NULL);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage() : KO technique avec message.</p>
+	 * <ul>
+	 * <li>propage l'exception technique ;</li>
+	 * <li>rationalise le message utilisateur avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE} ;</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage() : gateway KO avec message")
+	public void testRechercherTousParPageKoTechniqueAvecMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final RequetePage requete = new RequetePage(0, 4);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(gateway.rechercherTousParPage(requete)).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				ProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ ProduitICuService.TIRET_ESPACE
+					+ MESSAGE_GATEWAY);
+
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+	
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage() : KO technique sans message.</p>
+	 * <ul>
+	 * <li>propage l'exception technique ;</li>
+	 * <li>retombe sur
+	 * {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>rationalise le message utilisateur avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE} ;</li>
+	 * <li>n'interagit jamais avec le gateway SousTypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage() : gateway KO sans message")
+	public void testRechercherTousParPageKoTechniqueSansMessage() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final RequetePage requete = new RequetePage(0, 4);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(gateway.rechercherTousParPage(requete)).thenThrow(panneTechnique);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+			.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+			.isEqualTo(
+				ProduitICuService.KO_TECHNIQUE_RECHERCHE
+					+ ProduitICuService.TIRET_ESPACE
+					+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+	
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage() : résultat technique null.</p>
+	 * <ul>
+	 * <li>refuse une page technique null ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_KO}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage() : gateway retourne null")
+	public void testRechercherTousParPageRetourNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final RequetePage requete = mock(RequetePage.class);
+
+		when(gateway.rechercherTousParPage(requete)).thenReturn(null);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
+
+		assertThat(service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
+
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage() : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>reprend le numéro de page</li>
+	 * <li>reprend la taille de page</li>
+	 * <li>reprend le total d'éléments</li>
+	 * <li>filtre les {@code null}</li>
+	 * <li>trie les objets métier</li>
+	 * <li>dédoublonne les DTO</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage() : pagination reprise + filtre nulls + trie + dédoublonne + message MESSAGE_RECHERCHE_PAGINEE_OK")
+	public void testRechercherTousParPageOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+
+		final RequetePage requete = new RequetePage(0, 4);
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
+		parent.setIdSousTypeProduit(10L);
+
+		final Produit produitScie = new Produit(SCIE, parent);
+		produitScie.setIdProduit(2L);
+
+		final Produit produitMarteau = new Produit(MARTEAU, parent);
+		produitMarteau.setIdProduit(1L);
+
+		final ResultatPage<Produit> resultatGateway
+				= new ResultatPage<Produit>(
+						Arrays.asList(produitScie, null, produitMarteau, produitScie),
+						0,
+						4,
+						10L);
+
+		when(gateway.rechercherTousParPage(requete)).thenReturn(resultatGateway);
+
+		/* ======================= ACT ======================= */
+		final ResultatPage<OutputDTO> retour
+				= service.rechercherTousParPage(requete);
+
+		final String message = service.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getPageNumber()).isEqualTo(0);
+		assertThat(retour.getPageSize()).isEqualTo(4);
+		assertThat(retour.getTotalElements()).isEqualTo(10L);
+
+		assertThat(retour.getContent()).isNotNull();
+		assertThat(retour.getContent()).hasSize(2);
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getProduit)
+				.containsExactly(MARTEAU, SCIE);
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getIdProduit)
+				.containsExactly(1L, 2L);
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE, OUTILLAGE);
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR, BAZAR);
+
+		assertThat(message)
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________	
+	
+
+	
+	// ======================= TESTS findByLibelle(...) ====================
+
+	
 	
 	
 	

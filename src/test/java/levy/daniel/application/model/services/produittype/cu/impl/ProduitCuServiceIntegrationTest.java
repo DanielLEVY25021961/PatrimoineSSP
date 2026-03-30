@@ -734,9 +734,11 @@ public class ProduitCuServiceIntegrationTest {
 	 * <div>
 	 * <p>rechercherTousParPage(ok) : test "béton" sur la cohérence du {@link ResultatPage}.</p>
 	 * <ul>
-	 * <li>le {@code totalElements} reflète l'état base + créations</li>
-	 * <li>la page et la taille sont reprises</li>
-	 * <li>le contenu n'excède pas {@code pageSize}</li>
+	 * <li>le {@code totalElements} reflète l'état base + créations ;</li>
+	 * <li>la page et la taille sont reprises ;</li>
+	 * <li>le contenu n'excède pas {@code pageSize} ;</li>
+	 * <li>le message observable est exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -746,28 +748,42 @@ public class ProduitCuServiceIntegrationTest {
 	@DisplayName("rechercherTousParPage(ok) : retourne ResultatPage cohérent (totalElements repris)")
 	public void testRechercherTousParPageOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		/* ===================== ARRANGE ===================== */
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final long baseline = this.service.count();
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_01));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_02));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_03));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_04));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_05));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_01));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_02));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_03));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_04));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_05));
 
 		final long attendu = baseline + 5L;
-
 		final RequetePage requete = new RequetePage(0, 2);
 
+		/* ======================= ACT ======================= */
 		final ResultatPage<OutputDTO> rp = this.service.rechercherTousParPage(requete);
 
+		/* ===================== ASSERT ====================== */
 		assertThat(rp).isNotNull();
 		assertResultatPageCoherent(rp);
+
 		assertThat(rp.getPageNumber()).isEqualTo(0);
 		assertThat(rp.getPageSize()).isEqualTo(2);
 		assertThat(rp.getTotalElements()).isEqualTo(attendu);
-		
+
+		assertThat(rp.getContent()).isNotNull();
+		assertThat(rp.getContent().size()).isLessThanOrEqualTo(rp.getPageSize());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
 	} // __________________________________________________________________
 	
 	
