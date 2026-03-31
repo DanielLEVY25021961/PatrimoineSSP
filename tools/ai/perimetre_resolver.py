@@ -80,6 +80,35 @@ class BootstrapResolution:
     paths_txt_path: str
     files: Tuple[str, ...]
     missing_files: Tuple[str, ...]
+    
+    @dataclass(frozen=True)
+    
+class LayerDefinition:
+    """
+    Définition canonique d'une couche.
+    """
+
+    layer_name: str
+    status: str
+    mandatory_pre_read: bool
+    packs: Tuple[str, ...]
+    pivot_paths: Tuple[str, ...]
+    contract_paths: Tuple[str, ...]
+    sublayers: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class LayerResolution:
+    """
+    Résultat de résolution d'une couche canonique.
+    """
+
+    layer_name: str
+    files: Tuple[str, ...]
+    pack_names: Tuple[str, ...]
+    pivot_paths: Tuple[str, ...]
+    contract_paths: Tuple[str, ...]
+    missing_roots: Tuple[str, ...]
 
 
 def _read_text(path: Path) -> str:
@@ -639,4 +668,118 @@ def collect_bootstrap_paths(
         paths_txt_path=paths_txt_rel_path,
         files=tuple(sorted(result)),
         missing_files=tuple(sorted(existing_missing | missing_files)),
+    )
+    
+    def _load_layers_metadata(perimetre: Dict) -> Dict:
+    """
+    Charge et valide la section 'couches' du perimetre.
+    """
+    couches = perimetre.get("couches")
+    if not isinstance(couches, dict):
+        raise ValueError("perimetre.yaml : section 'couches' manquante ou invalide.")
+
+    definitions = couches.get("definitions")
+    if not isinstance(definitions, dict):
+        raise ValueError("perimetre.yaml : section 'couches.definitions' manquante ou invalide.")
+
+    return couches
+
+
+def list_layer_names(perimetre: Dict) -> List[str]:
+    """
+    Liste les couches canoniques déclarées.
+    Respecte l'ordre canonique s'il est fourni.
+    """
+    couches = _load_layers_metadata(perimetre)
+    ordered_names: List[str] = []
+
+    raw_order = couches.get("ordre_canonique") or []
+    if isinstance(raw_order, list):
+        for item in raw_order:
+            layer_name = str(item).strip()
+            if layer_name and layer_name not in ordered_names:
+                ordered_names.append(layer_name)
+
+    definitions = couches.get("definitions") or {}
+    for layer_name in definitions.keys():
+        normalized = str(layer_name).strip()
+        if normalized and normalized not in ordered_names:
+            ordered_names.append(normalized)
+
+    return ordered_names
+
+
+def get_layer_definition(perimetre: Dict, layer_name: str) -> LayerDefinition:
+    """
+    Retourne la définition canonique d'une couche.
+    """
+    couches = _load_layers_metadata(perimetre)
+    definitions = couches.get("definitions") or {}
+
+    raw_definition = definitions.get(layer_name)
+    if not isinstance(raw_definition, dict):
+        raise ValueError(f"Couche introuvable : {layer_name}")
+
+    packs_raw = raw_definition.get("packs", []) or []
+    pivot_paths_raw = raw_definition.get("fichiers_pivots", []) or []
+    contract_paths_raw = raw_definition.get("contract_paths", []) or raw_definition.get("contracts", []) or []
+    sublayers_raw = raw_definition.get("sous_couches", []) or []
+
+    if not isinstance(packs_raw, list):
+        raise ValueError(f"Couche '{layer_name}' : 'packs' invalide.")
+    if not isinstance(pivot_paths_raw, list):
+        raise ValueError(f"Couche '{layer_name}' : 'fichiers_pivots' invalide.")
+    if not isinstance(contract_paths_raw, list):
+        raise ValueError(f"Couche '{layer_name}' : 'contract_paths' invalide.")
+    if not isinstance(sublayers_raw, list):
+        raise ValueError(f"Couche '{layer_name}' : 'sous_couches' invalide.")
+
+    return LayerDefinition(
+        layer_name=layer_name,
+        status=str(raw_definition.get("statut", "")).strip(),
+        mandatory_pre_read=bool(raw_definition.get("mandatory_pre_read", False)),
+        packs=tuple(str(item).strip() for item in packs_raw if str(item).strip()),
+        pivot_paths=tuple(_safe_relpath(str(item)) for item in pivot_paths_raw if str(item).strip()),
+        contract_paths=tuple(_safe_relpath(str(item)) for item in contract_paths_raw if str(item).strip()),
+        sublayers=tuple(str(item).strip() for item in sublayers_raw if str(item).strip()),
+    )
+
+
+def resolve_layer(
+    *,
+    perimetre_path: Path,
+    repo_root: Path,
+    layer_name: str,
+    sha: Optional[str] = None,
+) -> LayerResolution:
+    """
+    Résout une couche canonique en agrégeant les packs qui la composent
+    et les contrats locaux/pivots associés.
+    """
+    perimetre = load_perimetre(perimetre_path)
+    layer_definition = get_layer_definition(perimetre, layer_name)
+
+    files: Set[str] = set(layer_definition.pivot_paths)
+    files.update(layer_definition.contract_paths)
+
+    missing_roots: Set[str] = set()
+
+    for pack_name in layer_definition.packs:
+        pack_resolution = resolve_pack(
+            perimetre_path=perimetre_path,
+            repo_root=repo_root,
+            pack_name=pack_name,
+            sha=sha,
+        )
+
+        files.update(pack_resolution.files)
+        missing_roots.update(pack_resolution.missing_roots)
+
+    return LayerResolution(
+        layer_name=layer_name,
+        files=tuple(sorted(files)),
+        pack_names=tuple(layer_definition.packs),
+        pivot_paths=tuple(sorted(set(layer_definition.pivot_paths))),
+        contract_paths=tuple(sorted(set(layer_definition.contract_paths))),
+        missing_roots=tuple(sorted(missing_roots)),
     )

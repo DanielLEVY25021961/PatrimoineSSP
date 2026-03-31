@@ -42,7 +42,7 @@
 #
 # *********************************************************************
 
-version: 2
+version: 3
 
 repo:
   owner: DanielLEVY25021961
@@ -51,6 +51,8 @@ repo:
 ai:
   contrat: docs/ai/CONTRAT_IA.md
   perimetre: docs/ai/perimetre.yaml
+  mandatory_bootstrap_pack: couche_ia
+  mandatory_bootstrap_paths_txt: tools/ai/paths.txt
 
 tools:
   resolver: tools/ai/perimetre_resolver.py
@@ -66,6 +68,7 @@ workflow:
   discover_from_manifest: true
   require_pre_read: true
   forbid_branch_urls_as_truth: true
+  governance_mode: canonical_layers
 
 lecture:
   method: raw_sha_binary
@@ -78,3 +81,80 @@ garantie:
   memory_independent: true
   deterministic: true
   pack_resolution_shared: true
+  baseline_consolidation_required: true
+
+couches:
+  ordre_canonique:
+    - couche_ia
+    - couche_configuration_tests
+    - couche_metier
+    - couche_persistance
+    - couche_services
+    - couche_controllers
+    - couche_vues
+
+  couche_bootstrap_obligatoire: couche_ia
+
+  definitions:
+    couche_ia:
+      statut: validated_locked
+      mandatory_pre_read: true
+      packs:
+        - couche_ia
+      contracts:
+        - docs/ai/CONTRAT_IA.md
+        - docs/ai/MANIFEST_IA.yaml
+        - docs/ai/perimetre.yaml
+        - docs/contrats/cu/ProduitICuService.md
+        - docs/contrats/cu/SousTypeProduitICuService.md
+        - docs/contrats/cu/TypeProduitICuService.md
+        - docs/contrats/gateway/TypeProduitGatewayJPAService.md
+
+    couche_configuration_tests:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - configuration
+
+    couche_metier:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - metier
+
+    couche_persistance:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - dto
+        - persistance
+      sous_couches:
+        - couche_persistance.dto
+        - couche_persistance.jpa
+
+    couche_services:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - gateway
+        - uc
+      sous_couches:
+        - couche_services.gateway
+        - couche_services.uc
+      contracts:
+        - docs/contrats/cu/ProduitICuService.md
+        - docs/contrats/cu/SousTypeProduitICuService.md
+        - docs/contrats/cu/TypeProduitICuService.md
+        - docs/contrats/gateway/TypeProduitGatewayJPAService.md
+
+    couche_controllers:
+      statut: reserved
+      mandatory_pre_read: false
+      packs:
+        - controllers
+
+    couche_vues:
+      statut: reserved
+      mandatory_pre_read: false
+      packs:
+        - views

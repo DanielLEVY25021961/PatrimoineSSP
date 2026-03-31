@@ -997,3 +997,139 @@ Fallback :
   - web tool tenté,
   - container tenté si nécessaire,
   - ≤ 3 tentatives.
+
+  ## 29) Gouvernance canonique par couches (sacralisation progressive)
+
+Objectif : permettre à l’IA de découvrir la structure complète de l’application,
+les contrats applicables et les formalismes associés,
+de façon **couche par couche**,
+avec un bootstrap reproductible,
+audit-ready
+et indépendant de la mémoire interne.
+
+### 29.1 Nomenclature canonique des couches
+
+Les couches canoniques du projet sont désormais :
+
+1. `couche_ia`
+2. `couche_configuration_tests`
+3. `couche_metier`
+4. `couche_persistance`
+5. `couche_services`
+6. `couche_controllers`
+7. `couche_vues`
+
+Sous-couches logiques admises :
+
+- `couche_persistance.dto`
+- `couche_persistance.jpa`
+- `couche_services.gateway`
+- `couche_services.uc`
+
+Règle :
+- `couche_dto` ne doit plus être utilisée comme couche canonique autonome.
+- Les DTO relèvent de `couche_persistance`,
+  avec éventuellement la sous-couche logique `couche_persistance.dto`.
+
+### 29.2 Couche bootstrap obligatoire : `couche_ia`
+
+La première couche à lire avant toute action de l’IA est `couche_ia`.
+
+Cette couche est **sacralisée** comme couche de bootstrap
+et doit être lue avant toute analyse,
+tout diagnostic,
+tout code,
+toute comparaison
+et toute consolidation.
+
+La couche `couche_ia` comprend au minimum les fichiers suivants :
+
+#### IA / gouvernance
+- `docs/ai/CONTRAT_IA.md`
+- `docs/ai/MANIFEST_IA.yaml`
+- `docs/ai/perimetre.yaml`
+
+#### Outils IA
+- `tools/ai/make_offline_bundle.py`
+- `tools/ai/pack_reading_list.py`
+- `tools/ai/paths.txt`
+- `tools/ai/perimetre_resolver.py`
+- `tools/ai/resolve_raw_sha.py`
+
+#### Contrats locaux à relire avant action de l’IA
+- `docs/contrats/cu/ProduitICuService.md`
+- `docs/contrats/cu/SousTypeProduitICuService.md`
+- `docs/contrats/cu/TypeProduitICuService.md`
+- `docs/contrats/gateway/TypeProduitGatewayJPAService.md`
+
+### 29.3 Obligation de prélecture de `couche_ia`
+
+Avant toute action,
+l’IA DOIT relire strictement `couche_ia`
+dans le dépôt au SHA courant
+ou dans la baseline consolidée si elle est à jour.
+
+Règles :
+- aucun nouveau chat ne doit s’appuyer sur la mémoire seule ;
+- la découverte des règles,
+  contrats,
+  packs,
+  couches
+  et formalismes
+  doit provenir du dépôt lui-même ;
+- `couche_ia` doit être résolue depuis `docs/ai/perimetre.yaml`
+  et bootstrapée via `tools/ai/paths.txt`.
+
+### 29.4 Anticipation obligatoire des couches futures
+
+L’IA ne doit pas raisonner seulement par liste ponctuelle de fichiers déjà rencontrés.
+
+L’IA doit raisonner par **couches canoniques**.
+
+Chaque couche canonique doit pouvoir être décrite par :
+- un nom canonique ;
+- un statut (`validated_locked`, `validated_unlocked`, `declared`, `reserved`) ;
+- un ou plusieurs packs de périmètre ;
+- des fichiers pivots ;
+- des contrats locaux éventuels ;
+- des tests Mock et d’intégration associés ;
+- des règles de lecture applicables.
+
+Une couche peut être pré-déclarée même si elle n’est pas encore totalement remplie.
+
+Objectif :
+- éviter toute réécriture du modèle IA lors de l’apparition de nouvelles classes ;
+- permettre des audits globaux par couche ;
+- garantir qu’une IA puisse découvrir la structure complète du projet
+  même dans un nouveau chat.
+
+### 29.5 Audit global par couche
+
+L’Utilisateur doit pouvoir demander à l’IA
+un audit global d’une couche canonique.
+
+Pour qu’un audit global soit possible,
+chaque couche doit permettre à l’IA de retrouver,
+comme un tout cohérent :
+- les classes principales ;
+- les utilitaires liés ;
+- les tests JUnit Mock ;
+- les tests JUnit d’intégration ;
+- les contrats locaux applicables ;
+- les formalismes spécifiques.
+
+### 29.6 Sacralisation opérationnelle
+
+La gouvernance par couches doit être matérialisée dans :
+- `docs/ai/MANIFEST_IA.yaml`
+- `docs/ai/perimetre.yaml`
+- `tools/ai/paths.txt`
+- `tools/ai/perimetre_resolver.py`
+
+Règles :
+- `couche_ia` doit exister comme pack explicite ;
+- `tools/ai/paths.txt` doit contenir le bootstrap minimal complet de `couche_ia` ;
+- `docs/ai/perimetre.yaml` doit déclarer les couches canoniques
+  et leurs packs associés ;
+- `tools/ai/perimetre_resolver.py` doit pouvoir exposer cette gouvernance par couches
+  comme API canonique.
