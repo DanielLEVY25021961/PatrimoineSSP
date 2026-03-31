@@ -1313,12 +1313,70 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
+	 * <p>Retourne le dernier message observable
+	 * actuellement porté par le SERVICE UC.</p>
 	 * <p style="font-weight:bold;">
-	 * Retourne le dernier message métier/observable produit par le service.
+	 * INTENTION DE SERVICE UC :
 	 * </p>
+	 * <ul>
+	 * <li>exposer à la couche appelante
+	 * le dernier message observable
+	 * produit par une opération précédente
+	 * du service ;</li>
+	 * <li>permettre à la couche appelante
+	 * de lire un message de succès,
+	 * d'absence de résultat,
+	 * d'erreur fonctionnelle
+	 * ou d'erreur technique déjà mémorisé ;</li>
+	 * <li>fournir une lecture pure,
+	 * sans recalcul, sans délégation
+	 * et sans effet de bord.</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @return String : message courant (peut être null selon le contexte).
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Retourne le dernier message observable
+	 * mémorisé par le service.</li>
+	 * <li>Peut retourner {@code null}
+	 * tant qu'aucune opération précédente
+	 * n'a encore produit de message observable.</li>
+	 * <li>Ne délègue à aucun composant GATEWAY.</li>
+	 * <li>Ne déclenche aucun traitement métier,
+	 * aucun recalcul,
+	 * aucune lecture du stockage
+	 * et aucune écriture.</li>
+	 * <li>Ne modifie pas l'état du service.</li>
+	 * <li>Ne lève aucune exception.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné reflète
+	 * le dernier état observable
+	 * réellement produit par le service.</li>
+	 * <li>Le dernier message mémorisé
+	 * remplace le précédent :
+	 * le dernier message gagne.</li>
+	 * <li>Une simple lecture via {@code getMessage()}
+	 * ne doit jamais altérer
+	 * le message courant.</li>
+	 * <li>La méthode peut être appelée
+	 * à tout moment,
+	 * y compris avant toute opération métier.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return String :
+	 * dernier message observable mémorisé
+	 * par le service ;
+	 * peut valoir {@code null}
+	 * avant toute production de message.
 	 */
 	String getMessage();
 	

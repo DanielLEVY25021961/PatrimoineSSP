@@ -1547,14 +1547,29 @@ public class ProduitCuService implements ProduitICuService {
 	 */
 	@Override
 	public String getMessage() {
-		return this.message.get();
-	}
 
+		/*
+		 * Retourne en lecture pure
+		 * le dernier message observable
+		 * actuellement mémorisé par le SERVICE UC.
+		 * Cette méthode ne délègue à aucun GATEWAY,
+		 * ne déclenche aucun recalcul,
+		 * n'émet aucun LOG
+		 * et ne modifie pas l'état courant.
+		 * Un retour null est acceptable
+		 * tant qu'aucune opération précédente
+		 * n'a encore produit de message.
+		 */
+		return this.message.get();
+
+	}
+	
 	
 	
 	// *************************** METHODES UTILITAIRES ********************/
 
 
+	
 	/**
 	 * <div>
 	 * <p>Détermine si un {@link ProduitDTO.InputDTO}

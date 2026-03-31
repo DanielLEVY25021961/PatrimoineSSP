@@ -3150,4 +3150,164 @@ public class ProduitCuServiceMockTest {
 	
 	
 	
+	/**
+	 * <div>
+	 * <p>getMessage() au démarrage :
+	 * aucun message n'a encore été produit.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>n'interagit avec aucun Gateway</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(initial) : retourne null + aucune interaction gateway")
+	public void testGetMessageInitialNull() {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		assertThat(service.getMessage()).isNull();
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() après erreur locale bénigne :
+	 * le service mémorise le message produit
+	 * par l'opération précédente.</p>
+	 * <ul>
+	 * <li>provoque volontairement
+	 * {@code creer(null)}</li>
+	 * <li>{@code creer(null)} retourne {@code null}</li>
+	 * <li>retourne ensuite exactement
+	 * {@link ProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * <li>n'interagit avec aucun Gateway</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après creer(null)) : retourne MESSAGE_CREER_NULL + aucune interaction gateway")
+	public void testGetMessageApresErreurLocale() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		final OutputDTO retour = service.creer(null);
+
+		assertThat(retour).isNull();
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() après succès observable :
+	 * le service retourne le message produit
+	 * par {@code count()} lorsque le comptage vaut zéro.</p>
+	 * <ul>
+	 * <li>délègue une seule fois au Gateway enfant</li>
+	 * <li>retourne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après count zéro) : retourne MESSAGE_RECHERCHE_VIDE")
+	public void testGetMessageApresCountZero() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.count()).thenReturn(0L);
+
+		final long retour = service.count();
+
+		assertThat(retour).isZero();
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).count();
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() : le dernier message gagne.</p>
+	 * <ul>
+	 * <li>produit d'abord un message de comptage réussi</li>
+	 * <li>produit ensuite un message plus récent
+	 * via {@code creer(null)}</li>
+	 * <li>retourne enfin le message le plus récent</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(dernier message gagne) : MESSAGE_CREER_NULL écrase le message précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		final ProduitGatewayIService gateway =
+				mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeGateway =
+				mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service =
+				new ProduitCuService(gateway, sousTypeGateway);
+
+		when(gateway.count()).thenReturn(1L);
+
+		final long retourCount = service.count();
+
+		assertThat(retourCount).isEqualTo(1L);
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		final OutputDTO retourCreer = service.creer(null);
+
+		assertThat(retourCreer).isNull();
+		assertThat(service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+
+		verify(gateway, times(1)).count();
+		verifyNoInteractions(sousTypeGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
 }

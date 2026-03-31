@@ -958,3 +958,53 @@ Le scénario nominal de `count()` est :
   - le retour `0`,
   - le retour strictement positif,
   - la cohérence avec le `COUNT(*)` physique.
+  
+  ## 21) Contrat spécifique de `getMessage()`
+
+Signature cible :
+- `String getMessage();`
+
+### 21.1) Scénario nominal attendu
+
+Le scénario nominal de `getMessage()` est :
+
+1. lire le dernier message observable actuellement mémorisé par le SERVICE UC ;
+2. retourner ce message tel quel à la couche appelante ;
+3. ne déclencher aucun traitement métier supplémentaire ;
+4. ne déléguer à aucun `GATEWAY` ;
+5. ne produire aucun effet de bord.
+
+### 21.2) Cas observables attendus
+
+- avant toute opération précédente ayant produit un message :
+  - retourne `null` ;
+
+- après une opération ayant produit un message observable :
+  - retourne exactement ce message ;
+
+- après une nouvelle opération produisant un autre message :
+  - retourne le message le plus récent ;
+  - le dernier message gagne ;
+
+- la simple lecture via `getMessage()` :
+  - ne modifie pas le message courant ;
+  - ne lit pas le stockage ;
+  - n'écrit rien ;
+  - ne lève aucune exception.
+
+### 21.3) Garanties spécifiques de `getMessage()`
+
+- `getMessage()` est une lecture pure ;
+- `getMessage()` ne délègue jamais à un `GATEWAY` ;
+- `getMessage()` ne fait aucun recalcul ;
+- `getMessage()` n'émet aucun `LOG` ;
+- `getMessage()` ne modifie jamais l'état interne du service ;
+- `getMessage()` peut retourner `null`
+  tant qu'aucune opération précédente
+  n'a encore produit de message observable ;
+- les tests Mock et Intégration
+  doivent verrouiller explicitement :
+  - le retour `null` initial,
+  - le retour du message après erreur locale,
+  - le retour du message après succès observable,
+  - la règle : le dernier message gagne.

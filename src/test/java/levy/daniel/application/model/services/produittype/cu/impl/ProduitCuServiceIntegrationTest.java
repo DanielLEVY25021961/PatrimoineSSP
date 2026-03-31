@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
-import java.util.Locale;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -2214,40 +2213,139 @@ public class ProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>getMessage() : reste appelable en toutes circonstances.</p>
-	 * <p>Test "béton" : message initial potentiellement {@code null} acceptable,
-	 * puis message fixé après une erreur utilisateur bénigne.</p>
+	 * <p>getMessage() au démarrage :
+	 * aucun message n'a encore été produit
+	 * par le service d'intégration.</p>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("getMessage(initial) : retourne null")
+	public void testGetMessageInitialNull() {
+
+		assertThat(this.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() après erreur locale bénigne :
+	 * le service doit exposer exactement
+	 * le message produit par {@code creer(null)}.</p>
+	 * <ul>
+	 * <li>{@code creer(null)} retourne {@code null}</li>
+	 * <li>vérifie immédiatement
+	 * le message observable exact</li>
+	 * <li>prouve aussi qu'aucune écriture BD
+	 * parasite n'a eu lieu</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("getMessage() : reste appelable en toutes circonstances (test béton)")
-	public void testGetMessageBeton() throws Exception {
+	@DisplayName("getMessage(après creer(null)) : retourne MESSAGE_CREER_NULL + aucune écriture BD")
+	public void testGetMessageApresErreurLocale() throws Exception {
 
-		/* 1) getMessage() doit être appelable sans lever d'exception. */
-		final String messageAvant = this.service.getMessage();
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		/* messageAvant peut être null : c'est acceptable. */
-		assertThat(messageAvant).isIn(null, messageAvant);
+		final OutputDTO retour = this.service.creer(null);
 
-		/* 2) Provoque une erreur utilisateur bénigne pour positionner un message local. */
-		final ProduitDTO.OutputDTO retourCreerNull = this.service.creer(null);
-
-		assertThat(retourCreerNull).isNull();
-
-		final String messageApres = this.service.getMessage();
-
-		assertThat(messageApres)
+		assertThat(retour).isNull();
+		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
 
-		/* Règle projet : toujours préciser une Locale pour toUpperCase. */
-		final String dummy = messageApres.toUpperCase(Locale.getDefault());
-		assertThat(dummy).isNotBlank();
-		
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
 	} // __________________________________________________________________
 	
 	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() après succès observable :
+	 * le service doit exposer exactement
+	 * le message produit par {@code count()}.</p>
+	 * <ul>
+	 * <li>compare le retour UC
+	 * au {@code COUNT(*)} physique</li>
+	 * <li>vérifie le message exact :
+	 * vide si zéro,
+	 * succès si strictement positif</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(après count) : retourne le message observable exact produit par count()")
+	public void testGetMessageApresCount() throws Exception {
+
+		final Long nombrePhysique = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final long retourUc = this.service.count();
+
+		assertThat(retourUc).isEqualTo(nombrePhysique.longValue());
+
+		if (retourUc == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() : le dernier message gagne.</p>
+	 * <ul>
+	 * <li>produit d'abord un message observable
+	 * via {@code count()}</li>
+	 * <li>produit ensuite un message plus récent
+	 * via {@code creer(null)}</li>
+	 * <li>vérifie que le message final
+	 * est bien le plus récent</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(dernier message gagne) : MESSAGE_CREER_NULL écrase le message précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		final long retourUc = this.service.count();
+
+		if (retourUc == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+		final OutputDTO retourCreer = this.service.creer(null);
+
+		assertThat(retourCreer).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+
+	} // __________________________________________________________________
+	
+
 	
 	// *************************** METHODES UTILITAIRES ********************/
 
