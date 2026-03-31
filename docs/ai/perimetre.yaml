@@ -25,17 +25,17 @@ variables:
   branche: "feature/uc"
 
 policy:
-	priorite_absolue:
-	  source_de_verite: "docs/ai/perimetre.yaml"
-	  rebuild_urls_sha_on_new_sha: true
-	  lecture_github_obligatoire: "RT-LECTURE-GITHUB-02"
-	  interdit_demander_urls_raw: true
-	  offline_required_when_github_unavailable: true
-	  perimetre_hybride: true
-	  gouvernance_par_couches_canoniques: true
-	  couche_bootstrap_obligatoire: "couche_ia"
-	  dedoublonnage_paths: true
-	  tri_stable: true
+  priorite_absolue:
+    source_de_verite: "docs/ai/perimetre.yaml"
+    rebuild_urls_sha_on_new_sha: true
+    lecture_github_obligatoire: "RT-LECTURE-GITHUB-02"
+    interdit_demander_urls_raw: true
+    offline_required_when_github_unavailable: true
+    perimetre_hybride: true
+    gouvernance_par_couches_canoniques: true
+    couche_bootstrap_obligatoire: "couche_ia"
+    dedoublonnage_paths: true
+    tri_stable: true
 
 raw:
   template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"
@@ -43,42 +43,42 @@ raw:
 
 packs:
 
-	couche_ia:
-	  description: "Couche IA sacralisée : gouvernance + outils IA + contrats locaux à relire avant toute action de l'IA."
-	  paths:
-	    - "docs/ai/MANIFEST_IA.yaml"
-	    - "docs/ai/CONTRAT_IA.md"
-	    - "docs/ai/perimetre.yaml"
-	    - "tools/ai/perimetre_resolver.py"
-	    - "tools/ai/pack_reading_list.py"
-	    - "tools/ai/paths.txt"
-	    - "tools/ai/resolve_raw_sha.py"
-	    - "tools/ai/make_offline_bundle.py"
-	    - "docs/contrats/cu/ProduitICuService.md"
-	    - "docs/contrats/cu/SousTypeProduitICuService.md"
-	    - "docs/contrats/cu/TypeProduitICuService.md"
-	    - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+  couche_ia:
+    description: "Couche IA sacralisée : gouvernance + outils IA + contrats locaux à relire avant toute action de l'IA."
+    paths:
+      - "docs/ai/MANIFEST_IA.yaml"
+      - "docs/ai/CONTRAT_IA.md"
+      - "docs/ai/perimetre.yaml"
+      - "tools/ai/perimetre_resolver.py"
+      - "tools/ai/pack_reading_list.py"
+      - "tools/ai/paths.txt"
+      - "tools/ai/resolve_raw_sha.py"
+      - "tools/ai/make_offline_bundle.py"
+      - "docs/contrats/cu/ProduitICuService.md"
+      - "docs/contrats/cu/SousTypeProduitICuService.md"
+      - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
-	ai:
-	  description: "Alias de compatibilité : gouvernance IA + outils IA."
-	  paths:
-	    - "docs/ai/MANIFEST_IA.yaml"
-	    - "docs/ai/CONTRAT_IA.md"
-	    - "docs/ai/perimetre.yaml"
-	    - "tools/ai/perimetre_resolver.py"
-	    - "tools/ai/pack_reading_list.py"
-	    - "tools/ai/paths.txt"
-	    - "tools/ai/resolve_raw_sha.py"
-	    - "tools/ai/make_offline_bundle.py"
+  ai:
+    description: "Alias de compatibilité : gouvernance IA + outils IA."
+    paths:
+      - "docs/ai/MANIFEST_IA.yaml"
+      - "docs/ai/CONTRAT_IA.md"
+      - "docs/ai/perimetre.yaml"
+      - "tools/ai/perimetre_resolver.py"
+      - "tools/ai/pack_reading_list.py"
+      - "tools/ai/paths.txt"
+      - "tools/ai/resolve_raw_sha.py"
+      - "tools/ai/make_offline_bundle.py"
 
-	docs_contrats:
-	  description: "Contrats locaux lisibles par l'IA avant action et/ou pendant l'audit."
-	  paths:
-	    - "docs/contrats/cu/ProduitICuService.md"
-	    - "docs/contrats/cu/SousTypeProduitICuService.md"
-	    - "docs/contrats/cu/TypeProduitICuService.md"
-	    - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
-		
+  docs_contrats:
+    description: "Contrats locaux lisibles par l'IA avant action et/ou pendant l'audit."
+    paths:
+      - "docs/contrats/cu/ProduitICuService.md"
+      - "docs/contrats/cu/SousTypeProduitICuService.md"
+      - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+
   configuration:
     description: "Configuration build + ressources de tests."
     paths:
@@ -263,83 +263,83 @@ packs:
           - "**/*.java"
         exclude_globs: []
         allow_missing: true
-		
-		couches:
-		  ordre_canonique:
-		    - "couche_ia"
-		    - "couche_configuration_tests"
-		    - "couche_metier"
-		    - "couche_persistance"
-		    - "couche_services"
-		    - "couche_controllers"
-		    - "couche_vues"
 
-		  definitions:
-		    couche_ia:
-		      statut: "validated_locked"
-		      mandatory_pre_read: true
-		      packs:
-		        - "couche_ia"
-		      fichiers_pivots:
-		        - "docs/ai/CONTRAT_IA.md"
-		        - "docs/ai/MANIFEST_IA.yaml"
-		        - "docs/ai/perimetre.yaml"
-		        - "tools/ai/perimetre_resolver.py"
-		        - "tools/ai/pack_reading_list.py"
-		        - "tools/ai/paths.txt"
-		        - "tools/ai/resolve_raw_sha.py"
-		        - "tools/ai/make_offline_bundle.py"
-		      contract_paths:
-		        - "docs/contrats/cu/ProduitICuService.md"
-		        - "docs/contrats/cu/SousTypeProduitICuService.md"
-		        - "docs/contrats/cu/TypeProduitICuService.md"
-		        - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+couches:
+  ordre_canonique:
+    - "couche_ia"
+    - "couche_configuration_tests"
+    - "couche_metier"
+    - "couche_persistance"
+    - "couche_services"
+    - "couche_controllers"
+    - "couche_vues"
 
-		    couche_configuration_tests:
-		      statut: "declared"
-		      mandatory_pre_read: false
-		      packs:
-		        - "configuration"
+  definitions:
+    couche_ia:
+      statut: "validated_locked"
+      mandatory_pre_read: true
+      packs:
+        - "couche_ia"
+      fichiers_pivots:
+        - "docs/ai/CONTRAT_IA.md"
+        - "docs/ai/MANIFEST_IA.yaml"
+        - "docs/ai/perimetre.yaml"
+        - "tools/ai/perimetre_resolver.py"
+        - "tools/ai/pack_reading_list.py"
+        - "tools/ai/paths.txt"
+        - "tools/ai/resolve_raw_sha.py"
+        - "tools/ai/make_offline_bundle.py"
+      contract_paths:
+        - "docs/contrats/cu/ProduitICuService.md"
+        - "docs/contrats/cu/SousTypeProduitICuService.md"
+        - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
-		    couche_metier:
-		      statut: "declared"
-		      mandatory_pre_read: false
-		      packs:
-		        - "metier"
+    couche_configuration_tests:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "configuration"
 
-		    couche_persistance:
-		      statut: "declared"
-		      mandatory_pre_read: false
-		      packs:
-		        - "dto"
-		        - "persistance"
-		      sous_couches:
-		        - "couche_persistance.dto"
-		        - "couche_persistance.jpa"
+    couche_metier:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "metier"
 
-		    couche_services:
-		      statut: "declared"
-		      mandatory_pre_read: false
-		      packs:
-		        - "gateway"
-		        - "uc"
-		      sous_couches:
-		        - "couche_services.gateway"
-		        - "couche_services.uc"
-		      contract_paths:
-		        - "docs/contrats/cu/ProduitICuService.md"
-		        - "docs/contrats/cu/SousTypeProduitICuService.md"
-		        - "docs/contrats/cu/TypeProduitICuService.md"
-		        - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+    couche_persistance:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "dto"
+        - "persistance"
+      sous_couches:
+        - "couche_persistance.dto"
+        - "couche_persistance.jpa"
 
-		    couche_controllers:
-		      statut: "reserved"
-		      mandatory_pre_read: false
-		      packs:
-		        - "controllers"
+    couche_services:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "gateway"
+        - "uc"
+      sous_couches:
+        - "couche_services.gateway"
+        - "couche_services.uc"
+      contract_paths:
+        - "docs/contrats/cu/ProduitICuService.md"
+        - "docs/contrats/cu/SousTypeProduitICuService.md"
+        - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
-		    couche_vues:
-		      statut: "reserved"
-		      mandatory_pre_read: false
-		      packs:
-		        - "views"
+    couche_controllers:
+      statut: "reserved"
+      mandatory_pre_read: false
+      packs:
+        - "controllers"
+
+    couche_vues:
+      statut: "reserved"
+      mandatory_pre_read: false
+      packs:
+        - "views"

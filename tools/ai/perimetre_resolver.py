@@ -80,9 +80,9 @@ class BootstrapResolution:
     paths_txt_path: str
     files: Tuple[str, ...]
     missing_files: Tuple[str, ...]
-    
-    @dataclass(frozen=True)
-    
+
+
+@dataclass(frozen=True)
 class LayerDefinition:
     """
     Définition canonique d'une couche.
@@ -669,8 +669,9 @@ def collect_bootstrap_paths(
         files=tuple(sorted(result)),
         missing_files=tuple(sorted(existing_missing | missing_files)),
     )
-    
-    def _load_layers_metadata(perimetre: Dict) -> Dict:
+
+
+def _load_layers_metadata(perimetre: Dict) -> Dict:
     """
     Charge et valide la section 'couches' du perimetre.
     """
