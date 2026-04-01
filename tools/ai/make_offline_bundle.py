@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# tools/ai/make_offline_bundle.py
 
 """
 Construit un bundle OFFLINE à partir :
@@ -9,7 +10,16 @@ Construit un bundle OFFLINE à partir :
 Rétrocompatibilité CLI :
 - --out-dir => alias de --output-dir
 - --lot <nom> => alias historique d'un pack unique
-- --lot all => bundle de tout le dépôt tracké, hors répertoire de sortie généré
+- --lot all => bundle de tout le dépôt tracké
+
+Comportement nominal :
+- le script produit directement un ZIP dans le répertoire passé via --out-dir ;
+- il ne laisse pas de répertoire FILES persistant dans l'espace de travail ;
+- la structure interne du ZIP reste conforme au contrat :
+  AI_OFFLINE/INDEX.txt
+  AI_OFFLINE/PROVENANCE.yaml
+  AI_OFFLINE/CHECKSUMS.sha256
+  AI_OFFLINE/FILES/**
 """
 
 from __future__ import annotations
@@ -19,12 +29,16 @@ import hashlib
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path, PurePosixPath
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import yaml
 
 from perimetre_resolver import get_project_info, load_perimetre, resolve_pack_paths
+
+
+BUNDLE_ROOT_NAME = "AI_OFFLINE"
 
 
 def sha256_file(path: Path) -> str:
@@ -79,13 +93,13 @@ def parse_args() -> argparse.Namespace:
         "--out-dir",
         dest="output_dir",
         default="AI_OFFLINE",
-        help="Répertoire de sortie du bundle",
+        help="Répertoire de destination du zip généré",
     )
 
     parser.add_argument(
         "--zip-output",
         default="",
-        help="Zip de sortie optionnel",
+        help="Chemin explicite du zip de sortie optionnel",
     )
 
     return parser.parse_args()
@@ -247,8 +261,34 @@ def resolve_selected_paths(
     )
 
 
-def write_provenance(
+def build_bundle_suffix(lot: str, packs: list[str] | None) -> str:
+    normalized_lot = lot.strip()
+
+    if normalized_lot:
+        if normalized_lot.lower() == "all":
+            return "all"
+        return normalized_lot.replace("/", "_").replace(" ", "_")
+
+    if packs:
+        sanitized = [pack.replace("/", "_").replace(" ", "_") for pack in packs]
+        return "__".join(sanitized)
+
+    return "couche_ia"
+
+
+def build_default_zip_output(
     output_dir: Path,
+    sha: str,
+    lot: str,
+    packs: list[str] | None,
+) -> Path:
+    suffix = build_bundle_suffix(lot=lot, packs=packs)
+    filename = f"AI_OFFLINE_{sha}_{suffix}.zip"
+    return (output_dir / filename).resolve()
+
+
+def write_provenance(
+    bundle_root: Path,
     repo_owner: str,
     repo_name: str,
     sha: str,
@@ -272,16 +312,16 @@ def write_provenance(
         sort_keys=False,
         allow_unicode=True,
     )
-    (output_dir / "PROVENANCE.yaml").write_text(content, encoding="utf-8")
+    (bundle_root / "PROVENANCE.yaml").write_text(content, encoding="utf-8")
 
 
-def write_index(output_dir: Path, resolved_paths: list[str]) -> None:
+def write_index(bundle_root: Path, resolved_paths: list[str]) -> None:
     content = "\n".join(resolved_paths) + ("\n" if resolved_paths else "")
-    (output_dir / "INDEX.txt").write_text(content, encoding="utf-8")
+    (bundle_root / "INDEX.txt").write_text(content, encoding="utf-8")
 
 
 def write_checksums(
-    output_dir: Path,
+    bundle_root: Path,
     files_root: Path,
     resolved_paths: list[str],
 ) -> None:
@@ -292,7 +332,7 @@ def write_checksums(
         lines.append(f"{checksum}  FILES/{relative_path}")
 
     content = "\n".join(lines) + ("\n" if lines else "")
-    (output_dir / "CHECKSUMS.sha256").write_text(content, encoding="utf-8")
+    (bundle_root / "CHECKSUMS.sha256").write_text(content, encoding="utf-8")
 
 
 def copy_files(
@@ -313,15 +353,15 @@ def copy_files(
         shutil.copy2(source, target)
 
 
-def zip_bundle(output_dir: Path, zip_output: Path) -> None:
+def zip_bundle(bundle_root: Path, zip_output: Path) -> None:
     zip_output.parent.mkdir(parents=True, exist_ok=True)
 
     with ZipFile(zip_output, "w", compression=ZIP_DEFLATED) as archive:
-        for file_path in sorted(output_dir.rglob("*")):
+        for file_path in sorted(bundle_root.rglob("*")):
             if file_path.is_file():
                 archive.write(
                     file_path,
-                    file_path.relative_to(output_dir.parent),
+                    file_path.relative_to(bundle_root.parent),
                 )
 
 
@@ -331,10 +371,20 @@ def main() -> int:
     repo_root = Path(args.repo_root).resolve()
     perimetre_path = Path(args.perimetre)
     output_dir = Path(args.output_dir).resolve()
-    files_root = output_dir / "FILES"
 
     perimetre_data = load_perimetre(perimetre_path)
     project = get_project_info(perimetre_data)
+
+    zip_output = (
+        Path(args.zip_output).resolve()
+        if args.zip_output
+        else build_default_zip_output(
+            output_dir=output_dir,
+            sha=args.sha,
+            lot=args.lot,
+            packs=args.packs,
+        )
+    )
 
     resolved_paths, bundle_mode, selection_metadata = resolve_selected_paths(
         repo_root=repo_root,
@@ -342,7 +392,7 @@ def main() -> int:
         output_dir=output_dir,
         lot=args.lot,
         packs=args.packs,
-        zip_output=args.zip_output,
+        zip_output=str(zip_output),
     )
 
     resolved_paths = _stable_unique(resolved_paths)
@@ -350,27 +400,29 @@ def main() -> int:
     if not resolved_paths:
         raise ValueError("Aucun fichier à empaqueter après résolution du périmètre.")
 
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-
     output_dir.mkdir(parents=True, exist_ok=True)
-    files_root.mkdir(parents=True, exist_ok=True)
 
-    copy_files(repo_root, files_root, resolved_paths)
-    write_index(output_dir, resolved_paths)
-    write_checksums(output_dir, files_root, resolved_paths)
-    write_provenance(
-        output_dir=output_dir,
-        repo_owner=project.owner,
-        repo_name=project.repo,
-        sha=args.sha,
-        resolved_paths=resolved_paths,
-        bundle_mode=bundle_mode,
-        selection_metadata=selection_metadata,
-    )
+    with tempfile.TemporaryDirectory(prefix="ai_offline_bundle_") as temp_dir:
+        bundle_root = Path(temp_dir) / BUNDLE_ROOT_NAME
+        files_root = bundle_root / "FILES"
 
-    if args.zip_output:
-        zip_bundle(output_dir, Path(args.zip_output).resolve())
+        bundle_root.mkdir(parents=True, exist_ok=True)
+        files_root.mkdir(parents=True, exist_ok=True)
+
+        copy_files(repo_root, files_root, resolved_paths)
+        write_index(bundle_root, resolved_paths)
+        write_checksums(bundle_root, files_root, resolved_paths)
+        write_provenance(
+            bundle_root=bundle_root,
+            repo_owner=project.owner,
+            repo_name=project.repo,
+            sha=args.sha,
+            resolved_paths=resolved_paths,
+            bundle_mode=bundle_mode,
+            selection_metadata=selection_metadata,
+        )
+
+        zip_bundle(bundle_root, zip_output)
 
     return 0
 
