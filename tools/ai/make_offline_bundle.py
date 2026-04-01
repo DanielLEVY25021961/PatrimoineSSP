@@ -424,6 +424,7 @@ def main() -> int:
 
         zip_bundle(bundle_root, zip_output)
 
+    print(str(zip_output))
     return 0
 
 
