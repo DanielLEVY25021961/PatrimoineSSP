@@ -49,7 +49,6 @@ raw:
   template_sha: "https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${path}"
 
 packs:
-
   couche_ia:
     description: "Couche IA sacralisée : gouvernance + outils IA + contrats locaux à relire avant toute action de l'IA."
     paths:
@@ -161,7 +160,7 @@ packs:
         allow_missing: true
 
   application_racine:
-    description: "Classes racine de l'application (bootstrap, package-info, lanceurs) hors sous-packages métier/controllers/views/persistence. Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
+    description: "Classes racine de l'application hors sous-packages spécialisés."
     roots:
       - path: "src/main/java/levy/daniel/application"
         recursive: false
@@ -237,7 +236,7 @@ packs:
         allow_missing: false
 
   persistance:
-    description: "Couche persistance : interfaces transverses de persistance, convertisseurs JPA ↔ métier, entités JPA, DAO JPA et tests associés."
+    description: "Couche persistance : interfaces transverses, convertisseurs JPA ↔ métier, entités JPA, DAO JPA et tests associés."
     paths:
       - "docs/contrats/persistance/CouchePersistance.md"
       - "docs/contrats/persistance/ConvertisseurJPAToMetier.md"
@@ -319,7 +318,7 @@ packs:
         allow_missing: true
 
   controllers:
-    description: "Couche controllers réelle du projet (desktop, mobile, web). Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
+    description: "Couche controllers réelle du projet."
     roots:
       - path: "src/main/java/levy/daniel/application/controllers"
         recursive: true
@@ -335,7 +334,7 @@ packs:
         allow_missing: true
 
   views:
-    description: "Couche views réelle du projet (desktop, mobile, web). Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
+    description: "Couche views réelle du projet."
     roots:
       - path: "src/main/java/levy/daniel/application/views"
         recursive: true
@@ -458,7 +457,6 @@ couches:
         - "docs/contrats/persistance/ProduitDaoJPA.md"
         - "docs/contrats/persistance/SousTypeProduitDaoJPA.md"
         - "docs/contrats/persistance/TypeProduitDaoJPA.md"
-
 
     couche_services:
       statut: "declared"
