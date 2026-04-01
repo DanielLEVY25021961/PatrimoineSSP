@@ -33,6 +33,7 @@ Ce port :
 - `ExceptionAppliParamNull`
 - `ExceptionAppliParentNull`
 - `ExceptionTechniqueGateway`
+- `ExceptionTechniqueGatewayNonPersistent`
 
 ## 4) Signatures exactes du port
 
@@ -74,7 +75,8 @@ Ces opérations restent techniques et peuvent signaler des préconditions invali
 - objet `null` ;
 - libellé blank ;
 - objet non persistant ;
-- parent `null` ou parent non persistant selon le scénario.
+- parent `null` ;
+- parent non persistant selon le scénario.
 
 ### 5.2) Recherche
 
@@ -102,6 +104,7 @@ Le port expose `count()` comme opération technique de comptage du stockage.
 ## 7) Fichiers à relire conjointement
 
 - `docs/contrats/gateway/CoucheServicesGateway.md`
+- `docs/contrats/gateway/SousTypeProduitGatewayJPAService.md`
 - `src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAService.java`
 - `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceMockTest.java`
 - `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceIntegrationTest.java`
