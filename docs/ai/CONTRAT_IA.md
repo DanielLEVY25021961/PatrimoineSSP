@@ -1045,6 +1045,7 @@ La couche `couche_ia` comprend au minimum les fichiers suivants :
 - `tools/ai/resolve_raw_sha.py`
 
 #### Contrats locaux à relire avant action de l’IA
+- `docs/contrats/cu/CoucheServicesUC.md`
 - `docs/contrats/cu/ProduitICuService.md`
 - `docs/contrats/cu/SousTypeProduitICuService.md`
 - `docs/contrats/cu/TypeProduitICuService.md`
@@ -1333,3 +1334,57 @@ La sous-couche `couche_services.gateway` doit permettre à l’IA de retrouver c
 - les tests Mock Gateway ;
 - les tests d’intégration Gateway ;
 - les contrats locaux Gateway applicables.
+
+### 29.11 Sacralisation de `couche_services.uc`
+
+La sous-couche logique `couche_services.uc` a vocation à regrouper l’ensemble des services métier de cas d’usage du domaine `produittype`, leurs exceptions de SERVICE UC, leurs tests associés et leurs contrats locaux.
+
+Cette sous-couche comprend au minimum :
+
+#### PORTS UC métier
+- `src/main/java/levy/daniel/application/model/services/produittype/cu/ProduitICuService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/cu/SousTypeProduitICuService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/cu/TypeProduitICuService.java`
+
+#### ADAPTERS UC métier
+- `src/main/java/levy/daniel/application/model/services/produittype/cu/impl/ProduitCuService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/cu/impl/SousTypeProduitCuService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/cu/impl/TypeProduitCuService.java`
+
+#### Exceptions services UC métier
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionDoublon.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionNonPersistant.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionParametreBlank.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionParametreNull.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionStockageVide.java`
+
+#### Tests services UC métier
+- `src/test/java/levy/daniel/application/model/services/produittype/cu/impl/ProduitCuServiceIntegrationTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/cu/impl/ProduitCuServiceMockTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/cu/impl/SousTypeProduitCuServiceIntegrationTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/cu/impl/SousTypeProduitCuServiceMockTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/cu/impl/TypeProduitCuServiceIntegrationTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/cu/impl/TypeProduitCuServiceMockTest.java`
+
+#### Contrats locaux UC pivots
+- `docs/contrats/cu/CoucheServicesUC.md`
+- `docs/contrats/cu/ProduitICuService.md`
+- `docs/contrats/cu/SousTypeProduitICuService.md`
+- `docs/contrats/cu/TypeProduitICuService.md`
+
+Règles :
+- `couche_services.uc` manipule les DTO applicatifs lorsque le contrat de service l’exige ;
+- `couche_services.uc` orchestre le métier et délègue les opérations techniques de stockage à `couche_services.gateway` ;
+- `couche_services.uc` est responsable du message observable côté appelant via `getMessage()` ;
+- les exceptions `exceptionsservices` appartiennent à `couche_services.uc` ;
+- les exceptions `exceptionsgateway` n’appartiennent pas à `couche_services.uc` et relèvent du périmètre Gateway ;
+- les tests Mock et d’intégration UC appartiennent à la même sous-couche logique ;
+- la sous-couche doit être auditée comme un tout cohérent, et non fichier par fichier isolé.
+
+La sous-couche `couche_services.uc` doit permettre à l’IA de retrouver comme un tout cohérent :
+- les PORTS UC ;
+- les ADAPTERS UC ;
+- les exceptions de SERVICE UC ;
+- les tests Mock UC ;
+- les tests d’intégration UC ;
+- les contrats locaux UC applicables.
