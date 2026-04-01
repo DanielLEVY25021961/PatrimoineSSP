@@ -61,6 +61,7 @@ packs:
       - "tools/ai/paths.txt"
       - "tools/ai/resolve_raw_sha.py"
       - "tools/ai/make_offline_bundle.py"
+      - "docs/contrats/cu/CoucheServicesUC.md"
       - "docs/contrats/cu/ProduitICuService.md"
       - "docs/contrats/cu/SousTypeProduitICuService.md"
       - "docs/contrats/cu/TypeProduitICuService.md"
@@ -70,6 +71,7 @@ packs:
       - "docs/contrats/dto/TypeProduitDTO.md"
       - "docs/contrats/dto/SousTypeProduitDTO.md"
       - "docs/contrats/dto/ProduitDTO.md"
+      - "docs/contrats/persistance/CouchePersistance.md"
       - "docs/contrats/gateway/CoucheServicesGateway.md"
       - "docs/contrats/gateway/ProduitGatewayIService.md"
       - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
@@ -77,7 +79,6 @@ packs:
       - "docs/contrats/gateway/ProduitGatewayJPAService.md"
       - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
-      - "docs/contrats/cu/CoucheServicesUC.md"
 
   ai:
     description: "Alias de compatibilité : gouvernance IA + outils IA."
@@ -94,6 +95,7 @@ packs:
   docs_contrats:
     description: "Contrats locaux lisibles par l'IA avant action et/ou pendant l'audit."
     paths:
+      - "docs/contrats/cu/CoucheServicesUC.md"
       - "docs/contrats/cu/ProduitICuService.md"
       - "docs/contrats/cu/SousTypeProduitICuService.md"
       - "docs/contrats/cu/TypeProduitICuService.md"
@@ -104,7 +106,7 @@ packs:
       - "docs/contrats/gateway/ProduitGatewayJPAService.md"
       - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
-      - "docs/contrats/cu/CoucheServicesUC.md"
+      - "docs/contrats/persistance/CouchePersistance.md"
       - "docs/contrats/metier/TypeProduit.md"
       - "docs/contrats/metier/SousTypeProduit.md"
       - "docs/contrats/metier/Produit.md"
@@ -219,7 +221,9 @@ packs:
         allow_missing: false
 
   persistance:
-    description: "Couche persistance (dao, entities, convertisseurs et tests)."
+    description: "Couche persistance : interfaces transverses de persistance, convertisseurs JPA ↔ métier, entités JPA, DAO JPA et tests associés."
+    paths:
+      - "docs/contrats/persistance/CouchePersistance.md"
     roots:
       - path: "src/main/java/levy/daniel/application/persistence"
         recursive: true
@@ -359,6 +363,7 @@ couches:
         - "docs/contrats/dto/TypeProduitDTO.md"
         - "docs/contrats/dto/SousTypeProduitDTO.md"
         - "docs/contrats/dto/ProduitDTO.md"
+        - "docs/contrats/persistance/CouchePersistance.md"
         - "docs/contrats/gateway/CoucheServicesGateway.md"
         - "docs/contrats/gateway/ProduitGatewayIService.md"
         - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
@@ -395,6 +400,7 @@ couches:
       mandatory_pre_read: false
       packs:
         - "dto"
+      sous_couches:
         - "couche_dto.objets"
         - "couche_dto.convertisseurs"
         - "couche_dto.tests"
@@ -404,12 +410,14 @@ couches:
         - "docs/contrats/dto/ProduitDTO.md"
 
     couche_persistance:
-      statut: "declared"
+      statut: "validated_locked"
       mandatory_pre_read: false
       packs:
         - "persistance"
       sous_couches:
         - "couche_persistance.jpa"
+      contract_paths:
+        - "docs/contrats/persistance/CouchePersistance.md"
 
     couche_services:
       statut: "declared"
@@ -425,12 +433,6 @@ couches:
         - "docs/contrats/cu/ProduitICuService.md"
         - "docs/contrats/cu/SousTypeProduitICuService.md"
         - "docs/contrats/cu/TypeProduitICuService.md"
-        - "docs/contrats/metier/TypeProduit.md"
-        - "docs/contrats/metier/SousTypeProduit.md"
-        - "docs/contrats/metier/Produit.md"
-        - "docs/contrats/dto/TypeProduitDTO.md"
-        - "docs/contrats/dto/SousTypeProduitDTO.md"
-        - "docs/contrats/dto/ProduitDTO.md"
         - "docs/contrats/gateway/CoucheServicesGateway.md"
         - "docs/contrats/gateway/ProduitGatewayIService.md"
         - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"

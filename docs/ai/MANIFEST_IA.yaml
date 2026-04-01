@@ -118,6 +118,7 @@ couches:
         - docs/ai/CONTRAT_IA.md
         - docs/ai/MANIFEST_IA.yaml
         - docs/ai/perimetre.yaml
+        - docs/contrats/cu/CoucheServicesUC.md
         - docs/contrats/cu/ProduitICuService.md
         - docs/contrats/cu/SousTypeProduitICuService.md
         - docs/contrats/cu/TypeProduitICuService.md
@@ -127,6 +128,7 @@ couches:
         - docs/contrats/dto/TypeProduitDTO.md
         - docs/contrats/dto/SousTypeProduitDTO.md
         - docs/contrats/dto/ProduitDTO.md
+        - docs/contrats/persistance/CouchePersistance.md
         - docs/contrats/gateway/CoucheServicesGateway.md
         - docs/contrats/gateway/ProduitGatewayIService.md
         - docs/contrats/gateway/SousTypeProduitGatewayIService.md
@@ -134,7 +136,6 @@ couches:
         - docs/contrats/gateway/ProduitGatewayJPAService.md
         - docs/contrats/gateway/SousTypeProduitGatewayJPAService.md
         - docs/contrats/gateway/TypeProduitGatewayJPAService.md
-        - docs/contrats/cu/CoucheServicesUC.md
 
     couche_configuration_tests:
       statut: declared
@@ -174,12 +175,14 @@ couches:
         - docs/contrats/dto/ProduitDTO.md
 
     couche_persistance:
-      statut: declared
+      statut: validated_locked
       mandatory_pre_read: false
       packs:
         - persistance
       sous_couches:
         - couche_persistance.jpa
+      contracts:
+        - docs/contrats/persistance/CouchePersistance.md
 
     couche_services:
       statut: declared

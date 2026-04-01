@@ -23,6 +23,7 @@ docs/contrats/metier/Produit.md
 docs/contrats/dto/TypeProduitDTO.md
 docs/contrats/dto/SousTypeProduitDTO.md
 docs/contrats/dto/ProduitDTO.md
+docs/contrats/persistance/CouchePersistance.md
 docs/contrats/gateway/CoucheServicesGateway.md
 docs/contrats/gateway/ProduitGatewayIService.md
 docs/contrats/gateway/SousTypeProduitGatewayIService.md

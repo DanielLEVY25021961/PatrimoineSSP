@@ -1055,6 +1055,7 @@ La couche `couche_ia` comprend au minimum les fichiers suivants :
 - `docs/contrats/dto/TypeProduitDTO.md`
 - `docs/contrats/dto/SousTypeProduitDTO.md`
 - `docs/contrats/dto/ProduitDTO.md`
+- `docs/contrats/persistance/CouchePersistance.md`
 - `docs/contrats/gateway/CoucheServicesGateway.md`
 - `docs/contrats/gateway/ProduitGatewayIService.md`
 - `docs/contrats/gateway/SousTypeProduitGatewayIService.md`
@@ -1265,7 +1266,59 @@ La couche `couche_dto` doit permettre à l’IA de retrouver comme un tout cohé
 - les tests unitaires des convertisseurs DTO ;
 - les contrats locaux DTO applicables.
 
-### 29.10 Sacralisation de `couche_services.gateway`
+### 29.10 Sacralisation de `couche_persistance`
+
+La couche canonique `couche_persistance` a vocation à regrouper l’ensemble des composants de persistance du domaine `produittype`, en particulier les interfaces transverses de persistance, les convertisseurs JPA ↔ métier, les entités JPA, les DAO JPA et les tests associés.
+
+Sous-couche logique admise :
+- `couche_persistance.jpa`
+
+Cette couche comprend au minimum :
+
+#### Interfaces transverses de persistance
+- `src/main/java/levy/daniel/application/persistence/metier/IExportateurCsv.java`
+- `src/main/java/levy/daniel/application/persistence/metier/IExportateurJTable.java`
+
+#### Entités JPA / convertisseurs
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetier.java`
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPA.java`
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPA.java`
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPA.java`
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPA.java`
+
+#### DAO JPA
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/ProduitDaoJPA.java`
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/SousTypeProduitDaoJPA.java`
+- `src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/TypeProduitDaoJPA.java`
+
+#### Tests persistance
+- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetierTest.java`
+- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPATest.java`
+- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPATest.java`
+- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPATest.java`
+- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPARattachementDetachementTest.java`
+- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java`
+
+#### Contrat local persistance pivot
+- `docs/contrats/persistance/CouchePersistance.md`
+
+Règles :
+- `couche_persistance` porte les composants de persistance et jamais la logique UC ;
+- la duplication éventuelle d’interfaces transverses entre `couche_metier` et `couche_persistance` est admise lorsqu’elle sert l’autonomie stricte des couches ;
+- les convertisseurs JPA ↔ métier appartiennent à `couche_persistance` ;
+- les DAO JPA appartiennent à `couche_persistance` ;
+- les tests de persistance appartiennent à `couche_persistance` ;
+- la couche doit être auditée comme un tout cohérent, et non fichier par fichier isolé.
+
+La couche `couche_persistance` doit permettre à l’IA de retrouver comme un tout cohérent :
+- les interfaces transverses de persistance ;
+- les convertisseurs JPA ↔ métier ;
+- les entités JPA ;
+- les DAO JPA ;
+- les tests de persistance ;
+- le contrat local de couche applicable.
+
+### 29.11 Sacralisation de `couche_services.gateway`
 
 La sous-couche logique `couche_services.gateway` a vocation à regrouper l’ensemble des services techniques d’accès au stockage du domaine `produittype`, leurs exceptions Gateway, leur socle de pagination, leurs tests associés et leurs contrats locaux.
 
@@ -1335,7 +1388,7 @@ La sous-couche `couche_services.gateway` doit permettre à l’IA de retrouver c
 - les tests d’intégration Gateway ;
 - les contrats locaux Gateway applicables.
 
-### 29.11 Sacralisation de `couche_services.uc`
+### 29.12 Sacralisation de `couche_services.uc`
 
 La sous-couche logique `couche_services.uc` a vocation à regrouper l’ensemble des services métier de cas d’usage du domaine `produittype`, leurs exceptions de SERVICE UC, leurs tests associés et leurs contrats locaux.
 
