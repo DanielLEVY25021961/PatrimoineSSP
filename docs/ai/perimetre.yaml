@@ -57,6 +57,10 @@ packs:
       - "docs/contrats/cu/ProduitICuService.md"
       - "docs/contrats/cu/SousTypeProduitICuService.md"
       - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/gateway/CoucheServicesGateway.md"
+      - "docs/contrats/gateway/ProduitGatewayIService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayIService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
   ai:
@@ -77,6 +81,10 @@ packs:
       - "docs/contrats/cu/ProduitICuService.md"
       - "docs/contrats/cu/SousTypeProduitICuService.md"
       - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/gateway/CoucheServicesGateway.md"
+      - "docs/contrats/gateway/ProduitGatewayIService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayIService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
       - "docs/contrats/metier/TypeProduit.md"
       - "docs/contrats/metier/SousTypeProduit.md"
@@ -208,7 +216,13 @@ packs:
         allow_missing: false
 
   gateway:
-    description: "Couche gateway : pagination, exceptions gateway/services, ports, adapters et tests associés."
+    description: "Sous-couche logique couche_services.gateway : pagination, exceptions gateway, ports, adapters JPA, tests associés et contrats locaux."
+    paths:
+      - "docs/contrats/gateway/CoucheServicesGateway.md"
+      - "docs/contrats/gateway/ProduitGatewayIService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
     roots:
       - path: "src/main/java/levy/daniel/application/model/services"
         recursive: true
@@ -217,10 +231,10 @@ packs:
           - "produittype/package-info.java"
           - "produittype/pagination/**/*.java"
           - "produittype/exceptionsgateway/**/*.java"
-          - "produittype/exceptionsservices/**/*.java"
           - "produittype/gateway/**/*.java"
         exclude_globs:
           - "produittype/cu/**/*.java"
+          - "produittype/exceptionsservices/**/*.java"
         allow_missing: false
       - path: "src/test/java/levy/daniel/application/model/services"
         recursive: true
@@ -239,6 +253,7 @@ packs:
         include_globs:
           - "package-info.java"
           - "produittype/package-info.java"
+          - "produittype/exceptionsservices/**/*.java"
           - "produittype/cu/**/*.java"
         exclude_globs: []
         allow_missing: false
@@ -311,6 +326,10 @@ couches:
         - "docs/contrats/cu/ProduitICuService.md"
         - "docs/contrats/cu/SousTypeProduitICuService.md"
         - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/gateway/CoucheServicesGateway.md"
+        - "docs/contrats/gateway/ProduitGatewayIService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayIService.md"
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
     couche_configuration_tests:
@@ -371,6 +390,10 @@ couches:
         - "docs/contrats/cu/ProduitICuService.md"
         - "docs/contrats/cu/SousTypeProduitICuService.md"
         - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/gateway/CoucheServicesGateway.md"
+        - "docs/contrats/gateway/ProduitGatewayIService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayIService.md"
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
     couche_controllers:

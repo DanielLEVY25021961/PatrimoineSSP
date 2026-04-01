@@ -109,6 +109,10 @@ couches:
         - docs/contrats/cu/ProduitICuService.md
         - docs/contrats/cu/SousTypeProduitICuService.md
         - docs/contrats/cu/TypeProduitICuService.md
+        - docs/contrats/gateway/CoucheServicesGateway.md
+        - docs/contrats/gateway/ProduitGatewayIService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayIService.md
+        - docs/contrats/gateway/TypeProduitGatewayIService.md
         - docs/contrats/gateway/TypeProduitGatewayJPAService.md
 
     couche_configuration_tests:
@@ -169,7 +173,14 @@ couches:
         - docs/contrats/cu/ProduitICuService.md
         - docs/contrats/cu/SousTypeProduitICuService.md
         - docs/contrats/cu/TypeProduitICuService.md
+        - docs/contrats/gateway/CoucheServicesGateway.md
+        - docs/contrats/gateway/ProduitGatewayIService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayIService.md
+        - docs/contrats/gateway/TypeProduitGatewayIService.md
         - docs/contrats/gateway/TypeProduitGatewayJPAService.md
+      sous_couches_statuts:
+        couche_services.gateway: validated_locked
+        couche_services.uc: declared
 
     couche_controllers:
       statut: reserved

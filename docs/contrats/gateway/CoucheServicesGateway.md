@@ -10,7 +10,8 @@ Elle expose :
 - les exceptions techniques et applicatives propres au niveau Gateway ;
 - le socle transverse de pagination utilisé par les Gateways ;
 - les tests Mock Gateway ;
-- les tests d'intégration Gateway.
+- les tests d'intégration Gateway ;
+- les contrats locaux nécessaires à la relecture de la couche.
 
 Cette sous-couche appartient à `couche_services`.
 
@@ -21,10 +22,12 @@ La sous-couche `couche_services.gateway` :
 - ne manipule pas les DTO ;
 - ne porte pas la logique UC ;
 - ne porte pas de logique Controller ;
-- ne porte pas de logique View.
+- ne porte pas de logique View ;
+- ne porte pas les exceptions de SERVICE UC.
 
 Les DTO relèvent de `couche_dto`.
 Les services UC relèvent de `couche_services.uc`.
+Les exceptions de service UC relèvent du périmètre UC, pas du périmètre Gateway.
 
 ## 3) Fichiers inclus dans le périmètre sacralisé
 
@@ -72,6 +75,14 @@ Les services UC relèvent de `couche_services.uc`.
 - `src/test/java/levy/daniel/application/model/services/produittype/pagination/ResultatPageTest.java`
 - `src/test/java/levy/daniel/application/model/services/produittype/pagination/TriSpecTest.java`
 
+### 3.7) Contrats locaux de la sous-couche
+
+- `docs/contrats/gateway/CoucheServicesGateway.md`
+- `docs/contrats/gateway/ProduitGatewayIService.md`
+- `docs/contrats/gateway/SousTypeProduitGatewayIService.md`
+- `docs/contrats/gateway/TypeProduitGatewayIService.md`
+- `docs/contrats/gateway/TypeProduitGatewayJPAService.md`
+
 ## 4) Règles de cohérence obligatoires
 
 ### 4.1) Règle DTO
@@ -80,7 +91,7 @@ Aucun fichier de cette sous-couche ne doit dépendre des DTO de `couche_dto`.
 
 ### 4.2) Règle UC
 
-Aucun fichier de cette sous-couche ne doit porter des messages utilisateur ou un comportement propre aux cas d'usage UC.
+Aucun fichier de cette sous-couche ne doit porter des messages utilisateur, des retours UC observables ou des exceptions de SERVICE UC.
 
 ### 4.3) Règle métier
 
@@ -95,11 +106,16 @@ Le socle de pagination appartient au périmètre sacralisé de Gateway tant qu'i
 Les tests Mock verrouillent le contrat technique.
 Les tests d'intégration prouvent le comportement réel JPA/BDD.
 
+### 4.6) Règle de contrats locaux
+
+Les contrats locaux de cette sous-couche servent de pivots de relecture avant toute analyse, tout diagnostic ou toute génération de code portant sur Gateway.
+
 ## 5) Définition de la sacralisation
 
 La sous-couche `couche_services.gateway` est considérée sacralisée lorsque :
 - le présent contrat local est présent ;
 - le périmètre IA référence exactement les fichiers de cette sous-couche ;
+- les contrats locaux Gateway sont présents dans les fichiers IA ;
 - les tests Gateway et pagination sont dans le périmètre validé ;
 - la séparation avec `couche_services.uc` est explicite ;
 - la séparation avec `couche_dto` est explicite.
@@ -109,6 +125,7 @@ La sous-couche `couche_services.gateway` est considérée sacralisée lorsque :
 Ne font pas partie de `couche_services.gateway` :
 - les services UC ;
 - les DTO ;
-- les converters DTO ;
+- les convertisseurs DTO ;
+- les exceptions de `exceptionsservices` ;
 - les controllers ;
 - les vues.

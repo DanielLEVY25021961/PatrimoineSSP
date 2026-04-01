@@ -524,6 +524,40 @@ Principe :
 
 Cette règle s’applique à tous les modes produisant du code, en particulier le MODE CODER.
 
+
+### 22.1) Règle de livraison des fichiers fragiles (`.md`, `.yaml`, `.py`)
+
+Pour tout fichier `.md`, `.yaml` ou `.py`, l’IA ne doit jamais livrer :
+- un snippet ;
+- un extrait partiel ;
+- un bloc isolé ;
+- un fragment à recoller ;
+- un patch implicite ;
+- un `.zip`.
+
+Règle obligatoire :
+- l’IA doit livrer **uniquement le fichier complet** ;
+- au bon format ;
+- avec la bonne structure ;
+- les bonnes indentations ;
+- les bonnes lignes vides ;
+- un contenu directement intégrable dans STS.
+
+Forme de livraison obligatoire :
+- dans le chat ;
+- sous forme d’un bloc autonome correspondant à un fichier complet ;
+- visible intégralement avant téléchargement ;
+- avec possibilité de téléchargement direct du même fichier en complément ;
+- sans archive `.zip`.
+
+Interdiction complémentaire :
+- un simple lien de téléchargement ne remplace jamais le bloc visible ;
+- l’utilisateur doit toujours pouvoir relire le contenu complet dans le chat avant téléchargement.
+
+Conséquence :
+- pour tout fichier fragile déjà existant dans le dépôt, l’IA doit d’abord le relire intégralement avant de le réécrire ;
+- pour tout nouveau fichier fragile, l’IA doit livrer le fichier entier et jamais un extrait.
+
 ## 23) Règle de couplage CODE/BUNDLE (Variante A — 2 SHAs)
 
 Définitions :
@@ -1008,6 +1042,10 @@ La couche `couche_ia` comprend au minimum les fichiers suivants :
 - `docs/contrats/cu/ProduitICuService.md`
 - `docs/contrats/cu/SousTypeProduitICuService.md`
 - `docs/contrats/cu/TypeProduitICuService.md`
+- `docs/contrats/gateway/CoucheServicesGateway.md`
+- `docs/contrats/gateway/ProduitGatewayIService.md`
+- `docs/contrats/gateway/SousTypeProduitGatewayIService.md`
+- `docs/contrats/gateway/TypeProduitGatewayIService.md`
 - `docs/contrats/gateway/TypeProduitGatewayJPAService.md`
 
 ### 29.3 Obligation de prélecture de `couche_ia`
@@ -1211,3 +1249,70 @@ La couche `couche_dto` doit permettre à l’IA de retrouver comme un tout cohé
 - les tests unitaires DTO ;
 - les tests unitaires des convertisseurs DTO ;
 - les contrats locaux DTO applicables.
+
+### 29.10 Sacralisation de `couche_services.gateway`
+
+La sous-couche logique `couche_services.gateway` a vocation à regrouper l’ensemble des services techniques d’accès au stockage du domaine `produittype`, leurs exceptions Gateway, leur socle de pagination, leurs tests associés et leurs contrats locaux.
+
+Cette sous-couche comprend au minimum :
+
+#### PORTS Gateway
+- `src/main/java/levy/daniel/application/model/services/produittype/gateway/ProduitGatewayIService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/gateway/SousTypeProduitGatewayIService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/gateway/TypeProduitGatewayIService.java`
+
+#### ADAPTERS Gateway JPA
+- `src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAService.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAService.java`
+
+#### Exceptions Gateway
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliLibelleBlank.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNonPersistent.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNull.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParentNull.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionTechniqueGateway.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionTechniqueGatewayNonPersistent.java`
+
+#### Pagination transverse Gateway
+- `src/main/java/levy/daniel/application/model/services/produittype/pagination/DirectionTri.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/pagination/RequetePage.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/pagination/ResultatPage.java`
+- `src/main/java/levy/daniel/application/model/services/produittype/pagination/TriSpec.java`
+
+#### Tests Gateway et pagination
+- `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceIntegrationTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceMockTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceIntegrationTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceMockTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceMockTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/pagination/DirectionTriTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/pagination/RequetePageTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/pagination/ResultatPageTest.java`
+- `src/test/java/levy/daniel/application/model/services/produittype/pagination/TriSpecTest.java`
+
+#### Contrats locaux Gateway pivots
+- `docs/contrats/gateway/CoucheServicesGateway.md`
+- `docs/contrats/gateway/ProduitGatewayIService.md`
+- `docs/contrats/gateway/SousTypeProduitGatewayIService.md`
+- `docs/contrats/gateway/TypeProduitGatewayIService.md`
+- `docs/contrats/gateway/TypeProduitGatewayJPAService.md`
+
+Règles :
+- `couche_services.gateway` manipule les objets métier et jamais les DTO ;
+- `couche_services.gateway` ne produit aucun message utilisateur et ne porte aucune logique UC ;
+- les exceptions `exceptionsgateway` appartiennent à `couche_services.gateway` ;
+- les exceptions `exceptionsservices` n’appartiennent pas à `couche_services.gateway` et relèvent du périmètre UC ;
+- la pagination liée aux recherches paginées des Gateways appartient à `couche_services.gateway` ;
+- les tests Mock et d’intégration Gateway appartiennent à la même sous-couche logique ;
+- la sous-couche doit être auditée comme un tout cohérent, et non fichier par fichier isolé.
+
+La sous-couche `couche_services.gateway` doit permettre à l’IA de retrouver comme un tout cohérent :
+- les PORTS Gateway ;
+- les ADAPTERS Gateway JPA ;
+- les exceptions Gateway ;
+- le socle de pagination transverse ;
+- les tests Mock Gateway ;
+- les tests d’intégration Gateway ;
+- les contrats locaux Gateway applicables.

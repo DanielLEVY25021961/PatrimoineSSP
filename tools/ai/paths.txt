@@ -16,4 +16,8 @@ tools/ai/make_offline_bundle.py
 docs/contrats/cu/ProduitICuService.md
 docs/contrats/cu/SousTypeProduitICuService.md
 docs/contrats/cu/TypeProduitICuService.md
+docs/contrats/gateway/CoucheServicesGateway.md
+docs/contrats/gateway/ProduitGatewayIService.md
+docs/contrats/gateway/SousTypeProduitGatewayIService.md
+docs/contrats/gateway/TypeProduitGatewayIService.md
 docs/contrats/gateway/TypeProduitGatewayJPAService.md
