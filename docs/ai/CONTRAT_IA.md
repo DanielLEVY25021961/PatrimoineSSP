@@ -1133,3 +1133,52 @@ Règles :
   et leurs packs associés ;
 - `tools/ai/perimetre_resolver.py` doit pouvoir exposer cette gouvernance par couches
   comme API canonique.
+  
+  ### 29.7 Sacralisation de `couche_configuration_tests`
+
+La couche canonique `couche_configuration_tests`
+a vocation à regrouper l’ensemble des fichiers racine,
+build,
+CI
+et configuration de tests
+permettant à l’IA de comprendre
+comment construire,
+tester
+et valider les couches déjà vertes du projet.
+
+Sous-couche logique admise :
+
+- `couche_configuration_tests.racine_build_ci`
+
+Cette sous-couche comprend au minimum :
+
+- `.gitattributes`
+- `.gitignore`
+- `pom.xml`
+- `README.md`
+- `scripts/test_couches_validees.sh`
+- `.github/workflows/maven.yml`
+
+Règles :
+
+- le script shell de lancement des tests validés
+  ne doit pas être figé sur un nombre de couches ;
+- son nom canonique devient
+  `scripts/test_couches_validees.sh` ;
+- ce script doit rester évolutif :
+  il commence par jouer les tests des couches déjà validées,
+  en particulier les services UC,
+  puis il devra intégrer les tests des Controllers
+  et des Vues lorsqu’ils seront créés et validés ;
+- l’objectif est de disposer d’un build Maven
+  jouant tous les tests déjà validés
+  et passant verts.
+
+La couche `couche_configuration_tests`
+doit donc permettre à l’IA de retrouver comme un tout cohérent :
+
+- les règles racine du dépôt ;
+- le build Maven ;
+- le point d’entrée CI ;
+- le script des couches validées ;
+- les ressources de test déjà sacralisées.

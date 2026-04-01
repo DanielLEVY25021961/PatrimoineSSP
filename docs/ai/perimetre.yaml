@@ -79,6 +79,16 @@ packs:
       - "docs/contrats/cu/TypeProduitICuService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
+  configuration_racine_build_ci:
+    description: "Racine / build / CI : fichiers racine du dépôt, build Maven, script de tests des couches validées et workflow CI."
+    paths:
+      - ".gitattributes"
+      - ".gitignore"
+      - "pom.xml"
+      - "README.md"
+      - "scripts/test_couches_validees.sh"
+      - ".github/workflows/maven.yml"
+		  
   configuration:
     description: "Configuration build + ressources de tests."
     paths:
@@ -89,15 +99,16 @@ packs:
       - "src/test/resources/Log4j2-test.xml"
 
   scripts_support:
-    description: "Scripts de support du projet."
+    description: "Scripts de support du projet hors script canonique des couches validées."
     roots:
       - path: "scripts"
         recursive: true
         include_globs:
           - "**/*.sh"
-        exclude_globs: []
+        exclude_globs:
+          - "test_couches_validees.sh"
         allow_missing: true
-
+			
   application_racine:
     description: "Classes racine de l'application (bootstrap, package-info, lanceurs) hors sous-packages métier/controllers/views/persistence. Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
     roots:
@@ -295,12 +306,15 @@ couches:
         - "docs/contrats/cu/TypeProduitICuService.md"
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
-    couche_configuration_tests:
-      statut: "declared"
-      mandatory_pre_read: false
-      packs:
-        - "configuration"
-
+	couche_configuration_tests:
+	  statut: "declared"
+	  mandatory_pre_read: false
+	  packs:
+	    - "configuration_racine_build_ci"
+	    - "configuration"
+	  sous_couches:
+	    - "couche_configuration_tests.racine_build_ci"
+			
     couche_metier:
       statut: "declared"
       mandatory_pre_read: false
