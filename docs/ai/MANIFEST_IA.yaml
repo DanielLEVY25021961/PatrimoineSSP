@@ -129,6 +129,14 @@ couches:
         - docs/contrats/dto/SousTypeProduitDTO.md
         - docs/contrats/dto/ProduitDTO.md
         - docs/contrats/persistance/CouchePersistance.md
+        - docs/contrats/persistance/ConvertisseurJPAToMetier.md
+        - docs/contrats/persistance/ConvertisseurMetierToJPA.md
+        - docs/contrats/persistance/ProduitJPA.md
+        - docs/contrats/persistance/SousTypeProduitJPA.md
+        - docs/contrats/persistance/TypeProduitJPA.md
+        - docs/contrats/persistance/ProduitDaoJPA.md
+        - docs/contrats/persistance/SousTypeProduitDaoJPA.md
+        - docs/contrats/persistance/TypeProduitDaoJPA.md
         - docs/contrats/gateway/CoucheServicesGateway.md
         - docs/contrats/gateway/ProduitGatewayIService.md
         - docs/contrats/gateway/SousTypeProduitGatewayIService.md
@@ -183,6 +191,14 @@ couches:
         - couche_persistance.jpa
       contracts:
         - docs/contrats/persistance/CouchePersistance.md
+        - docs/contrats/persistance/ConvertisseurJPAToMetier.md
+        - docs/contrats/persistance/ConvertisseurMetierToJPA.md
+        - docs/contrats/persistance/ProduitJPA.md
+        - docs/contrats/persistance/SousTypeProduitJPA.md
+        - docs/contrats/persistance/TypeProduitJPA.md
+        - docs/contrats/persistance/ProduitDaoJPA.md
+        - docs/contrats/persistance/SousTypeProduitDaoJPA.md
+        - docs/contrats/persistance/TypeProduitDaoJPA.md
 
     couche_services:
       statut: declared

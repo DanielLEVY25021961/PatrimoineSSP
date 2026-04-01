@@ -10,7 +10,7 @@ Elle expose :
 - les entités JPA ;
 - les DAO JPA ;
 - les tests de persistance ;
-- le contrat local de couche.
+- les contrats locaux de couche.
 
 Cette couche est distincte de `couche_metier`, de `couche_dto` et de `couche_services`.
 
@@ -57,9 +57,17 @@ La duplication de certaines interfaces transverses entre `couche_metier` et `cou
 - `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPARattachementDetachementTest.java`
 - `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java`
 
-### 3.5) Contrat local de la couche
+### 3.5) Contrats locaux de la couche
 
 - `docs/contrats/persistance/CouchePersistance.md`
+- `docs/contrats/persistance/ConvertisseurJPAToMetier.md`
+- `docs/contrats/persistance/ConvertisseurMetierToJPA.md`
+- `docs/contrats/persistance/ProduitJPA.md`
+- `docs/contrats/persistance/SousTypeProduitJPA.md`
+- `docs/contrats/persistance/TypeProduitJPA.md`
+- `docs/contrats/persistance/ProduitDaoJPA.md`
+- `docs/contrats/persistance/SousTypeProduitDaoJPA.md`
+- `docs/contrats/persistance/TypeProduitDaoJPA.md`
 
 ## 4) Règles de cohérence obligatoires
 
@@ -102,6 +110,7 @@ La couche `couche_persistance` ne doit pas absorber :
 
 La couche `couche_persistance` est considérée sacralisée lorsque :
 - le présent contrat local est présent ;
+- les contrats locaux détaillés des convertisseurs, entities JPA et DAO JPA sont présents ;
 - le périmètre IA référence exactement les fichiers de cette couche ;
 - les interfaces transverses de persistance sont explicitement incluses ;
 - les convertisseurs, entités JPA, DAO et tests sont dans le périmètre validé ;
