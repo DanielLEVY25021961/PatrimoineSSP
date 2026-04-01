@@ -13,6 +13,7 @@ tools/ai/pack_reading_list.py
 tools/ai/paths.txt
 tools/ai/resolve_raw_sha.py
 tools/ai/make_offline_bundle.py
+docs/contrats/cu/CoucheServicesUC.md
 docs/contrats/cu/ProduitICuService.md
 docs/contrats/cu/SousTypeProduitICuService.md
 docs/contrats/cu/TypeProduitICuService.md
