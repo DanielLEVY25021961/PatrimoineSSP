@@ -1002,6 +1002,44 @@ Fallback :
   - container tenté si nécessaire,
   - ≤ 3 tentatives.
 
+---
+
+### 28.14 RT-COMPARAISON-TEXTE-CRLF-01 (VALIDÉ) — Normalisation EOL obligatoire avant toute décision de différence réelle
+
+Objectif : éliminer définitivement les faux positifs de comparaison sur les fichiers texte entre STS/chat, GitHub@SHA et bundle OFFLINE.
+
+Règle prioritaire invariante :
+- Pour tout fichier texte (`.md`, `.yaml`, `.py`, `.java`, `.xml`, `.properties`, `.sh`, etc.), l’IA DOIT distinguer strictement :
+  - l’identité binaire (octet à octet),
+  - l’identité textuelle canonique après normalisation EOL,
+  - l’écart EOF (présence ou absence d’un saut de ligne final).
+- Pour la comparaison de contenu texte, l’IA DOIT construire une vue canonique en remplaçant :
+  - `CRLF` par `LF`,
+  - puis `CR` isolé par `LF`.
+- La comparaison métier DOIT ensuite être réalisée ligne à ligne sur cette vue canonique.
+- L’écart EOF DOIT être contrôlé et signalé séparément ; il ne doit jamais être confondu avec une différence de ligne.
+
+Définition prioritaire de « le même fichier » :
+- Pour un fichier texte, « le même fichier » ne signifie pas nécessairement « mêmes octets ».
+- Pour un fichier texte, « le même fichier » signifie : **même contenu texte canonique après normalisation EOL**, sauf si le fichier est binaire ou si le présent CONTRAT / le format du fichier lui donne explicitement une sémantique spéciale.
+
+Règle de décision :
+- Si l’identité binaire diffère uniquement à cause de `LF` / `CRLF`, mais que le contenu texte canonique est identique, l’IA DOIT qualifier le cas de :
+  - **FAUSSE DIFFÉRENCE BINAIRE — EOL ONLY**
+- Dans ce cas :
+  - le fichier DOIT être considéré comme **INCHANGÉ** sur le plan métier / contenu ;
+  - l’IA NE DOIT PAS annoncer un fichier **MODIFIÉ** ;
+  - cet écart NE DOIT PAS bloquer la comparaison, la consolidation, le diagnostic ni la génération ;
+  - l’IA DOIT signaler séparément l’écart binaire si cela est utile à l’audit.
+
+Cas explicitement visés :
+- `docs/ai/CONTRAT_IA.md`
+- `docs/ai/perimetre.yaml`
+- plus généralement tout fichier texte comparé entre STS/chat, GitHub@SHA et bundle OFFLINE.
+
+Conséquence projet :
+- GitHub en `LF` et bundle OFFLINE en `CRLF` ne doivent jamais produire un faux statut **MODIFIÉ** tant que le contenu texte normalisé est identique.
+
 ## 29) Gouvernance canonique par couches (sacralisation progressive)
 
 Objectif : permettre à l’IA de découvrir la structure complète de l’application, les contrats applicables et les formalismes associés, de façon **couche par couche**, avec un bootstrap reproductible, audit-ready et indépendant de la mémoire interne.

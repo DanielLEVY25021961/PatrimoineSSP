@@ -95,6 +95,15 @@ livraison_fichiers_fragiles:
   download_link_only_if_too_large: true
   multi_turn_delivery_allowed: true
 
+text_comparison:
+  mode: canonical_eol_normalized
+  canonical_newline: LF
+  compare_line_by_line: true
+  compare_eof_separately: true
+  eol_only_binary_difference_label: "fausse différence binaire EOL-only"
+  eol_only_binary_difference_is_real_change: false
+  treat_normalized_text_identity_as_same_file: true
+
 couches:
   ordre_canonique:
     - couche_ia

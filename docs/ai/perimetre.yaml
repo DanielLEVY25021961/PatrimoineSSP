@@ -43,6 +43,15 @@ policy:
     livraison_fichiers_fragiles_interdit_lien_seul: true
     livraison_fichiers_fragiles_lien_si_trop_gros_seulement: true
     livraison_fichiers_fragiles_livraison_multi_echanges_autorisee: true
+    comparaison_texte_eol_normalisee_obligatoire: true
+    comparaison_texte_eof_separee_obligatoire: true
+    text_comparison_mode: "canonical_eol_normalized"
+    canonical_newline_for_text_comparison: "LF"
+    eol_only_binary_difference_label: "fausse différence binaire EOL-only"
+    eol_only_binary_difference_is_real_change: false
+    treat_normalized_text_identity_as_same_file: true
+    consider_contrat_ia_same_across_sts_github_bundle_when_eol_only: true
+    consider_perimetre_same_across_sts_github_bundle_when_eol_only: true
 
 raw:
   template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"
