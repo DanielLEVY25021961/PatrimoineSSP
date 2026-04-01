@@ -92,7 +92,20 @@ def parse_args() -> argparse.Namespace:
 
 
 def _normalize_relative_path(value: str) -> str:
-    return PurePosixPath(value).as_posix().lstrip("./")
+    """
+    Normalise un chemin relatif sans casser les dotfiles.
+
+    Important :
+    - ne jamais utiliser lstrip("./"), car cela transformerait
+      '.gitattributes' en 'gitattributes' ;
+    - retirer uniquement un éventuel préfixe littéral './'.
+    """
+    normalized = PurePosixPath(value).as_posix()
+
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+
+    return normalized
 
 
 def _stable_unique(values: list[str]) -> list[str]:
