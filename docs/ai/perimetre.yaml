@@ -88,7 +88,7 @@ packs:
       - "README.md"
       - "scripts/test_couches_validees.sh"
       - ".github/workflows/maven.yml"
-		  
+
   configuration:
     description: "Configuration build + ressources de tests."
     paths:
@@ -108,7 +108,7 @@ packs:
         exclude_globs:
           - "test_couches_validees.sh"
         allow_missing: true
-			
+
   application_racine:
     description: "Classes racine de l'application (bootstrap, package-info, lanceurs) hors sous-packages métier/controllers/views/persistence. Root optionnelle tant qu'elle n'est pas présente sur GitHub@SHA."
     roots:
@@ -306,15 +306,15 @@ couches:
         - "docs/contrats/cu/TypeProduitICuService.md"
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
-	couche_configuration_tests:
-	  statut: "declared"
-	  mandatory_pre_read: false
-	  packs:
-	    - "configuration_racine_build_ci"
-	    - "configuration"
-	  sous_couches:
-	    - "couche_configuration_tests.racine_build_ci"
-			
+    couche_configuration_tests:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "configuration_racine_build_ci"
+        - "configuration"
+      sous_couches:
+        - "couche_configuration_tests.racine_build_ci"
+
     couche_metier:
       statut: "declared"
       mandatory_pre_read: false
