@@ -83,6 +83,18 @@ garantie:
   pack_resolution_shared: true
   baseline_consolidation_required: true
 
+livraison_fichiers_fragiles:
+  extensions:
+    - .md
+    - .yaml
+    - .py
+  complete_file_only: true
+  visible_code_block_required: true
+  copy_button_expected: true
+  zip_forbidden: true
+  download_link_only_if_too_large: true
+  multi_turn_delivery_allowed: true
+
 couches:
   ordre_canonique:
     - couche_ia
@@ -109,10 +121,18 @@ couches:
         - docs/contrats/cu/ProduitICuService.md
         - docs/contrats/cu/SousTypeProduitICuService.md
         - docs/contrats/cu/TypeProduitICuService.md
+        - docs/contrats/metier/TypeProduit.md
+        - docs/contrats/metier/SousTypeProduit.md
+        - docs/contrats/metier/Produit.md
+        - docs/contrats/dto/TypeProduitDTO.md
+        - docs/contrats/dto/SousTypeProduitDTO.md
+        - docs/contrats/dto/ProduitDTO.md
         - docs/contrats/gateway/CoucheServicesGateway.md
         - docs/contrats/gateway/ProduitGatewayIService.md
         - docs/contrats/gateway/SousTypeProduitGatewayIService.md
         - docs/contrats/gateway/TypeProduitGatewayIService.md
+        - docs/contrats/gateway/ProduitGatewayJPAService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayJPAService.md
         - docs/contrats/gateway/TypeProduitGatewayJPAService.md
 
     couche_configuration_tests:
@@ -177,6 +197,8 @@ couches:
         - docs/contrats/gateway/ProduitGatewayIService.md
         - docs/contrats/gateway/SousTypeProduitGatewayIService.md
         - docs/contrats/gateway/TypeProduitGatewayIService.md
+        - docs/contrats/gateway/ProduitGatewayJPAService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayJPAService.md
         - docs/contrats/gateway/TypeProduitGatewayJPAService.md
       sous_couches_statuts:
         couche_services.gateway: validated_locked

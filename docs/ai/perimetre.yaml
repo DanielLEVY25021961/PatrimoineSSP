@@ -36,6 +36,13 @@ policy:
     couche_bootstrap_obligatoire: "couche_ia"
     dedoublonnage_paths: true
     tri_stable: true
+    livraison_fichiers_fragiles_complete_only: true
+    livraison_fichiers_fragiles_bloc_visible_obligatoire: true
+    livraison_fichiers_fragiles_bouton_copier_nominal: true
+    livraison_fichiers_fragiles_interdit_zip: true
+    livraison_fichiers_fragiles_interdit_lien_seul: true
+    livraison_fichiers_fragiles_lien_si_trop_gros_seulement: true
+    livraison_fichiers_fragiles_livraison_multi_echanges_autorisee: true
 
 raw:
   template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"
@@ -57,10 +64,18 @@ packs:
       - "docs/contrats/cu/ProduitICuService.md"
       - "docs/contrats/cu/SousTypeProduitICuService.md"
       - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/metier/TypeProduit.md"
+      - "docs/contrats/metier/SousTypeProduit.md"
+      - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/dto/TypeProduitDTO.md"
+      - "docs/contrats/dto/SousTypeProduitDTO.md"
+      - "docs/contrats/dto/ProduitDTO.md"
       - "docs/contrats/gateway/CoucheServicesGateway.md"
       - "docs/contrats/gateway/ProduitGatewayIService.md"
       - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
       - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
   ai:
@@ -85,6 +100,8 @@ packs:
       - "docs/contrats/gateway/ProduitGatewayIService.md"
       - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
       - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
       - "docs/contrats/metier/TypeProduit.md"
       - "docs/contrats/metier/SousTypeProduit.md"
@@ -222,6 +239,8 @@ packs:
       - "docs/contrats/gateway/ProduitGatewayIService.md"
       - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
       - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
     roots:
       - path: "src/main/java/levy/daniel/application/model/services"
@@ -246,7 +265,7 @@ packs:
         allow_missing: false
 
   uc:
-    description: "Use Cases / services métier UC + impl + tests."
+    description: "Use Cases / services métier UC + impl + tests, y compris exceptionsservices."
     roots:
       - path: "src/main/java/levy/daniel/application/model/services"
         recursive: true
@@ -326,10 +345,18 @@ couches:
         - "docs/contrats/cu/ProduitICuService.md"
         - "docs/contrats/cu/SousTypeProduitICuService.md"
         - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/metier/TypeProduit.md"
+        - "docs/contrats/metier/SousTypeProduit.md"
+        - "docs/contrats/metier/Produit.md"
+        - "docs/contrats/dto/TypeProduitDTO.md"
+        - "docs/contrats/dto/SousTypeProduitDTO.md"
+        - "docs/contrats/dto/ProduitDTO.md"
         - "docs/contrats/gateway/CoucheServicesGateway.md"
         - "docs/contrats/gateway/ProduitGatewayIService.md"
         - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
         - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
     couche_configuration_tests:
@@ -390,10 +417,18 @@ couches:
         - "docs/contrats/cu/ProduitICuService.md"
         - "docs/contrats/cu/SousTypeProduitICuService.md"
         - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/metier/TypeProduit.md"
+        - "docs/contrats/metier/SousTypeProduit.md"
+        - "docs/contrats/metier/Produit.md"
+        - "docs/contrats/dto/TypeProduitDTO.md"
+        - "docs/contrats/dto/SousTypeProduitDTO.md"
+        - "docs/contrats/dto/ProduitDTO.md"
         - "docs/contrats/gateway/CoucheServicesGateway.md"
         - "docs/contrats/gateway/ProduitGatewayIService.md"
         - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
         - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
     couche_controllers:

@@ -81,6 +81,8 @@ Les exceptions de service UC relèvent du périmètre UC, pas du périmètre Gat
 - `docs/contrats/gateway/ProduitGatewayIService.md`
 - `docs/contrats/gateway/SousTypeProduitGatewayIService.md`
 - `docs/contrats/gateway/TypeProduitGatewayIService.md`
+- `docs/contrats/gateway/ProduitGatewayJPAService.md`
+- `docs/contrats/gateway/SousTypeProduitGatewayJPAService.md`
 - `docs/contrats/gateway/TypeProduitGatewayJPAService.md`
 
 ## 4) Règles de cohérence obligatoires
@@ -116,6 +118,7 @@ La sous-couche `couche_services.gateway` est considérée sacralisée lorsque :
 - le présent contrat local est présent ;
 - le périmètre IA référence exactement les fichiers de cette sous-couche ;
 - les contrats locaux Gateway sont présents dans les fichiers IA ;
+- les contrats locaux JPA Gateway existent pour `Produit`, `SousTypeProduit` et `TypeProduit` ;
 - les tests Gateway et pagination sont dans le périmètre validé ;
 - la séparation avec `couche_services.uc` est explicite ;
 - la séparation avec `couche_dto` est explicite.

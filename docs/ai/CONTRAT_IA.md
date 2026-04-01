@@ -524,7 +524,6 @@ Principe :
 
 Cette règle s’applique à tous les modes produisant du code, en particulier le MODE CODER.
 
-
 ### 22.1) Règle de livraison des fichiers fragiles (`.md`, `.yaml`, `.py`)
 
 Pour tout fichier `.md`, `.yaml` ou `.py`, l’IA ne doit jamais livrer :
@@ -544,15 +543,24 @@ Règle obligatoire :
 - un contenu directement intégrable dans STS.
 
 Forme de livraison obligatoire :
-- dans le chat ;
-- sous forme d’un bloc autonome correspondant à un fichier complet ;
-- visible intégralement avant téléchargement ;
-- avec possibilité de téléchargement direct du même fichier en complément ;
+- directement dans le chat ;
+- sous forme d’un bloc de code autonome correspondant à un fichier complet ;
+- visible intégralement avant copie ;
+- avec le bouton **copier** du bloc comme mode nominal de récupération ;
 - sans archive `.zip`.
 
-Interdiction complémentaire :
+Interdictions complémentaires :
 - un simple lien de téléchargement ne remplace jamais le bloc visible ;
-- l’utilisateur doit toujours pouvoir relire le contenu complet dans le chat avant téléchargement.
+- l’utilisateur doit toujours pouvoir relire le contenu complet dans le chat avant copie.
+
+Exception strictement encadrée :
+- si un fichier est trop gros pour être livré directement dans le chat, l’IA doit l’indiquer explicitement ;
+- dans ce seul cas, l’IA peut livrer un lien de téléchargement du fichier complet ;
+- cette exception doit rester exceptionnelle.
+
+Règle de volumétrie :
+- l’IA peut et doit livrer en plusieurs fois (plusieurs échanges dans le chat) si l’ensemble des fichiers à livrer est trop lourd ;
+- cette fragmentation par échanges n’autorise jamais les snippets : chaque bloc doit rester un fichier complet autonome.
 
 Conséquence :
 - pour tout fichier fragile déjà existant dans le dépôt, l’IA doit d’abord le relire intégralement avant de le réécrire ;
@@ -896,8 +904,6 @@ Avant de répondre, analyser ou coder, l’IA DOIT vérifier dans la baseline le
 
 Interdiction d’écrire des hypothèses conditionnelles du type “si l’import X existe…”.
 
----
-
 ### 28.7 RT-PRIORITAIRE-102 (VALIDÉ) — Baseline unique source de vérité + consolidation
 
 La baseline est l’unique source de vérité.
@@ -1042,10 +1048,18 @@ La couche `couche_ia` comprend au minimum les fichiers suivants :
 - `docs/contrats/cu/ProduitICuService.md`
 - `docs/contrats/cu/SousTypeProduitICuService.md`
 - `docs/contrats/cu/TypeProduitICuService.md`
+- `docs/contrats/metier/TypeProduit.md`
+- `docs/contrats/metier/SousTypeProduit.md`
+- `docs/contrats/metier/Produit.md`
+- `docs/contrats/dto/TypeProduitDTO.md`
+- `docs/contrats/dto/SousTypeProduitDTO.md`
+- `docs/contrats/dto/ProduitDTO.md`
 - `docs/contrats/gateway/CoucheServicesGateway.md`
 - `docs/contrats/gateway/ProduitGatewayIService.md`
 - `docs/contrats/gateway/SousTypeProduitGatewayIService.md`
 - `docs/contrats/gateway/TypeProduitGatewayIService.md`
+- `docs/contrats/gateway/ProduitGatewayJPAService.md`
+- `docs/contrats/gateway/SousTypeProduitGatewayJPAService.md`
 - `docs/contrats/gateway/TypeProduitGatewayJPAService.md`
 
 ### 29.3 Obligation de prélecture de `couche_ia`
@@ -1297,6 +1311,8 @@ Cette sous-couche comprend au minimum :
 - `docs/contrats/gateway/ProduitGatewayIService.md`
 - `docs/contrats/gateway/SousTypeProduitGatewayIService.md`
 - `docs/contrats/gateway/TypeProduitGatewayIService.md`
+- `docs/contrats/gateway/ProduitGatewayJPAService.md`
+- `docs/contrats/gateway/SousTypeProduitGatewayJPAService.md`
 - `docs/contrats/gateway/TypeProduitGatewayJPAService.md`
 
 Règles :
@@ -1306,6 +1322,7 @@ Règles :
 - les exceptions `exceptionsservices` n’appartiennent pas à `couche_services.gateway` et relèvent du périmètre UC ;
 - la pagination liée aux recherches paginées des Gateways appartient à `couche_services.gateway` ;
 - les tests Mock et d’intégration Gateway appartiennent à la même sous-couche logique ;
+- les contrats locaux JPA Gateway doivent exister pour `Produit`, `SousTypeProduit` et `TypeProduit` ;
 - la sous-couche doit être auditée comme un tout cohérent, et non fichier par fichier isolé.
 
 La sous-couche `couche_services.gateway` doit permettre à l’IA de retrouver comme un tout cohérent :
