@@ -593,7 +593,7 @@ Objectif :
 
 Principe :
 
-➡️ Une fois la baseline **rafraîchie** et **consolidée** au **SHA courant** (lecture GitHub parfaite selon **RT-LECTURE-GITHUB-02**), l’IA est autorisée à **analyser / diagnostiquer / coder** uniquement à partir des fichiers de la **baseline**, sans relecture GitHub ni bundle, tant que le SHA courant reste inchangé.
+➡️ Une fois la baseline **rafraîchie** et **consolidée** au **SHA courant** (lecture parfaite + consolidation réalisées), l’IA est autorisée à **analyser / diagnostiquer / coder** uniquement à partir des fichiers de la **baseline**, sans relecture GitHub ni bundle, tant que le SHA courant reste inchangé.
 
 Règle absolue (ANTI-RELECTURE-APRES-BASELINE-A-JOUR) :
 - Si la baseline est jugée **parfaitement à jour** au SHA courant (lecture parfaite + consolidation réalisées), l’IA **ne doit pas** relire GitHub/bundle “par prudence” pour travailler : la baseline devient le **matériau unique** de travail opérationnel.
@@ -973,20 +973,16 @@ Les couches canoniques du projet sont désormais :
 1. `couche_ia`
 2. `couche_configuration_tests`
 3. `couche_metier`
-4. `couche_persistance`
-5. `couche_services`
-6. `couche_controllers`
-7. `couche_vues`
+4. `couche_dto`
+5. `couche_persistance`
+6. `couche_services`
+7. `couche_controllers`
+8. `couche_vues`
 
 Sous-couches logiques admises :
-- `couche_persistance.dto`
-- `couche_persistance.jpa`
 - `couche_services.gateway`
 - `couche_services.uc`
-
-Règle :
-- `couche_dto` ne doit plus être utilisée comme couche canonique autonome.
-- Les DTO relèvent de `couche_persistance`, avec éventuellement la sous-couche logique `couche_persistance.dto`.
+- `couche_persistance.jpa`
 
 ### 29.2 Couche bootstrap obligatoire : `couche_ia`
 
@@ -1158,3 +1154,60 @@ La couche `couche_metier` doit permettre à l’IA de retrouver comme un tout co
 - les tests unitaires métier ;
 - les tests d’intégration métier ;
 - les contrats locaux métier applicables.
+
+### 29.9 Sacralisation de `couche_dto`
+
+La couche canonique `couche_dto` a vocation à regrouper l’ensemble des DTO, des convertisseurs DTO et des tests associés permettant à l’IA de comprendre le contrat d’échange entre couches applicatives, en particulier entre CONTROLLER et SERVICE UC.
+
+Sous-couches logiques admises :
+- `couche_dto.objets`
+- `couche_dto.convertisseurs`
+- `couche_dto.tests`
+
+Cette couche comprend au minimum :
+
+#### DTO et convertisseurs DTO
+- `src/main/java/levy/daniel/application/model/dto/produittype/ConvertisseurMetierToOutputDTOProduit.java`
+- `src/main/java/levy/daniel/application/model/dto/produittype/ConvertisseurMetierToOutputDTOSousTypeProduit.java`
+- `src/main/java/levy/daniel/application/model/dto/produittype/ConvertisseurMetierToOutputDTOTypeProduit.java`
+- `src/main/java/levy/daniel/application/model/dto/produittype/ProduitDTO.java`
+- `src/main/java/levy/daniel/application/model/dto/produittype/SousTypeProduitDTO.java`
+- `src/main/java/levy/daniel/application/model/dto/produittype/TypeProduitDTO.java`
+
+#### Tests DTO et convertisseurs DTO
+- `src/test/java/levy/daniel/application/model/dto/produittype/ConvertisseurMetierToOutputDTOProduitTest.java`
+- `src/test/java/levy/daniel/application/model/dto/produittype/ConvertisseurMetierToOutputDTOSousTypeProduitTest.java`
+- `src/test/java/levy/daniel/application/model/dto/produittype/ConvertisseurMetierToOutputDTOTypeProduitTest.java`
+- `src/test/java/levy/daniel/application/model/dto/produittype/ProduitDTOTest.java`
+- `src/test/java/levy/daniel/application/model/dto/produittype/SousTypeProduitDTOTest.java`
+- `src/test/java/levy/daniel/application/model/dto/produittype/TypeProduitDTOTest.java`
+
+#### Contrats locaux DTO pivots
+- `docs/contrats/dto/TypeProduitDTO.md`
+- `docs/contrats/dto/SousTypeProduitDTO.md`
+- `docs/contrats/dto/ProduitDTO.md`
+
+Règles :
+- les DTO ne relèvent pas de `couche_persistance` ;
+- les DTO servent de contrat d’échange entre couches applicatives, notamment CONTROLLER ↔ SERVICE UC ;
+- les convertisseurs DTO appartiennent à `couche_dto` ;
+- les tests DTO et convertisseurs DTO appartiennent à `couche_dto` ;
+- `couche_dto` doit être auditée comme un tout cohérent, et non fichier par fichier isolé ;
+- les pivots documentaires initiaux de la couche sont `TypeProduitDTO`, `SousTypeProduitDTO` et `ProduitDTO`.
+
+Les contrats locaux DTO doivent permettre à l’IA de retrouver :
+- le rôle du DTO ;
+- la structure `InputDTO` / `OutputDTO` lorsque applicable ;
+- les invariants de structure ;
+- les contraintes de nullité ;
+- les règles d’égalité / hashCode ;
+- les règles sur les collections embarquées ;
+- les interactions avec les convertisseurs ;
+- les tests qui verrouillent ces comportements.
+
+La couche `couche_dto` doit permettre à l’IA de retrouver comme un tout cohérent :
+- les DTO principaux ;
+- les convertisseurs DTO liés ;
+- les tests unitaires DTO ;
+- les tests unitaires des convertisseurs DTO ;
+- les contrats locaux DTO applicables.

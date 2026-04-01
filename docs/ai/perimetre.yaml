@@ -81,6 +81,9 @@ packs:
       - "docs/contrats/metier/TypeProduit.md"
       - "docs/contrats/metier/SousTypeProduit.md"
       - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/dto/TypeProduitDTO.md"
+      - "docs/contrats/dto/SousTypeProduitDTO.md"
+      - "docs/contrats/dto/ProduitDTO.md"
 
   configuration_racine_build_ci:
     description: "Racine / build / CI : fichiers racine du dépôt, build Maven, script de tests des couches validées et workflow CI."
@@ -173,7 +176,7 @@ packs:
         allow_missing: false
 
   dto:
-    description: "DTO, convertisseurs DTO et tests."
+    description: "Couche DTO : DTO, convertisseurs DTO et tests associés."
     roots:
       - path: "src/main/java/levy/daniel/application/model/dto"
         recursive: true
@@ -283,6 +286,7 @@ couches:
     - "couche_ia"
     - "couche_configuration_tests"
     - "couche_metier"
+    - "couche_dto"
     - "couche_persistance"
     - "couche_services"
     - "couche_controllers"
@@ -332,14 +336,26 @@ couches:
         - "docs/contrats/metier/SousTypeProduit.md"
         - "docs/contrats/metier/Produit.md"
 
-    couche_persistance:
+    couche_dto:
       statut: "declared"
       mandatory_pre_read: false
       packs:
         - "dto"
+      sous_couches:
+        - "couche_dto.objets"
+        - "couche_dto.convertisseurs"
+        - "couche_dto.tests"
+      contract_paths:
+        - "docs/contrats/dto/TypeProduitDTO.md"
+        - "docs/contrats/dto/SousTypeProduitDTO.md"
+        - "docs/contrats/dto/ProduitDTO.md"
+
+    couche_persistance:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
         - "persistance"
       sous_couches:
-        - "couche_persistance.dto"
         - "couche_persistance.jpa"
 
     couche_services:

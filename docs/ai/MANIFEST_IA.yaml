@@ -88,6 +88,7 @@ couches:
     - couche_ia
     - couche_configuration_tests
     - couche_metier
+    - couche_dto
     - couche_persistance
     - couche_services
     - couche_controllers
@@ -133,14 +134,26 @@ couches:
         - docs/contrats/metier/SousTypeProduit.md
         - docs/contrats/metier/Produit.md
 
-    couche_persistance:
+    couche_dto:
       statut: declared
       mandatory_pre_read: false
       packs:
         - dto
+      sous_couches:
+        - couche_dto.objets
+        - couche_dto.convertisseurs
+        - couche_dto.tests
+      contracts:
+        - docs/contrats/dto/TypeProduitDTO.md
+        - docs/contrats/dto/SousTypeProduitDTO.md
+        - docs/contrats/dto/ProduitDTO.md
+
+    couche_persistance:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
         - persistance
       sous_couches:
-        - couche_persistance.dto
         - couche_persistance.jpa
 
     couche_services:
