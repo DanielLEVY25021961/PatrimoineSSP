@@ -124,6 +124,14 @@ couches:
       mandatory_pre_read: false
       packs:
         - metier
+      sous_couches:
+        - couche_metier.objets
+        - couche_metier.utilitaires
+        - couche_metier.tests
+      contracts:
+        - docs/contrats/metier/TypeProduit.md
+        - docs/contrats/metier/SousTypeProduit.md
+        - docs/contrats/metier/Produit.md
 
     couche_persistance:
       statut: declared

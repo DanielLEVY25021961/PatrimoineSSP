@@ -78,6 +78,9 @@ packs:
       - "docs/contrats/cu/SousTypeProduitICuService.md"
       - "docs/contrats/cu/TypeProduitICuService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+      - "docs/contrats/metier/TypeProduit.md"
+      - "docs/contrats/metier/SousTypeProduit.md"
+      - "docs/contrats/metier/Produit.md"
 
   configuration_racine_build_ci:
     description: "Racine / build / CI : fichiers racine du dépôt, build Maven, script de tests des couches validées et workflow CI."
@@ -142,7 +145,7 @@ packs:
         allow_missing: true
 
   metier:
-    description: "Couche métier (domain model + tests)."
+    description: "Couche métier : objets métier, interfaces métier, utilitaires métier et tests associés."
     roots:
       - path: "src/main/java/levy/daniel/application/model/metier"
         recursive: true
@@ -151,6 +154,18 @@ packs:
         exclude_globs: []
         allow_missing: false
       - path: "src/test/java/levy/daniel/application/model/metier"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/main/java/levy/daniel/application/model/utilitaires/metier"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/utilitaires/metier"
         recursive: true
         include_globs:
           - "**/*.java"
@@ -174,7 +189,7 @@ packs:
         allow_missing: false
 
   persistance:
-    description: "Couche persistance (dao, entities, convertisseurs, utilitaires, tests)."
+    description: "Couche persistance (dao, entities, convertisseurs et tests)."
     roots:
       - path: "src/main/java/levy/daniel/application/persistence"
         recursive: true
@@ -183,18 +198,6 @@ packs:
         exclude_globs: []
         allow_missing: false
       - path: "src/test/java/levy/daniel/application/persistence"
-        recursive: true
-        include_globs:
-          - "**/*.java"
-        exclude_globs: []
-        allow_missing: false
-      - path: "src/main/java/levy/daniel/application/model/utilitaires"
-        recursive: true
-        include_globs:
-          - "**/*.java"
-        exclude_globs: []
-        allow_missing: false
-      - path: "src/test/java/levy/daniel/application/model/utilitaires"
         recursive: true
         include_globs:
           - "**/*.java"
@@ -320,6 +323,14 @@ couches:
       mandatory_pre_read: false
       packs:
         - "metier"
+      sous_couches:
+        - "couche_metier.objets"
+        - "couche_metier.utilitaires"
+        - "couche_metier.tests"
+      contract_paths:
+        - "docs/contrats/metier/TypeProduit.md"
+        - "docs/contrats/metier/SousTypeProduit.md"
+        - "docs/contrats/metier/Produit.md"
 
     couche_persistance:
       statut: "declared"
