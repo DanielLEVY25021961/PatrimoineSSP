@@ -28,8 +28,10 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreNull;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionStockageVide;
 import levy.daniel.application.model.services.produittype.gateway.TypeProduitGatewayIService;
+import levy.daniel.application.model.services.produittype.gateway.impl.TypeProduitGatewayJPAService;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
+import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.TypeProduitDaoJPA;
 
 /**
  * <style>p, ul, li, h1 {line-height : 1em;}</style>
@@ -44,7 +46,8 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * Cette classe modélise :
  * le <span style="font-weight:bold;">
  * SERVICE METIER (Use Case) ADAPTER</span>
- * pour l'objet métier <code style="font-weight:bold;">TypeProduit</code>.
+ * pour l'objet métier <code style="font-weight:bold;">
+ * {@link TypeProduit}</code>.
  * </p>
  *
  * <p style="font-weight:bold;">SERVICE USE CASE
@@ -55,11 +58,14 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * <p>Cette classe <span style="font-weight:bold;">
  * SERVICE METIER (Use Case)</span> ne connait
  * <span style="font-weight:bold;">pas</span> par exemple
- * le DAO JPA <code style="font-weight:bold;">TypeProduitDaoJPA</code>
+ * le DAO JPA <code style="font-weight:bold;">
+ * {@link TypeProduitDaoJPA}</code>
  * de la classe TECHNIQUE concrète <code style="font-weight:bold;">
- * TypeProduitGatewayJPAService</code> qui implémente l'interface
+ * {@link TypeProduitGatewayJPAService}</code> 
+ * qui implémente l'interface
  * de SERVICE TECHNIQUE <code style="font-weight:bold;">
- * TypeProduitGatewayIService</code>.</p>
+ * {@link TypeProduitGatewayIService}</code>.
+ * </p>
  *
  * <p>C'est dans ce SERVICE USE CASE ADAPTER METIER que l'on :</p>
  * <ul>

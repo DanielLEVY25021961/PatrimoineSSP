@@ -48,7 +48,8 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * Cette classe modélise :
  * le <span style="font-weight:bold;">
  * SERVICE METIER (Use Case) ADAPTER</span>
- * pour l'objet métier <code style="font-weight:bold;">SousTypeProduit</code>.
+ * pour l'objet métier <code style="font-weight:bold;">
+ * {@link SousTypeProduit}</code>.
  * </p>
  *
  * <p style="font-weight:bold;">SERVICE USE CASE
@@ -59,11 +60,14 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * <p>Cette classe <span style="font-weight:bold;">
  * SERVICE METIER (Use Case)</span> ne connait
  * <span style="font-weight:bold;">pas</span> par exemple
- * le DAO JPA <code style="font-weight:bold;">SousTypeProduitDaoJPA</code>
+ * le DAO JPA <code style="font-weight:bold;">
+ * {@link SousTypeProduitDaoJPA}</code>
  * de la classe TECHNIQUE concrète <code style="font-weight:bold;">
- * SousTypeProduitGatewayJPAService</code> qui implémente l'interface
+ * {@link SousTypeProduitGatewayJPAService}</code> 
+ * qui implémente l'interface
  * de SERVICE TECHNIQUE <code style="font-weight:bold;">
- * SousTypeProduitGatewayIService</code>.</p>
+ * {@link SousTypeProduitGatewayIService}</code>.
+ * </p>
  *
  * <p>C'est dans ce SERVICE USE CASE ADAPTER METIER que l'on :</p>
  * <ul>

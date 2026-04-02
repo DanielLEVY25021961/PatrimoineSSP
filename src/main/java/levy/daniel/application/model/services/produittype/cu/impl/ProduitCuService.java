@@ -34,10 +34,53 @@ import levy.daniel.application.model.services.produittype.pagination.RequetePage
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
 /**
+ * <style>p, ul, li, h1 {line-height : 1em;}</style>
+ * <style>h1 {text-decoration: underline;}</style>
+ * 
  * <div>
- * <p style="font-weight:bold;">CLASSE ProduitCuService :</p>
- * <p>SERVICE ADAPTER METIER Use Case implémentant le PORT {@link ProduitICuService}.</p>
- * <p>Délègue la persistance au Service Gateway {@link ProduitGatewayIService}.</p>
+ * <p style="font-weight:bold;">
+ * CLASSE ProduitCuService :
+ * </p>
+ * 
+ * <p>
+ * Cette classe modélise :
+ * le <span style="font-weight:bold;">
+ * SERVICE METIER (Use Case) ADAPTER</span>
+ * pour l'objet métier <code style="font-weight:bold;">
+ * {@link Produit}</code>.
+ * </p>
+ * 
+ * <p style="font-weight:bold;">SERVICE USE CASE
+ * </p>
+ * <p>Cette classe <span style="font-weight:bold;">
+ * SERVICE METIER (Use Case)</span> ne connait que l'INTERFACE
+ * TECHNIQUE GATEWAY qui est injectée par SPRING via le Constructeur.</p>
+ * <p>Cette classe <span style="font-weight:bold;">
+ * SERVICE METIER (Use Case)</span> ne connait
+ * <span style="font-weight:bold;">pas</span> par exemple
+ * le DAO JPA <code style="font-weight:bold;">
+ * {@link ProduitDaoJPA}</code>
+ * de la classe TECHNIQUE concrète <code style="font-weight:bold;">
+ * {@link ProduitGatewayJPAService}</code> 
+ * qui implémente l'interface
+ * de SERVICE TECHNIQUE <code style="font-weight:bold;">
+ * {@link ProduitGatewayIService}</code>.
+ * </p>
+ * 
+ * <p>C'est dans ce SERVICE USE CASE ADAPTER METIER que l'on :</p>
+ * <ul>
+ * <li>implémente la <span style="font-weight:bold;">
+ * logique métier
+ * </span>.</li>
+ * <li>Reçoit des InputDTO provenant des Controllers</li>
+ * <li><span style="font-weight:bold;">Convertit</span>
+ * les InputDTO en Objets métier</li>
+ * <li>Sollicite le SERVICE GATEWAY en lui passant des ObjetsMetier.</li>
+ * <li>Traite les réponses (Objets métier) retournées
+ * par le service Gateway.</li>
+ * <li>Convertit les Objets métier retournés
+ * par le gateway en OutputDTO.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
