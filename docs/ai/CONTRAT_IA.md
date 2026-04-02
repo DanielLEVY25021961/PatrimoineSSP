@@ -1,4 +1,4 @@
-# CONTRAT IA — Projet Java Hexagonal (Constitution technique)
+# CONTRAT IA — Projet Java Hexagonal (Constitution technique) - docs/ai/CONTRAT_IA.md
 
 ## PRÉAMBULE
 
@@ -544,14 +544,29 @@ Règle obligatoire :
 
 Forme de livraison obligatoire :
 - directement dans le chat ;
+- **1 fichier = 1 bloc autonome complet** ;
+- chaque fichier doit être précédé de la ligne exacte : `Chemin STS : <chemin exact dans le projet>` ;
+- le chemin annoncé doit être le chemin réel exact du fichier dans le dépôt ;
 - sous forme d’un bloc de code autonome correspondant à un fichier complet ;
 - visible intégralement avant copie ;
 - avec le bouton **copier** du bloc comme mode nominal de récupération ;
-- sans archive `.zip`.
+- sans archive `.zip` ;
+- sans fichier joint comme mode nominal ;
+- sans lien de téléchargement comme mode nominal.
 
 Interdictions complémentaires :
 - un simple lien de téléchargement ne remplace jamais le bloc visible ;
-- l’utilisateur doit toujours pouvoir relire le contenu complet dans le chat avant copie.
+- un fichier joint ne remplace jamais le bloc visible ;
+- l’utilisateur doit toujours pouvoir relire le contenu complet dans le chat avant copie ;
+- l’IA ne doit jamais rebaptiser le fichier livré ;
+- l’IA ne doit jamais remplacer une partie du contenu par `...` ou par une omission implicite ;
+- l’IA ne doit jamais intercaler une explication à l’intérieur du fichier livré ;
+- l’utilisateur ne doit jamais avoir à reconstruire le résultat final.
+
+Préférence forte de présentation :
+- lorsqu’un fichier généré admet naturellement les commentaires sans effet de bord, l’IA doit préférer insérer en tête du fichier un commentaire portant son chemin exact ;
+- si le fichier possède déjà un en-tête canonique du projet, l’IA doit le conserver et l’utiliser comme forme prioritaire ;
+- cette préférence ne doit jamais casser le format du fichier ni contredire un en-tête déjà validé.
 
 Exception strictement encadrée :
 - si un fichier est trop gros pour être livré directement dans le chat, l’IA doit l’indiquer explicitement ;

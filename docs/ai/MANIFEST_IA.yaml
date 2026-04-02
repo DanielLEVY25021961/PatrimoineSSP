@@ -90,8 +90,20 @@ livraison_fichiers_fragiles:
     - .py
   complete_file_only: true
   visible_code_block_required: true
+  exact_prefix_line_required: "Chemin STS : <chemin exact dans le projet>"
+  one_file_one_block: true
   copy_button_expected: true
   zip_forbidden: true
+  file_attachment_forbidden_as_nominal_mode: true
+  download_link_forbidden_as_nominal_mode: true
+  file_renaming_forbidden: true
+  omission_forbidden: true
+  ellipsis_forbidden: true
+  interleaved_explanation_inside_file_forbidden: true
+  visual_review_in_chat_before_copy_expected: true
+  direct_paste_into_sts_expected: true
+  filename_comment_header_preferred_when_format_allows: true
+  preserve_existing_canonical_header_if_present: true
   download_link_only_if_too_large: true
   multi_turn_delivery_allowed: true
 

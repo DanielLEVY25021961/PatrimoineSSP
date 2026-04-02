@@ -38,9 +38,21 @@ policy:
     tri_stable: true
     livraison_fichiers_fragiles_complete_only: true
     livraison_fichiers_fragiles_bloc_visible_obligatoire: true
+    livraison_fichiers_fragiles_prefixe_exact_obligatoire: "Chemin STS : <chemin exact dans le projet>"
+    livraison_fichiers_fragiles_un_fichier_un_bloc: true
     livraison_fichiers_fragiles_bouton_copier_nominal: true
     livraison_fichiers_fragiles_interdit_zip: true
+    livraison_fichiers_fragiles_interdit_fichier_joint_comme_mode_nominal: true
     livraison_fichiers_fragiles_interdit_lien_seul: true
+    livraison_fichiers_fragiles_interdit_lien_comme_mode_nominal: true
+    livraison_fichiers_fragiles_interdit_renommage: true
+    livraison_fichiers_fragiles_interdit_omission: true
+    livraison_fichiers_fragiles_interdit_ellipsis: true
+    livraison_fichiers_fragiles_interdit_explication_dans_fichier: true
+    livraison_fichiers_fragiles_relecture_visuelle_chat_avant_copie: true
+    livraison_fichiers_fragiles_collage_direct_sts: true
+    livraison_fichiers_fragiles_commentaire_nom_fichier_prefere_si_format_compatible: true
+    livraison_fichiers_fragiles_conserver_entete_canonique_si_present: true
     livraison_fichiers_fragiles_lien_si_trop_gros_seulement: true
     livraison_fichiers_fragiles_livraison_multi_echanges_autorisee: true
     comparaison_texte_eol_normalisee_obligatoire: true
