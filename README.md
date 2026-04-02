@@ -1,3 +1,4 @@
+<!-- README.md -->
 # PatrimoineSSP
 
 Application Java de gestion de patrimoine structurée selon une architecture hexagonale et gouvernée par un workflow technique strict orienté SHA-only.
@@ -56,11 +57,13 @@ Le projet est organisé selon les couches canoniques suivantes :
 La CI GitHub Actions est configurée sur :
 
 ### Push
+
 - `main`
 - `develop`
 - `feature/uc`
 
 ### Pull request
+
 - `main`
 - `develop`
 
@@ -89,36 +92,11 @@ Les couches controllers et vues restent en cours de construction.
 ## Objectif du dépôt
 
 Fournir un projet Java hexagonal :
+
 - lisible
 - testable
 - traçable
 - reproductible
 - auditable au SHA
 
-avec un workflow permettant de relire, comparer, consolider et corriger le projet de manière strictement déterministe.# PatrimoineSSP
-
-Application de gestion de patrimoine.
-
-## Stack technique
-
-- Java 21
-- Maven
-- Spring Boot
-- CI GitHub Actions
-
-## Architecture
-
-Projet structuré en couches :
-
-- Couche métier
-- Couche services
-- Couche persistence
-- Couche presentation
-
-## CI
-
-Build automatique via GitHub Actions sur la branche `main`.
-
----
-
-Projet en cours de construction.
+avec un workflow permettant de relire, comparer, consolider et corriger le projet de manière strictement déterministe.
