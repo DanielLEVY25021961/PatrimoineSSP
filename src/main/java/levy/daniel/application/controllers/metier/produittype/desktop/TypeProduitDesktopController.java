@@ -3,6 +3,8 @@
 /* ********************************************************************* */
 package levy.daniel.application.controllers.metier.produittype.desktop;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,6 +49,8 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * <ul>
  * <li>la création d'un objet métier dans le stockage
  * via {@link #creer(InputDTO)}.</li>
+ * <li>la recherche exhaustive des objets métier dans le stockage
+ * via {@link #rechercherTous()}.</li>
  * <li>la récupération du message utilisateur courant
  * via {@link #getMessage()}.</li>
  * </ul>
@@ -120,44 +124,49 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 		this.service = pService;
 	}
 
+
 	
-		
 	/**
 	* {@inheritDoc}
 	*/
 	@Override
 	public OutputDTO creer(final InputDTO pInputDTO) throws Exception {
 
-		/* **** TRAITEMENTS DE SURFACE.****** */
-		/* Si pInputDTO == null : 
-		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL 
-		 * + retourne null. */
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL
+		 * + retourne null.
+		 */
 		if (pInputDTO == null) {
 			this.message = MESSAGE_CREER_VUE_NULL;
 			return null;
 		}
-		
+
 		final String libelle = pInputDTO.getTypeProduit();
-		
-		/* Si le libelle est blank (null ou espaces) : 
-		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK 
-		 * + retourne null. */
+
+		/*
+		 * Si le libellé est blank (null ou espaces) :
+		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK
+		 * + retourne null.
+		 */
 		if (StringUtils.isBlank(libelle)) {
 			this.message = MESSAGE_CREER_VUE_BLANK;
 			return null;
 		}
-		
+
 		/* ****** CREATION. ****** */
 		/*
-		 * Délègue la création au SERVICE UC 
+		 * Délègue la création au SERVICE UC
 		 * et récupère le message éventuel du Service.
 		 */
 		final OutputDTO reponse = this.service.creer(pInputDTO);
 		message = this.service.getMessage();
-		
-		/* retourne l'OutputDTO créé. */
-		return reponse;	
-		
+
+		/*
+		 * retourne l'OutputDTO créé.
+		 */
+		return reponse;
 	}
 
 	
@@ -165,6 +174,42 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 	/**
 	* {@inheritDoc}
 	*/
+	@Override
+	public List<OutputDTO> rechercherTous() throws Exception {
+
+		/* ****** RECHERCHE EXHAUSTIVE. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche exhaustive au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final List<OutputDTO> reponse = this.service.rechercherTous();
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste d'OutputDTO obtenue.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getMessage() {
 

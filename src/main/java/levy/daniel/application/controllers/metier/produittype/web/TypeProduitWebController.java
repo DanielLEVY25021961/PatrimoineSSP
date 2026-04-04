@@ -3,11 +3,14 @@
 /* ********************************************************************* */
 package levy.daniel.application.controllers.metier.produittype.web;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,8 +34,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * pour l'objet métier <code style="font-weight:bold;">
  * {@link TypeProduit}</code>.</p>
  * </div>
- * 
- * 
+ *
  * <div>
  * <ul>
  * <li>Cette classe est appelée par la couche VUES / HTTP.</li>
@@ -43,12 +45,14 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * ni DAO, ni persistance.</li>
  * </ul>
  * </div>
- * 
+ *
  * <div>
- * <p>Dans l'état courant du chantier, elle implémente :<p>
+ * <p>Dans l'état courant du chantier, elle implémente :</p>
  * <ul>
- * <li>la création d'un objet métier dans le stockage 
+ * <li>la création d'un objet métier dans le stockage
  * via {@link #creer(InputDTO)}.</li>
+ * <li>la recherche exhaustive des objets métier dans le stockage
+ * via {@link #rechercherTous()}.</li>
  * <li>la récupération du message utilisateur courant
  * via {@link #getMessage()}.</li>
  * </ul>
@@ -73,12 +77,12 @@ public class TypeProduitWebController implements TypeProduitIController {
 	 * </div>
 	 */
 	private final TypeProduitICuService service;
-	
+
 	/**
 	 * <div>
 	 * <p>Message à l'attention de l'utilisateur (VUE).</p>
-	 * <p>Provient généralement directement du SERVICE METIER UC. 
-	 * Peut être créé ou enrichi par les contrôles de 
+	 * <p>Provient généralement directement du SERVICE METIER UC.
+	 * Peut être créé ou enrichi par les contrôles de
 	 * surface du présent CONTROLLER.</p>
 	 * </div>
 	 */
@@ -109,7 +113,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 	 * <li>Indispensable pour l'injection par SPRING
 	 * du {@link TypeProduitICuService} via le constructeur.</li>
 	 * <li>Ne surtout pas créer de constructeur d'arité nulle
-	 * dans cette classe (sinon, SPRING chercherait 
+	 * dans cette classe (sinon, SPRING chercherait
 	 * à l'utiliser et cela casserait l'injection du SERVICE).</li>
 	 * </ul>
 	 * </div>
@@ -127,46 +131,135 @@ public class TypeProduitWebController implements TypeProduitIController {
 	
 	
 	/**
-	 * {@inheritDoc}
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Reçoit depuis la couche VUES / HTTP
+	 * un {@link InputDTO}
+	 * et crée un objet métier dans le stockage.
+	 * </p>
+	 * <p>Le code exécute d'abord les contrôles de surface
+	 * de la requête reçue.</p>
+	 * <p>Si ces contrôles échouent,
+	 * il produit un message utilisateur local
+	 * et retourne {@code null}
+	 * sans solliciter le SERVICE UC.</p>
+	 * <p>Si ces contrôles sont satisfaits,
+	 * il délègue la création au SERVICE UC,
+	 * récupère le message utilisateur produit par ce service
+	 * et retourne la réponse fournie.</p>
+	 * </div>
+	 *
+	 * @param pInputDTO : InputDTO :
+	 * le TypeProduit transmis par la couche VUES / HTTP.
+	 * @return OutputDTO :
+	 * le TypeProduit créé ;
+	 * peut être {@code null}
+	 * si le CONTROLLER bloque la requête
+	 * ou si le SERVICE UC retourne {@code null}.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * après délégation effective.
 	 */
 	@Override
 	@PostMapping
 	public OutputDTO creer(@RequestBody final InputDTO pInputDTO)
 			throws Exception {
 
-		/* **** TRAITEMENTS DE SURFACE.****** */
-		/* Si pInputDTO == null : 
-		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL 
-		 * + retourne null. */
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL
+		 * + retourne null.
+		 */
 		if (pInputDTO == null) {
 			this.message = MESSAGE_CREER_VUE_NULL;
 			return null;
 		}
-		
+
 		final String libelle = pInputDTO.getTypeProduit();
-		
-		/* Si le libelle est blank (null ou espaces) : 
-		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK 
-		 * + retourne null. */
+
+		/*
+		 * Si le libellé est blank (null ou espaces) :
+		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK
+		 * + retourne null.
+		 */
 		if (StringUtils.isBlank(libelle)) {
 			this.message = MESSAGE_CREER_VUE_BLANK;
 			return null;
 		}
-		
+
 		/* ****** CREATION. ****** */
 		/*
-		 * Délègue la création au SERVICE UC 
+		 * Délègue la création au SERVICE UC
 		 * et récupère le message éventuel du Service.
 		 */
 		final OutputDTO reponse = this.service.creer(pInputDTO);
 		message = this.service.getMessage();
-		
-		/* retourne l'OutputDTO créé. */
+
+		/*
+		 * retourne l'OutputDTO créé.
+		 */
 		return reponse;
 		
 	}
-	
 
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Retourne à la VUE / HTTP
+	 * tous les objets métier présents dans le stockage.
+	 * </p>
+	 * <p>Le code délègue la recherche exhaustive
+	 * au SERVICE UC.</p>
+	 * <p>En cas de succès,
+	 * il récupère le message utilisateur du service
+	 * puis retourne la liste fournie.</p>
+	 * <p>En cas d'exception,
+	 * il récupère d'abord le message utilisateur du service,
+	 * puis laisse l'exception remonter à la VUE.</p>
+	 * </div>
+	 *
+	 * @return List<OutputDTO> :
+	 * la liste exhaustive des objets métier
+	 * présents dans le stockage.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC.
+	 */
+	@Override
+	@GetMapping
+	public List<OutputDTO> rechercherTous() throws Exception {
+
+		/* ****** RECHERCHE EXHAUSTIVE. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche exhaustive au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final List<OutputDTO> reponse = this.service.rechercherTous();
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste d'OutputDTO obtenue.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
+	
 	
 	/**
 	 * {@inheritDoc}
@@ -178,10 +271,9 @@ public class TypeProduitWebController implements TypeProduitIController {
 		 * Retourne le message utilisateur courant
 		 * produit par le SERVICE UC ou généré par le présent CONTROLLER.
 		 */
-		return this.message;	
-		
+		return this.message;
 	}
-	
-	
 
+	
+	
 }
