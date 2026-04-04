@@ -155,18 +155,32 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 			return null;
 		}
 
-		/* ****** CREATION. ****** */
-		/*
-		 * Délègue la création au SERVICE UC
-		 * et récupère le message éventuel du Service.
-		 */
-		final OutputDTO reponse = this.service.creer(pInputDTO);
-		message = this.service.getMessage();
+		/* ****** CREATION. ****** */		
+		try {
 
-		/*
-		 * retourne l'OutputDTO créé.
-		 */
-		return reponse;
+			/*
+			 * Délègue la création au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final OutputDTO reponse = this.service.creer(pInputDTO);
+			message = this.service.getMessage();
+
+			/*
+			 * retourne l'OutputDTO créé.
+			 */
+			return reponse;
+
+		} catch (Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+		
 	}
 
 	
