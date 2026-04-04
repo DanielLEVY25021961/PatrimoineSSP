@@ -353,9 +353,93 @@ public class TypeProduitWebControllerIntegrationTest {
 	
 
 	
-	// ------------------ rechercherTousString() -------------------------//
+	// ------------------ rechercherTousString() ------------------------//
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousString(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste de String non nulle</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>contient la création du test</li>
+	 * <li>reste cohérent avec la preuve physique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTousString(ok) : message exact + présence de la création + preuve BD")
+	public void testRechercherTousStringOkAvecPreuveBd() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final OutputDTO cree = this.controller.creer(new TypeProduitDTO.InputDTO(IT_ALPHA));
+
+		/* ======================= ACT ======================= */
+		final java.util.List<String> libelles = this.controller.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).contains(IT_ALPHA);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(IT_ALPHA);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousString(vide) : scénario nominal vide avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>prouve physiquement que la table est vide</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = {
+					"classpath:/truncate-test.sql"
+			},
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+	)
+	@DisplayName("rechercherTousString(vide) : liste vide + message exact + preuve BD")
+	public void testRechercherTousStringVideAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<String> libelles = this.controller.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(baseline).isZero();
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).isEmpty();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isZero();
+
+	} // __________________________________________________________________
 		
+	
+
+	// --------------- rechercherTousParPage(...) -----------------------//
+
+	
 
 	// ************************ METHODES PRIVEES **************************/
 
