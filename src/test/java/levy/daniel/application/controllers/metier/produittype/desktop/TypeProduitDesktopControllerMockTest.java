@@ -3,7 +3,6 @@ package levy.daniel.application.controllers.metier.produittype.desktop;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -192,22 +191,22 @@ public class TypeProduitDesktopControllerMockTest {
 	} // __________________________________________________________________
 
 
-	
-	
+		
 	/**
 	 * <div>
 	 * <p>creer(service KO) : propagation brute de l'exception du service.</p>
 	 * <ul>
 	 * <li>propage l'exception du service</li>
-	 * <li>n'appelle pas {@code service.getMessage()}</li>
-	 * <li>laisse inchangé le message du controller ({@code null} ici)</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
 	 * </ul>
 	 * </div>
-	 * @throws Exception 
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	@Tag(TAG)
-	@DisplayName("creer(service KO) : propage l'exception du service + pas de getMessage + message controller inchangé")
+	@DisplayName("creer(service KO) : propage l'exception + message service mémorisé")
 	public void testCreerServiceKo() throws Exception {
 
 		/* ===================== ARRANGE ===================== */
@@ -216,20 +215,122 @@ public class TypeProduitDesktopControllerMockTest {
 			= new TypeProduitDesktopController(service);
 		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
 		final ExceptionDoublon doublon = new ExceptionDoublon(MESSAGE_SERVICE_DOUBLON);
+		final String messageService = MESSAGE_SERVICE_DOUBLON;
 
 		when(service.creer(dto)).thenThrow(doublon);
+		when(service.getMessage()).thenReturn(messageService);
 
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> controller.creer(dto))
 				.isSameAs(doublon);
 
-		assertThat(controller.getMessage()).isNull();
+		assertThat(controller.getMessage()).isEqualTo(messageService);
 
 		verify(service, times(1)).creer(dto);
-		verify(service, never()).getMessage();
+		verify(service, times(1)).getMessage();
 
 	} // __________________________________________________________________
 	
 	
+	
+	// ------------------- rechercherTous() ------------------------------//
+
+	
+		
+	/**
+	 * <div>
+	 * <p>rechercherTous(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne la liste fournie par le service</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous(ok) : délégation service + liste + message service mémorisé")
+	public void testRechercherTousOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final OutputDTO dto = new TypeProduitDTO.OutputDTO(1L, OUTILLAGE, null);
+
+		when(service.rechercherTous()).thenReturn(java.util.List.of(dto));
+		when(service.getMessage()).thenReturn(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.rechercherTous();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(1);
+		assertThat(retour)
+				.extracting(TypeProduitDTO.OutputDTO::getIdTypeProduit)
+				.containsExactly(1L);
+		assertThat(retour)
+				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactly(OUTILLAGE);
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(service, times(1)).rechercherTous();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>rechercherTous(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous(service KO) : propage l'exception + message service mémorisé")
+	public void testRechercherTousServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ TypeProduitICuService.TIRET_ESPACE
+				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.rechercherTous()).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).rechercherTous();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+	
+	
+	// ------------------ rechercherTousString() -------------------------//
+
+		
 
 }

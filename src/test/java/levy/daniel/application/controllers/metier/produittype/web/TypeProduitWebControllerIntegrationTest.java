@@ -254,11 +254,73 @@ public class TypeProduitWebControllerIntegrationTest {
 				.isEqualTo(IT_ALPHA);
 
 	} // __________________________________________________________________
-
+	
+	
+	
+	// ------------------- rechercherTous() ------------------------------//
 
 	
+				
+	/**
+	 * <div>
+	 * <p>rechercherTous(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste non nulle</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>contient la création du test</li>
+	 * <li>reste cohérent avec le comptage physique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTous(ok) : message exact + cohérence count + présence de la création + preuve BD")
+	public void testRechercherTousOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final OutputDTO cree = this.controller.creer(new TypeProduitDTO.InputDTO(IT_ALPHA));
+		final long attendu = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos.size()).isEqualTo((int) attendu);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		assertThat(dtos)
+				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
+				.contains(IT_ALPHA);
+
+		final OutputDTO dtoAlpha = dtos.stream()
+				.filter(dto -> IT_ALPHA.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoAlpha).isNotNull();
+		assertThat(dtoAlpha.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(IT_ALPHA);
+
+	} // __________________________________________________________________
+
+	
+	
+	// ------------------ rechercherTousString() -------------------------//
+
+		
+
 	// ************************ METHODES PRIVEES **************************/
 
+	
+	
 	/**
 	 * <div>
 	 * <p>Compte physiquement en base le nombre total de lignes de TYPES_PRODUIT.</p>
