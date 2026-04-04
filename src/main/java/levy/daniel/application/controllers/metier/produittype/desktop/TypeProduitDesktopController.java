@@ -17,6 +17,8 @@ import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.OutputDTO;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
+import levy.daniel.application.model.services.produittype.pagination.RequetePage;
+import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
 /**
  * <style>p, ul, li, h1 {line-height : 1em;}</style>
@@ -163,7 +165,7 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final OutputDTO reponse = this.service.creer(pInputDTO);
-			message = this.service.getMessage();
+			this.message = this.service.getMessage();
 
 			/*
 			 * retourne l'OutputDTO créé.
@@ -255,6 +257,46 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 
 	}
 	
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ResultatPage<OutputDTO> rechercherTousParPage(
+			final RequetePage pRequetePage)
+					throws Exception {
+
+		/* ****** RECHERCHE PAGINEE. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche paginée au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final ResultatPage<OutputDTO> reponse
+				= this.service.rechercherTousParPage(pRequetePage);
+			
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne le résultat paginé obtenu.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}	
+
 
 	
 	/**
