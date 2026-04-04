@@ -30,7 +30,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * pour l'objet métier <code style="font-weight:bold;">
  * {@link TypeProduit}</code>.</p>
  * </div>
- * 
+ *
  * <div>
  * <ul>
  * <li>Cette classe est appelée par les VUES Desktop.</li>
@@ -41,11 +41,11 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * ni DAO, ni persistance.</li>
  * </ul>
  * </div>
- * 
+ *
  * <div>
  * <p>Dans l'état courant du chantier, elle implémente :</p>
  * <ul>
- * <li>la création d'un objet métier dans le stockage 
+ * <li>la création d'un objet métier dans le stockage
  * via {@link #creer(InputDTO)}.</li>
  * <li>la récupération du message utilisateur courant
  * via {@link #getMessage()}.</li>
@@ -69,12 +69,12 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 	 * </div>
 	 */
 	private final TypeProduitICuService service;
-	
+
 	/**
 	 * <div>
 	 * <p>Message à l'attention de l'utilisateur (VUE).</p>
-	 * <p>Provient généralement directement du SERVICE METIER UC. 
-	 * Peut être créé ou enrichi par les contrôles de 
+	 * <p>Provient généralement directement du SERVICE METIER UC.
+	 * Peut être créé ou enrichi par les contrôles de
 	 * surface du présent CONTROLLER.</p>
 	 * </div>
 	 */
@@ -96,11 +96,8 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 	private static final Logger LOG
 		= LogManager.getLogger(TypeProduitDesktopController.class);
 
-	
-	
 	/* ************************** METHODES ***************************** */
 
-	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">CONSTRUCTEUR COMPLET.</p>
@@ -108,7 +105,7 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 	 * <li>Indispensable pour l'injection par SPRING
 	 * du {@link TypeProduitICuService} via le constructeur.</li>
 	 * <li>Ne surtout pas créer de constructeur d'arité nulle
-	 * dans cette classe (sinon, SPRING chercherait 
+	 * dans cette classe (sinon, SPRING chercherait
 	 * à l'utiliser et cela casserait l'injection du SERVICE).</li>
 	 * </ul>
 	 * </div>
@@ -124,48 +121,54 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 	}
 
 	
-	
+		
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	*/
 	@Override
 	public OutputDTO creer(final InputDTO pInputDTO) throws Exception {
-		
-		/* **** TRAITEMENTS DE SURFACE.****** */
-		/* Si pInputDTO == null : 
-		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL 
-		 * + retourne null. */
+
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL
+		 * + retourne null.
+		 */
 		if (pInputDTO == null) {
 			this.message = MESSAGE_CREER_VUE_NULL;
 			return null;
 		}
-		
+
 		final String libelle = pInputDTO.getTypeProduit();
-		
-		/* Si le libelle est blank (null ou espaces) : 
-		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK 
-		 * + retourne null. */
+
+		/*
+		 * Si le libellé est blank (null ou espaces) :
+		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK
+		 * + retourne null.
+		 */
 		if (StringUtils.isBlank(libelle)) {
 			this.message = MESSAGE_CREER_VUE_BLANK;
 			return null;
 		}
 
-		/* ****** CREATION. ****** */
 		/*
-		 * Délègue la création au SERVICE UC 
-		 * et récupère le message éventuel du Service.
+		 * Délègue la création au SERVICE UC.
 		 */
 		final OutputDTO reponse = this.service.creer(pInputDTO);
-		message = this.service.getMessage();
-		
+
+		/*
+		 * Récupère le message utilisateur courant
+		 * produit par le SERVICE UC.
+		 */
+		this.message = this.service.getMessage();
+
 		return reponse;
 	}
 
 	
 	
 	/**
-	 * {@inheritDoc}
-	 */
+	* {@inheritDoc}
+	*/
 	@Override
 	public String getMessage() {
 
@@ -174,7 +177,6 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 		 * produit par le SERVICE UC ou généré par le présent CONTROLLER.
 		 */
 		return this.message;
-		
 	}
 
 	

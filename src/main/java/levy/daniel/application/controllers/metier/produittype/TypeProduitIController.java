@@ -50,28 +50,29 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
  * @since 4 avril 2026
  */
 public interface TypeProduitIController {
-	
+
 	/**
 	 * "KO - la Vue a transmis un InputDTO null"
 	 */
-	String MESSAGE_CREER_VUE_NULL 
+	String MESSAGE_CREER_VUE_NULL
 		= "KO - la Vue a transmis un InputDTO null";
-	
+
 	/**
-	 * "KO - la Vue a transmis un InputDTO 
+	 * "KO - la Vue a transmis un InputDTO
 	 * avec un libellé blank (null ou espaces)"
 	 */
-	String MESSAGE_CREER_VUE_BLANK 
+	String MESSAGE_CREER_VUE_BLANK
 		= "KO - la Vue a transmis un InputDTO "
 				+ "avec un libellé blank (null ou espaces)";
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
 	 * Reçoit depuis la couche VUES
 	 * un {@link TypeProduitDTO.InputDTO}
-	 * et crée un objet métier dans le stockage
-	 * en déléguant exclusivement au SERVICE UC.
+	 * et crée un objet métier dans le stockage.
 	 * </p>
 	 * <p style="font-weight:bold;">
 	 * INTENTION DE CONTROLLER (scénario nominal) :
@@ -79,13 +80,16 @@ public interface TypeProduitIController {
 	 * <ul>
 	 * <li>recevoir depuis la VUE
 	 * un {@link TypeProduitDTO.InputDTO} ;</li>
-	 * <li>Exécuter les premiers contrôles de surface sur l'InputDTO 
+	 * <li>exécuter les premiers contrôles de surface sur l'InputDTO
 	 * et rédiger le cas échéant un message utilisateur circonstancié ;</li>
-	 * <li>déléguer la création au
+	 * <li>si les contrôles de surface sont satisfaits,
+	 * déléguer la création au
 	 * {@link TypeProduitICuService#creer(TypeProduitDTO.InputDTO)} ;</li>
-	 * <li>retourner tel quel à la VUE
+	 * <li>retourner à la VUE
 	 * le {@link TypeProduitDTO.OutputDTO}
-	 * fourni par le SERVICE UC.</li>
+	 * fourni par le SERVICE UC
+	 * ou {@code null} si le CONTROLLER bloque la saisie
+	 * avant délégation.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -94,24 +98,27 @@ public interface TypeProduitIController {
 	 * <ul>
 	 * <li>La méthode ne porte aucune logique métier locale.</li>
 	 * <li>La méthode ne construit aucun objet métier
-	 * et ne parle jamais au stockage.</li>
+	 * et ne parle jamais directement au stockage.</li>
 	 * <li>Si {@code pInputDTO == null},
-	 * la méthode délègue quand même au SERVICE UC,
-	 * qui reste seul responsable du message utilisateur
-	 * et du résultat retourné.</li>
-	 * <li>Si le libellé est blank,
-	 * la méthode propage l'exception applicative
-	 * levée par le SERVICE UC et fournit un message utilisateur.</li>
-	 * <li>Si le DTO correspond à un doublon fonctionnel,
-	 * la méthode propage l'exception métier
-	 * levée par le SERVICE UC et fournit un message utilisateur.</li>
-	 * <li>En cas de succès,
-	 * la méthode retourne le
-	 * {@link TypeProduitDTO.OutputDTO}
-	 * fourni par le SERVICE UC + message utilisateur de succès.</li>
-	 * <li>En cas d'erreur technique ou applicative,
-	 * la méthode propage l'exception levée
-	 * par le SERVICE UC sans remappage local.</li>
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_CREER_VUE_NULL}
+	 * et retourne {@code null}.</li>
+	 * <li>Si le libellé porté par {@code pInputDTO}
+	 * est blank ({@code null} ou espaces),
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_CREER_VUE_BLANK}
+	 * et retourne {@code null}.</li>
+	 * <li>Si les contrôles de surface sont satisfaits,
+	 * la méthode délègue la création au SERVICE UC,
+	 * récupère le message utilisateur courant produit
+	 * par ce service
+	 * et retourne le {@link TypeProduitDTO.OutputDTO}
+	 * qu'il fournit.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC après délégation,
+	 * la méthode propage l'exception sans remappage local.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -123,9 +130,11 @@ public interface TypeProduitIController {
 	 * <li>Le CONTROLLER reste sur sa frontière :
 	 * VUES <span style="font-weight:bold;">→</span>
 	 * SERVICE UC.</li>
-	 * <li>Le message utilisateur reste celui produit
-	 * par le SERVICE UC via
-	 * {@link TypeProduitICuService#getMessage()}.</li>
+	 * <li>Le CONTROLLER peut produire un message utilisateur
+	 * propre lors des contrôles de surface d'entrée.</li>
+	 * <li>Après délégation, le message utilisateur porté
+	 * par le CONTROLLER devient celui produit
+	 * par le SERVICE UC.</li>
 	 * <li>La méthode ne connaît ni GATEWAY,
 	 * ni DAO, ni entité JPA.</li>
 	 * </ul>
@@ -136,38 +145,42 @@ public interface TypeProduitIController {
 	 * au scénario de création.
 	 * @return TypeProduitDTO.OutputDTO :
 	 * le TypeProduit créé retourné à la couche VUES ;
-	 * peut être {@code null} si le SERVICE UC
-	 * retourne {@code null}.
+	 * peut être {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation
+	 * ou si le SERVICE UC retourne {@code null}.
 	 * @throws ExceptionParametreBlank
-	 * si le SERVICE UC détecte un libellé blank.
+	 * si le SERVICE UC détecte une incohérence applicative
+	 * lors de la délégation effective.
 	 * @throws ExceptionDoublon
-	 * si le SERVICE UC détecte un doublon fonctionnel.
+	 * si le SERVICE UC détecte un doublon fonctionnel
+	 * lors de la délégation effective.
 	 * @throws IllegalStateException
 	 * si le SERVICE UC lève une incohérence technique
 	 * sur son scénario de création.
 	 * @throws Exception
-	 * toute autre exception propagée par le SERVICE UC.
+	 * toute autre exception propagée par le SERVICE UC
+	 * après délégation effective.
 	 */
 	TypeProduitDTO.OutputDTO creer(TypeProduitDTO.InputDTO pInputDTO)
 			throws Exception;
 
-	
-	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
 	 * Retourne à la VUE le message utilisateur courant
-	 * produit par le SERVICE UC (ou le présent CONTROLLER).
+	 * porté par le présent CONTROLLER.
 	 * </p>
 	 * <p style="font-weight:bold;">
 	 * INTENTION DE CONTROLLER (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>récupérer le message utilisateur courant
-	 * du SERVICE UC 
-	 * (ou créer un message utilisateur propre au CONTROLLER) ;</li>
-	 * <li>retourner tel quel ce message
-	 * à la VUE.</li>
+	 * <li>retourner à la VUE le dernier message utilisateur
+	 * actuellement mémorisé par le CONTROLLER ;</li>
+	 * <li>fournir ainsi soit un message produit
+	 * par les contrôles de surface du CONTROLLER,
+	 * soit un message récupéré auprès du SERVICE UC
+	 * après délégation.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -178,13 +191,13 @@ public interface TypeProduitIController {
 	 * <li>La méthode ne construit aucun objet métier
 	 * et ne parle jamais au stockage.</li>
 	 * <li>La méthode retourne le message utilisateur courant
-	 * produit par le SERVICE UC 
-	 * (ou peut générer son propre message utilisateur 
-	 * en cas de contrôle de surface).</li>
+	 * mémorisé dans le CONTROLLER.</li>
+	 * <li>Ce message peut provenir soit d'un contrôle
+	 * de surface exécuté par le CONTROLLER,
+	 * soit du SERVICE UC après une délégation effective.</li>
 	 * <li>La méthode peut retourner {@code null}
-	 * si le SERVICE UC ne porte encore aucun message utilisateur 
-	 * (ou si les contrôles de surface dans le CONTROLLER 
-	 * ne génèrent aucun message utilisateur).</li>
+	 * si aucun message utilisateur n'a encore été mémorisé
+	 * dans le CONTROLLER.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -197,18 +210,16 @@ public interface TypeProduitIController {
 	 * VUES <span style="font-weight:bold;">→</span>
 	 * SERVICE UC.</li>
 	 * <li>Le message utilisateur retourné
-	 * est celui du SERVICE UC 
-	 * (ou un message généré par les contrôles 
-	 * de surface du présent CONTROLLER).</li>
+	 * est celui actuellement porté
+	 * par le présent CONTROLLER.</li>
 	 * <li>La méthode ne connaît ni GATEWAY,
 	 * ni DAO, ni entité JPA.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @return String :
-	 * le message utilisateur courant produit
-	 * par le SERVICE UC 
-	 * (ou généré par les contrôles de surface du présent CONTROLLER) ;
+	 * le message utilisateur courant mémorisé
+	 * par le présent CONTROLLER ;
 	 * peut être {@code null}.
 	 */
 	String getMessage();
