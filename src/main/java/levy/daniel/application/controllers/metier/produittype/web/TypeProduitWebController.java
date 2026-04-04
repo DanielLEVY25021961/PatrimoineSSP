@@ -1,8 +1,9 @@
 /* ********************************************************************* */
-/* ********************** ADAPTER CONTROLLER *************************** */
+/* ******************* ADAPTER WEB CONTROLLER ************************** */
 /* ********************************************************************* */
 package levy.daniel.application.controllers.metier.produittype.web;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -48,6 +49,8 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * <ul>
  * <li>la création d'un objet métier dans le stockage 
  * via {@link #creer(InputDTO)}.</li>
+ * <li>la récupération du message utilisateur courant
+ * via {@link #getMessage()}.</li>
  * </ul>
  * </div>
  *
@@ -70,6 +73,16 @@ public class TypeProduitWebController implements TypeProduitIController {
 	 * </div>
 	 */
 	private final TypeProduitICuService service;
+	
+	/**
+	 * <div>
+	 * <p>Message à l'attention de l'utilisateur (VUE).</p>
+	 * <p>Provient généralement directement du SERVICE METIER UC. 
+	 * Peut être créé ou enrichi par les contrôles de 
+	 * surface du présent CONTROLLER.</p>
+	 * </div>
+	 */
+	private String message;
 
 	/**
 	 * <style>p, ul, li {line-height : 1em;}</style>
@@ -121,11 +134,50 @@ public class TypeProduitWebController implements TypeProduitIController {
 	public OutputDTO creer(@RequestBody final InputDTO pInputDTO)
 			throws Exception {
 
+		/* **** TRAITEMENTS DE SURFACE.****** */
+		/* Si pInputDTO == null : 
+		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL 
+		 * + retourne null. */
+		if (pInputDTO == null) {
+			this.message = MESSAGE_CREER_VUE_NULL;
+			return null;
+		}
+		
+		final String libelle = pInputDTO.getTypeProduit();
+		
+		/* Si le libelle est blank (null ou espaces) : 
+		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK 
+		 * + retourne null. */
+		if (StringUtils.isBlank(libelle)) {
+			this.message = MESSAGE_CREER_VUE_BLANK;
+			return null;
+		}
+		
+		/* ****** CREATION. ****** */
 		/*
-		 * Délègue sans traitement métier local
-		 * le scénario de création au SERVICE UC.
+		 * Délègue la création au SERVICE UC 
+		 * et récupère le message éventuel du Service.
 		 */
-		return this.service.creer(pInputDTO);
+		final OutputDTO reponse = this.service.creer(pInputDTO);
+		message = this.service.getMessage();
+		
+		return reponse;
+	}
+	
+
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String getMessage() {
+
+		/*
+		 * Retourne le message utilisateur courant
+		 * produit par le SERVICE UC ou généré par le présent CONTROLLER.
+		 */
+		return this.message;	
+		
 	}
 	
 	

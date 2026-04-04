@@ -40,6 +40,8 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
  * <ul>
  * <li>la création d'un objet métier dans le stockage via
  * {@link #creer(TypeProduitDTO.InputDTO)}</li>
+ * <li>la récupération du message utilisateur courant via
+ * {@link #getMessage()}</li>
  * </ul>
  * </div>
  *
@@ -48,6 +50,20 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
  * @since 4 avril 2026
  */
 public interface TypeProduitIController {
+	
+	/**
+	 * "KO - la Vue a transmis un InputDTO null"
+	 */
+	String MESSAGE_CREER_VUE_NULL 
+		= "KO - la Vue a transmis un InputDTO null";
+	
+	/**
+	 * "KO - la Vue a transmis un InputDTO 
+	 * avec un libellé blank (null ou espaces)"
+	 */
+	String MESSAGE_CREER_VUE_BLANK 
+		= "KO - la Vue a transmis un InputDTO "
+				+ "avec un libellé blank (null ou espaces)";
 
 	/**
 	 * <div>
@@ -63,6 +79,8 @@ public interface TypeProduitIController {
 	 * <ul>
 	 * <li>recevoir depuis la VUE
 	 * un {@link TypeProduitDTO.InputDTO} ;</li>
+	 * <li>Exécuter les premiers contrôles de surface sur l'InputDTO 
+	 * et rédiger le cas échéant un message utilisateur circonstancié ;</li>
 	 * <li>déléguer la création au
 	 * {@link TypeProduitICuService#creer(TypeProduitDTO.InputDTO)} ;</li>
 	 * <li>retourner tel quel à la VUE
@@ -132,5 +150,67 @@ public interface TypeProduitIController {
 	 */
 	TypeProduitDTO.OutputDTO creer(TypeProduitDTO.InputDTO pInputDTO)
 			throws Exception;
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Retourne à la VUE le message utilisateur courant
+	 * produit par le SERVICE UC (ou le présent CONTROLLER).
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE CONTROLLER (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>récupérer le message utilisateur courant
+	 * du SERVICE UC 
+	 * (ou créer un message utilisateur propre au CONTROLLER) ;</li>
+	 * <li>retourner tel quel ce message
+	 * à la VUE.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais au stockage.</li>
+	 * <li>La méthode retourne le message utilisateur courant
+	 * produit par le SERVICE UC 
+	 * (ou peut générer son propre message utilisateur 
+	 * en cas de contrôle de surface).</li>
+	 * <li>La méthode peut retourner {@code null}
+	 * si le SERVICE UC ne porte encore aucun message utilisateur 
+	 * (ou si les contrôles de surface dans le CONTROLLER 
+	 * ne génèrent aucun message utilisateur).</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES <span style="font-weight:bold;">→</span>
+	 * SERVICE UC.</li>
+	 * <li>Le message utilisateur retourné
+	 * est celui du SERVICE UC 
+	 * (ou un message généré par les contrôles 
+	 * de surface du présent CONTROLLER).</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return String :
+	 * le message utilisateur courant produit
+	 * par le SERVICE UC 
+	 * (ou généré par les contrôles de surface du présent CONTROLLER) ;
+	 * peut être {@code null}.
+	 */
+	String getMessage();
 
 }
