@@ -3,12 +3,18 @@
 # PERIMETRE IA — Projet PatrimoineSSP (Hexagonal)
 # ======================================================================
 # Objectif ABSOLU :
-# - Sacraliser TOUTES les URLs Raw "refs/heads/${branche}" du projet.
-# - Ne plus jamais redemander une URL Raw : on se réfère à CE fichier.
-# - A chaque nouveau SHA :
+# - Sacraliser la découverte SHA-only du projet
+# - Ne plus jamais redemander une URL Raw
+# - Résoudre un périmètre HYBRIDE :
+#   * fichiers pivots explicites (paths)
+#   * couches de code résolues automatiquement (roots + globs)
+#
+# Règle :
+# A chaque nouveau SHA :
 #   1) reconstruire automatiquement les URLs raw SHA
 #      (https://raw.githubusercontent.com/{owner}/{repo}/{sha}/{path})
 #   2) relire sur GitHub via ces URLs SHA (RT-LECTURE-GITHUB-02)
+#   3) consolider la baseline
 # ======================================================================
 
 project:
@@ -16,41 +22,146 @@ project:
   repo: "PatrimoineSSP"
 
 variables:
-  branche: "feature/gateway"
+  branche: "feature/uc"
 
 policy:
   priorite_absolue:
-    sacraliser_urls_raw: true
     source_de_verite: "docs/ai/perimetre.yaml"
     rebuild_urls_sha_on_new_sha: true
     lecture_github_obligatoire: "RT-LECTURE-GITHUB-02"
     interdit_demander_urls_raw: true
     offline_required_when_github_unavailable: true
+    perimetre_hybride: true
+    gouvernance_par_couches_canoniques: true
+    couche_bootstrap_obligatoire: "couche_ia"
+    dedoublonnage_paths: true
+    tri_stable: true
+    livraison_fichiers_fragiles_complete_only: true
+    livraison_fichiers_fragiles_bloc_visible_obligatoire: true
+    livraison_fichiers_fragiles_prefixe_exact_obligatoire: "Chemin STS : <chemin exact dans le projet>"
+    livraison_fichiers_fragiles_un_fichier_un_bloc: true
+    livraison_fichiers_fragiles_bouton_copier_nominal: true
+    livraison_fichiers_fragiles_interdit_zip: true
+    livraison_fichiers_fragiles_interdit_fichier_joint_comme_mode_nominal: true
+    livraison_fichiers_fragiles_interdit_lien_seul: true
+    livraison_fichiers_fragiles_interdit_lien_comme_mode_nominal: true
+    livraison_fichiers_fragiles_interdit_renommage: true
+    livraison_fichiers_fragiles_interdit_omission: true
+    livraison_fichiers_fragiles_interdit_ellipsis: true
+    livraison_fichiers_fragiles_interdit_explication_dans_fichier: true
+    livraison_fichiers_fragiles_relecture_visuelle_chat_avant_copie: true
+    livraison_fichiers_fragiles_collage_direct_sts: true
+    livraison_fichiers_fragiles_commentaire_nom_fichier_prefere_si_format_compatible: true
+    livraison_fichiers_fragiles_conserver_entete_canonique_si_present: true
+    livraison_fichiers_fragiles_lien_si_trop_gros_seulement: true
+    livraison_fichiers_fragiles_livraison_multi_echanges_autorisee: true
+    comparaison_texte_eol_normalisee_obligatoire: true
+    comparaison_texte_eof_separee_obligatoire: true
+    text_comparison_mode: "canonical_eol_normalized"
+    canonical_newline_for_text_comparison: "LF"
+    eol_only_binary_difference_label: "fausse différence binaire EOL-only"
+    eol_only_binary_difference_is_real_change: false
+    treat_normalized_text_identity_as_same_file: true
+    consider_contrat_ia_same_across_sts_github_bundle_when_eol_only: true
+    consider_perimetre_same_across_sts_github_bundle_when_eol_only: true
 
 raw:
   template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"
   template_sha: "https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${path}"
 
 packs:
-
-  ai:
-    description: "Fichiers de pilotage IA (constitution + périmètre + outils)."
+  couche_ia:
+    description: "Couche IA sacralisée : gouvernance + outils IA + contrats locaux à relire avant toute action de l'IA."
     paths:
       - "docs/ai/MANIFEST_IA.yaml"
       - "docs/ai/CONTRAT_IA.md"
       - "docs/ai/perimetre.yaml"
+      - "tools/ai/perimetre_resolver.py"
+      - "tools/ai/pack_reading_list.py"
+      - "tools/ai/paths.txt"
+      - "tools/ai/resolve_raw_sha.py"
+      - "tools/ai/make_offline_bundle.py"
+      - "docs/contrats/cu/CoucheServicesUC.md"
+      - "docs/contrats/cu/ProduitICuService.md"
+      - "docs/contrats/cu/SousTypeProduitICuService.md"
+      - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/metier/TypeProduit.md"
+      - "docs/contrats/metier/SousTypeProduit.md"
+      - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/dto/TypeProduitDTO.md"
+      - "docs/contrats/dto/SousTypeProduitDTO.md"
+      - "docs/contrats/dto/ProduitDTO.md"
+      - "docs/contrats/persistance/CouchePersistance.md"
+      - "docs/contrats/persistance/ConvertisseurJPAToMetier.md"
+      - "docs/contrats/persistance/ConvertisseurMetierToJPA.md"
+      - "docs/contrats/persistance/ProduitJPA.md"
+      - "docs/contrats/persistance/SousTypeProduitJPA.md"
+      - "docs/contrats/persistance/TypeProduitJPA.md"
+      - "docs/contrats/persistance/ProduitDaoJPA.md"
+      - "docs/contrats/persistance/SousTypeProduitDaoJPA.md"
+      - "docs/contrats/persistance/TypeProduitDaoJPA.md"
+      - "docs/contrats/gateway/CoucheServicesGateway.md"
+      - "docs/contrats/gateway/ProduitGatewayIService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+
+  ai:
+    description: "Alias de compatibilité : gouvernance IA + outils IA."
+    paths:
+      - "docs/ai/MANIFEST_IA.yaml"
+      - "docs/ai/CONTRAT_IA.md"
+      - "docs/ai/perimetre.yaml"
+      - "tools/ai/perimetre_resolver.py"
       - "tools/ai/pack_reading_list.py"
       - "tools/ai/paths.txt"
       - "tools/ai/resolve_raw_sha.py"
       - "tools/ai/make_offline_bundle.py"
 
   docs_contrats:
-    description: "Contrats fonctionnels/techniques lisibles (docs/contrats)."
+    description: "Contrats locaux lisibles par l'IA avant action et/ou pendant l'audit."
     paths:
+      - "docs/contrats/cu/CoucheServicesUC.md"
+      - "docs/contrats/cu/ProduitICuService.md"
+      - "docs/contrats/cu/SousTypeProduitICuService.md"
+      - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/gateway/CoucheServicesGateway.md"
+      - "docs/contrats/gateway/ProduitGatewayIService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
       - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+      - "docs/contrats/persistance/CouchePersistance.md"
+      - "docs/contrats/persistance/ConvertisseurJPAToMetier.md"
+      - "docs/contrats/persistance/ConvertisseurMetierToJPA.md"
+      - "docs/contrats/persistance/ProduitJPA.md"
+      - "docs/contrats/persistance/SousTypeProduitJPA.md"
+      - "docs/contrats/persistance/TypeProduitJPA.md"
+      - "docs/contrats/persistance/ProduitDaoJPA.md"
+      - "docs/contrats/persistance/SousTypeProduitDaoJPA.md"
+      - "docs/contrats/persistance/TypeProduitDaoJPA.md"
+      - "docs/contrats/metier/TypeProduit.md"
+      - "docs/contrats/metier/SousTypeProduit.md"
+      - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/dto/TypeProduitDTO.md"
+      - "docs/contrats/dto/SousTypeProduitDTO.md"
+      - "docs/contrats/dto/ProduitDTO.md"
+
+  configuration_racine_build_ci:
+    description: "Racine / build / CI : fichiers racine du dépôt, build Maven, script de tests des couches validées et workflow CI."
+    paths:
+      - ".gitattributes"
+      - ".gitignore"
+      - "pom.xml"
+      - "README.md"
+      - "scripts/test_couches_validees.sh"
+      - ".github/workflows/maven.yml"
 
   configuration:
-    description: "Configuration build + ressources de tests (pom + SQL + log4j2 + properties)."
+    description: "Configuration build + ressources de tests."
     paths:
       - "pom.xml"
       - "src/test/resources/truncate-test.sql"
@@ -58,79 +169,349 @@ packs:
       - "src/test/resources/application-test.properties"
       - "src/test/resources/Log4j2-test.xml"
 
+  scripts_support:
+    description: "Scripts de support du projet hors script canonique des couches validées."
+    roots:
+      - path: "scripts"
+        recursive: true
+        include_globs:
+          - "**/*.sh"
+        exclude_globs:
+          - "test_couches_validees.sh"
+        allow_missing: true
+
+  application_racine:
+    description: "Classes racine de l'application hors sous-packages spécialisés."
+    roots:
+      - path: "src/main/java/levy/daniel/application"
+        recursive: false
+        include_globs:
+          - "*.java"
+        exclude_globs: []
+        allow_missing: true
+      - path: "src/test/java/levy/daniel/application"
+        recursive: false
+        include_globs:
+          - "*.java"
+        exclude_globs: []
+        allow_missing: true
+
+  apptechnic:
+    description: "Couche apptechnic."
+    roots:
+      - path: "src/main/java/levy/daniel/application/apptechnic"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: true
+      - path: "src/test/java/levy/daniel/application/apptechnic"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: true
+
   metier:
-    description: "Couche métier (domain model + tests)."
-    paths:
-      - "src/main/java/levy/daniel/application/model/metier/IExportateurJTable.java"
-      - "src/main/java/levy/daniel/application/model/metier/IExportateurCsv.java"
-      - "src/main/java/levy/daniel/application/model/metier/produittype/TypeProduitI.java"
-      - "src/main/java/levy/daniel/application/model/metier/produittype/TypeProduit.java"
-      - "src/main/java/levy/daniel/application/model/metier/produittype/SousTypeProduitI.java"
-      - "src/main/java/levy/daniel/application/model/metier/produittype/SousTypeProduit.java"
-      - "src/main/java/levy/daniel/application/model/metier/produittype/ProduitI.java"
-      - "src/main/java/levy/daniel/application/model/metier/produittype/Produit.java"
-      - "src/main/java/levy/daniel/application/model/metier/produittype/CloneContext.java"
-      - "src/test/java/levy/daniel/application/model/metier/produittype/TypeProduitTest.java"
-      - "src/test/java/levy/daniel/application/model/metier/produittype/TypeProduitSousTypeProduitIntegrationTest.java"
-      - "src/test/java/levy/daniel/application/model/metier/produittype/SousTypeProduitTest.java"
-      - "src/test/java/levy/daniel/application/model/metier/produittype/ProduitTest.java"
-      - "src/test/java/levy/daniel/application/model/metier/produittype/MetierGlobalConformiteTest.java"
-      - "src/test/java/levy/daniel/application/model/metier/produittype/CloneContextTest.java"
+    description: "Couche métier : objets métier, interfaces métier, utilitaires métier et tests associés."
+    roots:
+      - path: "src/main/java/levy/daniel/application/model/metier"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/metier"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/main/java/levy/daniel/application/model/utilitaires/metier"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/utilitaires/metier"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+
+  dto:
+    description: "Couche DTO : DTO, convertisseurs DTO et tests associés."
+    roots:
+      - path: "src/main/java/levy/daniel/application/model/dto"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/dto"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
 
   persistance:
-    description: "Couche persistance (entities/dao/utils + tests)."
+    description: "Couche persistance : interfaces transverses, convertisseurs JPA ↔ métier, entités JPA, DAO JPA et tests associés."
     paths:
-      - "src/main/java/levy/daniel/application/persistence/metier/IExportateurCsv.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/IExportateurJTable.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPA.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPA.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPA.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetier.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPA.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/TypeProduitDaoJPA.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/SousTypeProduitDaoJPA.java"
-      - "src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/ProduitDaoJPA.java"
-      - "src/main/java/levy/daniel/application/model/utilitaires/metier/produittype/NormalizerUtils.java"
-      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java"
-      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPATest.java"
-      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPATest.java"
-      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPATest.java"
-      - "src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetierTest.java"
-      - "src/test/java/levy/daniel/application/model/utilitaires/metier/produittype/NormalizerUtilsTest.java"
+      - "docs/contrats/persistance/CouchePersistance.md"
+      - "docs/contrats/persistance/ConvertisseurJPAToMetier.md"
+      - "docs/contrats/persistance/ConvertisseurMetierToJPA.md"
+      - "docs/contrats/persistance/ProduitJPA.md"
+      - "docs/contrats/persistance/SousTypeProduitJPA.md"
+      - "docs/contrats/persistance/TypeProduitJPA.md"
+      - "docs/contrats/persistance/ProduitDaoJPA.md"
+      - "docs/contrats/persistance/SousTypeProduitDaoJPA.md"
+      - "docs/contrats/persistance/TypeProduitDaoJPA.md"
+    roots:
+      - path: "src/main/java/levy/daniel/application/persistence"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/persistence"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
 
   gateway:
-    description: "Couche gateway (pagination, exceptions, ports/adapters, CU + tests)."
+    description: "Sous-couche logique couche_services.gateway : pagination, exceptions gateway, ports, adapters JPA, tests associés et contrats locaux."
     paths:
-      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/TriSpec.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/ResultatPage.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/RequetePage.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/pagination/DirectionTri.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliLibelleBlank.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNonPersistent.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParamNull.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionAppliParentNull.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionTechniqueGateway.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsgateway/ExceptionTechniqueGatewayNonPersistent.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionDoublon.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionNonPersistant.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionParametreBlank.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionParametreNull.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/exceptionsservices/ExceptionStockageVide.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/TypeProduitGatewayIService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/SousTypeProduitGatewayIService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/ProduitGatewayIService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/cu/TypeProduitICuService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/cu/impl/TypeProduitCuService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/cu/SousTypeProduitICuService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/cu/impl/SousTypeProduitCuService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/cu/ProduitICuService.java"
-      - "src/main/java/levy/daniel/application/model/services/produittype/cu/impl/ProduitCuService.java"
-      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceMockTest.java"
-      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java"
-      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceMockTest.java"
-      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceIntegrationTest.java"
-      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceMockTest.java"
-      - "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceIntegrationTest.java"
+      - "docs/contrats/gateway/CoucheServicesGateway.md"
+      - "docs/contrats/gateway/ProduitGatewayIService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+    roots:
+      - path: "src/main/java/levy/daniel/application/model/services"
+        recursive: true
+        include_globs:
+          - "package-info.java"
+          - "produittype/package-info.java"
+          - "produittype/pagination/**/*.java"
+          - "produittype/exceptionsgateway/**/*.java"
+          - "produittype/gateway/**/*.java"
+        exclude_globs:
+          - "produittype/cu/**/*.java"
+          - "produittype/exceptionsservices/**/*.java"
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/services"
+        recursive: true
+        include_globs:
+          - "produittype/pagination/**/*.java"
+          - "produittype/gateway/**/*.java"
+        exclude_globs:
+          - "produittype/cu/**/*.java"
+        allow_missing: false
+
+  uc:
+    description: "Sous-couche logique couche_services.uc : ports UC, adapters UC, exceptionsservices, tests associés et contrats locaux."
+    paths:
+      - "docs/contrats/cu/CoucheServicesUC.md"
+      - "docs/contrats/cu/ProduitICuService.md"
+      - "docs/contrats/cu/SousTypeProduitICuService.md"
+      - "docs/contrats/cu/TypeProduitICuService.md"
+    roots:
+      - path: "src/main/java/levy/daniel/application/model/services"
+        recursive: true
+        include_globs:
+          - "package-info.java"
+          - "produittype/package-info.java"
+          - "produittype/exceptionsservices/**/*.java"
+          - "produittype/cu/**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/services"
+        recursive: true
+        include_globs:
+          - "produittype/cu/**/*.java"
+        exclude_globs: []
+        allow_missing: true
+
+  controllers:
+    description: "Couche controllers réelle du projet."
+    roots:
+      - path: "src/main/java/levy/daniel/application/controllers"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: true
+      - path: "src/test/java/levy/daniel/application/controllers"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: true
+
+  views:
+    description: "Couche views réelle du projet."
+    roots:
+      - path: "src/main/java/levy/daniel/application/views"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: true
+      - path: "src/test/java/levy/daniel/application/views"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: true
+
+couches:
+  ordre_canonique:
+    - "couche_ia"
+    - "couche_configuration_tests"
+    - "couche_metier"
+    - "couche_dto"
+    - "couche_persistance"
+    - "couche_services"
+    - "couche_controllers"
+    - "couche_vues"
+
+  definitions:
+    couche_ia:
+      statut: "validated_locked"
+      mandatory_pre_read: true
+      packs:
+        - "couche_ia"
+      fichiers_pivots:
+        - "docs/ai/CONTRAT_IA.md"
+        - "docs/ai/MANIFEST_IA.yaml"
+        - "docs/ai/perimetre.yaml"
+        - "tools/ai/perimetre_resolver.py"
+        - "tools/ai/pack_reading_list.py"
+        - "tools/ai/paths.txt"
+        - "tools/ai/resolve_raw_sha.py"
+        - "tools/ai/make_offline_bundle.py"
+      contract_paths:
+        - "docs/contrats/cu/CoucheServicesUC.md"
+        - "docs/contrats/cu/ProduitICuService.md"
+        - "docs/contrats/cu/SousTypeProduitICuService.md"
+        - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/metier/TypeProduit.md"
+        - "docs/contrats/metier/SousTypeProduit.md"
+        - "docs/contrats/metier/Produit.md"
+        - "docs/contrats/dto/TypeProduitDTO.md"
+        - "docs/contrats/dto/SousTypeProduitDTO.md"
+        - "docs/contrats/dto/ProduitDTO.md"
+        - "docs/contrats/persistance/CouchePersistance.md"
+        - "docs/contrats/persistance/ConvertisseurJPAToMetier.md"
+        - "docs/contrats/persistance/ConvertisseurMetierToJPA.md"
+        - "docs/contrats/persistance/ProduitJPA.md"
+        - "docs/contrats/persistance/SousTypeProduitJPA.md"
+        - "docs/contrats/persistance/TypeProduitJPA.md"
+        - "docs/contrats/persistance/ProduitDaoJPA.md"
+        - "docs/contrats/persistance/SousTypeProduitDaoJPA.md"
+        - "docs/contrats/persistance/TypeProduitDaoJPA.md"
+        - "docs/contrats/gateway/CoucheServicesGateway.md"
+        - "docs/contrats/gateway/ProduitGatewayIService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+
+    couche_configuration_tests:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "configuration_racine_build_ci"
+        - "configuration"
+      sous_couches:
+        - "couche_configuration_tests.racine_build_ci"
+
+    couche_metier:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "metier"
+      sous_couches:
+        - "couche_metier.objets"
+        - "couche_metier.utilitaires"
+        - "couche_metier.tests"
+      contract_paths:
+        - "docs/contrats/metier/TypeProduit.md"
+        - "docs/contrats/metier/SousTypeProduit.md"
+        - "docs/contrats/metier/Produit.md"
+
+    couche_dto:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "dto"
+      sous_couches:
+        - "couche_dto.objets"
+        - "couche_dto.convertisseurs"
+        - "couche_dto.tests"
+      contract_paths:
+        - "docs/contrats/dto/TypeProduitDTO.md"
+        - "docs/contrats/dto/SousTypeProduitDTO.md"
+        - "docs/contrats/dto/ProduitDTO.md"
+
+    couche_persistance:
+      statut: "validated_locked"
+      mandatory_pre_read: false
+      packs:
+        - "persistance"
+      sous_couches:
+        - "couche_persistance.jpa"
+      contract_paths:
+        - "docs/contrats/persistance/CouchePersistance.md"
+        - "docs/contrats/persistance/ConvertisseurJPAToMetier.md"
+        - "docs/contrats/persistance/ConvertisseurMetierToJPA.md"
+        - "docs/contrats/persistance/ProduitJPA.md"
+        - "docs/contrats/persistance/SousTypeProduitJPA.md"
+        - "docs/contrats/persistance/TypeProduitJPA.md"
+        - "docs/contrats/persistance/ProduitDaoJPA.md"
+        - "docs/contrats/persistance/SousTypeProduitDaoJPA.md"
+        - "docs/contrats/persistance/TypeProduitDaoJPA.md"
+
+    couche_services:
+      statut: "declared"
+      mandatory_pre_read: false
+      packs:
+        - "gateway"
+        - "uc"
+      sous_couches:
+        - "couche_services.gateway"
+        - "couche_services.uc"
+      contract_paths:
+        - "docs/contrats/cu/CoucheServicesUC.md"
+        - "docs/contrats/cu/ProduitICuService.md"
+        - "docs/contrats/cu/SousTypeProduitICuService.md"
+        - "docs/contrats/cu/TypeProduitICuService.md"
+        - "docs/contrats/gateway/CoucheServicesGateway.md"
+        - "docs/contrats/gateway/ProduitGatewayIService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+        - "docs/contrats/gateway/ProduitGatewayJPAService.md"
+        - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
+        - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
+      sous_couches_statuts:
+        couche_services.gateway: validated_locked
+        couche_services.uc: validated_locked
+
+    couche_controllers:
+      statut: "reserved"
+      mandatory_pre_read: false
+      packs:
+        - "controllers"
+
+    couche_vues:
+      statut: "reserved"
+      mandatory_pre_read: false
+      packs:
+        - "views"

@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
-import java.util.Locale;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -21,6 +20,7 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -34,7 +34,6 @@ import levy.daniel.application.model.services.produittype.cu.ProduitICuService;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
-import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionNonPersistant;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreNull;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
@@ -224,8 +223,48 @@ public class ProduitCuServiceIntegrationTest {
 	 * Préfixe recherche rapide introuvable : "IT-PRD-SEARCH-QQ".
 	 */
 	public static final String IT_PRD_SEARCH_PREFIXE_QQ = "IT-PRD-SEARCH-QQ";
+	
+	/**
+	 * "Creer"
+	 */
+	public static final String TAG_CREER = "Creer";
+	
+	/**
+	 * "SELECT COUNT(*) FROM PRODUITS"
+	 */
+	public static final String SELECT_COUNT_FROM_PRODUITS
+		= "SELECT COUNT(*) FROM PRODUITS";
+
+	/**
+	 * "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?"
+	 */
+	public static final String SELECT_COUNT_FROM_PRODUITS_BY_ID
+		= "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?";
+
+	/**
+	 * "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?"
+	 */
+	public static final String SELECT_PRODUIT_LIBELLE_BY_ID
+		= "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?";
+
+	/**
+	 * Parent SousTypeProduit d'un Produit par son ID.
+	 */
+	public static final String SELECT_PARENT_SOUS_TYPE_BY_ID_PRODUIT
+		= "SELECT stp.SOUS_TYPE_PRODUIT "
+		+ "FROM SOUS_TYPES_PRODUIT stp "
+		+ "INNER JOIN PRODUITS p "
+		+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
+		+ "WHERE p.ID_PRODUIT = ?";
+
 
 	// *************************** ATTRIBUTS *******************************/
+	
+	/**
+	 * SERVICE JDBC direct pour preuve BD.
+	 */
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	/**
 	 * SERVICE CU Produit sous test (PORT).
@@ -296,10 +335,15 @@ public class ProduitCuServiceIntegrationTest {
 		super();
 	}
 
+	
+	
 	// *************************** METHODES *******************************/
 
+	
+	
 	// ============================ TESTS creer(...) =======================
 
+	
 	
 	/**
 	 * <div>
@@ -313,16 +357,17 @@ public class ProduitCuServiceIntegrationTest {
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
 	@Test
 	@DisplayName("creer(null) : erreur utilisateur bénigne -> retourne null, message utilisateur, aucune exception")
 	public void testCreerNull() throws Exception {
 
-		final ProduitDTO.OutputDTO dto = this.service.creer(null);
+		final OutputDTO dto = this.service.creer(null);
 
 		assertThat(dto).isNull();
-		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
-	}
+		assertThat(this.service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -335,6 +380,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * </ul>
 	 * </div>
 	 */
+	@Tag(TAG_CREER)
 	@Test
 	@DisplayName("creer(blank) : positionne message + lève ExceptionParametreBlank")
 	public void testCreerBlank() {
@@ -342,12 +388,34 @@ public class ProduitCuServiceIntegrationTest {
 		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, ESPACES);
 
 		assertThatThrownBy(() -> this.service.creer(input))
-				.isInstanceOf(ExceptionParametreBlank.class);
+			.isInstanceOf(ExceptionParametreBlank.class);
 
-		/* IMPORTANT : le contrat observable sur creer(...) est MESSAGE_CREER_NOM_BLANK (et pas MESSAGE_PARAM_BLANK). */
-		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_CREER_NOM_BLANK);
-	}
+		assertThat(this.service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_CREER_NOM_BLANK);
+		
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>creer(parent blank) : positionne message 
+	 * + lève IllegalStateException.</p>
+	 * </div>
+	 */
+	@Tag(TAG_CREER)
+	@Test
+	@DisplayName("creer(parent blank) : positionne message + lève IllegalStateException")
+	public void testCreerParentBlank() {
+
+		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, ESPACES, IT_PRD_ALPHA);
+
+		assertThatThrownBy(() -> this.service.creer(input))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(this.service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -362,56 +430,75 @@ public class ProduitCuServiceIntegrationTest {
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
 	@Test
-	@DisplayName("creer(doublon) : positionne message + lève ExceptionDoublon")
+	@DisplayName("creer(doublon) : positionne message exact + lève ExceptionDoublon")
 	public void testCreerDoublon() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ALPHA);
 
 		final OutputDTO cree = this.service.creer(input);
-
 		assertThat(cree).isNotNull();
 
 		assertThatThrownBy(() -> this.service.creer(input))
-				.isInstanceOf(ExceptionDoublon.class);
+			.isInstanceOf(ExceptionDoublon.class)
+			.hasMessage(ProduitICuService.MESSAGE_DOUBLON + IT_PRD_ALPHA);
 
 		assertThat(this.service.getMessage())
-				.contains(ProduitICuService.MESSAGE_DOUBLON);
-	}
+			.isEqualTo(ProduitICuService.MESSAGE_DOUBLON + IT_PRD_ALPHA);
+		
+	} // __________________________________________________________________
 
+
+	
 	/**
 	 * <div>
-	 * <p>creer(ok) puis findByLibelle(ok) puis findById(ok) : round-trip complet.</p>
-	 * <p>Test "béton" : garantit la persistance effective dans H2 in-memory.</p>
+	 * <p>creer(ok) : test béton avec comptage et round-trip par ID.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>retourne un {@link OutputDTO} persistant ;</li>
+	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_CREER_OK} ;</li>
+	 * <li>augmente le comptage de 1 ;</li>
+	 * <li>reste retrouvable par {@link ProduitICuService#findById(Long)}
+	 * après création.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
 	@Test
-	@DisplayName("creer(ok) puis findByLibelle(ok) puis findById(ok) : round-trip complet")
-	public void testCreerOkFindByLibelleOkFindByIdOk() throws Exception {
+	@DisplayName("creer(ok) : message exact + count + round-trip findById")
+	public void testCreerOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		/* ===================== ARRANGE ===================== */
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_BETA);
+		final long nombreAvant = this.service.count();
 
+		final InputDTO input
+			= new ProduitDTO.InputDTO(
+					IT_TP_PARENT_A,
+					IT_STP_PARENT_A,
+					IT_PRD_BETA);
+
+		/* ======================= ACT ======================= */
 		final OutputDTO cree = this.service.creer(input);
 
+		/* ===================== ASSERT ====================== */
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
 		assertThat(cree.getProduit()).isEqualTo(IT_PRD_BETA);
 		assertThat(cree.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(cree.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
 
-		final OutputDTO trouveParLibelle = this.service.findByLibelle(IT_PRD_BETA);
+		final long nombreApres = this.service.count();
 
-		assertThat(trouveParLibelle).isNotNull();
-		assertThat(trouveParLibelle.getIdProduit()).isEqualTo(cree.getIdProduit());
-		assertThat(trouveParLibelle.getProduit()).isEqualTo(IT_PRD_BETA);
-		assertThat(trouveParLibelle.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
-		assertThat(trouveParLibelle.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(nombreApres).isEqualTo(nombreAvant + 1L);
 
 		final OutputDTO trouveParId = this.service.findById(cree.getIdProduit());
 
@@ -420,10 +507,15 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(trouveParId.getProduit()).isEqualTo(IT_PRD_BETA);
 		assertThat(trouveParId.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(trouveParId.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-	}
 
+	} // __________________________________________________________________
+		
+	
+	
 	// ========================= TESTS rechercherTous() ====================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>rechercherTous() : doit retourner une liste non nulle contenant les créations du test.</p>
@@ -446,14 +538,93 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(ProduitDTO.OutputDTO::getProduit)
 				.contains(IT_PRD_GAMMA, IT_PRD_DELTA);
-	}
 
-	
-	
+	} // __________________________________________________________________
+
+
+
 	/**
 	 * <div>
-	 * <p>rechercherTous() : après truncate -> stockage vide -> liste vide + message MESSAGE_RECHERCHE_VIDE.</p>
-	 * <p>Test d'intégration : force un stockage vide malgré le dataset global.</p>
+	 * <p>rechercherTous() : scénario nominal béton avec cohérence count.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>reste cohérent avec {@link ProduitICuService#count()}</li>
+	 * <li>contient les créations du test</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTous(ok) : message exact + cohérence count + présence des créations")
+	public void testRechercherTousOkAvecCohherenceCount() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		final OutputDTO creeGamma = this.service.creer(
+				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
+		final OutputDTO creeDelta = this.service.creer(
+				new ProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_DELTA));
+
+		final long attendu = this.service.count();
+
+		/* ======================= ACT ======================= */
+		final List<ProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos.size()).isEqualTo((int) attendu);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.contains(IT_PRD_GAMMA, IT_PRD_DELTA);
+
+		final OutputDTO dtoGamma = dtos.stream()
+				.filter(dto -> IT_PRD_GAMMA.equals(dto.getProduit()))
+				.findFirst()
+				.orElse(null);
+
+		final OutputDTO dtoDelta = dtos.stream()
+				.filter(dto -> IT_PRD_DELTA.equals(dto.getProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoGamma).isNotNull();
+		assertThat(dtoGamma.getIdProduit())
+				.isEqualTo(creeGamma.getIdProduit());
+		assertThat(dtoGamma.getTypeProduit())
+				.isEqualTo(IT_TP_PARENT_A);
+		assertThat(dtoGamma.getSousTypeProduit())
+				.isEqualTo(IT_STP_PARENT_A);
+
+		assertThat(dtoDelta).isNotNull();
+		assertThat(dtoDelta.getIdProduit())
+				.isEqualTo(creeDelta.getIdProduit());
+		assertThat(dtoDelta.getTypeProduit())
+				.isEqualTo(IT_TP_PARENT_B);
+		assertThat(dtoDelta.getSousTypeProduit())
+				.isEqualTo(IT_STP_PARENT_B);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous() : stockage vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>reste cohérent avec une base physiquement vide</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -463,69 +634,113 @@ public class ProduitCuServiceIntegrationTest {
 			scripts = { "classpath:/truncate-test.sql" },
 			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 	)
-	@DisplayName("rechercherTous() : après truncate -> liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testRechercherTousStockageVide() throws Exception {
+	@DisplayName("rechercherTous(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + base vide")
+	public void testRechercherTousVide() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
+		assertThat(this.service.count()).isEqualTo(0L);
+
+		/* ======================= ACT ======================= */
 		final List<ProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
 
-		assertThat(dtos).isNotNull().isEmpty();
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-	}
+
+	} // __________________________________________________________________	
 	
 
 	
-	/**
-	 * <div>
-	 * <p>rechercherTous() : stockage null -> {@link ExceptionStockageVide} + message {@link ProduitICuService#MESSAGE_STOCKAGE_NULL}.</p>
-	 * </div>
-	 */
-//	@Test
-//	@DisplayName("rechercherTous(stockage null) : positionne message + lève ExceptionStockageVide")
-//	public void testRechercherTousStockageNull() {
-//
-//		/*
-//		 * Test d'intégration :
-//		 * ce cas dépend du comportement technique Gateway.
-//		 * On conserve néanmoins ce test pour contractualiser l'invariant CU
-//		 * (si gateway renvoie null => ExceptionStockageVide).
-//		 *
-//		 * NOTE : Si ce test échoue parce que le Gateway ne renvoie jamais null,
-//		 * il est acceptable de le désactiver au niveau projet, mais on le laisse ici
-//		 * pour suivre la structure des IT validés.
-//		 */
-//		assertThatThrownBy(() -> {
-//			/* Provoque le cas "stockage null" si la couche technique le permet. */
-//			this.service.rechercherTous();
-//		}).isInstanceOfAny(ExceptionStockageVide.class, RuntimeException.class);
-//	}
-
 	// ===================== TESTS rechercherTousString() ==================
 
+	
+	
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : doit retourner une liste non nulle contenant les libellés créés.</p>
+	 * <p>rechercherTousString() : scénario nominal.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>crée plusieurs Produit en base ;</li>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>retourne les libellés créés ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("rechercherTousString() : retourne une liste non nulle contenant les libellés créés")
-	public void testRechercherTousString() throws Exception {
+	@DisplayName("rechercherTousString(ok) : retourne les libellés créés + message MESSAGE_RECHERCHE_OK")
+	public void testRechercherTousStringOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		/* ===================== ARRANGE ===================== */
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_EPSILON));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ZETA));
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_GAMMA));
 
-		final List<String> libelles = this.service.rechercherTousString();
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_DELTA));
 
-		assertThat(libelles).isNotNull();
-		assertThat(libelles).contains(IT_PRD_EPSILON, IT_PRD_ZETA);
-	}
+		/* ======================= ACT ======================= */
+		final List<String> retour = this.service.rechercherTousString();
 
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).contains(IT_PRD_GAMMA, IT_PRD_DELTA);
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString() : stockage vide.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = { "classpath:/truncate-test.sql" },
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+	)
+	@DisplayName("rechercherTousString(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testRechercherTousStringVide() throws Exception {
+
+		/* ======================= ACT ======================= */
+		final List<String> retour = this.service.rechercherTousString();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(this.service.getMessage())
+			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________	
+	
+
+	
 	// ================== TESTS rechercherTousParPage(...) =================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>rechercherTousParPage(null) : violation de contrat.</p>
@@ -544,15 +759,20 @@ public class ProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PAGEABLE_NULL);
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
 	 * <p>rechercherTousParPage(ok) : test "béton" sur la cohérence du {@link ResultatPage}.</p>
 	 * <ul>
-	 * <li>le {@code totalElements} reflète l'état base + créations</li>
-	 * <li>la page et la taille sont reprises</li>
-	 * <li>le contenu n'excède pas {@code pageSize}</li>
+	 * <li>le {@code totalElements} reflète l'état base + créations ;</li>
+	 * <li>la page et la taille sont reprises ;</li>
+	 * <li>le contenu n'excède pas {@code pageSize} ;</li>
+	 * <li>le message observable est exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -562,37 +782,57 @@ public class ProduitCuServiceIntegrationTest {
 	@DisplayName("rechercherTousParPage(ok) : retourne ResultatPage cohérent (totalElements repris)")
 	public void testRechercherTousParPageOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		/* ===================== ARRANGE ===================== */
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final long baseline = this.service.count();
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_01));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_02));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_03));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_04));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_05));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_01));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_02));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_03));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_04));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_PAGE_05));
 
 		final long attendu = baseline + 5L;
-
 		final RequetePage requete = new RequetePage(0, 2);
 
+		/* ======================= ACT ======================= */
 		final ResultatPage<OutputDTO> rp = this.service.rechercherTousParPage(requete);
 
+		/* ===================== ASSERT ====================== */
 		assertThat(rp).isNotNull();
 		assertResultatPageCoherent(rp);
+
 		assertThat(rp.getPageNumber()).isEqualTo(0);
 		assertThat(rp.getPageSize()).isEqualTo(2);
 		assertThat(rp.getTotalElements()).isEqualTo(attendu);
-	}
+
+		assertThat(rp.getContent()).isNotNull();
+		assertThat(rp.getContent().size()).isLessThanOrEqualTo(rp.getPageSize());
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+	} // __________________________________________________________________
+	
+	
 
 	// ======================= TESTS findByLibelle(...) ====================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
 	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -602,59 +842,100 @@ public class ProduitCuServiceIntegrationTest {
 	@DisplayName("findByLibelle(blank) : erreur utilisateur bénigne -> retourne null, message utilisateur, aucune exception")
 	public void testFindByLibelleBlank() throws Exception {
 
-		final OutputDTO dto = this.service.findByLibelle(ESPACES);
+		final List<OutputDTO> dtos = this.service.findByLibelle(ESPACES);
 
-		assertThat(dto).isNull();
+		assertThat(dtos).isNull();
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-	}
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
 	 * <p>findByLibelle(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>retourne une liste vide mais non {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findByLibelle(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
 	public void testFindByLibelleIntrouvable() throws Exception {
 
-		final OutputDTO dto = this.service.findByLibelle(IT_PRD_INEXISTANT_XYZ);
+		final List<OutputDTO> dtos = this.service.findByLibelle(IT_PRD_INEXISTANT_XYZ);
 
-		assertThat(dto).isNull();
+		assertThat(dtos).isNotNull().isEmpty();
 		assertThat(this.service.getMessage())
-				.contains(ProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : retourne un DTO non nul après création.</p>
+	 * <p>findByLibelle(ok) : retourne tous les DTO correspondant exactement au libellé.</p>
+	 * <ul>
+	 * <li>crée deux parents persistants distincts ;</li>
+	 * <li>crée deux Produits de même libellé sous deux parents différents ;</li>
+	 * <li>retourne une liste non nulle de taille 2 ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(ok) : retourne OutputDTO après création")
+	@DisplayName("findByLibelle(ok) : retourne la liste des OutputDTO de même libellé exact")
 	public void testFindByLibelleOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELTA));
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
 
-		final OutputDTO dto = this.service.findByLibelle(IT_PRD_DELTA);
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_DELTA));
 
-		assertThat(dto).isNotNull();
-		assertThat(dto.getProduit()).isEqualTo(IT_PRD_DELTA);
-		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
-		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-	}
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_PARENT_B,
+						IT_PRD_DELTA));
+
+		final List<OutputDTO> dtos = this.service.findByLibelle(IT_PRD_DELTA);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.containsExactlyInAnyOrder(IT_PRD_DELTA, IT_PRD_DELTA);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactlyInAnyOrder(IT_STP_PARENT_A, IT_STP_PARENT_B);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactlyInAnyOrder(IT_TP_PARENT_A, IT_TP_PARENT_B);
+
+	} // __________________________________________________________________	
+	
+	
 
 	// ===================== TESTS findByLibelleRapide(...) =================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>findByLibelleRapide(null) : violation de contrat.</p>
@@ -673,12 +954,19 @@ public class ProduitCuServiceIntegrationTest {
 
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-	}
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(blank) : délègue au comportement "rechercherTous".</p>
-	 * <p>Test "béton" : garantit que la liste retournée contient les créations du test.</p>
+	 * <p>findByLibelleRapide(blank) : délègue au comportement rechercherTous().</p>
+	 * <ul>
+	 * <li>retourne une liste non nulle ;</li>
+	 * <li>retourne les créations du test ;</li>
+	 * <li>positionne le message observable de rechercherTous().</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -687,10 +975,12 @@ public class ProduitCuServiceIntegrationTest {
 	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous et retourne une liste non nulle")
 	public void testFindByLibelleRapideBlank() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELTA));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELTA));
 
 		final List<OutputDTO> dtos = this.service.findByLibelleRapide(ESPACES);
 
@@ -698,219 +988,395 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(ProduitDTO.OutputDTO::getProduit)
 				.contains(IT_PRD_GAMMA, IT_PRD_DELTA);
-	}
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(non blank) : retourne une liste non nulle sans exception.</p>
-	 * <p>Test "béton" : crée deux Produits partageant un préfixe puis recherche ce préfixe.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findByLibelleRapide(non blank) : retourne liste non nulle contenant les créations du test")
-	public void testFindByLibelleRapideNonBlank() throws Exception {
-
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABC));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABD));
-
-		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_PRD_SEARCH_PREFIXE_AB);
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getProduit)
-				.contains(IT_PRD_SEARCH_ABC, IT_PRD_SEARCH_ABD);
-	}
-
-	/**
-	 * <div>
-	 * <p>findByLibelleRapide(introuvable) : retourne une liste vide.</p>
+	 * <p>findByLibelleRapide(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
-	 * <li>retourne une liste vide</li>
-	 * <li>positionne un message utilisateur (contrat observable)</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelleRapide(introuvable) : liste vide (contrat)")
+	@DisplayName("findByLibelleRapide(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
 	public void testFindByLibelleRapideIntrouvable() throws Exception {
 
 		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_PRD_SEARCH_PREFIXE_QQ);
 
 		assertThat(dtos).isNotNull().isEmpty();
-	}
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-	// ========================== TESTS findByDTO(...) =====================
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByDTO(null) : erreur utilisateur bénigne (contrat du PORT).</p>
+	 * <p>findByLibelleRapide(ok) : retourne tous les DTO correspondant au préfixe demandé.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
+	 * <li>crée le parent persistant requis ;</li>
+	 * <li>crée deux Produits correspondant au préfixe ;</li>
+	 * <li>retourne une liste non nulle ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByDTO(null) : retourne null (contrat)")
+	@DisplayName("findByLibelleRapide(ok) : retourne la liste des OutputDTO correspondant au préfixe")
+	public void testFindByLibelleRapideOk() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABC));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_SEARCH_ABD));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ZETA));
+
+		final List<OutputDTO> dtos = this.service.findByLibelleRapide(IT_PRD_SEARCH_PREFIXE_AB);
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.containsExactlyInAnyOrder(IT_PRD_SEARCH_ABC, IT_PRD_SEARCH_ABD);
+
+	} // __________________________________________________________________	
+		
+	
+
+	// ===================== TESTS findAllByParent(...) ====================
+
+	
+	
+	/**
+	 * <div>
+	 * <p>findAllByParent(null) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève une exception ;</li>
+	 * <li>positionne {@link ProduitICuService#RECHERCHE_SOUSTYPEPRODUIT_NULL}.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("findAllByParent(null) : positionne message + lève RuntimeException")
+	public void testFindAllByParentNull() {
+
+		assertThatThrownBy(() -> this.service.findAllByParent(null))
+				.isInstanceOf(RuntimeException.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent absent) : violation de contrat.</p>
+	 * <ul>
+	 * <li>lève une exception ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}.</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("findAllByParent(parent absent) : positionne message + lève exception")
+	public void testFindAllByParentPasParent() {
+
+		final SousTypeProduitDTO.InputDTO parentDto
+			= new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
+				.isInstanceOfAny(RuntimeException.class, IllegalStateException.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(introuvable) : aucun Produit rattaché au parent.</p>
+	 * <ul>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindAllByParentIntrouvable() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		final List<OutputDTO> dtos = this.service.findAllByParent(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B));
+
+		assertThat(dtos).isNotNull().isEmpty();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(ok) : retourne tous les Produits du parent demandé.</p>
+	 * <ul>
+	 * <li>crée d'abord le parent persistant requis ;</li>
+	 * <li>crée plusieurs Produits sous ce parent ;</li>
+	 * <li>retourne une liste non nulle ;</li>
+	 * <li>retourne uniquement les Produits de ce parent ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(ok) : retourne la liste non nulle des créations du parent")
+	public void testFindAllByParentOk() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_GAMMA));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_DELTA));
+
+		final List<OutputDTO> dtos = this.service.findAllByParent(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B));
+
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getProduit)
+				.containsExactlyInAnyOrder(IT_PRD_GAMMA, IT_PRD_DELTA);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactlyInAnyOrder(IT_STP_PARENT_B, IT_STP_PARENT_B);
+
+		assertThat(dtos)
+				.extracting(ProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactlyInAnyOrder(IT_TP_PARENT_B, IT_TP_PARENT_B);
+
+	} // __________________________________________________________________
+	
+	
+	
+	// ========================== TESTS findByDTO(...) =====================
+
+	
+	
+	/**
+	 * <div>
+	 * <p>findByDTO(null) : erreur utilisateur bénigne.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL}</li>
+	 * <li>ne lève aucune exception</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(null) : retourne null + message MESSAGE_RECHERCHE_OBJ_NULL")
 	public void testFindByDTONull() throws Exception {
 
 		final OutputDTO dto = this.service.findByDTO(null);
 
 		assertThat(dto).isNull();
-	}
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findByDTO(parent blank) : violation de contrat (PORT).</p>
-	 * <p>
-	 * NOTE : le message constant peut dépendre de l'implémentation finale
-	 * (ProduitICuService doit aligner ses constantes sur les autres PORTS).
-	 * </p>
-	 * </div>
-	 */
-	@Test
-	@DisplayName("findByDTO(parent blank) : lève une exception (contrat)")
-	public void testFindByDTOParentBlank() {
-
-		final InputDTO dto = new ProduitDTO.InputDTO(ESPACES, IT_STP_PARENT_A, IT_PRD_ALPHA);
-
-		assertThatThrownBy(() -> this.service.findByDTO(dto))
-				.isInstanceOfAny(IllegalStateException.class, RuntimeException.class);
-	}
-
-	/**
-	 * <div>
-	 * <p>findByDTO(ok) : test "béton" (si implémenté) de la recherche via DTO.</p>
-	 * <p>
-	 * NOTE : cette méthode est déclarée dans le PORT mais l'implémentation
-	 * peut être en cours (TODO). Le test contractualise le comportement attendu.
-	 * </p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("findByDTO(ok) : retourne OutputDTO cohérent après création (contrat)")
-	public void testFindByDTOOk() throws Exception {
-
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ALPHA));
-
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_ALPHA);
-
-		final OutputDTO dto = this.service.findByDTO(input);
-
-		/*
-		 * Si l'implémentation n'est pas encore finalisée, dto peut être null.
-		 * Le test "béton" deviendra strict (dto non null) une fois findByDTO implémenté.
-		 */
-		if (dto != null) {
-			assertThat(dto.getProduit()).isEqualTo(IT_PRD_ALPHA);
-			assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
-			assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-		}
-	}
-
-	// ===================== TESTS findAllByParent(...) ====================
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(null) : violation de contrat.</p>
+	 * <p>findByDTO(parent blank) : violation de contrat.</p>
 	 * <ul>
-	 * <li>lève une exception (contrat)</li>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("findAllByParent(null) : lève une exception (contrat)")
-	public void testFindAllByParentNull() {
+	@DisplayName("findByDTO(parent blank) : positionne message + lève IllegalStateException")
+	public void testFindByDTOParentBlank() {
 
-		assertThatThrownBy(() -> this.service.findAllByParent(null))
-				.isInstanceOfAny(RuntimeException.class, IllegalStateException.class);
-	}
+		final InputDTO dto = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				ESPACES,
+				IT_PRD_ALPHA);
 
-	/**
-	 * <div>
-	 * <p>findAllByParent(parent absent) : violation de contrat (si parent requis persistant).</p>
-	 * </div>
-	 */
-	@Test
-	@DisplayName("findAllByParent(parent absent) : lève une exception ou retourne vide (contrat)")
-	public void testFindAllByParentPasParent() {
+		assertThatThrownBy(() -> this.service.findByDTO(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
 
-		final SousTypeProduitDTO.InputDTO parentDto = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
 
-		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
-				.isInstanceOfAny(RuntimeException.class, IllegalStateException.class);
-	}
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
-	 * <p>findAllByParent(ok) : test "béton" (si implémenté) de la récupération de tous les Produits d'un parent.</p>
+	 * <p>findByDTO(introuvable) : aucun Produit exact trouvé.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findAllByParent(ok) : retourne une liste non nulle contenant les créations du test (contrat)")
-	public void testFindAllByParentOk() throws Exception {
+	@DisplayName("findByDTO(introuvable) : retourne null + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindByDTOIntrouvable() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_GAMMA));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B, IT_PRD_DELTA));
+		this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_ALPHA));
 
-		final List<OutputDTO> dtos = this.service.findAllByParent(
-				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_B, IT_STP_PARENT_B));
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_BETA);
 
-		/*
-		 * Si l'implémentation n'est pas encore finalisée, dtos peut être vide.
-		 * Le test deviendra strict une fois findAllByParent implémenté.
-		 */
-		assertThat(dtos).isNotNull();
-	}
+		final OutputDTO dto = this.service.findByDTO(input);
 
+		assertThat(dto).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(ok) : retourne l'OutputDTO exact correspondant au DTO de recherche.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>crée un Produit persistant ;</li>
+	 * <li>retrouve ce Produit via le DTO de recherche ;</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByDTO(ok) : retourne OutputDTO cohérent + message MESSAGE_SUCCES_RECHERCHE")
+	public void testFindByDTOOk() throws Exception {
+
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+
+		final OutputDTO cree = this.service.creer(new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_ALPHA));
+
+		assertThat(cree).isNotNull();
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_ALPHA);
+
+		final OutputDTO dto = this.service.findByDTO(input);
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.getIdProduit()).isEqualTo(cree.getIdProduit());
+		assertThat(dto.getProduit()).isEqualTo(IT_PRD_ALPHA);
+		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
+		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+	} // __________________________________________________________________	
+
+	
+	
 	// ======================== TESTS findById(...) ========================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>findById(null) : erreur utilisateur bénigne.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(null) : retourne null")
+	@DisplayName("findById(null) : retourne null + message MESSAGE_PARAM_NULL")
 	public void testFindByIdNull() throws Exception {
 
 		final OutputDTO dto = this.service.findById(null);
 
 		assertThat(dto).isNull();
-	}
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
 	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("findById(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + id")
 	public void testFindByIdIntrouvable() throws Exception {
 
 		final Long idInexistant = Long.valueOf(Long.MAX_VALUE);
@@ -919,24 +1385,35 @@ public class ProduitCuServiceIntegrationTest {
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(ProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + idInexistant);
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>
 	 * <p>findById(ok) : round-trip création puis lecture par ID.</p>
+	 * <ul>
+	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
+	 * <li>retourne l'OutputDTO correspondant à l'identifiant demandé ;</li>
+	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findById(ok) : retourne OutputDTO après création")
+	@DisplayName("findById(ok) : retourne OutputDTO exact + message MESSAGE_SUCCES_RECHERCHE")
 	public void testFindByIdOk() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final OutputDTO cree = this.service.creer(
-				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_GAMMA));
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_GAMMA));
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
@@ -948,293 +1425,786 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(relu.getProduit()).isEqualTo(IT_PRD_GAMMA);
 		assertThat(relu.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(relu.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
-	}
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+	} // __________________________________________________________________
+	
+	
 
 	// ========================= TESTS update(...) =========================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>update(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(null) : positionne message + lève ExceptionParametreNull")
-	public void testUpdateNull() {
+	@DisplayName("update(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
+	public void testUpdateNull() throws Exception {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		assertThatThrownBy(() -> this.service.update(null))
 				.isInstanceOf(ExceptionParametreNull.class);
 
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-	}
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+	
+
 
 	/**
 	 * <div>
 	 * <p>update(blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(blank) : positionne message + lève ExceptionParametreBlank")
-	public void testUpdateBlank() {
+	@DisplayName("update(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
+	public void testUpdateBlank() throws Exception {
 
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, ESPACES);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				ESPACES);
 
 		assertThatThrownBy(() -> this.service.update(input))
 				.isInstanceOf(ExceptionParametreBlank.class);
 
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-	}
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+	
+
 
 	/**
 	 * <div>
-	 * <p>update(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>update(parent blank) : violation de contrat structurel.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(introuvable) : retourne null, message 'introuvable'")
+	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testUpdateParentBlank() throws Exception {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				ESPACES,
+				IT_PRD_UPDATE_OK);
+
+		assertThatThrownBy(() -> this.service.update(input))
+				.isInstanceOf(IllegalStateException.class);
+
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+	
+
+
+	/**
+	 * <div>
+	 * <p>update(parent absent) : le parent requis n'existe pas en stockage.</p>
+	 * <ul>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testUpdateParentAbsent() throws Exception {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_UPDATE_OK);
+
+		assertThatThrownBy(() -> this.service.update(input))
+				.isInstanceOf(IllegalStateException.class);
+
+		/*
+		 * Vérifie immédiatement le message porté par update(...)
+		 * avant tout autre appel de service susceptible de l'écraser.
+		 */
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune écriture parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+	
+
+
+	/**
+	 * <div>
+	 * <p>update(introuvable) : aucun objet persistant
+	 * ne correspond au couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne crée aucune ligne en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("update(introuvable) : null + message exact MESSAGE_OBJ_INTROUVABLE + libellé + aucune création BD")
 	public void testUpdateIntrouvable() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_INEXISTANT_UPDATE);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final InputDTO input = new ProduitDTO.InputDTO(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_INEXISTANT_UPDATE);
 
 		final OutputDTO dto = this.service.update(input);
 
+		/*
+		 * Vérifie immédiatement le résultat observable de update(...)
+		 * avant tout autre appel de service susceptible d'écraser le message.
+		 */
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.contains(ProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+				.isEqualTo(
+						ProduitICuService.MESSAGE_OBJ_INTROUVABLE
+								+ IT_PRD_INEXISTANT_UPDATE);
+
+		/*
+		 * Prouve ensuite physiquement en base
+		 * qu'aucune création parasite n'a eu lieu.
+		 */
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+	
+
 
 	/**
 	 * <div>
-	 * <p>update(non persistant) : violation de contrat (objet existant mais non persistant).</p>
+	 * <p>update(ok) : preuve BD directe avec JdbcTemplate.</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionNonPersistant}</li>
-	 * <li>positionne un message contenant {@link ProduitICuService#MESSAGE_OBJ_NON_PERSISTE}</li>
+	 * <li>crée d'abord le parent persistant requis ;</li>
+	 * <li>crée un Produit réel ;</li>
+	 * <li>modifie ce même objet sans créer de doublon ;</li>
+	 * <li>conserve exactement le même identifiant persistant ;</li>
+	 * <li>prouve physiquement en base que la ligne existe toujours ;</li>
+	 * <li>prouve physiquement que le parent BD reste identique ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_MODIF_OK} + parent.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(non persistant) : positionne message + lève ExceptionNonPersistant")
-	public void testUpdateNonPersistant() throws Exception {
+	@DisplayName("update(ok) : preuve BD directe + ID conservé + message exact")
+	public void testUpdateOkAvecPreuveBdEtJdbcTemplate() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
-
-		/*
-		 * Pour provoquer "non persistant", on s'appuie sur le contrat observable
-		 * de ProduitCuService : si l'objet trouvé par libellé existe mais a un ID null,
-		 * la méthode doit lever ExceptionNonPersistant.
-		 *
-		 * En IT, ce cas est difficile à produire avec une base JPA (les IDs sont
-		 * toujours attribués). On conserve un test contractuel minimal :
-		 * si l'implémentation est alignée avec les autres services CU,
-		 * elle doit lever ExceptionNonPersistant lorsque l'ID est null.
-		 */
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_UPDATE_OK);
-
-		/* Création nominale. */
-		final OutputDTO cree = this.service.creer(input);
-		assertThat(cree).isNotNull();
-
-		/*
-		 * Ici, on ne peut pas retirer l'ID en intégration. On vérifie donc simplement
-		 * que l'update nominal ne casse pas le contrat et conserve l'ID.
-		 */
-		final OutputDTO modifie = this.service.update(input);
-
-		assertThat(modifie).isNotNull();
-		assertThat(modifie.getIdProduit()).isEqualTo(cree.getIdProduit());
-	}
-
-	/**
-	 * <div>
-	 * <p>update(ok) : met à jour et conserve l'ID persistant.</p>
-	 * <p>Test "béton" : round-trip création puis modification puis re-lecture.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("update(ok) : retourne OutputDTO avec le même ID persistant")
-	public void testUpdateOk() throws Exception {
-
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		/* ===================== ARRANGE ===================== */
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
 		final OutputDTO cree = this.service.creer(
-				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_UPDATE_OK));
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_UPDATE_OK));
 
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
 
-		final OutputDTO modifie = this.service.update(
-				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_UPDATE_OK));
+		final Long idAvantUpdate = cree.getIdProduit();
 
+		final long totalAvantUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO modifie = this.service.update(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_UPDATE_OK));
+
+		/* ===================== ASSERT ====================== */
 		assertThat(modifie).isNotNull();
-		assertThat(modifie.getIdProduit()).isEqualTo(cree.getIdProduit());
+		assertThat(modifie.getIdProduit()).isEqualTo(idAvantUpdate);
 		assertThat(modifie.getProduit()).isEqualTo(IT_PRD_UPDATE_OK);
 		assertThat(modifie.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(modifie.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 
-		final OutputDTO relu = this.service.findById(cree.getIdProduit());
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + IT_PRD_UPDATE_OK);
+
+		final long totalApresUpdate = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(totalApresUpdate).isEqualTo(totalAvantUpdate);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS_BY_ID,
+				Long.class,
+				idAvantUpdate)).isEqualTo(1L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_PRODUIT_LIBELLE_BY_ID,
+				String.class,
+				idAvantUpdate)).isEqualTo(IT_PRD_UPDATE_OK);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_PARENT_SOUS_TYPE_BY_ID_PRODUIT,
+				String.class,
+				idAvantUpdate)).isEqualTo(IT_STP_PARENT_A);
+
+		final OutputDTO relu = this.service.findById(idAvantUpdate);
 
 		assertThat(relu).isNotNull();
-		assertThat(relu.getIdProduit()).isEqualTo(cree.getIdProduit());
+		assertThat(relu.getIdProduit()).isEqualTo(idAvantUpdate);
 		assertThat(relu.getProduit()).isEqualTo(IT_PRD_UPDATE_OK);
 		assertThat(relu.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(relu.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 
-		/* Règle projet : toujours préciser une Locale pour toUpperCase. */
-		final String dummy = relu.getProduit().toUpperCase(Locale.getDefault());
-		assertThat(dummy).isNotBlank();
-	}
+	} // __________________________________________________________________
+	
+	
 
 	// ========================= TESTS delete(...) =========================
 
+	
+	
 	/**
 	 * <div>
 	 * <p>delete(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(null) : violation de contrat -> ExceptionParametreNull")
+	@DisplayName("delete(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune écriture BD")
 	public void testDeleteNull() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		assertThatThrownBy(() -> this.service.delete(null))
 				.isInstanceOf(ExceptionParametreNull.class);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-	}
+		assertThat(nombreApres).isEqualTo(nombreAvant);
 
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
 	 * <p>delete(blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(blank) : positionne message + lève ExceptionParametreBlank")
+	@DisplayName("delete(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune écriture BD")
 	public void testDeleteBlank() {
 
-		final InputDTO input = new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, ESPACES);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final InputDTO input =
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						ESPACES);
 
 		assertThatThrownBy(() -> this.service.delete(input))
 				.isInstanceOf(ExceptionParametreBlank.class);
 
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-	}
+		assertThat(nombreApres).isEqualTo(nombreAvant);
 
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(introuvable) : ne supprime rien.</p>
+	 * <p>delete(parent blank) : violation de contrat structurel.</p>
 	 * <ul>
-	 * <li>le {@code count()} reste inchangé</li>
-	 * <li>le message contient {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}</li>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
-	 *
-	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("delete(introuvable) : ne supprime rien, retourne, message 'introuvable'")
-	public void testDeleteIntrouvable() throws Exception {
+	@DisplayName("delete(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testDeleteParentBlank() {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		final long baseline = this.service.count();
+		final InputDTO input =
+				new ProduitDTO.InputDTO(
+						ESPACES,
+						IT_STP_PARENT_A,
+						IT_PRD_DELETE_OK);
 
-		this.service.delete(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_INEXISTANT_DELETE));
+		assertThatThrownBy(() -> this.service.delete(input))
+				.isInstanceOf(IllegalStateException.class);
 
-		assertThat(this.service.count()).isEqualTo(baseline);
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
 		assertThat(this.service.getMessage())
-				.contains(ProduitICuService.MESSAGE_OBJ_INTROUVABLE);
-	}
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
 
+	} // __________________________________________________________________
+
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(ok) : supprime effectivement.</p>
+	 * <p>delete(parent absent) : le parent requis
+	 * n'existe pas en stockage.</p>
 	 * <ul>
-	 * <li>après suppression, {@code findByLibelle(libelle)} retourne {@code null}</li>
+	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("delete(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	public void testDeleteParentAbsent() {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThatThrownBy(() -> this.service.delete(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_DELETE_OK)))
+				.isInstanceOf(IllegalStateException.class);
+
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(introuvable) : aucun objet persistant
+	 * ne correspond au couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>ne supprime rien physiquement en base</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}
+	 * + libellé</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("delete(ok) : supprime effectivement (findByLibelle -> null)")
-	public void testDeleteOk() throws Exception {
+	@DisplayName("delete(introuvable) : aucune suppression + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
+	public void testDeleteIntrouvable() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
 
-		final OutputDTO cree = this.service.creer(
-				new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELETE_OK));
+		final Long nombreAvantDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		assertThat(cree).isNotNull();
+		this.service.delete(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_INEXISTANT_DELETE));
 
-		this.service.delete(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_DELETE_OK));
+		final Long nombreApresDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		final OutputDTO apresSuppression = this.service.findByLibelle(IT_PRD_DELETE_OK);
+		assertThat(this.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_OBJ_INTROUVABLE
+								+ IT_PRD_INEXISTANT_DELETE);
+		assertThat(nombreApresDelete).isEqualTo(nombreAvantDelete);
+		assertThat(this.compterProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_INEXISTANT_DELETE))
+				.isEqualTo(0L);
 
-		assertThat(apresSuppression).isNull();
-	}
+	} // __________________________________________________________________
 
-	// ============================ TESTS count() ==========================
-
+	
+	
 	/**
 	 * <div>
-	 * <p>count() : cohérence (baseline + créations - suppressions).</p>
+	 * <p>delete(ok) : preuve béton de la destruction
+	 * sur le couple [parent, libellé].</p>
+	 * <ul>
+	 * <li>crée d'abord deux hiérarchies de parents réelles</li>
+	 * <li>crée ensuite deux Produits portant le même libellé
+	 * sur deux couples parents différents</li>
+	 * <li>détruit uniquement le couple ciblé</li>
+	 * <li>ne détruit jamais le couple homonyme
+	 * rattaché à l'autre parent</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("count() : retourne un nombre cohérent (baseline + créations - suppressions)")
-	public void testCountCoherent() throws Exception {
+	@DisplayName("delete(ok) : détruit le bon couple [parent, libellé] + message exact + preuve BD")
+	public void testDeleteOkAvecPreuveCoupleParentLibelle() throws Exception {
 
-		creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+		this.creerParentsBeton(IT_TP_PARENT_B, IT_STP_PARENT_B);
+
+		final OutputDTO creeParentA = this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_DELETE_OK));
+
+		final OutputDTO creeParentB = this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_PARENT_B,
+						IT_PRD_DELETE_OK));
+
+		assertThat(creeParentA).isNotNull();
+		assertThat(creeParentB).isNotNull();
+		assertThat(creeParentA.getIdProduit()).isNotNull();
+		assertThat(creeParentB.getIdProduit()).isNotNull();
+
+		final Long idCibleParentB = creeParentB.getIdProduit();
+
+		assertThat(this.compterProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_DELETE_OK))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleEnBase(
+				IT_TP_PARENT_B,
+				IT_STP_PARENT_B,
+				IT_PRD_DELETE_OK))
+				.isEqualTo(1L);
+
+		final Long nombreAvantDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		this.service.delete(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_B,
+						IT_STP_PARENT_B,
+						IT_PRD_DELETE_OK));
+
+		final Long nombreApresDelete = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(this.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_DELETE_OK
+								+ IT_PRD_DELETE_OK);
+
+		assertThat(nombreApresDelete).isEqualTo(nombreAvantDelete - 1L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS_BY_ID,
+				Long.class,
+				idCibleParentB)).isEqualTo(0L);
+
+		assertThat(this.compterProduitParCoupleEnBase(
+				IT_TP_PARENT_A,
+				IT_STP_PARENT_A,
+				IT_PRD_DELETE_OK))
+				.isEqualTo(1L);
+
+		assertThat(this.compterProduitParCoupleEnBase(
+				IT_TP_PARENT_B,
+				IT_STP_PARENT_B,
+				IT_PRD_DELETE_OK))
+				.isEqualTo(0L);
+
+	} // __________________________________________________________________	
+	
+
+	
+	// ============================ TESTS count() ==========================
+
+	
+	
+	/**
+	 * <div>
+	 * <p>count() : retourne le comptage réel de la base
+	 * et positionne le message observable correspondant.</p>
+	 * <ul>
+	 * <li>compare le résultat UC
+	 * au {@code SELECT COUNT(*)} physique</li>
+	 * <li>vérifie le message exact :
+	 * vide si {@code 0},
+	 * succès si strictement positif</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("count() : résultat identique au COUNT(*) physique + message observable exact")
+	public void testCountRetourneLeNombrePhysiqueEtLeMessageObservable()
+			throws Exception {
+
+		final Long nombrePhysique = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final long retourUc = this.service.count();
+
+		assertThat(retourUc).isEqualTo(nombrePhysique.longValue());
+
+		if (retourUc == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>count() : cohérence renforcée
+	 * avant créations, après créations,
+	 * puis après suppressions de nettoyage.</p>
+	 * <ul>
+	 * <li>prouve la hausse exacte après deux créations</li>
+	 * <li>prouve le retour exact au niveau initial
+	 * après suppression des deux objets créés</li>
+	 * <li>vérifie à chaque étape
+	 * le message observable exact</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("count() : cohérence complète + messages exacts avant/après créations puis nettoyage")
+	public void testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage()
+			throws Exception {
 
 		final long baseline = this.service.count();
 
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_COUNT_01));
-		this.service.creer(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_COUNT_02));
+		if (baseline == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+		this.creerParentsBeton(IT_TP_PARENT_A, IT_STP_PARENT_A);
+
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_COUNT_01));
+
+		this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_COUNT_02));
 
 		final long apresCreations = this.service.count();
 
 		assertThat(apresCreations).isEqualTo(baseline + 2L);
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
-		this.service.delete(new ProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_PARENT_A, IT_PRD_COUNT_01));
+		this.service.delete(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_COUNT_01));
 
-		final long apresSuppression = this.service.count();
+		this.service.delete(
+				new ProduitDTO.InputDTO(
+						IT_TP_PARENT_A,
+						IT_STP_PARENT_A,
+						IT_PRD_COUNT_02));
 
-		assertThat(apresSuppression).isEqualTo(baseline + 1L);
-	}
+		final long apresNettoyage = this.service.count();
 
+		assertThat(apresNettoyage).isEqualTo(baseline);
+
+		if (apresNettoyage == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+		final Long nombrePhysiqueFinal = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(apresNettoyage).isEqualTo(nombrePhysiqueFinal.longValue());
+
+	} // __________________________________________________________________
+	
 	
 	
 	// ========================= TESTS getMessage() ========================
@@ -1243,42 +2213,144 @@ public class ProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>getMessage() : reste appelable en toutes circonstances.</p>
-	 * <p>Test "béton" : message initial potentiellement {@code null} acceptable,
-	 * puis message fixé après une erreur utilisateur bénigne.</p>
+	 * <p>getMessage() au démarrage :
+	 * aucun message n'a encore été produit
+	 * par le service d'intégration.</p>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("getMessage(initial) : retourne null")
+	public void testGetMessageInitialNull() {
+
+		assertThat(this.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() après erreur locale bénigne :
+	 * le service doit exposer exactement
+	 * le message produit par {@code creer(null)}.</p>
+	 * <ul>
+	 * <li>{@code creer(null)} retourne {@code null}</li>
+	 * <li>vérifie immédiatement
+	 * le message observable exact</li>
+	 * <li>prouve aussi qu'aucune écriture BD
+	 * parasite n'a eu lieu</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("getMessage() : reste appelable en toutes circonstances (test béton)")
-	public void testGetMessageBeton() throws Exception {
+	@DisplayName("getMessage(après creer(null)) : retourne MESSAGE_CREER_NULL + aucune écriture BD")
+	public void testGetMessageApresErreurLocale() throws Exception {
 
-		/* 1) getMessage() doit être appelable sans lever d'exception. */
-		final String messageAvant = this.service.getMessage();
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		/* messageAvant peut être null : c'est acceptable. */
-		assertThat(messageAvant).isIn(null, messageAvant);
+		final OutputDTO retour = this.service.creer(null);
 
-		/* 2) Provoque une erreur utilisateur bénigne pour positionner un message local. */
-		final ProduitDTO.OutputDTO retourCreerNull = this.service.creer(null);
-
-		assertThat(retourCreerNull).isNull();
-
-		final String messageApres = this.service.getMessage();
-
-		assertThat(messageApres)
+		assertThat(retour).isNull();
+		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
 
-		/* Règle projet : toujours préciser une Locale pour toUpperCase. */
-		final String dummy = messageApres.toUpperCase(Locale.getDefault());
-		assertThat(dummy).isNotBlank();
-	}
+		final Long nombreApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreApres).isEqualTo(nombreAvant);
+
+	} // __________________________________________________________________
 	
 	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() après succès observable :
+	 * le service doit exposer exactement
+	 * le message produit par {@code count()}.</p>
+	 * <ul>
+	 * <li>compare le retour UC
+	 * au {@code COUNT(*)} physique</li>
+	 * <li>vérifie le message exact :
+	 * vide si zéro,
+	 * succès si strictement positif</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(après count) : retourne le message observable exact produit par count()")
+	public void testGetMessageApresCount() throws Exception {
+
+		final Long nombrePhysique = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		final long retourUc = this.service.count();
+
+		assertThat(retourUc).isEqualTo(nombrePhysique.longValue());
+
+		if (retourUc == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+	} // __________________________________________________________________
+
+	
+	
+	/**
+	 * <div>
+	 * <p>getMessage() : le dernier message gagne.</p>
+	 * <ul>
+	 * <li>produit d'abord un message observable
+	 * via {@code count()}</li>
+	 * <li>produit ensuite un message plus récent
+	 * via {@code creer(null)}</li>
+	 * <li>vérifie que le message final
+	 * est bien le plus récent</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(dernier message gagne) : MESSAGE_CREER_NULL écrase le message précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		final long retourUc = this.service.count();
+
+		if (retourUc == 0L) {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(this.service.getMessage())
+					.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+		final OutputDTO retourCreer = this.service.creer(null);
+
+		assertThat(retourCreer).isNull();
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+
+	} // __________________________________________________________________
+	
+
 	
 	// *************************** METHODES UTILITAIRES ********************/
 
+	
+	
 	/**
 	 * <div>
 	 * <p>Crée la hiérarchie de parents nécessaire aux tests "béton" Produit :</p>
@@ -1300,7 +2372,45 @@ public class ProduitCuServiceIntegrationTest {
 		 */
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(typeProduit));
 		this.sousTypeProduitService.creer(new SousTypeProduitDTO.InputDTO(typeProduit, sousTypeProduit));
-	}
+		
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Compte le nombre de lignes physiques pour un triplet
+	 * [type parent, sous-type parent, produit].</p>
+	 * </div>
+	 *
+	 * @param pTypeProduit : String : libellé du TypeProduit parent.
+	 * @param pSousTypeProduit : String : libellé du SousTypeProduit parent.
+	 * @param pProduit : String : libellé exact du Produit.
+	 * @return Long : nombre de lignes trouvées pour ce triplet.
+	 */
+	private Long compterProduitParCoupleEnBase(
+			final String pTypeProduit,
+			final String pSousTypeProduit,
+			final String pProduit) {
+
+		return this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) "
+				+ "FROM PRODUITS p "
+				+ "INNER JOIN SOUS_TYPES_PRODUIT stp "
+				+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
+				+ "INNER JOIN TYPES_PRODUIT tp "
+				+ "ON stp.TYPE_PRODUIT = tp.ID_TYPE_PRODUIT "
+				+ "WHERE tp.TYPE_PRODUIT = ? "
+				+ "AND stp.SOUS_TYPE_PRODUIT = ? "
+				+ "AND p.PRODUIT = ?",
+				Long.class,
+				pTypeProduit,
+				pSousTypeProduit,
+				pProduit);
+
+	} // __________________________________________________________________
+
+	
 
 	/**
 	 * <div>
@@ -1320,6 +2430,9 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(0L);
 		assertThat(page.getContent()).isNotNull();
 		assertThat(page.getContent().size()).isLessThanOrEqualTo(page.getPageSize());
-	}
+		
+	} // __________________________________________________________________
+	
+	
 
 }

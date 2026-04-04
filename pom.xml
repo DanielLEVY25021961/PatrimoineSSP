@@ -7,8 +7,8 @@
 
 	<!-- ================================================== -->
 	<!-- POM pour MAVEN 4.0.0 -->
-	<!-- Java 24 -->
-	<!-- C:\Program Files\Java\jdk-24 -->
+	<!-- Java 21 -->
+	<!-- C:\Program Files\Java\jdk-21 -->
 	<!-- ================================================== -->
 
 	<!-- Version du POM. -->
@@ -23,7 +23,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.4</version>
+		<version>4.0.5</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<!-- ========================================================== -->

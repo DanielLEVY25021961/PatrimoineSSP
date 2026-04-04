@@ -354,7 +354,7 @@ public final class TypeProduitDTO {
 			/* Fallback “business key” vers le métier si pas d'ID. */
 			/* TypeProduit. */
 			final String tp = this.getTypeProduit();
-			
+
 			return Objects.hash(tp);
 		}
 
@@ -381,7 +381,11 @@ public final class TypeProduitDTO {
 			if ((id != null) && (otherId != null)) {
 				return Objects.equals(id, otherId);
 			}
-			
+
+			if ((id == null) ^ (otherId == null)) {
+				return false;
+			}
+
 			/* Fallback “business key” vers le métier si pas d'ID. */
 			/* TypeProduit. */
 			return Objects.equals(
@@ -390,7 +394,7 @@ public final class TypeProduitDTO {
 
 		}
 
-
+	
 		
 		/**
 		* {@inheritDoc}

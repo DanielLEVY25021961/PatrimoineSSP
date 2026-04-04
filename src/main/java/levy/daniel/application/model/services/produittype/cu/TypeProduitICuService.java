@@ -54,7 +54,8 @@ public interface TypeProduitICuService {
 	 * </div>
 	 */
 	String TIRET_ESPACE = " - ";
-	
+
+	// * ---------------- CREER ---------------------- *//
 	/**
 	 * <div>
 	 * <p>"vous ne pouvez pas sauvegarder un Type de Produit null."</p>
@@ -72,6 +73,54 @@ public interface TypeProduitICuService {
 	String MESSAGE_CREER_NOM_BLANK 
 		= "vous ne pouvez pas sauvegarder un Type de Produit "
 			+ "dont le libellé est blank (null ou que des espaces).";
+	
+	/**
+	 * <div>
+	 * <p>"Impossible de vérifier l'unicité 
+	 * du Type de Produit dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER =
+			"Impossible de vérifier l'unicité "
+			+ "du Type de Produit dans le stockage : ";
+	
+	/**
+	 * <div>
+	 * <p>"Impossible de créer le Type de Produit dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER =
+			"Impossible de créer le Type de Produit dans le stockage : ";
+	
+	/**
+	 * <div>
+	 * <p>"Impossible de créer le Type de Produit - 
+	 * le stockage n'a retourné aucun objet créé."</p>
+	 * </div>
+	 */
+	String MESSAGE_CREATION_TECHNIQUE_KO_CREER =
+			"Impossible de créer le Type de Produit - "
+					+ "le stockage n'a retourné aucun objet créé.";
+	
+	/**
+	 * <div>
+	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * après la création du Type de Produit : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER =
+			"Impossible de préparer la réponse utilisateur "
+					+ "après la création du Type de Produit : ";
+	
+	/**
+	 * <div>
+	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * après la création du Type de Produit."</p>
+	 * </div>
+	 */
+	String MESSAGE_CONVERSION_TECHNIQUE_KO_CREER =
+			"Impossible de préparer la réponse utilisateur "
+					+ "après la création du Type de Produit.";
 	
 	/**
 	 * <div>
@@ -243,94 +292,165 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Stocke un {@link TypeProduit}
-	 * dans le stockage en déléguant à un composant technique GATEWAY 
-	 * et le retourne sous forme d'OutputDTO.
+	 * Stocke un {@link TypeProduitDTO.InputDTO} en pilotant 
+	 * un scénario complet de SERVICE UC,
+	 * puis retourne la réponse sous forme de
+	 * {@link TypeProduitDTO.OutputDTO}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>retourne null si pInputDTO == null.</li>
-	 * <li>doit jeter une Exception si 
-	 * pInputDTO.getTypeProduit() est Blank.</li>
-	 * <li>positionne {@link #getMessage()} à {@link #MESSAGE_CREER_NULL}
-	 * si pInputDTO est null (aucun LOG, aucune exception).</li>
-	 * <li>émet un message, Log.info et jette une 
-	 * ExceptionParametreBlank si le libellé dans le DTO est blank.</li>
-	 * <li>émet un message, Log.info et jette une ExceptionDoublon 
-	 * si le DTO est un doublon.</li>
-	 * <li>convertit l'Input DTO en Objet métier.</li>
-	 * <li>appelle le SERVICE GATEWAY pour l'opération sur le stockage.</li>
-	 * <li>récupère l'objet métier retourné par le GATEWAY.</li>
-	 * <li>convertit l'objet métier -> OutputDTO.</li>
-	 * <li>retourne OutputDTO.</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO} 
+	 * provenant de la couche de présentation ;</li>
+	 * <li>valider les préconditions applicatives observables 
+	 * par l'utilisateur ;</li>
+	 * <li>convertir l'InputDTO en objet métier {@link TypeProduit} ;</li>
+	 * <li>déléguer l'écriture au composant technique GATEWAY ;</li>
+	 * <li>récupérer l'objet métier effectivement stocké ;</li>
+	 * <li>convertir l'objet métier retourné en
+	 * {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable par le CONTROLLER appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL} 
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si {@code pInputDTO.getTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_CREER_NOM_BLANK}, LOG et lève une exception.</li>
-	 * <li>Si le DTO est un doublon, positionne {@link #getMessage()} à
-	 * {@link #MESSAGE_DOUBLON} + libellé, LOG et lève une exception.</li>
-	 * <li>Sinon, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_CREER_OK}, délègue la création 
-	 * au composant technique GATEWAY et retourne
-	 * l'OutputDTO correspondant à l'objet stocké.</li>
+	 * <li>Si {@code pInputDTO == null}, retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NOM_BLANK},
+	 * émet un LOG de service et lève une exception applicative.</li>
+	 * <li>Si le DTO correspond à un doublon fonctionnel, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_DOUBLON} + libellé,
+	 * émet un LOG de service et lève une exception métier.</li>
+	 * <li>Sinon, délègue la création au composant GATEWAY, puis retourne
+	 * l'{@link TypeProduitDTO.OutputDTO} correspondant à l'objet réellement
+	 * stocké.</li>
+	 * <li>En cas d'échec remonté par le GATEWAY ou par une étape interne du
+	 * SERVICE UC, propage une exception circonstanciée conforme à
+	 * l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : TypeProduitDTO.InputDTO : 
-	 * le Type de Produit à stocker.
-	 * @return TypeProduitDTO.OutputDTO : 
-	 * le Type de Produit sauvegardé dans le stockage.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()} reflète l'issue
+	 * observable de l'opération pour l'appelant.</li>
+	 * <li>En cas de succès, {@link #getMessage()} est positionné à
+	 * {@link #MESSAGE_CREER_OK}.</li>
+	 * <li>En cas d'échec métier ou applicatif,
+	 * le SERVICE UC produit un message utilisateur déterministe et traçable.</li>
+	 * <li>Le résultat retourné, s'il est non {@code null},
+	 * correspond à l'état métier effectivement créé dans le stockage
+	 * via le GATEWAY.</li>
+	 * <li>Le SERVICE UC conserve son rôle d'orchestration applicative entre
+	 * couche de présentation, métier, GATEWAY et message utilisateur.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * le Type de Produit à créer via le SERVICE UC.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * le Type de Produit créé et retourné à la couche appelante ;
+	 * peut être {@code null} si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si le libellé de {@code pInputDTO} est blank.
+	 * @throws ExceptionDoublon
+	 * si {@code pInputDTO} correspond à un doublon fonctionnel.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors du contrôle d'unicité
+	 * ou lors de la création via le GATEWAY.
+	 * @throws IllegalStateException
+	 * si le GATEWAY retourne {@code null}
+	 * ou si la conversion finale en {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}.
+	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
-	TypeProduitDTO.OutputDTO creer(TypeProduitDTO.InputDTO pInputDTO) 
-			throws Exception;
+	TypeProduitDTO.OutputDTO creer(TypeProduitDTO.InputDTO pInputDTO)
+			throws Exception;	
 
 
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">retourne tous les 
-	 * <code>{@link TypeProduit}</code> 
-	 * présents dans le stockage sous forme de DTOs 
-	 * <code>TypeProduitDTO.OutputDTO</code>.
+	 * <p style="font-weight:bold;">
+	 * Retourne tous les {@link TypeProduitDTO.OutputDTO}
+	 * disponibles en pilotant un scénario complet de SERVICE UC.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>demande au SERVICE GATEWAY la liste de tous les 
-	 * enregistrements dans le stockage.</li>
-	 * <li>émet un message, LOG et jette une ExceptionStockageVide 
-	 * si la liste retournée est null.</li>
-	 * <li>convertit les objets métier retournés en OutputDTO  
-	 * , fabrique la liste et la retourne.</li>
+	 * <li>demander au composant GATEWAY la liste complète
+	 * des {@link TypeProduit} présents dans le stockage ;</li>
+	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
+	 * <li>filtrer les éventuels éléments {@code null},
+	 * trier les objets métier et dédoublonner la réponse côté UC
+	 * si nécessaire ;</li>
+	 * <li>convertir la liste métier en
+	 * {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une liste exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si le stockage retourne {@code null}, positionne 
-	 * {@link #getMessage()}
-	 * à {@link #MESSAGE_STOCKAGE_NULL}, LOG et lève une exception.</li>
-	 * <li>Sinon, retourne la liste des OutputDTO correspondant 
-	 * à tous les enregistrements
-	 * du stockage (dédoublonnés côté CU si nécessaire).</li>
-	 * <ul>
-	 * <li>si la liste résultat est vide, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>si la liste résultat n'est pas vide, positionne 
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}</li>
-	 * </ul>
+	 * <li>Délègue la recherche exhaustive au composant GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne une {@link List} de
+	 * {@link TypeProduitDTO.OutputDTO} jamais {@code null}
+	 * (éventuellement vide).</li>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return List&lt;TypeProduitDTO.OutputDTO&gt;: 
-	 * Liste de tous les objets métier dans le stockage. Jamais null.
-	 * @throws Exception 
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>La liste retournée, si elle n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY,
+	 * exprimé sous forme de DTO.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return List<TypeProduitDTO.OutputDTO> :
+	 * liste de tous les objets métier présents dans le stockage ;
+	 * jamais {@code null}, éventuellement vide.
+	 * @throws ExceptionStockageVide
+	 * si le stockage retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * exhaustive via le GATEWAY.
+	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation de la réponse utilisateur.
 	 */
 	List<TypeProduitDTO.OutputDTO> rechercherTous() throws Exception;
 	
@@ -339,88 +459,169 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Retourne tous les libellés des
-	 * <code>{@link TypeProduit}</code>
-	 * présents dans le stockage sous forme de 
-	 * <code>String</code>.
+	 * Retourne tous les libellés des {@link TypeProduit}
+	 * disponibles en pilotant un scénario complet de SERVICE UC.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>demande au SERVICE GATEWAY la liste de tous les 
-	 * enregistrements dans le stockage.</li>
-	 * <li>émet un message, LOG et jette une ExceptionStockageVide 
-	 * si la liste retournée est null.</li>
-	 * <li>convertit les objets métier retournés en String  
-	 * , fabrique la liste et la retourne.</li>
+	 * <li>demander au composant GATEWAY la liste complète
+	 * des {@link TypeProduit} présents dans le stockage ;</li>
+	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
+	 * <li>filtrer les éventuels éléments {@code null},
+	 * trier les objets métier,
+	 * extraire les libellés non blank
+	 * et dédoublonner la réponse côté UC si nécessaire ;</li>
+	 * <li>retourner une liste de {@link String}
+	 * exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si le stockage retourne {@code null}
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_STOCKAGE_NULL}, LOG et lève une exception.</li>
-	 * <li>Sinon, retourne la liste des libellés 
-	 * non blank des objets du stockage
-	 * (dédoublonnés côté CU si nécessaire).</li>
-	 * <ul>
-	 * <li>si la liste résultat est vide, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>si la liste résultat n'est pas vide, positionne 
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}</li>
-	 * </ul>
+	 * <li>Délègue la recherche exhaustive au composant GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne une {@link List} de {@link String}
+	 * jamais {@code null}, éventuellement vide.</li>
+	 * <li>La liste retournée ne contient que des libellés non blank,
+	 * dédoublonnés côté UC si nécessaire.</li>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return List&lt;String&gt; : 
-	 * Liste de tous les libellés des objets métier dans le stockage.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>La liste retournée correspond, si elle n'est pas vide,
+	 * à l'état métier effectivement accessible dans le stockage
+	 * via le GATEWAY, exprimé sous forme de libellés.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return List&lt;String&gt; :
+	 * liste des libellés des objets métier présents dans le stockage ;
+	 * jamais {@code null}, éventuellement vide.
+	 * @throws ExceptionStockageVide
+	 * si le stockage retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * exhaustive via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation de la réponse utilisateur.
 	 */
 	List<String> rechercherTousString() throws Exception;
-
+	
 
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">retourne tous les 
-	 * <code>{@link TypeProduit}</code> 
-	 * présents dans le stockage sous forme de DTOs 
-	 * <code>TypeProduitDTO.OutputDTO</code> par Page.
+	 * <p style="font-weight:bold;">
+	 * Retourne tous les {@link TypeProduitDTO.OutputDTO}
+	 * disponibles sous forme paginée
+	 * en pilotant un scénario complet de SERVICE UC.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>émet un message, LOG et jette une 
-	 * IllegalStateException si pRequetePage == null.</li>
-	 * <li>délègue au Service Gateway la tâche 
-	 * de retourner le résultat paginé.</li>
-	 * <li>retourne null si resultatPagine == null.</li>
-	 * <li>construit un ResultatPage<OutputDTO> en reprenant 
-	 * totalElements du résultat Gateway 
-	 * (pagination cohérente : totalPages, hasNext…)</li>
-	 * <li>convertit les objets metier en OutputDTO.</li>
-	 * <li>récupère le message auprès du Gateway 
-	 * et retourne le résultat paginé.</li>
+	 * <li>valider la requête de pagination transmise
+	 * par la couche appelante ;</li>
+	 * <li>déléguer au composant GATEWAY
+	 * la recherche paginée des {@link TypeProduit}
+	 * dans le stockage ;</li>
+	 * <li>sécuriser la réponse technique retournée
+	 * par le GATEWAY ;</li>
+	 * <li>filtrer les éventuels éléments {@code null},
+	 * trier les objets métier et dédoublonner la réponse
+	 * côté UC si nécessaire ;</li>
+	 * <li>convertir le contenu métier paginé
+	 * en {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner un {@link ResultatPage} exploitable
+	 * par la couche appelante,
+	 * avec une pagination cohérente.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pRequetePage == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PAGEABLE_NULL}, LOG et lève une exception.</li>
-	 * <li>Si le résultat paginé retourné par le Gateway est {@code null}, 
-	 * positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_PAGINEE_KO} et retourne {@code null}.</li>
-	 * <li>Sinon, retourne un {@link ResultatPage} d'OutputDTO en reprenant
-	 * {@code totalElements} du résultat Gateway (pagination cohérente).
-	 *  Positionne {@link #getMessage()} 
-	 *  à {@link #MESSAGE_RECHERCHE_PAGINEE_OK}.</li>
+	 * <li>Si {@code pRequetePage == null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_PAGEABLE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Délègue ensuite la recherche paginée
+	 * au composant GATEWAY.</li>
+	 * <li>Si le résultat paginé retourné par le GATEWAY
+	 * est {@code null}, positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_PAGINEE_KO},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne un {@link ResultatPage}
+	 * de {@link TypeProduitDTO.OutputDTO} jamais {@code null},
+	 * en reprenant une pagination cohérente
+	 * à partir du résultat technique sécurisé.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse paginée utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pRequetePage : RequetePage
-	 * @return ResultatPage&lt;TypeProduitDTO.OutputDTO&gt; 
-	 * : page de résultats.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse paginée utilisateur.</li>
+	 * <li>Le contenu retourné dans le {@link ResultatPage},
+	 * s'il n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY,
+	 * exprimé sous forme de DTO paginés.</li>
+	 * <li>Aucun résultat paginé partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pRequetePage : RequetePage :
+	 * requête de pagination demandée par la couche appelante.
+	 * @return ResultatPage&lt;TypeProduitDTO.OutputDTO&gt; :
+	 * page de résultats DTO ; jamais {@code null}.
+	 * @throws IllegalStateException
+	 * si {@code pRequetePage == null}
+	 * ou si le résultat paginé retourné par le GATEWAY
+	 * est {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche paginée
+	 * via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse paginée utilisateur.
 	 */
 	ResultatPage<TypeProduitDTO.OutputDTO> rechercherTousParPage(
 			RequetePage pRequetePage) throws Exception;
@@ -430,113 +631,247 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche un {@link TypeProduit}
-	 * dans le stockage par libellé exact.</p>
-	 * <ul>
-	 * <li>retourne null si pTypeProduit est blank (null ou espaces).</li>
-	 * <li>retourne null si aucun objet n'est trouvé.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
-	 * <ul>
-	 * <li>Si {@code pLibelle} est Blank, retourne 
-	 * {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK} 
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>Si aucun objet n'est trouvé en stockage
-	 * , retourne {@code null} et positionne
-	 * {@link #getMessage()} à 
-	 * {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Sinon, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_SUCCES_RECHERCHE} 
-	 * et retourne l'OutputDTO correspondant à l'objet trouvé.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @param pLibelle : String : libellé exact à rechercher.
-	 * @return TypeProduitDTO.OutputDTO : DTO résultat ou null.
-	 * @throws Exception
-	 */
-	TypeProduitDTO.OutputDTO findByLibelle(
-			String pLibelle) throws Exception;
-
-	
-	
-	/**
-	 * <div>
+	 * Recherche un {@link TypeProduitDTO.OutputDTO}
+	 * à partir de son libellé exact.
+	 * </p>
 	 * <p style="font-weight:bold;">
-	 * Retourne la List&lt;TypeProduitDTO.OutputDTO&gt; 
-	 * des {@link TypeProduit}
-	 * dont le libellé contient pContenu.
+	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>doit jeter une Exception si pContenu est null.</li>
-	 * <li>doit retourner tous les enregistrements 
-	 * si pContenu est blank.</li>
-	 * <li>doit retourner une liste vide si aucun résultat.</li>
+	 * <li>recevoir un libellé exact provenant de la couche appelante ;</li>
+	 * <li>valider le caractère exploitable du libellé transmis ;</li>
+	 * <li>déléguer au composant GATEWAY la recherche exacte
+	 * du {@link TypeProduit} correspondant dans le stockage ;</li>
+	 * <li>convertir l'objet métier trouvé
+	 * en {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pContenu == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL}, LOG et lève une exception.</li>
-	 * <li>Si {@code pContenu} est Blank, délègue 
-	 * à {@link #rechercherTous()} et retourne 
-	 * tous les enregistrements.</li>
-	 * <li>Si {@code pContenu} n'est pas Blank,  
-	 * retourne la liste des objets dont le libellé 
-	 * contient {@code pContenu}
-	 * (liste vide si aucun résultat).</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_RECHERCHE_VIDE} si la 
-	 * liste de résultats est vide.</li>
-	 * <li>positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_RECHERCHE_OK} si la 
-	 * liste de résultats n'est pas vide.</li>
+	 * <li>Si {@code pLibelle} est blank, retourne {@code null},
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Sinon, délègue la recherche exacte au composant GATEWAY.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage,
+	 * retourne {@code null} et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
+	 * <li>Si un objet est trouvé, retourne l'{@link TypeProduitDTO.OutputDTO}
+	 * correspondant.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
-	 * </ul>
-	 * <p><b>INVARIANT technique :</b> le composant Gateway ne renvoie jamais
-	 * de liste contenant des éléments {@code null}.</p>
 	 * </div>
 	 *
-	 * @param pContenu : String : 
-	 * contenu partiel du libellé (recherche rapide).
-	 * @return List&lt;TypeProduitDTO.OutputDTO&gt; : 
-	 * Liste de tous les objets métier dont le libellé contient pContenu.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pLibelle : String :
+	 * libellé exact du TypeProduit recherché.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO correspondant à l'objet trouvé ;
+	 * retourne {@code null} si le libellé est blank
+	 * ou si aucun objet n'est trouvé.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * via le GATEWAY.
+	 * @throws IllegalStateException
+	 * si la conversion finale en {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
-	List<TypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) 
+	TypeProduitDTO.OutputDTO findByLibelle(String pLibelle) throws Exception;
+	
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Recherche rapidement tous les {@link TypeProduitDTO.OutputDTO}
+	 * dont le libellé contient un contenu donné.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>recevoir un contenu partiel de recherche
+	 * provenant de la couche appelante ;</li>
+	 * <li>valider le caractère exploitable du contenu transmis ;</li>
+	 * <li>déléguer au composant GATEWAY
+	 * la recherche rapide des {@link TypeProduit}
+	 * dans le stockage ;</li>
+	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
+	 * <li>filtrer les éventuels éléments {@code null},
+	 * trier les objets métier et dédoublonner la réponse
+	 * côté UC si nécessaire ;</li>
+	 * <li>convertir la liste métier en
+	 * {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une liste exploitable
+	 * par la couche appelante.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Si {@code pContenu == null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Si {@code pContenu} est blank, délègue à
+	 * {@link #rechercherTous()} et retourne tous les enregistrements
+	 * selon le contrat observable de cette méthode.</li>
+	 * <li>Sinon, délègue la recherche rapide au composant GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG de service et lève une exception.</li>
+	 * <li>Sinon, retourne une {@link List} de
+	 * {@link TypeProduitDTO.OutputDTO} jamais {@code null},
+	 * éventuellement vide.</li>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>En cas d'échec technique remonté par le GATEWAY
+	 * ou par la préparation de la réponse utilisateur,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>La liste retournée, si elle n'est pas vide,
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via le GATEWAY,
+	 * exprimé sous forme de DTO.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pContenu : String :
+	 * contenu partiel du libellé recherché.
+	 * @return List<TypeProduitDTO.OutputDTO> :
+	 * liste des DTO dont le libellé contient {@code pContenu} ;
+	 * jamais {@code null}, éventuellement vide.
+	 * @throws IllegalStateException
+	 * si {@code pContenu == null}.
+	 * @throws ExceptionStockageVide
+	 * si le stockage retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * via le GATEWAY.
+	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
+	 */
+	List<TypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu)
 			throws Exception;
-
+	
 
 
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche un TypeProduit dans 
-	 * le stockage à partir d'un InputDTO.</p>
-	 * </div>
-	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * Recherche un {@link TypeProduitDTO.OutputDTO}
+	 * à partir d'un {@link TypeProduitDTO.InputDTO}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null} 
-	 * et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OBJ_NULL} 
-	 * (aucun LOG, aucune exception).</li>
-	 * <li>délègue la recherche de l'objet métier 
-	 * à {@link #findByLibelle(String)}</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO}
+	 * provenant de la couche appelante ;</li>
+	 * <li>vérifier que le DTO de recherche est exploitable ;</li>
+	 * <li>extraire son libellé métier ;</li>
+	 * <li>déléguer la recherche exacte
+	 * à {@link #findByLibelle(String)} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : TypeProduitDTO.InputDTO : DTO de recherche.
-	 * @return TypeProduitDTO.OutputDTO : DTO résultat ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null}, retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OBJ_NULL}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Sinon, délègue la recherche exacte
+	 * à {@link #findByLibelle(String)}
+	 * avec {@code pInputDTO.getTypeProduit()}.</li>
+	 * <li>Le comportement observable sur le libellé transmis
+	 * (blank, introuvable, succès, erreur technique)
+	 * est alors celui de {@link #findByLibelle(String)}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur déléguée.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'état métier effectivement accessible
+	 * dans le stockage via la recherche exacte par libellé.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * DTO de recherche.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO résultat ; retourne {@code null}
+	 * si {@code pInputDTO == null}
+	 * ou si la recherche exacte déléguée ne trouve aucun objet.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche exacte
+	 * déléguée à {@link #findByLibelle(String)}.
+	 * @throws IllegalStateException
+	 * si la conversion finale en {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}
+	 * dans le scénario délégué à {@link #findByLibelle(String)}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * via {@link #findByLibelle(String)}.
 	 */
 	TypeProduitDTO.OutputDTO findByDTO(
 			TypeProduitDTO.InputDTO pInputDTO) throws Exception;
@@ -545,165 +880,439 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Retourne un {@link TypeProduit}
-	 * sous forme de OutputDTO déterminé par son ID dans le stockage.</p>
+	 * <p style="font-weight:bold;">
+	 * Recherche un {@link TypeProduitDTO.OutputDTO}
+	 * à partir de son identifiant persistant.</p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>retourne null si pId == null.</li>
-	 * <li>retourne null si l'objet métier n'est pas trouvé.</li>
-	 * <li>convertit la réponse en DTO et le retourne.</li>
+	 * <li>recevoir un identifiant persistant
+	 * provenant de la couche appelante ;</li>
+	 * <li>vérifier que cet identifiant est exploitable ;</li>
+	 * <li>déléguer la recherche de l'objet métier
+	 * au composant de stockage GATEWAY;</li>
+	 * <li>préparer une réponse utilisateur complète
+	 * à partir de l'objet effectivement trouvé ;</li>
+	 * <li>retourner un {@link TypeProduitDTO.OutputDTO}
+	 * exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :
+	 * </p>
 	 * <ul>
-	 * <li>Si {@code pId == null}, retourne {@code null} et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL} 
-	 * (aucun LOG, aucune exception).</li>
- 	 * <li>Si aucun objet n'est trouvé en stockage, positionne 
- 	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} + pId
- 	 * , et retourne {@code null}.</li>
- 	 * <li>Sinon, positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_SUCCES_RECHERCHE} 
-	 * et retourne l'OutputDTO correspondant à l'objet trouvé.</li>
+	 * <li>Si {@code pId == null}, retourne {@code null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL}
+	 * et n'émet ni LOG ni Exception.</li>
+	 * <li>Sinon, délègue la recherche de l'objet métier
+	 * portant cet identifiant persistant
+	 * au composant de stockage.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + pId.</li>
+	 * <li>Si un objet est trouvé,
+	 * prépare un {@link TypeProduitDTO.OutputDTO}
+	 * correspondant à cet objet métier.</li>
+	 * <li>En cas de succès,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_SUCCES_RECHERCHE}
+	 * après préparation complète de la réponse utilisateur.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pId : Long : ID dans le stockage.
-	 * @return TypeProduitDTO.OutputDTO : 
-	 * l'objet métier qui possède pId, ou null.
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'objet métier effectivement trouvé
+	 * en stockage pour l'identifiant demandé.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pId : Long :
+	 * identifiant persistant recherché dans le stockage.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO résultat ; retourne {@code null}
+	 * si {@code pId == null}
+	 * ou si aucun objet ne correspond à cet identifiant.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors de la recherche par identifiant
+	 * via le composant de stockage.
+	 * @throws IllegalStateException
+	 * si la conversion finale en {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}
+	 * après récupération d'un objet métier trouvé.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation,
+	 * notamment lors de la préparation
+	 * de la réponse utilisateur.
 	 */
 	TypeProduitDTO.OutputDTO findById(Long pId) throws Exception;
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Modifie un {@link TypeProduit}
-	 * déjà existant dans le stockage.</p>
-	 * <p>Cette méthode ne s'applique qu'à un objet déjà persistant.</p>
+	 * <p>Modifie un {@link TypeProduit} déjà persistant à partir d'un
+	 * {@link TypeProduitDTO.InputDTO}.</p>
+	 *
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
 	 * <ul>
-	 * <li>doit jeter une Exception si pTypeProduit == null.</li>
-	 * <li>doit jeter une Exception 
-	 * si le libellé est Blank.</li>
-	 * <li>doit jeter une ExceptionNonPersistant si l'ID est null.</li>
-	 * <li>retourne null si l'objet n'existe pas en stockage.</li>
-	 * <li>retourne l'objet modifié 
-	 * si une modification est effectuée.</li>
-	 * <li>sinon retourne l'objet inchangé 
-	 * et fournit un message utilisateur.</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO}
+	 * provenant de la couche appelante ;</li>
+	 * <li>valider les préconditions applicatives observables
+	 * sur le DTO et sur son libellé ;</li>
+	 * <li>clarifier qu'un {@link TypeProduitDTO.InputDTO}
+	 * ne portant aucun identifiant persistant
+	 * ni aucune ancienne valeur métier,
+	 * la méthode n'exprime pas un renommage
+	 * ni un changement de clé métier ;</li>
+	 * <li>ré-identifier l'objet déjà persistant
+	 * par une recherche exacte
+	 * sur ce même libellé ;</li>
+	 * <li>réinjecter l'identifiant persistant retrouvé
+	 * dans l'objet métier reconstruit
+	 * à partir du DTO ;</li>
+	 * <li>déléguer la modification technique
+	 * au composant GATEWAY ;</li>
+	 * <li>convertir l'objet métier modifié
+	 * en {@link TypeProduitDTO.OutputDTO} ;</li>
+	 * <li>retourner une réponse exploitable
+	 * par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
 	 * <ul>
-	 * <li>Si {@code pTypeProduit == null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_NULL}, LOG et lève une exception.</li>
-	 * <li>Si {@code pTypeProduit.getTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
-	 * , LOG et lève une exception.</li>
-	 * <li>Si l'objet n'existe pas dans le stockage 
-	 * (recherche par libellé exact), retourne {@code null} et positionne
-	 * {@link #getMessage()} à 
-	 * {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Si l'objet existe mais n'est pas persistant (ID {@code null})
-	 * , positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé
-	 * , LOG et lève une exception.</li>
-	 * <li>Sinon, délègue la modification au Gateway.</li> 
-	 * <li>retourne l'OutputDTO correspondant à l'objet modifié
-	 * (ou {@code null} si le Gateway retourne {@code null}).</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_MODIF_KO} + pTypeProduit.getTypeProduit()
-	 * , et retourne null si le Gateway retourne {@code null}.</li>
-	 * <li>positionne {@link #getMessage()} à 
-	 * {@link #MESSAGE_MODIF_OK} + pTypeProduit.getTypeProduit()
-	 * , et retourne l'OutputDTO modifié en cas de succès.</li>
-	 * </ul>
+	 * <li>Si {@code pInputDTO == null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_BLANK},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Le {@link TypeProduitDTO.InputDTO}
+	 * ne portant ni identifiant persistant
+	 * ni ancienne valeur métier,
+	 * cette méthode ne peut pas exprimer
+	 * un renommage
+	 * ni distinguer un "avant"
+	 * d'un "après".</li>
+	 * <li>En conséquence,
+	 * cette méthode s'applique uniquement
+	 * à un objet déjà persistant
+	 * retrouvé par le même libellé exact
+	 * que celui porté par {@code pInputDTO}.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage
+	 * via cette recherche exacte,
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
+	 * <li>Si l'objet retrouvé existe
+	 * mais n'est pas persistant
+	 * (identifiant {@code null}),
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé,
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Sinon, réinjecte l'identifiant persistant retrouvé
+	 * dans l'objet métier reconstruit à partir du DTO,
+	 * puis délègue la modification au GATEWAY.</li>
+	 * <li>Si le GATEWAY retourne {@code null},
+	 * retourne {@code null}
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_KO} + libellé.</li>
+	 * <li>En cas de succès,
+	 * retourne un {@link TypeProduitDTO.OutputDTO}
+	 * correspondant à l'objet modifié
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_MODIF_OK} + libellé
+	 * seulement après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>En cas d'échec technique
+	 * lors de la recherche de l'existant,
+	 * de la délégation de modification
+	 * ou de la préparation finale de la réponse,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : TypeProduitDTO.InputDTO : 
-	 * Objet métier portant les modifications (hors ID).
-	 * @return TypeProduitDTO.OutputDTO : 
-	 * OutputDTO de même ID que pTypeProduit, modifié ou inchangé, ou null.
+	 * <div>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète
+	 * de la réponse utilisateur.</li>
+	 * <li>Le DTO retourné, s'il n'est pas {@code null},
+	 * correspond à l'objet déjà persistant
+	 * retrouvé par libellé exact,
+	 * puis modifié via le GATEWAY.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * ne doit être exposé à l'appelant.</li>
+	 * <li>L'absence d'identifiant
+	 * dans le {@link TypeProduitDTO.InputDTO}
+	 * est explicitement compensée
+	 * par une phase préalable
+	 * de ré-identification de l'objet persistant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * DTO portant le libellé métier
+	 * de l'objet déjà persistant
+	 * à ré-identifier puis à modifier ;
+	 * ce DTO ne porte ni ID
+	 * ni ancienne valeur métier.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * DTO de l'objet persistant modifié ;
+	 * retourne {@code null}
+	 * si aucun objet n'est trouvé
+	 * par libellé exact
+	 * ou si le GATEWAY retourne {@code null}.
+	 * @throws ExceptionParametreNull
+	 * si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si {@code pInputDTO.getTypeProduit()} est blank.
+	 * @throws ExceptionNonPersistant
+	 * si l'objet retrouvé avant modification
+	 * n'est pas persistant.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors de la recherche de l'existant,
+	 * de la délégation de modification
+	 * ou de la préparation finale
+	 * de la réponse utilisateur.
+	 * @throws IllegalStateException
+	 * si l'objet retourné après modification
+	 * n'est plus persistant
+	 * ou si la conversion finale en
+	 * {@link TypeProduitDTO.OutputDTO}
+	 * retourne {@code null}.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
 	TypeProduitDTO.OutputDTO update(
 			TypeProduitDTO.InputDTO pInputDTO) throws Exception;
-
 	
+
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Détruit un {@link TypeProduit}
-	 * déjà existant dans le stockage.</p>
+	 * <p>Détruit un {@link TypeProduit} déjà persistant
+	 * à partir d'un {@link TypeProduitDTO.InputDTO}.</p>
+	 *
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
 	 * <ul>
-	 * <li>doit jeter une Exception 
-	 * si pInputDTO == null.</li>
-	 * <li>doit jeter une Exception 
-	 * si pInputDTO.getTypeProduit() est blank.</li>
-	 * <li>doit déléguer la suppression à la couche technique.</li>
+	 * <li>recevoir un {@link TypeProduitDTO.InputDTO}
+	 * provenant de la couche appelante ;</li>
+	 * <li>valider les préconditions applicatives observables
+	 * sur le DTO et sur son libellé ;</li>
+	 * <li>clarifier que pour un {@link TypeProduitDTO.InputDTO}
+	 * ne portant aucun identifiant persistant,
+	 * la méthode ré-identifie l'objet à détruire
+	 * par une recherche exacte sur le libellé métier ;</li>
+	 * <li>vérifier que l'objet retrouvé
+	 * est bien persistant ;</li>
+	 * <li>déléguer la destruction technique
+	 * au composant GATEWAY ;</li>
+	 * <li>retourner un message de suppression
+	 * observable et exploitable
+	 * par la couche appelante si la suppression s'est bien déroulée.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, positionne
-	 *  {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL}, LOG
-	 *   et lève une exception (violation de contrat).</li>
-	 * <li>Si {@code pInputDTO.getTypeProduit()} est Blank
-	 * , positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
-	 * , LOG et lève une exception.</li>
-	 * <li>Si l'objet n'existe pas en stockage 
-	 * (recherche par libellé exact)
-	 * , ne supprime rien
-	 * , retourne, et positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_OBJ_INTROUVABLE} 
-	 * + libellé.</li>
-	 * <li>Sinon, délègue la suppression au Gateway.</li>
-	 * <ul>
-	 * <li>positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_DELETE_OK} + libelle 
-	 * si la destruction aboutit.</li>
-	 * <li>alimente {@link #getMessage()} 
-	 * à {@link #MESSAGE_DELETE_KO} + libelle 
-	 * , LOG et jette une Exception si la destruction a échoué</li>
-	 * </ul>
+	 * <li>Si {@code pInputDTO == null},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_NULL},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_PARAM_BLANK},
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Si {@link TypeProduitDTO.InputDTO}
+	 * ne porte aucun identifiant persistant,
+	 * la destruction cible l'objet déjà persistant
+	 * retrouvé par le même libellé exact
+	 * que celui porté par {@code pInputDTO}.</li>
+	 * <li>Si aucun objet n'est trouvé en stockage
+	 * via cette recherche exacte,
+	 * ne détruit rien
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
+	 * <li>Si l'objet retrouvé existe
+	 * mais n'est pas persistant
+	 * (identifiant {@code null}),
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_OBJ_NON_PERSISTE} + libellé,
+	 * émet un LOG de service
+	 * et lève une exception.</li>
+	 * <li>Sinon, délègue la destruction
+	 * au composant GATEWAY.</li>
+	 * <li>En cas de succès,
+	 * ne retourne aucune valeur
+	 * et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_DELETE_OK} + libellé
+	 * seulement après destruction effective
+	 * de l'objet persistant.</li>
+	 * <li>En cas d'échec technique
+	 * lors de la recherche de l'existant
+	 * ou lors de la destruction,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : TypeProduitDTO.InputDTO : 
-	 * l'objet métier à détruire.
+	 * <div>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après destruction effective
+	 * de l'objet persistant ciblé.</li>
+	 * <li>Si aucun objet ne correspond au libellé transmis,
+	 * aucune suppression n'est exécutée.</li>
+	 * <li>Aucune destruction incohérente
+	 * d'objet non persistant
+	 * ne doit être tentée.</li>
+	 * <li>L'absence d'identifiant
+	 * dans le {@link TypeProduitDTO.InputDTO}
+	 * est explicitement compensée
+	 * par une phase préalable
+	 * de ré-identification par libellé exact.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * DTO portant le libellé métier
+	 * de l'objet déjà persistant
+	 * à ré-identifier puis à détruire ;
+	 * ce DTO ne porte aucun identifiant persistant.
+	 * @throws ExceptionParametreNull
+	 * si {@code pInputDTO == null}.
+	 * @throws ExceptionParametreBlank
+	 * si {@code pInputDTO.getTypeProduit()} est blank.
+	 * @throws ExceptionNonPersistant
+	 * si l'objet retrouvé avant destruction
+	 * n'est pas persistant.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors de la recherche de l'existant
+	 * ou lors de la destruction via le GATEWAY.
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
-	void delete(TypeProduitDTO.InputDTO pInputDTO) 
-			throws Exception;
-
+	void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;
+	
 	
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Compte le nombre de {@link TypeProduit}
-	 * dans le stockage.
-	 * </p>
-	 * </div>
+	 * <p>Compte le nombre de {@link TypeProduit}
+	 * accessibles dans le stockage
+	 * en pilotant un scénario complet de SERVICE UC.</p>
 	 *
-	 * <div>
-	 * <p style="font-weight:bold;">CONTRAT (métier / observable) :</p>
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
 	 * <ul>
-	 * <li>Délègue au Gateway le comptage et retourne le résultat.</li>
+	 * <li>demander au composant GATEWAY
+	 * le nombre total de {@link TypeProduit}
+	 * présents dans le stockage ;</li>
+	 * <li>sécuriser la valeur numérique
+	 * retournée par le GATEWAY ;</li>
+	 * <li>retourner un résultat de comptage
+	 * exploitable par la couche appelante ;</li>
+	 * <li>positionner un message utilisateur
+	 * cohérent avec l'issue observable du comptage.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return long : nombre d'enregistrements dans le stockage.
+	 * <div>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
+	 * <ul>
+	 * <li>Délègue le comptage
+	 * au composant GATEWAY.</li>
+	 * <li>Retourne un {@code long}
+	 * représentant le nombre total
+	 * d'objets présents dans le stockage.</li>
+	 * <li>Si le comptage retourné vaut {@code 0},
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si le comptage retourné est strictement positif,
+	 * positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>Si le composant GATEWAY retourne
+	 * une valeur négative,
+	 * positionne un message utilisateur technique cohérent
+	 * et lève une exception,
+	 * car un tel résultat est incohérent
+	 * pour un comptage observable.</li>
+	 * <li>En cas d'échec technique
+	 * lors du comptage via le GATEWAY,
+	 * positionne un message utilisateur technique cohérent
+	 * puis propage une exception circonstanciée
+	 * conforme à l'implémentation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
+	 * <ul>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès ou d'absence de résultat
+	 * n'est positionné qu'après récupération effective
+	 * du comptage retourné par le GATEWAY.</li>
+	 * <li>Le résultat retourné correspond
+	 * au nombre total d'objets
+	 * effectivement accessibles dans le stockage
+	 * via le GATEWAY.</li>
+	 * <li>Aucune valeur de comptage incohérente
+	 * ne doit être exposée à l'appelant.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return long :
+	 * nombre total d'enregistrements présents
+	 * dans le stockage ;
+	 * peut valoir {@code 0},
+	 * mais ne doit jamais être négatif.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient
+	 * lors du comptage via le GATEWAY.
+	 * @throws IllegalStateException
+	 * si le comptage retourné
+	 * est incohérent
+	 * (par exemple strictement négatif).
 	 * @throws Exception
+	 * toute autre exception levée par l'implémentation.
 	 */
 	long count() throws Exception;
 	
@@ -711,17 +1320,71 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
-	 * Getter du message à l'attention de l'Utilisateur 
-	 * généré en cas de problème lors des opérations de stockage.</p>
-	 * <p>ATTENTION : ne jamais finaliser cette méthode sinon SPRING 
-	 * échoue à fournir le message dans le Proxy de TypeProduitCuService 
-	 * injecté dans le CONTROLLER.</p>
+	 * <p>Retourne le message utilisateur courant
+	 * porté localement par le SERVICE METIER UC.</p>
+	 *
+	 * <p><strong>INTENTION DE SERVICE UC (scénario nominal) :</strong></p>
+	 * <ul>
+	 * <li>exposer à la couche appelante
+	 * le message observable le plus récent
+	 * produit par le SERVICE UC ;</li>
+	 * <li>permettre la consultation de ce message
+	 * après une opération nominale,
+	 * une absence de résultat,
+	 * une erreur bénigne,
+	 * une erreur métier
+	 * ou une erreur technique ;</li>
+	 * <li>retourner ce message
+	 * sans recalcul,
+	 * sans délégation technique
+	 * et sans altération de l'état courant du service.</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @return String : 
-	 * message à l'attention de l'Utilisateur (peut être null).
+	 * <div>
+	 * <p><strong>CONTRAT DE SERVICE UC :</strong></p>
+	 * <ul>
+	 * <li>Peut retourner {@code null}
+	 * tant qu'aucune opération UC
+	 * n'a encore positionné de message observable.</li>
+	 * <li>Retourne ensuite le dernier message local
+	 * effectivement positionné
+	 * par l'opération UC la plus récente.</li>
+	 * <li>Le message retourné peut correspondre
+	 * à un succès,
+	 * à une absence de résultat,
+	 * à une erreur bénigne,
+	 * à une erreur métier
+	 * ou à une erreur technique.</li>
+	 * <li>Ne délègue jamais au composant GATEWAY.</li>
+	 * <li>Ne modifie aucun état métier
+	 * ni aucun état technique du service.</li>
+	 * <li>N'émet aucun LOG
+	 * et ne lève aucune exception.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p><strong>GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</strong></p>
+	 * <ul>
+	 * <li>Le message retourné reflète l'issue observable
+	 * de l'opération UC la plus récente.</li>
+	 * <li>Le getter retourne un état local déjà établi ;
+	 * il ne recalcule pas le message.</li>
+	 * <li>Le getter reste appelable
+	 * avant comme après les opérations UC.</li>
+	 * <li>Aucune interaction technique supplémentaire
+	 * n'est déclenchée par sa consultation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return String :
+	 * message utilisateur courant du SERVICE UC ;
+	 * peut valoir {@code null}
+	 * avant toute opération ayant positionné un message.
 	 */
 	String getMessage();
-
+	
+	
+	
 }

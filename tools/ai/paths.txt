@@ -1,8 +1,41 @@
-# tools/ai/paths.txt (exemple)
-# Vous pouvez y mettre des paths OU des URLs raw refs/heads OU raw SHA.
+# tools/ai/paths.txt
+# Bootstrap minimal obligatoire de la couche_ia.
+# Ce fichier doit lister tous les fichiers à relire avant toute action de l'IA.
+# La découverte des autres couches continue de passer par docs/ai/perimetre.yaml.
+# Utilisation typique :
+#   python tools/ai/resolve_raw_sha.py --sha <SHA> --input tools/ai/paths.txt
 
-
-
-src/main/java/levy/daniel/application/model/services/produittype/gateway/TypeProduitGatewayIService.java
-https://raw.githubusercontent.com/DanielLEVY25021961/PatrimoineSSP/refs/heads/feature/gateway/src/main/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAService.java
-https://raw.githubusercontent.com/DanielLEVY25021961/PatrimoineSSP/refs/heads/feature/gateway/src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java
+docs/ai/MANIFEST_IA.yaml
+docs/ai/CONTRAT_IA.md
+docs/ai/perimetre.yaml
+tools/ai/perimetre_resolver.py
+tools/ai/pack_reading_list.py
+tools/ai/paths.txt
+tools/ai/resolve_raw_sha.py
+tools/ai/make_offline_bundle.py
+docs/contrats/cu/CoucheServicesUC.md
+docs/contrats/cu/ProduitICuService.md
+docs/contrats/cu/SousTypeProduitICuService.md
+docs/contrats/cu/TypeProduitICuService.md
+docs/contrats/metier/TypeProduit.md
+docs/contrats/metier/SousTypeProduit.md
+docs/contrats/metier/Produit.md
+docs/contrats/dto/TypeProduitDTO.md
+docs/contrats/dto/SousTypeProduitDTO.md
+docs/contrats/dto/ProduitDTO.md
+docs/contrats/persistance/CouchePersistance.md
+docs/contrats/persistance/ConvertisseurJPAToMetier.md
+docs/contrats/persistance/ConvertisseurMetierToJPA.md
+docs/contrats/persistance/ProduitJPA.md
+docs/contrats/persistance/SousTypeProduitJPA.md
+docs/contrats/persistance/TypeProduitJPA.md
+docs/contrats/persistance/ProduitDaoJPA.md
+docs/contrats/persistance/SousTypeProduitDaoJPA.md
+docs/contrats/persistance/TypeProduitDaoJPA.md
+docs/contrats/gateway/CoucheServicesGateway.md
+docs/contrats/gateway/ProduitGatewayIService.md
+docs/contrats/gateway/SousTypeProduitGatewayIService.md
+docs/contrats/gateway/TypeProduitGatewayIService.md
+docs/contrats/gateway/ProduitGatewayJPAService.md
+docs/contrats/gateway/SousTypeProduitGatewayJPAService.md
+docs/contrats/gateway/TypeProduitGatewayJPAService.md

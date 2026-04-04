@@ -1,42 +1,62 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """
-pack_reading_list.py
-
-Génère la liste complète des URLs RAW SHA
-pour un pack donné.
-
-Usage :
-    python pack_reading_list.py <SHA> <PACK>
+Produit une liste de lecture à partir d'un ou plusieurs packs de perimetre.yaml.
 """
 
-import sys
-import yaml
+from __future__ import annotations
 
-REPO = "DanielLEVY25021961/PatrimoineSSP"
+import argparse
+from pathlib import Path
+
+from perimetre_resolver import resolve_pack_paths
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Résout une liste de lecture IA.")
+    parser.add_argument(
+        "--repo-root",
+        default=".",
+        help="Racine du dépôt local (défaut: .)",
+    )
+    parser.add_argument(
+        "--perimetre",
+        default="docs/ai/perimetre.yaml",
+        help="Chemin vers docs/ai/perimetre.yaml",
+    )
+    parser.add_argument(
+        "--packs",
+        nargs="+",
+        default=["couche_ia"],
+        help="Nom(s) de pack à résoudre",
+    )
+    parser.add_argument(
+        "--output",
+        default="",
+        help="Fichier de sortie optionnel",
+    )
+    return parser.parse_args()
 
-    if len(sys.argv) != 3:
-        print("Usage: python pack_reading_list.py <SHA> <PACK>")
-        sys.exit(1)
 
-    sha = sys.argv[1]
-    pack_name = sys.argv[2]
+def main() -> int:
+    args = parse_args()
 
-    with open("docs/ai/perimetre.yaml", "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+    resolved = resolve_pack_paths(
+        repo_root=Path(args.repo_root),
+        perimetre_path=Path(args.perimetre),
+        pack_names=list(args.packs),
+    )
 
-    packs = data.get("packs", {})
+    content = "\n".join(resolved) + ("\n" if resolved else "")
 
-    if pack_name not in packs:
-        print(f"Pack inconnu : {pack_name}")
-        sys.exit(2)
+    if args.output:
+        Path(args.output).write_text(content, encoding="utf-8")
+    else:
+        print(content, end="")
 
-    for path in packs[pack_name].get("paths", []):
-        url = f"https://raw.githubusercontent.com/{REPO}/{sha}/{path}"
-        print(url)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

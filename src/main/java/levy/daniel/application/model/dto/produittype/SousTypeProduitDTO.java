@@ -423,34 +423,36 @@ public final class SousTypeProduitDTO {
 
 		// ********************METHODES*****************************/
 
+		
+		
 		/**
-		* {@inheritDoc}
-		*/
+		 * {@inheritDoc}
+		 */
 		@Override
 		public int hashCode() {
 
 			/* ID. */
 			final Long id = this.getIdSousTypeProduit();
-			
+
 			if (id != null) {
 				return Objects.hash(id);
 			}
-			
+
 			/* Fallback “business key” vers le métier si pas d'ID. */
 			/* TypeProduit. */
 			final String tp = this.getTypeProduit();
-			
-			/* SousTypeProduit.  */
+
+			/* SousTypeProduit. */
 			final String stp = this.getSousTypeProduit();
-			
+
 			return Objects.hash(stp, tp);
 		}
 
 		
 		
 		/**
-		* {@inheritDoc}
-		*/
+		 * {@inheritDoc}
+		 */
 		@Override
 		public boolean equals(final Object pObject) {
 
@@ -458,36 +460,36 @@ public final class SousTypeProduitDTO {
 				return true;
 			}
 
-			if (pObject == null) {
-				return false;
-			}
-
 			if (!(pObject instanceof OutputDTO other)) {
 				return false;
 			}
-			
+
 			/* ID. */
 			final Long id = this.getIdSousTypeProduit();
 			final Long otherId = other.getIdSousTypeProduit();
 
-			if (id != null && otherId != null) {
+			if ((id != null) && (otherId != null)) {
 				return Objects.equals(id, otherId);
 			}
-			
+
+			if ((id == null) ^ (otherId == null)) {
+				return false;
+			}
+
 			/* Fallback “business key” vers le métier si pas d'ID. */
 			/* TypeProduit. */
 			final String tp = this.getTypeProduit();
 			final String otherTp = other.getTypeProduit();
 
-			/* SousTypeProduit.  */
+			/* SousTypeProduit. */
 			final String stp = this.getSousTypeProduit();
 			final String otherStp = other.getSousTypeProduit();
-			
+
 			return Objects.equals(stp, otherStp)
 					&& Objects.equals(tp, otherTp);
 		}
-
 		
+
 		
 		/**
 		* {@inheritDoc}

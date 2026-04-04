@@ -23,10 +23,13 @@
 #
 # 3) Lire ensuite docs/ai/perimetre.yaml au même SHA
 #
-# 4) Reconstruire toutes les URLs Raw SHA :
+# 4) Résoudre le périmètre de lecture à partir de perimetre.yaml
+#    selon le mode déclaré par ce MANIFEST
+#
+# 5) Reconstruire toutes les URLs Raw SHA :
 #    https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
 #
-# 5) Lire les fichiers nécessaires AVANT toute analyse ou code
+# 6) Lire les fichiers nécessaires AVANT toute analyse ou code
 #
 # INTERDICTIONS :
 # - Ne jamais utiliser refs/heads comme source de vérité
@@ -35,12 +38,11 @@
 #
 # INTEGRATION CONTRAT_IA.md :
 # Ce MANIFEST est la racine opérationnelle décrite dans
-# docs/ai/CONTRAT_IA.md (sections Source de vérité, SHA unique,
-# Méthode de lecture).
+# docs/ai/CONTRAT_IA.md.
 #
 # *********************************************************************
 
-version: 1
+version: 3
 
 repo:
   owner: DanielLEVY25021961
@@ -49,13 +51,24 @@ repo:
 ai:
   contrat: docs/ai/CONTRAT_IA.md
   perimetre: docs/ai/perimetre.yaml
+  mandatory_bootstrap_pack: couche_ia
+  mandatory_bootstrap_paths_txt: tools/ai/paths.txt
+
+tools:
+  resolver: tools/ai/perimetre_resolver.py
+  pack_reading_list: tools/ai/pack_reading_list.py
+  resolve_raw_sha: tools/ai/resolve_raw_sha.py
+  make_offline_bundle: tools/ai/make_offline_bundle.py
 
 workflow:
   mode: sha_only
   url_mode: raw_sha_only
+  discovery_mode: hybrid
+  perimetre_format: paths_and_roots
   discover_from_manifest: true
   require_pre_read: true
   forbid_branch_urls_as_truth: true
+  governance_mode: canonical_layers
 
 lecture:
   method: raw_sha_binary
@@ -67,3 +80,180 @@ garantie:
   reproducible: true
   memory_independent: true
   deterministic: true
+  pack_resolution_shared: true
+  baseline_consolidation_required: true
+
+livraison_fichiers_fragiles:
+  extensions:
+    - .md
+    - .yaml
+    - .py
+  complete_file_only: true
+  visible_code_block_required: true
+  exact_prefix_line_required: "Chemin STS : <chemin exact dans le projet>"
+  one_file_one_block: true
+  copy_button_expected: true
+  zip_forbidden: true
+  file_attachment_forbidden_as_nominal_mode: true
+  download_link_forbidden_as_nominal_mode: true
+  file_renaming_forbidden: true
+  omission_forbidden: true
+  ellipsis_forbidden: true
+  interleaved_explanation_inside_file_forbidden: true
+  visual_review_in_chat_before_copy_expected: true
+  direct_paste_into_sts_expected: true
+  filename_comment_header_preferred_when_format_allows: true
+  preserve_existing_canonical_header_if_present: true
+  download_link_only_if_too_large: true
+  multi_turn_delivery_allowed: true
+
+text_comparison:
+  mode: canonical_eol_normalized
+  canonical_newline: LF
+  compare_line_by_line: true
+  compare_eof_separately: true
+  eol_only_binary_difference_label: "fausse différence binaire EOL-only"
+  eol_only_binary_difference_is_real_change: false
+  treat_normalized_text_identity_as_same_file: true
+
+couches:
+  ordre_canonique:
+    - couche_ia
+    - couche_configuration_tests
+    - couche_metier
+    - couche_dto
+    - couche_persistance
+    - couche_services
+    - couche_controllers
+    - couche_vues
+
+  couche_bootstrap_obligatoire: couche_ia
+
+  definitions:
+    couche_ia:
+      statut: validated_locked
+      mandatory_pre_read: true
+      packs:
+        - couche_ia
+      contracts:
+        - docs/ai/CONTRAT_IA.md
+        - docs/ai/MANIFEST_IA.yaml
+        - docs/ai/perimetre.yaml
+        - docs/contrats/cu/CoucheServicesUC.md
+        - docs/contrats/cu/ProduitICuService.md
+        - docs/contrats/cu/SousTypeProduitICuService.md
+        - docs/contrats/cu/TypeProduitICuService.md
+        - docs/contrats/metier/TypeProduit.md
+        - docs/contrats/metier/SousTypeProduit.md
+        - docs/contrats/metier/Produit.md
+        - docs/contrats/dto/TypeProduitDTO.md
+        - docs/contrats/dto/SousTypeProduitDTO.md
+        - docs/contrats/dto/ProduitDTO.md
+        - docs/contrats/persistance/CouchePersistance.md
+        - docs/contrats/persistance/ConvertisseurJPAToMetier.md
+        - docs/contrats/persistance/ConvertisseurMetierToJPA.md
+        - docs/contrats/persistance/ProduitJPA.md
+        - docs/contrats/persistance/SousTypeProduitJPA.md
+        - docs/contrats/persistance/TypeProduitJPA.md
+        - docs/contrats/persistance/ProduitDaoJPA.md
+        - docs/contrats/persistance/SousTypeProduitDaoJPA.md
+        - docs/contrats/persistance/TypeProduitDaoJPA.md
+        - docs/contrats/gateway/CoucheServicesGateway.md
+        - docs/contrats/gateway/ProduitGatewayIService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayIService.md
+        - docs/contrats/gateway/TypeProduitGatewayIService.md
+        - docs/contrats/gateway/ProduitGatewayJPAService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayJPAService.md
+        - docs/contrats/gateway/TypeProduitGatewayJPAService.md
+
+    couche_configuration_tests:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - configuration_racine_build_ci
+        - configuration
+      sous_couches:
+        - couche_configuration_tests.racine_build_ci
+
+    couche_metier:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - metier
+      sous_couches:
+        - couche_metier.objets
+        - couche_metier.utilitaires
+        - couche_metier.tests
+      contracts:
+        - docs/contrats/metier/TypeProduit.md
+        - docs/contrats/metier/SousTypeProduit.md
+        - docs/contrats/metier/Produit.md
+
+    couche_dto:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - dto
+      sous_couches:
+        - couche_dto.objets
+        - couche_dto.convertisseurs
+        - couche_dto.tests
+      contracts:
+        - docs/contrats/dto/TypeProduitDTO.md
+        - docs/contrats/dto/SousTypeProduitDTO.md
+        - docs/contrats/dto/ProduitDTO.md
+
+    couche_persistance:
+      statut: validated_locked
+      mandatory_pre_read: false
+      packs:
+        - persistance
+      sous_couches:
+        - couche_persistance.jpa
+      contracts:
+        - docs/contrats/persistance/CouchePersistance.md
+        - docs/contrats/persistance/ConvertisseurJPAToMetier.md
+        - docs/contrats/persistance/ConvertisseurMetierToJPA.md
+        - docs/contrats/persistance/ProduitJPA.md
+        - docs/contrats/persistance/SousTypeProduitJPA.md
+        - docs/contrats/persistance/TypeProduitJPA.md
+        - docs/contrats/persistance/ProduitDaoJPA.md
+        - docs/contrats/persistance/SousTypeProduitDaoJPA.md
+        - docs/contrats/persistance/TypeProduitDaoJPA.md
+
+    couche_services:
+      statut: declared
+      mandatory_pre_read: false
+      packs:
+        - gateway
+        - uc
+      sous_couches:
+        - couche_services.gateway
+        - couche_services.uc
+      contracts:
+        - docs/contrats/cu/CoucheServicesUC.md
+        - docs/contrats/cu/ProduitICuService.md
+        - docs/contrats/cu/SousTypeProduitICuService.md
+        - docs/contrats/cu/TypeProduitICuService.md
+        - docs/contrats/gateway/CoucheServicesGateway.md
+        - docs/contrats/gateway/ProduitGatewayIService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayIService.md
+        - docs/contrats/gateway/TypeProduitGatewayIService.md
+        - docs/contrats/gateway/ProduitGatewayJPAService.md
+        - docs/contrats/gateway/SousTypeProduitGatewayJPAService.md
+        - docs/contrats/gateway/TypeProduitGatewayJPAService.md
+      sous_couches_statuts:
+        couche_services.gateway: validated_locked
+        couche_services.uc: validated_locked
+
+    couche_controllers:
+      statut: reserved
+      mandatory_pre_read: false
+      packs:
+        - controllers
+
+    couche_vues:
+      statut: reserved
+      mandatory_pre_read: false
+      packs:
+        - views
