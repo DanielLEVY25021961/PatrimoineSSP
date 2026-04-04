@@ -22,7 +22,7 @@ project:
   repo: "PatrimoineSSP"
 
 variables:
-  branche: "feature/uc"
+  branche: "feature/controllers"
 
 policy:
   priorite_absolue:

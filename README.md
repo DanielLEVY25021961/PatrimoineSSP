@@ -60,7 +60,7 @@ La CI GitHub Actions est configurée sur :
 
 - `main`
 - `develop`
-- `feature/uc`
+- `feature/controllers`
 
 ### Pull request
 
