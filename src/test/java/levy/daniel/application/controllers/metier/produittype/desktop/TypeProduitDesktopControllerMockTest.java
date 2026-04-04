@@ -1,61 +1,235 @@
 package levy.daniel.application.controllers.metier.produittype.desktop;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import levy.daniel.application.controllers.metier.produittype.TypeProduitIController;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO.OutputDTO;
+import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
 
 /**
- * <style>p, ul, li, h1 {line-height : 1em;}</style>
- * <style>h1 {text-decoration: underline;}</style>
- * 
- * 
+ * <div>
+ * <p style="font-weight:bold;">CLASSE TypeProduitDesktopControllerMockTest.java :</p>
+ * <p>Tests JUnit Mockito complets (avec tests "béton") du
+ * CONTROLLER ADAPTER DESKTOP {@link TypeProduitDesktopController}.</p>
+ * <p>Vérifie l'implémentation des contrats du PORT
+ * {@link TypeProduitIController} et le dialogue avec
+ * {@link TypeProduitICuService}.</p>
+ * </div>
  *
  * @author Daniel Lévy
  * @version 1.0
  * @since 4 avril 2026
  */
+@ExtendWith(MockitoExtension.class)
 public class TypeProduitDesktopControllerMockTest {
 
-	// ************************ATTRIBUTS************************************/
+	// *************************** CONSTANTES ******************************/
+
+	/** Tag JUnit : tests Mockito du controller desktop. */
+	public static final String TAG = "controller-desktop-mock";
+
+	/** "outillage". */
+	public static final String OUTILLAGE = "outillage";
+
+	/** Chaine blank : "   ". */
+	public static final String ESPACES = "   ";
+
+	/** Message mock service : "message doublon service". */
+	public static final String MESSAGE_SERVICE_DOUBLON
+		= "message doublon service";
+
+	// ************************* CONSTRUCTEURS *****************************/
 
 	/**
-	 * <style>p, ul, li {line-height : 1em;}</style>
 	 * <div>
-	 * <p>LOG : Logger : </p>
-	 * <p>Logger pour Log4j (utilisant org.apache.logging.log4j).</p>
-	 * <p>dépendances : </p>
-	 * <ul>
-	 * <li><code>org.apache.logging.log4j.Logger</code></li>
-	 * <li><code>org.apache.logging.log4j.LogManager</code></li>
-	 * </ul>
+	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
 	 * </div>
 	 */
-	private static final Logger LOG = LogManager
-			.getLogger(TypeProduitDesktopControllerMockTest.class);
-
-	// *************************METHODES************************************/
-
-
-
-	/**
-	* <div>
-	* <p>CONSTRUCTEUR D'ARITE NULLE.</p>
-	* </div>
-	*/
 	public TypeProduitDesktopControllerMockTest() {
 		super();
-	} // Fin du CONSTRUCTEUR D'ARITE NULLE.________________________________
-
-
-
-	@Test
-	final void test() {
-
-		fail("Not yet implemented"); // TODO
-
 	}
+
+	// *************************** METHODES *******************************/
+
+	
+	
+	// ---------------------- creer(...) --------------------------------//
+
+	
+	
+	/**
+	 * <div>
+	 * <p>creer(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_CREER_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(null) : retourne null, message MESSAGE_CREER_VUE_NULL, aucune interaction service")
+	public void testCreerNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.creer(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_CREER_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>creer(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_CREER_VUE_BLANK}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(blank) : retourne null, message MESSAGE_CREER_VUE_BLANK, aucune interaction service")
+	public void testCreerBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(ESPACES);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.creer(dto);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_CREER_VUE_BLANK);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+	
+	
+	/**
+	 * <div>
+	 * <p>creer(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne l'{@link OutputDTO} fourni</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(ok) : délégation service.creer + OutputDTO + message service mémorisé")
+	public void testCreerOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
+		final OutputDTO cree = new TypeProduitDTO.OutputDTO(1L, OUTILLAGE, null);
+
+		when(service.creer(dto)).thenReturn(cree);
+		when(service.getMessage()).thenReturn(TypeProduitICuService.MESSAGE_CREER_OK);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.creer(dto);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdTypeProduit()).isEqualTo(1L);
+		assertThat(retour.getTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_CREER_OK);
+
+		verify(service, times(1)).creer(dto);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+	
+	
+	/**
+	 * <div>
+	 * <p>creer(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>n'appelle pas {@code service.getMessage()}</li>
+	 * <li>laisse inchangé le message du controller ({@code null} ici)</li>
+	 * </ul>
+	 * </div>
+	 * @throws Exception 
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("creer(service KO) : propage l'exception du service + pas de getMessage + message controller inchangé")
+	public void testCreerServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
+		final ExceptionDoublon doublon = new ExceptionDoublon(MESSAGE_SERVICE_DOUBLON);
+
+		when(service.creer(dto)).thenThrow(doublon);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.creer(dto))
+				.isSameAs(doublon);
+
+		assertThat(controller.getMessage()).isNull();
+
+		verify(service, times(1)).creer(dto);
+		verify(service, never()).getMessage();
+
+	} // __________________________________________________________________
+	
+	
 
 }
