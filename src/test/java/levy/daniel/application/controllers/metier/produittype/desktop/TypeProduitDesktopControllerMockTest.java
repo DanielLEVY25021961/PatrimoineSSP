@@ -326,8 +326,49 @@ public class TypeProduitDesktopControllerMockTest {
 		verify(service, times(1)).getMessage();
 
 	} // __________________________________________________________________
-
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTous(vide) : scénario nominal vide.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne une liste vide</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous(vide) : délégation service + liste vide + message service mémorisé")
+	public void testRechercherTousVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+
+		when(service.rechercherTous()).thenReturn(java.util.Collections.emptyList());
+		when(service.getMessage()).thenReturn(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.rechercherTous();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(service, times(1)).rechercherTous();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+
 	
 	// ------------------ rechercherTousString() -------------------------//
 

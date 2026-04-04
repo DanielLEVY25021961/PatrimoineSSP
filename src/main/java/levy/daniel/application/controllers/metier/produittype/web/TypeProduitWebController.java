@@ -225,8 +225,45 @@ public class TypeProduitWebController implements TypeProduitIController {
 		}
 
 	}
-
 	
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	@GetMapping
+	public List<String> rechercherTousString() throws Exception {
+
+		/* ****** RECHERCHE EXHAUSTIVE STRING. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche exhaustive des libellés au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final List<String> reponse = this.service.rechercherTousString();
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste de String obtenue.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+	
+
 	
 	/**
 	 * {@inheritDoc}

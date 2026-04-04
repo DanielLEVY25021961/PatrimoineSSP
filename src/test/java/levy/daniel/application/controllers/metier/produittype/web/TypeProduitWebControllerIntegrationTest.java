@@ -310,8 +310,48 @@ public class TypeProduitWebControllerIntegrationTest {
 				.isEqualTo(IT_ALPHA);
 
 	} // __________________________________________________________________
-
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTous(vide) : scénario nominal vide avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>prouve physiquement que la table est vide</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = {
+					"classpath:/truncate-test.sql"
+			},
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+	)
+	@DisplayName("rechercherTous(vide) : liste vide + message exact + preuve BD")
+	public void testRechercherTousVideAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(baseline).isZero();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isZero();
+
+	} // __________________________________________________________________
+	
+
 	
 	// ------------------ rechercherTousString() -------------------------//
 
