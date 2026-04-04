@@ -161,7 +161,9 @@ public class TypeProduitWebController implements TypeProduitIController {
 		final OutputDTO reponse = this.service.creer(pInputDTO);
 		message = this.service.getMessage();
 		
+		/* retourne l'OutputDTO créé. */
 		return reponse;
+		
 	}
 	
 

@@ -128,40 +128,36 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 	@Override
 	public OutputDTO creer(final InputDTO pInputDTO) throws Exception {
 
-		/*
-		 * Si pInputDTO == null :
-		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL
-		 * + retourne null.
-		 */
+		/* **** TRAITEMENTS DE SURFACE.****** */
+		/* Si pInputDTO == null : 
+		 * émet un message utilisateur MESSAGE_CREER_VUE_NULL 
+		 * + retourne null. */
 		if (pInputDTO == null) {
 			this.message = MESSAGE_CREER_VUE_NULL;
 			return null;
 		}
-
+		
 		final String libelle = pInputDTO.getTypeProduit();
-
-		/*
-		 * Si le libellé est blank (null ou espaces) :
-		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK
-		 * + retourne null.
-		 */
+		
+		/* Si le libelle est blank (null ou espaces) : 
+		 * émet un message utilisateur MESSAGE_CREER_VUE_BLANK 
+		 * + retourne null. */
 		if (StringUtils.isBlank(libelle)) {
 			this.message = MESSAGE_CREER_VUE_BLANK;
 			return null;
 		}
-
+		
+		/* ****** CREATION. ****** */
 		/*
-		 * Délègue la création au SERVICE UC.
+		 * Délègue la création au SERVICE UC 
+		 * et récupère le message éventuel du Service.
 		 */
 		final OutputDTO reponse = this.service.creer(pInputDTO);
-
-		/*
-		 * Récupère le message utilisateur courant
-		 * produit par le SERVICE UC.
-		 */
-		this.message = this.service.getMessage();
-
-		return reponse;
+		message = this.service.getMessage();
+		
+		/* retourne l'OutputDTO créé. */
+		return reponse;	
+		
 	}
 
 	
