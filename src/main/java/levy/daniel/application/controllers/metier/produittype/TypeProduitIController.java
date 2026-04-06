@@ -142,7 +142,16 @@ public interface TypeProduitIController {
 	String MESSAGE_FIND_BY_DTO_VUE_NULL
 			= "KO - la Vue a transmis un InputDTO de recherche null";	
 
-
+	// ----------------------- findById ---------------------------------//
+	/**
+	 * <div>
+	 * <p>"KO - la Vue a transmis un identifiant persistant null"</p>
+	 * </div>
+	 */
+	String MESSAGE_FIND_BY_ID_VUE_NULL
+			= "KO - la Vue a transmis un identifiant persistant null";
+	
+	
 	
 	/**
 	 * <div>
@@ -761,6 +770,104 @@ public interface TypeProduitIController {
 	 * lors de la recherche.
 	 */
 	TypeProduitDTO.OutputDTO findByDTO(TypeProduitDTO.InputDTO pInputDTO)
+			throws Exception;
+	
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Retourne à la VUE
+	 * le {@link TypeProduitDTO.OutputDTO}
+	 * correspondant à un identifiant persistant transmis.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE CONTROLLER (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>recevoir depuis la VUE
+	 * un identifiant persistant de {@link TypeProduit} ;</li>
+	 * <li>exécuter le premier contrôle de surface
+	 * sur cet identifiant lorsqu'il est {@code null}
+	 * et rédiger le cas échéant un message utilisateur
+	 * circonstancié ;</li>
+	 * <li>si ce contrôle de surface est satisfait,
+	 * déléguer la recherche au
+	 * {@link TypeProduitICuService#findById(Long)} ;</li>
+	 * <li>retourner à la VUE
+	 * le {@link TypeProduitDTO.OutputDTO}
+	 * fourni par le SERVICE UC
+	 * ou {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation
+	 * ou si le SERVICE UC ne trouve aucun objet.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais directement au stockage.</li>
+	 * <li>Si {@code pId == null},
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_FIND_BY_ID_VUE_NULL}
+	 * et retourne {@code null}.</li>
+	 * <li>Sinon, la méthode délègue la recherche
+	 * au SERVICE UC
+	 * via
+	 * {@link TypeProduitICuService#findById(Long)}.</li>
+	 * <li>Le comportement porté par l'identifiant transmis
+	 * (introuvable, succès, erreur technique)
+	 * est alors celui du SERVICE UC délégué.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES <span style="font-weight:bold;">→</span>
+	 * SERVICE UC.</li>
+	 * <li>Le CONTROLLER peut produire un message utilisateur
+	 * propre lors du contrôle de surface d'entrée
+	 * sur un identifiant {@code null}.</li>
+	 * <li>Après délégation, le message utilisateur porté
+	 * par le CONTROLLER devient celui produit
+	 * par le SERVICE UC.</li>
+	 * <li>Les éventuelles exceptions traversent le CONTROLLER
+	 * et remontent à la VUE.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pId : Long :
+	 * l'identifiant persistant transmis par la couche VUES
+	 * au scénario de recherche.
+	 * @return TypeProduitDTO.OutputDTO :
+	 * le TypeProduit trouvé retourné à la couche VUES ;
+	 * peut être {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation
+	 * ou si le SERVICE UC ne trouve aucun objet.
+	 * @throws IllegalStateException
+	 * si le SERVICE UC lève une incohérence technique
+	 * sur son scénario de recherche par identifiant.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors de la recherche par identifiant.
+	 */
+	TypeProduitDTO.OutputDTO findById(Long pId)
 			throws Exception;
 	
 	
