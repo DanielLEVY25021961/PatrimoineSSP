@@ -20,7 +20,7 @@ import java.util.List;
  * <li>Cette CLASSE modélise :
  * <span style="font-weight:bold;">une requête de pagination DTO</span>, 
  * c'est à dire l'objet de transport qui permet à l'utilisateur d'indiquer 
- * à l'pplication quel numéro (0-based) de page il veut, 
+ * à l'application quel numéro (0-based) de page il veut, 
  * combien d'enregistrements par page, ...
  * </li>
  * <li>Cette CLASSE est un objet de transport

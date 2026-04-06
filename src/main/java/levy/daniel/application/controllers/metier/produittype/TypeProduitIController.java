@@ -5,13 +5,13 @@ package levy.daniel.application.controllers.metier.produittype;
 
 import java.util.List;
 
+import levy.daniel.application.model.dto.pagination.RequetePageDTO;
+import levy.daniel.application.model.dto.pagination.ResultatPageDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
-import levy.daniel.application.model.services.produittype.pagination.RequetePage;
-import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
 /**
  * <style>p, ul, li, h1 {line-height : 1em;}</style>
@@ -331,13 +331,13 @@ public interface TypeProduitIController {
 	 * INTENTION DE CONTROLLER (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>demander au SERVICE UC
-	 * la page de {@link TypeProduitDTO.OutputDTO}
-	 * correspondant à la requête de pagination transmise ;</li>
-	 * <li>récupérer le message utilisateur courant
-	 * produit par le SERVICE UC ;</li>
+	 * <li>recevoir depuis la VUE
+	 * une requête paginée DTO ;</li>
+	 * <li>laisser l'ADAPTER convertir cette requête DTO
+	 * en pagination interne (du package services.pagination) 
+	 * avant l'appel au SERVICE UC ;</li>
 	 * <li>retourner à la VUE
-	 * le résultat paginé fourni par le SERVICE UC.</li>
+	 * un résultat paginé DTO.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -345,13 +345,12 @@ public interface TypeProduitIController {
 	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
 	 * <ul>
 	 * <li>La méthode ne porte aucune logique métier locale.</li>
-	 * <li>La méthode ne construit aucun objet métier
-	 * et ne parle jamais directement au stockage.</li>
 	 * <li>La méthode délègue la recherche paginée
-	 * au SERVICE UC.</li>
+	 * au SERVICE UC après conversion de la pagination DTO
+	 * en pagination interne (du package services.pagination).</li>
 	 * <li>En cas de succès, la méthode récupère
 	 * le message utilisateur courant du SERVICE UC
-	 * puis retourne le résultat paginé qu'il fournit.</li>
+	 * puis retourne le résultat paginé DTO.</li>
 	 * <li>En cas d'erreur applicative, métier ou technique
 	 * levée par le SERVICE UC,
 	 * la méthode récupère le message utilisateur courant
@@ -360,36 +359,17 @@ public interface TypeProduitIController {
 	 * </ul>
 	 * </div>
 	 *
-	 * <div>
-	 * <p style="font-weight:bold;">
-	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
-	 * </p>
-	 * <ul>
-	 * <li>Le CONTROLLER reste sur sa frontière :
-	 * VUES <span style="font-weight:bold;">→</span>
-	 * SERVICE UC.</li>
-	 * <li>Le message utilisateur porté
-	 * par le CONTROLLER après l'appel
-	 * est celui du SERVICE UC.</li>
-	 * <li>Les éventuelles exceptions traversent le CONTROLLER
-	 * et remontent à la VUE.</li>
-	 * <li>La méthode ne connaît ni GATEWAY,
-	 * ni DAO, ni entité JPA.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @param pRequetePage :
-	 * la requête de pagination transmise par la VUE.
-	 * @return ResultatPage<TypeProduitDTO.OutputDTO> :
-	 * la page de résultats DTO
-	 * retournée par le SERVICE UC.
+	 * @param pRequetePageDTO :
+	 * la requête de pagination DTO transmise par la VUE.
+	 * @return ResultatPageDTO<TypeProduitDTO.OutputDTO> :
+	 * le résultat paginé DTO retourné à la VUE.
 	 * @throws Exception
 	 * toute exception propagée par le SERVICE UC
 	 * lors de la recherche paginée.
 	 */
-	ResultatPage<TypeProduitDTO.OutputDTO> rechercherTousParPage(
-				RequetePage pRequetePage) throws Exception;	
-
+	ResultatPageDTO<TypeProduitDTO.OutputDTO> rechercherTousParPage(
+					RequetePageDTO pRequetePageDTO)
+							throws Exception;
 	
 	
 	/**

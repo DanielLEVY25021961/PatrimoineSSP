@@ -13,12 +13,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import levy.daniel.application.controllers.metier.produittype.TypeProduitIController;
+import levy.daniel.application.model.dto.pagination.DirectionTriDTO;
+import levy.daniel.application.model.dto.pagination.RequetePageDTO;
+import levy.daniel.application.model.dto.pagination.ResultatPageDTO;
+import levy.daniel.application.model.dto.pagination.TriSpecDTO;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.OutputDTO;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
+import levy.daniel.application.model.services.produittype.pagination.DirectionTri;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
+import levy.daniel.application.model.services.produittype.pagination.TriSpec;
 
 /**
  * <style>p, ul, li, h1 {line-height : 1em;}</style>
@@ -263,26 +270,80 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public ResultatPage<OutputDTO> rechercherTousParPage(
-			final RequetePage pRequetePage)
-					throws Exception {
+	public ResultatPageDTO<TypeProduitDTO.OutputDTO> rechercherTousParPage(
+					final RequetePageDTO pRequetePageDTO)
+							throws Exception {
 
 		/* ****** RECHERCHE PAGINEE. ****** */
 		try {
 
 			/*
+			 * Convertit d'abord la pagination DTO reçue de la VUE
+			 * en pagination interne du SERVICE UC.
+			 * La VUE reste "humaine" :
+			 * page 1 -> index interne 0.
+			 */
+			RequetePage requeteInterne = null;
+
+			if (pRequetePageDTO != null) {
+
+				final List<TriSpec> trisInternes
+					= new java.util.ArrayList<TriSpec>();
+
+				for (final TriSpecDTO triDTO : pRequetePageDTO.getTris()) {
+
+					if (triDTO != null) {
+
+						final DirectionTri directionInterne
+							= triDTO.getDirection()
+								== DirectionTriDTO.DESC
+									? DirectionTri.DESC
+									: DirectionTri.ASC;
+
+						trisInternes.add(
+								new TriSpec(
+										triDTO.getPropriete(),
+										directionInterne));
+
+					}
+
+				}
+
+				final int pageNumberInterne
+					= pRequetePageDTO.getPageNumber() > 0
+						? pRequetePageDTO.getPageNumber() - 1
+						: 0;
+
+				requeteInterne
+					= new RequetePage(
+							pageNumberInterne,
+							pRequetePageDTO.getPageSize(),
+							trisInternes);
+
+			}
+
+			/*
 			 * Délègue la recherche paginée au SERVICE UC
 			 * et récupère le message éventuel du Service.
 			 */
-			final ResultatPage<OutputDTO> reponse
-				= this.service.rechercherTousParPage(pRequetePage);
-			
+			final ResultatPage<TypeProduitDTO.OutputDTO> reponseInterne
+				= this.service.rechercherTousParPage(requeteInterne);
 			this.message = this.service.getMessage();
 
 			/*
-			 * retourne le résultat paginé obtenu.
+			 * Retourne à la VUE un résultat paginé DTO.
+			 * La numérotation redevient "humaine" :
+			 * index interne 0 -> page 1.
 			 */
-			return reponse;
+			if (reponseInterne == null) {
+				return null;
+			}
+
+			return new ResultatPageDTO<TypeProduitDTO.OutputDTO>(
+					reponseInterne.getContent(),
+					reponseInterne.getPageNumber() + 1,
+					reponseInterne.getPageSize(),
+					reponseInterne.getTotalElements());
 
 		} catch (final Exception pException) {
 
@@ -295,8 +356,8 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 
 		}
 
-	}	
-
+	}
+	
 
 	
 	/**
