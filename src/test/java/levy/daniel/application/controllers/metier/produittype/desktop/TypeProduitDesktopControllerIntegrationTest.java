@@ -1344,6 +1344,141 @@ public class TypeProduitDesktopControllerIntegrationTest {
 	// ------------------------ delete(...) -----------------------------//
 
 
+
+	/**
+	 * <div>
+	 * <p>delete(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_DELETE_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(null) : message local + aucune écriture BD")
+	public void testDeleteNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitIController.MESSAGE_DELETE_VUE_NULL);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_DELETE_VUE_BLANK}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(blank) : message local + aucune écriture BD")
+	public void testDeleteBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final InputDTO input = new TypeProduitDTO.InputDTO(ESPACES);
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(input);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitIController.MESSAGE_DELETE_VUE_BLANK);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(absent) : scénario nominal sans suppression avec preuve BD.</p>
+	 * <ul>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(absent) : message exact + aucune suppression BD")
+	public void testDeleteAbsentAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final String libelle = "IT-CTRL-DESKTOP-DELETE-INEXISTANT";
+		final InputDTO input = new TypeProduitDTO.InputDTO(libelle);
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(input);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelle);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelle)).isZero();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(ok) : suppression physique avec preuve BD.</p>
+	 * <ul>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
+	 * <li>prouve physiquement la disparition en base</li>
+	 * <li>prouve le retour au volume initial en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(ok) : suppression physique + message exact + preuve BD")
+	public void testDeleteOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final OutputDTO cree = this.controller.creer(new TypeProduitDTO.InputDTO(IT_ALPHA));
+
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(IT_ALPHA);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(new TypeProduitDTO.InputDTO(IT_ALPHA));
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_DELETE_OK + IT_ALPHA);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit())).isZero();
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isZero();
+
+	} // __________________________________________________________________
+
+	
 	
 	// -------------------------- count() -------------------------------//
 
