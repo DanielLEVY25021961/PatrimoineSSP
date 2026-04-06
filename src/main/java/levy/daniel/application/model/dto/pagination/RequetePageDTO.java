@@ -177,7 +177,7 @@ public final class RequetePageDTO implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Setter du numéro de page "humai" demandé.</p>
+	 * <p>Setter du numéro de page "humain" demandé.</p>
 	 * </div>
 	 *
 	 * @param pPageNumber : int :

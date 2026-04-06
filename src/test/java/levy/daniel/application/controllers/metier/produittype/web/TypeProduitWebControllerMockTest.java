@@ -463,6 +463,259 @@ public class TypeProduitWebControllerMockTest {
 	
 
 	// --------------- rechercherTousParPage(...) -----------------------//
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage(null) : retourne null + message local + aucune interaction service")
+	public void testRechercherTousParPageNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+
+		/* ======================= ACT ======================= */
+		final levy.daniel.application.model.dto.pagination.ResultatPageDTO<OutputDTO> retour
+			= controller.rechercherTousParPage(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(controller.getMessage())
+				.isEqualTo(
+						TypeProduitIController
+							.MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(défaut) : scénario nominal avec pagination DTO par défaut.</p>
+	 * <ul>
+	 * <li>délègue au service avec page interne 0-based</li>
+	 * <li>retourne un {@link levy.daniel.application.model.dto.pagination.ResultatPageDTO}
+	 * cohérent pour la VUE</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage(défaut) : page 1 / taille 10 + conversion interne 0-based + message service mémorisé")
+	public void testRechercherTousParPageDefautOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final levy.daniel.application.model.dto.pagination.RequetePageDTO requeteDTO
+			= new levy.daniel.application.model.dto.pagination.RequetePageDTO();
+		final levy.daniel.application.model.services.produittype.pagination.ResultatPage<OutputDTO> reponseInterne
+			= new levy.daniel.application.model.services.produittype.pagination.ResultatPage<OutputDTO>(
+					java.util.Collections.emptyList(),
+					0,
+					10,
+					0L);
+
+		when(service.rechercherTousParPage(
+				org.mockito.ArgumentMatchers.any(
+						levy.daniel.application.model.services.produittype.pagination.RequetePage.class)))
+				.thenReturn(reponseInterne);
+		when(service.getMessage())
+				.thenReturn(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* ======================= ACT ======================= */
+		final levy.daniel.application.model.dto.pagination.ResultatPageDTO<OutputDTO> retour
+			= controller.rechercherTousParPage(requeteDTO);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getPageNumber()).isEqualTo(1);
+		assertThat(retour.getPageSize()).isEqualTo(10);
+		assertThat(retour.getTotalElements()).isEqualTo(0L);
+		assertThat(retour.getTotalPages()).isZero();
+		assertThat(retour.getContent()).isEmpty();
+		assertThat(controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		verify(service, times(1)).rechercherTousParPage(
+				org.mockito.ArgumentMatchers.argThat(requete ->
+						requete != null
+						&& requete.getPageNumber() == 0
+						&& requete.getPageSize() == 10
+						&& requete.getTris() != null
+						&& requete.getTris().isEmpty()));
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(ok) : scénario nominal complet avec conversion
+	 * pagination + tri.</p>
+	 * <ul>
+	 * <li>convertit la page humaine en page interne 0-based</li>
+	 * <li>convertit le tri DTO en tri interne</li>
+	 * <li>reconvertit le résultat paginé interne en résultat DTO pour la VUE</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage(ok) : conversion pagination/tri + ResultatPageDTO + message service mémorisé")
+	public void testRechercherTousParPageOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+
+		final levy.daniel.application.model.dto.pagination.TriSpecDTO triDTO
+			= new levy.daniel.application.model.dto.pagination.TriSpecDTO(
+					"typeProduit",
+					levy.daniel.application.model.dto.pagination.DirectionTriDTO.DESC);
+
+		final levy.daniel.application.model.dto.pagination.RequetePageDTO requeteDTO
+			= new levy.daniel.application.model.dto.pagination.RequetePageDTO(
+					2,
+					3,
+					java.util.List.of(triDTO));
+
+		final OutputDTO dto1 = new TypeProduitDTO.OutputDTO(1L, OUTILLAGE, null);
+		final OutputDTO dto2 = new TypeProduitDTO.OutputDTO(2L, "tourisme", null);
+
+		final levy.daniel.application.model.services.produittype.pagination.ResultatPage<OutputDTO> reponseInterne
+			= new levy.daniel.application.model.services.produittype.pagination.ResultatPage<OutputDTO>(
+					java.util.List.of(dto1, dto2),
+					1,
+					3,
+					7L);
+
+		when(service.rechercherTousParPage(
+				org.mockito.ArgumentMatchers.any(
+						levy.daniel.application.model.services.produittype.pagination.RequetePage.class)))
+				.thenReturn(reponseInterne);
+		when(service.getMessage())
+				.thenReturn(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* ======================= ACT ======================= */
+		final levy.daniel.application.model.dto.pagination.ResultatPageDTO<OutputDTO> retour
+			= controller.rechercherTousParPage(requeteDTO);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getPageNumber()).isEqualTo(2);
+		assertThat(retour.getPageSize()).isEqualTo(3);
+		assertThat(retour.getTotalElements()).isEqualTo(7L);
+		assertThat(retour.getTotalPages()).isEqualTo(3);
+		assertThat(retour.getContent()).hasSize(2);
+		assertThat(retour.getContent())
+				.extracting(TypeProduitDTO.OutputDTO::getIdTypeProduit)
+				.containsExactly(1L, 2L);
+		assertThat(retour.getContent())
+				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactly(OUTILLAGE, "tourisme");
+		assertThat(controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		verify(service, times(1)).rechercherTousParPage(
+				org.mockito.ArgumentMatchers.argThat(requete ->
+						requete != null
+						&& requete.getPageNumber() == 1
+						&& requete.getPageSize() == 3
+						&& requete.getTris() != null
+						&& requete.getTris().size() == 1
+						&& "typeProduit".equals(requete.getTris().get(0).getPropriete())
+						&& requete.getTris().get(0).getDirection()
+							== levy.daniel.application.model.services.produittype.pagination.DirectionTri.DESC));
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousParPage(service KO) : propage l'exception + message service mémorisé")
+	public void testRechercherTousParPageServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final levy.daniel.application.model.dto.pagination.RequetePageDTO requeteDTO
+			= new levy.daniel.application.model.dto.pagination.RequetePageDTO(1, 10);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ TypeProduitICuService.TIRET_ESPACE
+				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.rechercherTousParPage(
+				org.mockito.ArgumentMatchers.any(
+						levy.daniel.application.model.services.produittype.pagination.RequetePage.class)))
+				.thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.rechercherTousParPage(requeteDTO))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).rechercherTousParPage(
+				org.mockito.ArgumentMatchers.argThat(requete ->
+						requete != null
+						&& requete.getPageNumber() == 0
+						&& requete.getPageSize() == 10));
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+
+	
+	// --------------------- findByLibelle(...) -------------------------//
+
+	
+		
 
 	
 		
