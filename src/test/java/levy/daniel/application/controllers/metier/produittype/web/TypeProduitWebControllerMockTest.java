@@ -1545,6 +1545,217 @@ public class TypeProduitWebControllerMockTest {
 
 	
 	// ------------------------ update(...) -----------------------------//
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>update(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_UPDATE_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("update(null) : retourne null + message local + aucune interaction service")
+	public void testUpdateNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.update(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_UPDATE_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_UPDATE_VUE_BLANK}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("update(blank) : retourne null + message local + aucune interaction service")
+	public void testUpdateBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final InputDTO inputDTO = new TypeProduitDTO.InputDTO(ESPACES);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.update(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_UPDATE_VUE_BLANK);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne l'{@link OutputDTO} fourni</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("update(ok) : délégation service + OutputDTO + message service mémorisé")
+	public void testUpdateOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final InputDTO inputDTO = new TypeProduitDTO.InputDTO(OUTILLAGE);
+		final OutputDTO modifie = new TypeProduitDTO.OutputDTO(1L, OUTILLAGE, null);
+		final String messageService
+			= TypeProduitICuService.MESSAGE_MODIF_OK + OUTILLAGE;
+
+		when(service.update(inputDTO)).thenReturn(modifie);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.update(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdTypeProduit()).isEqualTo(1L);
+		assertThat(retour.getTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).update(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(absent) : scénario nominal sans résultat.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne {@code null}</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("update(absent) : retourne null + message service mémorisé")
+	public void testUpdateAbsent() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final String libelle = "type-produit-update-introuvable";
+		final InputDTO inputDTO = new TypeProduitDTO.InputDTO(libelle);
+		final String messageService
+			= TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelle;
+
+		when(service.update(inputDTO)).thenReturn(null);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.update(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).update(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("update(service KO) : propage l'exception + message service mémorisé")
+	public void testUpdateServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final InputDTO inputDTO = new TypeProduitDTO.InputDTO(OUTILLAGE);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ TypeProduitICuService.TIRET_ESPACE
+				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.update(inputDTO)).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.update(inputDTO))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).update(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
 
 
 	

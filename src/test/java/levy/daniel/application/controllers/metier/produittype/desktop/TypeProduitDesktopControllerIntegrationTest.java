@@ -1192,6 +1192,152 @@ public class TypeProduitDesktopControllerIntegrationTest {
 
 	
 	// ------------------------ update(...) -----------------------------//
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>update(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_UPDATE_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("update(null) : retourne null + message local + aucune écriture BD")
+	public void testUpdateNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final OutputDTO dto = this.controller.update(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dto).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitIController.MESSAGE_UPDATE_VUE_NULL);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_UPDATE_VUE_BLANK}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("update(blank) : retourne null + message local + aucune écriture BD")
+	public void testUpdateBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final InputDTO input = new TypeProduitDTO.InputDTO(ESPACES);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO dto = this.controller.update(input);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dto).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitIController.MESSAGE_UPDATE_VUE_BLANK);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne un {@link OutputDTO} non nul</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_MODIF_OK} + libellé</li>
+	 * <li>retourne le DTO correspondant à l'objet déjà persistant</li>
+	 * <li>ne modifie pas le nombre d'enregistrements en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("update(ok) : DTO modifié + message exact + preuve BD")
+	public void testUpdateOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final InputDTO inputCreation = new TypeProduitDTO.InputDTO(IT_ALPHA);
+		final OutputDTO cree = this.controller.creer(inputCreation);
+		final InputDTO inputModification = new TypeProduitDTO.InputDTO(IT_ALPHA);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO modifie = this.controller.update(inputModification);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(modifie).isNotNull();
+		assertThat(modifie.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
+		assertThat(modifie.getTypeProduit()).isEqualTo(IT_ALPHA);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_MODIF_OK + IT_ALPHA);
+
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(IT_ALPHA);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>update(absent) : scénario nominal sans résultat avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("update(absent) : retourne null + message exact + aucune écriture BD")
+	public void testUpdateAbsentAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final String libelle = "IT-CTRL-DESKTOP-UPDATE-INEXISTANT";
+		final InputDTO input = new TypeProduitDTO.InputDTO(libelle);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO dto = this.controller.update(input);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dto).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelle);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterTypeProduitParLibelleEnBase(libelle)).isZero();
+
+	} // __________________________________________________________________
 
 
 	
