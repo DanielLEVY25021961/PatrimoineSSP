@@ -16,11 +16,12 @@ import java.io.Serializable;
  * <ul>
  * <li>Cette CLASSE modélise :
  * <span style="font-weight:bold;">une spécification de tri DTO</span>
- * pour la pagination (par exemple tri ascendant, tri descendant, ...).</li>
- * <li>Cette CLASSE est un objet de transport
- * partagé entre les VUES, les CONTROLLERS
- * et les SERVICES UC (elle ne porte pas de logique métier 
- * et ne dépend d’aucune technologie).</li>
+ * (tri ascendant, tri descendant, ...) 
+ * utilisée dans les objets de pagination transmis entre les VUES,
+ * les CONTROLLERS et les SERVICES UC.</li>
+ * <li>Cette CLASSE est un objet de transport partagé
+ * entre les VUES, les CONTROLLERS et les SERVICES UC,
+ * sans logique métier ni dépendance technologique.</li>
  * </ul>
  * </div>
  *
@@ -38,7 +39,7 @@ public final class TriSpecDTO implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Direction par défaut.
+	 * Direction de tri par défaut.
 	 */
 	public static final DirectionTriDTO DIRECTION_DEFAUT
 		= DirectionTriDTO.ASC;
@@ -46,12 +47,12 @@ public final class TriSpecDTO implements Serializable {
 	/* *************************** ATTRIBUTS **************************** */
 
 	/**
-	 * Propriété à trier.
+	 * Nom de la propriété à trier.
 	 */
 	private String propriete;
 
 	/**
-	 * Direction de tri.
+	 * Direction de tri portée par le DTO.
 	 */
 	private DirectionTriDTO direction;
 
@@ -63,9 +64,9 @@ public final class TriSpecDTO implements Serializable {
 	 * </div>
 	 *
 	 * @param pPropriete : String :
-	 * la propriété à trier.
+	 * le nom de la propriété à trier.
 	 * @param pDirection : DirectionTriDTO :
-	 * la direction de tri.
+	 * la direction de tri portée par le DTO.
 	 */
 	public TriSpecDTO(
 			final String pPropriete,
@@ -78,52 +79,59 @@ public final class TriSpecDTO implements Serializable {
 				: DIRECTION_DEFAUT;
 	}
 
+	
+	
 	/**
 	 * <div>
-	 * <p>Inverse la direction de tri.</p>
+	 * <p>Getter du nom de la propriété à trier.</p>
 	 * </div>
 	 *
-	 * @return TriSpecDTO :
-	 * une nouvelle spécification de tri
-	 * avec la direction inversée.
-	 */
-	public TriSpecDTO inverserDirection() {
-
-		return new TriSpecDTO(
-				this.propriete,
-				this.direction == DirectionTriDTO.ASC
-					? DirectionTriDTO.DESC
-					: DirectionTriDTO.ASC);
-
-	}
-
-	/**
-	 * @return String :
-	 * la propriété à trier.
+	 * @return String : <code>this.propriete</code> :
+	 * le nom de la propriété à trier.
 	 */
 	public String getPropriete() {
 		return this.propriete;
 	}
 
+	
+	
 	/**
+	 * <div>
+	 * <p>Setter du nom de la propriété à trier.</p>
+	 * </div>
+	 *
 	 * @param pPropriete : String :
-	 * la propriété à trier.
+	 * valeur à passer à <code>this.propriete</code> :
+	 * le nom de la propriété à trier.
 	 */
 	public void setPropriete(final String pPropriete) {
 		this.propriete = pPropriete;
 	}
 
+	
+	
 	/**
-	 * @return DirectionTriDTO :
-	 * la direction de tri.
+	 * <div>
+	 * <p>Getter de la direction de tri portée par le DTO.</p>
+	 * </div>
+	 *
+	 * @return DirectionTriDTO : <code>this.direction</code> :
+	 * la direction de tri portée par le DTO.
 	 */
 	public DirectionTriDTO getDirection() {
 		return this.direction;
 	}
 
+	
+	
 	/**
+	 * <div>
+	 * <p>Setter de la direction de tri portée par le DTO.</p>
+	 * </div>
+	 *
 	 * @param pDirection : DirectionTriDTO :
-	 * la direction de tri.
+	 * valeur à passer à <code>this.direction</code> :
+	 * la direction de tri portée par le DTO.
 	 */
 	public void setDirection(final DirectionTriDTO pDirection) {
 		this.direction
@@ -132,4 +140,6 @@ public final class TriSpecDTO implements Serializable {
 				: DIRECTION_DEFAUT;
 	}
 
+	
+	
 }

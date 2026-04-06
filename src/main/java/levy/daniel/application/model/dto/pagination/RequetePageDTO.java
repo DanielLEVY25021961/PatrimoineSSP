@@ -16,20 +16,20 @@ import java.util.List;
  * </div>
  *
  * <div>
- * </ul>
+ * <ul>
  * <li>Cette CLASSE modélise :
- * <span style="font-weight:bold;">une requête de pagination DTO</span>, 
- * c'est à dire l'objet de transport qui permet à l'utilisateur d'indiquer 
- * à l'application quel numéro (0-based) de page il veut, 
- * combien d'enregistrements par page, ...
- * </li>
- * <li>Cette CLASSE est un objet de transport
- * partagé entre les VUES, les CONTROLLERS
- * et les SERVICES UC (elle ne porte pas de logique métier 
- * et ne dépend d’aucune technologie).</li>
+ * <span style="font-weight:bold;">une requête de pagination DTO</span>,
+ * c'est à dire l'objet de transport utilisé par les VUES
+ * pour demander une page, une taille de page
+ * et éventuellement des critères de tri.</li>
+ * <li>Cette CLASSE est un objet de transport partagé
+ * entre les VUES, les CONTROLLERS et les SERVICES UC,
+ * sans logique métier ni dépendance technologique.</li>
+ * <li>Convention contractuelle :
+ * <span style="font-weight:bold;">pageNumber est humain</span>,
+ * commence à <span style="font-weight:bold;">1</span>
+ * et n'est donc pas 0-based.</li>
  * </ul>
- * <p>Convention contractuelle :
- * <span style="font-weight:bold;">pageNumber est 0-based</span>.</p>
  * </div>
  *
  * @author Daniel Lévy
@@ -46,34 +46,50 @@ public final class RequetePageDTO implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Numéro de page par défaut (base 0).
+	 * <div>
+	 * <p>Numéro de page "humain" (pas 0-based) par défaut 
+	 * (appliqué par le constructeur d'arité nulle).</p>
+	 * </div>
 	 */
-	public static final int PAGE_DEFAUT = 0;
+	public static final int PAGE_DEFAUT = 1;
 
 	/**
-	 * Taille de page par défaut.
+	 * <div>
+	 * <p>Taille de page par défaut 
+	 * (appliquée par le constructeur d'arité nulle).</p>
+	 * </div>
 	 */
-	public static final int TAILLE_DEFAUT = 20;
+	public static final int TAILLE_DEFAUT = 10;
 
 	/**
-	 * Taille minimale.
+	 * <div>
+	 * <p>Taille minimale autorisée 
+	 * (nombre minimal d'enregistrements par page).</p>
+	 * </div>
 	 */
 	public static final int TAILLE_MIN = 1;
 
 	/* *************************** ATTRIBUTS **************************** */
 
 	/**
-	 * Numéro de page (base 0).
+	 * <div>
+	 * <p>Numéro de page "humain" (pas 0-based) demandé par la VUE.</p>
+	 * </div>
 	 */
 	private int pageNumber;
 
 	/**
-	 * Taille de page (nombre d'enregistrements par page).
+	 * <div>
+	 * <p>Taille de page demandée par la VUE
+	 * (nombre d'enregistrements dans la page).</p>
+	 * </div>
 	 */
 	private int pageSize;
 
 	/**
-	 * Liste des tris.
+	 * <div>
+	 * <p>Liste des critères de tri demandés par la VUE.</p>
+	 * </div>
 	 */
 	private List<TriSpecDTO> tris;
 
@@ -96,7 +112,7 @@ public final class RequetePageDTO implements Serializable {
 	 * </div>
 	 *
 	 * @param pPageNumber : int :
-	 * le numéro de page demandé.
+	 * le numéro de page humain demandé.
 	 * @param pPageSize : int :
 	 * la taille de page demandée.
 	 */
@@ -114,11 +130,11 @@ public final class RequetePageDTO implements Serializable {
 	 * </div>
 	 *
 	 * @param pPageNumber : int :
-	 * le numéro de page demandé.
+	 * le numéro de page humain demandé.
 	 * @param pPageSize : int :
 	 * la taille de page demandée.
 	 * @param pTris : List<TriSpecDTO> :
-	 * la liste des tris demandés.
+	 * la liste des critères de tri demandés.
 	 */
 	public RequetePageDTO(
 			final int pPageNumber,
@@ -127,20 +143,19 @@ public final class RequetePageDTO implements Serializable {
 		super();
 
 		this.pageNumber
-			= (pPageNumber >= 0)
+			= (pPageNumber >= PAGE_DEFAUT)
 				? pPageNumber
 				: PAGE_DEFAUT;
 
-		if (pPageSize < TAILLE_MIN) {
-			this.pageSize = TAILLE_DEFAUT;
-		} else {
-			this.pageSize = pPageSize;
-		}
+		this.pageSize
+			= (pPageSize >= TAILLE_MIN)
+				? pPageSize
+				: TAILLE_DEFAUT;
 
 		if (pTris != null) {
-			this.tris = new ArrayList<>(pTris);
+			this.tris = new ArrayList<TriSpecDTO>(pTris);
 		} else {
-			this.tris = new ArrayList<>();
+			this.tris = new ArrayList<TriSpecDTO>();
 		}
 	}
 
@@ -148,11 +163,11 @@ public final class RequetePageDTO implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Getter du numéro de page (0-based).</p>
+	 * <p>Getter du numéro de page "humain" demandé.</p>
 	 * </div>
-	 * 
-	 * @return int : <code>this.pageNumber</code> : 
-	 * le numéro de page demandé (0-based).
+	 *
+	 * @return int : <code>this.pageNumber</code> :
+	 * le numéro de page "humain" demandé.
 	 */
 	public int getPageNumber() {
 		return this.pageNumber;
@@ -162,16 +177,16 @@ public final class RequetePageDTO implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Setter du numéro de page (0-based).</p>
+	 * <p>Setter du numéro de page "humai" demandé.</p>
 	 * </div>
-	 * 
-	 * @param pPageNumber : int : valeur à passer à 
-	 * <code>this.pageNumber</code> : 
-	 * le numéro de page demandé (0-based).
+	 *
+	 * @param pPageNumber : int :
+	 * valeur à passer à <code>this.pageNumber</code> :
+	 * le numéro de page "humain" demandé.
 	 */
 	public void setPageNumber(final int pPageNumber) {
 		this.pageNumber
-			= (pPageNumber >= 0)
+			= (pPageNumber >= PAGE_DEFAUT)
 				? pPageNumber
 				: PAGE_DEFAUT;
 	}
@@ -180,12 +195,12 @@ public final class RequetePageDTO implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Getter de la taille de la page demandée 
-	 * (nombre d'enregistrements dans la page).</p>
+	 * <p>Getter de la taille de page demandée.</p>
 	 * </div>
-	 * 
-	 * @return int : <code>this.pageSize</code> : 
-	 * la taille de page demandée.
+	 *
+	 * @return int : <code>this.pageSize</code> :
+	 * la taille de page demandée
+	 * (nombre d'enregistrements dans la page).
 	 */
 	public int getPageSize() {
 		return this.pageSize;
@@ -195,13 +210,13 @@ public final class RequetePageDTO implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Setter de la taille de la page demandée 
-	 * (nombre d'enregistrements dans la page).</p>
+	 * <p>Setter de la taille de page demandée.</p>
 	 * </div>
-	 * 
-	 * @param pPageSize : int : valeur à passer à 
-	 * <code>this.pageSize</code> : 
-	 * la taille de page demandée.
+	 *
+	 * @param pPageSize : int :
+	 * valeur à passer à <code>this.pageSize</code> :
+	 * la taille de page demandée
+	 * (nombre d'enregistrements dans la page).
 	 */
 	public void setPageSize(final int pPageSize) {
 		this.pageSize
@@ -214,12 +229,12 @@ public final class RequetePageDTO implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Getter de la liste des tris disponibles.</p>
+	 * <p>Getter de la liste des critères de tri demandés.</p>
 	 * </div>
-	 * 
+	 *
 	 * @return List&lt;TriSpecDTO&gt; :
-	 * la liste des tris,
-	 * sous forme de copie défensive non nulle (new ArrayList<>(this.tris)).
+	 * la liste des critères de tri demandés,
+	 * sous forme de copie défensive non nulle.
 	 */
 	public List<TriSpecDTO> getTris() {
 
@@ -234,11 +249,11 @@ public final class RequetePageDTO implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Setter de la liste des tris disponibles.</p>
+	 * <p>Setter de la liste des critères de tri demandés.</p>
 	 * </div>
-	 * 
+	 *
 	 * @param pTris : List<TriSpecDTO> :
-	 * la liste des tris.
+	 * la liste des critères de tri demandés.
 	 */
 	public void setTris(final List<TriSpecDTO> pTris) {
 

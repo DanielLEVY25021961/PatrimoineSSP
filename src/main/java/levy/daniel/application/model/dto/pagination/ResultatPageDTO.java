@@ -18,18 +18,18 @@ import java.util.List;
  * <div>
  * <ul>
  * <li>Cette CLASSE modélise :
- * <span style="font-weight:bold;">un résultat paginé DTO</span>, 
- * c'est à dire l'ensemble des enregistrements de Type T dans une page 
- * correspondant à une RequetePageDTO.
- * </li>
- * <li>Attention : classe utilisant la généricité 
+ * <span style="font-weight:bold;">un résultat paginé DTO</span>,
+ * c'est à dire l'ensemble des enregistrements d'une page
+ * ainsi que les métadonnées utiles à la navigation.</li>
+ * <li>Attention : classe utilisant la généricité
  * utilisable pour tout Type T.</li>
- * <li>Cette CLASSE est un objet de transport
- * partagé entre les VUES, les CONTROLLERS
- * et les SERVICES UC (elle ne porte pas de logique métier 
- * et ne dépend d’aucune technologie).</li>
- * <li>Elle encapsule le contenu paginé
- * et les métadonnées utiles à la navigation.</li>
+ * <li>Cette CLASSE est un objet de transport partagé
+ * entre les VUES, les CONTROLLERS et les SERVICES UC,
+ * sans logique métier ni dépendance technologique.</li>
+ * <li>Convention contractuelle :
+ * <span style="font-weight:bold;">pageNumber est "humain"</span>,
+ * commence à <span style="font-weight:bold;">1</span>
+ * et n'est donc pas 0-based.</li>
  * </ul>
  * </div>
  *
@@ -49,37 +49,66 @@ public final class ResultatPageDTO<T> implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * <div>
+	 * <p>Numéro de page humain par défaut.</p>
+	 * </div>
+	 */
+	public static final int PAGE_DEFAUT = 1;
+
+	/**
+	 * <div>
+	 * <p>Taille de page minimale autorisée.</p>
+	 * </div>
+	 */
+	public static final int TAILLE_MIN = 1;
+
 	/* *************************** ATTRIBUTS **************************** */
 
 	/**
-	 * Contenu de la page (liste des enregistrements dans la page).
+	 * <div>
+	 * <p>Contenu de la page
+	 * (liste des enregistrements de Type T dans la page).</p>
+	 * </div>
 	 */
 	private final List<T> content;
 
 	/**
-	 * Numéro de page (0-based).
+	 * <div>
+	 * <p>Numéro de page humain (pas 0-based).</p>
+	 * </div>
 	 */
 	private final int pageNumber;
 
 	/**
-	 * Taille de la page.
+	 * <div>
+	 * <p>Taille de la page (nombre d'enregistrements dans la page).</p>
+	 * </div>
 	 */
 	private final int pageSize;
 
 	/**
-	 * Nombre total d'éléments de Type T dans le stockage.
+	 * <div>
+	 * <p>Nombre total d'éléments de Type T disponibles dans le stockage.</p>
+	 * </div>
 	 */
 	private final long totalElements;
 
 	/**
-	 * Nombre total de pages 
-	 * (prenant en compte la taille de la page indiquée 
-	 * dans un RequetePageDTO).
+	 * <div>
+	 * <p>Nombre total de pages calculé à partir de la taille de page
+	 * et du nombre total d'éléments de Type T disponibles 
+	 * dans le stockage.</p>
+	 * </div>
 	 */
 	private final int totalPages;
 
+	
+	
 	/* *************************** METHODES ***************************** */
 
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">CONSTRUCTEUR D'ARITE 4.</p>
@@ -88,7 +117,7 @@ public final class ResultatPageDTO<T> implements Serializable {
 	 * @param pContent : List<T> :
 	 * le contenu de la page.
 	 * @param pPageNumber : int :
-	 * le numéro de page.
+	 * le numéro de page humain.
 	 * @param pPageSize : int :
 	 * la taille de page.
 	 * @param pTotalElements : long :
@@ -102,14 +131,25 @@ public final class ResultatPageDTO<T> implements Serializable {
 		super();
 
 		if (pContent != null) {
-			this.content = new ArrayList<>(pContent);
+			this.content = new ArrayList<T>(pContent);
 		} else {
-			this.content = new ArrayList<>();
+			this.content = new ArrayList<T>();
 		}
 
-		this.pageNumber = (pPageNumber >= 0) ? pPageNumber : 0;
-		this.pageSize = (pPageSize >= 1) ? pPageSize : 1;
-		this.totalElements = (pTotalElements >= 0L) ? pTotalElements : 0L;
+		this.pageNumber
+			= (pPageNumber >= PAGE_DEFAUT)
+				? pPageNumber
+				: PAGE_DEFAUT;
+
+		this.pageSize
+			= (pPageSize >= TAILLE_MIN)
+				? pPageSize
+				: TAILLE_MIN;
+
+		this.totalElements
+			= (pTotalElements >= 0L)
+				? pTotalElements
+				: 0L;
 
 		final long pages
 			= (this.pageSize > 0)
@@ -126,10 +166,9 @@ public final class ResultatPageDTO<T> implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Getter du Contenu de la page 
-	 * (liste des enregistrements dans la page).</p>
+	 * <p>Getter du contenu de la page.</p>
 	 * </div>
-	 * 
+	 *
 	 * @return List<T> :
 	 * le contenu de la page,
 	 * sous forme de copie défensive non nulle.
@@ -140,18 +179,18 @@ public final class ResultatPageDTO<T> implements Serializable {
 			return Collections.emptyList();
 		}
 
-		return new ArrayList<>(this.content);
+		return new ArrayList<T>(this.content);
 	}
 
 	
 	
 	/**
 	 * <div>
-	 * <p>Getter du Numéro de page (0-based).</p>
+	 * <p>Getter du numéro de page "humain" (pas 0-based).</p>
 	 * </div>
-	 * 
+	 *
 	 * @return int : <code>this.pageNumber</code> :
-	 * le numéro de page.
+	 * le numéro de page "humain" (pas 0-based).
 	 */
 	public int getPageNumber() {
 		return this.pageNumber;
@@ -161,11 +200,11 @@ public final class ResultatPageDTO<T> implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Getter de la Taille de la page.</p>
+	 * <p>Getter de la taille de la page.</p>
 	 * </div>
-	 * 
-	 * @return int : <code>this.pageSize</code> : 
-	 * la taille de page.
+	 *
+	 * @return int : <code>this.pageSize</code> :
+	 * la taille de la page.
 	 */
 	public int getPageSize() {
 		return this.pageSize;
@@ -175,11 +214,11 @@ public final class ResultatPageDTO<T> implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Getter du Nombre total d'éléments de Type T dans le stockage.</p>
+	 * <p>Getter du nombre total d'éléments disponibles.</p>
 	 * </div>
-	 * 
-	 * @return long : <code>this.totalElements</code> : 
-	 * le nombre total d'éléments.
+	 *
+	 * @return long : <code>this.totalElements</code> :
+	 * le nombre total d'éléments disponibles.
 	 */
 	public long getTotalElements() {
 		return this.totalElements;
@@ -189,12 +228,10 @@ public final class ResultatPageDTO<T> implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>Getter du Nombre total de pages 
-	 * (prenant en compte la taille de la page indiquée 
-	 * dans un RequetePageDTO).</p>
+	 * <p>Getter du nombre total de pages.</p>
 	 * </div>
-	 * 
-	 * @return int : <code>this.totalPages</code> : 
+	 *
+	 * @return int : <code>this.totalPages</code> :
 	 * le nombre total de pages.
 	 */
 	public int getTotalPages() {
@@ -205,30 +242,31 @@ public final class ResultatPageDTO<T> implements Serializable {
 	
 	/**
 	 * <div>
-	 * <p>boolean indiquant si une page a une page suivante.</p>
+	 * <p>Indique si une page suivante existe.</p>
 	 * </div>
-	 * 
+	 *
 	 * @return boolean :
 	 * true si une page suivante existe.
 	 */
 	public boolean isHasNext() {
-		return this.pageNumber + 1 < this.totalPages;
+		return this.totalPages > 0
+				&& this.pageNumber < this.totalPages;
 	}
 
 	
 	
 	/**
 	 * <div>
-	 * <p>boolean indiquant si une page a une page précédente.</p>
+	 * <p>Indique si une page précédente existe.</p>
 	 * </div>
-	 * 
+	 *
 	 * @return boolean :
 	 * true si une page précédente existe.
 	 */
 	public boolean isHasPrevious() {
-		return this.pageNumber > 0;
+		return this.pageNumber > 1;
 	}
-	
-	
 
+	
+	
 }

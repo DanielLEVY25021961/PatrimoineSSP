@@ -14,11 +14,12 @@ package levy.daniel.application.model.dto.pagination;
  * <ul>
  * <li>Cette ENUM modélise :
  * <span style="font-weight:bold;">la direction de tri DTO</span>
- * pour la pagination.</li>
- * <li>Cette ENUM est un objet de transport
- * partagé entre les VUES, les CONTROLLERS
- * et les SERVICES UC (elle ne porte pas de logique métier 
- * et ne dépend d’aucune technologie).</li>
+ * (tri ascendant, tri descendant, ...) 
+ * utilisée dans les objets de pagination transmis entre les VUES,
+ * les CONTROLLERS et les SERVICES UC.</li>
+ * <li>Cette ENUM est un objet de transport partagé
+ * entre les VUES, les CONTROLLERS et les SERVICES UC,
+ * sans logique métier ni dépendance technologique.</li>
  * </ul>
  * </div>
  *
@@ -29,12 +30,16 @@ package levy.daniel.application.model.dto.pagination;
 public enum DirectionTriDTO {
 
 	/**
-	 * Tri ascendant.
+	 * <div>
+	 * <p>Direction de tri ascendante.</p>
+	 * </div>
 	 */
 	ASC,
 
 	/**
-	 * Tri descendant.
+	 * <div>
+	 * <p>Direction de tri descendante.</p>
+	 * </div>
 	 */
 	DESC;
 
