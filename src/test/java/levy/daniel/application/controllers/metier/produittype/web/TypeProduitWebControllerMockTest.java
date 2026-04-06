@@ -1373,5 +1373,191 @@ public class TypeProduitWebControllerMockTest {
 	// ----------------------- findById(...) ----------------------------//
 	
 	
-										
+	
+	/**
+	 * <div>
+	 * <p>findById(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_FIND_BY_ID_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(null) : retourne null + message local + aucune interaction service")
+	public void testFindByIdNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findById(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_FIND_BY_ID_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findById(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne l'{@link OutputDTO} fourni</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(ok) : délégation service + OutputDTO + message service mémorisé")
+	public void testFindByIdOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final Long id = 1L;
+		final OutputDTO trouve = new TypeProduitDTO.OutputDTO(id, OUTILLAGE, null);
+
+		when(service.findById(id)).thenReturn(trouve);
+		when(service.getMessage()).thenReturn(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findById(id);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdTypeProduit()).isEqualTo(id);
+		assertThat(retour.getTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		verify(service, times(1)).findById(id);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findById(absent) : scénario nominal sans résultat.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne {@code null}</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(absent) : retourne null + message service mémorisé")
+	public void testFindByIdAbsent() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final Long id = 999_999_999L;
+		final String messageService
+			= TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + id;
+
+		when(service.findById(id)).thenReturn(null);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findById(id);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).findById(id);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findById(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findById(service KO) : propage l'exception + message service mémorisé")
+	public void testFindByIdServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitWebController controller
+			= new TypeProduitWebController(service);
+		final Long id = 1L;
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ TypeProduitICuService.TIRET_ESPACE
+				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.findById(id)).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.findById(id))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).findById(id);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+	
+	// ------------------------ update(...) -----------------------------//
+
+
+	
+	// ------------------------ delete(...) -----------------------------//
+
+
+	
+	// -------------------------- count() -------------------------------//
+
+
+	
+	// ------------------------ getMessage() ----------------------------//
+	
+	
+																			
 }
