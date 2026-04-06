@@ -711,7 +711,218 @@ public class TypeProduitDesktopControllerMockTest {
 
 	
 	// --------------------- findByLibelle(...) -------------------------//
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>findByLibelle(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_FIND_BY_LIBELLE_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(null) : retourne null, message local, aucune interaction service")
+	public void testFindByLibelleNull() throws Exception {
 
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findByLibelle(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_FIND_BY_LIBELLE_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findByLibelle(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_FIND_BY_LIBELLE_VUE_BLANK}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(blank) : retourne null, message local, aucune interaction service")
+	public void testFindByLibelleBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findByLibelle(ESPACES);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_FIND_BY_LIBELLE_VUE_BLANK);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findByLibelle(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne l'{@link OutputDTO} fourni</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(ok) : délégation service + OutputDTO + message service mémorisé")
+	public void testFindByLibelleOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final String libelle = OUTILLAGE;
+		final OutputDTO trouve = new TypeProduitDTO.OutputDTO(1L, libelle, null);
+
+		when(service.findByLibelle(libelle)).thenReturn(trouve);
+		when(service.getMessage()).thenReturn(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findByLibelle(libelle);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdTypeProduit()).isEqualTo(1L);
+		assertThat(retour.getTypeProduit()).isEqualTo(libelle);
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		verify(service, times(1)).findByLibelle(libelle);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findByLibelle(absent) : scénario nominal sans résultat.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne {@code null}</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(absent) : retourne null + message service mémorisé")
+	public void testFindByLibelleAbsent() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final String libelle = "type-produit-introuvable";
+		final String messageService
+			= TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelle;
+
+		when(service.findByLibelle(libelle)).thenReturn(null);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findByLibelle(libelle);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).findByLibelle(libelle);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>findByLibelle(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelle(service KO) : propage l'exception + message service mémorisé")
+	public void testFindByLibelleServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final String libelle = OUTILLAGE;
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ TypeProduitICuService.TIRET_ESPACE
+				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.findByLibelle(libelle)).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.findByLibelle(libelle))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).findByLibelle(libelle);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+
+	
+	// ------------------ findByLibelleRapide(...) ----------------------//
+	
 	
 		
 }
