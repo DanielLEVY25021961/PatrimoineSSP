@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -615,6 +616,69 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final OutputDTO reponse = this.service.findById(id);
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne l'OutputDTO obtenu.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+	
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	@PutMapping
+	public OutputDTO update(
+			@RequestBody(required = false)
+			final InputDTO pInputDTO)
+					throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur MESSAGE_UPDATE_VUE_NULL
+		 * + retourne null.
+		 */
+		if (pInputDTO == null) {
+			this.message = MESSAGE_UPDATE_VUE_NULL;
+			return null;
+		}
+
+		final String libelle = pInputDTO.getTypeProduit();
+
+		/*
+		 * Si le libellé est blank (null ou espaces) :
+		 * émet un message utilisateur MESSAGE_UPDATE_VUE_BLANK
+		 * + retourne null.
+		 */
+		if (StringUtils.isBlank(libelle)) {
+			this.message = MESSAGE_UPDATE_VUE_BLANK;
+			return null;
+		}
+
+		/* ****** MODIFICATION. ****** */
+		try {
+
+			/*
+			 * Délègue la modification au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final OutputDTO reponse = this.service.update(pInputDTO);
 			this.message = this.service.getMessage();
 
 			/*

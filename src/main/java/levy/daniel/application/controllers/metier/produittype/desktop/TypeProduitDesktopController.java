@@ -611,6 +611,65 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 
 	}
 	
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public OutputDTO update(final InputDTO pInputDTO) throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur MESSAGE_UPDATE_VUE_NULL
+		 * + retourne null.
+		 */
+		if (pInputDTO == null) {
+			this.message = MESSAGE_UPDATE_VUE_NULL;
+			return null;
+		}
+
+		final String libelle = pInputDTO.getTypeProduit();
+
+		/*
+		 * Si le libellé est blank (null ou espaces) :
+		 * émet un message utilisateur MESSAGE_UPDATE_VUE_BLANK
+		 * + retourne null.
+		 */
+		if (StringUtils.isBlank(libelle)) {
+			this.message = MESSAGE_UPDATE_VUE_BLANK;
+			return null;
+		}
+
+		/* ****** MODIFICATION. ****** */
+		try {
+
+			/*
+			 * Délègue la modification au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final OutputDTO reponse = this.service.update(pInputDTO);
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne l'OutputDTO obtenu.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+	
 
 	
 	/**
