@@ -121,6 +121,16 @@ public interface TypeProduitIController {
 	 */
 	String MESSAGE_FIND_BY_LIBELLE_VUE_BLANK
 			= "KO - la Vue a transmis un libellé blank (null ou espaces)";
+	
+	// ----------------------- findByLibelleRapide -----------------------//
+	
+	/**
+	 * <div>
+	 * <p>"KO - la Vue a transmis un contenu de recherche rapide null"</p>
+	 * </div>
+	 */
+	String MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL
+			= "KO - la Vue a transmis un contenu de recherche rapide null";
 
 
 	
@@ -539,6 +549,110 @@ public interface TypeProduitIController {
 			throws Exception;
 	
 	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Retourne à la VUE
+	 * la liste des {@link TypeProduitDTO.OutputDTO}
+	 * correspondant à un contenu de libellé transmis.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE CONTROLLER (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>recevoir depuis la VUE
+	 * un contenu de recherche rapide sur le libellé
+	 * d'un {@link TypeProduit} ;</li>
+	 * <li>exécuter le contrôle de surface
+	 * sur ce contenu lorsqu'il est {@code null}
+	 * et rédiger le cas échéant un message utilisateur
+	 * circonstancié ;</li>
+	 * <li>si le contrôle de surface est satisfait,
+	 * déléguer la recherche rapide au
+	 * {@link TypeProduitICuService#findByLibelleRapide(String)} ;</li>
+	 * <li>retourner à la VUE
+	 * la liste des {@link TypeProduitDTO.OutputDTO}
+	 * fournie par le SERVICE UC
+	 * ou {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais directement au stockage.</li>
+	 * <li>Si {@code pContenu == null},
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL}
+	 * et retourne {@code null}.</li>
+	 * <li>Si {@code pContenu} est blank ({@code null} ou espaces),
+	 * la méthode ne bloque pas localement la saisie
+	 * et délègue au SERVICE UC,
+	 * qui applique alors son propre contrat 
+	 * de recherche rapide (retourne tous les enregistrements).</li>
+	 * <li>Si le contrôle de surface est satisfait,
+	 * la méthode délègue la recherche rapide au SERVICE UC,
+	 * récupère le message utilisateur courant produit
+	 * par ce service
+	 * puis retourne la liste de
+	 * {@link TypeProduitDTO.OutputDTO}
+	 * qu'il fournit.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES <span style="font-weight:bold;">→</span>
+	 * SERVICE UC.</li>
+	 * <li>Le CONTROLLER peut produire un message utilisateur
+	 * propre lors du contrôle de surface d'entrée
+	 * sur un contenu {@code null}.</li>
+	 * <li>Après délégation, le message utilisateur porté
+	 * par le CONTROLLER devient celui produit
+	 * par le SERVICE UC.</li>
+	 * <li>Les éventuelles exceptions traversent le CONTROLLER
+	 * et remontent à la VUE.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pContenu : String :
+	 * le contenu partiel de libellé transmis par la couche VUES
+	 * au scénario de recherche rapide.
+	 * @return List<TypeProduitDTO.OutputDTO> :
+	 * la liste des TypeProduit trouvés retournée à la couche VUES ;
+	 * peut être {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation ;
+	 * sinon, la liste retournée par le SERVICE UC,
+	 * éventuellement vide.
+	 * @throws IllegalStateException
+	 * si le SERVICE UC lève une incohérence technique
+	 * sur son scénario de recherche rapide.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors de la recherche rapide.
+	 */
+	List<TypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu)
+			throws Exception;	
+	
+
 	
 	/**
 	 * <div>
