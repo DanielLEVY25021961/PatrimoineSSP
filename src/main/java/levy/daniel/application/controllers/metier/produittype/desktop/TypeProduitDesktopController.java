@@ -669,7 +669,66 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 		}
 
 	}
+
+
 	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void delete(final InputDTO pInputDTO) throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur MESSAGE_DELETE_VUE_NULL
+		 * + retourne immédiatement.
+		 */
+		if (pInputDTO == null) {
+			this.message = MESSAGE_DELETE_VUE_NULL;
+			return;
+		}
+
+		final String libelle = pInputDTO.getTypeProduit();
+
+		/*
+		 * Si le libellé est blank (null ou espaces) :
+		 * émet un message utilisateur MESSAGE_DELETE_VUE_BLANK
+		 * + retourne immédiatement.
+		 */
+		if (StringUtils.isBlank(libelle)) {
+			this.message = MESSAGE_DELETE_VUE_BLANK;
+			return;
+		}
+
+		/* ****** SUPPRESSION. ****** */
+		try {
+
+			/*
+			 * Délègue la suppression au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			this.service.delete(pInputDTO);
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne immédiatement.
+			 */
+			return;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
 
 	
 	/**

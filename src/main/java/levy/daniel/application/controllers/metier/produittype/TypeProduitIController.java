@@ -172,6 +172,26 @@ public interface TypeProduitIController {
 			= "KO - la Vue a transmis un libellé "
 					+ "de modification blank (null ou espaces)";	
 
+	// ----------------------- delete -----------------------------------//
+	
+	/**
+	 * <div>
+	 * <p>"KO - la Vue a transmis un InputDTO de suppression null"</p>
+	 * </div>
+	 */
+	String MESSAGE_DELETE_VUE_NULL
+			= "KO - la Vue a transmis un InputDTO de suppression null";
+
+	/**
+	 * <div>
+	 * <p>"KO - la Vue a transmis un libellé 
+	 * de suppression blank (null ou espaces)"</p>
+	 * </div>
+	 */
+	String MESSAGE_DELETE_VUE_BLANK
+			= "KO - la Vue a transmis un libellé "
+					+ "de suppression blank (null ou espaces)";
+
 	
 	
 	/**
@@ -994,6 +1014,98 @@ public interface TypeProduitIController {
 	 * lors de la modification.
 	 */
 	TypeProduitDTO.OutputDTO update(TypeProduitDTO.InputDTO pInputDTO)
+			throws Exception;
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Détruit depuis la VUE
+	 * un {@link TypeProduit}
+	 * à partir d'un {@link TypeProduitDTO.InputDTO}
+	 * transmis.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE CONTROLLER (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>recevoir depuis la VUE
+	 * un {@link TypeProduitDTO.InputDTO}
+	 * destiné à une suppression ;</li>
+	 * <li>exécuter les premiers contrôles de surface
+	 * sur cet InputDTO
+	 * et rédiger le cas échéant un message utilisateur
+	 * circonstancié ;</li>
+	 * <li>si les contrôles de surface sont satisfaits,
+	 * déléguer la suppression au
+	 * {@link TypeProduitICuService#delete(TypeProduitDTO.InputDTO)} ;</li>
+	 * <li>ne retourner aucune valeur à la VUE
+	 * et laisser le message utilisateur courant
+	 * refléter l'issue de la suppression.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais directement au stockage.</li>
+	 * <li>Si {@code pInputDTO == null},
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_DELETE_VUE_NULL}
+	 * et retourne immédiatement.</li>
+	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank,
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_DELETE_VUE_BLANK}
+	 * et retourne immédiatement.</li>
+	 * <li>Si les contrôles de surface sont satisfaits,
+	 * la méthode délègue la suppression au SERVICE UC,
+	 * récupère le message utilisateur courant produit
+	 * par ce service
+	 * puis termine sans retourner de valeur.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES <span style="font-weight:bold;">→</span>
+	 * SERVICE UC.</li>
+	 * <li>Le CONTROLLER peut produire un message utilisateur
+	 * propre lors des contrôles de surface d'entrée.</li>
+	 * <li>Après délégation, le message utilisateur porté
+	 * par le CONTROLLER devient celui produit
+	 * par le SERVICE UC.</li>
+	 * <li>Les éventuelles exceptions traversent le CONTROLLER
+	 * et remontent à la VUE.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : TypeProduitDTO.InputDTO :
+	 * l'InputDTO transmis par la couche VUES
+	 * au scénario de suppression.
+	 * @throws IllegalStateException
+	 * si le SERVICE UC lève une incohérence technique
+	 * sur son scénario de suppression.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors de la suppression.
+	 */
+	void delete(TypeProduitDTO.InputDTO pInputDTO)
 			throws Exception;
 	
 	
