@@ -751,6 +751,184 @@ public class TypeProduitWebControllerIntegrationTest {
 	
 	
 	
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link TypeProduitIController#MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelleRapide(null) : retourne null + message local + aucune écriture BD")
+	public void testFindByLibelleRapideNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findByLibelleRapide(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(
+						TypeProduitIController
+							.MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(blank) : le controller délègue au service.</p>
+	 * <ul>
+	 * <li>retourne tous les enregistrements selon le contrat observable de rechercherTous()</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>prouve physiquement la cohérence avec la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelleRapide(blank) : liste complète + message exact + preuve BD")
+	public void testFindByLibelleRapideBlankAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final OutputDTO cree = this.controller.creer(new TypeProduitDTO.InputDTO(IT_ALPHA));
+		final long attendu = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findByLibelleRapide(ESPACES);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos.size()).isEqualTo((int) attendu);
+		assertThat(dtos)
+				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
+				.contains(IT_ALPHA);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		final OutputDTO dtoAlpha = dtos.stream()
+				.filter(dto -> IT_ALPHA.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoAlpha).isNotNull();
+		assertThat(dtoAlpha.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(IT_ALPHA);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste non vide</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>contient le DTO correspondant à l'objet créé en base</li>
+	 * <li>ne modifie pas physiquement la base lors de la recherche</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelleRapide(ok) : liste trouvée + message exact + preuve BD")
+	public void testFindByLibelleRapideOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final InputDTO input = new TypeProduitDTO.InputDTO(IT_ALPHA);
+		final OutputDTO cree = this.controller.creer(input);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos
+			= this.controller.findByLibelleRapide(IT_ALPHA);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isNotEmpty();
+		assertThat(dtos)
+				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
+				.contains(IT_ALPHA);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		final OutputDTO dtoAlpha = dtos.stream()
+				.filter(dto -> IT_ALPHA.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoAlpha).isNotNull();
+		assertThat(dtoAlpha.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isEqualTo(1L);
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(IT_ALPHA);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(absent) : scénario nominal sans résultat avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelleRapide(absent) : liste vide + message exact + aucune écriture BD")
+	public void testFindByLibelleRapideAbsentAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final String contenu = "IT-CTRL-WEB-RAPIDE-INEXISTANT";
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos
+			= this.controller.findByLibelleRapide(contenu);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterTypeProduitParLibelleEnBase(contenu)).isZero();
+
+	} // __________________________________________________________________	
+
+
+	
+	// ---------------------- findByDTO(...) ----------------------------//
+	
+	
+			
 	// ************************ METHODES PRIVEES **************************/
 
 	
