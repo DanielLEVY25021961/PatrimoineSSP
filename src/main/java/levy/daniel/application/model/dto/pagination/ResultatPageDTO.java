@@ -26,9 +26,8 @@ import java.util.List;
  * utilisable pour tout Type T.</li>
  * <li>Cette CLASSE est un objet de transport
  * partagé entre les VUES, les CONTROLLERS
- * et les SERVICES UC.</li>
- * <li>Cette CLASSE est purement contractuelle
- * et ne dépend d'aucune technologie.</li>
+ * et les SERVICES UC (elle ne porte pas de logique métier 
+ * et ne dépend d’aucune technologie).</li>
  * <li>Elle encapsule le contenu paginé
  * et les métadonnées utiles à la navigation.</li>
  * </ul>

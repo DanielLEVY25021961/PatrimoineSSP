@@ -25,10 +25,9 @@ import java.util.List;
  * </li>
  * <li>Cette CLASSE est un objet de transport
  * partagé entre les VUES, les CONTROLLERS
- * et les SERVICES UC.</li>
- * <li>Cette CLASSE est purement contractuelle
- * et ne dépend d'aucune technologie.</li>
- *
+ * et les SERVICES UC (elle ne porte pas de logique métier 
+ * et ne dépend d’aucune technologie).</li>
+ * </ul>
  * <p>Convention contractuelle :
  * <span style="font-weight:bold;">pageNumber est 0-based</span>.</p>
  * </div>
