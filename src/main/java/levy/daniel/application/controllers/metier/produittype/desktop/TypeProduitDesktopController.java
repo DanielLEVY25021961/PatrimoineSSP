@@ -3,6 +3,7 @@
 /* ********************************************************************* */
 package levy.daniel.application.controllers.metier.produittype.desktop;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -274,53 +275,75 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 					final RequetePageDTO pRequetePageDTO)
 							throws Exception {
 
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pRequetePageDTO == null :
+		 * émet un message utilisateur
+		 * MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL
+		 * + retourne null.
+		 */
+		if (pRequetePageDTO == null) {
+			this.message = MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL;
+			return null;
+		}
+
 		/* ****** RECHERCHE PAGINEE. ****** */
 		try {
 
 			/*
 			 * Convertit d'abord la pagination DTO reçue de la VUE
-			 * en pagination interne du SERVICE UC.
-			 * La VUE reste "humaine" :
+			 * en pagination interne du SERVICE UC 
+			 * (appartenant au package services.pagination).
+			 * Le numéro de page exposé dans la VUE reste "humain" :
 			 * page 1 -> index interne 0.
 			 */
-			RequetePage requeteInterne = null;
+			final int pageNumberHumain
+				= pRequetePageDTO.getPageNumber();
 
-			if (pRequetePageDTO != null) {
+			/* applique le numéro de page par défaut 
+			 * NUMERO_PAGE_HUMAIN_PAR_DEFAUT 
+			 * si la VUE a omis d'en fournir un. */
+			final int pageNumberInterne
+				= pageNumberHumain >= NUMERO_PAGE_HUMAIN_PAR_DEFAUT
+					? pageNumberHumain - 1
+					: NUMERO_PAGE_HUMAIN_PAR_DEFAUT - 1;
 
-				final List<TriSpec> trisInternes
-					= new java.util.ArrayList<TriSpec>();
+			/* applique la taille de page par défaut 
+			 * NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT 
+			 * si la VUE a omis de l'indiquer. */
+			final int pageSizeInterne
+				= pRequetePageDTO.getPageSize() >= 1
+					? pRequetePageDTO.getPageSize()
+					: NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT;
 
-				for (final TriSpecDTO triDTO : pRequetePageDTO.getTris()) {
+			final List<TriSpec> trisInternes
+				= new ArrayList<TriSpec>();
 
-					if (triDTO != null) {
+			for (final TriSpecDTO triDTO : pRequetePageDTO.getTris()) {
 
-						final DirectionTri directionInterne
-							= triDTO.getDirection()
-								== DirectionTriDTO.DESC
-									? DirectionTri.DESC
-									: DirectionTri.ASC;
+				if (triDTO != null) {
 
-						trisInternes.add(
-								new TriSpec(
-										triDTO.getPropriete(),
-										directionInterne));
+					final DirectionTri directionInterne
+						= triDTO.getDirection() == DirectionTriDTO.DESC
+							? DirectionTri.DESC
+							: DirectionTri.ASC;
 
-					}
+					trisInternes.add(
+							new TriSpec(
+									triDTO.getPropriete(),
+									directionInterne));
 
 				}
 
-				final int pageNumberInterne
-					= pRequetePageDTO.getPageNumber() > 0
-						? pRequetePageDTO.getPageNumber() - 1
-						: 0;
-
-				requeteInterne
-					= new RequetePage(
-							pageNumberInterne,
-							pRequetePageDTO.getPageSize(),
-							trisInternes);
-
 			}
+
+			/* Crée un RequetePage interne 
+			 * (appartenant au package services.pagination). */
+			final RequetePage requeteInterne
+				= new RequetePage(
+						pageNumberInterne,
+						pageSizeInterne,
+						trisInternes);
 
 			/*
 			 * Délègue la recherche paginée au SERVICE UC
@@ -330,20 +353,26 @@ public class TypeProduitDesktopController implements TypeProduitIController {
 				= this.service.rechercherTousParPage(requeteInterne);
 			this.message = this.service.getMessage();
 
+			/* Si le Service retourne null : 
+			 * retourne null + message du service.*/
+			if (reponseInterne == null) {
+				return null;
+			}
+
 			/*
 			 * Retourne à la VUE un résultat paginé DTO.
 			 * La numérotation redevient "humaine" :
 			 * index interne 0 -> page 1.
 			 */
-			if (reponseInterne == null) {
-				return null;
-			}
-
-			return new ResultatPageDTO<TypeProduitDTO.OutputDTO>(
+			final ResultatPageDTO<TypeProduitDTO.OutputDTO> reponse 
+				= new ResultatPageDTO<TypeProduitDTO.OutputDTO>(
 					reponseInterne.getContent(),
 					reponseInterne.getPageNumber() + 1,
 					reponseInterne.getPageSize(),
 					reponseInterne.getTotalElements());
+			
+			/* Retourne la réponse à la VUE. */
+			return reponse;
 
 		} catch (final Exception pException) {
 

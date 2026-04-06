@@ -80,8 +80,7 @@ public interface TypeProduitIController {
 
 	/**
 	 * <div>
-	 * <p>Message utilisateur retourné lorsque la requête 
-	 * paginée transmise par la VUE est absente.</p>
+	 * <p>"La requête paginée transmise à la VUE ne doit pas être null."</p>
 	 * </div>
 	 */
 	String MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL
@@ -89,8 +88,9 @@ public interface TypeProduitIController {
 
 	/**
 	 * <div>
-	 * <p>Numéro de page humain par défaut utilisé lorsque la VUE 
-	 * n'a rien renseigné ou a fourni une valeur incohérente.</p>
+	 * <p>Numéro de page "humain" par défaut utilisé lorsque la VUE 
+	 * n'a rien renseigné ou a fourni une valeur incohérente 
+	 * (1 signifie "page 1" qui aura pour index 0-based la valeur 0).</p>
 	 * </div>
 	 */
 	int NUMERO_PAGE_HUMAIN_PAR_DEFAUT = 1;
@@ -385,10 +385,12 @@ public interface TypeProduitIController {
 	 * un message utilisateur local, n'appelle pas le SERVICE UC 
 	 * et retourne null.</li>
 	 * <li>Si le numéro de page humain est absent ou inférieur à 1 : 
-	 * le CONTROLLER applique le numéro de page humain par défaut.</li>
+	 * le CONTROLLER applique le numéro de page humain par défaut 
+	 * {@code NUMERO_PAGE_HUMAIN_PAR_DEFAUT}.</li>
 	 * <li>Si la taille de page (nombre d'enregistrements par page) 
 	 * est absent ou inférieur à 1 : 
-	 * le CONTROLLER applique la taille de page par défaut.</li>
+	 * le CONTROLLER applique la taille de page par défaut 
+	 * {@code NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT}.</li>
 	 * <li>La méthode convertit le numéro de page humain 
 	 * en numéro de page 0-based.</li>
 	 * <li>La méthode délègue la recherche paginée
