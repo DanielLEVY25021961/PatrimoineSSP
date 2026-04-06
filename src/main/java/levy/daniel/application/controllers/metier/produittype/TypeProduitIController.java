@@ -57,21 +57,54 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
  */
 public interface TypeProduitIController {
 
+	// ----------------------- creer ------------------------------------//
 	/**
-	 * "KO - la Vue a transmis un InputDTO null"
+	 * <div>
+	 * <p>"KO - la Vue a transmis un InputDTO null"</p>
+	 * </div>
 	 */
 	String MESSAGE_CREER_VUE_NULL
 		= "KO - la Vue a transmis un InputDTO null";
 
 	/**
-	 * "KO - la Vue a transmis un InputDTO
-	 * avec un libellé blank (null ou espaces)"
+	 * <div>
+	 * <p>"KO - la Vue a transmis un InputDTO
+	 * avec un libellé blank (null ou espaces)"</p>
+	 * </div>
 	 */
 	String MESSAGE_CREER_VUE_BLANK
 		= "KO - la Vue a transmis un InputDTO "
 				+ "avec un libellé blank (null ou espaces)";
 
-	
+	// ----------------------- rechercherTousParPage --------------------//
+
+	/**
+	 * <div>
+	 * <p>Message utilisateur retourné lorsque la requête 
+	 * paginée transmise par la VUE est absente.</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL
+	        = "La requête paginée transmise à la VUE ne doit pas être null.";
+
+	/**
+	 * <div>
+	 * <p>Numéro de page humain par défaut utilisé lorsque la VUE 
+	 * n'a rien renseigné ou a fourni une valeur incohérente.</p>
+	 * </div>
+	 */
+	int NUMERO_PAGE_HUMAIN_PAR_DEFAUT = 1;
+
+	/**
+	 * <div>
+	 * <p>Nombre d'enregistrements par page par défaut utilisé 
+	 * lorsque la VUE n'a rien renseigné ou a fourni 
+	 * une valeur incohérente.</p>
+	 * </div>
+	 */
+	int NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT = 10;
+
+
 	
 	/**
 	 * <div>
@@ -333,6 +366,10 @@ public interface TypeProduitIController {
 	 * <ul>
 	 * <li>recevoir depuis la VUE
 	 * une requête paginée DTO ;</li>
+	 * <li>applique les contrôles de surface propres à la 
+	 * pagination de VUE avant d'appeler le SERVICE UC.</li>
+	 * <li>convertir le numéro de page "humain" 
+	 * en numéro de page 0-based.</li>
 	 * <li>laisser l'ADAPTER convertir cette requête DTO
 	 * en pagination interne (du package services.pagination) 
 	 * avant l'appel au SERVICE UC ;</li>
@@ -344,7 +381,16 @@ public interface TypeProduitIController {
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
 	 * <ul>
-	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>Si la requête paginée est null : le CONTROLLER mémorise 
+	 * un message utilisateur local, n'appelle pas le SERVICE UC 
+	 * et retourne null.</li>
+	 * <li>Si le numéro de page humain est absent ou inférieur à 1 : 
+	 * le CONTROLLER applique le numéro de page humain par défaut.</li>
+	 * <li>Si la taille de page (nombre d'enregistrements par page) 
+	 * est absent ou inférieur à 1 : 
+	 * le CONTROLLER applique la taille de page par défaut.</li>
+	 * <li>La méthode convertit le numéro de page humain 
+	 * en numéro de page 0-based.</li>
 	 * <li>La méthode délègue la recherche paginée
 	 * au SERVICE UC après conversion de la pagination DTO
 	 * en pagination interne (du package services.pagination).</li>
