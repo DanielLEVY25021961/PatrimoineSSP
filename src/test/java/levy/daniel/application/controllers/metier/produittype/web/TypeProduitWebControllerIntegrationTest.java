@@ -1558,9 +1558,152 @@ public class TypeProduitWebControllerIntegrationTest {
 
 	
 	// ------------------------ getMessage() ----------------------------//
+
 	
 	
-																				
+	/**
+	 * <div>
+	 * <p>getMessage(initial) : état initial du controller intégré.</p>
+	 * <ul>
+	 * <li>retourne {@code null} avant toute opération</li>
+	 * <li>n'écrit rien en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(initial) : retourne null avant toute opération")
+	public void testGetMessageInitialNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final String message = this.controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message).isNull();
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après succès réel) : message courant issu du comptage réel.</p>
+	 * <ul>
+	 * <li>après {@code count()}, retourne le message exact cohérent
+	 * avec le volume physique observé</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(après succès réel) : retourne le message exact du count()")
+	public void testGetMessageApresSuccesReel() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final String messageAttendu
+			= baseline == 0L
+				? TypeProduitICuService.MESSAGE_RECHERCHE_VIDE
+				: TypeProduitICuService.MESSAGE_RECHERCHE_OK;
+
+		/* ======================= ACT ======================= */
+		final long retour = this.controller.count();
+		final String message = this.controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isEqualTo(baseline);
+		assertThat(message).isEqualTo(messageAttendu);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après erreur locale) : message produit par le controller.</p>
+	 * <ul>
+	 * <li>après {@code creer(null)}, retourne exactement
+	 * {@link TypeProduitIController#MESSAGE_CREER_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_VUE_NULL")
+	public void testGetMessageApresErreurLocale() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		this.controller.creer(null);
+		final String message = this.controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message)
+				.isEqualTo(TypeProduitIController.MESSAGE_CREER_VUE_NULL);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(dernier message gagne) : le message courant est écrasé.</p>
+	 * <ul>
+	 * <li>une erreur locale positionne d'abord
+	 * {@link TypeProduitIController#MESSAGE_CREER_VUE_NULL}</li>
+	 * <li>un {@code count()} réel remplace ensuite ce message
+	 * par le message exact du comptage courant</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("getMessage(dernier message gagne) : le message réel le plus récent écrase le précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		this.controller.creer(null);
+		final String messageErreur = this.controller.getMessage();
+
+		final long retour = this.controller.count();
+		final String messageFinal = this.controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(messageErreur)
+				.isEqualTo(TypeProduitIController.MESSAGE_CREER_VUE_NULL);
+		assertThat(retour).isEqualTo(baseline);
+
+		if (retour == 0L) {
+			assertThat(messageFinal)
+					.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		} else {
+			assertThat(messageFinal)
+					.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		}
+
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+	
+
+	
 	// ************************ METHODES PRIVEES **************************/
 
 	
