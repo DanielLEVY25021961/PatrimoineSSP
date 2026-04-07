@@ -1,8 +1,11 @@
 package levy.daniel.application.controllers.metier.produittype.web;
 
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -211,6 +214,44 @@ public class SousTypeProduitWebController
 
 	}
 
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	@GetMapping("/rechercherTous")
+	public List<SousTypeProduitDTO.OutputDTO> rechercherTous() throws Exception {
+
+		/* ****** RECHERCHE EXHAUSTIVE. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche exhaustive au SERVICE UC
+			 * puis récupère le message utilisateur du Service.
+			 */
+			final List<SousTypeProduitDTO.OutputDTO> reponse
+				= this.service.rechercherTous();
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste obtenue du Service.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+	
 
 	
 	/**
