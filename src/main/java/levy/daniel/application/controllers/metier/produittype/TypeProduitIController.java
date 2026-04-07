@@ -1113,6 +1113,82 @@ public interface TypeProduitIController {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
+	 * Retourne à la VUE
+	 * le nombre total de {@link TypeProduit}
+	 * présents dans le stockage.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE CONTROLLER (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>demander au SERVICE UC
+	 * le nombre total de {@link TypeProduit}
+	 * présents dans le stockage ;</li>
+	 * <li>récupérer le message utilisateur courant
+	 * produit par le SERVICE UC ;</li>
+	 * <li>retourner à la VUE
+	 * le comptage fourni par le SERVICE UC.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais directement au stockage.</li>
+	 * <li>La méthode délègue le comptage
+	 * au SERVICE UC
+	 * via {@link TypeProduitICuService#count()}.</li>
+	 * <li>En cas de succès, la méthode récupère
+	 * le message utilisateur courant du SERVICE UC
+	 * puis retourne le comptage qu'il fournit.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES <span style="font-weight:bold;">→</span>
+	 * SERVICE UC.</li>
+	 * <li>Le message utilisateur porté
+	 * par le CONTROLLER après l'appel
+	 * est celui du SERVICE UC.</li>
+	 * <li>Les éventuelles exceptions traversent le CONTROLLER
+	 * et remontent à la VUE.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return long :
+	 * le nombre total d'objets métier
+	 * présents dans le stockage,
+	 * retourné par le SERVICE UC ;
+	 * peut valoir {@code 0},
+	 * mais ne doit jamais être négatif.
+	 * @throws IllegalStateException
+	 * si le SERVICE UC lève une incohérence technique
+	 * sur son scénario de comptage.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors du comptage.
+	 */
+	long count() throws Exception;	
+	
+
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
 	 * Retourne à la VUE le message utilisateur courant
 	 * porté par le présent CONTROLLER.
 	 * </p>
