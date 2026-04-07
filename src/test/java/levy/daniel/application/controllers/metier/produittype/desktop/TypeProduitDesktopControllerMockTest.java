@@ -1963,6 +1963,135 @@ public class TypeProduitDesktopControllerMockTest {
 
 	
 	// -------------------------- count() -------------------------------//
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>count(vide) : scénario nominal sans résultat.</p>
+	 * <ul>
+	 * <li>délègue le comptage au service</li>
+	 * <li>retourne {@code 0}</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("count(vide) : retourne 0 + message service mémorisé")
+	public void testCountVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final long comptage = 0L;
+		final String messageService = TypeProduitICuService.MESSAGE_RECHERCHE_VIDE;
+
+		when(service.count()).thenReturn(comptage);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		final long retour = controller.count();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isZero();
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).count();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>count(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue le comptage au service</li>
+	 * <li>retourne le comptage fourni par le service</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("count(ok) : retourne le comptage + message service mémorisé")
+	public void testCountOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+		final long comptage = 5L;
+		final String messageService = TypeProduitICuService.MESSAGE_RECHERCHE_OK;
+
+		when(service.count()).thenReturn(comptage);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		final long retour = controller.count();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isEqualTo(comptage);
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).count();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>count(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("count(service KO) : propage l'exception + message service mémorisé")
+	public void testCountServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final TypeProduitICuService service = mock(TypeProduitICuService.class);
+		final TypeProduitDesktopController controller
+			= new TypeProduitDesktopController(service);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ TypeProduitICuService.TIRET_ESPACE
+				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.count()).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.count())
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).count();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
 
 
 	

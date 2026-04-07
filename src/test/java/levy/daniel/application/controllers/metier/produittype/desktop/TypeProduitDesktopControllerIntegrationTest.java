@@ -1481,6 +1481,82 @@ public class TypeProduitDesktopControllerIntegrationTest {
 	
 	
 	// -------------------------- count() -------------------------------//
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>count(initial) : comptage exact avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne exactement le nombre de lignes présentes en base</li>
+	 * <li>positionne le message exact cohérent avec le volume trouvé</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("count(initial) : comptage exact + message exact + aucune écriture BD")
+	public void testCountInitialAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final String messageAttendu
+			= baseline == 0L
+				? TypeProduitICuService.MESSAGE_RECHERCHE_VIDE
+				: TypeProduitICuService.MESSAGE_RECHERCHE_OK;
+
+		/* ======================= ACT ======================= */
+		final long retour = this.controller.count();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isEqualTo(baseline);
+		assertThat(this.controller.getMessage()).isEqualTo(messageAttendu);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>count(après création) : comptage exact après ajout avec preuve BD.</p>
+	 * <ul>
+	 * <li>prouve d'abord physiquement l'ajout en base</li>
+	 * <li>retourne exactement le nouveau volume</li>
+	 * <li>positionne exactement {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("count(après création) : volume exact + message exact + preuve BD")
+	public void testCountApresCreationAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesTypeProduitEnBase();
+		final OutputDTO cree = this.controller.creer(new TypeProduitDTO.InputDTO(IT_ALPHA));
+
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(IT_ALPHA);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isEqualTo(1L);
+
+		/* ======================= ACT ======================= */
+		final long retour = this.controller.count();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isEqualTo(baseline + 1L);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		assertThat(this.compterTousLesTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ALPHA)).isEqualTo(1L);
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit())).isEqualTo(1L);
+
+	} // __________________________________________________________________
 
 
 	
