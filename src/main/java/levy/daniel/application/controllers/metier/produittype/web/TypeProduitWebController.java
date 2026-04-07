@@ -51,6 +51,8 @@ import levy.daniel.application.model.services.produittype.pagination.TriSpec;
  * <div>
  * <ul>
  * <li>Cette classe est appelée par la couche VUES / HTTP.</li>
+ * <li>Cette classe ADAPTER CONTROLLER implémente 
+ * l'interface PORT CONTROLLER {@link TypeProduitIController}</li>
  * <li>Cette classe ne communique qu'avec le
  * <code style="font-weight:bold;">{@link TypeProduitICuService}</code>
  * injecté par SPRING via le constructeur.</li>
@@ -60,12 +62,30 @@ import levy.daniel.application.model.services.produittype.pagination.TriSpec;
  * </div>
  *
  * <div>
- * <p>Dans l'état courant du chantier, elle implémente :</p>
+ * <p>Cette classe implémente : </p>
  * <ul>
  * <li>la création d'un objet métier dans le stockage
  * via {@link #creer(InputDTO)}.</li>
  * <li>la recherche exhaustive des objets métier dans le stockage
  * via {@link #rechercherTous()}.</li>
+ * <li>la recherche exhaustive des libellés dans le stockage
+ * via {@link #rechercherTousString()}.</li>
+ * <li>la recherche paginée des objets métier dans le stockage
+ * via {@link #rechercherTousParPage(RequetePageDTO)}.</li>
+ * <li>la recherche exacte d'un objet métier par libellé
+ * via {@link #findByLibelle(String)}.</li>
+ * <li>la recherche rapide d'objets métier par contenu de libellé
+ * via {@link #findByLibelleRapide(String)}.</li>
+ * <li>la recherche d'un objet métier à partir d'un DTO d'entrée
+ * via {@link #findByDTO(InputDTO)}.</li>
+ * <li>la recherche d'un objet métier par identifiant
+ * via {@link #findById(Long)}.</li>
+ * <li>la modification d'un objet métier dans le stockage
+ * via {@link #update(InputDTO)}.</li>
+ * <li>la suppression d'un objet métier dans le stockage
+ * via {@link #delete(InputDTO)}.</li>
+ * <li>le comptage des objets métier présents dans le stockage
+ * via {@link #count()}.</li>
  * <li>la récupération du message utilisateur courant
  * via {@link #getMessage()}.</li>
  * </ul>

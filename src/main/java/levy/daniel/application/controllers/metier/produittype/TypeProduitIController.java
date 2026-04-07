@@ -8,6 +8,7 @@ import java.util.List;
 import levy.daniel.application.model.dto.pagination.RequetePageDTO;
 import levy.daniel.application.model.dto.pagination.ResultatPageDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
@@ -40,14 +41,32 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
  * </div>
  *
  * <div>
- * <p>Dans l'état courant du chantier, elle expose :</p>
+ * <p>Cette interface définit : </p>
  * <ul>
- * <li>la création d'un objet métier dans le stockage via
- * {@link #creer(TypeProduitDTO.InputDTO)}</li>
- * <li>la recherche exhaustive des objets métier dans le stockage via
- * {@link #rechercherTous()}</li>
- * <li>la récupération du message utilisateur courant via
- * {@link #getMessage()}</li>
+ * <li>la création d'un objet métier dans le stockage
+ * via {@link #creer(InputDTO)}.</li>
+ * <li>la recherche exhaustive des objets métier dans le stockage
+ * via {@link #rechercherTous()}.</li>
+ * <li>la recherche exhaustive des libellés dans le stockage
+ * via {@link #rechercherTousString()}.</li>
+ * <li>la recherche paginée des objets métier dans le stockage
+ * via {@link #rechercherTousParPage(RequetePageDTO)}.</li>
+ * <li>la recherche exacte d'un objet métier par libellé
+ * via {@link #findByLibelle(String)}.</li>
+ * <li>la recherche rapide d'objets métier par contenu de libellé
+ * via {@link #findByLibelleRapide(String)}.</li>
+ * <li>la recherche d'un objet métier à partir d'un DTO d'entrée
+ * via {@link #findByDTO(InputDTO)}.</li>
+ * <li>la recherche d'un objet métier par identifiant
+ * via {@link #findById(Long)}.</li>
+ * <li>la modification d'un objet métier dans le stockage
+ * via {@link #update(InputDTO)}.</li>
+ * <li>la suppression d'un objet métier dans le stockage
+ * via {@link #delete(InputDTO)}.</li>
+ * <li>le comptage des objets métier présents dans le stockage
+ * via {@link #count()}.</li>
+ * <li>la récupération du message utilisateur courant
+ * via {@link #getMessage()}.</li>
  * </ul>
  * </div>
  *
