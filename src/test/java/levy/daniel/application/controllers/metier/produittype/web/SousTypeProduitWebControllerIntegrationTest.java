@@ -376,6 +376,110 @@ public class SousTypeProduitWebControllerIntegrationTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>rechercherTous(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste non nulle</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>contient la création du test</li>
+	 * <li>reste cohérent avec le comptage physique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTous(ok) : message exact + cohérence count + présence de la création + preuve BD")
+	public void testRechercherTousOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final OutputDTO cree
+			= this.controller.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
+		final Long attendu = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<SousTypeProduitDTO.OutputDTO> dtos
+			= this.controller.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos.size()).isEqualTo(attendu.intValue());
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(dtos)
+				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.contains(IT_STP_ALPHA);
+
+		final OutputDTO dtoAlpha = dtos.stream()
+				.filter(dto -> IT_STP_ALPHA.equals(dto.getSousTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoAlpha).isNotNull();
+		assertThat(dtoAlpha.getIdSousTypeProduit()).isEqualTo(cree.getIdSousTypeProduit());
+		assertThat(dtoAlpha.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(vide) : scénario nominal vide avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>prouve physiquement que la table est vide</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+		scripts = { "classpath:/truncate-test.sql" },
+		executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+	)
+	@DisplayName("rechercherTous(vide) : liste vide + message exact + preuve BD")
+	public void testRechercherTousVideAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<SousTypeProduitDTO.OutputDTO> dtos
+			= this.controller.rechercherTous();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(baseline).isZero();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isZero();
+
+	} // __________________________________________________________________
+	
+
+	
 	// ------------------ rechercherTousString() ------------------------//
 
 	

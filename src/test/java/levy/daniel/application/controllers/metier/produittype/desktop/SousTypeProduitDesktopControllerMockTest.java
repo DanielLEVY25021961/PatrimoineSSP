@@ -287,8 +287,149 @@ public class SousTypeProduitDesktopControllerMockTest {
 	
 	
 	// -------------------- rechercherTous() ----------------------------//
-
 	
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTous(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne la liste fournie par le service</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous(ok) : délégation service + liste + message service mémorisé")
+	public void testRechercherTousOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller
+			= new SousTypeProduitDesktopController(service);
+
+		final OutputDTO dto
+			= new SousTypeProduitDTO.OutputDTO(1L, BAZAR, OUTILLAGE, null);
+
+		when(service.rechercherTous()).thenReturn(java.util.List.of(dto));
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<SousTypeProduitDTO.OutputDTO> retour
+			= controller.rechercherTous();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(1);
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getIdSousTypeProduit)
+				.containsExactly(1L);
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR);
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE);
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(service, times(1)).rechercherTous();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous(service KO) : propage l'exception + message service mémorisé")
+	public void testRechercherTousServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller
+			= new SousTypeProduitDesktopController(service);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ SousTypeProduitICuService.TIRET_ESPACE
+				+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.rechercherTous()).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).rechercherTous();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(vide) : scénario nominal vide.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne une liste vide</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTous(vide) : délégation service + liste vide + message service mémorisé")
+	public void testRechercherTousVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller
+			= new SousTypeProduitDesktopController(service);
+
+		when(service.rechercherTous()).thenReturn(java.util.Collections.emptyList());
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<SousTypeProduitDTO.OutputDTO> retour
+			= controller.rechercherTous();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(service, times(1)).rechercherTous();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+
 	
 	// ------------------ rechercherTousString() ------------------------//
 
