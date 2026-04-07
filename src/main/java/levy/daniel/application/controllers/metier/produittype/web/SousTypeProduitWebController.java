@@ -251,6 +251,43 @@ public class SousTypeProduitWebController
 		}
 
 	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	@GetMapping("/rechercherTousString")
+	public List<String> rechercherTousString() throws Exception {
+
+		/* ****** RECHERCHE EXHAUSTIVE DES LIBELLES. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche exhaustive des libellés au SERVICE UC
+			 * puis récupère le message utilisateur du Service.
+			 */
+			final List<String> reponse = this.service.rechercherTousString();
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste de libellés obtenue du Service.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
 	
 
 	

@@ -294,7 +294,82 @@ public interface SousTypeProduitIController {
 	 * lors de la recherche exhaustive.
 	 */
 	List<SousTypeProduitDTO.OutputDTO> rechercherTous() throws Exception;
+
+
 	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Retourne à la VUE
+	 * la liste exhaustive des libellés des {@link SousTypeProduit}
+	 * présents dans le stockage.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE CONTROLLER (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>demander au SERVICE UC
+	 * la liste exhaustive des libellés des {@link SousTypeProduit}
+	 * présents dans le stockage ;</li>
+	 * <li>récupérer le message utilisateur courant
+	 * produit par le SERVICE UC ;</li>
+	 * <li>retourner à la VUE
+	 * la liste de libellés fournie par le SERVICE UC.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais directement au stockage.</li>
+	 * <li>La méthode délègue la recherche exhaustive des libellés
+	 * au SERVICE UC
+	 * via {@link SousTypeProduitICuService#rechercherTousString()}.</li>
+	 * <li>En cas de succès, la méthode récupère
+	 * le message utilisateur courant du SERVICE UC
+	 * puis retourne la liste de libellés qu'il fournit.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES <span style="font-weight:bold;">→</span>
+	 * SERVICE UC.</li>
+	 * <li>Le message utilisateur porté
+	 * par le CONTROLLER après l'appel
+	 * est celui du SERVICE UC.</li>
+	 * <li>Les éventuelles exceptions traversent le CONTROLLER
+	 * et remontent à la VUE.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @return List&lt;String&gt; :
+	 * la liste exhaustive des libellés des objets métier
+	 * présents dans le stockage,
+	 * retournée par le SERVICE UC ;
+	 * jamais {@code null},
+	 * mais éventuellement vide.
+	 * @throws IllegalStateException
+	 * si le SERVICE UC lève une incohérence technique
+	 * sur son scénario de recherche exhaustive des libellés.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors de la recherche exhaustive des libellés.
+	 */
+	List<String> rechercherTousString() throws Exception;
 
 	
 	/**
