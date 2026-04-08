@@ -3,12 +3,14 @@ package levy.daniel.application.controllers.metier.produittype.web;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import levy.daniel.application.controllers.metier.produittype.SousTypeProduitIController;
 import levy.daniel.application.model.dto.pagination.DirectionTriDTO;
@@ -407,6 +409,71 @@ public class SousTypeProduitWebController
 						reponseInterne.getTotalElements());
 
 			/* Retourne la réponse à la VUE. */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	@GetMapping("/libelle")
+	public List<SousTypeProduitDTO.OutputDTO> findByLibelle(
+			@RequestParam(value = "libelle", required = false) final String pLibelle)
+			throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pLibelle == null :
+		 * émet un message utilisateur
+		 * MESSAGE_FIND_BY_LIBELLE_VUE_NULL
+		 * + retourne null.
+		 */
+		if (pLibelle == null) {
+			this.message = MESSAGE_FIND_BY_LIBELLE_VUE_NULL;
+			return null;
+		}
+
+		final String libelle = pLibelle;
+
+		/*
+		 * Si le libellé est blank (null ou espaces) :
+		 * émet un message utilisateur
+		 * MESSAGE_FIND_BY_LIBELLE_VUE_BLANK
+		 * + retourne null.
+		 */
+		if (StringUtils.isBlank(libelle)) {
+			this.message = MESSAGE_FIND_BY_LIBELLE_VUE_BLANK;
+			return null;
+		}
+
+		/* ****** RECHERCHE EXACTE PAR LIBELLE. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche exacte par libellé au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final List<SousTypeProduitDTO.OutputDTO> reponse
+				= this.service.findByLibelle(libelle);
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste obtenue.
+			 */
 			return reponse;
 
 		} catch (final Exception pException) {
