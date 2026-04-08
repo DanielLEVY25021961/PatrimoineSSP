@@ -21,6 +21,7 @@ import levy.daniel.application.controllers.metier.produittype.SousTypeProduitICo
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.OutputDTO;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
 
 /**
@@ -1283,6 +1284,234 @@ public class SousTypeProduitWebControllerMockTest {
 	
 	// ------------------- findAllByParent(...) -------------------------//
 
+	
+	
+	/**
+	 * <div>
+	 * <p>findAllByParent(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(null) : retourne null + message local + aucune interaction service")
+	public void testFindAllByParentNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findAllByParent(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(SousTypeProduitIController.MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(parent blank) : retourne null + message local + aucune interaction service")
+	public void testFindAllByParentParentBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(ESPACES);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findAllByParent(parentDto);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(
+						SousTypeProduitIController.MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(vide) : le controller délègue au service.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>mémorise le message du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(vide) : liste vide + message service mémorisé")
+	public void testFindAllByParentVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+
+		when(service.findAllByParent(parentDto))
+				.thenReturn(java.util.Collections.emptyList());
+		when(service.getMessage())
+				.thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findAllByParent(parentDto);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(service, times(1)).findAllByParent(parentDto);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne la liste fournie</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(ok) : délégation service + liste + message service mémorisé")
+	public void testFindAllByParentOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(BAZAR);
+		final String sousTypeProduitB = "jardinage";
+
+		final OutputDTO dto1 = new SousTypeProduitDTO.OutputDTO(1L, BAZAR, OUTILLAGE, null);
+		final OutputDTO dto2 = new SousTypeProduitDTO.OutputDTO(2L, BAZAR, sousTypeProduitB, null);
+		final java.util.List<OutputDTO> trouves = java.util.List.of(dto1, dto2);
+
+		when(service.findAllByParent(parentDto)).thenReturn(trouves);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findAllByParent(parentDto);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
+
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getIdSousTypeProduit)
+				.containsExactly(1L, 2L);
+
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR, BAZAR);
+
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE, sousTypeProduitB);
+
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(service, times(1)).findAllByParent(parentDto);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent absent service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findAllByParent(parent absent service KO) : propage l'exception + message service mémorisé")
+	public void testFindAllByParentParentAbsentServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final TypeProduitDTO.InputDTO parentDto
+			= new TypeProduitDTO.InputDTO("type-produit-absent");
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		when(service.findAllByParent(parentDto)).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.findAllByParent(parentDto))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(service, times(1)).findAllByParent(parentDto);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
 	
 	
 	// ---------------------- findByDTO(...) ----------------------------//

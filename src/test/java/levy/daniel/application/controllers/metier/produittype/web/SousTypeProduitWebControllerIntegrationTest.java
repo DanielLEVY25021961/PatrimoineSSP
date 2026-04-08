@@ -1129,6 +1129,239 @@ public class SousTypeProduitWebControllerIntegrationTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>findAllByParent(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(null) : retourne null + message local + aucune écriture BD")
+	public void testFindAllByParentNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findAllByParent(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitIController.MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(parent blank) : retourne null + message local + aucune écriture BD")
+	public void testFindAllByParentParentBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(ESPACES);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findAllByParent(parentDto);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(
+						SousTypeProduitIController.MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent absent) : le controller propage l'échec du service.</p>
+	 * <ul>
+	 * <li>propage {@link IllegalStateException}</li>
+	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("findAllByParent(parent absent) : IllegalStateException + message exact + aucune écriture BD")
+	public void testFindAllByParentParentAbsentServiceKo() {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final TypeProduitDTO.InputDTO parentDto
+			= new TypeProduitDTO.InputDTO(IT_TP_PARENT_ABSENT);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> this.controller.findAllByParent(parentDto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(vide) : parent existant mais aucun enfant rattaché.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>ne modifie pas physiquement la base des sous-types</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(vide) : liste vide + message exact + aucune écriture BD")
+	public void testFindAllByParentVideAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		final TypeProduitDTO.InputDTO parentDto
+			= new TypeProduitDTO.InputDTO(IT_TP_PARENT_A);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findAllByParent(parentDto);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(ok) : retourne uniquement les enfants du parent demandé.</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>ne retourne que les enfants du parent transmis</li>
+	 * <li>prouve physiquement en base les couples parent / sous-type créés</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findAllByParent(ok) : retourne uniquement les enfants du parent demandé + message exact + preuve BD")
+	public void testFindAllByParentOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final String parentB = "IT-CTRL-WEB-TP-PARENT-B";
+		final String sousTypeProduitGamma = "IT-CTRL-WEB-STP-GAMMA";
+
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(parentB));
+
+		final OutputDTO creeA1 = this.controller.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
+		final OutputDTO creeA2 = this.controller.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_BETA));
+		final OutputDTO creeB1 = this.controller.creer(
+				new SousTypeProduitDTO.InputDTO(parentB, sousTypeProduitGamma));
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findAllByParent(
+				new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(IT_STP_ALPHA, IT_STP_BETA);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getTypeProduit)
+				.containsOnly(IT_TP_PARENT_A);
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.containsExactly(
+						creeA1.getIdSousTypeProduit(),
+						creeA2.getIdSousTypeProduit());
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdSousTypeProduit)
+				.doesNotContain(creeB1.getIdSousTypeProduit());
+
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline + 3L);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeA1.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeA1.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeA1.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeA2.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeA2.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_BETA);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeA2.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+		assertThat(this.compterSousTypeProduitEnBase(creeB1.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeB1.getIdSousTypeProduit()))
+				.isEqualTo(sousTypeProduitGamma);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeB1.getIdSousTypeProduit()))
+				.isEqualTo(parentB);
+
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_BETA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(parentB, sousTypeProduitGamma))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________
+	
+	
+	
 	// ---------------------- findByDTO(...) ----------------------------//
 
 	
