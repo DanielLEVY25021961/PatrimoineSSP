@@ -16,6 +16,7 @@ import levy.daniel.application.model.dto.pagination.TriSpecDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.OutputDTO;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
@@ -527,6 +528,71 @@ public class SousTypeProduitDesktopController
 
 			/*
 			 * retourne la liste d'OutputDTO obtenue.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<SousTypeProduitDTO.OutputDTO> findAllByParent(
+			final TypeProduitDTO.InputDTO pTypeProduit)
+					throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pTypeProduit == null :
+		 * émet un message utilisateur
+		 * MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL
+		 * + retourne null.
+		 */
+		if (pTypeProduit == null) {
+			this.message = MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL;
+			return null;
+		}
+
+		/*
+		 * Si le libellé du parent est blank (null ou espaces) :
+		 * émet un message utilisateur
+		 * MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK
+		 * + retourne null.
+		 */
+		if (pTypeProduit.getTypeProduit() == null
+				|| pTypeProduit.getTypeProduit().isBlank()) {
+			this.message = MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK;
+			return null;
+		}
+
+		/* ****** RECHERCHE PAR PARENT. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche des SousTypeProduit rattachés
+			 * au TypeProduit parent au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final List<SousTypeProduitDTO.OutputDTO> reponse
+				= this.service.findAllByParent(pTypeProduit);
+			
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste obtenue du Service.
 			 */
 			return reponse;
 

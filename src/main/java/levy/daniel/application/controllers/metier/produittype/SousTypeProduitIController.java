@@ -9,6 +9,7 @@ import levy.daniel.application.model.dto.pagination.RequetePageDTO;
 import levy.daniel.application.model.dto.pagination.ResultatPageDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.InputDTO;
+import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
@@ -165,6 +166,26 @@ public interface SousTypeProduitIController {
 	 */
 	String MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL
 		= "KO - la Vue a transmis un contenu de recherche rapide null";
+	
+	// ----------------------- findAllByParent --------------------------//
+
+	/**
+	 * <div>
+	 * <p>"KO - la Vue a transmis un TypeProduitDTO.InputDTO null"</p>
+	 * </div>
+	 */
+	String MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL
+		= "KO - la Vue a transmis un TypeProduitDTO.InputDTO null";
+
+	/**
+	 * <div>
+	 * <p>"KO - la Vue a transmis un TypeProduitDTO.InputDTO
+	 * avec un typeProduit blank (null ou espaces)"</p>
+	 * </div>
+	 */
+	String MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK
+		= "KO - la Vue a transmis un TypeProduitDTO.InputDTO "
+			+ "avec un typeProduit blank (null ou espaces)";
 
 	
 	
@@ -738,6 +759,106 @@ public interface SousTypeProduitIController {
 	List<SousTypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu)
 			throws Exception;
 
+	
+
+	/**
+	 * <div>
+	 * <p>Retourne à la VUE
+	 * la liste des {@link SousTypeProduitDTO.OutputDTO}
+	 * rattachés à un {@link TypeProduit} parent transmis.</p>
+	 *
+	 * <p>INTENTION DE CONTROLLER (scénario nominal) :</p>
+	 * <ul>
+	 * <li>recevoir depuis la VUE
+	 * un {@link TypeProduitDTO.InputDTO}
+	 * représentant le parent demandé ;</li>
+	 * <li>exécuter les premiers contrôles de surface
+	 * sur le DTO parent
+	 * et sur son libellé ;</li>
+	 * <li>rédiger le cas échéant
+	 * un message utilisateur circonstancié
+	 * sans solliciter le SERVICE UC ;</li>
+	 * <li>si les contrôles de surface sont satisfaits,
+	 * déléguer la recherche des enfants au
+	 * {@link SousTypeProduitICuService#findAllByParent(TypeProduitDTO.InputDTO)} ;</li>
+	 * <li>retourner à la VUE
+	 * la liste des {@link SousTypeProduitDTO.OutputDTO}
+	 * fournie par le SERVICE UC
+	 * ou {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation.</li>
+	 * </ul>
+	 *
+	 * <p>CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais directement au stockage.</li>
+	 * <li>Si {@code pTypeProduit == null},
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_FIND_ALL_BY_PARENT_VUE_NULL}
+	 * et retourne {@code null}.</li>
+	 * <li>Si le libellé du parent porté par {@code pTypeProduit}
+	 * est blank ({@code null} ou espaces),
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_FIND_ALL_BY_PARENT_VUE_PARENT_BLANK}
+	 * et retourne {@code null}.</li>
+	 * <li>Si les contrôles de surface sont satisfaits,
+	 * la méthode délègue la recherche au SERVICE UC,
+	 * récupère le message utilisateur courant produit
+	 * par ce service
+	 * puis retourne la liste de
+	 * {@link SousTypeProduitDTO.OutputDTO}
+	 * qu'il fournit.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 *
+	 * <p>GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES → SERVICE UC.</li>
+	 * <li>Le CONTROLLER peut produire un message utilisateur
+	 * propre lors des contrôles de surface d'entrée.</li>
+	 * <li>Après délégation,
+	 * le message utilisateur porté
+	 * par le CONTROLLER
+	 * devient celui produit
+	 * par le SERVICE UC.</li>
+	 * <li>Les éventuelles exceptions traversent le CONTROLLER
+	 * et remontent à la VUE.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pTypeProduit : TypeProduitDTO.InputDTO :
+	 * le parent transmis par la couche VUES
+	 * au scénario de recherche par parent.
+	 * @return List<SousTypeProduitDTO.OutputDTO> :
+	 * la liste des SousTypeProduit trouvés
+	 * retournée à la couche VUES ;
+	 * peut être {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation ;
+	 * sinon, la liste retournée par le SERVICE UC,
+	 * éventuellement vide.
+	 * @throws IllegalStateException
+	 * si le SERVICE UC lève une incohérence technique
+	 * sur son scénario de recherche par parent.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors de la recherche par parent.
+	 */
+	List<SousTypeProduitDTO.OutputDTO> findAllByParent(
+			TypeProduitDTO.InputDTO pTypeProduit)
+					throws Exception;
+	
 	
 	
 	/**
