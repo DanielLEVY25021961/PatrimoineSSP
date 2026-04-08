@@ -1518,6 +1518,220 @@ public class SousTypeProduitWebControllerMockTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>findByDTO(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link SousTypeProduitIController#MESSAGE_FIND_BY_DTO_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(null) : retourne null + message local + aucune interaction service")
+	public void testFindByDTONull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findByDTO(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(SousTypeProduitIController.MESSAGE_FIND_BY_DTO_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(parent blank) : le controller délègue au service.</p>
+	 * <ul>
+	 * <li>ne bloque pas localement un InputDTO portant un parent blank</li>
+	 * <li>laisse le service lever l'exception</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(parent blank) : propage l'exception + message service mémorisé")
+	public void testFindByDTOParentBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(ESPACES, OUTILLAGE);
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		when(service.findByDTO(inputDTO)).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.findByDTO(inputDTO))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(service, times(1)).findByDTO(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(absent) : scénario nominal sans résultat.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne {@code null}</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(absent) : retourne null + message service mémorisé")
+	public void testFindByDTOAbsent() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO
+			= new SousTypeProduitDTO.InputDTO("type-produit-absent", OUTILLAGE);
+
+		when(service.findByDTO(inputDTO)).thenReturn(null);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findByDTO(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(service, times(1)).findByDTO(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne l'{@link OutputDTO} fourni</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(ok) : délégation service + OutputDTO + message service mémorisé")
+	public void testFindByDTOOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+		final OutputDTO trouve = new SousTypeProduitDTO.OutputDTO(1L, BAZAR, OUTILLAGE, null);
+
+		when(service.findByDTO(inputDTO)).thenReturn(trouve);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		/* ======================= ACT ======================= */
+		final OutputDTO retour = controller.findByDTO(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdSousTypeProduit()).isEqualTo(1L);
+		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
+		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		verify(service, times(1)).findByDTO(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByDTO(service KO) : propage l'exception + message service mémorisé")
+	public void testFindByDTOServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ SousTypeProduitICuService.TIRET_ESPACE
+				+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.findByDTO(inputDTO)).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.findByDTO(inputDTO))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).findByDTO(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+	
+	
 	// ----------------------- findById(...) ----------------------------//
 
 	
