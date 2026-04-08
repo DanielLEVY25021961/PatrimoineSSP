@@ -1051,6 +1051,236 @@ public class SousTypeProduitWebControllerMockTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(null) : retourne null + message local + aucune interaction service")
+	public void testFindByLibelleRapideNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findByLibelleRapide(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNull();
+		assertThat(message)
+				.isEqualTo(
+						SousTypeProduitIController
+							.MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(blank) : le controller délègue au service.</p>
+	 * <ul>
+	 * <li>ne bloque pas localement un contenu blank</li>
+	 * <li>délègue au service</li>
+	 * <li>retourne la liste fournie par le service</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(blank) : délégation service + liste + message service mémorisé")
+	public void testFindByLibelleRapideBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final OutputDTO dto = new SousTypeProduitDTO.OutputDTO(1L, BAZAR, OUTILLAGE, null);
+		final java.util.List<OutputDTO> trouves = java.util.List.of(dto);
+
+		when(service.findByLibelleRapide(ESPACES)).thenReturn(trouves);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findByLibelleRapide(ESPACES);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(1);
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE);
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(service, times(1)).findByLibelleRapide(ESPACES);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne la liste fournie</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(ok) : délégation service + liste + message service mémorisé")
+	public void testFindByLibelleRapideOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final String contenu = "outi";
+
+		final OutputDTO dto1 = new SousTypeProduitDTO.OutputDTO(1L, BAZAR, OUTILLAGE, null);
+		final OutputDTO dto2 = new SousTypeProduitDTO.OutputDTO(2L, TOURISME, OUTILLAGE, null);
+		final java.util.List<OutputDTO> trouves = java.util.List.of(dto1, dto2);
+
+		when(service.findByLibelleRapide(contenu)).thenReturn(trouves);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findByLibelleRapide(contenu);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getIdSousTypeProduit)
+				.containsExactly(1L, 2L);
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR, TOURISME);
+		assertThat(retour)
+				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE, OUTILLAGE);
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(service, times(1)).findByLibelleRapide(contenu);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(absent) : scénario nominal sans résultat.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne une liste vide</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(absent) : liste vide + message service mémorisé")
+	public void testFindByLibelleRapideAbsent() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final String contenu = "sous-type-produit-introuvable";
+
+		when(service.findByLibelleRapide(contenu)).thenReturn(java.util.Collections.emptyList());
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> retour = controller.findByLibelleRapide(contenu);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(service, times(1)).findByLibelleRapide(contenu);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("findByLibelleRapide(service KO) : propage l'exception + message service mémorisé")
+	public void testFindByLibelleRapideServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final String contenu = OUTILLAGE;
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ SousTypeProduitICuService.TIRET_ESPACE
+				+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.findByLibelleRapide(contenu)).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.findByLibelleRapide(contenu))
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).findByLibelleRapide(contenu);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+	
+	
 	// ------------------- findAllByParent(...) -------------------------//
 
 	
