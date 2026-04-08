@@ -752,6 +752,191 @@ public class SousTypeProduitWebControllerIntegrationTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>findByLibelle(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_FIND_BY_LIBELLE_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelle(null) : retourne null + message local + aucune écriture BD")
+	public void testFindByLibelleNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findByLibelle(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitIController.MESSAGE_FIND_BY_LIBELLE_VUE_NULL);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_FIND_BY_LIBELLE_VUE_BLANK}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelle(blank) : retourne null + message local + aucune écriture BD")
+	public void testFindByLibelleBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findByLibelle(ESPACES);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitIController.MESSAGE_FIND_BY_LIBELLE_VUE_BLANK);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste non nulle</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>retourne les deux DTO correspondant au même libellé exact</li>
+	 * <li>prouve la non-unicité du libellé à travers deux parents distincts</li>
+	 * <li>ne modifie pas physiquement la base lors de la recherche</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelle(ok) : liste trouvée + message exact + preuve BD")
+	public void testFindByLibelleOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final String parentB = "IT-CTRL-WEB-TP-PARENT-B";
+		final long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(parentB));
+
+		final OutputDTO creeA
+			= this.controller.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
+		final OutputDTO creeB
+			= this.controller.creer(new SousTypeProduitDTO.InputDTO(parentB, IT_STP_ALPHA));
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findByLibelle(IT_STP_ALPHA);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(creeA).isNotNull();
+		assertThat(creeB).isNotNull();
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(2);
+		assertThat(dtos)
+				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.containsOnly(IT_STP_ALPHA);
+		assertThat(dtos)
+				.extracting(SousTypeProduitDTO.OutputDTO::getTypeProduit)
+				.containsExactlyInAnyOrder(IT_TP_PARENT_A, parentB);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		final OutputDTO trouveA = dtos.stream()
+				.filter(dto -> IT_TP_PARENT_A.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+		final OutputDTO trouveB = dtos.stream()
+				.filter(dto -> parentB.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(trouveA).isNotNull();
+		assertThat(trouveA.getIdSousTypeProduit()).isEqualTo(creeA.getIdSousTypeProduit());
+
+		assertThat(trouveB).isNotNull();
+		assertThat(trouveB.getIdSousTypeProduit()).isEqualTo(creeB.getIdSousTypeProduit());
+
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline + 2L);
+		assertThat(this.compterSousTypeProduitEnBase(creeA.getIdSousTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitEnBase(creeB.getIdSousTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(parentB, IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeA.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(creeB.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeA.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.lireParentSousTypeProduitEnBase(creeB.getIdSousTypeProduit()))
+				.isEqualTo(parentB);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(absent) : scénario nominal sans résultat avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une liste vide</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findByLibelle(absent) : liste vide + message exact + aucune écriture BD")
+	public void testFindByLibelleAbsentAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final String libelle = "IT-CTRL-WEB-STP-INEXISTANT";
+
+		/* ======================= ACT ======================= */
+		final java.util.List<OutputDTO> dtos = this.controller.findByLibelle(libelle);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelle);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, libelle)).isZero();
+
+	} // __________________________________________________________________
+	
+	
+	
 	// ----------------- findByLibelleRapide(...) -----------------------//
 
 	
