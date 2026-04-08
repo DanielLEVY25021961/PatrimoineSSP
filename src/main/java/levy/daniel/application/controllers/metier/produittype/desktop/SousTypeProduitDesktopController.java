@@ -608,6 +608,66 @@ public class SousTypeProduitDesktopController
 		}
 
 	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public OutputDTO findByDTO(final InputDTO pInputDTO)
+			throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur
+		 * MESSAGE_FIND_BY_DTO_VUE_NULL
+		 * + retourne null.
+		 */
+		if (pInputDTO == null) {
+			this.message = MESSAGE_FIND_BY_DTO_VUE_NULL;
+			return null;
+		}
+
+		final InputDTO inputDTO = pInputDTO;
+
+		/* ****** RECHERCHE PAR DTO. ****** */
+		try {
+
+			/*
+			 * Le contenu métier porté par l'InputDTO
+			 * n'est pas contrôlé localement ici
+			 * par le CONTROLLER.
+			 * Il est délégué au SERVICE UC,
+			 * qui applique alors son propre contrat.
+			 */
+
+			/*
+			 * Délègue la recherche par DTO au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final OutputDTO reponse = this.service.findByDTO(inputDTO);
+			
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne l'OutputDTO obtenu.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
 	
 
 	
