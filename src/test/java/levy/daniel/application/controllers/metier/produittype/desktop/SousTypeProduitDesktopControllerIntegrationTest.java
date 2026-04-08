@@ -98,6 +98,13 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 
 	/** SousTypeProduit IT controller desktop : "IT-CTRL-DESKTOP-STP-BETA". */
 	public static final String IT_STP_BETA = "IT-CTRL-DESKTOP-STP-BETA";
+	
+	/**
+	 * "classpath:/truncate-test.sql"
+	 */
+	public static final String CLASSPATH_TRUNCATE_TEST 
+		= "classpath:/truncate-test.sql";
+	
 
 	// **************************** BEANS *********************************/
 
@@ -454,7 +461,7 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	 */
 	@Test
 	@Sql(
-		scripts = { "classpath:/truncate-test.sql" },
+		scripts = { CLASSPATH_TRUNCATE_TEST },
 		executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 	)
 	@DisplayName("rechercherTous(vide) : liste vide + message exact + preuve BD")
@@ -550,7 +557,7 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	 */
 	@Test
 	@Sql(
-		scripts = { "classpath:/truncate-test.sql" },
+		scripts = { CLASSPATH_TRUNCATE_TEST },
 		executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 	)
 	@DisplayName("rechercherTousString(vide) : liste vide + message exact + preuve BD")
@@ -575,6 +582,169 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 
 	
 	// ---------------- rechercherTousParPage(...) ----------------------//
+
+	
+	
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTousParPage(null) : retourne null + message local + aucune écriture BD")
+	public void testRechercherTousParPageNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final levy.daniel.application.model.dto.pagination.ResultatPageDTO<OutputDTO> page
+			= this.controller.rechercherTousParPage(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(page).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(
+						SousTypeProduitIController
+							.MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une page DTO non nulle</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}</li>
+	 * <li>retourne une pagination humaine cohérente pour la VUE</li>
+	 * <li>reste cohérent avec le comptage physique en base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("rechercherTousParPage(ok) : page DTO cohérente + message exact + présence de la création + preuve BD")
+	public void testRechercherTousParPageOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+
+		final long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final OutputDTO cree
+			= this.controller.creer(new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
+		final long attendu = this.compterTousLesSousTypeProduitEnBase();
+
+		final levy.daniel.application.model.dto.pagination.RequetePageDTO requete
+			= new levy.daniel.application.model.dto.pagination.RequetePageDTO(
+					1,
+					10,
+					java.util.List.of(
+							new levy.daniel.application.model.dto.pagination.TriSpecDTO(
+									"sousTypeProduit",
+									levy.daniel.application.model.dto.pagination.DirectionTriDTO.ASC)));
+
+		/* ======================= ACT ======================= */
+		final levy.daniel.application.model.dto.pagination.ResultatPageDTO<OutputDTO> page
+			= this.controller.rechercherTousParPage(requete);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(page).isNotNull();
+		assertThat(page.getPageNumber()).isEqualTo(1);
+		assertThat(page.getPageSize()).isEqualTo(10);
+		assertThat(page.getTotalElements()).isEqualTo(attendu);
+		assertThat(page.getTotalPages()).isEqualTo(1);
+		assertThat(page.getContent()).isNotNull();
+		assertThat(page.getContent().size()).isEqualTo((int) attendu);
+		assertThat(page.getContent())
+				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
+				.contains(IT_STP_ALPHA);
+
+		final OutputDTO dtoAlpha = page.getContent().stream()
+				.filter(dto -> IT_STP_ALPHA.equals(dto.getSousTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoAlpha).isNotNull();
+		assertThat(dtoAlpha.getIdSousTypeProduit()).isEqualTo(cree.getIdSousTypeProduit());
+		assertThat(dtoAlpha.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(vide) : scénario nominal vide avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne une page DTO non nulle et vide</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}</li>
+	 * <li>prouve physiquement que la table est vide</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Sql(
+			scripts = {
+					CLASSPATH_TRUNCATE_TEST
+			},
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+	)
+	@DisplayName("rechercherTousParPage(vide) : page vide + message exact + preuve BD")
+	public void testRechercherTousParPageVideAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final levy.daniel.application.model.dto.pagination.RequetePageDTO requete
+			= new levy.daniel.application.model.dto.pagination.RequetePageDTO(1, 10);
+
+		/* ======================= ACT ======================= */
+		final levy.daniel.application.model.dto.pagination.ResultatPageDTO<OutputDTO> page
+			= this.controller.rechercherTousParPage(requete);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(baseline).isZero();
+		assertThat(page).isNotNull();
+		assertThat(page.getPageNumber()).isEqualTo(1);
+		assertThat(page.getPageSize()).isEqualTo(10);
+		assertThat(page.getTotalElements()).isEqualTo(0L);
+		assertThat(page.getTotalPages()).isZero();
+		assertThat(page.getContent()).isEmpty();
+		assertThat(page.isHasNext()).isFalse();
+		assertThat(page.isHasPrevious()).isFalse();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isZero();
+
+	} // __________________________________________________________________
 
 	
 	
