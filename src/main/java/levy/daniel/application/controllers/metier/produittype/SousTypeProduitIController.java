@@ -5,6 +5,8 @@ package levy.daniel.application.controllers.metier.produittype;
 
 import java.util.List;
 
+import levy.daniel.application.model.dto.pagination.RequetePageDTO;
+import levy.daniel.application.model.dto.pagination.ResultatPageDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.InputDTO;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
@@ -79,6 +81,7 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
 public interface SousTypeProduitIController {
 
 	// ----------------------- creer ------------------------------------//
+	
 	/**
 	 * <div>
 	 * <p>"KO - la Vue a transmis un InputDTO null"</p>
@@ -106,7 +109,37 @@ public interface SousTypeProduitIController {
 	String MESSAGE_CREER_VUE_PARENT_BLANK
 		= "KO - la Vue a transmis un InputDTO "
 				+ "avec un TypeProduit parent blank (null ou espaces)";
+	
+	// ----------------------- rechercherTousParPage --------------------//
+	
+	/**
+	 * <div>
+	 * <p>"La requête paginée transmise à la VUE ne doit pas être null."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL
+		= "La requête paginée transmise à la VUE ne doit pas être null.";
 
+	/**
+	 * <div>
+	 * <p>Numéro de page "humain" par défaut utilisé lorsque la VUE
+	 * n'a rien renseigné ou a fourni une valeur incohérente
+	 * (1 signifie "page 1" qui aura pour index 0-based la valeur 0).</p>
+	 * </div>
+	 */
+	int NUMERO_PAGE_HUMAIN_PAR_DEFAUT = 1;
+
+	/**
+	 * <div>
+	 * <p>Nombre d'enregistrements par page par défaut utilisé
+	 * lorsque la VUE n'a rien renseigné
+	 * ou a fourni une valeur incohérente.</p>
+	 * </div>
+	 */
+	int NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT = 10;
+
+	
+	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
@@ -370,6 +403,107 @@ public interface SousTypeProduitIController {
 	 * lors de la recherche exhaustive des libellés.
 	 */
 	List<String> rechercherTousString() throws Exception;
+
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Retourne à la VUE
+	 * tous les objets métier présents dans le stockage
+	 * sous forme paginée.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE CONTROLLER (scénario nominal) :
+	 * </p>
+	 * <ul>
+	 * <li>recevoir depuis la VUE
+	 * une requête paginée DTO ;</li>
+	 * <li>appliquer les contrôles de surface propres à la
+	 * pagination de VUE avant d'appeler le SERVICE UC ;</li>
+	 * <li>convertir le numéro de page "humain"
+	 * en numéro de page 0-based ;</li>
+	 * <li>laisser l'ADAPTER convertir cette requête DTO
+	 * en pagination interne
+	 * du package services.pagination
+	 * avant l'appel au SERVICE UC ;</li>
+	 * <li>retourner à la VUE
+	 * un résultat paginé DTO.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>Si la requête paginée est {@code null},
+	 * le CONTROLLER mémorise un message utilisateur local,
+	 * n'appelle pas le SERVICE UC
+	 * et retourne {@code null}.</li>
+	 * <li>Si le numéro de page humain est absent
+	 * ou inférieur à 1,
+	 * le CONTROLLER applique le numéro de page humain par défaut
+	 * {@code NUMERO_PAGE_HUMAIN_PAR_DEFAUT}.</li>
+	 * <li>Si la taille de page
+	 * (nombre d'enregistrements par page)
+	 * est absente ou inférieure à 1,
+	 * le CONTROLLER applique la taille de page par défaut
+	 * {@code NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT}.</li>
+	 * <li>La méthode convertit le numéro de page humain
+	 * en numéro de page 0-based.</li>
+	 * <li>La méthode délègue la recherche paginée
+	 * au SERVICE UC
+	 * après conversion de la pagination DTO
+	 * en pagination interne
+	 * via
+	 * {@link SousTypeProduitICuService#rechercherTousParPage(RequetePage)}.</li>
+	 * <li>En cas de succès,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis retourne à la VUE
+	 * un {@link ResultatPageDTO}
+	 * reconstruit en pagination humaine.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :
+	 * </p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES <span style="font-weight:bold;">→</span>
+	 * SERVICE UC.</li>
+	 * <li>Le message utilisateur porté
+	 * par le CONTROLLER après l'appel
+	 * est celui du SERVICE UC,
+	 * sauf dans le cas de rejet local
+	 * d'une requête paginée {@code null}.</li>
+	 * <li>La VUE manipule une pagination humaine 1-based,
+	 * alors que le SERVICE UC reçoit une pagination interne 0-based.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pRequetePageDTO :
+	 * la requête de pagination DTO transmise par la VUE.
+	 * @return ResultatPageDTO<SousTypeProduitDTO.OutputDTO> :
+	 * le résultat paginé DTO retourné à la VUE ;
+	 * peut être {@code null}
+	 * si la requête paginée transmise par la VUE est {@code null}
+	 * ou si le SERVICE UC retourne exceptionnellement {@code null}.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors de la recherche paginée.
+	 */
+	ResultatPageDTO<SousTypeProduitDTO.OutputDTO> rechercherTousParPage(
+			RequetePageDTO pRequetePageDTO) throws Exception;
+
 
 	
 	/**

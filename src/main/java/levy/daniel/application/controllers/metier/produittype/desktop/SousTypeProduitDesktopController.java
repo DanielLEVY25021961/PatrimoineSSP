@@ -1,5 +1,6 @@
 package levy.daniel.application.controllers.metier.produittype.desktop;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -7,11 +8,19 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import levy.daniel.application.controllers.metier.produittype.SousTypeProduitIController;
+import levy.daniel.application.model.dto.pagination.DirectionTriDTO;
+import levy.daniel.application.model.dto.pagination.RequetePageDTO;
+import levy.daniel.application.model.dto.pagination.ResultatPageDTO;
+import levy.daniel.application.model.dto.pagination.TriSpecDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.InputDTO;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
+import levy.daniel.application.model.services.produittype.pagination.DirectionTri;
+import levy.daniel.application.model.services.produittype.pagination.RequetePage;
+import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
+import levy.daniel.application.model.services.produittype.pagination.TriSpec;
 
 
 /**
@@ -271,6 +280,129 @@ public class SousTypeProduitDesktopController
 			/*
 			 * retourne la liste de libellés obtenue du Service.
 			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ResultatPageDTO<SousTypeProduitDTO.OutputDTO> rechercherTousParPage(
+			final RequetePageDTO pRequetePageDTO) throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pRequetePageDTO == null :
+		 * émet un message utilisateur
+		 * MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL
+		 * + retourne null.
+		 */
+		if (pRequetePageDTO == null) {
+			this.message = MESSAGE_RECHERCHE_PAGINEE_REQUETE_NULL;
+			return null;
+		}
+
+		/* ****** RECHERCHE PAGINEE. ****** */
+		try {
+
+			/*
+			 * Convertit d'abord la pagination DTO reçue de la VUE
+			 * en pagination interne du SERVICE UC
+			 * (appartenant au package services.pagination).
+			 * Le numéro de page exposé dans la VUE reste "humain" :
+			 * page 1 -> index interne 0.
+			 */
+			final int pageNumberHumain = pRequetePageDTO.getPageNumber();
+
+			/*
+			 * applique le numéro de page par défaut
+			 * NUMERO_PAGE_HUMAIN_PAR_DEFAUT
+			 * si la VUE a omis d'en fournir un.
+			 */
+			final int pageNumberInterne
+				= pageNumberHumain >= NUMERO_PAGE_HUMAIN_PAR_DEFAUT
+					? pageNumberHumain - 1
+					: NUMERO_PAGE_HUMAIN_PAR_DEFAUT - 1;
+
+			/*
+			 * applique la taille de page par défaut
+			 * NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT
+			 * si la VUE a omis de l'indiquer.
+			 */
+			final int pageSizeInterne
+				= pRequetePageDTO.getPageSize() >= 1
+					? pRequetePageDTO.getPageSize()
+					: NOMBRE_ENREGISTREMENTS_PAR_PAGE_PAR_DEFAUT;
+
+			final List<TriSpec> trisInternes = new ArrayList<TriSpec>();
+
+			for (final TriSpecDTO triDTO : pRequetePageDTO.getTris()) {
+				if (triDTO != null) {
+					final DirectionTri directionInterne
+						= triDTO.getDirection() == DirectionTriDTO.DESC
+							? DirectionTri.DESC
+							: DirectionTri.ASC;
+
+					trisInternes.add(
+							new TriSpec(
+									triDTO.getPropriete(),
+									directionInterne));
+				}
+			}
+
+			/*
+			 * Crée un RequetePage interne
+			 * (appartenant au package services.pagination).
+			 */
+			final RequetePage requeteInterne
+				= new RequetePage(
+						pageNumberInterne,
+						pageSizeInterne,
+						trisInternes);
+
+			/*
+			 * Délègue la recherche paginée au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final ResultatPage<SousTypeProduitDTO.OutputDTO> reponseInterne
+				= this.service.rechercherTousParPage(requeteInterne);
+			this.message = this.service.getMessage();
+
+			/*
+			 * Si le Service retourne null :
+			 * retourne null + message du service.
+			 */
+			if (reponseInterne == null) {
+				return null;
+			}
+
+			/*
+			 * Retourne à la VUE un résultat paginé DTO.
+			 * La numérotation redevient "humaine" :
+			 * index interne 0 -> page 1.
+			 */
+			final ResultatPageDTO<SousTypeProduitDTO.OutputDTO> reponse
+				= new ResultatPageDTO<>(
+						reponseInterne.getContent(),
+						reponseInterne.getPageNumber() + 1,
+						reponseInterne.getPageSize(),
+						reponseInterne.getTotalElements());
+
+			/* Retourne la réponse à la VUE. */
 			return reponse;
 
 		} catch (final Exception pException) {
