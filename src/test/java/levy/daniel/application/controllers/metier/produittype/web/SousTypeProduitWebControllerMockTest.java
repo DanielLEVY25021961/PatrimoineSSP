@@ -433,6 +433,134 @@ public class SousTypeProduitWebControllerMockTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>rechercherTousString(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne la liste de libellés fournie par le service</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString(ok) : délégation service + liste de libellés + message service mémorisé")
+	public void testRechercherTousStringOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+
+		when(service.rechercherTousString()).thenReturn(java.util.List.of(OUTILLAGE));
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<String> retour = controller.rechercherTousString();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(1);
+		assertThat(retour).containsExactly(OUTILLAGE);
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(service, times(1)).rechercherTousString();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString(service KO) : propage l'exception + message service mémorisé")
+	public void testRechercherTousStringServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+
+		final IllegalStateException panneTechnique
+			= new IllegalStateException(SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ SousTypeProduitICuService.TIRET_ESPACE
+				+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		when(service.rechercherTousString()).thenThrow(panneTechnique);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.rechercherTousString())
+				.isSameAs(panneTechnique);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).rechercherTousString();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString(vide) : scénario nominal vide.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>retourne une liste vide</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("rechercherTousString(vide) : délégation service + liste vide + message service mémorisé")
+	public void testRechercherTousStringVide() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+
+		when(service.rechercherTousString()).thenReturn(java.util.Collections.emptyList());
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* ======================= ACT ======================= */
+		final java.util.List<String> retour = controller.rechercherTousString();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(service, times(1)).rechercherTousString();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+
+	
 	// ---------------- rechercherTousParPage(...) ----------------------//
 
 	
