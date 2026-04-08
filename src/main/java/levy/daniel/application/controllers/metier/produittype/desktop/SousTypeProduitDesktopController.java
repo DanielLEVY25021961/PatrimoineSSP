@@ -15,6 +15,7 @@ import levy.daniel.application.model.dto.pagination.ResultatPageDTO;
 import levy.daniel.application.model.dto.pagination.TriSpecDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.InputDTO;
+import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.OutputDTO;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
@@ -466,6 +467,66 @@ public class SousTypeProduitDesktopController
 
 			/*
 			 * retourne la liste obtenue.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<OutputDTO> findByLibelleRapide(
+			final String pContenu)
+					throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pContenu == null :
+		 * émet un message utilisateur
+		 * MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL
+		 * + retourne null.
+		 */
+		if (pContenu == null) {
+			this.message = MESSAGE_FIND_BY_LIBELLE_RAPIDE_VUE_NULL;
+			return null;
+		}
+
+		final String contenu = pContenu;
+
+		/* ****** RECHERCHE RAPIDE PAR LIBELLE. ****** */
+		try {
+
+			/*
+			 * Le cas blank n'est pas bloqué localement
+			 * par le CONTROLLER.
+			 * Il est délégué au SERVICE UC,
+			 * qui applique alors son propre contrat.
+			 */
+
+			/*
+			 * Délègue la recherche rapide par libellé au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final List<OutputDTO> reponse
+				= this.service.findByLibelleRapide(contenu);
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne la liste d'OutputDTO obtenue.
 			 */
 			return reponse;
 
