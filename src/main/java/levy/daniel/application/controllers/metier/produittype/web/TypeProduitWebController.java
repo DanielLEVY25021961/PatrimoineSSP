@@ -167,8 +167,9 @@ public class TypeProduitWebController implements TypeProduitIController {
 	* {@inheritDoc}
 	*/
 	@Override
-	@PostMapping
-	public OutputDTO creer(@RequestBody final InputDTO pInputDTO)
+	@PostMapping("/creer")
+	public OutputDTO creer(
+			@RequestBody(required = false) final InputDTO pInputDTO)
 			throws Exception {
 
 		/* ******** TRAITEMENTS DE SURFACE ********/
@@ -202,6 +203,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final OutputDTO reponse = this.service.creer(pInputDTO);
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -221,14 +223,14 @@ public class TypeProduitWebController implements TypeProduitIController {
 		}
 		
 	}
-
+	
 	
 		
 	/**
 	* {@inheritDoc}
 	*/
 	@Override
-	@GetMapping
+	@GetMapping("/rechercherTous")
 	public List<OutputDTO> rechercherTous() throws Exception {
 
 		/* ****** RECHERCHE EXHAUSTIVE. ****** */
@@ -239,6 +241,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final List<OutputDTO> reponse = this.service.rechercherTous();
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -265,7 +268,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 	 * {@inheritDoc}
 	 */
 	@Override
-	@GetMapping
+	@GetMapping("/rechercherTousString")
 	public List<String> rechercherTousString() throws Exception {
 
 		/* ****** RECHERCHE EXHAUSTIVE STRING. ****** */
@@ -276,6 +279,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final List<String> reponse = this.service.rechercherTousString();
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -383,6 +387,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 */
 			final ResultatPage<TypeProduitDTO.OutputDTO> reponseInterne
 				= this.service.rechercherTousParPage(requeteInterne);
+			
 			this.message = this.service.getMessage();
 	
 			/* Si le Service retourne null : 
@@ -462,6 +467,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final OutputDTO reponse = this.service.findByLibelle(libelle);
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -524,6 +530,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 */
 			final List<OutputDTO> reponse
 				= this.service.findByLibelleRapide(contenu);
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -584,6 +591,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final OutputDTO reponse = this.service.findByDTO(inputDTO);
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -637,6 +645,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final OutputDTO reponse = this.service.findById(id);
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -700,6 +709,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 			 * et récupère le message éventuel du Service.
 			 */
 			final OutputDTO reponse = this.service.update(pInputDTO);
+			
 			this.message = this.service.getMessage();
 
 			/*
@@ -826,6 +836,7 @@ public class TypeProduitWebController implements TypeProduitIController {
 	 * {@inheritDoc}
 	 */
 	@Override
+	@GetMapping("/message")
 	public String getMessage() {
 
 		/*
