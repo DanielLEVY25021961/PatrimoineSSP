@@ -2630,5 +2630,190 @@ public class SousTypeProduitDesktopControllerMockTest {
 	// ------------------------ getMessage() ----------------------------//
 
 	
+	
+	/**
+	 * <div>
+	 * <p>getMessage(initial) : état initial du controller Mock.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(initial) : retourne null + aucune interaction service")
+	public void testGetMessageInitialNull() {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller = new SousTypeProduitDesktopController(service);
+
+		/* ======================= ACT ======================= */
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message).isNull();
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après erreur locale) : message produit par le controller.</p>
+	 * <ul>
+	 * <li>après {@code creer(null)}, retourne exactement
+	 * {@link SousTypeProduitIController#MESSAGE_CREER_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_VUE_NULL")
+	public void testGetMessageApresErreurLocale() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller = new SousTypeProduitDesktopController(service);
+
+		/* ======================= ACT ======================= */
+		controller.creer(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message)
+				.isEqualTo(SousTypeProduitIController.MESSAGE_CREER_VUE_NULL);
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après succès vide) : message relayé depuis le service.</p>
+	 * <ul>
+	 * <li>après {@code count() == 0}, retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>délègue bien le comptage au service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après succès vide) : retourne MESSAGE_RECHERCHE_VIDE")
+	public void testGetMessageApresCountZero() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller = new SousTypeProduitDesktopController(service);
+		when(service.count()).thenReturn(0L);
+		when(service.getMessage())
+				.thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* ======================= ACT ======================= */
+		final long retour = controller.count();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isZero();
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		verify(service, times(1)).count();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(après succès positif) : message relayé depuis le service.</p>
+	 * <ul>
+	 * <li>après {@code count() > 0}, retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>délègue bien le comptage au service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(après succès positif) : retourne MESSAGE_RECHERCHE_OK")
+	public void testGetMessageApresCountPositif() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller = new SousTypeProduitDesktopController(service);
+		when(service.count()).thenReturn(1L);
+		when(service.getMessage())
+				.thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		final long retour = controller.count();
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(retour).isEqualTo(1L);
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		verify(service, times(1)).count();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>getMessage(dernier message gagne) : le message courant est écrasé.</p>
+	 * <ul>
+	 * <li>après une erreur locale, le message vaut d'abord
+	 * {@link SousTypeProduitIController#MESSAGE_CREER_VUE_NULL}</li>
+	 * <li>après un {@code count()} positif, le message courant devient
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("getMessage(dernier message gagne) : le message le plus récent écrase le précédent")
+	public void testGetMessageDernierMessageGagne() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitDesktopController controller = new SousTypeProduitDesktopController(service);
+		when(service.count()).thenReturn(1L);
+		when(service.getMessage())
+				.thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* ======================= ACT ======================= */
+		controller.creer(null);
+		final String messageErreur = controller.getMessage();
+		final long retour = controller.count();
+		final String messageFinal = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(messageErreur)
+				.isEqualTo(SousTypeProduitIController.MESSAGE_CREER_VUE_NULL);
+		assertThat(retour).isEqualTo(1L);
+		assertThat(messageFinal)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+		verify(service, times(1)).count();
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
+	
 																																																																																																																										
 } // FIN DE LA CLASSE SousTypeProduitDesktopControllerMockTest.------------

@@ -936,6 +936,7 @@ public class SousTypeProduitWebController
 	 * {@inheritDoc}
 	 */
 	@Override
+	@GetMapping("/message")
 	public String getMessage() {
 
 		/*
@@ -943,8 +944,9 @@ public class SousTypeProduitWebController
 		 * produit par le SERVICE UC ou généré par le présent CONTROLLER.
 		 */
 		return this.message;
-	}
 
+	}
+	
 	
 	
 } // FIN DE LA CLASSE SousTypeProduitWebController.------------------------
