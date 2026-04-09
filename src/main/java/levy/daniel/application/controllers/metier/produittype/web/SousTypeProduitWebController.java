@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -800,6 +801,83 @@ public class SousTypeProduitWebController
 			 * retourne l'OutputDTO obtenu.
 			 */
 			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	@DeleteMapping
+	public void delete(
+			@RequestBody(required = false) final InputDTO pInputDTO)
+					throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pInputDTO == null :
+		 * émet un message utilisateur
+		 * MESSAGE_DELETE_VUE_NULL
+		 * + retourne immédiatement.
+		 */
+		if (pInputDTO == null) {
+			this.message = MESSAGE_DELETE_VUE_NULL;
+			return;
+		}
+
+		final String libelle = pInputDTO.getSousTypeProduit();
+
+		/*
+		 * Si le libellé enfant est blank (null ou espaces) :
+		 * émet un message utilisateur
+		 * MESSAGE_DELETE_VUE_BLANK
+		 * + retourne immédiatement.
+		 */
+		if (StringUtils.isBlank(libelle)) {
+			this.message = MESSAGE_DELETE_VUE_BLANK;
+			return;
+		}
+
+		final String parent = pInputDTO.getTypeProduit();
+
+		/*
+		 * Si le libellé du parent est blank (null ou espaces) :
+		 * émet un message utilisateur
+		 * MESSAGE_DELETE_VUE_PARENT_BLANK
+		 * + retourne immédiatement.
+		 */
+		if (StringUtils.isBlank(parent)) {
+			this.message = MESSAGE_DELETE_VUE_PARENT_BLANK;
+			return;
+		}
+
+		/* ****** SUPPRESSION. ****** */
+		try {
+
+			/*
+			 * Délègue la suppression au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			this.service.delete(pInputDTO);
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne immédiatement.
+			 */
+			return;
 
 		} catch (final Exception pException) {
 
