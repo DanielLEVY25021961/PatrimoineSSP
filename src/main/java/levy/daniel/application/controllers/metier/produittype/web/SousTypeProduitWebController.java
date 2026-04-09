@@ -909,6 +909,7 @@ public class SousTypeProduitWebController
 			 * et récupère le message éventuel du Service.
 			 */
 			final long reponse = this.service.count();
+			
 			this.message = this.service.getMessage();
 
 			/*
