@@ -206,8 +206,42 @@ public interface SousTypeProduitIController {
 	 */
 	String MESSAGE_FIND_BY_ID_VUE_NULL
 		= "KO - la Vue a transmis un identifiant persistant null";
-	
 
+	// ----------------------- update -----------------------------------//
+
+	/**
+	 * <div>
+	 * <p>"KO - la Vue a transmis un InputDTO de modification null"</p>
+	 * </div>
+	 */
+	String MESSAGE_UPDATE_VUE_NULL
+		= "KO - la Vue a transmis un InputDTO de modification null";
+
+	/**
+	 * <div>
+	 * <p>
+	 * "KO - la Vue a transmis un InputDTO de modification
+	 * avec un libellé blank (null ou espaces)"
+	 * </p>
+	 * </div>
+	 */
+	String MESSAGE_UPDATE_VUE_BLANK
+		= "KO - la Vue a transmis un InputDTO de modification "
+			+ "avec un libellé blank (null ou espaces)";
+
+	/**
+	 * <div>
+	 * <p>
+	 * "KO - la Vue a transmis un InputDTO de modification
+	 * avec un TypeProduit parent blank (null ou espaces)"
+	 * </p>
+	 * </div>
+	 */
+	String MESSAGE_UPDATE_VUE_PARENT_BLANK
+		= "KO - la Vue a transmis un InputDTO de modification "
+			+ "avec un TypeProduit parent blank (null ou espaces)";
+
+	
 	
 	/**
 	 * <div>
@@ -1063,6 +1097,117 @@ public interface SousTypeProduitIController {
 	 * lors de la recherche par identifiant.
 	 */
 	SousTypeProduitDTO.OutputDTO findById(Long pId) throws Exception;
+
+	
+	
+	/**
+	 * <div>
+	 * <p>
+	 * Retourne à la VUE
+	 * le {@link SousTypeProduitDTO.OutputDTO}
+	 * correspondant à un {@link SousTypeProduitDTO.InputDTO}
+	 * de modification transmis.
+	 * </p>
+	 *
+	 * <p>INTENTION DE CONTROLLER (scénario nominal) :</p>
+	 * <ul>
+	 * <li>recevoir depuis la VUE
+	 * un {@link SousTypeProduitDTO.InputDTO}
+	 * destiné à une modification ;</li>
+	 * <li>exécuter les premiers contrôles de surface
+	 * sur cet InputDTO,
+	 * sur le libellé enfant
+	 * et sur le libellé du parent ;</li>
+	 * <li>rédiger le cas échéant
+	 * un message utilisateur circonstancié
+	 * sans solliciter le SERVICE UC ;</li>
+	 * <li>si les contrôles de surface sont satisfaits,
+	 * déléguer la modification au
+	 * {@link SousTypeProduitICuService#update(SousTypeProduitDTO.InputDTO)} ;</li>
+	 * <li>retourner à la VUE
+	 * le {@link SousTypeProduitDTO.OutputDTO}
+	 * fourni par le SERVICE UC
+	 * ou {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation
+	 * ou si le SERVICE UC ne trouve aucun objet
+	 * ou retourne {@code null}.</li>
+	 * </ul>
+	 *
+	 * <p>CONTRAT DE CONTROLLER :</p>
+	 * <ul>
+	 * <li>La méthode ne porte aucune logique métier locale.</li>
+	 * <li>La méthode ne construit aucun objet métier
+	 * et ne parle jamais directement au stockage.</li>
+	 * <li>Si {@code pInputDTO == null},
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_UPDATE_VUE_NULL}
+	 * et retourne {@code null}.</li>
+	 * <li>Si le libellé enfant porté par {@code pInputDTO}
+	 * est blank ({@code null} ou espaces),
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_UPDATE_VUE_BLANK}
+	 * et retourne {@code null}.</li>
+	 * <li>Si le libellé du {@link TypeProduit} parent
+	 * porté par {@code pInputDTO}
+	 * est blank ({@code null} ou espaces),
+	 * la méthode ne sollicite pas le SERVICE UC,
+	 * positionne le message utilisateur
+	 * {@link #MESSAGE_UPDATE_VUE_PARENT_BLANK}
+	 * et retourne {@code null}.</li>
+	 * <li>Si les contrôles de surface sont satisfaits,
+	 * la méthode délègue la modification au SERVICE UC,
+	 * récupère le message utilisateur courant produit
+	 * par ce service
+	 * puis retourne le {@link SousTypeProduitDTO.OutputDTO}
+	 * qu'il fournit.</li>
+	 * <li>En cas d'erreur applicative, métier ou technique
+	 * levée par le SERVICE UC,
+	 * la méthode récupère le message utilisateur courant
+	 * du SERVICE UC
+	 * puis propage l'exception sans remappage local.</li>
+	 * </ul>
+	 *
+	 * <p>GARANTIES ARCHITECTURALES ET DE TRAÇABILITE :</p>
+	 * <ul>
+	 * <li>Le CONTROLLER reste sur sa frontière :
+	 * VUES → SERVICE UC.</li>
+	 * <li>Le CONTROLLER peut produire un message utilisateur
+	 * propre lors des contrôles de surface d'entrée.</li>
+	 * <li>Après délégation,
+	 * le message utilisateur porté
+	 * par le CONTROLLER
+	 * devient celui produit
+	 * par le SERVICE UC.</li>
+	 * <li>Les éventuelles exceptions traversent le CONTROLLER
+	 * et remontent à la VUE.</li>
+	 * <li>La méthode ne connaît ni GATEWAY,
+	 * ni DAO, ni entité JPA.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @param pInputDTO : SousTypeProduitDTO.InputDTO :
+	 * l'InputDTO transmis par la couche VUES
+	 * au scénario de modification.
+	 * @return SousTypeProduitDTO.OutputDTO :
+	 * le SousTypeProduit modifié retourné à la couche VUES ;
+	 * peut être {@code null}
+	 * si le CONTROLLER bloque la saisie
+	 * avant délégation
+	 * ou si le SERVICE UC ne trouve aucun objet
+	 * ou retourne {@code null}.
+	 * @throws IllegalStateException
+	 * si le SERVICE UC lève une incohérence technique
+	 * sur son scénario de modification.
+	 * @throws Exception
+	 * toute exception propagée par le SERVICE UC
+	 * lors de la modification.
+	 */
+	SousTypeProduitDTO.OutputDTO update(
+			SousTypeProduitDTO.InputDTO pInputDTO)
+					throws Exception;
 	
 	
 	
