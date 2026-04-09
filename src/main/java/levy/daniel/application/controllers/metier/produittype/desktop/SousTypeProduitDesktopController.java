@@ -668,6 +668,57 @@ public class SousTypeProduitDesktopController
 		}
 
 	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public OutputDTO findById(final Long pId) throws Exception {
+
+		/* ******** TRAITEMENTS DE SURFACE ********/
+		/*
+		 * Si pId == null :
+		 * émet un message utilisateur
+		 * MESSAGE_FIND_BY_ID_VUE_NULL
+		 * + retourne null.
+		 */
+		if (pId == null) {
+			this.message = MESSAGE_FIND_BY_ID_VUE_NULL;
+			return null;
+		}
+
+		final Long id = pId;
+
+		/* ****** RECHERCHE PAR ID. ****** */
+		try {
+
+			/*
+			 * Délègue la recherche par identifiant au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final OutputDTO reponse = this.service.findById(id);
+			
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne l'OutputDTO obtenu.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
 	
 
 	
