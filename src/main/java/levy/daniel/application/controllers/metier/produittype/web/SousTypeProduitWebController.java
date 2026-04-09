@@ -7,12 +7,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import levy.daniel.application.controllers.metier.produittype.SousTypeProduitIController;
 import levy.daniel.application.model.dto.pagination.DirectionTriDTO;
@@ -99,6 +102,9 @@ import levy.daniel.application.model.services.produittype.pagination.TriSpec;
  * @version 1.0
  * @since 7 avril 2026
  */
+@RestController("SousTypeProduitWebController")
+@RequestMapping("/soustypeproduit")
+@Profile({ "web", "dev", "prod" })
 public class SousTypeProduitWebController 
 				implements SousTypeProduitIController {
 

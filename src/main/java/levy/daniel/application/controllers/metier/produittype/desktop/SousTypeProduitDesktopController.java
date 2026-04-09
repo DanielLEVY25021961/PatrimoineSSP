@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Controller;
 
 import levy.daniel.application.controllers.metier.produittype.SousTypeProduitIController;
 import levy.daniel.application.model.dto.pagination.DirectionTriDTO;
@@ -93,6 +95,8 @@ import levy.daniel.application.model.services.produittype.pagination.TriSpec;
  * @version 1.0
  * @since 7 avril 2026
  */
+@Controller("SousTypeProduitDesktopController")
+@Profile("desktop")
 public class SousTypeProduitDesktopController 
 				implements SousTypeProduitIController {
 
