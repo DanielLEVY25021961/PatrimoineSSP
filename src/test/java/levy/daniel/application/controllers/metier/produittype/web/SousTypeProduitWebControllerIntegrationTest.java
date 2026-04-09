@@ -1553,6 +1553,121 @@ public class SousTypeProduitWebControllerIntegrationTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>findById(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne {@link SousTypeProduitIController#MESSAGE_FIND_BY_ID_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findById(null) : retourne null + message local + aucune écriture BD")
+	public void testFindByIdNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		final OutputDTO dto = this.controller.findById(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dto).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitIController.MESSAGE_FIND_BY_ID_VUE_NULL);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findById(ok) : cohérence complète avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne un {@link OutputDTO} non nul</li>
+	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
+	 * <li>retourne le DTO correspondant à l'objet créé en base</li>
+	 * <li>ne modifie pas physiquement la base lors de la recherche</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findById(ok) : DTO trouvé + message exact + preuve BD")
+	public void testFindByIdOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		final OutputDTO cree = this.controller.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
+
+		/* ======================= ACT ======================= */
+		final OutputDTO trouve = this.controller.findById(cree.getIdSousTypeProduit());
+
+		/* ===================== ASSERT ====================== */
+		assertThat(cree).isNotNull();
+		assertThat(trouve).isNotNull();
+		assertThat(trouve.getIdSousTypeProduit()).isEqualTo(cree.getIdSousTypeProduit());
+		assertThat(trouve.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
+		assertThat(trouve.getSousTypeProduit()).isEqualTo(IT_STP_ALPHA);
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline + 1L);
+		assertThat(this.compterSousTypeProduitEnBase(cree.getIdSousTypeProduit())).isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
+				.isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_STP_ALPHA);
+		assertThat(this.lireParentSousTypeProduitEnBase(cree.getIdSousTypeProduit()))
+				.isEqualTo(IT_TP_PARENT_A);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>findById(absent) : scénario nominal sans résultat avec preuve BD.</p>
+	 * <ul>
+	 * <li>retourne {@code null}</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("findById(absent) : retourne null + message exact + aucune écriture BD")
+	public void testFindByIdAbsentAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final Long id = 999_999_999L;
+
+		/* ======================= ACT ======================= */
+		final OutputDTO dto = this.controller.findById(id);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(dto).isNull();
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterSousTypeProduitEnBase(id)).isZero();
+
+	} // __________________________________________________________________
+	
+	
+	
 	// ------------------------ update(...) -----------------------------//
 
 	
