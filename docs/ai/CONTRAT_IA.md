@@ -1019,7 +1019,32 @@ Fallback :
 
 ---
 
-### 28.14 RT-COMPARAISON-TEXTE-CRLF-01 (VALIDÉ) — Normalisation EOL obligatoire avant toute décision de différence réelle
+### 28.14 RT-LECTURE-LITTERALE-01 (VALIDÉ) — Lecture littérale ancrée sur la méthode exacte de référence
+
+Objectif : éliminer définitivement les erreurs de lecture par reconnaissance de motif, généralisation de style ou relecture “avec une idée en tête”.
+
+Règle prioritaire invariante :
+- Avant toute analyse, affirmation, javadoc, test ou génération de code, l’IA DOIT verrouiller la méthode exacte de référence déjà validée dans le même fichier, la même couche, le même objet métier et la même famille de méthode.
+- L’IA DOIT effectuer une lecture littérale ancrée sur les lignes exactes de cette méthode de référence.
+- Interdiction formelle de relire “avec une idée en tête”, par reconnaissance de motif, par généralisation de style, ou à partir d’une conclusion antérieure non revérifiée.
+- Aucune règle de style ne peut être déduite globalement d’une classe, d’une couche, d’un souvenir de lecture ou d’un lot précédent.
+
+Vérification point par point obligatoire :
+- présence ou absence de balises HTML de javadoc (`<div>`, `<p>`, `<ul>`, `<li>`),
+- vocabulaire exact,
+- structure des puces,
+- annotations exactes,
+- placement du trait final `} // __________________________________________________________________`,
+- nombre exact de lignes vides entre méthodes,
+- tout autre élément de formalisme visible dans les lignes relues.
+
+Règle de conclusion :
+- L’IA NE DOIT conclure qu’à partir des éléments matériellement visibles dans la méthode exacte relue.
+- Si la méthode exacte de référence n’a pas été relue littéralement ligne à ligne, l’IA DOIT s’arrêter, le signaler, et ne pas livrer.
+
+---
+
+### 28.15 RT-COMPARAISON-TEXTE-CRLF-01 (VALIDÉ) — Normalisation EOL obligatoire avant toute décision de différence réelle
 
 Objectif : éliminer définitivement les faux positifs de comparaison sur les fichiers texte entre STS/chat, GitHub@SHA et bundle OFFLINE.
 

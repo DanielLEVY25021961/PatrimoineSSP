@@ -1,4 +1,3 @@
-# docs/ai/MANIFEST_IA.yaml
 # *********************************************************************
 # *********************** MANIFEST IA — UNIQUE ************************
 # *********************************************************************
@@ -18,17 +17,12 @@
 #
 # 1) Construire l’URL :
 #    https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/docs/ai/MANIFEST_IA.yaml
-#
 # 2) Lire ce MANIFEST
-#
 # 3) Lire ensuite docs/ai/perimetre.yaml au même SHA
-#
 # 4) Résoudre le périmètre de lecture à partir de perimetre.yaml
 #    selon le mode déclaré par ce MANIFEST
-#
 # 5) Reconstruire toutes les URLs Raw SHA :
 #    https://raw.githubusercontent.com/{owner}/{repo}/{SHA}/{path}
-#
 # 6) Lire les fichiers nécessaires AVANT toute analyse ou code
 #
 # INTERDICTIONS :
@@ -75,6 +69,27 @@ lecture:
   verify_generics: true
   max_retries: 3
   on_failure: "incident de lecture"
+  literal_reference_reading:
+    rule_id: RT-LECTURE-LITTERALE-01
+    required: true
+    anchor: exact_method_lines
+    same_scope_only: true
+    forbid_pattern_recognition: true
+    forbid_reading_with_preconception: true
+    forbid_global_style_inference: true
+    forbid_unreverified_prior_conclusion: true
+    verify_point_by_point:
+      - javadoc_html_div_presence_or_absence
+      - javadoc_html_p_presence_or_absence
+      - javadoc_html_ul_presence_or_absence
+      - javadoc_html_li_presence_or_absence
+      - exact_vocabulary
+      - bullet_structure
+      - exact_annotations
+      - final_closing_bar_same_line
+      - exact_blank_lines_between_methods
+      - any_other_visible_formalism
+    stop_if_reference_not_re_read: true
 
 garantie:
   reproducible: true
@@ -90,7 +105,7 @@ livraison_fichiers_fragiles:
     - .py
   complete_file_only: true
   visible_code_block_required: true
-  exact_prefix_line_required: "Chemin STS : <chemin exact dans le projet>"
+  exact_prefix_line_required: "Chemin STS : "
   one_file_one_block: true
   copy_button_expected: true
   zip_forbidden: true
