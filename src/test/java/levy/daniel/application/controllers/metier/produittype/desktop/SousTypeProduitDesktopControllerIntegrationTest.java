@@ -1896,6 +1896,213 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 
 	
 	
+	/**
+	 * <div>
+	 * <p>delete(null) : erreur utilisateur bénigne côté controller.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne {@link SousTypeProduitIController#MESSAGE_DELETE_VUE_NULL}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(null) : message local + aucune écriture BD")
+	public void testDeleteNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(null);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitIController.MESSAGE_DELETE_VUE_NULL);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne {@link SousTypeProduitIController#MESSAGE_DELETE_VUE_BLANK}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(blank) : message local + aucune écriture BD")
+	public void testDeleteBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, ESPACES);
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(input);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitIController.MESSAGE_DELETE_VUE_BLANK);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(parent blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_DELETE_VUE_PARENT_BLANK}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(parent blank) : message local + aucune écriture BD")
+	public void testDeleteParentBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(ESPACES, IT_STP_ALPHA);
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(input);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitIController.MESSAGE_DELETE_VUE_PARENT_BLANK);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(parent absent) : le controller propage l'échec du service.</p>
+	 * <ul>
+	 * <li>propage {@link IllegalStateException}</li>
+	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Test
+	@DisplayName("delete(parent absent) : IllegalStateException + message exact + aucune écriture BD")
+	public void testDeleteParentAbsentAvecPreuveBd() {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_ABSENT, IT_STP_ALPHA);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> this.controller.delete(input))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_ABSENT, IT_STP_ALPHA))
+				.isZero();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(absent) : scénario nominal sans suppression effective.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
+	 * <li>ne modifie pas physiquement la base</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(absent) : message exact + aucune écriture BD")
+	public void testDeleteAbsentAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		final InputDTO input = new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA);
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(input);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + IT_STP_ALPHA);
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
+				.isZero();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(ok) : suppression effective avec preuve BD.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
+	 * <li>supprime physiquement l'objet persistant visé</li>
+	 * <li>ramène le nombre d'enregistrements au niveau initial</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("delete(ok) : suppression effective + message exact + preuve BD")
+	public void testDeleteOkAvecPreuveBd() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final Long baseline = this.compterTousLesSousTypeProduitEnBase();
+		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(IT_TP_PARENT_A));
+		final OutputDTO cree = this.controller.creer(
+				new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA));
+		final InputDTO inputSuppression
+			= new SousTypeProduitDTO.InputDTO(IT_TP_PARENT_A, IT_STP_ALPHA);
+
+		/* ======================= ACT ======================= */
+		this.controller.delete(inputSuppression);
+
+		/* ===================== ASSERT ====================== */
+		assertThat(this.controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_DELETE_OK + IT_STP_ALPHA);
+
+		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
+		assertThat(this.compterSousTypeProduitEnBase(cree.getIdSousTypeProduit())).isZero();
+		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_ALPHA))
+				.isZero();
+
+	} // __________________________________________________________________
+	
+	
+	
 	// -------------------------- count() -------------------------------//
 
 	

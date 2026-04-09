@@ -5,6 +5,7 @@ package levy.daniel.application.controllers.metier.produittype.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -2207,6 +2208,289 @@ public class SousTypeProduitWebControllerMockTest {
 	
 	// ------------------------ delete(...) -----------------------------//
 
+	
+	
+	/**
+	 * <div>
+	 * <p>delete(null) : contrôle de surface bénin côté controller.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne {@link SousTypeProduitIController#MESSAGE_DELETE_VUE_NULL}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(null) : message local + aucune interaction service")
+	public void testDeleteNull() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+
+		/* ======================= ACT ======================= */
+		controller.delete(null);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message)
+				.isEqualTo(SousTypeProduitIController.MESSAGE_DELETE_VUE_NULL);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne {@link SousTypeProduitIController#MESSAGE_DELETE_VUE_BLANK}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(blank) : message local + aucune interaction service")
+	public void testDeleteBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(BAZAR, ESPACES);
+
+		/* ======================= ACT ======================= */
+		controller.delete(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message)
+				.isEqualTo(SousTypeProduitIController.MESSAGE_DELETE_VUE_BLANK);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(parent blank) : contrôle de surface applicatif côté controller.</p>
+	 * <ul>
+	 * <li>ne lève aucune exception</li>
+	 * <li>positionne
+	 * {@link SousTypeProduitIController#MESSAGE_DELETE_VUE_PARENT_BLANK}</li>
+	 * <li>n'interagit jamais avec le service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(parent blank) : message local + aucune interaction service")
+	public void testDeleteParentBlank() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(ESPACES, OUTILLAGE);
+
+		/* ======================= ACT ======================= */
+		controller.delete(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message)
+				.isEqualTo(SousTypeProduitIController.MESSAGE_DELETE_VUE_PARENT_BLANK);
+
+		verifyNoInteractions(service);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(ok) : scénario nominal complet.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>ne lève aucune exception</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(ok) : délégation service + message service mémorisé")
+	public void testDeleteOk() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+		final String messageService
+			= SousTypeProduitICuService.MESSAGE_DELETE_OK + OUTILLAGE;
+
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		controller.delete(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).delete(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(absent) : scénario nominal sans suppression effective.</p>
+	 * <ul>
+	 * <li>délègue au service</li>
+	 * <li>ne lève aucune exception</li>
+	 * <li>mémorise le message utilisateur du service</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(absent) : message service mémorisé")
+	public void testDeleteAbsent() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final String sousTypeProduit = "sous-type-produit-delete-introuvable";
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(BAZAR, sousTypeProduit);
+		final String messageService
+			= SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + sousTypeProduit;
+
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* ======================= ACT ======================= */
+		controller.delete(inputDTO);
+		final String message = controller.getMessage();
+
+		/* ===================== ASSERT ====================== */
+		assertThat(message).isEqualTo(messageService);
+
+		verify(service, times(1)).delete(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(parent absent service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(parent absent service KO) : propage l'exception + message service mémorisé")
+	public void testDeleteParentAbsentServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO
+			= new SousTypeProduitDTO.InputDTO("type-produit-parent-absent", OUTILLAGE);
+		final IllegalStateException exception
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		doThrow(exception).when(service).delete(inputDTO);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.delete(inputDTO))
+				.isSameAs(exception);
+
+		assertThat(controller.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(service, times(1)).delete(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>delete(service KO) : propagation brute de l'exception du service.</p>
+	 * <ul>
+	 * <li>propage l'exception du service</li>
+	 * <li>récupère quand même le message utilisateur du service</li>
+	 * <li>mémorise ce message dans le controller</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG)
+	@DisplayName("delete(service KO) : propage l'exception + message service mémorisé")
+	public void testDeleteServiceKo() throws Exception {
+
+		/* ===================== ARRANGE ===================== */
+		final SousTypeProduitICuService service = mock(SousTypeProduitICuService.class);
+		final SousTypeProduitWebController controller
+			= new SousTypeProduitWebController(service);
+		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+		final IllegalStateException exception
+			= new IllegalStateException(SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		final String messageService
+			= SousTypeProduitICuService.MESSAGE_DELETE_KO
+				+ OUTILLAGE
+				+ SousTypeProduitICuService.TIRET_ESPACE
+				+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
+
+		doThrow(exception).when(service).delete(inputDTO);
+		when(service.getMessage()).thenReturn(messageService);
+
+		/* =================== ACT & ASSERT ================== */
+		assertThatThrownBy(() -> controller.delete(inputDTO))
+				.isSameAs(exception);
+
+		assertThat(controller.getMessage()).isEqualTo(messageService);
+
+		verify(service, times(1)).delete(inputDTO);
+		verify(service, times(1)).getMessage();
+
+	} // __________________________________________________________________
+	
 	
 	
 	// -------------------------- count() -------------------------------//
