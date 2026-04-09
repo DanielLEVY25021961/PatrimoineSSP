@@ -869,6 +869,43 @@ public class SousTypeProduitDesktopController
 		}
 
 	}
+
+	
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long count() throws Exception {
+
+		/* ****** COMPTAGE. ****** */
+		try {
+
+			/*
+			 * Délègue le comptage au SERVICE UC
+			 * et récupère le message éventuel du Service.
+			 */
+			final long reponse = this.service.count();
+			
+			this.message = this.service.getMessage();
+
+			/*
+			 * retourne le comptage obtenu.
+			 */
+			return reponse;
+
+		} catch (final Exception pException) {
+
+			/*
+			 * Récupère le message utilisateur éventuel du Service
+			 * puis laisse l'Exception remonter à la VUE.
+			 */
+			this.message = this.service.getMessage();
+			throw pException;
+
+		}
+
+	}
 	
 
 	
