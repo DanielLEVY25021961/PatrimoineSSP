@@ -66,6 +66,10 @@ workflow:
 
 lecture:
   method: raw_sha_binary
+  preferred_read_order: web_tool_then_local_binary
+  local_binary_download_preferred: container.download
+  local_binary_download_fallback_allowed: true
+  forbid_shell_network_as_primary_local_download: true
   verify_generics: true
   max_retries: 3
   on_failure: "incident de lecture"
@@ -90,6 +94,18 @@ lecture:
       - exact_blank_lines_between_methods
       - any_other_visible_formalism
     stop_if_reference_not_re_read: true
+  local_binary_download_reading:
+    rule_id: RT-DOWNLOAD-BINAIRE-LOCAL-01
+    required: true
+    preferred_tool: container.download
+    shell_network_fallback_only: true
+    forbid_shell_network_as_primary: true
+    preserve_contractual_method:
+      - raw_sha_url
+      - local_binary_download
+      - local_raw_byte_reading
+      - strict_generics_verification
+    stop_if_container_download_not_attempted: true
 
 garantie:
   reproducible: true

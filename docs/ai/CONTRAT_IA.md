@@ -105,13 +105,17 @@ Aucun Raw Type ne doit être toléré comme effet d’une mauvaise lecture.
 
 Ordre préférentiel des techniques de lecture GitHub@SHA :
 1. lecture par **web tool**
-2. si la lecture par **web tool** ne fonctionne pas, bascule automatique vers le **container**
+2. pour la jambe de **téléchargement binaire local**, utilisation prioritaire de **`container.download`**
+3. si **`container.download`** ne fonctionne pas, bascule automatique vers une autre technique **container** autorisée permettant toujours un téléchargement binaire local puis une lecture locale
 
 Si une technique de lecture échoue, l’IA doit changer d’elle-même de technique, sans attendre une nouvelle instruction de l’Utilisateur, tout en conservant strictement la même méthode contractuelle de lecture :
 - URL Raw au SHA
-- téléchargement binaire
+- téléchargement binaire local
 - lecture locale des octets bruts
 - vérification des génériques
+
+Interdiction spécifique :
+- la lecture réseau par shell (`curl`, `wget`, etc. via `container.exec`) ne doit jamais être la technique locale **préférée** pour satisfaire la jambe “téléchargement binaire local” lorsqu’une primitive dédiée **`container.download`** existe et est disponible.
 
 Toute autre forme de lecture (rendu texte, HTML, extraction non binaire, lecture indirecte d’une page GitHub) est interdite et doit être considérée comme non contractuelle.
 
@@ -984,26 +988,29 @@ Objectif : éviter tout faux “incident de lecture” dû à l’échec d’un 
 
 Règle prioritaire invariante :
 - Lors d’une lecture GitHub@SHA (RT-LECTURE-GITHUB-02), l’IA DOIT tenter en priorité la lecture par **web tool**.
-- Si la lecture par **web tool** échoue, l’IA DOIT basculer d’elle-même sur la lecture par **container**, sans attendre une nouvelle instruction de l’Utilisateur.
-- Les deux techniques doivent strictement respecter la même méthode contractuelle :
+- Pour la jambe de **téléchargement binaire local**, l’IA DOIT utiliser en priorité la primitive dédiée **`container.download`**.
+- Si la lecture par **web tool** échoue, ou si **`container.download`** échoue, l’IA DOIT basculer d’elle-même sur une autre technique **container** autorisée, sans attendre une nouvelle instruction de l’Utilisateur.
+- Toutes les techniques doivent strictement respecter la même méthode contractuelle :
   - URL Raw@SHA
-  - téléchargement binaire (octets bruts)
+  - téléchargement binaire local (octets bruts)
   - lecture locale du fichier téléchargé
   - vérification stricte des génériques (aucun Raw Type)
 
 Règles de tentative :
 - L’IA DOIT effectuer au maximum **3 tentatives au total**.
 - L’IA DOIT garantir **au moins une tentative par web tool**.
-- Si nécessaire, l’IA DOIT garantir **au moins une tentative par container** avant de conclure à un “incident de lecture”.
+- L’IA DOIT garantir **au moins une tentative par `container.download`** avant de conclure à un “incident de lecture”.
+- Si nécessaire, l’IA DOIT garantir **au moins une tentative par autre technique container autorisée** avant de conclure à un “incident de lecture”.
 
 Règle de déclaration d’incident :
 - L’IA NE DOIT déclarer **"incident de lecture"** que si :
   - la technique **web tool** a été tentée,
-  - la technique **container** a été tentée si la lecture par **web tool** n’a pas réussi,
+  - la technique **`container.download`** a été tentée,
+  - une autre technique **container** a été tentée si nécessaire,
   - les tentatives ont échoué,
   - et que, pour chacune des tentatives, tout contenu manifestement invalide (HTML d’erreur, contenu vide, tronqué, incohérent) est traité comme un échec de tentative.
 
-En cas de succès (par **web tool** ou par **container**) :
+En cas de succès (par **web tool**, par **`container.download`** ou par une autre technique **container** autorisée) :
 - L’IA poursuit la procédure RT-LECTURE-GITHUB-02 :
   - lecture locale du fichier téléchargé,
   - vérification de cohérence,
@@ -1014,12 +1021,36 @@ En cas de succès (par **web tool** ou par **container**) :
 Fallback :
 - Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) n’est autorisé qu’après un **incident de lecture** établi selon la présente règle :
   - web tool tenté,
-  - container tenté si nécessaire,
+  - `container.download` tenté,
+  - autre technique container tentée si nécessaire,
   - ≤ 3 tentatives.
 
 ---
+### 28.14 RT-DOWNLOAD-BINAIRE-LOCAL-01 (VALIDÉ) — Primitive locale préférée pour le téléchargement Raw@SHA
 
-### 28.14 RT-LECTURE-LITTERALE-01 (VALIDÉ) — Lecture littérale ancrée sur la méthode exacte de référence
+Objectif : éliminer les faux incidents de lecture dus à l’usage prioritaire d’une technique réseau shell fragile alors qu’une primitive locale de téléchargement binaire dédiée est disponible.
+
+Règle obligatoire :
+- Pour satisfaire la jambe **“téléchargement binaire local”** de RT-LECTURE-GITHUB-02, l’IA DOIT utiliser en priorité **`container.download`**.
+- L’usage d’une commande réseau shell (`curl`, `wget`, etc. via `container.exec`) ne peut être qu’un **fallback** et ne doit jamais être la technique locale préférée.
+- Toute technique de fallback doit continuer à respecter strictement :
+  - l’URL Raw@SHA,
+  - le téléchargement binaire local,
+  - la lecture locale des octets bruts,
+  - la vérification stricte des génériques.
+
+Conséquences :
+- L’IA NE DOIT PAS conclure à un **"incident de lecture"** tant que **`container.download`** n’a pas été tenté.
+- Si **`container.download`** réussit, la lecture GitHub@SHA est réputée nominalement valide au titre de la jambe locale de téléchargement binaire.
+- Si **`container.download`** échoue, l’IA DOIT relancer automatiquement selon la politique de tentatives puis basculer sur une autre technique **container** autorisée avant toute conclusion d’échec définitif.
+
+Interdiction absolue :
+- conclure à une indisponibilité GitHub, à un défaut de SHA, ou à une illisibilité d’un fichier alors que seule une technique réseau shell locale a échoué sans tentative préalable de **`container.download`**.
+
+---
+
+
+### 28.15 RT-LECTURE-LITTERALE-01 (VALIDÉ) — Lecture littérale ancrée sur la méthode exacte de référence
 
 Objectif : éliminer définitivement les erreurs de lecture par reconnaissance de motif, généralisation de style ou relecture “avec une idée en tête”.
 
@@ -1044,7 +1075,7 @@ Règle de conclusion :
 
 ---
 
-### 28.15 RT-COMPARAISON-TEXTE-CRLF-01 (VALIDÉ) — Normalisation EOL obligatoire avant toute décision de différence réelle
+### 28.16 RT-COMPARAISON-TEXTE-CRLF-01 (VALIDÉ) — Normalisation EOL obligatoire avant toute décision de différence réelle
 
 Objectif : éliminer définitivement les faux positifs de comparaison sur les fichiers texte entre STS/chat, GitHub@SHA et bundle OFFLINE.
 
