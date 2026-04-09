@@ -177,9 +177,10 @@ public class SousTypeProduitWebController
 	@Override
 	@PostMapping("/creer")
 	public SousTypeProduitDTO.OutputDTO creer(
-			@RequestBody final SousTypeProduitDTO.InputDTO pInputDTO)
-			throws Exception {
-
+			@RequestBody(required = false) 
+				final SousTypeProduitDTO.InputDTO pInputDTO)
+						throws Exception {
+		
 		/* ****** CONTROLES DE SURFACE SUR L'INPUTDTO. ****** */
 		/* Si pInputDTO == null : 
 		 * émet un message MESSAGE_CREER_VUE_NULL + Retourne null. */
@@ -569,7 +570,7 @@ public class SousTypeProduitWebController
 	@Override
 	@PostMapping("/parent")
 	public List<SousTypeProduitDTO.OutputDTO> findAllByParent(
-			@RequestBody final TypeProduitDTO.InputDTO pTypeProduit)
+			@RequestBody(required = false) final TypeProduitDTO.InputDTO pTypeProduit)
 					throws Exception {
 
 		/* ******** TRAITEMENTS DE SURFACE ********/

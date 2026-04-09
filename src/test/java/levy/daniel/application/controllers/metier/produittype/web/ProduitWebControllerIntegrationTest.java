@@ -8,7 +8,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -226,9 +225,10 @@ public class ProduitWebControllerIntegrationTest {
 	@Autowired
 	private SousTypeProduitICuService sousTypeProduitService;
 
-	/** Controller Web réel instancié sur le vrai SERVICE UC. */
+	/** Controller Web réel injecté par Spring. */
+	@Autowired
 	private ProduitWebController controller;
-
+	
 	// ************************ CONFIGURATION DE TEST *********************/
 
 	/**
@@ -254,6 +254,7 @@ public class ProduitWebControllerIntegrationTest {
 	})
 	@ComponentScan(
 			basePackages = {
+					"levy.daniel.application.controllers.metier.produittype",
 					"levy.daniel.application.model.services.produittype",
 					"levy.daniel.application.persistence.metier.produittype"
 			},
@@ -281,16 +282,6 @@ public class ProduitWebControllerIntegrationTest {
 
 	// *************************** INITIALISATION **************************/
 
-	/**
-	 * <div>
-	 * <p>Instancie le controller réel sur le vrai SERVICE UC
-	 * avant chaque test.</p>
-	 * </div>
-	 */
-	@BeforeEach
-	public void setUp() {
-		this.controller = new ProduitWebController(this.service);
-	}
 
 	// *************************** METHODES *******************************/
 

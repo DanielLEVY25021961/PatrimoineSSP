@@ -6,7 +6,6 @@ package levy.daniel.application.controllers.metier.produittype.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -108,7 +107,9 @@ public class SousTypeProduitWebControllerIntegrationTest {
 
 	// **************************** BEANS *********************************/
 
-	/** JdbcTemplate de test pour preuve BD directe. */
+	/**
+	 * JdbcTemplate de test pour preuve BD directe.
+	 */
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
@@ -120,9 +121,10 @@ public class SousTypeProduitWebControllerIntegrationTest {
 	@Autowired
 	private TypeProduitICuService typeProduitService;
 
-	/** Controller Web réel instancié sur le vrai SERVICE UC. */
+	/** Controller Web réel injecté par Spring. */
+	@Autowired
 	private SousTypeProduitWebController controller;
-
+	
 	// ************************ CONFIGURATION DE TEST *********************/
 
 	/**
@@ -148,6 +150,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 	})
 	@ComponentScan(
 			basePackages = {
+					"levy.daniel.application.controllers.metier.produittype",
 					"levy.daniel.application.model.services.produittype",
 					"levy.daniel.application.persistence.metier.produittype"
 			},
@@ -155,7 +158,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 					@Filter(type = FilterType.REGEX, pattern = ".*IntegrationTest.*"),
 					@Filter(type = FilterType.REGEX, pattern = ".*MockTest.*")
 			}
-	)
+	)	
 	public static class ConfigTest { // NOPMD by danyl on 07/04/2026 16:00
 		/* configuration de test. */
 	}
@@ -173,16 +176,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 
 	// *************************** INITIALISATION **************************/
 
-	/**
-	 * <div>
-	 * <p>Instancie le controller réel sur le vrai SERVICE UC
-	 * avant chaque test.</p>
-	 * </div>
-	 */
-	@BeforeEach
-	public void setUp() {
-		this.controller = new SousTypeProduitWebController(this.service);
-	}
+
 
 	// *************************** METHODES *******************************/
 
