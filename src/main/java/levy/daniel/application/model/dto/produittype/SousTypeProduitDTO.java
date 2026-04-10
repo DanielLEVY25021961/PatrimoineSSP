@@ -389,6 +389,27 @@ public final class SousTypeProduitDTO {
 			this(null, null, null, null);
 		}
 
+
+		
+		/**
+		 * <div>
+		 * <p>CONSTRUCTEUR sans Liste de petits-enfants Produit.</p>
+		 * </div>
+		 *
+		 * @param pIdSousTypeProduit : Long : 
+		 * ID technique dans le stockage du sous type de produit.
+		 * @param pTypeProduit: String : Type de produit (libellé) 
+		 * parent (exemple : "vêtement", "outillage", ...). 
+		 * @param pSousTypeProduit : String : 
+		 * Sous-type de produit (libellé). (exemple : 
+		 * "vêtement pour homme", "vêtement pour femme", ...).
+		 */
+		public OutputDTO(final Long pIdSousTypeProduit,
+				final String pTypeProduit,
+				final String pSousTypeProduit) {
+			this(pIdSousTypeProduit, pTypeProduit, pSousTypeProduit, null);
+		}
+		
 		
 		
 		/**

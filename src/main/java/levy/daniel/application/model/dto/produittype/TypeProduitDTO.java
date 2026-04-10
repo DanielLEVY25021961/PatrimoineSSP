@@ -310,8 +310,27 @@ public final class TypeProduitDTO {
             this(null, null, null);
         }
 		
-		
 
+		
+		/**
+		 * <div>
+		 * <p>Constructeur sans Liste de libéllés 
+		 * d'enfants SousTypeProduit.</p>
+		 * </div>
+		 *
+		 * @param pIdTypeProduit : Long : 
+		 * ID technique dans le stockage du type de produit.
+		 * @param pTypeProduit : String : type de produit 
+		 *(exemple : "vêtement", "outillage", ...).
+		 */
+		public OutputDTO(
+				final Long pIdTypeProduit
+					, final String pTypeProduit) {
+			this(pIdTypeProduit, pTypeProduit, null);
+		}
+		
+		
+		
 		/**
 		 * <div>
 		 * <p>Constructeur Complet.</p>
