@@ -205,6 +205,12 @@
 		    <artifactId>spring-boot-starter-test</artifactId>
 		    <scope>test</scope>
 		</dependency>
+		<!-- Tests JUnit Mock Mvc -->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-webmvc-test</artifactId>
+		    <scope>test</scope>
+		</dependency>
 		<!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-data-jpa-test -->
 		<!-- indispensable pour @DataJpaTest -->
 		<dependency>
