@@ -106,7 +106,7 @@ import levy.daniel.application.model.services.produittype.pagination.TriSpec;
  */
 @RestController("ProduitWebController")
 @RequestMapping("/produit")
-@Profile({ "web", "dev", "prod" })
+@Profile({ "web" })
 public class ProduitWebController implements ProduitIController {
 
 	// ************************ATTRIBUTS************************************/
