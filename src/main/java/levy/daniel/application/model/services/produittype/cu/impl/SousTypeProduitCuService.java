@@ -211,8 +211,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_CREER_NOM_BLANK + LOG + ExceptionParametreBlank.
 		 */
 		if (StringUtils.isBlank(libelle)) {
+			
 			return this.traiterErreur(
 					MESSAGE_CREER_NOM_BLANK,
+					METHODE_CREER,
 					new ExceptionParametreBlank(MESSAGE_CREER_NOM_BLANK));
 		}
 
@@ -236,6 +238,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			return this.traiterErreur(
 					PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
 							+ messageSecurise,
+					METHODE_CREER,
 					e);
 		}
 
@@ -249,6 +252,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					messageDoublon,
+					METHODE_CREER,
 					new ExceptionDoublon(messageDoublon));
 		}
 
@@ -261,8 +265,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		final String libelleParent = pInputDTO.getTypeProduit();
 
 		if (StringUtils.isBlank(libelleParent)) {
+			
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_CREER,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
@@ -288,6 +294,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			return this.traiterErreur(
 					PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
 							+ messageSecurise,
+					METHODE_CREER,
 					e);
 		}
 
@@ -298,8 +305,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdTypeProduit() == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_CREER,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
@@ -333,6 +342,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			return this.traiterErreur(
 					PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
 							+ messageSecurise,
+					METHODE_CREER,
 					e);
 		}
 
@@ -344,8 +354,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * + LOG + IllegalStateException
 		 */
 		if (cree == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_CREATION_TECHNIQUE_KO_CREER,
+					METHODE_CREER,
 					new IllegalStateException(
 							MESSAGE_CREATION_TECHNIQUE_KO_CREER));
 		}
@@ -371,6 +383,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			return this.traiterErreur(
 					PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
 							+ messageSecurise,
+					METHODE_CREER,
 					e);
 		}
 
@@ -378,8 +391,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet un message MESSAGE_CONVERSION_TECHNIQUE_KO_CREER 
 		 * + LOG + IllegalStateException. */
 		if (dto == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_CONVERSION_TECHNIQUE_KO_CREER,
+					METHODE_CREER,
 					new IllegalStateException(
 							MESSAGE_CONVERSION_TECHNIQUE_KO_CREER));
 		}
@@ -422,6 +437,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_RECHERCHER_TOUS,
 					e);
 		}
 
@@ -432,6 +448,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		if (records == null) {
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
+					METHODE_RECHERCHER_TOUS,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
@@ -459,6 +476,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_RECHERCHER_TOUS,
 					e);
 		}
 
@@ -504,6 +522,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
 
@@ -512,8 +531,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
 		 */
 		if (records == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
+					METHODE_RECHERCHER_TOUS_STRING,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
@@ -559,6 +580,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
 
@@ -595,6 +617,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		if (pRequetePage == null) {
 			return this.traiterErreur(
 					MESSAGE_PAGEABLE_NULL,
+					METHODE_RECHERCHER_TOUS_PAGE,
 					new IllegalStateException(MESSAGE_PAGEABLE_NULL));
 		}
 
@@ -612,11 +635,14 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 				= this.gateway.rechercherTousParPage(pRequetePage);
 
 		} catch (final Exception e) {
+			
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
+			
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_RECHERCHER_TOUS_PAGE,
 					e);
 		}
 
@@ -628,8 +654,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_RECHERCHE_PAGINEE_KO + LOG + IllegalStateException.
 		 */
 		if (resultatPagine == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_RECHERCHE_PAGINEE_KO,
+					METHODE_RECHERCHER_TOUS_PAGE,
 					new IllegalStateException(MESSAGE_RECHERCHE_PAGINEE_KO));
 		}
 
@@ -667,11 +695,14 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					totalElements);
 
 		} catch (final Exception e) {
+			
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
+			
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_RECHERCHER_TOUS_PAGE,
 					e);
 		}
 
@@ -729,6 +760,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
@@ -739,6 +771,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		if (records == null) {
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
+					METHODE_FIND_BY_LIBELLE,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
@@ -765,6 +798,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
@@ -804,8 +838,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_PARAM_NULL + LOG + IllegalStateException.
 		 */
 		if (pContenu == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_PARAM_NULL,
+					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					new IllegalStateException(MESSAGE_PARAM_NULL));
 		}
 
@@ -837,6 +873,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					e);
 		}
 
@@ -845,8 +882,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
 		 */
 		if (records == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
+					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
@@ -875,6 +914,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					e);
 		}
 
@@ -910,8 +950,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet RECHERCHE_TYPEPRODUIT_NULL + LOG + IllegalStateException.
 		 */
 		if (pTypeProduit == null) {
+			
 			return this.traiterErreur(
 					RECHERCHE_TYPEPRODUIT_NULL,
+					METHODE_FIND_ALL_BY_PARENT,
 					new IllegalStateException(RECHERCHE_TYPEPRODUIT_NULL));
 		}
 
@@ -922,8 +964,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		final String libelleParent = pTypeProduit.getTypeProduit();
 
 		if (StringUtils.isBlank(libelleParent)) {
+			
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_FIND_ALL_BY_PARENT,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
@@ -948,6 +992,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_ALL_BY_PARENT,
 					e);
 		}
 
@@ -958,8 +1003,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdTypeProduit() == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_FIND_ALL_BY_PARENT,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
@@ -983,6 +1030,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_ALL_BY_PARENT,
 					e);
 		}
 
@@ -991,8 +1039,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
 		 */
 		if (records == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
+					METHODE_FIND_ALL_BY_PARENT,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
@@ -1020,6 +1070,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_ALL_BY_PARENT,
 					e);
 		}
 
@@ -1065,8 +1116,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		final String libelleParent = pInputDTO.getTypeProduit();
 
 		if (StringUtils.isBlank(libelleParent)) {
+			
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_FIND_BY_DTO,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
@@ -1084,6 +1137,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 				= this.typeProduitGateway.findByLibelle(libelleParent);
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1093,6 +1147,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_FIND_BY_DTO,
 					e);
 		}
 
@@ -1121,6 +1176,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			records = this.gateway.findAllByParent(parentPersistant);
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1130,6 +1186,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_FIND_BY_DTO,
 					e);
 		}
 
@@ -1168,6 +1225,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			resultat = trouve;
 
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1177,6 +1235,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_FIND_BY_DTO,
 					e);
 		}
 
@@ -1203,6 +1262,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			= ConvertisseurMetierToOutputDTOSousTypeProduit.convert(resultat);
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1212,6 +1272,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_FIND_BY_DTO,
 					e);
 		}
 
@@ -1227,6 +1288,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					messageTechnique,
+					METHODE_FIND_BY_DTO,
 					new IllegalStateException(messageTechnique));
 		}
 
@@ -1276,6 +1338,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			sousTypeProduit = this.gateway.findById(pId);
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1285,6 +1348,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_FIND_BY_ID,
 					e);
 		}
 
@@ -1313,6 +1377,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					sousTypeProduit);
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1322,6 +1387,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_FIND_BY_ID,
 					e);
 		}
 
@@ -1332,6 +1398,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet un message + LOG + IllegalStateException.
 		 */
 		if (dto == null) {
+			
 			final String messageTechnique =
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
@@ -1339,6 +1406,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					messageTechnique,
+					METHODE_FIND_BY_ID,
 					new IllegalStateException(messageTechnique));
 		}
 
@@ -1369,8 +1437,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_PARAM_NULL + LOG + ExceptionParametreNull.
 		 */
 		if (pInputDTO == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_PARAM_NULL,
+					METHODE_UPDATE,
 					new ExceptionParametreNull(MESSAGE_PARAM_NULL));
 		}
 
@@ -1386,8 +1456,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_PARAM_BLANK + LOG + ExceptionParametreBlank.
 		 */
 		if (StringUtils.isBlank(libelleSousType)) {
+			
 			return this.traiterErreur(
 					MESSAGE_PARAM_BLANK,
+					METHODE_UPDATE,
 					new ExceptionParametreBlank(MESSAGE_PARAM_BLANK));
 		}
 
@@ -1397,8 +1469,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
 		 */
 		if (StringUtils.isBlank(libelleParent)) {
+			
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_UPDATE,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
@@ -1416,11 +1490,14 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 				= this.typeProduitGateway.findByLibelle(libelleParent);
 
 		} catch (final Exception e) {
+			
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
+			
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_UPDATE,
 					e);
 		}
 
@@ -1429,8 +1506,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdTypeProduit() == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_UPDATE,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 		}
 
@@ -1448,11 +1527,14 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			records = this.gateway.findAllByParent(parentPersistant);
 
 		} catch (final Exception e) {
+			
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
+			
 			return this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_UPDATE,
 					e);
 		}
 
@@ -1461,8 +1543,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * constitue une anomalie technique de stockage.
 		 */
 		if (records == null) {
+			
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
+					METHODE_UPDATE,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
@@ -1501,10 +1585,13 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * + LOG + ExceptionNonPersistant.
 		 */
 		if (existant.getIdSousTypeProduit() == null) {
+			
 			final String messageUtil =
 					MESSAGE_OBJ_NON_PERSISTE + libelleSousType;
+			
 			return this.traiterErreur(
 					messageUtil,
+					METHODE_UPDATE,
 					new ExceptionNonPersistant(messageUtil));
 		}
 
@@ -1532,14 +1619,17 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			modifie = this.gateway.update(stp);
 
 		} catch (final Exception e) {
+			
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
+			
 			return this.traiterErreur(
 					MESSAGE_MODIF_KO
 							+ libelleSousType
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_UPDATE,
 					e);
 		}
 
@@ -1560,10 +1650,13 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * + LOG + IllegalStateException
 		 */
 		if (modifie.getIdSousTypeProduit() == null) {
+			
 			final String messageTechnique =
 					MESSAGE_OBJ_NON_PERSISTE + libelleSousType;
+			
 			return this.traiterErreur(
 					messageTechnique,
+					METHODE_UPDATE,
 					new IllegalStateException(messageTechnique));
 		}
 
@@ -1579,14 +1672,17 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			= ConvertisseurMetierToOutputDTOSousTypeProduit.convert(modifie);
 
 		} catch (final Exception e) {
+			
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
+			
 			return this.traiterErreur(
 					MESSAGE_MODIF_KO
 							+ libelleSousType
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_UPDATE,
 					e);
 		}
 
@@ -1596,13 +1692,16 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * message technique + LOG + IllegalStateException
 		 */
 		if (dto == null) {
+			
 			final String messageTechnique =
 					MESSAGE_MODIF_KO
 							+ libelleSousType
 							+ TIRET_ESPACE
 							+ MSG_ERREUR_NON_SPECIFIEE;
+			
 			return this.traiterErreur(
 					messageTechnique,
+					METHODE_UPDATE,
 					new IllegalStateException(messageTechnique));
 		}
 
@@ -1632,8 +1731,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_PARAM_NULL + LOG + ExceptionParametreNull.
 		 */
 		if (pInputDTO == null) {
+			
 			this.traiterErreur(
 					MESSAGE_PARAM_NULL,
+					METHODE_DELETE,
 					new ExceptionParametreNull(MESSAGE_PARAM_NULL));
 			return;
 		}
@@ -1650,8 +1751,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_PARAM_BLANK + LOG + ExceptionParametreBlank.
 		 */
 		if (StringUtils.isBlank(libelleSousType)) {
+			
 			this.traiterErreur(
 					MESSAGE_PARAM_BLANK,
+					METHODE_DELETE,
 					new ExceptionParametreBlank(MESSAGE_PARAM_BLANK));
 			return;
 		}
@@ -1662,8 +1765,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
 		 */
 		if (StringUtils.isBlank(libelleParent)) {
+			
 			this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_DELETE,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 			return;
 		}
@@ -1683,6 +1788,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 				= this.typeProduitGateway.findByLibelle(libelleParent);
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1690,6 +1796,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_DELETE,
 					e);
 			return;
 		}
@@ -1700,8 +1807,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdTypeProduit() == null) {
+			
 			this.traiterErreur(
 					MESSAGE_PAS_PARENT,
+					METHODE_DELETE,
 					new IllegalStateException(MESSAGE_PAS_PARENT));
 			return;
 		}
@@ -1720,6 +1829,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			records = this.gateway.findAllByParent(parentPersistant);
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1727,6 +1837,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			this.traiterErreur(
 					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_DELETE,
 					e);
 			return;
 		}
@@ -1737,8 +1848,10 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * émet un MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
 		 */
 		if (records == null) {
+			
 			this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
+					METHODE_DELETE,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 			return;
 		}
@@ -1779,11 +1892,13 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * + LOG + ExceptionNonPersistant
 		 */
 		if (existant.getIdSousTypeProduit() == null) {
+			
 			final String messageUtil =
 					MESSAGE_OBJ_NON_PERSISTE + libelleSousType;
 
 			this.traiterErreur(
 					messageUtil,
+					METHODE_DELETE,
 					new ExceptionNonPersistant(messageUtil));
 			return;
 		}
@@ -1796,6 +1911,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		try {
 			this.gateway.delete(existant);
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1806,6 +1922,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 							+ libelleSousType
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_DELETE,
 					e);
 			return;
 		}
@@ -1842,6 +1959,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			resultat = this.gateway.count();
 			
 		} catch (final Exception e) {
+			
 			final String messageSecurise =
 					StringUtils.isNotBlank(e.getMessage())
 							? e.getMessage()
@@ -1851,6 +1969,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
 							+ messageSecurise,
+					METHODE_COUNT,
 					e);
 		}
 
@@ -1862,6 +1981,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * + LOG + IllegalStateException.
 		 */
 		if (resultat < 0L) {
+			
 			final String messageTechnique =
 					KO_TECHNIQUE_RECHERCHE
 							+ TIRET_ESPACE
@@ -1870,6 +1990,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 			return this.traiterErreur(
 					messageTechnique,
+					METHODE_COUNT,
 					new IllegalStateException(messageTechnique));
 		}
 
@@ -2159,17 +2280,34 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">Centralise le traitement des erreurs</p>
-	 * <p>alimente this.message, LOG et jette une Exception typée.</p>
+	 * <p>Centralise le traitement des erreurs :
+	 * <ul>
+	 * <li>alimente le message utilisateur ; </li>
+	 * <li>ajoute le nom de la méthode appelante au message de l'utilisateur 
+	 * pour former le message visible dans les logs ; </li>
+	 * <li>journalise selon la nature de l'erreur ; </li>
+	 * <li>propage l'exception initale.</p>
+	 * </ul>
+	 * <p>
+	 * Les erreurs métier attendues sont journalisées
+	 * sans pile d'exception afin d'éviter
+	 * un bruit inutile dans les tests verts (OK)
+	 * et dans les logs de build CI.
+	 * </p>
 	 * </div>
 	 *
-	 * @param pMessage : String : message d'erreur
-	 * @param pE : Exception typée à jeter
-	 * @return T : pour chaîner dans les méthodes retournant une valeur
+	 * @param pMessage : String : message d'erreur.
+	 * @param pMethode : String : nom de la méthode appelante.
+	 * @param pE : Exception : exception typée transmise 
+	 * par la méthode appelante à jeter.
+	 * @param <T> : type de retour : pour chaîner dans les méthodes 
+	 * retournant une valeur.
+	 * @return T : jamais atteint.
 	 * @throws Exception
 	 */
 	private <T> T traiterErreur(
 			final String pMessage,
+			final String pMethode,
 			final Exception pE) throws Exception {
 
 		final String messageFinal
@@ -2177,8 +2315,23 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 		this.message.set(messageFinal);
 
-		if (LOG.isInfoEnabled()) {
-			LOG.info(messageFinal, pE);
+		final String messagePourLog = pMethode + TIRET_ESPACE + messageFinal;
+		/*
+		 * Une erreur métier attendue ne nécessite pas
+		 * de pile complète dans les logs :
+		 * un DEBUG avec le message suffit.
+		 */
+		if (this.isErreurMetierAttendue(messageFinal, pE)) {
+			if (LOG.isDebugEnabled()) {
+				
+				LOG.debug(messagePourLog);
+			}
+		} else if (LOG.isErrorEnabled()) {
+			/*
+			 * Une erreur technique ou inattendue
+			 * conserve un LOG.error avec stacktrace.
+			 */
+			LOG.error(messagePourLog, pE);
 		}
 
 		if (pE != null) {
@@ -2186,6 +2339,58 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		throw new Exception(messageFinal);
+
 	}
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>Détermine si l'erreur correspond à un scénario métier attendu
+	 * pour lequel une pile d'exception complète
+	 * n'apporte rien dans les logs.</p>
+	 * </div>
+	 *
+	 * @param pMessage : String :
+	 * le message utilisateur courant.
+	 * @param pException : Exception :
+	 * l'exception sur le point d'être relancée.
+	 * @return boolean :
+	 * true si l'erreur est attendue côté métier.
+	 */
+	private boolean isErreurMetierAttendue(
+			final String pMessage,
+			final Exception pException) {
+
+		if (pException == null) {
+			return false;
+		}
+
+		/*
+		 * Les exceptions métier explicites du SERVICE UC
+		 * ne nécessitent pas de stacktrace complète.
+		 */
+		if (pException instanceof ExceptionParametreBlank
+				|| pException instanceof ExceptionParametreNull
+				|| pException instanceof ExceptionDoublon
+				|| pException instanceof ExceptionNonPersistant) {
+			return true;
+		}
+
+		/*
+		 * Certains IllegalStateException relèvent aussi
+		 * d'une précondition métier attendue.
+		 */
+		if (pException instanceof IllegalStateException) {
+			return Strings.CI.equals(pMessage, MESSAGE_PARAM_NULL)
+					|| Strings.CI.equals(pMessage, MESSAGE_PAGEABLE_NULL)
+					|| Strings.CI.equals(pMessage, MESSAGE_PAS_PARENT)
+					|| Strings.CI.equals(pMessage, RECHERCHE_TYPEPRODUIT_NULL);
+		}
+
+		return false;
+	}
+	
+	
 
 }

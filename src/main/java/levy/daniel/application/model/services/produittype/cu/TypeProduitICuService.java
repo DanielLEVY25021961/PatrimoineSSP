@@ -283,7 +283,59 @@ public interface TypeProduitICuService {
 		= "Une recherche technique a échouée";
 
 
+	// -------------------Constantes Méthodes ---------------------------//
 	
+	/**
+	 * "méthode Creer(...)"
+	 */
+	String METHODE_CREER = "méthode Creer(...)";
+	
+	/**
+	 * "méthode rechercherTous()"
+	 */
+	String METHODE_RECHERCHER_TOUS = "méthode rechercherTous()";
+	
+	/**
+	 * "méthode rechercherTousString()"
+	 */
+	String METHODE_RECHERCHER_TOUS_STRING 
+		= "méthode rechercherTousString()";
+	
+	/**
+	 * "méthode rechercherTousParPage(...)"
+	 */
+	String METHODE_RECHERCHER_TOUS_PAGE 
+		= "méthode rechercherTousParPage(...)";
+	
+	/**
+	 * "méthode findByLibelle(...)"
+	 */
+	String METHODE_FIND_BY_LIBELLE = "méthode findByLibelle(...)";
+	
+	/**
+	 * "méthode findByLibelleRapide()"
+	 */
+	String METHODE_FIND_BY_LIBELLE_RAPIDE = "méthode findByLibelleRapide()";
+	
+	/**
+	 * "méthode findById(...)"
+	 */
+	String METHODE_FIND_BY_ID = "méthode findById(...)";
+	
+	/**
+	 * "méthode update(...)"
+	 */
+	String METHODE_UPDATE = "méthode update(...)";
+	
+	/**
+	 * "méthode delete(...)"
+	 */
+	String METHODE_DELETE = "méthode delete(...)";
+	
+	/**
+	 * "méthode count()"
+	 */
+	String METHODE_COUNT = "méthode count()";
 
 	//* ------------------------ METHODES -------------------------------*//
 
