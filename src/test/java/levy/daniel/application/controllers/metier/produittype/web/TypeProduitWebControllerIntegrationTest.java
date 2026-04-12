@@ -49,17 +49,16 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * <ul>
  * <li>le vrai bean CONTROLLER Web 
  * {@link TypeProduitWebController},</li> 
- * le vrai SERVICE UC,
- * le vrai Gateway 
- * et la vraie persistance TypeProduit ;
+ * <li>Toute la chaîne de beans nécessaire pour le test,</li>
+ * <li>et la vraie persistance JPA/H2 de test</li>
  * </ul>
  * </li>
  * <li>on n'exécute pas de test HTTP bout-en-bout : on appelle directement
  * le bean Spring du controller ;</li>
- * <li>on active les profils "web" et "dev" (en plus de "test") afin
- * d'instancier le CONTROLLER Web et le SERVICE UC.</li>
+ * <li>on active le groupe de profils SPRING "test-web-jpa"
+ * afin d’obtenir la configuration de test attendue avec le
+ * controller web et la vraie persistance JPA/H2 de test.</li>
  * </ul>
- * </p>
  * </div>
  *
  * @author Daniel Lévy
@@ -72,7 +71,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * ce test comme non web :
  * aucun serveur web embarqué n'est démarré,
  * aucun environnement HTTP n'est créé,
- * et le controller desktop est testé comme un bean Spring classique.
+ * et le controller web est testé comme un bean Spring classique.
  */
 @SpringBootTest(
 		classes = TypeProduitWebControllerIntegrationTest.ConfigTest.class,
@@ -81,8 +80,8 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
 )
 
 /*
- * Active le groupe de profils test-desktop-jpa
- * afin d'obtenir le CONTROLLER Desktop réel,
+ * Active le groupe de profils test-web-jpa
+ * afin d'obtenir le CONTROLLER web réel,
  * le SERVICE UC réel requis
  * et la persistance JPA/H2 de test.
  */
@@ -134,18 +133,27 @@ public class TypeProduitWebControllerIntegrationTest {
 		= "classpath:/truncate-test.sql";
 
 	// **************************** BEANS *********************************/
+	
+	/**
+	 * <div>
+	 * <p>JdbcTemplate de test pour preuve BD directe.</p>
+	 * </div>
+	 */
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	/**
-	 * Controller Web réel injecté par Spring.
-	 * Son injection prouve aussi la présence du SERVICE UC TypeProduit
-	 * requis dans le contexte Spring de test.
+	 * <div>
+	 * <p>Controller Web réel injecté par Spring.</p>
+	 * <p>Son injection entraîne aussi la présence du SERVICE UC 
+	 * TypeProduitCuService injecté par SPRING dans le constructeur 
+	 * du CONTROLLER
+	 * et requis dans le contexte Spring de test.</p>
+	 * </div>
 	 */
 	@Autowired
 	private TypeProduitWebController controller;
 
-	/** JdbcTemplate de test pour preuve BD directe. */
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
 
 	// ************************ CONFIGURATION DE TEST *********************/
 
