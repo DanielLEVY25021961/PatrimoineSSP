@@ -1,3 +1,6 @@
+/* ********************************************************************* */
+/* ********************* TEST MOCKITO CONTROLLER WEB ******************* */
+/* ********************************************************************* */
 package levy.daniel.application.controllers.metier.produittype.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,12 +26,23 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
 
 /**
  * <div>
- * <p style="font-weight:bold;">CLASSE TypeProduitWebControllerMockTest.java :</p>
- * <p>Tests JUnit Mockito complets (avec tests "béton") du
- * CONTROLLER ADAPTER WEB {@link TypeProduitWebController}.</p>
- * <p>Vérifie l'implémentation des contrats du PORT
+ * <p style="font-weight:bold;">
+ * CLASSE TypeProduitWebControllerMockTest.java :
+ * </p>
+ * 
+ * <ul>
+ * <li>Tests JUnit Mockito complets (avec tests "béton") du 
+ * CONTROLLER ADAPTER WEB 
+ * {@link TypeProduitWebController}.</li>
+ * <li>Vérifie l'implémentation des contrats du PORT
  * {@link TypeProduitIController} et le dialogue avec
- * {@link TypeProduitICuService}.</p>
+ * {@link TypeProduitICuService}.</li>
+ * <li>
+ * Aucun profil Spring n'est activé dans cette classe,
+ * car ce test Mockito ne démarre pas de contexte Spring :
+ * le service est mocké à la main
+ * et le controller est instancié directement.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy

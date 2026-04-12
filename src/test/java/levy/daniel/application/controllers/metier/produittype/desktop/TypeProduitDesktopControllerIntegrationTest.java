@@ -207,7 +207,8 @@ public class TypeProduitDesktopControllerIntegrationTest {
 			},
 			excludeFilters = {
 					@Filter(type = FilterType.REGEX, pattern = ".*IntegrationTest.*"),
-					@Filter(type = FilterType.REGEX, pattern = ".*MockTest.*")
+					@Filter(type = FilterType.REGEX, pattern = ".*MockTest.*"),
+					@Filter(type = FilterType.REGEX, pattern = ".*MockMvcTest.*")
 			}
 	)
 	public static class ConfigTest { // NOPMD by danyl on 04/04/2026 17:00

@@ -64,7 +64,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
 @WebMvcTest(controllers = TypeProduitWebController.class)
 @ContextConfiguration(
 		classes = TypeProduitWebControllerMockMvcTest.MockMvcBootConfiguration.class)
-@ActiveProfiles({ "test", "web" })
+@ActiveProfiles({  "test-web-jpa" })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class TypeProduitWebControllerMockMvcTest {
 
