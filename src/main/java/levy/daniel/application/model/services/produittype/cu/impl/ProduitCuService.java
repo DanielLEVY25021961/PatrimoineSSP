@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import levy.daniel.application.model.dto.produittype.ConvertisseurMetierToOutputDTOProduit;
@@ -30,8 +29,10 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionStockageVide;
 import levy.daniel.application.model.services.produittype.gateway.ProduitGatewayIService;
 import levy.daniel.application.model.services.produittype.gateway.SousTypeProduitGatewayIService;
+import levy.daniel.application.model.services.produittype.gateway.impl.ProduitGatewayJPAService;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
+import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.ProduitDaoJPA;
 
 /**
  * <style>p, ul, li, h1 {line-height : 1em;}</style>
@@ -72,6 +73,8 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * (WEB, MOBILE, DESKTOP) et à tous les environnements d'exécution 
  * (TEST, DEV, PROD, ...) -> Les SERVICES UC ne doivent 
  * pas avoir de PROFIL SPRING.</li>
+ * <li>Rappel : si un bean n’a pas d’annotation @Profile, 
+ * Spring l’enregistre quel que soit le profil actif</li>
  * <li>Cette classe ne dépend ni du mode d'entrée (desktop / web),
  * ni de l'environnement d'exécution (test / dev / prod).</li>
  * <li>Le choix du mode d'accès appartient aux controllers 

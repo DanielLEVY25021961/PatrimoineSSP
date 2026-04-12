@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.context.annotation.Import;
 
 import java.util.List;
 
@@ -27,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -43,28 +43,56 @@ import levy.daniel.application.model.services.produittype.cu.ProduitICuService;
  * <p style="font-weight:bold;">
  * CLASSE ProduitWebControllerMockMvcTest.java :
  * </p>
- * <p>
- * Exemple de tests MockMvc ciblés du CONTROLLER ADAPTER WEB
- * {@link ProduitWebController}.
- * </p>
- * <p>
- * Cette classe ne remplace ni les tests Mockito du controller,
- * ni les tests d'intégration avec preuve BD.
- * Elle ajoute un petit verrouillage HTTP réel sur quelques endpoints critiques :
- * mapping Spring MVC, binding JSON,
- * corps absent sur {@code @RequestBody(required = false)}
- * et restitution HTTP de la réponse.
- * </p>
+ * <ul>
+ * <li>Tests MockMvc ciblés du CONTROLLER ADAPTER WEB
+ * {@link ProduitWebController}.</li>
+ * <li>Vérifie le comportement HTTP réel exposé par Spring MVC :
+ * existence des mappings,
+ * binding JSON,
+ * gestion d'un body absent,
+ * sérialisation JSON de la réponse
+ * et accessibilité du message exposé par l'endpoint dédié.</li>
+ * <li>Le SERVICE UC {@link ProduitICuService} est mocké :
+ * cette classe ne prouve donc ni la logique métier interne,
+ * ni la persistance,
+ * ni les scénarios d'intégration avec preuve BD.</li>
+ * <li>Cette classe complète les tests Mockito du controller
+ * en ajoutant une vérification concrète de la couche HTTP.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
  * @version 1.0
  * @since 10 avril 2026
  */
+/*
+ * Limite le contexte Spring de test à la couche web utile ici.
+ * On teste le controller web réel et son comportement HTTP,
+ * sans démarrer toute l'application.
+ */
 @WebMvcTest(controllers = ProduitWebController.class)
+
+/*
+ * Indique à Spring quelle configuration minimale utiliser
+ * pour démarrer proprement ce test MockMvc.
+ * Cela évite d'aller chercher une configuration plus large
+ * qui ne serait pas utile ici.
+ */
 @ContextConfiguration(
 		classes = ProduitWebControllerMockMvcTest.MockMvcBootConfiguration.class)
-@ActiveProfiles({ "test", "web" })
+
+/*
+ * Active le groupe de profils test-web-jpa.
+ * Ici, cela garde une cohérence avec le mode WEB de test,
+ * même si le service métier est mocké dans cette classe.
+ */
+@ActiveProfiles({ "test-web-jpa" })
+
+/*
+ * Demande à Spring de reconstruire un contexte propre après chaque méthode
+ * afin d'éviter qu'un test ne pollue le suivant
+ * par l'état mémorisé du controller ou des mocks Spring.
+ */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ProduitWebControllerMockMvcTest {
 
@@ -100,17 +128,6 @@ public class ProduitWebControllerMockMvcTest {
 	/** SERVICE UC mocké sous le nom réellement injecté par le controller. */
 	@MockitoBean(name = "ProduitCuService")
 	private ProduitICuService service;
-
-	// *************************** CONSTRUCTEUR ****************************/
-
-	/**
-	 * <div>
-	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
-	 * </div>
-	 */
-	public ProduitWebControllerMockMvcTest() {
-		super();
-	}
 	
 	// ********************** CONFIGURATION DE TEST ***********************/
 
@@ -125,13 +142,47 @@ public class ProduitWebControllerMockMvcTest {
 	 * </p>
 	 * </div>
 	 */
+	/*
+	 * Déclare une classe de configuration Spring 
+	 * dédiée à ce test d'intégration.
+	 * Elle sert de point d'entrée au contexte Spring Boot de test.
+	 * @SpringBootConfiguration est l’alternative Spring Boot 
+	 * à @Configuration (annotation Spring générique 
+	 * pour déclarer une classe de configuration), 
+	 * prévue pour marquer une configuration 
+	 * d’application Boot et pouvoir être trouvée automatiquement, 
+	 * notamment dans les tests
+	 */
 	@SpringBootConfiguration
+	
+	/*
+	 * Demande à Spring Boot d'appliquer son auto-configuration standard
+	 * compatible avec les dépendances présentes et le profil de test actif.
+	 */
 	@EnableAutoConfiguration
+	
+	/*
+	 * Importe juste la ou les classes nécessaires 
+	 * pourla configuration SPRING du présent test.
+	 */
 	@Import(ProduitWebController.class)
 	public static class MockMvcBootConfiguration {
 		/* configuration minimale de bootstrapping du test. */
 	}
+	
+	// *************************** CONSTRUCTEUR ****************************/
 
+	/**
+	 * <div>
+	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
+	 * </div>
+	 */
+	public ProduitWebControllerMockMvcTest() {
+		super();
+	}
+
+
+	
 	// *************************** METHODES *******************************/
 
 

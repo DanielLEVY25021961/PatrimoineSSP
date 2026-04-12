@@ -86,7 +86,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * Ici, cela garde une cohérence avec le mode WEB de test,
  * même si le service métier est mocké dans cette classe.
  */
-@ActiveProfiles({  "test-web-jpa" })
+@ActiveProfiles({ "test-web-jpa" })
 
 /*
  * Demande à Spring de reconstruire un contexte propre après chaque méthode
@@ -125,12 +125,24 @@ public class TypeProduitWebControllerMockMvcTest {
 	/**
 	 * <div>
 	 * <p>Configuration Spring Boot minimale dédiée au test MockMvc.</p>
+	 * <p>
+	 * Elle sert uniquement à fournir à Spring Boot
+	 * une {@link SpringBootConfiguration} explicite,
+	 * afin d'éviter la recherche automatique infructueuse
+	 * d'une configuration applicative dans l'arborescence des packages.
+	 * </p>
 	 * </div>
 	 */
 	/*
-	 * Déclare une classe de configuration Spring dédiée à ce test d'intégration.
+	 * Déclare une classe de configuration Spring 
+	 * dédiée à ce test d'intégration.
 	 * Elle sert de point d'entrée au contexte Spring Boot de test.
-	 * Pourquoi @SpringBootConfiguration au lieu de @Configuration
+	 * @SpringBootConfiguration est l’alternative Spring Boot 
+	 * à @Configuration (annotation Spring générique 
+	 * pour déclarer une classe de configuration), 
+	 * prévue pour marquer une configuration 
+	 * d’application Boot et pouvoir être trouvée automatiquement, 
+	 * notamment dans les tests
 	 */
 	@SpringBootConfiguration
 	
@@ -160,6 +172,8 @@ public class TypeProduitWebControllerMockMvcTest {
 		super();
 	}
 
+	
+	
 	// *************************** METHODES *******************************/
 
 	
