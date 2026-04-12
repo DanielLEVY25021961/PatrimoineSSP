@@ -49,13 +49,16 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * pour l'objet métier <code style="font-weight:bold;">
  * {@link Produit}</code>.
  * </p>
+ * </div>
  * 
+ * <div>
  * <p style="font-weight:bold;">SERVICE USE CASE
  * </p>
- * <p>Cette classe <span style="font-weight:bold;">
+ * <ul>
+ * <li>Cette classe <span style="font-weight:bold;">
  * SERVICE METIER (Use Case)</span> ne connait que l'INTERFACE
- * TECHNIQUE GATEWAY qui est injectée par SPRING via le Constructeur.</p>
- * <p>Cette classe <span style="font-weight:bold;">
+ * TECHNIQUE GATEWAY qui est injectée par SPRING via le Constructeur.</li>
+ * <li>Cette classe <span style="font-weight:bold;">
  * SERVICE METIER (Use Case)</span> ne connait
  * <span style="font-weight:bold;">pas</span> par exemple
  * le DAO JPA <code style="font-weight:bold;">
@@ -64,9 +67,21 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * {@link ProduitGatewayJPAService}</code> 
  * qui implémente l'interface
  * de SERVICE TECHNIQUE <code style="font-weight:bold;">
- * {@link ProduitGatewayIService}</code>.
- * </p>
+ * {@link ProduitGatewayIService}</code>.</li>
+ * <li>SERVICE UC commun à tous les modes d'accès à l'application 
+ * (WEB, MOBILE, DESKTOP) et à tous les environnements d'exécution 
+ * (TEST, DEV, PROD, ...) -> Les SERVICES UC ne doivent 
+ * pas avoir de PROFIL SPRING.</li>
+ * <li>Cette classe ne dépend ni du mode d'entrée (desktop / web),
+ * ni de l'environnement d'exécution (test / dev / prod).</li>
+ * <li>Le choix du mode d'accès appartient aux controllers 
+ * (Web, Mobile, Desktop),
+ * et le choix du mode de stockage appartient aux gateways 
+ * (JPA, XML, ...).</li>
+ * </ul>
+ * </div>
  * 
+ * <div>
  * <p>C'est dans ce SERVICE USE CASE ADAPTER METIER que l'on :</p>
  * <ul>
  * <li>implémente la <span style="font-weight:bold;">
@@ -88,7 +103,6 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * @since 22 janvier 2026
  */
 @Service(value = "ProduitCuService")
-@Profile({ "desktop", "web", "dev", "prod", "test", "test-web-jpa" })
 public class ProduitCuService implements ProduitICuService {
 
 	// *************************** ATTRIBUTS ******************************/

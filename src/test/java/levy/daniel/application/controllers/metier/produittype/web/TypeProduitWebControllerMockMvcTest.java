@@ -127,8 +127,23 @@ public class TypeProduitWebControllerMockMvcTest {
 	 * <p>Configuration Spring Boot minimale dédiée au test MockMvc.</p>
 	 * </div>
 	 */
+	/*
+	 * Déclare une classe de configuration Spring dédiée à ce test d'intégration.
+	 * Elle sert de point d'entrée au contexte Spring Boot de test.
+	 * Pourquoi @SpringBootConfiguration au lieu de @Configuration
+	 */
 	@SpringBootConfiguration
+	
+	/*
+	 * Demande à Spring Boot d'appliquer son auto-configuration standard
+	 * compatible avec les dépendances présentes et le profil de test actif.
+	 */
 	@EnableAutoConfiguration
+	
+	/*
+	 * Importe juste la ou les classes nécessaires 
+	 * pourla configuration SPRING du présent test.
+	 */
 	@Import(TypeProduitWebController.class)
 	public static class MockMvcBootConfiguration {
 		/* configuration minimale de bootstrapping du test. */

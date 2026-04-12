@@ -14,7 +14,6 @@ import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import levy.daniel.application.model.dto.produittype.ConvertisseurMetierToOutputDTOTypeProduit;
@@ -50,13 +49,16 @@ import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.TypePr
  * pour l'objet métier <code style="font-weight:bold;">
  * {@link TypeProduit}</code>.
  * </p>
+ * </div>
  *
+ * <div>
  * <p style="font-weight:bold;">SERVICE USE CASE
  * </p>
- * <p>Cette classe <span style="font-weight:bold;">
+ * <ul>
+ * <li>Cette classe <span style="font-weight:bold;">
  * SERVICE METIER (Use Case)</span> ne connait que l'INTERFACE
- * TECHNIQUE GATEWAY qui est injectée par SPRING via le Constructeur.</p>
- * <p>Cette classe <span style="font-weight:bold;">
+ * TECHNIQUE GATEWAY qui est injectée par SPRING via le Constructeur.</li>
+ * <li>Cette classe <span style="font-weight:bold;">
  * SERVICE METIER (Use Case)</span> ne connait
  * <span style="font-weight:bold;">pas</span> par exemple
  * le DAO JPA <code style="font-weight:bold;">
@@ -65,9 +67,21 @@ import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.TypePr
  * {@link TypeProduitGatewayJPAService}</code> 
  * qui implémente l'interface
  * de SERVICE TECHNIQUE <code style="font-weight:bold;">
- * {@link TypeProduitGatewayIService}</code>.
- * </p>
- *
+ * {@link TypeProduitGatewayIService}</code>.</li>
+ * <li>SERVICE UC commun à tous les modes d'accès à l'application 
+ * (WEB, MOBILE, DESKTOP) et à tous les environnements d'exécution 
+ * (TEST, DEV, PROD, ...) -> Les SERVICES UC ne doivent 
+ * pas avoir de PROFIL SPRING.</li>
+ * <li>Cette classe ne dépend ni du mode d'entrée (desktop / web),
+ * ni de l'environnement d'exécution (test / dev / prod).</li>
+ * <li>Le choix du mode d'accès appartient aux controllers 
+ * (Web, Mobile, Desktop),
+ * et le choix du mode de stockage appartient aux gateways 
+ * (JPA, XML, ...).</li>
+ * </ul>
+ * </div>
+ * 
+ * <div>
  * <p>C'est dans ce SERVICE USE CASE ADAPTER METIER que l'on :</p>
  * <ul>
  * <li>implémente la <span style="font-weight:bold;">
@@ -89,7 +103,6 @@ import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.TypePr
  * @since 29 décembre 2025
  */
 @Service(value = "TypeProduitCuService")
-@Profile({ "desktop", "dev", "prod" })
 public class TypeProduitCuService implements TypeProduitICuService {
 
 	// *************************** ATTRIBUTS *******************************/
