@@ -156,7 +156,8 @@ public class TypeProduitDesktopControllerIntegrationTest {
 	 * <div>
 	 * <p style="font-weight:bold;">CONFIGURATION DE TEST SPRING.</p>
 	 * <ul>
-	 * <li>scan applicatif limité (Controllers TypeProduit + Services TypeProduit + Persistance TypeProduit),</li>
+	 * <li>scan applicatif limité
+	 * (Controllers ProduitType + Services ProduitType + Persistance ProduitType),</li>
 	 * <li>scan des entités JPA,</li>
 	 * <li>activation des repositories Spring Data JPA une seule fois.</li>
 	 * </ul>
