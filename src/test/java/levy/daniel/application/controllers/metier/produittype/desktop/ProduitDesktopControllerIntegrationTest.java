@@ -79,7 +79,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
 		webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = { "spring.main.web-application-type=none" }
 )
-@ActiveProfiles({ "test", "desktop" })
+@ActiveProfiles({ "test-desktop-jpa" })
 @Tag(ProduitDesktopControllerIntegrationTest.TAG)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Sql(

@@ -88,7 +88,7 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * @since 22 janvier 2026
  */
 @Service(value = "ProduitCuService")
-@Profile({ "desktop", "dev", "prod" })
+@Profile({ "desktop", "web", "dev", "prod", "test", "test-web-jpa" })
 public class ProduitCuService implements ProduitICuService {
 
 	// *************************** ATTRIBUTS ******************************/

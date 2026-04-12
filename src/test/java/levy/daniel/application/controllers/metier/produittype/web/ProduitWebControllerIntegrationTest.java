@@ -81,7 +81,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
 		webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = { "spring.main.web-application-type=none" }
 )
-@ActiveProfiles({ "test", "web", "dev" })
+@ActiveProfiles({ "test-web-jpa" })
 @Tag(ProduitWebControllerIntegrationTest.TAG)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Sql(
