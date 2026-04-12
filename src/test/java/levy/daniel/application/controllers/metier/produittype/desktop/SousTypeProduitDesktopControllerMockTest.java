@@ -30,16 +30,21 @@ import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuS
  * <p style="font-weight:bold;">
  * CLASSE SousTypeProduitDesktopControllerMockTest.java :
  * </p>
- * <p>
- * Tests JUnit Mockito complets du CONTROLLER ADAPTER DESKTOP
- * {@link SousTypeProduitDesktopController}.
- * </p>
- * <p>
- * Vérifie l'implémentation des contrats du PORT
+ * 
+ * <ul>
+ * <li>Tests JUnit Mockito complets (avec tests "béton") 
+ * du CONTROLLER ADAPTER DESKTOP
+ * {@link SousTypeProduitDesktopController}.</li>
+ * <li>Vérifie l'implémentation des contrats du PORT
  * {@link SousTypeProduitIController}
  * et le dialogue avec
- * {@link SousTypeProduitICuService}.
- * </p>
+ * {@link SousTypeProduitICuService}.</li>
+ * <li>
+ * Aucun profil Spring n'est activé dans cette classe,
+ * car ce test Mockito ne démarre pas de contexte Spring :
+ * le service est mocké à la main
+ * et le controller est instancié directement.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy

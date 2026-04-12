@@ -6,7 +6,6 @@ package levy.daniel.application.controllers.metier.produittype.desktop;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -31,45 +30,86 @@ import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.OutputDT
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
+import levy.daniel.application.model.services.produittype.cu.impl.SousTypeProduitCuService;
+import levy.daniel.application.model.services.produittype.cu.impl.TypeProduitCuService;
 
 /**
  * <div>
  * <p style="font-weight:bold;">
  * CLASSE SousTypeProduitDesktopControllerIntegrationTest.java :
  * </p>
- * <p>
- * Tests d'intégration complets du CONTROLLER ADAPTER DESKTOP
- * {@link SousTypeProduitDesktopController}.
- * </p>
- * <p>
- * IMPORTANT :
  * <ul>
- * <li>on charge le vrai SERVICE UC SousTypeProduit,
- * le vrai SERVICE UC TypeProduit,
- * les vrais Gateways
- * et la vraie persistance ProduitType ;</li>
- * <li>on n'exécute pas de stack IHM Desktop :
- * on instancie directement le controller
- * avec le vrai SERVICE UC injecté par Spring ;</li>
- * <li>on active le profil "desktop"
- * (en plus de "test")
- * afin d'instancier les SERVICES UC concrets.</li>
+ * <li>Tests d'intégration complets (avec tests "béton") 
+ * du CONTROLLER ADAPTER DESKTOP
+ * {@link SousTypeProduitDesktopController}.</li>
+ * <li>Vérifie l'implémentation des contrats du PORT
+ * {@link SousTypeProduitIController}, avec preuve BD directe.</li>
  * </ul>
- * </p>
+ * </div>
+ * 
+ * <div>
+ * <p style="font-weight:bold;">IMPORTANT :</p>
+ * <ul>
+ * <li>on charge :
+ * <ul>
+ * <li>le vrai bean CONTROLLER Desktop
+ * {@link SousTypeProduitDesktopController},</li>
+ * <li>les vrais SERVICES UC {@link TypeProduitCuService}
+ * et {@link SousTypeProduitCuService} requis et
+ * toute la chaîne réelle autour de SousTypeProduit,</li>
+ * <li>et la vraie persistance JPA/H2 de test</li>
+ * </ul>
+ * pour tester le controller SousTypeProduit ;</li>
+ * <li>on n'exécute pas de stack IHM Desktop (pas de VUE JavaFX) :
+ * on appelle directement le bean Spring du controller ;</li>
+ * <li>on active le groupe de profils SPRING "test-desktop-jpa"
+ * afin d’obtenir la configuration de test attendue avec le
+ * controller desktop et la vraie persistance JPA/H2 de test.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
  * @version 1.0
  * @since 7 avril 2026
  */
+/* 
+ * Démarre un vrai contexte Spring Boot de test à partir de ConfigTest.
+ * spring.main.web-application-type=none force Spring Boot à considérer
+ * ce test comme non web :
+ * aucun serveur web embarqué n'est démarré,
+ * aucun environnement HTTP n'est créé,
+ * et le controller desktop est testé comme un bean Spring classique.
+ */
 @SpringBootTest(
 		classes = SousTypeProduitDesktopControllerIntegrationTest.ConfigTest.class,
 		webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = { "spring.main.web-application-type=none" }
 )
+/*
+ * Active le groupe de profils test-desktop-jpa
+ * afin d'obtenir le CONTROLLER Desktop réel,
+ * les SERVICES UC réels
+ * et la persistance JPA/H2 de test.
+ */
 @ActiveProfiles({ "test-desktop-jpa" })
+/*
+ * Tag JUnit de la classe :
+ * permet de repérer, filtrer ou lancer
+ * cette famille de tests d'intégration Controller Desktop.
+ */
 @Tag(SousTypeProduitDesktopControllerIntegrationTest.TAG)
+/*
+ * Demande à Spring de reconstruire un contexte propre après chaque méthode
+ * afin d'éviter qu'un test ne pollue le suivant
+ * par l'état des beans ou des messages mémorisés.
+ */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+
+/*
+ * Réinitialise la base avant chaque test
+ * en exécutant d'abord le script de nettoyage,
+ * puis le script de réinjection des données de test.
+ */
 @Sql(
 		scripts = {
 				"classpath:/truncate-test.sql",
@@ -102,11 +142,15 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	/**
 	 * "classpath:/truncate-test.sql"
 	 */
-	public static final String CLASSPATH_TRUNCATE_TEST 
+	public static final String CLASSPATH_TRUNCATE_TEST
 		= "classpath:/truncate-test.sql";
 	
 
 	// **************************** BEANS *********************************/
+
+	/** Controller Desktop réel injecté par Spring. */
+	@Autowired
+	private SousTypeProduitDesktopController controller;
 
 	/** JdbcTemplate de test pour preuve BD directe. */
 	@Autowired
@@ -120,9 +164,6 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	@Autowired
 	private TypeProduitICuService typeProduitService;
 
-	/** Controller Desktop réel instancié sur le vrai SERVICE UC. */
-	private SousTypeProduitDesktopController controller;
-
 	// ************************ CONFIGURATION DE TEST *********************/
 
 	/**
@@ -130,7 +171,7 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	 * <p style="font-weight:bold;">CONFIGURATION DE TEST SPRING.</p>
 	 * <ul>
 	 * <li>scan applicatif limité
-	 * (Services ProduitType + Persistance ProduitType),</li>
+	 * (Controllers ProduitType + Services ProduitType + Persistance ProduitType),</li>
 	 * <li>scan des entités JPA,</li>
 	 * <li>activation des repositories Spring Data JPA une seule fois.</li>
 	 * </ul>
@@ -138,22 +179,50 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	 *
 	 * @author Daniel Lévy
 	 */
+	/*
+	 * Déclare une classe de configuration Spring dédiée à ce test d'intégration.
+	 * Elle sert de point d'entrée au contexte Spring Boot de test.
+	 */
 	@Configuration
+	
+	/*
+	 * Demande à Spring Boot d'appliquer son auto-configuration standard
+	 * compatible avec les dépendances présentes et le profil de test actif.
+	 */
 	@EnableAutoConfiguration
+	
+	/*
+	 * Demande à Spring de repérer les entités JPA du périmètre ProduitType.
+	 * Cela permet à Hibernate de connaître les tables mappées à charger pour le test.
+	 */
 	@EntityScan(basePackages = {
 			"levy.daniel.application.persistence.metier.produittype"
 	})
+	
+	/*
+	 * Active les repositories Spring Data JPA du périmètre ProduitType.
+	 * Cela permet d'utiliser les DAO JPA réels dans le contexte de test.
+	 */
 	@EnableJpaRepositories(basePackages = {
 			"levy.daniel.application.persistence.metier.produittype.dao.daosJPA"
 	})
+	
+	/*
+	 * Limite le scan Spring aux composants réellement utiles à ce test :
+	 * controllers, services et persistance du périmètre ProduitType.
+	 * Les classes de tests sont exclues pour éviter qu'elles soient chargées
+	 * par erreur comme composants Spring.
+	 */
 	@ComponentScan(
 			basePackages = {
+					"levy.daniel.application.controllers.metier.produittype",
 					"levy.daniel.application.model.services.produittype",
 					"levy.daniel.application.persistence.metier.produittype"
 			},
 			excludeFilters = {
 					@Filter(type = FilterType.REGEX, pattern = ".*IntegrationTest.*"),
-					@Filter(type = FilterType.REGEX, pattern = ".*MockTest.*")
+					@Filter(type = FilterType.REGEX, pattern = ".*MockTest.*"),
+					@Filter(type = FilterType.REGEX, pattern = ".*MockMvcTest.*")
 			}
 	)
 	public static class ConfigTest { // NOPMD by danyl on 07/04/2026 16:00
@@ -169,19 +238,6 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	 */
 	public SousTypeProduitDesktopControllerIntegrationTest() {
 		super();
-	}
-
-	// *************************** INITIALISATION **************************/
-
-	/**
-	 * <div>
-	 * <p>Instancie le controller réel sur le vrai SERVICE UC
-	 * avant chaque test.</p>
-	 * </div>
-	 */
-	@BeforeEach
-	public void setUp() {
-		this.controller = new SousTypeProduitDesktopController(this.service);
 	}
 
 	// *************************** METHODES *******************************/

@@ -23,12 +23,23 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
 
 /**
  * <div>
- * <p style="font-weight:bold;">CLASSE TypeProduitDesktopControllerMockTest.java :</p>
- * <p>Tests JUnit Mockito complets (avec tests "béton") du
- * CONTROLLER ADAPTER DESKTOP {@link TypeProduitDesktopController}.</p>
- * <p>Vérifie l'implémentation des contrats du PORT
+ * <p style="font-weight:bold;">
+ * CLASSE TypeProduitDesktopControllerMockTest.java :
+ * </p>
+ * 
+ * <ul>
+ * <li>Tests JUnit Mockito complets (avec tests "béton") du
+ * CONTROLLER ADAPTER DESKTOP 
+ * {@link TypeProduitDesktopController}.</li>
+ * <li>Vérifie l'implémentation des contrats du PORT
  * {@link TypeProduitIController} et le dialogue avec
- * {@link TypeProduitICuService}.</p>
+ * {@link TypeProduitICuService}.</li>
+ * <li>
+ * Aucun profil Spring n'est activé dans cette classe,
+ * car ce test Mockito ne démarre pas de contexte Spring :
+ * le service est mocké à la main
+ * et le controller est instancié directement.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
