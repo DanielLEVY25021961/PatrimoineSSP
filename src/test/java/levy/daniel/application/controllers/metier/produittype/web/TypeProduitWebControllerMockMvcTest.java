@@ -43,28 +43,56 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
  * <p style="font-weight:bold;">
  * CLASSE TypeProduitWebControllerMockMvcTest.java :
  * </p>
- * <p>
- * Exemple de tests MockMvc ciblés du CONTROLLER ADAPTER WEB
- * {@link TypeProduitWebController}.
- * </p>
- * <p>
- * Cette classe ne remplace ni les tests Mockito du controller,
- * ni les tests d'intégration avec preuve BD.
- * Elle ajoute un petit verrouillage HTTP réel sur quelques endpoints critiques :
- * mapping Spring MVC, binding JSON,
- * corps absent sur {@code @RequestBody(required = false)}
- * et restitution HTTP de la réponse.
- * </p>
+ * <ul>
+ * <li>Tests MockMvc ciblés du CONTROLLER ADAPTER WEB
+ * {@link TypeProduitWebController}.</li>
+ * <li>Vérifie le comportement HTTP réel exposé par Spring MVC :
+ * existence des mappings,
+ * binding JSON,
+ * gestion d'un body absent,
+ * sérialisation JSON de la réponse
+ * et accessibilité du message exposé par l'endpoint dédié.</li>
+ * <li>Le SERVICE UC {@link TypeProduitICuService} est mocké :
+ * cette classe ne prouve donc ni la logique métier interne,
+ * ni la persistance,
+ * ni les scénarios d'intégration avec preuve BD.</li>
+ * <li>Cette classe complète les tests Mockito du controller
+ * en ajoutant une vérification concrète de la couche HTTP.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
  * @version 1.0
  * @since 10 avril 2026
  */
+/*
+ * Limite le contexte Spring de test à la couche web utile ici.
+ * On teste le controller web réel et son comportement HTTP,
+ * sans démarrer toute l'application.
+ */
 @WebMvcTest(controllers = TypeProduitWebController.class)
+
+/*
+ * Indique à Spring quelle configuration minimale utiliser
+ * pour démarrer proprement ce test MockMvc.
+ * Cela évite d'aller chercher une configuration plus large
+ * qui ne serait pas utile ici.
+ */
 @ContextConfiguration(
 		classes = TypeProduitWebControllerMockMvcTest.MockMvcBootConfiguration.class)
+
+/*
+ * Active le groupe de profils test-web-jpa.
+ * Ici, cela garde une cohérence avec le mode WEB de test,
+ * même si le service métier est mocké dans cette classe.
+ */
 @ActiveProfiles({  "test-web-jpa" })
+
+/*
+ * Demande à Spring de reconstruire un contexte propre après chaque méthode
+ * afin d'éviter qu'un test ne pollue le suivant
+ * par l'état mémorisé du controller ou des mocks Spring.
+ */
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class TypeProduitWebControllerMockMvcTest {
 
@@ -119,9 +147,18 @@ public class TypeProduitWebControllerMockMvcTest {
 
 	// *************************** METHODES *******************************/
 
+	
+	
 	/**
 	 * <div>
 	 * <p>POST /typeproduit/creer sans body : le binding HTTP transmet {@code null}.</p>
+	 * <ul>
+	 * <li>le mapping POST /typeproduit/creer existe réellement ;</li>
+	 * <li>l'absence de body n'est pas rejetée par Spring MVC ;</li>
+	 * <li>le controller produit le message local
+	 * {@link TypeProduitIController#MESSAGE_CREER_VUE_NULL} ;</li>
+	 * <li>le service n'est jamais appelé.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -150,7 +187,16 @@ public class TypeProduitWebControllerMockMvcTest {
 
 	/**
 	 * <div>
-	 * <p>GET /typeproduit/rechercherTous : smoke test du mapping GET et du rendu JSON.</p>
+	 * <p>GET /typeproduit/rechercherTous : 
+	 * smoke test (test simple de bon fonctionnement HTTP) 
+	 * du mapping GET et du rendu JSON.</p>
+	 * <ul>
+	 * <li>test simple du mapping GET et du rendu JSON</li>
+	 * <li>le mapping GET /typeproduit/rechercherTous existe réellement ;</li>
+	 * <li>la liste JSON restituée correspond au DTO renvoyé par le service ;</li>
+	 * <li>le message du service reste ensuite accessible sur l'endpoint
+	 * {@code /typeproduit/message}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -190,7 +236,19 @@ public class TypeProduitWebControllerMockMvcTest {
 
 	/**
 	 * <div>
-	 * <p>PUT /typeproduit : smoke test du mapping PUT racine et du binding JSON.</p>
+	 * <p>PUT /typeproduit : 
+	 * smoke test (test simple de bon fonctionnement HTTP) 
+	 * du mapping PUT racine et du binding JSON.</p>
+	 * <ul>
+	 * <li>test simple du mapping PUT racine et de la lecture du JSON</li>
+	 * <li>le JSON d'entrée est bien désérialisé en
+	 * {@link TypeProduitDTO.InputDTO} ;</li>
+	 * <li>le service reçoit bien le libellé métier attendu ;</li>
+	 * <li>la réponse HTTP restitue correctement le
+	 * {@link TypeProduitDTO.OutputDTO} renvoyé par le service ;</li>
+	 * <li>le message du service reste accessible sur l'endpoint
+	 * {@code /typeproduit/message}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
@@ -242,7 +300,18 @@ public class TypeProduitWebControllerMockMvcTest {
 
 	/**
 	 * <div>
-	 * <p>DELETE /typeproduit : smoke test du mapping DELETE racine et du binding JSON.</p>
+	 * <p>DELETE /typeproduit : 
+	 * smoke test (test simple de bon fonctionnement HTTP) 
+	 * du mapping DELETE racine et du binding JSON.</p>
+	 * <ul>
+	 * <li>test simple du mapping DELETE racine et de la lecture du JSON</li>
+	 * <li>le JSON d'entrée est bien désérialisé en
+	 * {@link TypeProduitDTO.InputDTO} ;</li>
+	 * <li>le service est bien invoqué avec le bon DTO ;</li>
+	 * <li>la réponse HTTP reste vide, conformément au contrat observable ;</li>
+	 * <li>le message du service reste accessible sur l'endpoint
+	 * {@code /typeproduit/message}.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception

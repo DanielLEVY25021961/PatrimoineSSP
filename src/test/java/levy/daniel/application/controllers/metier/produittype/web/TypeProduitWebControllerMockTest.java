@@ -29,16 +29,15 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
  * <p style="font-weight:bold;">
  * CLASSE TypeProduitWebControllerMockTest.java :
  * </p>
- * 
+ *
  * <ul>
- * <li>Tests JUnit Mockito complets (avec tests "béton") du 
- * CONTROLLER ADAPTER WEB 
+ * <li>Tests JUnit Mockito complets du
+ * CONTROLLER ADAPTER WEB
  * {@link TypeProduitWebController}.</li>
  * <li>Vérifie l'implémentation des contrats du PORT
  * {@link TypeProduitIController} et le dialogue avec
  * {@link TypeProduitICuService}.</li>
- * <li>
- * Aucun profil Spring n'est activé dans cette classe,
+ * <li>Aucun profil Spring n'est activé dans cette classe,
  * car ce test Mockito ne démarre pas de contexte Spring :
  * le service est mocké à la main
  * et le controller est instancié directement.</li>

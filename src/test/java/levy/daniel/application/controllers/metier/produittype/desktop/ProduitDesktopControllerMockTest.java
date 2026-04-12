@@ -32,7 +32,7 @@ import levy.daniel.application.model.services.produittype.cu.ProduitICuService;
  * </p>
  * 
  * <ul>
- * <li>Tests JUnit Mockito complets (avec tests "béton") du 
+ * <li>Tests JUnit Mockito complets du 
  * CONTROLLER ADAPTER DESKTOP
  * {@link ProduitDesktopController}.</li>
  * <li>Vérifie l'implémentation des contrats du PORT

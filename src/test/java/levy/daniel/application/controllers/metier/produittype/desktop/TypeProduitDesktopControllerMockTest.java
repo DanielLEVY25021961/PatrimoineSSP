@@ -28,7 +28,7 @@ import levy.daniel.application.model.services.produittype.exceptionsservices.Exc
  * </p>
  * 
  * <ul>
- * <li>Tests JUnit Mockito complets (avec tests "béton") du
+ * <li>Tests JUnit Mockito complets du
  * CONTROLLER ADAPTER DESKTOP 
  * {@link TypeProduitDesktopController}.</li>
  * <li>Vérifie l'implémentation des contrats du PORT
