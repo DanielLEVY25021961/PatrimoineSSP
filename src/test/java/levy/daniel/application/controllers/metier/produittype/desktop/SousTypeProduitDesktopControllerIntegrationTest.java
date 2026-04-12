@@ -30,7 +30,6 @@ import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO.OutputDT
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.services.produittype.cu.SousTypeProduitICuService;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
-import levy.daniel.application.model.services.produittype.cu.impl.SousTypeProduitCuService;
 import levy.daniel.application.model.services.produittype.cu.impl.TypeProduitCuService;
 
 /**
@@ -54,8 +53,8 @@ import levy.daniel.application.model.services.produittype.cu.impl.TypeProduitCuS
  * <ul>
  * <li>le vrai bean CONTROLLER Desktop
  * {@link SousTypeProduitDesktopController},</li>
- * <li>les vrais SERVICES UC {@link TypeProduitCuService}
- * et {@link SousTypeProduitCuService} requis et
+ * <li>le vrai SERVICE UC {@link TypeProduitCuService}
+ * requis par la présente classe de test et
  * toute la chaîne réelle autour de SousTypeProduit,</li>
  * <li>et la vraie persistance JPA/H2 de test</li>
  * </ul>
@@ -156,11 +155,7 @@ public class SousTypeProduitDesktopControllerIntegrationTest {
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
-	/** SERVICE UC SousTypeProduit réel injecté par Spring. */
-	@Autowired
-	private SousTypeProduitICuService service;
-
-	/** SERVICE UC TypeProduit réel injecté par Spring. */
+	/** SERVICE UC TypeProduit (parent) réel injecté par Spring. */
 	@Autowired
 	private TypeProduitICuService typeProduitService;
 

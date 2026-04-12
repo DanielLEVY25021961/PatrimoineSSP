@@ -27,7 +27,6 @@ import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.OutputDTO;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
-import levy.daniel.application.model.services.produittype.cu.impl.SousTypeProduitCuService;
 import levy.daniel.application.model.services.produittype.cu.impl.TypeProduitCuService;
 
 /**
@@ -51,9 +50,8 @@ import levy.daniel.application.model.services.produittype.cu.impl.TypeProduitCuS
  * <ul>
  * <li>le vrai bean CONTROLLER Desktop
  * {@link TypeProduitDesktopController},</li>
- * <li>les vrais SERVICES UC {@link TypeProduitCuService}
- * et {@link SousTypeProduitCuService} requis et
- * toute la chaîne réelle autour de TypeProduit,</li>
+ * <li>le vrai SERVICE UC {@link TypeProduitCuService}
+ * requis et toute la chaîne réelle autour de TypeProduit,</li>
  * <li>et la vraie persistance JPA/H2 de test</li>
  * </ul>
  * pour tester le controller TypeProduit ;</li>
@@ -86,7 +84,7 @@ import levy.daniel.application.model.services.produittype.cu.impl.TypeProduitCuS
 /*
  * Active le groupe de profils test-desktop-jpa
  * afin d'obtenir le CONTROLLER Desktop réel,
- * les SERVICES UC réels
+ * le SERVICE UC réel requis
  * et la persistance JPA/H2 de test.
  */
 @ActiveProfiles({ "test-desktop-jpa" })
@@ -138,7 +136,11 @@ public class TypeProduitDesktopControllerIntegrationTest {
 
 	// **************************** BEANS *********************************/
 
-	/** Controller Desktop réel injecté par Spring. */
+	/**
+	 * Controller Desktop réel injecté par Spring.
+	 * Son injection prouve aussi la présence du SERVICE UC TypeProduit
+	 * requis dans le contexte Spring de test.
+	 */
 	@Autowired
 	private TypeProduitDesktopController controller;
 

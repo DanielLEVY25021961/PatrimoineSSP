@@ -63,7 +63,8 @@ import levy.daniel.application.model.services.produittype.cu.impl.TypeProduitCuS
  * <li>le vrai bean CONTROLLER Desktop 
  * {@link ProduitDesktopController},</li>
  * <li>les vrais SERVICES UC {@link TypeProduitCuService} 
- * et {@link SousTypeProduitCuService} requis et 
+ * et {@link SousTypeProduitCuService} 
+ * requis dans la présente classe de test et 
  * toute la chaîne réelle autour de Produit,</li>
  * <li>et la vraie persistance JPA/H2 de test</li> 
  * </ul>
