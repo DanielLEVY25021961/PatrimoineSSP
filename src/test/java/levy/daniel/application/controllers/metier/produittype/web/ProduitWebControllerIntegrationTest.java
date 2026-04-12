@@ -252,7 +252,7 @@ public class ProduitWebControllerIntegrationTest {
 
 	/**
 	 * <div> 
-	 * <p>SERVICE UC Produit réel injecté par Spring.</p>
+	 * <p>SERVICE UC TypeProduit réel injecté par Spring.</p>
 	 * <p>Utilisé pour instancier des objets dans le présent test.</p>
 	 * </div>
 	 */
@@ -287,7 +287,7 @@ public class ProduitWebControllerIntegrationTest {
 	 * <p style="font-weight:bold;">CONFIGURATION DE TEST SPRING.</p>
 	 * <ul>
 	 * <li>scan applicatif limité
-	 * (Services ProduitType + Persistance ProduitType),</li>
+	 * (Controllers ProduitType + Services ProduitType + Persistance ProduitType),</li>
 	 * <li>scan des entités JPA,</li>
 	 * <li>activation des repositories Spring Data JPA une seule fois.</li>
 	 * </ul>

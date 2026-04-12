@@ -84,7 +84,7 @@ import levy.daniel.application.model.services.produittype.cu.TypeProduitICuServi
 
 /*
  * Active le groupe de profils test-web-jpa
- * afin d'obtenir le CONTROLLER Desktop réel,
+ * afin d'obtenir le CONTROLLER Web réel,
  * le SERVICE UC réel requis
  * et la persistance JPA/H2 de test.
  */
