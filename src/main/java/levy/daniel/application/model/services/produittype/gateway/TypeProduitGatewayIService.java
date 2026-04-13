@@ -489,14 +489,18 @@ public interface TypeProduitGatewayIService {
 	 * retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
+	 * <li>Si scénario nominal : 
+	 * convertit une RequetePage neutre en Pageable Spring, 
+	 * récupère la page des Entities auprès du DAO, 
+	 * convertit la page d'Entities en page d'objets métier,
+	 * retourne un {@link ResultatPage} d'objets métier 
+	 * cohérent avec la requête (page, taille, total).</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_STOCKAGE}
 	 * + un message sûr dérivé de l'Exception (jamais {@code null}),
 	 * et propage l'Exception technique cause.</li>
-	 * <li>Retourne un {@link ResultatPage} cohérent avec la requête
-	 * (page, taille, total).</li>
 	 * </ul>
 	 * </div>
 	 *
