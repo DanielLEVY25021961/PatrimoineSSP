@@ -68,7 +68,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 )
 @DataJpaTest
-@ActiveProfiles("test")
+@ActiveProfiles({ "test-jpa" })
 @Import(ProduitGatewayJPAService.class)
 @ContextConfiguration(classes = ProduitGatewayJPAServiceIntegrationTest.ConfigTest.class)
 public class ProduitGatewayJPAServiceIntegrationTest {

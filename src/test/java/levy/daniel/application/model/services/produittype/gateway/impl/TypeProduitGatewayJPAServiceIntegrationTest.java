@@ -78,23 +78,23 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
     executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 )
 @DataJpaTest
-@ActiveProfiles(TypeProduitGatewayJPAServiceIntegrationTest.PROFILE_TEST)
+@ActiveProfiles({ "test-jpa" })
 @Import(TypeProduitGatewayJPAService.class)
 @ContextConfiguration(classes = TypeProduitGatewayJPAServiceIntegrationTest.ConfigTest.class)
 public class TypeProduitGatewayJPAServiceIntegrationTest {
 
     // *************************** CONSTANTES ******************************/
 
-    /** Profil Spring : "test". */
+    /** "test" */
     public static final String PROFILE_TEST = "test";
 
-    /** Script SQL truncate (classpath). */
+    /** "classpath:truncate-test.sql". */
     public static final String CLASSPATH_TRUNCATE_SQL = "classpath:truncate-test.sql";
 
-    /** Script SQL data (classpath). */
+    /** "classpath:data-test.sql" */
     public static final String CLASSPATH_DATA_SQL = "classpath:data-test.sql";
 
-    /** Qualifier Spring du service gateway. */
+    /** "TypeProduitGatewayJPAService" */
     public static final String QUALIFIER_SERVICE = "TypeProduitGatewayJPAService";
 
     /** Tag JUnit : tests de création. */

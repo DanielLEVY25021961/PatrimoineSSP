@@ -1,3 +1,6 @@
+/* ********************************************************************* */
+/* ********************* TEST MOCKITO GATEWAY JPA ********************** */
+/* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.gateway.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,15 +52,33 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  *
  * <div>
  * <p style="font-weight:bold;">
- * Test JUnit (Mockito) du Service Gateway
- * <code>TypeProduitGatewayJPAService</code>.
+ * Test JUnit (Mockito) du SERVICE GATEWAY JPA
+ * <code>{@link TypeProduitGatewayJPAService}</code>.
  * </p>
  *
  * <p>
- * Objectif : tester le comportement du gateway en isolation,
- * en mockant le {@link TypeProduitDaoJPA}.
+ * Objectif : tester le comportement du SERVICE GATEWAY JPA en isolation,
+ * en mockant le DAO JPA {@link TypeProduitDaoJPA}.
  * </p>
- *
+ * </div>
+ * 
+ * <div>
+ * <ul>
+ * <li>Tests JUnit Mockito complets du
+ * SERVICE GATEWAY JPA
+ * {@link TypeProduitGatewayJPAService}.</li>
+ * <li>Vérifie l'implémentation des contrats du PORT
+ * {@link TypeProduitGatewayIService} et le dialogue avec le DAO JPA
+ * {@link TypeProduitDaoJPA}.</li>
+ * <li>Aucun profil Spring n'est activé dans cette classe,
+ * car ce test Mockito ne démarre pas de contexte Spring :
+ * le DAO JPA est mocké à la main
+ * et le SERVICE GATEWAY JPA est instancié directement 
+ * dans la méthode init().</li>
+ * </ul>
+ * </div>
+ * 
+ * <div>
  * <p style="font-weight:bold;">COUVERTURE :</p>
  * <ul>
  * <li>Tous les cas nominaux et d'erreur des méthodes du PORT.</li>
@@ -73,7 +94,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 @ExtendWith(MockitoExtension.class)
 public class TypeProduitGatewayJPAServiceMockTest {
 
-    // *************************** CONSTANTES ******************************/
+    // ************************** CONSTANTES *****************************/
 	
 	/**
 	 * <div>
@@ -108,86 +129,130 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 */
 	public static final String APPLIQUER_MODIFS = "appliquerModifications";
 
-    /** Tag JUnit : tests de création. */
+    /**
+     * "servicesGateway-Creer"
+     */
     public static final String TAG_CREER = "servicesGateway-Creer";
-
-    /** Tag JUnit : tests de recherche. */
+    
+    /**
+     * "servicesGateway-Rechercher"
+     */
     public static final String TAG_RECHERCHER = "servicesGateway-Rechercher";
-
-    /** Tag JUnit : tests de recherche par objet métier. */
-    public static final String TAG_FINDBYOBJETMETIER = "servicesGateway-FindByObjetMetier";
-
-    /** Tag JUnit : tests de recherche rapide. */
-    public static final String TAG_RECHERCHER_RAPIDE = "servicesGateway-RechercherRapide";
-
-    /** Tag JUnit : tests de pagination. */
-    public static final String TAG_PAGINATION = "servicesGateway-Pagination";
-
-    /** Tag JUnit : tests d'update. */
+    
+    /**
+     * "servicesGateway-FindByObjetMetier"
+     */
+    public static final String TAG_FINDBYOBJETMETIER 
+    	= "servicesGateway-FindByObjetMetier";
+   
+    /**
+     * "servicesGateway-RechercherRapide"
+     */
+    public static final String TAG_RECHERCHER_RAPIDE 
+    	= "servicesGateway-RechercherRapide";
+    
+    /**
+     * "servicesGateway-Pagination"
+     */
+    public static final String TAG_PAGINATION 
+    	= "servicesGateway-Pagination";
+   
+    /**
+     * "servicesGateway-Update"
+     */
     public static final String TAG_UPDATE = "servicesGateway-Update";
-
-    /** Tag JUnit : tests de delete. */
+   
+    /**
+     * "servicesGateway-Delete"
+     */
     public static final String TAG_DELETE = "servicesGateway-Delete";
-
-    /** Tag JUnit : tests de count. */
+    
+    /**
+     * "servicesGateway-Count"
+     */
     public static final String TAG_COUNT = "servicesGateway-Count";
-
-    /** Tag JUnit : tests de tris. */
+   
+    /**
+     * "servicesGateway-Tris"
+     */
     public static final String TAG_TRIS = "servicesGateway-Tris";
+    
+    /**
+     * "servicesGateway-Dedoublonnage"
+     */
+    public static final String TAG_DEDOUBLONNAGE 
+    	= "servicesGateway-Dedoublonnage";
 
-    /** Tag JUnit : tests de dédoublonnage. */
-    public static final String TAG_DEDOUBLONNAGE = "servicesGateway-Dedoublonnage";
-
-    /** blank (espaces). */
+    /**
+     * "   "
+     */
     public static final String BLANK = "   ";
-
-    /** Libellé : "vêtement". */
+    
+    /**
+     * "vêtement"
+     */
     public static final String VETEMENT = "vêtement";
-
-    /** Libellé : "outillage". */
+    
+    /**
+     * "outillage"
+     */
     public static final String OUTILLAGE = "outillage";
-
-    /** Libellé : "camping". */
+   
+    /**
+     * "camping"
+     */
     public static final String CAMPING = "camping";
-
-    /** Recherche rapide : "me". */
+    
+    /**
+     * "me"
+     */
     public static final String RECHERCHE_ME = "me";
-
-    /** Message technique DAO : "boom". */
+   
+    /**
+     * "boom"
+     */
     public static final String MSG_BOOM = "boom";
-
-    /** Propriété de tri JPA : "typeProduit". */
+    
+    /**
+     * "typeProduit"
+     */
     public static final String PROP_TYPEPRODUIT = "typeProduit";
-
-    /** Propriété de tri JPA : "idTypeProduit". */
+    
+    /**
+     * "idTypeProduit"
+     */
     public static final String PROP_IDTYPEPRODUIT = "idTypeProduit";
 
-    /** ID : 1L. */
+    /** 1L */
     public static final Long ID_1 = Long.valueOf(1L);
 
-    /** ID : 2L. */
+    /** 2L */
     public static final Long ID_2 = Long.valueOf(2L);
 
-    /** ID : 3L. */
+    /** 3L */
     public static final Long ID_3 = Long.valueOf(3L);
 
-    /** ID : 4L. */
+    /** 4L */
     public static final Long ID_4 = Long.valueOf(4L);
 
-    /** ID inexistant : 999999L. */
+    /** 999_999L */
     public static final Long ID_INEXISTANT = Long.valueOf(999_999L);
 
-    /** Total elements : 10L. */
+    /** 10L */
     public static final long TOTAL_10 = 10L;
 
-    /** Total elements : 0L. */
+    /** 0L */
     public static final long TOTAL_0 = 0L;
 
-    /** Message attendu : "Erreur Technique lors du stockage : " (préfixe). */
+    /** 
+     * "Erreur Technique lors du stockage : " 
+     */
     public static final String MSG_PREFIX_ERREUR_TECH
         = TypeProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE;
 
-    /** Message attendu : "Erreur Technique - Le stockage a retourné null." */
+    /** 
+     * "Erreur Technique - Le stockage a retourné null." 
+     */
     public static final String MSG_ERREUR_TECH_KO_STOCKAGE
         = TypeProduitGatewayIService.ERREUR_TECHNIQUE_KO_STOCKAGE;
 
@@ -208,7 +273,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      */
     private TypeProduitGatewayJPAService service;
 
-    // ************************* CONSTRUCTEUR ******************************/
+    // ************************* CONSTRUCTEUR ****************************/
 
     /**
      * <div>
@@ -217,98 +282,35 @@ public class TypeProduitGatewayJPAServiceMockTest {
      */
     public TypeProduitGatewayJPAServiceMockTest() {
         super();
-    }
+    } // __________________________________________________________________
+    
+    
 
-    // ************************* METHODES **********************************/
+    // *************************** INIT **********************************/
 
     /**
      * <div>
-     * <p>Initialise le service avec un DAO mocké.</p>
+     * <p>Initialise le service GATEWAY avec un DAO mocké.</p>
      * </div>
      */
     @BeforeEach
     public void init() {
-        this.service = new TypeProduitGatewayJPAService(this.typeProduitDaoJPA);
-    }
+    	
+        this.service 
+        	= new TypeProduitGatewayJPAService(this.typeProduitDaoJPA);
+        
+    } // __________________________________________________________________
 
-    // ============================== OUTILS ===============================
+    
+    
+    // ************************* METHODES ********************************/
+    
+    
+    
+    // =============================== CREER ==============================
 
-    /**
-     * <div>
-     * <p>Fabrique un {@link TypeProduit} minimal.</p>
-     * </div>
-     *
-     * @param pLibelle : String
-     * @param pId : Long
-     * @return TypeProduit
-     */
-    private static TypeProduit fabriquerTypeProduit(
-            final String pLibelle,
-            final Long pId) {
-        return new TypeProduit(pId, pLibelle);
-    }
-
-    /**
-     * <div>
-     * <p>Fabrique un {@link TypeProduitJPA} minimal.</p>
-     * </div>
-     *
-     * @param pLibelle : String
-     * @param pId : Long
-     * @return TypeProduitJPA
-     */
-    private static TypeProduitJPA fabriquerTypeProduitJPA(
-            final String pLibelle,
-            final Long pId) {
-        return new TypeProduitJPA(pId, pLibelle);
-    }
-
-    /**
-     * <div>
-     * <p>Crée une page Spring à partir d'un contenu.</p>
-     * </div>
-     *
-     * @param pContenu : List&lt;TypeProduitJPA&gt;
-     * @param pPageNumber : int
-     * @param pPageSize : int
-     * @param pTotalElements : long
-     * @return Page&lt;TypeProduitJPA&gt;
-     */
-    private static Page<TypeProduitJPA> creerPage(
-            final List<TypeProduitJPA> pContenu,
-            final int pPageNumber,
-            final int pPageSize,
-            final long pTotalElements) {
-        final Pageable pageable = PageRequest.of(pPageNumber, pPageSize);
-        return new PageImpl<TypeProduitJPA>(pContenu, pageable, pTotalElements);
-    }
-
-    /**
-     * <div>
-     * <p>Appelle une méthode privée via reflection.</p>
-     * </div>
-     *
-     * @param pObject : Object
-     * @param pMethodName : String
-     * @param pParameterTypes : Class&lt;?&gt;[]
-     * @param pParameters : Object[]
-     * @return Object
-     * @throws Exception
-     */
-    private static Object invokePrivateMethod(
-            final Object pObject,
-            final String pMethodName,
-            final Class<?>[] pParameterTypes,
-            final Object... pParameters) throws Exception {
-
-        final Method method = pObject.getClass()
-                .getDeclaredMethod(pMethodName, pParameterTypes);
-        method.setAccessible(true); // NOPMD by danyl on 02/02/2026 16:36
-        return method.invoke(pObject, pParameters);
-    }
-
-    // =============================== CREER ===============================
-
+    
+    
     /**
      * <div>
      * <p>creer(null) : jette {@link ExceptionAppliParamNull}
@@ -320,6 +322,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
     @Test
     public void testCreerNull() {
+    	
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
@@ -340,7 +343,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(blank) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
     @Test
     public void testCreerBlank() {
+    	
         final TypeProduit metier = new TypeProduit(BLANK);
+        
         assertThatThrownBy(() -> this.service.creer(metier))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
@@ -360,6 +365,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(OK) : délègue save() au DAO et retourne l'objet métier persisté")
     @Test
     public void testCreerOK() throws Exception {
+    	
         final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         final ArgumentCaptor<TypeProduitJPA> captor = ArgumentCaptor.forClass(TypeProduitJPA.class);
@@ -392,6 +398,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testCreerDAORetourneNull() {
+    	
         final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenReturn(null);
 
@@ -415,7 +422,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("creer(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testCreerKOExceptionDAO() {
+    	
         final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
+        
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenThrow(new RuntimeException(MSG_BOOM));
 
         assertThatThrownBy(() -> this.service.creer(aCreer))
@@ -428,8 +437,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     
 
-    // ============================ RECHERCHER =============================
+    // ======================== RechercherTous ============================
 
+    
+    
     /**
      * <div>
      * <p>rechercherTous() : jette {@link ExceptionTechniqueGateway}
@@ -440,12 +451,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTous() : jette ExceptionTechniqueGateway si DAO retourne null")
     @Test
     public void testRechercherTousDAORetourneNull() {
+    	
         when(this.typeProduitDaoJPA.findAll()).thenReturn(null);
+        
         assertThatThrownBy(() -> this.service.rechercherTous())
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).findAll();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -457,11 +473,16 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTous() : retourne une liste vide si le stockage est vide")
     @Test
     public void testRechercherTousVide() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findAll()).thenReturn(Collections.emptyList());
         final List<TypeProduit> resultat = this.service.rechercherTous();
+        
         assertThat(resultat).isNotNull().isEmpty();
         verify(this.typeProduitDaoJPA).findAll();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -473,6 +494,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTous() : filtre les null, trie et dédoublonne")
     @Test
     public void testRechercherTousOKTriDedoublonnage() throws Exception {
+    	
         final List<TypeProduitJPA> contenu = Arrays.asList(
                 fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
                 null,
@@ -488,153 +510,8 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .extracting(TypeProduit::getTypeProduit)
             .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
         verify(this.typeProduitDaoJPA).findAll();
-    }
-
-    // ============================ PAGINATION =============================
-
-    /**
-     * <div>
-     * <p>rechercherTousParPage(null) : applique la pagination par défaut
-     * et délègue au DAO.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(null) : applique la pagination par défaut")
-    @Test
-    public void testRechercherTousParPageNull() throws Exception {
-        final List<TypeProduitJPA> contenuJPA = Arrays.asList(
-                fabriquerTypeProduitJPA(VETEMENT, ID_1),
-                fabriquerTypeProduitJPA(OUTILLAGE, ID_2));
-
-        final Page<TypeProduitJPA> page = creerPage(
-                contenuJPA,
-                RequetePage.PAGE_DEFAUT,
-                RequetePage.TAILLE_DEFAUT,
-                2L);
-
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
-
-        final ResultatPage<TypeProduit> resultat = this.service.rechercherTousParPage(null);
-
-        verify(this.typeProduitDaoJPA).findAll(captor.capture());
-        final Pageable pageable = captor.getValue();
-        assertThat(pageable).isNotNull();
-        assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
-        assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
-        assertThat(pageable.getSort().isSorted()).isFalse();
-
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
-        assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
-        assertThat(resultat.getTotalElements()).isEqualTo(2L);
-        assertThat(resultat.getContent())
-            .extracting(TypeProduit::getTypeProduit)
-            .containsExactly(VETEMENT, OUTILLAGE);
-    }
-
-    /**
-     * <div>
-     * <p>rechercherTousParPage(DAO retourne null) :
-     * jette {@link ExceptionTechniqueGateway} KO_STOCKAGE.</p>
-     * </div>
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
-    @Test
-    public void testRechercherTousParPageDAORetourneNull() {
-        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(null);
-        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-        verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
-    }
-
-    /**
-     * <div>
-     * <p>rechercherTousParPage(content null) :
-     * jette {@link ExceptionTechniqueGateway} KO_STOCKAGE.</p>
-     * </div>
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(content null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
-    @Test
-    public void testRechercherTousParPageContentNull() {
-        final Page<TypeProduitJPA> pageMock = org.mockito.Mockito.mock(Page.class);
-        when(pageMock.getContent()).thenReturn(null);
-        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(pageMock);
-
-        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-        verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
-    }
-
-    /**
-     * <div>
-     * <p>rechercherTousParPage(avec tri) : convertit TriSpec en Sort Spring.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(avec tri) : convertit TriSpec en Sort Spring")
-    @Test
-    public void testRechercherTousParPageAvecTri() throws Exception {
-        final List<TriSpec> tris = new ArrayList<TriSpec>();
-        tris.add(null);
-        tris.add(new TriSpec(BLANK, DirectionTri.ASC));
-        tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
-        tris.add(new TriSpec(PROP_IDTYPEPRODUIT, DirectionTri.DESC));
-
-        final RequetePage requete = new RequetePage(1, 3, tris);
-        final Page<TypeProduitJPA> page = creerPage(
-                Collections.singletonList(fabriquerTypeProduitJPA(CAMPING, ID_4)),
-                1,
-                3,
-                TOTAL_10);
-
-        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
-
-        final ResultatPage<TypeProduit> resultat = this.service.rechercherTousParPage(requete);
-
-        verify(this.typeProduitDaoJPA).findAll(captor.capture());
-        final Pageable pageable = captor.getValue();
-        assertThat(pageable.getPageNumber()).isEqualTo(1);
-        assertThat(pageable.getPageSize()).isEqualTo(3);
-
-        final Sort sort = pageable.getSort();
-        assertThat(sort.isSorted()).isTrue();
-        assertThat(sort.getOrderFor(PROP_TYPEPRODUIT)).isNotNull();
-        assertThat(sort.getOrderFor(PROP_TYPEPRODUIT).getDirection()).isEqualTo(Sort.Direction.ASC);
-        assertThat(sort.getOrderFor(PROP_IDTYPEPRODUIT)).isNotNull();
-        assertThat(sort.getOrderFor(PROP_IDTYPEPRODUIT).getDirection()).isEqualTo(Sort.Direction.DESC);
-
-        assertThat(resultat.getContent()).hasSize(1);
-        assertThat(resultat.getContent().get(0).getTypeProduit()).isEqualTo(CAMPING);
         
-    } // _________________________________________________________________
-
-    
-    
-    /**
-     * <div>
-     * <p>rechercherTousParPage(KO DAO) : wrappe en {@link ExceptionTechniqueGateway}.</p>
-     * </div>
-     */
-    @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
-    @Test
-    public void testRechercherTousParPageExceptionDAO() {
-        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenThrow(new RuntimeException(MSG_BOOM));
-        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(MSG_BOOM);
-        verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
-        
-    } // _________________________________________________________________
+    } // __________________________________________________________________
 
     
     
@@ -671,6 +548,198 @@ public class TypeProduitGatewayJPAServiceMockTest {
         verify(this.typeProduitDaoJPA).findAll();
         
     } // _________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>rechercherTous(KO DAO) :
+     * wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testRechercherTousExceptionDAO() {
+
+        when(this.typeProduitDaoJPA.findAll())
+            .thenThrow(new RuntimeException(MSG_BOOM));
+
+        assertThatThrownBy(() -> this.service.rechercherTous())
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(MSG_BOOM);
+
+        verify(this.typeProduitDaoJPA).findAll();
+        
+    } // _________________________________________________________________
+
+    
+    
+    // ================== rechercherTousParPage ===========================
+    
+    
+
+    /**
+     * <div>
+     * <p>rechercherTousParPage(null) : applique la pagination par défaut
+     * et délègue au DAO.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(null) : applique la pagination par défaut")
+    @Test
+    public void testRechercherTousParPageNull() throws Exception {
+    	
+        final List<TypeProduitJPA> contenuJPA = Arrays.asList(
+                fabriquerTypeProduitJPA(VETEMENT, ID_1),
+                fabriquerTypeProduitJPA(OUTILLAGE, ID_2));
+
+        final Page<TypeProduitJPA> page = creerPage(
+                contenuJPA,
+                RequetePage.PAGE_DEFAUT,
+                RequetePage.TAILLE_DEFAUT,
+                2L);
+
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+
+        final ResultatPage<TypeProduit> resultat = this.service.rechercherTousParPage(null);
+
+        verify(this.typeProduitDaoJPA).findAll(captor.capture());
+        final Pageable pageable = captor.getValue();
+        assertThat(pageable).isNotNull();
+        assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(pageable.getSort().isSorted()).isFalse();
+
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(resultat.getTotalElements()).isEqualTo(2L);
+        assertThat(resultat.getContent())
+            .extracting(TypeProduit::getTypeProduit)
+            .containsExactly(VETEMENT, OUTILLAGE);
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>rechercherTousParPage(DAO retourne null) :
+     * jette {@link ExceptionTechniqueGateway} KO_STOCKAGE.</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testRechercherTousParPageDAORetourneNull() {
+    	
+        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(null);
+        
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+        verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>rechercherTousParPage(content null) :
+     * jette {@link ExceptionTechniqueGateway} KO_STOCKAGE.</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(content null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testRechercherTousParPageContentNull() {
+    	
+        final Page<TypeProduitJPA> pageMock = org.mockito.Mockito.mock(Page.class);
+        when(pageMock.getContent()).thenReturn(null);
+        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(pageMock);
+
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+        verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>rechercherTousParPage(avec tri) : convertit TriSpec en Sort Spring.</p>
+     * </div>
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(avec tri) : convertit TriSpec en Sort Spring")
+    @Test
+    public void testRechercherTousParPageAvecTri() throws Exception {
+    	
+        final List<TriSpec> tris = new ArrayList<TriSpec>();
+        tris.add(null);
+        tris.add(new TriSpec(BLANK, DirectionTri.ASC));
+        tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
+        tris.add(new TriSpec(PROP_IDTYPEPRODUIT, DirectionTri.DESC));
+
+        final RequetePage requete = new RequetePage(1, 3, tris);
+        final Page<TypeProduitJPA> page = creerPage(
+                Collections.singletonList(fabriquerTypeProduitJPA(CAMPING, ID_4)),
+                1,
+                3,
+                TOTAL_10);
+
+        final ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        
+        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+
+        final ResultatPage<TypeProduit> resultat = this.service.rechercherTousParPage(requete);
+
+        verify(this.typeProduitDaoJPA).findAll(captor.capture());
+        final Pageable pageable = captor.getValue();
+        assertThat(pageable.getPageNumber()).isEqualTo(1);
+        assertThat(pageable.getPageSize()).isEqualTo(3);
+
+        final Sort sort = pageable.getSort();
+        assertThat(sort.isSorted()).isTrue();
+        assertThat(sort.getOrderFor(PROP_TYPEPRODUIT)).isNotNull();
+        assertThat(sort.getOrderFor(PROP_TYPEPRODUIT).getDirection()).isEqualTo(Sort.Direction.ASC);
+        assertThat(sort.getOrderFor(PROP_IDTYPEPRODUIT)).isNotNull();
+        assertThat(sort.getOrderFor(PROP_IDTYPEPRODUIT).getDirection()).isEqualTo(Sort.Direction.DESC);
+
+        assertThat(resultat.getContent()).hasSize(1);
+        assertThat(resultat.getContent().get(0).getTypeProduit()).isEqualTo(CAMPING);
+        
+    } // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>rechercherTousParPage(KO DAO) : wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
+    @Test
+    public void testRechercherTousParPageExceptionDAO() {
+    	
+        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenThrow(new RuntimeException(MSG_BOOM));
+        
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(MSG_BOOM);
+        verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
+        
+    } // __________________________________________________________________
 
     
     
@@ -706,38 +775,14 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .extracting(TypeProduit::getTypeProduit)
             .containsExactly(VETEMENT, OUTILLAGE);
         
-    } // _________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
-     * <p>rechercherTous(KO DAO) :
-     * wrappe en {@link ExceptionTechniqueGateway}.</p>
-     * </div>
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
-    @Test
-    public void testRechercherTousExceptionDAO() {
+    } // __________________________________________________________________
 
-        when(this.typeProduitDaoJPA.findAll())
-            .thenThrow(new RuntimeException(MSG_BOOM));
 
-        assertThatThrownBy(() -> this.service.rechercherTous())
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(MSG_BOOM);
-
-        verify(this.typeProduitDaoJPA).findAll();
         
-    } // _________________________________________________________________
-
-
-    
-    
     // ========================= FINDBYOBJETMETIER =========================
 
+    
+    
     /**
      * <div>
      * <p>findByObjetMetier(null) : jette {@link ExceptionAppliParamNull}
@@ -749,11 +794,16 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByObjetMetier(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
     @Test
     public void testFindByObjetMetierNull() {
+    	
         assertThatThrownBy(() -> this.service.findByObjetMetier(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
+        
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -766,12 +816,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByObjetMetier(libellé null) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
     @Test
     public void testFindByObjetMetierLibelleNull() {
+    	
         final TypeProduit metier = fabriquerTypeProduit(null, null);
+        
         assertThatThrownBy(() -> this.service.findByObjetMetier(metier))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -784,12 +839,18 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByObjetMetier(libellé blank) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
     @Test
     public void testFindByObjetMetierLibelleBlank() {
+    	
         final TypeProduit metier = fabriquerTypeProduit(BLANK, null);
+        
         assertThatThrownBy(() -> this.service.findByObjetMetier(metier))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
+        
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -802,12 +863,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByObjetMetier(non trouvé) : délègue DAO et retourne null")
     @Test
     public void testFindByObjetMetierNonTrouve() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT)).thenReturn(null);
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
         final TypeProduit resultat = this.service.findByObjetMetier(metier);
         assertThat(resultat).isNull();
         verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -820,15 +886,20 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByObjetMetier(trouvé) : délègue DAO et retourne l'objet métier converti")
     @Test
     public void testFindByObjetMetierTrouve() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
             .thenReturn(fabriquerTypeProduitJPA(VETEMENT, ID_1));
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
         final TypeProduit resultat = this.service.findByObjetMetier(metier);
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
         verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -839,18 +910,25 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByObjetMetier(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testFindByObjetMetierExceptionDAO() {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
             .thenThrow(new RuntimeException(MSG_BOOM));
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
         assertThatThrownBy(() -> this.service.findByObjetMetier(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
-    // ============================ FINDBYLIBELLE ===========================
+    // ========================== findByLibelle ===========================
 
+    
+    
     /**
      * <div>
      * <p>findByLibelle(blank) : jette {@link ExceptionAppliLibelleBlank}.</p>
@@ -860,11 +938,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelle(blank) : jette ExceptionAppliLibelleBlank")
     @Test
     public void testFindByLibelleBlank() {
+    	
         assertThatThrownBy(() -> this.service.findByLibelle(BLANK))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -876,11 +958,16 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelle(non trouvé) : retourne null")
     @Test
     public void testFindByLibelleNonTrouve() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT)).thenReturn(null);
+        
         final TypeProduit resultat = this.service.findByLibelle(VETEMENT);
         assertThat(resultat).isNull();
         verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -892,14 +979,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelle(trouvé) : retourne l'objet métier converti")
     @Test
     public void testFindByLibelleTrouve() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
             .thenReturn(fabriquerTypeProduitJPA(VETEMENT, ID_1));
+        
         final TypeProduit resultat = this.service.findByLibelle(VETEMENT);
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
         verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -910,16 +1002,23 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelle(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testFindByLibelleExceptionDAO() {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
             .thenThrow(new RuntimeException(MSG_BOOM));
+        
         assertThatThrownBy(() -> this.service.findByLibelle(VETEMENT))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
-    // ========================= FINDBYLIBELLERAPIDE =======================
+    // ======================== findByLibelleRapide =======================
+    
+    
 
     /**
      * <div>
@@ -930,11 +1029,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(null) : jette ExceptionAppliParamNull")
     @Test
     public void testFindByLibelleRapideNull() {
+    	
         assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -946,15 +1049,20 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(blank) : délègue findAll()")
     @Test
     public void testFindByLibelleRapideBlankDelegueFindAll() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findAll()).thenReturn(Arrays.asList(
                 fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
                 fabriquerTypeProduitJPA(VETEMENT, ID_1)));
+        
         final List<TypeProduit> resultat = this.service.findByLibelleRapide(BLANK);
         assertThat(resultat).isNotNull().hasSize(2);
         verify(this.typeProduitDaoJPA).findAll();
         verify(this.typeProduitDaoJPA, never())
             .findByTypeProduitContainingIgnoreCase(any(String.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -966,14 +1074,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(non blank) : délègue containing()")
     @Test
     public void testFindByLibelleRapideNonBlankDelegueContaining() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
             .thenReturn(Collections.singletonList(fabriquerTypeProduitJPA(VETEMENT, ID_1)));
+        
         final List<TypeProduit> resultat = this.service.findByLibelleRapide(RECHERCHE_ME);
         assertThat(resultat).isNotNull().hasSize(1);
         assertThat(resultat.get(0).getTypeProduit()).isEqualTo(VETEMENT);
         verify(this.typeProduitDaoJPA).findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
         verify(this.typeProduitDaoJPA, never()).findAll();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -984,13 +1097,18 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByLibelleRapideDAORetourneNull() {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
             .thenReturn(null);
+        
         assertThatThrownBy(() -> this.service.findByLibelleRapide(RECHERCHE_ME))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1002,14 +1120,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(blank + DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByLibelleRapideBlankDAORetourneNull() {
+    	
         when(this.typeProduitDaoJPA.findAll()).thenReturn(null);
+        
         assertThatThrownBy(() -> this.service.findByLibelleRapide(BLANK))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).findAll();
         verify(this.typeProduitDaoJPA, never())
             .findByTypeProduitContainingIgnoreCase(any(String.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1020,15 +1143,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testFindByLibelleRapideExceptionDAO() {
+    	
         when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
             .thenThrow(new RuntimeException(MSG_BOOM));
+        
         assertThatThrownBy(() -> this.service.findByLibelleRapide(RECHERCHE_ME))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
         
-    } // ________________________________________________________________
+    } // __________________________________________________________________
     
     
 
@@ -1042,20 +1167,23 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(dédoublonnage) : retourne une liste sans doublons de libellés")
     @Test
     public void testFindByLibelleRapideDedoublonnage() throws Exception {
+    	
         final List<TypeProduitJPA> entities = Arrays.asList(
             fabriquerTypeProduitJPA(VETEMENT, ID_1),
             fabriquerTypeProduitJPA(VETEMENT, ID_3), // Doublon de libellé
             fabriquerTypeProduitJPA(OUTILLAGE, ID_2)
         );
+        
         when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
             .thenReturn(entities);
+        
         final List<TypeProduit> resultat = this.service.findByLibelleRapide(RECHERCHE_ME);
         assertThat(resultat).hasSize(2); // Vêtement + Outillage (dédoublonnage appliqué)
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
             .containsExactlyInAnyOrder(VETEMENT, OUTILLAGE);
         
-    } // ________________________________________________________________
+    } // __________________________________________________________________
     
     
     
@@ -1088,12 +1216,14 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .extracting(TypeProduit::getTypeProduit)
             .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
         
-    } // ________________________________________________________________
+    } // __________________________________________________________________
 
 
     
-    // ============================== FINDBYID ==============================
+    // ============================ findById ==============================
 
+    
+    
     /**
      * <div>
      * <p>findById(null) : jette {@link ExceptionAppliParamNull}.</p>
@@ -1103,11 +1233,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findById(null) : jette ExceptionAppliParamNull")
     @Test
     public void testFindByIdNull() {
+    	
         assertThatThrownBy(() -> this.service.findById(null)
             ).isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1119,12 +1253,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findById(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByIdDAORetourneNull() {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
+        
         assertThatThrownBy(() -> this.service.findById(ID_1))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).findById(ID_1);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1136,11 +1275,16 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findById(non trouvé) : retourne null")
     @Test
     public void testFindByIdNonTrouve() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
+        
         final TypeProduit resultat = this.service.findById(ID_1);
         assertThat(resultat).isNull();
         verify(this.typeProduitDaoJPA).findById(ID_1);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1152,14 +1296,20 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findById(trouvé) : retourne l'objet métier converti")
     @Test
     public void testFindByIdTrouve() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1))
             .thenReturn(Optional.of(fabriquerTypeProduitJPA(VETEMENT, ID_1)));
+        
         final TypeProduit resultat = this.service.findById(ID_1);
+        
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
         verify(this.typeProduitDaoJPA).findById(ID_1);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1171,11 +1321,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findById(ID inexistant) : retourne null")
     @Test
     public void testFindByIdInexistant() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findById(ID_INEXISTANT)).thenReturn(Optional.empty());
+        
         final TypeProduit resultat = this.service.findById(ID_INEXISTANT);
+        
         assertThat(resultat).isNull();
         verify(this.typeProduitDaoJPA).findById(ID_INEXISTANT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1186,16 +1342,23 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findById(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testFindByIdExceptionDAO() {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1))
             .thenThrow(new RuntimeException(MSG_BOOM));
+        
         assertThatThrownBy(() -> this.service.findById(ID_1))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findById(ID_1);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
-    // =============================== UPDATE ===============================
+    // ============================= update ===============================
+    
+    
 
     /**
      * <div>
@@ -1206,11 +1369,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(null) : jette ExceptionAppliParamNull")
     @Test
     public void testUpdateNull() {
+    	
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1221,12 +1388,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(blank) : jette ExceptionAppliLibelleBlank")
     @Test
     public void testUpdateBlank() {
+    	
         final TypeProduit metier = fabriquerTypeProduit(BLANK, ID_1);
+        
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1239,12 +1411,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(ID null) : jette ExceptionAppliParamNonPersistent")
     @Test
     public void testUpdateIdNull() {
+    	
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+        
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT + VETEMENT);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1256,14 +1433,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(findById retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testUpdateFindByIdDAORetourneNull() {
+    	
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1274,16 +1456,22 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(KO DAO sur findById) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testUpdateExceptionDAOFindById() {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1))
             .thenThrow(new RuntimeException(MSG_BOOM));
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+        
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1295,13 +1483,20 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(entity inexistante) : retourne null")
     @Test
     public void testUpdateEntityInexistante() throws Exception {
+    	
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
+        
         final TypeProduit resultat = this.service.update(metier);
+        
         assertThat(resultat).isNull();
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1313,16 +1508,23 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(aucune modification) : ne déclenche pas de save()")
     @Test
     public void testUpdateAucuneModification() throws Exception {
+    	
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
         final TypeProduit resultat = this.service.update(metier);
+        
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1334,18 +1536,27 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(modification) : sauvegarde via save() et retourne modifié")
     @Test
     public void testUpdateAvecModification() throws Exception {
+    	
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+        
         final TypeProduitJPA modifiee = fabriquerTypeProduitJPA(CAMPING, ID_1);
+        
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenReturn(modifiee);
+        
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
         final TypeProduit resultat = this.service.update(metier);
+        
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(CAMPING);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1357,17 +1568,26 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(modification de casse) : préserve la casse du nouveau libellé")
     @Test
     public void testUpdateModificationCasse() throws Exception {
+    	
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+        
         final String nouveauLibelle = VETEMENT.toUpperCase(Locale.getDefault());
         final TypeProduitJPA modifiee = fabriquerTypeProduitJPA(nouveauLibelle, ID_1);
+        
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenReturn(modifiee);
+        
         final TypeProduit metier = fabriquerTypeProduit(nouveauLibelle, ID_1);
         final TypeProduit resultat = this.service.update(metier);
+        
         assertThat(resultat).isNotNull();
         assertThat(resultat.getTypeProduit()).isEqualTo(nouveauLibelle); // Casse préservée
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1378,16 +1598,23 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(DAO save retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testUpdateSauvegardeNull() {
+    	
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenReturn(null);
+        
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
+        
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1398,19 +1625,28 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("update(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testUpdateExceptionDAO() {
+    	
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenThrow(new RuntimeException(MSG_BOOM));
+        
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
+        
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
-    // =============================== DELETE ===============================
+    // ============================= delete ===============================
+    
+    
 
     /**
      * <div>
@@ -1421,11 +1657,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(null) : jette ExceptionAppliParamNull")
     @Test
     public void testDeleteNull() {
+    	
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1437,12 +1677,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(ID null) : jette ExceptionAppliParamNonPersistent")
     @Test
     public void testDeleteIdNull() {
+    	
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+        
         assertThatThrownBy(() -> this.service.delete(metier))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL);
         verifyNoInteractions(this.typeProduitDaoJPA);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1454,14 +1699,20 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(findById retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testDeleteFindByIdDAORetourneNull() {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+        
         assertThatThrownBy(() -> this.service.delete(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1472,16 +1723,22 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(KO DAO sur findById) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testDeleteExceptionDAOFindById() {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1))
             .thenThrow(new RuntimeException(MSG_BOOM));
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+        
         assertThatThrownBy(() -> this.service.delete(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1493,12 +1750,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(entity inexistante) : ne fait rien")
     @Test
     public void testDeleteEntityInexistante() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+        
         this.service.delete(metier);
+        
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1510,12 +1774,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(ID inexistant) : ne fait rien et ne lève pas d'exception")
     @Test
     public void testDeleteIdInexistant() throws Exception {
+    	
         when(this.typeProduitDaoJPA.findById(ID_INEXISTANT)).thenReturn(Optional.empty());
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_INEXISTANT);
+        
         this.service.delete(metier); // Pas d'exception attendue
+        
         verify(this.typeProduitDaoJPA).findById(ID_INEXISTANT);
         verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1527,13 +1798,20 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(OK) : délègue delete() au DAO")
     @Test
     public void testDeleteOK() throws Exception {
+    	
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
         this.service.delete(metier);
+        
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA).delete(persistee);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1544,20 +1822,30 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("delete(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testDeleteExceptionDAO() {
+    	
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+        
         org.mockito.Mockito.doThrow(new RuntimeException(MSG_BOOM))
             .when(this.typeProduitDaoJPA).delete(any(TypeProduitJPA.class));
+        
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+        
         assertThatThrownBy(() -> this.service.delete(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA).delete(persistee);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
-    // ================================ COUNT ===============================
+    // ============================== Count ===============================
+    
+    
 
     /**
      * <div>
@@ -1569,11 +1857,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("count() : délègue count() au DAO et retourne sa valeur")
     @Test
     public void testCount() throws Exception {
+    	
         when(this.typeProduitDaoJPA.count()).thenReturn(TOTAL_10);
+        
         final long resultat = this.service.count();
+        
         assertThat(resultat).isEqualTo(TOTAL_10);
         verify(this.typeProduitDaoJPA).count();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1585,10 +1879,14 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("count() : retourne 0 si le stockage est vide")
     @Test
     public void testCountZero() throws Exception {
+    	
         when(this.typeProduitDaoJPA.count()).thenReturn(TOTAL_0);
+        
         final long resultat = this.service.count();
+        
         assertThat(resultat).isEqualTo(TOTAL_0);
         verify(this.typeProduitDaoJPA).count();
+        
     } // _________________________________________________________________
     
     
@@ -1602,12 +1900,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("count(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
     @Test
     public void testCountExceptionDAO() {
+    	
         when(this.typeProduitDaoJPA.count()).thenThrow(new RuntimeException(MSG_BOOM));
+        
         assertThatThrownBy(() -> this.service.count())
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
         verify(this.typeProduitDaoJPA).count();
+        
     } // _________________________________________________________________
     
     
@@ -1629,14 +1930,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
         final long resultat = this.service.count();
 
         assertThat(resultat).isEqualTo(-1L);
-
         verify(this.typeProduitDaoJPA).count();
         
     } // _________________________________________________________________
     
 
 
-    // ================================ TRIS ===============================
+    // ============================== TRIS ================================
+    
+    
 
     /**
      * <div>
@@ -1647,17 +1949,22 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("convertirRequetePageEnPageable(null) : utilise une requête par défaut")
     @Test
     public void testConvertirRequetePageEnPageableNull() throws Exception {
+    	
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
                 new Class<?>[]{RequetePage.class},
                 new Object[]{null});
+        
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
         assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
         assertThat(pageable.getSort().isUnsorted()).isTrue();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1668,18 +1975,24 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("convertirRequetePageEnPageable(tris null) : retourne un Pageable non trié")
     @Test
     public void testConvertirRequetePageEnPageableTrisNull() throws Exception {
+    	
         final RequetePage requete = new RequetePage(1, 5, null);
+        
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
                 new Class<?>[]{RequetePage.class},
                 new Object[]{requete});
+        
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
         assertThat(pageable.getSort().isUnsorted()).isTrue();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1690,18 +2003,24 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("convertirRequetePageEnPageable(tris vides) : retourne un Pageable non trié")
     @Test
     public void testConvertirRequetePageEnPageableTrisVides() throws Exception {
+    	
         final RequetePage requete = new RequetePage(1, 5, Collections.emptyList());
+        
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
                 new Class<?>[]{RequetePage.class},
                 new Object[]{requete});
+        
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
         assertThat(pageable.getSort().isUnsorted()).isTrue();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1712,16 +2031,21 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("convertirRequetePageEnPageable(tris valides) : convertit en Sort Spring")
     @Test
     public void testConvertirRequetePageEnPageableTrisValides() throws Exception {
+    	
         final List<TriSpec> tris = new ArrayList<TriSpec>();
+        
         tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
         tris.add(new TriSpec(PROP_IDTYPEPRODUIT, DirectionTri.DESC));
+        
         final RequetePage requete = new RequetePage(1, 5, tris);
+        
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
                 new Class<?>[]{RequetePage.class},
                 new Object[]{requete});
+        
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
@@ -1732,7 +2056,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(pageable.getSort().getOrderFor(PROP_IDTYPEPRODUIT)).isNotNull();
         assertThat(pageable.getSort().getOrderFor(PROP_IDTYPEPRODUIT).getDirection())
             .isEqualTo(Sort.Direction.DESC);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1743,17 +2070,22 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("convertirRequetePageEnPageable(tris invalides) : ignore les tris invalides")
     @Test
     public void testConvertirRequetePageEnPageableTrisInvalides() throws Exception {
+    	
         final List<TriSpec> tris = new ArrayList<TriSpec>();
+        
         tris.add(null);
         tris.add(new TriSpec(BLANK, DirectionTri.ASC));
         tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
+        
         final RequetePage requete = new RequetePage(1, 5, tris);
+        
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
                 new Class<?>[]{RequetePage.class},
                 new Object[]{requete});
+        
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
@@ -1761,10 +2093,15 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(pageable.getSort().getOrderFor(PROP_TYPEPRODUIT)).isNotNull();
         assertThat(pageable.getSort().getOrderFor(PROP_TYPEPRODUIT).getDirection())
             .isEqualTo(Sort.Direction.ASC);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     // ========================= DEDOUBLONNAGE =============================
 
+    
+    
     /**
      * <div>
      * <p>filtrerTrierDedoublonner(null) : retourne une liste vide.</p>
@@ -1774,14 +2111,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("filtrerTrierDedoublonner(null) : retourne une liste vide")
     @Test
     public void testFiltrerTrierDedoublonnerNull() throws Exception {
+    	
         @SuppressWarnings(UNCHECKED)
         final List<TypeProduit> resultat = (List<TypeProduit>) invokePrivateMethod(
                 this.service,
                 FILTRERTRIER,
                 new Class<?>[]{List.class},
                 new Object[]{null});
+        
         assertThat(resultat).isNotNull().isEmpty();
-    }
+        
+    } // __________________________________________________________________
+    
+    
     
     /**
      * <div>
@@ -1792,14 +2134,19 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("filtrerTrierDedoublonner(vide) : retourne une liste vide")
     @Test
     public void testFiltrerTrierDedoublonnerVide() throws Exception {
+    	
         @SuppressWarnings(UNCHECKED)
         final List<TypeProduit> resultat = (List<TypeProduit>) invokePrivateMethod(
                 this.service,
                 FILTRERTRIER,
                 new Class<?>[]{List.class},
                 new Object[]{Collections.emptyList()});
+        
         assertThat(resultat).isNotNull().isEmpty();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1810,6 +2157,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("filtrerTrierDedoublonner(avec nulls) : filtre les nulls")
     @Test
     public void testFiltrerTrierDedoublonnerAvecNulls() throws Exception {
+    	
         final List<TypeProduitJPA> entities = Arrays.asList(
             null,
             fabriquerTypeProduitJPA(VETEMENT, ID_1),
@@ -1827,7 +2175,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
             .containsExactly(OUTILLAGE, VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1838,6 +2189,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("filtrerTrierDedoublonner(case-insensitive) : dédoublonne sans tenir compte de la casse")
     @Test
     public void testFiltrerTrierDedoublonnerCaseInsensitive() throws Exception {
+    	
         final List<TypeProduitJPA> entities = Arrays.asList(
             fabriquerTypeProduitJPA("VÊTEMENT", ID_1),
             fabriquerTypeProduitJPA("vêtement", ID_2), // Doublon (case-insensitive)
@@ -1854,7 +2206,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
             .containsExactlyInAnyOrder("VÊTEMENT", "OUTILLAGE");
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1865,6 +2220,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("filtrerTrierDedoublonner(tri) : trie par libellé (case-insensitive)")
     @Test
     public void testFiltrerTrierDedoublonnerTri() throws Exception {
+    	
         final List<TypeProduitJPA> entities = Arrays.asList(
             fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
             fabriquerTypeProduitJPA(VETEMENT, ID_1),
@@ -1881,7 +2237,8 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
             .containsExactly(CAMPING, OUTILLAGE, VETEMENT); // Tri alphabétique
-    }
+        
+    } // __________________________________________________________________
 
 
     
@@ -1895,6 +2252,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("appliquerModifications() : retourne false si un paramètre est null")
     @Test
     public void testAppliquerModificationsAvecNull() throws Exception {
+    	
         final TypeProduitJPA entity = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
 
@@ -1912,7 +2270,8 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
         assertThat(resultatNullPersistant).isFalse();
         assertThat(resultatNullMetier).isFalse();
-    }
+        
+    } // __________________________________________________________________
 
     
     
@@ -1926,6 +2285,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("appliquerModifications() : retourne false si les libellés sont identiques")
     @Test
     public void testAppliquerModificationsSansModification() throws Exception {
+    	
         final TypeProduitJPA entity = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
 
@@ -1937,7 +2297,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
         assertThat(resultat).isFalse();
         assertThat(entity.getTypeProduit()).isEqualTo(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1949,6 +2312,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("appliquerModifications() : retourne true et modifie l'entité si les libellés sont différents")
     @Test
     public void testAppliquerModificationsAvecModification() throws Exception {
+    	
         final TypeProduitJPA entity = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
 
@@ -1960,7 +2324,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
         assertThat(resultat).isTrue();
         assertThat(entity.getTypeProduit()).isEqualTo(CAMPING);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -1972,6 +2339,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("safeEquals() : gère correctement les paramètres null")
     @Test
     public void testSafeEqualsAvecNull() throws Exception {
+    	
         final boolean resultat1 = (boolean) invokePrivateMethod(
                 this.service,
                 SAFE_EQUALS,
@@ -1993,7 +2361,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat1).isTrue();
         assertThat(resultat2).isFalse();
         assertThat(resultat3).isFalse();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2005,6 +2376,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("safeEquals() : retourne true si les objets sont égaux")
     @Test
     public void testSafeEqualsAvecObjetsEgaux() throws Exception {
+    	
         final boolean resultat = (boolean) invokePrivateMethod(
                 this.service,
                 SAFE_EQUALS,
@@ -2012,7 +2384,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{VETEMENT, VETEMENT});
 
         assertThat(resultat).isTrue();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2024,6 +2399,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("safeEquals() : retourne false si les objets sont différents")
     @Test
     public void testSafeEqualsAvecObjetsDifferents() throws Exception {
+    	
         final boolean resultat = (boolean) invokePrivateMethod(
                 this.service,
                 SAFE_EQUALS,
@@ -2031,7 +2407,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{VETEMENT, OUTILLAGE});
 
         assertThat(resultat).isFalse();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2043,6 +2422,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("isBlank() : retourne true si le paramètre est null")
     @Test
     public void testIsBlankAvecNull() throws Exception {
+    	
         final boolean resultat = (boolean) invokePrivateMethod(
                 this.service,
                 ISBLANK,
@@ -2050,7 +2430,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{null});
 
         assertThat(resultat).isTrue();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2062,6 +2445,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("isBlank() : retourne true si le paramètre est vide")
     @Test
     public void testIsBlankAvecChaineVide() throws Exception {
+    	
         final boolean resultat = (boolean) invokePrivateMethod(
                 this.service,
                 ISBLANK,
@@ -2069,7 +2453,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{""});
 
         assertThat(resultat).isTrue();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2081,6 +2468,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("isBlank() : retourne true si le paramètre est blanc")
     @Test
     public void testIsBlankAvecChaineBlanche() throws Exception {
+    	
         final boolean resultat = (boolean) invokePrivateMethod(
                 this.service,
                 ISBLANK,
@@ -2088,7 +2476,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{BLANK});
 
         assertThat(resultat).isTrue();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2100,6 +2491,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("isBlank() : retourne false si le paramètre est valide")
     @Test
     public void testIsBlankAvecChaineValide() throws Exception {
+    	
         final boolean resultat = (boolean) invokePrivateMethod(
                 this.service,
                 ISBLANK,
@@ -2107,7 +2499,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{VETEMENT});
 
         assertThat(resultat).isFalse();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2119,6 +2514,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("safeMessage() : retourne une chaîne vide si le paramètre est null")
     @Test
     public void testSafeMessageAvecNull() throws Exception {
+    	
         final String resultat = (String) invokePrivateMethod(
                 this.service,
                 "safeMessage",
@@ -2126,7 +2522,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{null});
 
         assertThat(resultat).isEmpty();
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2138,6 +2537,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("safeMessage() : retourne la représentation textuelle de l'objet")
     @Test
     public void testSafeMessageAvecObjetValide() throws Exception {
+    	
         final String resultat = (String) invokePrivateMethod(
                 this.service,
                 "safeMessage",
@@ -2145,7 +2545,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{VETEMENT});
 
         assertThat(resultat).isEqualTo(VETEMENT);
-    }
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2157,6 +2560,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("safeMessage() : retourne une chaîne vide si toString() retourne null")
     @Test
     public void testSafeMessageAvecToStringNull() throws Exception {
+    	
         final Object objet = new Object() {
             @Override
             public String toString() {
@@ -2171,7 +2575,103 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 new Object[]{objet});
 
         assertThat(resultat).isEmpty();
-    }
+        
+    } // __________________________________________________________________
+    
+    
+    
+    // ============================== OUTILS ===============================
+
+    
+    
+    /**
+     * <div>
+     * <p>Fabrique un {@link TypeProduit} minimal.</p>
+     * </div>
+     *
+     * @param pLibelle : String
+     * @param pId : Long
+     * @return TypeProduit
+     */
+    private static TypeProduit fabriquerTypeProduit(
+            final String pLibelle,
+            final Long pId) {
+    	
+        return new TypeProduit(pId, pLibelle);
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Fabrique un {@link TypeProduitJPA} minimal.</p>
+     * </div>
+     *
+     * @param pLibelle : String
+     * @param pId : Long
+     * @return TypeProduitJPA
+     */
+    private static TypeProduitJPA fabriquerTypeProduitJPA(
+            final String pLibelle,
+            final Long pId) {
+    	
+        return new TypeProduitJPA(pId, pLibelle);
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Crée une page Spring à partir d'un contenu.</p>
+     * </div>
+     *
+     * @param pContenu : List&lt;TypeProduitJPA&gt;
+     * @param pPageNumber : int
+     * @param pPageSize : int
+     * @param pTotalElements : long
+     * @return Page&lt;TypeProduitJPA&gt;
+     */
+    private static Page<TypeProduitJPA> creerPage(
+            final List<TypeProduitJPA> pContenu,
+            final int pPageNumber,
+            final int pPageSize,
+            final long pTotalElements) {
+    	
+        final Pageable pageable = PageRequest.of(pPageNumber, pPageSize);
+        return new PageImpl<TypeProduitJPA>(pContenu, pageable, pTotalElements);
+        
+    } // __________________________________________________________________
+    
+    
+    
+
+    /**
+     * <div>
+     * <p>Appelle une méthode privée via reflection.</p>
+     * </div>
+     *
+     * @param pObject : Object
+     * @param pMethodName : String
+     * @param pParameterTypes : Class&lt;?&gt;[]
+     * @param pParameters : Object[]
+     * @return Object
+     * @throws Exception
+     */
+    private static Object invokePrivateMethod(
+            final Object pObject,
+            final String pMethodName,
+            final Class<?>[] pParameterTypes,
+            final Object... pParameters) throws Exception {
+
+        final Method method = pObject.getClass()
+                .getDeclaredMethod(pMethodName, pParameterTypes);
+        method.setAccessible(true); // NOPMD by danyl on 02/02/2026 16:36
+        return method.invoke(pObject, pParameters);
+        
+    } // __________________________________________________________________
 
 
-}
+    
+} // FIN DE LA CLASSE TypeProduitGatewayJPAServiceMockTest.----------------
