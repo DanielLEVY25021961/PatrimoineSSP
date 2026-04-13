@@ -715,8 +715,8 @@ public interface TypeProduitGatewayIService {
 	 * persistantes dont le libellé contient pContenu insensible à la casse, 
 	 * convertit la collection d'Entities JPA persistantes 
 	 * en collection d'objets métier, 
-	 * retourne la collection filtrée, triée et dédoublonnée 
-	 * d'objets métier persistants.</li>
+	 * retourne la collection filtrée des null, triée par libellé 
+	 * et dédoublonnée d'objets métier persistants.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
