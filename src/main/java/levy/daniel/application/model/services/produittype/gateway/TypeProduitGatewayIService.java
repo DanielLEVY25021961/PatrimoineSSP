@@ -553,7 +553,8 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si le libellé de pObject est blank : jette une
 	 * {@link ExceptionAppliLibelleBlank}
 	 * avec {@link #MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK}.</li>
-	 * <li>Sinon, recherche un persistant correspondant
+	 * <li>Si scénario nominal : 
+	 * recherche un persistant correspondant
 	 * via {@link #findByLibelle(String)}.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
@@ -627,6 +628,11 @@ public interface TypeProduitGatewayIService {
 	 * avec un message {@link #MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK}.</li>
 	 * <li>Si aucun objet n'est trouvé :
 	 * retourne {@code null}. Pas d'Exception.</li>
+	 * <li>Si scénario nominal :
+	 * délègue au DAO la recherche de l' Entity JPA 
+	 * persistante par son libellé insensible à la casse, 
+	 * convertit l'Entity JPA persistante en objet métier, 
+	 * retourne l'objet métier persistant.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
@@ -704,6 +710,13 @@ public interface TypeProduitGatewayIService {
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
 	 * <li>Si aucun résultat : retourne une liste vide.</li>
+	 * <li>Si scénario nominal :
+	 * délègue au DAO la recherche des Entities JPA 
+	 * persistantes dont le libellé contient pContenu insensible à la casse, 
+	 * convertit la collection d'Entities JPA persistantes 
+	 * en collection d'objets métier, 
+	 * retourne la collection filtrée, triée et dédoublonnée 
+	 * d'objets métier persistants.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
@@ -765,6 +778,10 @@ public interface TypeProduitGatewayIService {
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
 	 * <li>Si le {@link TypeProduit} n'est pas trouvé :
 	 * retourne {@code null}. Pas d'Exception.</li>
+	 * <li>Si scénario nominal : 
+	 * délègue au DAO la recherche par ID, 
+	 * convertit l'Entity JPA persistante retournée en objet métier, 
+	 * retourne l'objet métier persistant trouvé.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
@@ -845,9 +862,11 @@ public interface TypeProduitGatewayIService {
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
 	 * <li>Si l'objet n'existe pas en stockage :
 	 * retourne {@code null}.</li>
-	 * <li>Si une modification est effectuée :
+	 * <li>Si scénario nominal : 
+	 * une modification est effectuée dans le stockage,
 	 * retourne l'objet persistant modifié.</li>
-	 * <li>Si aucune modification n'est effectuée :
+	 * <li>Si scénario alternatif normal : 
+	 * aucune modification n'est effectuée dans le stockage,
 	 * retourne l'objet persistant inchangé.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
@@ -922,6 +941,9 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si {@code DAO} retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
+	 * <li>Si scénario nominal : 
+	 * délègue au DAO la recherche de l'Entity JPA persistée par ID, 
+	 * délègue au DAO la destruction de l'Entity JPA persistante.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
@@ -973,7 +995,7 @@ public interface TypeProduitGatewayIService {
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
 	 * <ul>
-	 * <li>Fonctionnement nominal : retourne un compteur {@code >= 0}.</li>
+	 * <li>Si scénario nominal : retourne un compteur {@code >= 0}.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}

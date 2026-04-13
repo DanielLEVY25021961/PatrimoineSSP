@@ -437,6 +437,48 @@ Règle obligatoire :
 Conséquence :
 - avant toute livraison d’un test d’intégration Produit, l’IA doit relire les tests d’intégration validés de `TypeProduit` et `SousTypeProduit` et vérifier que le niveau de preuve BD n’est pas inférieur.
 
+
+#### 15.2.6) Contrôle canonique des tests d’une méthode de SERVICE GATEWAY
+
+Interdiction absolue :
+- ne jamais conclure trop tôt sur la qualité des tests d’une méthode de SERVICE GATEWAY ;
+- ne jamais découvrir progressivement de nouvelles lacunes à chaque passe alors que ces lacunes étaient déjà déductibles du contrat et des tests effectivement lus ;
+- ne jamais conclure `contrat respecté - complétude des tests assurée - ordre suivi - tests OK` après un contrôle partiel, implicite ou non structuré.
+
+Règle obligatoire :
+- avant toute conclusion sur les tests associés à une méthode d’un SERVICE GATEWAY, l’IA doit appliquer un contrôle canonique unique et exhaustif selon l’ordre suivant :
+  1. lire d’abord le contrat de la méthode dans le PORT du SERVICE GATEWAY ;
+  2. établir la liste exhaustive, ordonnée et explicite de tous les cas du contrat ;
+  3. vérifier qu’à chaque cas du contrat correspond un test dédié, clair, pédagogique, documenté en javadoc et en commentaires de bloc, et complet dans ses assertions ;
+  4. vérifier que tous les tests portant sur cette même méthode sont rangés dans le même ordre que les cas exposés dans le contrat du PORT ;
+  5. vérifier que le `@DisplayName` de chaque test est exactement cohérent avec ce que le test prouve réellement ;
+  6. vérifier que le `@Tag` de chaque test est cohérent avec la méthode testée et la zone fonctionnelle ;
+  7. vérifier l’absence de doublons fonctionnels inutiles, de tests manquants, de preuves partielles, et d’asymétries entre variantes voisines du contrat ;
+  8. vérifier que les assertions couvrent explicitement, lorsque le contrat le prévoit : le type d’exception, le message, la cause propagée, l’appel DAO, l’absence d’appel DAO, les paramètres transmis, l’ordre contractuel, les invariants métier et les invariants techniques ;
+  9. produire une matrice explicite `cas du contrat -> test correspondant -> verdict`.
+
+Points de vigilance obligatoires :
+- l’IA doit contrôler explicitement les symétries de preuve, par exemple :
+  - `message non nul` / `message null` ;
+  - `DAO retourne null` / `content retourne null` ;
+  - `requête null` / `requête neutre non nulle` ;
+  - `cas nominal pur` / `cas nominal enrichi` ;
+  - `doublon strict` / `doublon à la casse près` ;
+- l’IA doit distinguer :
+  - un test réellement distinct couvrant une variante contractuelle utile ;
+  - d’un doublon fonctionnel inutile qui ne fait que répéter une preuve déjà acquise ;
+- l’IA doit contrôler la complétude probatoire réelle du test, et non la seule présence apparente du scénario dans le fichier.
+
+Conséquence :
+- l’IA ne peut conclure `contrat respecté - complétude des tests assurée - ordre suivi - tests OK` que si tous les points ci-dessus sont validés en une seule passe de contrôle ;
+- si un seul point manque, l’IA doit livrer en une seule fois la liste exhaustive de toutes les lacunes restantes ;
+- toute nouvelle passe ultérieure ne doit pas révéler une lacune qui était déjà détectable lors de la première lecture complète du contrat et des tests.
+
+Sacralisation :
+- cette règle constitue la règle durable de contrôle des tests d’une méthode de SERVICE GATEWAY ;
+- elle doit être relue avant tout audit, diagnostic, refactoring ou validation finale portant sur des tests de SERVICE GATEWAY ;
+- elle s’applique en priorité à toute méthode de PORT GATEWAY et à l’ensemble des classes de tests Mock / Intégration / autres tests associés à cette méthode.
+
 ---
 
 ## 16) Règles d’architecture

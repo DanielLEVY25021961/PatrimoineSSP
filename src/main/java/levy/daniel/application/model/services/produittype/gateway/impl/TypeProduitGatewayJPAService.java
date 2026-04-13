@@ -770,7 +770,7 @@ public class TypeProduitGatewayJPAService
 
 		try {
 
-			/* Recherche préalable de l'Entity persistée par ID. */
+			/* Délègue au DAO la recherche de l'Entity persistée par ID. */
 			final Optional<TypeProduitJPA> optEntity
 				= this.typeProduitDaoJPA.findById(id);
 
@@ -788,7 +788,8 @@ public class TypeProduitGatewayJPAService
 				return;
 			}
 
-			/* détruit l'Entity JPA persistée dans le stockage. */
+			/* Délègue au DAO la destruction de l'Entity JPA 
+			 * persistée dans le stockage. */
 			this.typeProduitDaoJPA.delete(optEntity.get());
 
 		} catch (final ExceptionTechniqueGateway e) {
