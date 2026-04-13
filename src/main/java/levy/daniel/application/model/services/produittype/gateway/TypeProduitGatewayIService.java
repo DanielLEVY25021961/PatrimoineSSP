@@ -339,6 +339,11 @@ public interface TypeProduitGatewayIService {
 	 * avec un message {@link #ERREUR_TECHNIQUE_STOCKAGE}
 	 * + un message sûr dérivé de l'Exception (jamais {@code null}),
 	 * et propage l'Exception technique cause.</li>
+	 * <li>Si l'objet métier est stockable : 
+	 * convertit l'objet métier en Entity JPA, 
+	 * délègue au DAO la sauvegarde, 
+	 * convertit l'entity JPA persistante retournée par le DAO en objet métier, 
+	 * et retourne l'objet métier persistant.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}
