@@ -415,6 +415,10 @@ public interface TypeProduitGatewayIService {
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
 	 * <li>Si {@code DAO.findAll()} retourne une liste vide :
 	 * retourne une liste vide. Pas d'Exception.</li>
+	 * <li>Si scenario nominal : 
+	 * délègue au DAO la recherche de tous les objets, 
+	 * filtre et dédoublonne, 
+	 * puis retourne la liste triée filtrée.</li>
 	 * <li>Si une erreur technique survient lors de l'accès au stockage
 	 * (base indisponible, erreur JPA, rollback, réseau, etc.) :
 	 * jette une {@link ExceptionTechniqueGateway}

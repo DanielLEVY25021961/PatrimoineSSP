@@ -690,20 +690,37 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>rechercherTous() : jette {@link ExceptionTechniqueGateway}
-     * si le DAO retourne {@code null}.</p>
+     * <p>garantit que si DAO.findAll() retourne null :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet le message
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous() : jette ExceptionTechniqueGateway si DAO retourne null")
+    @DisplayName("rechercherTous(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testRechercherTousDAORetourneNull() {
     	
+    	/* ARRANGE :
+    	 * simule un DAO qui retourne null au lieu d'une liste.
+    	 * Ce comportement doit être interprété comme 
+    	 * un échec technique de stockage.
+    	 */
         when(this.typeProduitDaoJPA.findAll()).thenReturn(null);
         
+        /* ACT - ASSERT :
+         * garantit que this.service.rechercherTous()
+         * - jette une ExceptionTechniqueGateway
+         * - émet exactement le message ERREUR_TECHNIQUE_KO_STOCKAGE.
+         */
         assertThatThrownBy(() -> this.service.rechercherTous())
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+        
+        /* Garantit que le DAO mocké a bien été appelé une fois. */
         verify(this.typeProduitDaoJPA).findAll();
         
     } // __________________________________________________________________
@@ -712,19 +729,47 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>rechercherTous() : retourne une liste vide si le stockage est vide.</p>
+     * <p>garantit que si DAO.findAll() retourne une liste vide :</p>
+     * <ul>
+     * <li>retourne une {@link List} non null</li>
+     * <li>retourne une liste vide</li>
+     * <li>ne jette aucune exception</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous() : retourne une liste vide si le stockage est vide")
+    @DisplayName("rechercherTous(liste vide) : retourne une liste vide non null")
     @Test
     public void testRechercherTousVide() throws Exception {
     	
-        when(this.typeProduitDaoJPA.findAll()).thenReturn(Collections.emptyList());
+    	/* ARRANGE :
+    	 * simule un stockage vide.
+    	 * Le DAO retourne ici une liste vide,
+    	 * et non null.
+    	 */
+        when(this.typeProduitDaoJPA.findAll())
+        	.thenReturn(Collections.emptyList());
+        
+        /* ACT :
+         * exécute la recherche complète via le service GATEWAY JPA.
+         */
         final List<TypeProduit> resultat = this.service.rechercherTous();
         
+        /* ASSERT :
+         * garantit que this.service.rechercherTous()
+         * - retourne une liste non null
+         * - retourne une liste vide
+         * - ne jette pas d'exception.
+         */
         assertThat(resultat).isNotNull().isEmpty();
+        
+        /* 
+         * Garantit que le DAO mocké a bien été appelé une fois.
+         * findAll() précise quelle méthode du mock a été appelée.
+         */
         verify(this.typeProduitDaoJPA).findAll();
         
     } // __________________________________________________________________
@@ -733,15 +778,31 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>rechercherTous() : filtre les null, trie et dédoublonne.</p>
+     * <p>garantit que si DAO.findAll() retourne une liste 
+     * contenant des nulls et des doublons :</p>
+     * <ul>
+     * <li>retourne une {@link List} non null</li>
+     * <li>filtre les éléments null</li>
+     * <li>dédoublonne les résultats fonctionnellement</li>
+     * <li>trie les résultats par libellé</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous() : filtre les null, trie et dédoublonne")
+    @DisplayName("rechercherTous(nulls + doublons) : filtre, dédoublonne et trie")
     @Test
     public void testRechercherTousOKTriDedoublonnage() throws Exception {
     	
+    	/* ARRANGE :
+    	 * simule un DAO qui retourne :
+    	 * - un élément null
+    	 * - deux objets portant le même libellé métier VETEMENT
+    	 * - plusieurs libellés non triés.
+    	 * Le service doit nettoyer puis ordonner ce contenu.
+    	 */
         final List<TypeProduitJPA> contenu = Arrays.asList(
                 fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
                 null,
@@ -750,12 +811,27 @@ public class TypeProduitGatewayJPAServiceMockTest {
                 fabriquerTypeProduitJPA(CAMPING, ID_4));
 
         when(this.typeProduitDaoJPA.findAll()).thenReturn(contenu);
+
+        /* ACT :
+         * exécute la recherche complète via le service GATEWAY JPA.
+         */
         final List<TypeProduit> resultat = this.service.rechercherTous();
 
+        /* ASSERT :
+         * garantit que this.service.rechercherTous()
+         * - retourne une liste non null
+         * - filtre l'élément null
+         * - ne conserve qu'un seul VETEMENT
+         * - trie les libellés par ordre alphabétique.
+         */
         assertThat(resultat).isNotNull().hasSize(3);
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
             .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * via la méthode findAll().
+         */
         verify(this.typeProduitDaoJPA).findAll();
         
     } // __________________________________________________________________
@@ -764,63 +840,143 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>rechercherTous(KO DAO avec message technique) :
-     * encapsule en {@link ExceptionTechniqueGateway}
-     * en conservant le message d'origine.</p>
+     * <p>garantit que si DAO.findAll() jette une exception technique 
+     * avec message non nul :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine de l'exception</li>
+     * <li>propage l'exception technique cause</li>
+     * <li>appelle le DAO une fois via {@code findAll()}</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(KO DAO) : encapsulation avec message technique")
+    @DisplayName("rechercherTous(KO DAO message non nul) : jette ExceptionTechniqueGateway et conserve le message technique")
     @Test
     public void testRechercherTousExceptionDAOMessagePreserve() {
 
-        /* Le DAO est simulé pour lever une RuntimeException
-         * contenant déjà un message technique.
-         * On ne peut pas lever ExceptionTechniqueGateway directement
-         * car c'est une checked exception non déclarée par findAll(). */
-        when(this.typeProduitDaoJPA.findAll())
-            .thenThrow(new RuntimeException(MSG_ERREUR_TECH_KO_STOCKAGE));
-
-        /* Vérifie que le Gateway encapsule l'exception technique
-         * dans une ExceptionTechniqueGateway et que le message
-         * final contient à la fois :
-         * - le préfixe contractuel ERREUR_TECHNIQUE_STOCKAGE
-         * - le message d'origine fourni par le DAO */
-        assertThatThrownBy(() -> this.service.rechercherTous())
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(MSG_ERREUR_TECH_KO_STOCKAGE);
-
-        /* Vérifie que la méthode DAO a bien été appelée une fois. */
-        verify(this.typeProduitDaoJPA).findAll();
-        
-    } // _________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
-     * <p>rechercherTous(KO DAO) :
-     * wrappe en {@link ExceptionTechniqueGateway}.</p>
-     * </div>
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
-    @Test
-    public void testRechercherTousExceptionDAO() {
+    	/* ARRANGE :
+    	 * simule un DAO qui jette une exception technique avec message non nul
+    	 * au moment de l'accès au stockage via findAll().
+    	 * Ce cas doit être encapsulé par le service dans une ExceptionTechniqueGateway.
+    	 */
+        final RuntimeException causeDao
+            = new RuntimeException(MSG_BOOM);
 
         when(this.typeProduitDaoJPA.findAll())
-            .thenThrow(new RuntimeException(MSG_BOOM));
+            .thenThrow(causeDao);
 
-        assertThatThrownBy(() -> this.service.rechercherTous())
+        /* ACT :
+         * exécute une seule fois this.service.rechercherTous()
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite :
+         * - son type,
+         * - son message,
+         * - et sa cause technique d'origine.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.rechercherTous());
+
+        /* ASSERT :
+         * garantit que this.service.rechercherTous()
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
 
-        verify(this.typeProduitDaoJPA).findAll();
-        
-    } // _________________________________________________________________
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
 
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * via la méthode findAll().
+         */
+        verify(this.typeProduitDaoJPA).findAll();
+
+    } // _________________________________________________________________    
+    
+
+    
+    /**
+     * <div>
+     * <p>garantit que si DAO.findAll() jette une exception technique 
+     * avec message null :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage l'exception technique cause</li>
+     * <li>appelle le DAO une fois via {@code findAll()}</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @Test
+    public void testRechercherTousExceptionDAOMsgNull() {
+
+    	/* ARRANGE :
+    	 * simule un DAO qui jette une exception technique sans message
+    	 * au moment de l'accès au stockage via findAll().
+    	 * Ce cas est utile pour vérifier que safeMessage(e)
+    	 * construit malgré tout un message sûr non nul.
+    	 */
+        final RuntimeException causeDao
+            = new RuntimeException((String) null);
+
+        when(this.typeProduitDaoJPA.findAll())
+            .thenThrow(causeDao);
+
+        /* ACT :
+         * exécute une seule fois this.service.rechercherTous()
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite :
+         * - son type,
+         * - son message,
+         * - et sa cause technique d'origine.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.rechercherTous());
+
+        /* ASSERT :
+         * garantit que this.service.rechercherTous()
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * via la méthode findAll().
+         */
+        verify(this.typeProduitDaoJPA).findAll();
+
+    } // _________________________________________________________________
+    
     
     
     // ================== rechercherTousParPage ===========================
