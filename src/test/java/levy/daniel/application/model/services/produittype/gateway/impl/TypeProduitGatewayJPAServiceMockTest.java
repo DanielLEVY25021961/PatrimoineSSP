@@ -368,55 +368,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que si DAO.save(entity) retourne null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway}</li>
-     * <li>émet un message
+     * <li>émet le message
      * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
      * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     */
-    @Tag(TAG_CREER)
-    @DisplayName("creer(...) : DAO.save retourne null → ExceptionTechniqueGateway")
-    @Test
-    public void testCreerDaoRetourneNull() {
-    	
-    	/* ARRANGE :
-    	 * prépare un objet métier valide pour atteindre réellement l'appel DAO.
-    	 */
-    	final TypeProduit metier = new TypeProduit(VETEMENT);
-    	
-    	/* Simule un DAO qui retourne null au lieu de renvoyer l'entité sauvée :
-    	 * ce comportement doit être interprété comme un échec technique de stockage.
-    	 */
-    	when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
-    		.thenReturn(null);
-    	
-    	/* ACT - ASSERT :
-    	 * garantit que this.service.creer(metier)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet le message ERREUR_TECHNIQUE_KO_STOCKAGE.
-    	 */
-    	assertThatThrownBy(() -> this.service.creer(metier))
-    		.isInstanceOf(ExceptionTechniqueGateway.class)
-    		.hasMessage(TypeProduitGatewayIService.ERREUR_TECHNIQUE_KO_STOCKAGE);
-    	
-    	/* Garantit que le DAO mocké a bien été appelé une fois
-    	 * avec une entité JPA à persister.
-    	 */
-    	verify(this.typeProduitDaoJPA, times(1))
-    		.save(any(TypeProduitJPA.class));
-    	
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>garantit que si DAO.save(entity) retourne null :</p>
-     * <ul>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
-     * <li>émet un
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
-     * <li>appelle le DAO une fois</li>
+     * <li>tente bien de persister une entité JPA</li>
      * </ul>
      * </div>
      */
@@ -427,11 +382,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     	
     	/* ARRANGE :
     	 * prépare un objet métier valide pour atteindre réellement l'appel DAO.
+    	 * On utilise un objet métier stockable,
+    	 * afin que l'échec observé provienne bien du stockage
+    	 * et non d'un contrôle préalable sur les paramètres.
     	 */
         final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
         
         /* Simule un DAO qui retourne null au lieu de renvoyer l'entité sauvée :
          * ce comportement doit être interprété comme un échec technique de stockage.
+         * Le contrat de creer(...) impose alors :
+         * - une ExceptionTechniqueGateway
+         * - avec le message ERREUR_TECHNIQUE_KO_STOCKAGE.
          */
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
             .thenReturn(null);
@@ -439,7 +400,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
         /* ACT - ASSERT :
          * garantit que this.service.creer(aCreer)
          * - jette une ExceptionTechniqueGateway
-         * - émet le message ERREUR_TECHNIQUE_KO_STOCKAGE.
+         * - émet exactement le message ERREUR_TECHNIQUE_KO_STOCKAGE.
          */
         assertThatThrownBy(() -> this.service.creer(aCreer))
             .isInstanceOf(ExceptionTechniqueGateway.class)
@@ -447,8 +408,161 @@ public class TypeProduitGatewayJPAServiceMockTest {
         
         /* Garantit que le DAO mocké a bien été appelé une fois
          * avec une entité JPA à persister.
+         * Cela prouve que le service a bien tenté l'accès au stockage
+         * avant de constater l'anomalie technique "retour null".
          */
-        verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
+        verify(this.typeProduitDaoJPA, times(1))
+            .save(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que si le stockage refuse creer(...) pour cause de doublon fonctionnel :</p>
+     * <ul>
+     * <li>le SERVICE GATEWAY JPA jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve un message technique sûr dérivé de l'exception de stockage</li>
+     * <li>propage l'exception technique cause</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(doublon stockage) : jette ExceptionTechniqueGateway et propage la cause")
+    @Test
+    public void testCreerDoublonFonctionnelRefuseParStockage() {
+    	
+    	/* ARRANGE :
+    	 * prépare un objet métier valide.
+    	 * Le doublon n'est pas simulé au niveau métier,
+    	 * mais au niveau du stockage au moment du save(...).
+    	 * On utilise un libellé valide pour atteindre réellement l'appel DAO.
+    	 */
+    	final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
+    	
+    	/* Prépare l'exception technique d'intégrité levée par le stockage :
+    	 * elle représente ici un refus de création pour cause de doublon fonctionnel.
+    	 * Le message technique d'origine doit être conservé dans le message final
+    	 * de l'ExceptionTechniqueGateway.
+    	 */
+    	final String messageTechnique = "contrainte d'unicité violée";
+    	final DataIntegrityViolationException causeDao
+    		= new DataIntegrityViolationException(messageTechnique);
+    	
+    	/* Simule un refus du stockage pour cause de doublon fonctionnel :
+    	 * le DAO mocké jette une exception technique d'intégrité au moment du save(...).
+    	 */
+    	when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
+    		.thenThrow(causeDao);
+    	
+    	/* ACT :
+    	 * exécute une seule fois this.service.creer(aCreer)
+    	 * et capture l'exception réellement levée,
+    	 * afin de contrôler ensuite séparément :
+    	 * - le type de l'exception,
+    	 * - son message,
+    	 * - et sa cause technique d'origine.
+    	 */
+    	final Throwable throwable
+    		= org.assertj.core.api.Assertions.catchThrowable(
+    				() -> this.service.creer(aCreer));
+    	
+    	/* ASSERT :
+    	 * garantit que this.service.creer(aCreer)
+    	 * - jette une ExceptionTechniqueGateway
+    	 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+    	 * - conserve le message technique d'origine
+    	 * - propage l'exception technique cause.
+    	 */
+    	assertThat(throwable)
+    		.isInstanceOf(ExceptionTechniqueGateway.class)
+    		.hasMessageContaining(TypeProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE)
+    		.hasMessageContaining(messageTechnique);
+    	
+    	/* Garantit que la cause technique d'origine
+    	 * est bien propagée par l'ExceptionTechniqueGateway.
+    	 */
+    	assertThat(throwable.getCause()).isSameAs(causeDao);
+    	
+    	/* Garantit que le DAO mocké a bien été appelé une fois.
+    	 * Cela prouve que l'échec observé provient bien du stockage
+    	 * au moment de la tentative de persistance.
+    	 */
+    	verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
+    	
+    } // __________________________________________________________________
+    
+    
+        
+    /**
+     * <div>
+     * <p>garantit que creer(OK) :</p>
+     * <ul>
+     * <li>appelle le DAO pour persister un {@link TypeProduitJPA}</li>
+     * <li>envoie au DAO une entité JPA sans identifiant initial</li>
+     * <li>envoie au DAO une entité JPA portant le bon libellé métier</li>
+     * <li>retourne un {@link TypeProduit} persistant</li>
+     * <li>retourne un objet métier portant l'identifiant généré par le stockage</li>
+     * <li>retourne un objet métier portant le bon libellé</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(OK) : persiste via le DAO et retourne l'objet métier persisté")
+    @Test
+    public void testCreerOK() throws Exception {
+    	
+    	/* ARRANGE :
+    	 * prépare un objet métier valide à créer,
+    	 * une entité JPA simulant le retour du stockage après save(...),
+    	 * et un captor pour contrôler précisément ce qui a été envoyé au DAO.
+    	 */
+        final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
+        final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        final ArgumentCaptor<TypeProduitJPA> captor
+        	= ArgumentCaptor.forClass(TypeProduitJPA.class);
+
+        /* Simule un DAO qui persiste correctement l'entité
+         * et retourne une entité JPA portant l'identifiant généré ID_1.
+         */
+        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
+            .thenReturn(persistee);
+
+        /* ACT :
+         * exécute la création métier via le service GATEWAY JPA.
+         */
+        final TypeProduit resultat = this.service.creer(aCreer);
+
+        /* ASSERT :
+         * garantit que le DAO mocké a bien été appelé
+         * avec une entité JPA construite à partir de l'objet métier d'entrée.
+         */
+        verify(this.typeProduitDaoJPA).save(captor.capture());
+
+        /* Garantit que l'entité envoyée au DAO :
+         * - n'est pas null
+         * - ne porte pas encore d'identifiant
+         * - porte bien le libellé métier attendu.
+         */
+        final TypeProduitJPA envoyeAuDAO = captor.getValue();
+        assertThat(envoyeAuDAO).isNotNull();
+        assertThat(envoyeAuDAO.getIdTypeProduit()).isNull();
+        assertThat(envoyeAuDAO.getTypeProduit()).isEqualTo(VETEMENT);
+
+        /* Garantit que l'objet métier retourné par le service :
+         * - n'est pas null
+         * - porte l'identifiant généré par le stockage
+         * - porte le bon libellé métier.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
+        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
         
     } // __________________________________________________________________
     
@@ -566,213 +680,6 @@ public class TypeProduitGatewayJPAServiceMockTest {
     	/* Garantit que le DAO mocké a bien été appelé une fois. */
     	verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
     	
-    } // __________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
-     * <p>garantit que si le stockage refuse creer(...) pour cause de doublon fonctionnel :</p>
-     * <ul>
-     * <li>le SERVICE GATEWAY JPA jette une {@link ExceptionTechniqueGateway}</li>
-     * <li>émet un message commençant par
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
-     * <li>conserve le message technique d'origine de l'exception de stockage</li>
-     * <li>propage l'exception technique cause</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     */
-    @Tag(TAG_CREER)
-    @DisplayName("creer(doublon) : jette ExceptionTechniqueGateway et propage la cause technique")
-    @Test
-    public void testCreerDoublonFonctionnel() {
-    	
-    	/* ARRANGE */
-    	final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
-    	final String messageTechnique = "contrainte d'unicité violée";
-    	final DataIntegrityViolationException causeDao
-    		= new DataIntegrityViolationException(messageTechnique);
-    	
-    	/* Simule un refus du stockage pour cause de doublon fonctionnel :
-    	 * le DAO mocké jette une exception technique d'intégrité.
-    	 */
-    	when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
-    		.thenThrow(causeDao);
-    	
-    	/* ACT */
-    	/* Exécute une seule fois this.service.creer(aCreer)
-    	 * et capture l'exception éventuellement levée dans la variable throwable.
-    	 * Cette écriture permet ensuite de vérifier séparément :
-    	 * - le type de l'exception,
-    	 * - son message,
-    	 * - et sa cause technique d'origine.
-    	 */
-    	/* Capture l'exception lancée par this.service.creer(aCreer)
-    	 * au lieu de l'asserter immédiatement,
-    	 * afin de contrôler ensuite son type, son message et sa cause.
-    	 */
-    	final Throwable throwable
-    		= org.assertj.core.api.Assertions.catchThrowable(
-    				() -> this.service.creer(aCreer));
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.creer(aCreer)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-    	 * - conserve le message technique d'origine
-    	 * - propage l'exception technique cause.
-    	 */
-    	assertThat(throwable)
-    		.isInstanceOf(ExceptionTechniqueGateway.class)
-    		.hasMessageContaining(TypeProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE)
-    		.hasMessageContaining(messageTechnique);
-    	
-    	/* Garantit que la cause technique d'origine est bien propagée. */
-    	assertThat(throwable.getCause()).isSameAs(causeDao);
-    	
-    	/* Garantit que le DAO mocké a bien été appelé une fois. */
-    	verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    	
-    } // __________________________________________________________________ 
-    
-    
-    
-    /**
-     * <div>
-     * <p>garantit que si un doublon fonctionnel est refusé par le stockage pendant creer(...) :</p>
-     * <ul>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
-     * <li>émet un message commençant par
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
-     * <li>conserve un message technique sûr dérivé de l'exception de stockage</li>
-     * <li>propage l'exception technique cause</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     */
-    @Tag(TAG_CREER)
-    @DisplayName("creer(doublon stockage) : jette ExceptionTechniqueGateway et propage la cause")
-    @Test
-    public void testCreerDoublonFonctionnelRefuseParStockage() {
-    	
-    	/* ARRANGE :
-    	 * prépare un objet métier valide.
-    	 * Le doublon n'est pas simulé au niveau métier,
-    	 * mais au niveau du stockage au moment du save(...).
-    	 */
-    	final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
-    	
-    	/* Prépare l'exception technique d'intégrité levée par le stockage :
-    	 * elle représente ici un refus de création pour cause de doublon fonctionnel.
-    	 */
-    	final DataIntegrityViolationException exceptionDoublon
-    		= new DataIntegrityViolationException("contrainte d'unicité violée");
-    	
-    	/* Simule un stockage qui refuse le save(...)
-    	 * pour cause de doublon fonctionnel déjà présent.
-    	 */
-    	when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
-    		.thenThrow(exceptionDoublon);
-    	
-    	/* ACT :
-    	 * exécute une seule fois this.service.creer(aCreer)
-    	 * et capture l'exception réellement levée,
-    	 * afin de contrôler ensuite son type, son message et sa cause.
-    	 */
-    	final Throwable throwable
-    		= org.assertj.core.api.Assertions.catchThrowable(
-    				() -> this.service.creer(aCreer));
-    	
-    	/* ASSERT :
-    	 * garantit que this.service.creer(aCreer)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-    	 * - conserve le message technique d'origine de l'exception de stockage.
-    	 */
-    	assertThat(throwable)
-    		.isInstanceOf(ExceptionTechniqueGateway.class)
-    		.hasMessageContaining(TypeProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE)
-    		.hasMessageContaining("contrainte d'unicité violée");
-    	
-    	/* Garantit que la cause technique d'origine
-    	 * est bien propagée par l'ExceptionTechniqueGateway.
-    	 */
-    	assertThat(throwable.getCause()).isSameAs(exceptionDoublon);
-    	
-    	/* Garantit que le DAO mocké a bien été appelé une fois. */
-    	verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    	
-    } // __________________________________________________________________
-    
-    
-        
-    /**
-     * <div>
-     * <p>garantit que creer(OK) :</p>
-     * <ul>
-     * <li>appelle le DAO pour persister un {@link TypeProduitJPA}</li>
-     * <li>envoie au DAO une entité JPA sans identifiant initial</li>
-     * <li>envoie au DAO une entité JPA portant le bon libellé métier</li>
-     * <li>retourne un {@link TypeProduit} persistant</li>
-     * <li>retourne un objet métier portant l'identifiant généré par le stockage</li>
-     * <li>retourne un objet métier portant le bon libellé</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_CREER)
-    @DisplayName("creer(OK) : persiste via le DAO et retourne l'objet métier persisté")
-    @Test
-    public void testCreerOK() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * prépare un objet métier valide à créer,
-    	 * une entité JPA simulant le retour du stockage après save(...),
-    	 * et un captor pour contrôler précisément ce qui a été envoyé au DAO.
-    	 */
-        final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
-        final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
-        final ArgumentCaptor<TypeProduitJPA> captor
-        	= ArgumentCaptor.forClass(TypeProduitJPA.class);
-
-        /* Simule un DAO qui persiste correctement l'entité
-         * et retourne une entité JPA portant l'identifiant généré ID_1.
-         */
-        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
-            .thenReturn(persistee);
-
-        /* ACT :
-         * exécute la création métier via le service GATEWAY JPA.
-         */
-        final TypeProduit resultat = this.service.creer(aCreer);
-
-        /* ASSERT :
-         * garantit que le DAO mocké a bien été appelé
-         * avec une entité JPA construite à partir de l'objet métier d'entrée.
-         */
-        verify(this.typeProduitDaoJPA).save(captor.capture());
-
-        /* Garantit que l'entité envoyée au DAO :
-         * - n'est pas null
-         * - ne porte pas encore d'identifiant
-         * - porte bien le libellé métier attendu.
-         */
-        final TypeProduitJPA envoyeAuDAO = captor.getValue();
-        assertThat(envoyeAuDAO).isNotNull();
-        assertThat(envoyeAuDAO.getIdTypeProduit()).isNull();
-        assertThat(envoyeAuDAO.getTypeProduit()).isEqualTo(VETEMENT);
-
-        /* Garantit que l'objet métier retourné par le service :
-         * - n'est pas null
-         * - porte l'identifiant généré par le stockage
-         * - porte le bon libellé métier.
-         */
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
-        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
-        
     } // __________________________________________________________________
     
     
