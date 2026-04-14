@@ -2507,99 +2507,13 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que findByLibelleRapide(non blank) :</p>
-     * <ul>
-     * <li>délègue au DAO la recherche rapide via
-     * {@code findByTypeProduitContainingIgnoreCase(...)}</li>
-     * <li>retourne une {@link List} non null</li>
-     * <li>retourne tous les objets métier correspondant au contenu recherché</li>
-     * <li>retourne une collection d'objets métier correctement convertis</li>
-     * <li>retourne la collection finale triée par libellé</li>
-     * <li>n'appelle jamais {@code findAll()}</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER_RAPIDE)
-    @DisplayName("findByLibelleRapide(non blank) : délègue à containingIgnoreCase() et retourne toute la collection convertie")
-    @Test
-    public void testFindByLibelleRapideNonBlankDelegueContaining() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le contenu RECHERCHE_ME via
-    	 * findByTypeProduitContainingIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra répondre
-    	 * une collection de TypeProduitJPA persistants".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui trouve plusieurs TypeProduit persistants
-    	 * contenant le texte recherché,
-    	 * avec des libellés de casse différente.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "non blank délègue containingIgnoreCase()
-    	 * et retourne toute la collection convertie".
-    	 */
-    	final String libelle1 = "meuble";
-    	final String libelle2 = "MECANIQUE";
-    	final String libelle3 = "gamme";
-    	
-        when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
-            .thenReturn(Arrays.asList(
-                    fabriquerTypeProduitJPA(libelle1, ID_1),
-                    fabriquerTypeProduitJPA(libelle2, ID_2),
-                    fabriquerTypeProduitJPA(libelle3, ID_3)));
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
-        final List<TypeProduit> resultat = this.service.findByLibelleRapide(RECHERCHE_ME);
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
-    	 * - retourne une liste non null
-    	 * - retourne tous les objets métier correspondant
-    	 *   au contenu recherché
-    	 * - convertit correctement toute la collection persistante
-    	 * - applique le tri final par libellé.
-    	 */
-        assertThat(resultat).isNotNull().hasSize(3);
-        assertThat(resultat)
-            .extracting(TypeProduit::getTypeProduit)
-            .containsExactly(libelle3, libelle2, libelle1);
-        assertThat(resultat)
-            .extracting(TypeProduit::getIdTypeProduit)
-            .containsExactly(ID_3, ID_2, ID_1);
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * via findByTypeProduitContainingIgnoreCase(RECHERCHE_ME).
-         */
-        verify(this.typeProduitDaoJPA).findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
-        
-        /* Garantit que le DAO mocké n'a jamais été appelé
-         * via findAll().
-         */
-        verify(this.typeProduitDaoJPA, never()).findAll();
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
      * <p>garantit que findByLibelleRapide(DAO retourne null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway}</li>
      * <li>émet le message
      * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
-     * <li>appelle le DAO une fois</li>
+     * <li>appelle le DAO une fois avec le bon contenu de recherche rapide</li>
+     * <li>n'appelle jamais {@code findAll()}</li>
      * </ul>
      * </div>
      */
@@ -2607,113 +2521,236 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByLibelleRapide(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByLibelleRapideDAORetourneNull() {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le contenu RECHERCHE_ME via
-    	 * findByTypeProduitContainingIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra répondre null".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui retourne null au lieu d'une collection persistante.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "DAO retourne null".
-    	 */
+
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec le contenu RECHERCHE_ME via
+         * findByTypeProduitContainingIgnoreCase(...),
+         * alors le DAO mocké avec Mockito devra répondre null".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne null au lieu d'une collection persistante.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "DAO retourne null".
+         */
         when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
             .thenReturn(null);
-    	
-    	/* ACT - ASSERT */
-    	/* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet exactement le message ERREUR_TECHNIQUE_KO_STOCKAGE.
-    	 */
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
+         * - jette une ExceptionTechniqueGateway
+         * - émet exactement le message ERREUR_TECHNIQUE_KO_STOCKAGE.
+         */
         assertThatThrownBy(() -> this.service.findByLibelleRapide(RECHERCHE_ME))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-        
+
         /* Garantit que le DAO mocké a bien été appelé une fois
          * avec le bon contenu de recherche rapide.
          */
         verify(this.typeProduitDaoJPA)
             .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
-        
-    } // __________________________________________________________________
-    
-    
 
-    /**
-     * <div>
-     * <p>garantit que findByLibelleRapide(blank + DAO retourne null) :</p>
-     * <ul>
-     * <li>délègue au DAO la recherche complète via {@code findAll()}</li>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
-     * <li>émet le message
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
-     * <li>n'appelle jamais la recherche rapide DAO dédiée</li>
-     * </ul>
-     * </div>
-     */
-    @Tag(TAG_RECHERCHER_RAPIDE)
-    @DisplayName("findByLibelleRapide(blank + DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
-    @Test
-    public void testFindByLibelleRapideBlankDAORetourneNull() {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * via findAll(),
-    	 * alors le DAO mocké avec Mockito devra répondre null".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui retourne null au lieu d'une collection persistante
-    	 * lorsque le libellé rapide est blank
-    	 * et que le service délègue à findAll().
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel
-    	 * "blank délègue findAll() puis KO_STOCKAGE si DAO retourne null".
-    	 */
-        when(this.typeProduitDaoJPA.findAll()).thenReturn(null);
-    	
-    	/* ACT - ASSERT */
-    	/* Garantit que this.service.findByLibelleRapide(BLANK)
-    	 * - délègue à findAll()
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet exactement le message ERREUR_TECHNIQUE_KO_STOCKAGE.
-    	 */
-        assertThatThrownBy(() -> this.service.findByLibelleRapide(BLANK))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
+        /* Garantit que le DAO mocké n'a jamais été appelé
          * via findAll().
          */
-        verify(this.typeProduitDaoJPA).findAll();
-        
-        /* Garantit que le DAO mocké n'a jamais été appelé
-         * via la recherche rapide dédiée
-         * findByTypeProduitContainingIgnoreCase(...).
-         */
-        verify(this.typeProduitDaoJPA, never())
-            .findByTypeProduitContainingIgnoreCase(any(String.class));
-        
+        verify(this.typeProduitDaoJPA, never()).findAll();
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>garantit que findByLibelleRapide(KO DAO) :</p>
+     * <p>garantit que findByLibelleRapide(aucun résultat) :</p>
+     * <ul>
+     * <li>délègue au DAO la recherche rapide via
+     * {@code findByTypeProduitContainingIgnoreCase(...)}</li>
+     * <li>retourne une {@link List} non null</li>
+     * <li>retourne une liste vide</li>
+     * <li>n'appelle jamais {@code findAll()}</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER_RAPIDE)
+    @DisplayName("findByLibelleRapide(aucun résultat) : retourne une liste vide non null")
+    @Test
+    public void testFindByLibelleRapideAucunResultat() throws Exception {
+
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec le contenu RECHERCHE_ME via
+         * findByTypeProduitContainingIgnoreCase(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * une liste vide".
+         *
+         * On simule donc volontairement un stockage
+         * qui ne trouve aucun enregistrement correspondant.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "aucun résultat".
+         */
+        when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
+            .thenReturn(Collections.emptyList());
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        final List<TypeProduit> resultat =
+            this.service.findByLibelleRapide(RECHERCHE_ME);
+
+        /* ASSERT */
+        /* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
+         * - retourne une liste non null
+         * - retourne une liste vide
+         *   lorsque le stockage ne trouve aucun résultat.
+         */
+        assertThat(resultat).isNotNull().isEmpty();
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon contenu de recherche rapide.
+         */
+        verify(this.typeProduitDaoJPA)
+            .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
+
+        /* Garantit que le DAO mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.typeProduitDaoJPA, never()).findAll();
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que findByLibelleRapide(nominal) :</p>
+     * <ul>
+     * <li>délègue au DAO la recherche rapide via
+     * {@code findByTypeProduitContainingIgnoreCase(...)}</li>
+     * <li>retourne une {@link List} non null</li>
+     * <li>filtre les éléments null issus du stockage</li>
+     * <li>dédoublonne les libellés au sens métier
+     * sans tenir compte de la casse</li>
+     * <li>retourne les objets métier triés par libellé</li>
+     * <li>n'appelle jamais {@code findAll()}</li>
+     * </ul>
+     * <p>Ce test prouve directement au niveau de la méthode publique
+     * le filtrage des null,
+     * le dédoublonnage insensible à la casse
+     * et le tri final par libellé.</p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER_RAPIDE)
+    @DisplayName("findByLibelleRapide(nominal) : filtre les null, trie et dédoublonne sans tenir compte de la casse")
+    @Test
+    public void testFindByLibelleRapideNominalFiltreTrieDedoublonne() throws Exception {
+
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec le contenu RECHERCHE_ME via
+         * findByTypeProduitContainingIgnoreCase(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * une collection persistante non triée,
+         * contenant un null
+         * et un doublon métier à la casse près".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne :
+         * - un élément null,
+         * - deux libellés fonctionnellement identiques
+         *   ne différant que par la casse,
+         * - plusieurs valeurs non triées.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "scénario nominal complet".
+         */
+        final String libelle1 = "meuble";
+        final String libelle2 = "MECANIQUE";
+        final String libelle3 = "gamme";
+        final String libelle4 = libelle1.toUpperCase(Locale.ROOT);
+
+        final List<TypeProduitJPA> entities = Arrays.asList(
+                fabriquerTypeProduitJPA(libelle1, ID_1),
+                null,
+                fabriquerTypeProduitJPA(libelle2, ID_2),
+                fabriquerTypeProduitJPA(libelle3, ID_3),
+                fabriquerTypeProduitJPA(libelle4, ID_4));
+
+        when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
+            .thenReturn(entities);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        final List<TypeProduit> resultat =
+            this.service.findByLibelleRapide(RECHERCHE_ME);
+
+        /* ASSERT */
+        /* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
+         * - retourne une liste non null
+         * - ne contient plus aucun élément null
+         * - dédoublonne les libellés au sens métier
+         *   sans tenir compte de la casse
+         * - restitue le résultat final trié par libellé.
+         *
+         * L'extraction normalisée en trim + lowerCase(Locale.ROOT)
+         * est volontaire :
+         * elle permet de prouver directement le dédoublonnage métier
+         * et le tri final
+         * sans sur-contraindre artificiellement
+         * la casse conservée par l'implémentation.
+         */
+        assertThat(resultat).isNotNull().doesNotContainNull().hasSize(3);
+        assertThat(resultat)
+            .extracting(typeProduit -> typeProduit.getTypeProduit()
+                .trim()
+                .toLowerCase(Locale.ROOT))
+            .containsExactly(
+                libelle3,
+                libelle2.toLowerCase(Locale.ROOT),
+                libelle1);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon contenu de recherche rapide.
+         */
+        verify(this.typeProduitDaoJPA)
+            .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
+
+        /* Garantit que le DAO mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.typeProduitDaoJPA, never()).findAll();
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que findByLibelleRapide(KO DAO message non nul) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway}</li>
      * <li>émet un message commençant par
@@ -2721,228 +2758,167 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * <li>conserve le message technique d'origine du DAO</li>
      * <li>propage comme cause l'exception technique d'origine</li>
      * <li>appelle le DAO une fois</li>
+     * <li>n'appelle jamais {@code findAll()}</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER_RAPIDE)
-    @DisplayName("findByLibelleRapide(KO DAO) : jette ExceptionTechniqueGateway et propage la cause")
+    @DisplayName("findByLibelleRapide(KO DAO message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
     public void testFindByLibelleRapideExceptionDAO() {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenThrow(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le contenu RECHERCHE_ME via
-    	 * findByTypeProduitContainingIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra lancer
-    	 * une RuntimeException portant le message MSG_BOOM".
-    	 *
-    	 * On simule donc volontairement une panne technique du stockage
-    	 * pendant la recherche rapide par contenu.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réaction
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "KO DAO".
-    	 */
-    	final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
-    	
+
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec le contenu RECHERCHE_ME via
+         * findByTypeProduitContainingIgnoreCase(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message MSG_BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant la recherche rapide par contenu.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réaction
+         * afin de prouver comment le service réagit
+         * au cas contractuel "KO DAO message non nul".
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
         when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
             .thenThrow(causeDao);
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
          * dans les conditions voulues par le Mock (when du ARRANGE). */
         /* Exécute une seule fois this.service.findByLibelleRapide(RECHERCHE_ME)
          * et capture l'exception réellement levée,
-         * afin de contrôler ensuite son type, son message et sa cause.*/
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
         final Throwable throwable
             = org.assertj.core.api.Assertions.catchThrowable(
                     () -> this.service.findByLibelleRapide(RECHERCHE_ME));
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-    	 * - conserve le message technique d'origine MSG_BOOM.
-    	 */
+
+        /* ASSERT */
+        /* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
         assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
-        
+
         /* Garantit que la cause technique d'origine
          * est bien propagée par l'ExceptionTechniqueGateway.
          */
         assertThat(throwable.getCause()).isSameAs(causeDao);
-        
+
         /* Garantit que le DAO mocké a bien été appelé une fois
          * avec le bon contenu de recherche rapide.
          */
         verify(this.typeProduitDaoJPA)
             .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
-        
+
+        /* Garantit que le DAO mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.typeProduitDaoJPA, never()).findAll();
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>garantit que findByLibelleRapide(dédoublonnage) :</p>
+     * <p>garantit que findByLibelleRapide(KO DAO message null) :</p>
      * <ul>
-     * <li>délègue au DAO la recherche rapide via
-     * {@code findByTypeProduitContainingIgnoreCase(...)}</li>
-     * <li>retourne une {@link List} non null</li>
-     * <li>retourne une liste sans doublons de libellés</li>
-     * <li>conserve une seule occurrence métier par libellé</li>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois</li>
      * <li>n'appelle jamais {@code findAll()}</li>
      * </ul>
      * </div>
-     *
-     * @throws Exception
      */
-    @Tag(TAG_DEDOUBLONNAGE)
-    @DisplayName("findByLibelleRapide(dédoublonnage) : retourne une liste sans doublons de libellés")
+    @Tag(TAG_RECHERCHER_RAPIDE)
+    @DisplayName("findByLibelleRapide(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testFindByLibelleRapideDedoublonnage() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le contenu RECHERCHE_ME via
-    	 * findByTypeProduitContainingIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra répondre
-    	 * une collection contenant un doublon de libellé".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui retourne plusieurs TypeProduitJPA persistants,
-    	 * dont deux portent le même libellé VETEMENT.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "dédoublonnage".
-    	 */
-        final List<TypeProduitJPA> entities = Arrays.asList(
-                fabriquerTypeProduitJPA(VETEMENT, ID_1),
-                fabriquerTypeProduitJPA(VETEMENT, ID_3),
-                fabriquerTypeProduitJPA(OUTILLAGE, ID_2));
-    	
+    public void testFindByLibelleRapideExceptionDAOMsgNull() {
+
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec le contenu RECHERCHE_ME via
+         * findByTypeProduitContainingIgnoreCase(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant la recherche rapide par contenu,
+         * avec un message technique d'origine null.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réaction
+         * afin de prouver comment le service réagit
+         * au cas contractuel "KO DAO message null".
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
         when(this.typeProduitDaoJPA.findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
-            .thenReturn(entities);
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
-        final List<TypeProduit> resultat = this.service.findByLibelleRapide(RECHERCHE_ME);
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
-    	 * - retourne une liste non null
-    	 * - élimine le doublon de libellé VETEMENT
-    	 * - ne conserve qu'une seule occurrence métier par libellé.
-    	 */
-        assertThat(resultat).isNotNull().hasSize(2);
-        assertThat(resultat)
-            .extracting(TypeProduit::getTypeProduit)
-            .containsExactlyInAnyOrder(VETEMENT, OUTILLAGE);
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * via findByTypeProduitContainingIgnoreCase(RECHERCHE_ME).
-         */
-        verify(this.typeProduitDaoJPA)
-            .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
-        
-        /* Garantit que le DAO mocké n'a jamais été appelé
-         * via findAll().
-         */
-        verify(this.typeProduitDaoJPA, never()).findAll();
-        
-    } // __________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
-     * <p>garantit que findByLibelleRapide(tri final) :</p>
-     * <ul>
-     * <li>délègue au DAO la recherche rapide via
-     * {@code findByTypeProduitContainingIgnoreCase(...)}</li>
-     * <li>retourne une {@link List} non null</li>
-     * <li>retourne les objets métier triés par libellé</li>
-     * <li>n'appelle jamais {@code findAll()}</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_TRIS)
-    @DisplayName("findByLibelleRapide(tri final) : retourne les résultats triés par libellé")
-    @Test
-    public void testFindByLibelleRapideTriFinal() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le contenu RECHERCHE_ME via
-    	 * findByTypeProduitContainingIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra répondre
-    	 * une collection de TypeProduitJPA persistants non triée".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui retourne des objets persistants
-    	 * dans un ordre différent de l'ordre métier attendu,
-    	 * afin de prouver que le service applique bien
-    	 * le tri final par libellé.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "tri final".
-    	 */
-        final List<TypeProduitJPA> entities = Arrays.asList(
-                fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
-                fabriquerTypeProduitJPA(CAMPING, ID_1),
-                fabriquerTypeProduitJPA(VETEMENT, ID_3));
+            .thenThrow(causeDao);
 
-        when(this.typeProduitDaoJPA
-            .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME))
-            .thenReturn(entities);
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
          * dans les conditions voulues par le Mock (when du ARRANGE). */
-        final List<TypeProduit> resultat =
-            this.service.findByLibelleRapide(RECHERCHE_ME);
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
-    	 * - retourne une liste non null
-    	 * - restitue les objets métier triés
-    	 *   par ordre alphabétique de libellé.
-    	 */
-        assertThat(resultat).isNotNull();
-        assertThat(resultat)
-            .extracting(TypeProduit::getTypeProduit)
-            .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
-        
+        /* Exécute une seule fois this.service.findByLibelleRapide(RECHERCHE_ME)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.findByLibelleRapide(RECHERCHE_ME));
+
+        /* ASSERT */
+        /* Garantit que this.service.findByLibelleRapide(RECHERCHE_ME)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
         /* Garantit que le DAO mocké a bien été appelé une fois
-         * via findByTypeProduitContainingIgnoreCase(RECHERCHE_ME).
+         * avec le bon contenu de recherche rapide.
          */
         verify(this.typeProduitDaoJPA)
             .findByTypeProduitContainingIgnoreCase(RECHERCHE_ME);
-        
+
         /* Garantit que le DAO mocké n'a jamais été appelé
          * via findAll().
          */
         verify(this.typeProduitDaoJPA, never()).findAll();
-        
+
     } // __________________________________________________________________
     
 
@@ -2953,17 +2929,30 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>findById(null) : jette {@link ExceptionAppliParamNull}.</p>
+     * <p>garantit que findById(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull}</li>
+     * <li>émet un
+     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYID_KO_PARAM_NULL}</li>
+     * <li>n'appelle pas le DAO</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(null) : jette ExceptionAppliParamNull")
+    @DisplayName("findById(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
     @Test
     public void testFindByIdNull() {
     	
-        assertThatThrownBy(() -> this.service.findById(null)
-            ).isInstanceOf(ExceptionAppliParamNull.class)
+        /* ARRANGE - ACT - ASSERT */
+        /* Garantit que this.service.findById(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet un message MESSAGE_FINDBYID_KO_PARAM_NULL.
+         */
+        assertThatThrownBy(() -> this.service.findById(null))
+            .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL);
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
         verifyNoInteractions(this.typeProduitDaoJPA);
         
     } // __________________________________________________________________
@@ -2972,8 +2961,13 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>findById(DAO retourne null) : jette {@link ExceptionTechniqueGateway}
-     * KO_STOCKAGE.</p>
+     * <p>garantit que findById(DAO retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet le message
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO une fois avec le bon identifiant</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
@@ -2981,11 +2975,36 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Test
     public void testFindByIdDAORetourneNull() {
     	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre null".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne null au lieu d'un Optional<TypeProduitJPA>.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "DAO retourne null".
+         */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
         
+        /* ACT - ASSERT */
+        /* Garantit que this.service.findById(ID_1)
+         * - jette une ExceptionTechniqueGateway
+         * - émet exactement le message ERREUR_TECHNIQUE_KO_STOCKAGE.
+         */
         assertThatThrownBy(() -> this.service.findById(ID_1))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant.
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
         
     } // __________________________________________________________________
@@ -2994,66 +3013,60 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>findById(non trouvé) : retourne null.</p>
+     * <p>garantit que findById(ID inexistant) :</p>
+     * <ul>
+     * <li>délègue la recherche au DAO avec le bon identifiant inexistant</li>
+     * <li>retourne {@code null} si le stockage ne trouve aucun
+     * objet persistant pour cet identifiant sans jeter d'Exception</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(non trouvé) : retourne null")
-    @Test
-    public void testFindByIdNonTrouve() throws Exception {
-    	
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
-        
-        final TypeProduit resultat = this.service.findById(ID_1);
-        assertThat(resultat).isNull();
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>findById(trouvé) : retourne l'objet métier converti.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(trouvé) : retourne l'objet métier converti")
-    @Test
-    public void testFindByIdTrouve() throws Exception {
-    	
-        when(this.typeProduitDaoJPA.findById(ID_1))
-            .thenReturn(Optional.of(fabriquerTypeProduitJPA(VETEMENT, ID_1)));
-        
-        final TypeProduit resultat = this.service.findById(ID_1);
-        
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
-        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>findById(ID inexistant) : retourne null.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(ID inexistant) : retourne null")
+    @DisplayName("findById(ID inexistant) : délègue au DAO et retourne null")
     @Test
     public void testFindByIdInexistant() throws Exception {
     	
-        when(this.typeProduitDaoJPA.findById(ID_INEXISTANT)).thenReturn(Optional.empty());
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant inexistant ID_INEXISTANT via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * Optional.empty()".
+         *
+         * On simule donc volontairement un stockage
+         * qui ne trouve aucun TypeProduit persistant
+         * pour cet identifiant inexistant.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "ID inexistant".
+         */
+        when(this.typeProduitDaoJPA.findById(ID_INEXISTANT))
+            .thenReturn(Optional.empty());
         
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         final TypeProduit resultat = this.service.findById(ID_INEXISTANT);
         
+        /* ASSERT */
+        /* Garantit que this.service.findById(ID_INEXISTANT)
+         * retourne null
+         * lorsque le stockage ne trouve aucun objet persistant
+         * pour l'identifiant inexistant demandé.
+         */
         assertThat(resultat).isNull();
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant inexistant.
+         */
         verify(this.typeProduitDaoJPA).findById(ID_INEXISTANT);
         
     } // __________________________________________________________________
@@ -3062,21 +3075,224 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>findById(KO DAO) : wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * <p>garantit que findById(trouvé) :</p>
+     * <ul>
+     * <li>délègue la recherche au DAO avec le bon identifiant</li>
+     * <li>retourne un objet métier non null</li>
+     * <li>convertit correctement l'identifiant et le libellé
+     * de l'objet persistant trouvé</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findById(trouvé) : délègue au DAO et retourne l'objet métier converti")
+    @Test
+    public void testFindByIdTrouve() throws Exception {
+    	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * Optional.of(...) contenant un TypeProduitJPA persistant
+         * portant l'identifiant ID_1 et le libellé VETEMENT".
+         *
+         * On simule donc volontairement un stockage
+         * qui trouve bien un TypeProduit persistant
+         * pour cet identifiant.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "trouvé".
+         */
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenReturn(Optional.of(fabriquerTypeProduitJPA(VETEMENT, ID_1)));
+        
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        final TypeProduit resultat = this.service.findById(ID_1);
+        
+        /* ASSERT */
+        /* Garantit que this.service.findById(ID_1)
+         * - délègue la recherche au DAO avec l'identifiant ID_1
+         * - retourne un objet métier non null
+         * - convertit correctement l'identifiant et le libellé
+         *   de l'objet persistant trouvé.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
+        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant.
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>garantit que findById(KO DAO message non nul) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois avec le bon identifiant</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
+    @DisplayName("findById(KO DAO message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
     public void testFindByIdExceptionDAO() {
     	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message MSG_BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant la recherche par identifiant.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réaction
+         * afin de prouver comment le service réagit
+         * au cas contractuel "KO DAO message non nul".
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+    	
         when(this.typeProduitDaoJPA.findById(ID_1))
-            .thenThrow(new RuntimeException(MSG_BOOM));
+            .thenThrow(causeDao);
         
-        assertThatThrownBy(() -> this.service.findById(ID_1))
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.findById(ID_1)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.findById(ID_1));
+        
+        /* ASSERT */
+        /* Garantit que this.service.findById(ID_1)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant.
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que findById(KO DAO message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois avec le bon identifiant</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findById(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @Test
+    public void testFindByIdExceptionDAOMsgNull() {
+    	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant la recherche par identifiant,
+         * avec un message technique d'origine null.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réaction
+         * afin de prouver comment le service réagit
+         * au cas contractuel "KO DAO message null".
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+    	
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenThrow(causeDao);
+        
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.findById(ID_1)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.findById(ID_1));
+        
+        /* ASSERT */
+        /* Garantit que this.service.findById(ID_1)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant.
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
         
     } // __________________________________________________________________
@@ -3089,17 +3305,30 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>update(null) : jette {@link ExceptionAppliParamNull}.</p>
+     * <p>garantit que update(paramètre null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_PARAM_NULL}</li>
+     * <li>n'appelle pas le DAO</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(null) : jette ExceptionAppliParamNull")
+    @DisplayName("update(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
     @Test
     public void testUpdateNull() {
     	
+        /* ARRANGE - ACT - ASSERT */
+        /* Garantit que this.service.update(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet un message MESSAGE_UPDATE_KO_PARAM_NULL.
+         */
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL);
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
         verifyNoInteractions(this.typeProduitDaoJPA);
         
     } // __________________________________________________________________
@@ -3108,145 +3337,121 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>update(blank) : jette {@link ExceptionAppliLibelleBlank}.</p>
+     * <p>garantit que update(libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK}</li>
+     * <li>n'appelle pas le DAO</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(blank) : jette ExceptionAppliLibelleBlank")
+    @DisplayName("update(libellé blank) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
     @Test
     public void testUpdateBlank() {
     	
+        /* ARRANGE */
         final TypeProduit metier = fabriquerTypeProduit(BLANK, ID_1);
         
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet un message MESSAGE_UPDATE_KO_LIBELLE_BLANK.
+         */
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
         verifyNoInteractions(this.typeProduitDaoJPA);
         
     } // __________________________________________________________________
     
     
-
+    
     /**
      * <div>
-     * <p>update(ID null) : jette {@link ExceptionAppliParamNonPersistent}
-     * avec {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_NON_PERSISTENT}
-     * + libellé.</p>
+     * <p>garantit que update(libellé déjà porté par un autre TypeProduit) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * <li>retourne l'objet persistant inchangé</li>
+     * <li>contrôle le conflit fonctionnel via le DAO</li>
+     * </ul>
      * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(ID null) : jette ExceptionAppliParamNonPersistent")
-    @Test
-    public void testUpdateIdNull() {
-    	
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
-        
-        assertThatThrownBy(() -> this.service.update(metier))
-            .isInstanceOf(ExceptionAppliParamNonPersistent.class)
-            .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT + VETEMENT);
-        verifyNoInteractions(this.typeProduitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(findById retourne null) : jette {@link ExceptionTechniqueGateway}
-     * KO_STOCKAGE, et ne sauvegarde pas.</p>
-     * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(findById retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
-    @Test
-    public void testUpdateFindByIdDAORetourneNull() {
-    	
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
-        
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
-        assertThatThrownBy(() -> this.service.update(metier))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(KO DAO sur findById) : wrappe en {@link ExceptionTechniqueGateway}.</p>
-     * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(KO DAO sur findById) : jette ExceptionTechniqueGateway (wrap)")
-    @Test
-    public void testUpdateExceptionDAOFindById() {
-    	
-        when(this.typeProduitDaoJPA.findById(ID_1))
-            .thenThrow(new RuntimeException(MSG_BOOM));
-        
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
-        
-        assertThatThrownBy(() -> this.service.update(metier))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(MSG_BOOM);
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(entity inexistante) : retourne null, ne sauvegarde pas.</p>
-     * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(entity inexistante) : retourne null")
+    @DisplayName("update(libellé déjà existant sur un autre TypeProduit) : retourne l'objet persistant inchangé sans save()")
     @Test
-    public void testUpdateEntityInexistante() throws Exception {
+    public void testUpdateLibelleExistant() throws Exception {
     	
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
-        
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
-        
-        final TypeProduit resultat = this.service.update(metier);
-        
-        assertThat(resultat).isNull();
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(aucune modification) : ne sauvegarde pas.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(aucune modification) : ne déclenche pas de save()")
-    @Test
-    public void testUpdateAucuneModification() throws Exception {
-    	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * l'objet persistant actuellement stocké".
+         *
+         * On simule donc volontairement un objet persistant courant
+         * portant encore le libellé VETEMENT.
+         */
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
-        
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
-        
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenReturn(Optional.of(persistee));
+
+        /* Configure ensuite le contrôle de conflit fonctionnel :
+         * le DAO mocké avec Mockito trouve déjà un autre TypeProduit
+         * portant le libellé CAMPING,
+         * mais avec un identifiant différent ID_2.
+         *
+         * Cela simule exactement le cas contractuel :
+         * le nouveau libellé demandé correspond déjà
+         * à celui d'un autre TypeProduit présent dans le stockage.
+         */
+        final TypeProduitJPA autrePersistant = fabriquerTypeProduitJPA(CAMPING, ID_2);
+
+        when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(CAMPING))
+            .thenReturn(autrePersistant);
+
+        final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         final TypeProduit resultat = this.service.update(metier);
-        
+
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - ne lève aucune exception
+         * - ne modifie pas l'objet persistant courant
+         *   lorsqu'un autre TypeProduit possède déjà le libellé demandé
+         * - retourne donc l'objet persistant inchangé.
+         */
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
+
+        /* Garantit que le DAO mocké a bien été interrogé
+         * sur l'objet persistant courant à mettre à jour.
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit que le DAO mocké a bien contrôlé
+         * l'existence d'un autre TypeProduit portant déjà le libellé demandé.
+         */
+        verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(CAMPING);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée,
+         * puisque le contrat impose
+         * qu'aucune modification ne soit appliquée dans ce cas.
+         */
         verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
@@ -3255,30 +3460,313 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>update(modification) : sauvegarde et retourne modifié.</p>
+     * <p>garantit que update(pObject avec ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNonPersistent}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_NON_PERSISTENT}
+     * suivi du libellé de l'objet métier</li>
+     * <li>n'appelle pas le DAO</li>
+     * </ul>
      * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(ID null) : jette ExceptionAppliParamNonPersistent et n'appelle pas le DAO")
+    @Test
+    public void testUpdateIdNull() {
+    	
+        /* ARRANGE */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionAppliParamNonPersistent
+         * - émet un message MESSAGE_UPDATE_KO_NON_PERSISTENT
+         *   suivi du libellé VETEMENT.
+         */
+        assertThatThrownBy(() -> this.service.update(metier))
+            .isInstanceOf(ExceptionAppliParamNonPersistent.class)
+            .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT + VETEMENT);
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>garantit que update(DAO.findById retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(findById retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE et ne sauvegarde pas")
+    @Test
+    public void testUpdateFindByIdDAORetourneNull() {
+    	
+        /* ARRANGE */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre null".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne null au lieu d'un Optional<TypeProduitJPA>,
+         * ce qui doit être interprété comme une anomalie technique
+         * de stockage.
+         */
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message ERREUR_TECHNIQUE_KO_STOCKAGE
+         *   lorsque le stockage retourne null sur findById(...).
+         */
+        assertThatThrownBy(() -> this.service.update(metier))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée,
+         * puisque le chargement de l'objet persistant a échoué
+         * avant toute modification.
+         */
+        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>garantit que update(entity inexistante dans le stockage) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>retourne {@code null}</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(modification) : sauvegarde via save() et retourne modifié")
+    @DisplayName("update(entity inexistante dans le stockage) : retourne null et ne sauvegarde pas")
     @Test
-    public void testUpdateAvecModification() throws Exception {
+    public void testUpdateEntityInexistante() throws Exception {
     	
+        /* ARRANGE */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * Optional.empty()".
+         *
+         * On simule donc volontairement un stockage
+         * qui ne trouve aucun TypeProduit persistant
+         * pour l'identifiant demandé.
+         */
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        final TypeProduit resultat = this.service.update(metier);
+
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - retourne null
+         *   lorsque l'objet à mettre à jour
+         *   n'existe pas dans le stockage
+         * - ne lève aucune exception.
+         */
+        assertThat(resultat).isNull();
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée,
+         * puisqu'aucun objet persistant n'a été trouvé
+         * à modifier dans le stockage.
+         */
+        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>garantit que update(aucune modification) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>retourne l'objet persistant inchangé</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(aucune modification) : retourne l'objet persistant inchangé sans save()")
+    @Test
+    public void testUpdateAucuneModification() throws Exception {
+    	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * l'objet persistant actuellement stocké".
+         *
+         * On simule donc volontairement un objet persistant courant
+         * portant le libellé VETEMENT.
+         */
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
         
-        final TypeProduitJPA modifiee = fabriquerTypeProduitJPA(CAMPING, ID_1);
-        
-        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenReturn(modifiee);
-        
-        final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         final TypeProduit resultat = this.service.update(metier);
         
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - ne lève aucune exception
+         * - ne modifie pas l'objet persistant courant
+         *   lorsque le libellé demandé est déjà celui stocké
+         * - retourne donc l'objet persistant inchangé.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
+        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée,
+         * puisqu'aucune modification n'était à appliquer
+         * dans le stockage.
+         */
+        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>garantit que update(modification effective) :</p>
+     * <ul>
+     * <li>charge l'objet persistant courant via {@code findById(...)}</li>
+     * <li>déclenche une modification dans le stockage via {@code save(...)}</li>
+     * <li>retourne l'objet persistant modifié</li>
+     * <li>conserve le même identifiant</li>
+     * <li>applique le nouveau libellé demandé</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(modification effective) : sauvegarde dans le stockage et retourne l'objet persistant modifié")
+    @Test
+    public void testUpdateAvecModification() throws Exception {
+    	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie d'abord :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * l'objet persistant actuellement stocké".
+         *
+         * On simule donc volontairement un objet persistant courant
+         * portant encore le libellé VETEMENT.
+         */
+        final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenReturn(Optional.of(persistee));
+
+        /* La formule when(...).thenReturn(...) signifie ensuite :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via save(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * l'objet persistant modifié".
+         *
+         * On simule donc volontairement une modification effective
+         * dans le stockage :
+         * l'identifiant reste ID_1
+         * et le nouveau libellé devient CAMPING.
+         */
+        final TypeProduitJPA modifiee = fabriquerTypeProduitJPA(CAMPING, ID_1);
+
+        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
+            .thenReturn(modifiee);
+
+        final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        final TypeProduit resultat = this.service.update(metier);
+
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - effectue bien une modification dans le stockage
+         * - retourne l'objet persistant modifié
+         * - conserve l'identifiant ID_1
+         * - applique le nouveau libellé CAMPING.
+         */
         assertThat(resultat).isNotNull();
         assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(resultat.getTypeProduit()).isEqualTo(CAMPING);
+
+        /* Garantit que le DAO mocké a bien été interrogé
+         * sur l'objet persistant courant à modifier.
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'une sauvegarde a bien été déclenchée,
+         * ce qui prouve qu'une modification effective
+         * a été appliquée dans le stockage.
+         */
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
@@ -3287,29 +3775,160 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>update(modification de casse) : préserve la casse du nouveau libellé.</p>
+     * <p>garantit que update(KO DAO sur findById message non nul) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
      * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO sur findById message non nul) : jette ExceptionTechniqueGateway et propage la cause")
+    @Test
+    public void testUpdateExceptionDAOFindById() {
+    	
+        /* ARRANGE */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message MSG_BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le chargement de l'objet persistant à mettre à jour.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réaction
+         * afin de prouver comment le service réagit
+         * au cas contractuel "KO DAO sur findById message non nul".
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.update(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.update(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(MSG_BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée,
+         * puisque l'échec technique est survenu
+         * avant toute modification et avant tout save(...).
+         */
+        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>garantit que update(modification de casse) :</p>
+     * <ul>
+     * <li>effectue une modification dans le stockage</li>
+     * <li>retourne l'objet persistant modifié</li>
+     * <li>préserve exactement la casse du nouveau libellé</li>
+     * <li>appelle le DAO via {@code findById(...)} puis {@code save(...)}</li>
+     * </ul>
+     * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(modification de casse) : préserve la casse du nouveau libellé")
+    @DisplayName("update(modification de casse) : sauvegarde et préserve exactement la casse du nouveau libellé")
     @Test
     public void testUpdateModificationCasse() throws Exception {
     	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie d'abord :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * l'objet persistant actuellement stocké".
+         *
+         * On simule donc volontairement un objet persistant courant
+         * portant encore le libellé VETEMENT.
+         */
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
         
-        final String nouveauLibelle = VETEMENT.toUpperCase(Locale.getDefault());
+        /* Prépare ensuite une modification limitée à la casse du libellé.
+         *
+         * L'usage de Locale.ROOT évite toute dépendance
+         * au locale de la machine qui exécute le test.
+         */
+        final String nouveauLibelle = VETEMENT.toUpperCase(Locale.ROOT);
         final TypeProduitJPA modifiee = fabriquerTypeProduitJPA(nouveauLibelle, ID_1);
         
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenReturn(modifiee);
         
         final TypeProduit metier = fabriquerTypeProduit(nouveauLibelle, ID_1);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         final TypeProduit resultat = this.service.update(metier);
         
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - effectue bien une modification dans le stockage
+         * - retourne l'objet persistant modifié
+         * - préserve exactement la casse du nouveau libellé demandé.
+         */
         assertThat(resultat).isNotNull();
-        assertThat(resultat.getTypeProduit()).isEqualTo(nouveauLibelle); // Casse préservée
+        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
+        assertThat(resultat.getTypeProduit()).isEqualTo(nouveauLibelle);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'une sauvegarde a bien été déclenchée,
+         * ce qui prouve qu'une modification effective
+         * a été appliquée dans le stockage.
+         */
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
@@ -3318,7 +3937,14 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>update(DAO save retourne null) : jette KO_STOCKAGE.</p>
+     * <p>garantit que update(DAO save retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de sauvegarde via {@code save(...)}</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
@@ -3326,17 +3952,56 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Test
     public void testUpdateSauvegardeNull() {
     	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie d'abord :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * l'objet persistant actuellement stocké".
+         *
+         * On simule donc volontairement un objet persistant courant
+         * portant encore le libellé VETEMENT,
+         * afin d'atteindre réellement la phase de sauvegarde.
+         */
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+
+        /* La formule when(...).thenReturn(...) signifie ensuite :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via save(...),
+         * alors le DAO mocké avec Mockito devra répondre null".
+         *
+         * On simule donc volontairement une anomalie technique du stockage :
+         * la sauvegarde est tentée,
+         * mais le stockage retourne null au lieu de renvoyer
+         * l'objet persistant modifié.
+         */
         when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenReturn(null);
         
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
         
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message ERREUR_TECHNIQUE_KO_STOCKAGE
+         *   lorsque le stockage retourne null sur save(...).
+         */
         assertThatThrownBy(() -> this.service.update(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'une tentative de sauvegarde a bien eu lieu,
+         * ce qui prouve que l'échec technique observé
+         * provient bien du retour null de save(...).
+         */
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
@@ -3345,26 +4010,87 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>update(KO DAO) : wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * <p>garantit que update(KO DAO sur save message non nul) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de sauvegarde via {@code save(...)}</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
+    @DisplayName("update(KO DAO sur save message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
     public void testUpdateExceptionDAO() {
     	
+        /* ARRANGE */
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
-        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class))).thenThrow(new RuntimeException(MSG_BOOM));
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via save(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message MSG_BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment de la sauvegarde de l'objet modifié.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réaction
+         * afin de prouver comment le service réagit
+         * au cas contractuel "KO DAO sur save message non nul".
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
+        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
+            .thenThrow(causeDao);
         
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
         
-        assertThatThrownBy(() -> this.service.update(metier))
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.update(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.update(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'une tentative de sauvegarde a bien eu lieu,
+         * ce qui prouve que l'échec technique observé
+         * provient bien du save(...).
+         */
         verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________

@@ -776,7 +776,8 @@ public interface TypeProduitGatewayIService {
 	 * <li>Si {@code DAO} retourne {@code null} :
 	 * jette une {@link ExceptionTechniqueGateway}
 	 * avec un message {@link #ERREUR_TECHNIQUE_KO_STOCKAGE}.</li>
-	 * <li>Si le {@link TypeProduit} n'est pas trouvé :
+	 * <li>Si le {@link TypeProduit} n'est pas trouvé 
+	 * avec cet ID dans le stockage :
 	 * retourne {@code null}. Pas d'Exception.</li>
 	 * <li>Si scénario nominal : 
 	 * délègue au DAO la recherche par ID, 
