@@ -97,199 +97,324 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     /** "TypeProduitGatewayJPAService" */
     public static final String QUALIFIER_SERVICE = "TypeProduitGatewayJPAService";
 
-    /** Tag JUnit : tests de création. */
+    /** "servicesGateway-Creer" */
     public static final String TAG_CREER = "servicesGateway-Creer";
 
-    /** Tag JUnit : tests de recherche. */
+    /** "servicesGateway-Rechercher" */
     public static final String TAG_RECHERCHER = "servicesGateway-Rechercher";
 
-    /** Tag JUnit : tests de recherche par objet métier. */
+    /** "servicesGateway-FindByObjetMetier" */
     public static final String TAG_FINDBYOBJETMETIER = "servicesGateway-FindByObjetMetier";
 
-    /** Tag JUnit : tests de recherche rapide. */
+    /** "servicesGateway-RechercherRapide" */
     public static final String TAG_RECHERCHER_RAPIDE = "servicesGateway-RechercherRapide";
 
-    /** Tag JUnit : tests de pagination. */
+    /** "servicesGateway-Pagination" */
     public static final String TAG_PAGINATION = "servicesGateway-Pagination";
 
-    /** Tag JUnit : tests d'update. */
+    /** "servicesGateway-Update" */
     public static final String TAG_UPDATE = "servicesGateway-Update";
 
-    /** Tag JUnit : tests de delete. */
+    /** "servicesGateway-Delete" */
     public static final String TAG_DELETE = "servicesGateway-Delete";
 
-    /** Tag JUnit : tests de count. */
+    /** "servicesGateway-Count" */
     public static final String TAG_COUNT = "servicesGateway-Count";
 
-    /** DisplayName : rechercherTous(). */
-    public static final String DN_RECHERCHER_TOUS = "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
+    /** 
+     * "rechercherTous() - retourne la liste seedée (triée, sans doublons)" 
+     */
+    public static final String DN_RECHERCHER_TOUS 
+    	= "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
 
-    /** DisplayName : creer(OK). */
-    public static final String DN_CREER_OK = "creer(OK) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
+    /** 
+     * "creer(OK) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés"
+     */
+    public static final String DN_CREER_OK 
+    	= "creer(OK) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
 
-    /** DisplayName : creer(null). */
-    public static final String DN_CREER_NULL = "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** 
+     * "creer(null) - jette ExceptionAppliParamNull (contrat du port)"
+     */
+    public static final String DN_CREER_NULL 
+    	= "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : creer(blank). */
-    public static final String DN_CREER_BLANK = "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** 
+     * "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)"
+     */
+    public static final String DN_CREER_BLANK 
+    	= "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : findByObjetMetier(null). */
-    public static final String DN_FINDBYOBJETMETIER_NULL = "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** 
+     * "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)"
+     */
+    public static final String DN_FINDBYOBJETMETIER_NULL 
+    	= "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : findByObjetMetier(libellé blank). */
-    public static final String DN_FINDBYOBJETMETIER_BLANK = "findByObjetMetier(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** 
+     * "findByObjetMetier(blank) - jette ExceptionAppliLibelleBlank (contrat du port)"
+     */
+    public static final String DN_FINDBYOBJETMETIER_BLANK 
+    	= "findByObjetMetier(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : findByObjetMetier(non trouvé). */
-    public static final String DN_FINDBYOBJETMETIER_NON_TROUVE = "findByObjetMetier(non trouvé) - retourne null";
+    /** 
+     * "findByObjetMetier(non trouvé) - retourne null"
+     */
+    public static final String DN_FINDBYOBJETMETIER_NON_TROUVE 
+    	= "findByObjetMetier(non trouvé) - retourne null";
 
-    /** DisplayName : findByObjetMetier(trouvé). */
-    public static final String DN_FINDBYOBJETMETIER_TROUVE = "findByObjetMetier(trouvé) - retourne l'objet métier";
+    /** 
+     * "findByObjetMetier(trouvé) - retourne l'objet métier" 
+     */
+    public static final String DN_FINDBYOBJETMETIER_TROUVE 
+    	= "findByObjetMetier(trouvé) - retourne l'objet métier";
 
-    /** DisplayName : findByObjetMetier(béton). */
-    public static final String DN_FINDBYOBJETMETIER_BETON = "findByObjetMetier(béton) - insensible à l'ID fourni et insensible à la casse (case-insensitive)";
+    /** 
+     * "findByObjetMetier(béton) - insensible à l'ID fourni et insensible à la casse (case-insensitive)" 
+     */
+    public static final String DN_FINDBYOBJETMETIER_BETON 
+    	= "findByObjetMetier(béton) - insensible à l'ID fourni et insensible à la casse (case-insensitive)";
 
-    /** DisplayName : findByLibelle(blank). */
-    public static final String DN_FINDBYLIBELLE_BLANK = "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** 
+     * "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)"
+     */
+    public static final String DN_FINDBYLIBELLE_BLANK 
+    	= "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : findByLibelle(non trouvé). */
-    public static final String DN_FINDBYLIBELLE_NON_TROUVE = "findByLibelle(non trouvé) - retourne null";
+    /** 
+     * "findByLibelle(non trouvé) - retourne null"
+     */
+    public static final String DN_FINDBYLIBELLE_NON_TROUVE 
+    	= "findByLibelle(non trouvé) - retourne null";
 
-    /** DisplayName : findByLibelle(trouvé). */
-    public static final String DN_FINDBYLIBELLE_TROUVE = "findByLibelle(trouvé) - retourne l'objet métier";
+    /** 
+     * "findByLibelle(trouvé) - retourne l'objet métier"
+     */
+    public static final String DN_FINDBYLIBELLE_TROUVE 
+    	= "findByLibelle(trouvé) - retourne l'objet métier";
 
-    /** DisplayName : findByLibelleRapide(null). */
-    public static final String DN_RAPIDE_NULL = "findByLibelleRapide(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** 
+     * "findByLibelleRapide(null) - jette ExceptionAppliParamNull (contrat du port)" 
+     */
+    public static final String DN_RAPIDE_NULL 
+    	= "findByLibelleRapide(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : findByLibelleRapide(blank). */
-    public static final String DN_RAPIDE_BLANK = "findByLibelleRapide(blank) - délègue rechercherTous()";
+    /** 
+     * "findByLibelleRapide(blank) - délègue rechercherTous()"
+     */
+    public static final String DN_RAPIDE_BLANK 
+    	= "findByLibelleRapide(blank) - délègue rechercherTous()";
 
-    /** DisplayName : findByLibelleRapide(OK). */
-    public static final String DN_RAPIDE_OK = "findByLibelleRapide(OK) - retourne les correspondances";
+    /** 
+     * "findByLibelleRapide(OK) - retourne les correspondances"
+     */
+    public static final String DN_RAPIDE_OK 
+    	= "findByLibelleRapide(OK) - retourne les correspondances";
 
-    /** DisplayName : findById(trouvé). */
-    public static final String DN_FINDBYID_TROUVE = "findById(trouvé) - retourne l'objet métier";
+    /** 
+     * "findById(trouvé) - retourne l'objet métier" 
+     */
+    public static final String DN_FINDBYID_TROUVE 
+    	= "findById(trouvé) - retourne l'objet métier";
 
-    /** DisplayName : findById(non trouvé). */
-    public static final String DN_FINDBYID_NON_TROUVE = "findById(non trouvé) - retourne null";
+    /** 
+     * "findById(non trouvé) - retourne null"
+     */
+    public static final String DN_FINDBYID_NON_TROUVE 
+    	= "findById(non trouvé) - retourne null";
 
-    /** DisplayName : findById(null). */
-    public static final String DN_FINDBYID_NULL = "findById(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** 
+     * "findById(null) - jette ExceptionAppliParamNull (contrat du port)"
+     */
+    public static final String DN_FINDBYID_NULL 
+    	= "findById(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : rechercherTousParPage(null). */
-    public static final String DN_PAGE_NULL = "rechercherTousParPage(null) - applique la pagination par défaut";
+    /** 
+     * "rechercherTousParPage(null) - applique la pagination par défaut"
+     */
+    public static final String DN_PAGE_NULL 
+    	= "rechercherTousParPage(null) - applique la pagination par défaut";
 
-    /** DisplayName : rechercherTousParPage(avec tri). */
+    /** 
+     * "rechercherTousParPage(avec tri) - respecte la pagination et le tri (béton)"
+     */
     public static final String DN_PAGE_TRI = "rechercherTousParPage(avec tri) - respecte la pagination et le tri (béton)";
 
-    /** DisplayName : update(null). */
-    public static final String DN_UPDATE_NULL = "update(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** 
+     * "update(null) - jette ExceptionAppliParamNull (contrat du port)"
+     */
+    public static final String DN_UPDATE_NULL 
+    	= "update(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : update(blank). */
-    public static final String DN_UPDATE_BLANK = "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** 
+     * "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)"
+     */
+    public static final String DN_UPDATE_BLANK 
+    	= "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : update(ID null). */
-    public static final String DN_UPDATE_ID_NULL = "update(ID null) - jette ExceptionAppliParamNonPersistent (contrat du port)";
+    /** 
+     * "update(ID null) - jette ExceptionAppliParamNonPersistent (contrat du port)"
+     */
+    public static final String DN_UPDATE_ID_NULL 
+    	= "update(ID null) - jette ExceptionAppliParamNonPersistent (contrat du port)";
 
-    /** DisplayName : update(entity inexistante). */
-    public static final String DN_UPDATE_INEXISTANTE = "update(entity inexistante) - retourne null";
+    /** 
+     * "update(entity inexistante) - retourne null" 
+     */
+    public static final String DN_UPDATE_INEXISTANTE 
+    	= "update(entity inexistante) - retourne null";
 
-    /** DisplayName : update(sans modification). */
-    public static final String DN_UPDATE_SANS_MODIF = "update(sans modification) - retourne un objet métier équivalent et ne modifie pas le stockage";
+    /** 
+     * "update(sans modification) - retourne un objet métier équivalent et ne modifie pas le stockage" 
+     */
+    public static final String DN_UPDATE_SANS_MODIF 
+    	= "update(sans modification) - retourne un objet métier équivalent et ne modifie pas le stockage";
 
-    /** DisplayName : update(modification). */
-    public static final String DN_UPDATE_AVEC_MODIF = "update(modification) - modifie le stockage et retourne l'objet modifié";
+    /** 
+     * "update(modification) - modifie le stockage et retourne l'objet modifié"
+     */
+    public static final String DN_UPDATE_AVEC_MODIF 
+    	= "update(modification) - modifie le stockage et retourne l'objet modifié";
     
-    /** DisplayName : update(libellé existant). */
+    /** 
+     * "update(libellé existant) - vérifie le comportement en cas de doublon" 
+     */
     public static final String DN_UPDATE_LIBELLE_EXISTANT =
             "update(libellé existant) - vérifie le comportement en cas de doublon";
 
-    /** DisplayName : delete(null). */
-    public static final String DN_DELETE_NULL = "delete(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** 
+     * "delete(null) - jette ExceptionAppliParamNull (contrat du port)"
+     */
+    public static final String DN_DELETE_NULL 
+    	= "delete(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : delete(OK). */
-    public static final String DN_DELETE_OK = "delete(OK) - supprime un type créé et le rend introuvable";
+    /** 
+     * "delete(OK) - supprime un type créé et le rend introuvable"
+     */
+    public static final String DN_DELETE_OK 
+    	= "delete(OK) - supprime un type créé et le rend introuvable";
 
-    /** DisplayName : count(). */
-    public static final String DN_COUNT_OK = "count() - cohérent avec rechercherTous()";
+    /** 
+     * "count() - cohérent avec rechercherTous()" 
+     */
+    public static final String DN_COUNT_OK 
+    	= "count() - cohérent avec rechercherTous()";
 
-    /** DisplayName : delete(ID inexistant). */
-    public static final String DN_DELETE_ID_INEXISTANT = "delete(ID inexistant) - ne lève pas d'exception";
+    /** 
+     * "delete(ID inexistant) - ne lève pas d'exception" 
+     */
+    public static final String DN_DELETE_ID_INEXISTANT 
+    	= "delete(ID inexistant) - ne lève pas d'exception";
     
-    /** DisplayName : delete(double suppression). */
+    /** 
+     * "delete(double suppression) - ne lève pas d'exception"
+     */
     public static final String DN_DELETE_DOUBLE =
             "delete(double suppression) - ne lève pas d'exception";
 
-    /** DisplayName : findByLibelleRapide(case-insensitive). */
-    public static final String DN_RAPIDE_CASE_INSENSITIVE = "findByLibelleRapide(case-insensitive) - recherche insensible à la casse";
+    /** 
+     * "findByLibelleRapide(case-insensitive) - recherche insensible à la casse"
+     */
+    public static final String DN_RAPIDE_CASE_INSENSITIVE 
+    	= "findByLibelleRapide(case-insensitive) - recherche insensible à la casse";
 
-    /** DisplayName : findByLibelleRapide(dédoublonnage). */
-    public static final String DN_RAPIDE_DEDOUBLONNAGE = "findByLibelleRapide(dédoublonnage) - pas de doublons dans les résultats";
+    /** 
+     * "findByLibelleRapide(dédoublonnage) - pas de doublons dans les résultats"
+     */
+    public static final String DN_RAPIDE_DEDOUBLONNAGE 
+    	= "findByLibelleRapide(dédoublonnage) - pas de doublons dans les résultats";
 
-    /** DisplayName : rechercherTousParPage(vide). */
-    public static final String DN_PAGE_VIDE = "rechercherTousParPage(vide) - retourne une page vide si la base est vide";
+    /** 
+     * "rechercherTousParPage(vide) - retourne une page vide si la base est vide"
+     */
+    public static final String DN_PAGE_VIDE 
+    	= "rechercherTousParPage(vide) - retourne une page vide si la base est vide";
 
-    /** DisplayName : rechercherTousParPage(taille > total). */
-    public static final String DN_PAGE_TAILLE_SUP = "rechercherTousParPage(taille > total) - retourne tous les éléments";
+    /** 
+     * "rechercherTousParPage(taille > total) - retourne tous les éléments" 
+     */
+    public static final String DN_PAGE_TAILLE_SUP 
+    	= "rechercherTousParPage(taille > total) - retourne tous les éléments";
     
-    /** DisplayName : findByLibelleRapide(aucun résultat). */
+    /** 
+     * "findByLibelleRapide(aucun résultat) - retourne une liste vide" 
+     */
     public static final String DN_RAPIDE_AUCUN =
             "findByLibelleRapide(aucun résultat) - retourne une liste vide";
 
-    /** Recherche rapide sans résultat. */
+    /** 
+     * "zzz"
+     */
     public static final String RECHERCHE_AUCUN = "zzz";
     
-    /** DisplayName : rechercherTousParPage(page hors bornes). */
+    /** 
+     * "rechercherTousParPage(page hors bornes) - retourne une page vide cohérente"
+     */
     public static final String DN_PAGE_HORS_BORNES =
             "rechercherTousParPage(page hors bornes) - retourne une page vide cohérente";
     
-    /** DisplayName : rechercherTousParPage(taille zéro). */
+    /** 
+     * "rechercherTousParPage(taille zéro) - normalise la taille et retourne la première page cohérente"
+     */
     public static final String DN_PAGE_TAILLE_ZERO =
-            "rechercherTousParPage(taille zéro) - retourne une page vide";
+            "rechercherTousParPage(taille zéro) - normalise la taille et retourne la première page cohérente";
 
-    /** blank (espaces). */
+    /** "   " */
     public static final String BLANK = "   ";
 
-    /** Libellé seed : "vêtement". */
+    /** "vêtement" */
     public static final String VETEMENT = "vêtement";
 
-    /** Libellé seed : "bazar". */
+    /** "bazar" */
     public static final String BAZAR = "bazar";
 
-    /** Libellé seed : "outillage". */
+    /** "outillage" */
     public static final String OUTILLAGE = "outillage";
 
-    /** Libellé seed : "tourisme". */
+    /** "tourisme" */
     public static final String TOURISME = "tourisme";
 
-    /** Libellé seed : "vestons". */
+    /** "vestons" */
     public static final String VESTONS = "vestons";
 
-    /** Libellé nouveau type (création). */
+    /** "peinture" */
     public static final String NOUVEAU_TYPE_1 = "peinture";
 
-    /** Libellé nouveau type 2 (création). */
+    /** "électronique" */
     public static final String NOUVEAU_TYPE_2 = "électronique";
 
-    /** Suffixe de modification. */
+    /** "-modif" */
     public static final String SUFFIX_MODIF = "-modif";
 
-    /** Libellé temporaire à supprimer. */
+    /** "a-supprimer" */
     public static final String TEMP_A_SUPPRIMER = "a-supprimer";
 
-    /** Recherche rapide : "me". */
+    /** "me" */
     public static final String RECHERCHE_ME = "me";
 
-    /** Recherche rapide : "ve". */
+    /** "ve" */
     public static final String RECHERCHE_VE = "ve";
 
-    /** Recherche rapide : "VE". */
+    /** "VE" */
     public static final String RECHERCHE_VE_MAJ = "VE";
 
-    /** ID inexistant. */
+    /** 999_999L */
     public static final Long ID_INEXISTANTE = Long.valueOf(999_999L);
 
-    /** Propriété JPA : "typeProduit". */
+    /** "typeProduit" */
     public static final String PROP_TYPEPRODUIT = "typeProduit";
+    
+    /**
+     * "SELECT COUNT(*) FROM TYPES_PRODUIT"
+     */
+    public static final String SELECT_COUNT_FROM_TYPES_PRODUIT 
+    	= "SELECT COUNT(*) FROM TYPES_PRODUIT";
+    
+    /**
+     * "SELECT TYPE_PRODUIT FROM TYPES_PRODUIT"
+     */
+    public static final String SELECT_TYPEPRODUIT_FROM_TYPES_PRODUIT 
+    	= "SELECT TYPE_PRODUIT FROM TYPES_PRODUIT";
 
     // *************************** ATTRIBUTS *******************************/
 
@@ -586,7 +711,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
          * - l'identifiant de la ligne seedée existante.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM TYPES_PRODUIT",
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
                 Long.class);
 
         final Long countLibelleAvant = this.jdbcTemplate.queryForObject(
@@ -625,7 +750,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
          * potentiellement marqué en erreur après l'échec attendu.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM TYPES_PRODUIT",
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
                 Long.class);
 
         final Long countLibelleApres = this.jdbcTemplate.queryForObject(
@@ -875,204 +1000,537 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
     
     
-	/**
-	 * <div>
-	 * <p>
-	 * Vérifie que `rechercherTous()` retourne une liste non nulle, non vide,
-	 * et contient les types seedés par data-test.sql.
-	 * </p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_RECHERCHER)
-	@DisplayName(DN_RECHERCHER_TOUS)
-	@Test
-	public void testRechercherTous() throws Exception {
-		
-	    final List<TypeProduit> resultats = this.service.rechercherTous();
-	    assertThat(resultats).isNotNull();
-	    assertThat(resultats).isNotEmpty();
-	    assertThat(resultats)
-	        .extracting(TypeProduit::getTypeProduit)
-	        .doesNotHaveDuplicates()
-	        .contains(VETEMENT, BAZAR, OUTILLAGE, TOURISME, VESTONS);
-	    assertListeTrieeParLibelle(resultats);
-	    
-	} // ________________________________________________________________
-    
-    
+    /**
+     * <div>
+     * <p>garantit que rechercherTous() sur la base seedée :</p>
+     * <ul>
+     * <li>retourne une liste non null et non vide ;</li>
+     * <li>retourne exactement les libellés physiquement présents en base ;</li>
+     * <li>retourne autant d'objets métier que de lignes présentes en base ;</li>
+     * <li>retourne une liste triée par libellé et sans doublon.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(base seedée) - retourne exactement l'état physique trié et sans doublon")
+    @Test
+    public void testRechercherTous() throws Exception {
+    	
+        /* ARRANGE :
+         * lit d'abord l'état physique actuel de la base
+         * via JdbcTemplate, afin de disposer d'une référence
+         * indépendante d'Hibernate.
+         *
+         * Ce test vérifie ensuite que la liste renvoyée par le service
+         * correspond exactement à cet état physique.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+                SELECT_TYPEPRODUIT_FROM_TYPES_PRODUIT,
+                String.class);
+
+        assertThat(countEnBase).isNotNull().isPositive();
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+
+        /* Trie la référence lue en base
+         * pour la comparer au résultat métier attendu,
+         * puisque rechercherTous() doit renvoyer une liste triée.
+         */
+        libellesEnBase.sort(Comparator.naturalOrder());
+
+        /* ACT :
+         * sollicite la méthode rechercherTous()
+         * dans le scénario nominal de la base seedée.
+         */
+        final List<TypeProduit> resultats = this.service.rechercherTous();
+
+        /* ASSERT :
+         * vérifie d'abord que la méthode retourne bien
+         * une liste métier exploitable.
+         */
+        assertThat(resultats).isNotNull().isNotEmpty();
+        assertThat((long) resultats.size()).isEqualTo(countEnBase.longValue());
+
+        final List<String> libellesResultats = resultats.stream()
+                .map(TypeProduit::getTypeProduit)
+                .toList();
+
+        /* Vérifie ensuite que les libellés métier retournés
+         * correspondent exactement aux libellés physiquement présents en base,
+         * une fois l'ordre naturel appliqué.
+         */
+        assertThat(libellesResultats)
+            .containsExactlyElementsOf(libellesEnBase);
+
+        /* Vérifie que les données seedées attendues
+         * sont bien présentes dans le résultat.
+         */
+        assertThat(libellesResultats)
+            .contains(VETEMENT, BAZAR, OUTILLAGE, TOURISME, VESTONS);
+
+        /* Vérifie enfin les propriétés attendues côté service :
+         * pas de doublon métier et ordre alphabétique.
+         */
+        assertThat(libellesResultats).doesNotHaveDuplicates();
+        assertListeTrieeParLibelle(resultats);
+        
+    } // ________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que rechercherTous() sur une base vidée :</p>
+     * <ul>
+     * <li>retourne une liste non null ;</li>
+     * <li>retourne une liste vide ;</li>
+     * <li>reste cohérent avec l'état physique vide de la base.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(base vide) - retourne une liste vide non null")
+    @Test
+    @Sql(
+        scripts = TypeProduitGatewayJPAServiceIntegrationTest.CLASSPATH_TRUNCATE_SQL,
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    public void testRechercherTousBaseVide() throws Exception {
+    	
+        /* ARRANGE :
+         * remplace pour ce test la préparation standard
+         * par le seul script de vidage,
+         * afin d'obtenir une base réellement vide.
+         *
+         * Ce test vérifie ensuite que le service
+         * reste cohérent avec cet état physique.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countEnBase).isNotNull().isZero();
+
+        /* ACT :
+         * sollicite la recherche complète
+         * sur une base ne contenant aucune ligne.
+         */
+        final List<TypeProduit> resultats = this.service.rechercherTous();
+
+        /* ASSERT :
+         * vérifie que la méthode ne retourne jamais null,
+         * même lorsque le stockage réel est vide.
+         */
+        assertThat(resultats).isNotNull().isEmpty();
+        
+    } // ________________________________________________________________
+
+
     
     // ================== rechercherTousParPage ===========================
     
     
 
-	/**
-	 * <div>
-	 * <p>Vérifie que `rechercherTousParPage(null)` 
-	 * retourne une page cohérente.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName(DN_PAGE_NULL)
-	@Test
-	public void testRechercherTousParPageNull() throws Exception {
-		
-	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(null);
-	    assertThat(page).isNotNull();
-	    assertThat(page.getContent()).isNotNull();
-	    assertThat(page.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
-	    assertThat(page.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
-	    assertThat(page.getTotalElements()).isPositive();
-	    
-	} // ________________________________________________________________
+    /**
+     * <div>
+     * <p>garantit que rechercherTousParPage(null) :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>applique les paramètres par défaut
+     * de {@link RequetePage} ;</li>
+     * <li>retourne un contenu cohérent avec l'état physique de la base ;</li>
+     * <li>retourne un contenu trié par libellé.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_NULL)
+    @Test
+    public void testRechercherTousParPageNull() throws Exception {
+    	
+        /* ARRANGE :
+         * lit d'abord l'état physique de la base,
+         * afin de comparer le résultat paginé
+         * à une référence indépendante d'Hibernate.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+                SELECT_TYPEPRODUIT_FROM_TYPES_PRODUIT,
+                String.class);
+
+        assertThat(countEnBase).isNotNull().isPositive();
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+
+        libellesEnBase.sort(Comparator.naturalOrder());
+
+        final int tailleAttendue = Math.min(
+                RequetePage.TAILLE_DEFAUT,
+                libellesEnBase.size());
+
+        /* ACT :
+         * sollicite la méthode avec une requête nulle,
+         * ce qui doit conduire à l'usage
+         * de la pagination par défaut.
+         */
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(null);
+
+        /* ASSERT :
+         * vérifie d'abord la cohérence générale
+         * de l'enveloppe paginée renvoyée.
+         */
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull();
+        assertThat(page.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(page.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(page.getTotalElements()).isEqualTo(countEnBase.longValue());
+        assertThat(page.getContent()).hasSize(tailleAttendue);
+
+        final List<String> libellesPage = page.getContent().stream()
+                .map(TypeProduit::getTypeProduit)
+                .toList();
+
+        /* Vérifie ensuite que la première page retournée
+         * correspond exactement au début de l'état physique trié.
+         */
+        assertThat(libellesPage)
+            .containsExactlyElementsOf(
+                    libellesEnBase.subList(0, tailleAttendue));
+
+        /* Vérifie enfin que le contenu est trié.
+         */
+        assertListeTrieeParLibelle(page.getContent());
+        
+    } // ________________________________________________________________
 
 
 
-	/**
-	 * <div>
-	 * <p>Vérifie que `rechercherTousParPage(avec tri)` 
-	 * respecte le tri demandé.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName(DN_PAGE_TRI)
-	@Test
-	public void testRechercherTousParPageAvecTri() throws Exception {
-		
-	    final List<TriSpec> tris = new ArrayList<TriSpec>();
-	    tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
-	    final RequetePage requete = new RequetePage(0, 3, tris);
-	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
-	    assertThat(page).isNotNull();
-	    assertThat(page.getContent()).isNotNull().isNotEmpty();
-	    assertThat(page.getPageNumber()).isEqualTo(0);
-	    assertThat(page.getPageSize()).isEqualTo(3);
-	    assertThat(page.getTotalElements()).isPositive();
-	    assertThat(page.getContent().size()).isLessThanOrEqualTo(3);
-	    assertListeTrieeParLibelle(page.getContent());
-	    
-	} // ________________________________________________________________
+    /**
+     * <div>
+     * <p>garantit que rechercherTousParPage(avec tri) :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>respecte le numéro de page et la taille demandés ;</li>
+     * <li>respecte le tri ascendant demandé sur le libellé ;</li>
+     * <li>retourne un contenu cohérent avec l'état physique de la base.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_TRI)
+    @Test
+    public void testRechercherTousParPageAvecTri() throws Exception {
+    	
+        /* ARRANGE :
+         * prépare une requête paginée explicite
+         * avec un tri ascendant sur le libellé métier.
+         *
+         * Le test vérifie ensuite que la page retournée
+         * correspond exactement au segment attendu
+         * de l'état physique trié.
+         */
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+                SELECT_TYPEPRODUIT_FROM_TYPES_PRODUIT,
+                String.class);
+
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+        libellesEnBase.sort(Comparator.naturalOrder());
+
+        final List<TriSpec> tris = new ArrayList<TriSpec>();
+        tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
+
+        final RequetePage requete = new RequetePage(0, 3, tris);
+
+        /* ACT :
+         * sollicite la pagination sur la première page
+         * avec taille 3 et tri ascendant.
+         */
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * vérifie la cohérence générale de la page.
+         */
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().hasSize(3);
+        assertThat(page.getPageNumber()).isEqualTo(0);
+        assertThat(page.getPageSize()).isEqualTo(3);
+        assertThat(page.getTotalElements()).isEqualTo(libellesEnBase.size());
+
+        final List<String> libellesPage = page.getContent().stream()
+                .map(TypeProduit::getTypeProduit)
+                .toList();
+
+        /* Vérifie que le contenu retourné
+         * correspond exactement aux trois premiers libellés
+         * de l'état physique trié.
+         */
+        assertThat(libellesPage)
+            .containsExactlyElementsOf(libellesEnBase.subList(0, 3));
+
+        /* Vérifie enfin le tri alphabétique du contenu.
+         */
+        assertListeTrieeParLibelle(page.getContent());
+        
+    } // ________________________________________________________________
 
 
 
-	/**
-	 * <div>
-	 * <p>Vérifie que `rechercherTousParPage(vide)` 
-	 * retourne une page vide si la base est vide.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName(DN_PAGE_VIDE)
-	@Test
-	public void testRechercherTousParPageVide() throws Exception {
-		
-	    final List<TypeProduit> tous = this.service.rechercherTous();
-	    final RequetePage requete = new RequetePage(0, 10, new ArrayList<>());
-	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
-	    assertThat(page).isNotNull();
-	    assertThat(page.getContent()).hasSize(tous.size());
-	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
-	    
-	} // ________________________________________________________________
+    /**
+     * <div>
+     * <p>garantit que rechercherTousParPage(...) sur une base vidée :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne un contenu vide ;</li>
+     * <li>retourne un total à zéro ;</li>
+     * <li>reste cohérent avec l'état physique vide de la base.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_VIDE)
+    @Test
+    @Sql(
+        scripts = TypeProduitGatewayJPAServiceIntegrationTest.CLASSPATH_TRUNCATE_SQL,
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    public void testRechercherTousParPageVide() throws Exception {
+    	
+        /* ARRANGE :
+         * prépare pour ce test une base réellement vide
+         * en ne rejouant que le script de vidage.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countEnBase).isNotNull().isZero();
+
+        final RequetePage requete = new RequetePage(0, 10, new ArrayList<>());
+
+        /* ACT :
+         * sollicite la pagination
+         * sur une base ne contenant aucune ligne.
+         */
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * vérifie que la page retournée
+         * reste exploitable et cohérente.
+         */
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().isEmpty();
+        assertThat(page.getPageNumber()).isEqualTo(0);
+        assertThat(page.getPageSize()).isEqualTo(10);
+        assertThat(page.getTotalElements()).isZero();
+        
+    } // ________________________________________________________________
 
 
 
-	/**
-	 * <div>
-	 * <p>Vérifie que `rechercherTousParPage(taille > total)` 
-	 * retourne tous les éléments.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName(DN_PAGE_TAILLE_SUP)
-	@Test
-	public void testRechercherTousParPageTailleSuperieure() throws Exception {
-	    final List<TypeProduit> tous = this.service.rechercherTous();
-	    final RequetePage requete = new RequetePage(0, tous.size() + 10, new ArrayList<>());
-	    final ResultatPage<TypeProduit> page = this.service.rechercherTousParPage(requete);
-	    assertThat(page.getContent()).hasSize(tous.size());
-	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
-	    
-	} // _________________________________________________________________
+    /**
+     * <div>
+     * <p>garantit que rechercherTousParPage(taille &gt; total) :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne tous les éléments disponibles ;</li>
+     * <li>retourne un total cohérent avec l'état physique de la base ;</li>
+     * <li>retourne un contenu trié par libellé.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_TAILLE_SUP)
+    @Test
+    public void testRechercherTousParPageTailleSuperieure() throws Exception {
+    	
+        /* ARRANGE :
+         * lit l'état physique de la base
+         * puis construit une requête dont la taille
+         * dépasse le nombre total de lignes.
+         */
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+                SELECT_TYPEPRODUIT_FROM_TYPES_PRODUIT,
+                String.class);
+
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+        libellesEnBase.sort(Comparator.naturalOrder());
+
+        final RequetePage requete =
+                new RequetePage(0, libellesEnBase.size() + 10, new ArrayList<>());
+
+        /* ACT :
+         * sollicite la pagination
+         * avec une taille supérieure au total disponible.
+         */
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * vérifie que tous les éléments sont renvoyés.
+         */
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().hasSize(libellesEnBase.size());
+        assertThat(page.getPageNumber()).isEqualTo(0);
+        assertThat(page.getPageSize()).isEqualTo(libellesEnBase.size() + 10);
+        assertThat(page.getTotalElements()).isEqualTo(libellesEnBase.size());
+
+        final List<String> libellesPage = page.getContent().stream()
+                .map(TypeProduit::getTypeProduit)
+                .toList();
+
+        assertThat(libellesPage).containsExactlyElementsOf(libellesEnBase);
+        assertListeTrieeParLibelle(page.getContent());
+        
+    } // _________________________________________________________________
 
 
 
-	/**
-	 * <div>
-	 * <p>
-	 * Vérifie qu'une page très au-delà du nombre total
-	 * retourne un contenu vide mais cohérent.
-	 * </p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName(DN_PAGE_HORS_BORNES)
-	@Test
-	public void testRechercherTousParPageHorsBornes() throws Exception {
+    /**
+     * <div>
+     * <p>garantit que rechercherTousParPage(page hors bornes) :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne un contenu vide ;</li>
+     * <li>conserve un total cohérent avec l'état physique de la base ;</li>
+     * <li>reste cohérent malgré un index de page très au-delà du total.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_HORS_BORNES)
+    @Test
+    public void testRechercherTousParPageHorsBornes() throws Exception {
 	
-	    final List<TypeProduit> tous = this.service.rechercherTous();
-	
-	    /* Page très élevée. */
-	    final RequetePage requete =
-	            new RequetePage(9999, 10, new ArrayList<>());
-	
-	    final ResultatPage<TypeProduit> page =
-	            this.service.rechercherTousParPage(requete);
-	
-	    assertThat(page).isNotNull();
-	    assertThat(page.getContent()).isNotNull().isEmpty();
-	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
-	    
-	} // _________________________________________________________________
+        /* ARRANGE :
+         * lit le nombre réel de lignes présentes en base
+         * puis prépare une requête avec un index de page
+         * volontairement très élevé.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countEnBase).isNotNull().isPositive();
+
+        final RequetePage requete =
+                new RequetePage(9999, 10, new ArrayList<>());
+
+        /* ACT :
+         * sollicite la pagination très au-delà
+         * du nombre réel de pages disponibles.
+         */
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * vérifie que le contenu est vide
+         * tout en conservant les métadonnées cohérentes.
+         */
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().isEmpty();
+        assertThat(page.getPageNumber()).isEqualTo(9999);
+        assertThat(page.getPageSize()).isEqualTo(10);
+        assertThat(page.getTotalElements()).isEqualTo(countEnBase.longValue());
+        
+    } // _________________________________________________________________
 
 
 
-	/**
-	 * <div>
-	 * <p>
-	 * Vérifie qu'une taille de page égale à zéro
-	 * retourne un contenu cohérent avec le comportement réel observé
-	 * (Spring Data / H2) : retour de tous les éléments.
-	 * </p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName(DN_PAGE_TAILLE_ZERO)
-	@Test
-	public void testRechercherTousParPageTailleZero() throws Exception {
+    /**
+     * <div>
+     * <p>garantit que rechercherTousParPage(taille zéro) :</p>
+     * <ul>
+     * <li>normalise la taille demandée ;</li>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne un contenu cohérent avec la première page attendue ;</li>
+     * <li>retourne un total cohérent avec l'état physique de la base.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName(DN_PAGE_TAILLE_ZERO)
+    @Test
+    public void testRechercherTousParPageTailleZero() throws Exception {
 	
-	    final List<TypeProduit> tous = this.service.rechercherTous();
+        /* ARRANGE :
+         * lit l'état physique de la base
+         * puis prépare une requête avec une taille à zéro.
+         *
+         * Le comportement réel observé passe par la normalisation
+         * de la taille au niveau de RequetePage.
+         */
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+                SELECT_TYPEPRODUIT_FROM_TYPES_PRODUIT,
+                String.class);
+
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+        libellesEnBase.sort(Comparator.naturalOrder());
+
+        final RequetePage requete =
+                new RequetePage(0, 0, new ArrayList<>());
+
+        final int tailleAttendue = Math.min(
+                requete.getPageSize(),
+                libellesEnBase.size());
+
+        /* ACT :
+         * sollicite la pagination
+         * avec une taille initialement nulle.
+         */
+        final ResultatPage<TypeProduit> page =
+                this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * vérifie que la taille renvoyée
+         * correspond à la taille normalisée de la requête
+         * et que le contenu correspond à la première page attendue.
+         */
+        assertThat(page).isNotNull();
+        assertThat(page.getContent()).isNotNull().hasSize(tailleAttendue);
+        assertThat(page.getPageNumber()).isEqualTo(requete.getPageNumber());
+        assertThat(page.getPageSize()).isEqualTo(requete.getPageSize());
+        assertThat(page.getTotalElements()).isEqualTo(libellesEnBase.size());
+
+        final List<String> libellesPage = page.getContent().stream()
+                .map(TypeProduit::getTypeProduit)
+                .toList();
+
+        assertThat(libellesPage)
+            .containsExactlyElementsOf(
+                    libellesEnBase.subList(0, tailleAttendue));
+
+        assertListeTrieeParLibelle(page.getContent());
 	
-	    final RequetePage requete =
-	            new RequetePage(0, 0, new ArrayList<>());
-	
-	    final ResultatPage<TypeProduit> page =
-	            this.service.rechercherTousParPage(requete);
-	
-	    assertThat(page).isNotNull();
-	    assertThat(page.getContent()).isNotNull();
-	    assertThat(page.getContent()).hasSize(tous.size());
-	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
-	
-	} // _________________________________________________________________
+    } // _________________________________________________________________
     
-
+    
     
     // ======================== findByObjetMetier =========================
-
+    
     
     
 	/**
