@@ -3334,6 +3334,41 @@ public class TypeProduitGatewayJPAServiceMockTest {
     } // __________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>garantit que update(libellé null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK}</li>
+     * <li>n'appelle pas le DAO</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(libellé null) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
+    @Test
+    public void testUpdateLibelleNull() {
+    	
+        /* ARRANGE */
+        final TypeProduit metier = fabriquerTypeProduit(null, ID_1);
+        
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet un message MESSAGE_UPDATE_KO_LIBELLE_BLANK.
+         */
+        assertThatThrownBy(() -> this.service.update(metier))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -3855,6 +3890,93 @@ public class TypeProduitGatewayJPAServiceMockTest {
         verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO sur findById message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO sur findById message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @Test
+    public void testUpdateExceptionDAOFindByIdMsgNull() {
+    	
+        /* ARRANGE */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le chargement de l'objet persistant à mettre à jour,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.update(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.update(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée,
+         * puisque l'échec technique est survenu
+         * avant toute modification et avant tout save(...).
+         */
+        verify(this.typeProduitDaoJPA, never()).save(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
     
     
 
@@ -4076,6 +4198,97 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'une tentative de sauvegarde a bien eu lieu,
+         * ce qui prouve que l'échec technique observé
+         * provient bien du save(...).
+         */
+        verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO sur save message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de sauvegarde via {@code save(...)}</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO sur save message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @Test
+    public void testUpdateExceptionDAOMsgNull() {
+    	
+        /* ARRANGE */
+        final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+        
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via save(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment de la sauvegarde de l'objet modifié,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
+            .thenThrow(causeDao);
+        
+        final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
+        
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.update(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.update(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
 
         /* Garantit que la cause technique d'origine
          * est bien propagée par l'ExceptionTechniqueGateway.
