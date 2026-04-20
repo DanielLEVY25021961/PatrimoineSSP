@@ -900,8 +900,12 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 	    assertListeTrieeParLibelle(resultats);
 	    
 	} // ________________________________________________________________
-
-
+    
+    
+    
+    // ================== rechercherTousParPage ===========================
+    
+    
 
 	/**
 	 * <div>
@@ -1064,9 +1068,13 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 	    assertThat(page.getTotalElements()).isEqualTo(tous.size());
 	
 	} // _________________________________________________________________
+    
 
+    
+    // ======================== findByObjetMetier =========================
 
-
+    
+    
 	/**
      * <div>
      * <p>Vérifie que `findByObjetMetier(null)` respecte le contrat du port :
@@ -1207,8 +1215,12 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
-        
-	
+    
+
+    // ========================== findByLibelle ===========================
+
+    
+    
 	/**
      * <div>
      * <p>Vérifie que `findByLibelle(blank)` respecte le contrat du port :
@@ -1266,6 +1278,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(retour.getTypeProduit()).isEqualTo(VETEMENT);
         
     } // __________________________________________________________________
+    
+    
+
+    // ======================== findByLibelleRapide =======================
     
     
 
@@ -1409,8 +1425,12 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         
     } // ________________________________________________________________
     
-    
 
+    
+    // ============================ findById ==============================
+
+    
+    
     /**
      * <div>
      * <p>Vérifie que `findById(null)` respecte le contrat du port :
@@ -1471,13 +1491,13 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(relu.getTypeProduit()).isEqualTo(VETEMENT);
         
     } // ________________________________________________________________
+    
+    
 
+    // ============================= update ===============================
+    
+    
 
-
-	// ========================== UPDATE ===============================
-	
-	
-	
     /**
      * <div>
      * <p>Vérifie que `update(null)` respecte le contrat du port :
@@ -1725,13 +1745,13 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(relu.getTypeProduit()).isEqualTo(BAZAR);
 
     } // ________________________________________________________________
-
-
-
-	// ========================== DELETE ===============================
-	
-	
     
+    
+
+    // ============================= delete ===============================
+    
+    
+
     /**
      * <div>
      * <p>Vérifie que `delete(null)` respecte le contrat du port :
@@ -1879,13 +1899,13 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         this.service.delete(cree);
         
     } // ________________________________________________________________
+    
+    
 
+    // ============================== Count ===============================
+    
+    
 
-
-	// =========================== COUNT ===============================
-	
-	
-       
     /**
      * <div>
      * <p>Vérifie que `count()` est cohérent avec `rechercherTous()`.</p>
@@ -1904,6 +1924,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(count).isEqualTo(liste.size());
         
     } // ________________________________________________________________
+
     
     
 }
