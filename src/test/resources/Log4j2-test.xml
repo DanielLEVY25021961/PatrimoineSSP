@@ -10,12 +10,18 @@
         - désactiver l'écriture disque des rolling files sans supprimer la
           configuration d'origine ;
         - garder un fichier pédagogique, multi-lignes, clair et modifiable ;
-        - réduire au maximum le bruit Spring / JPA / Hibernate côté logs.
-
+        - réduire au maximum le bruit Spring / JPA / Hibernate côté logs ;
+        - éviter que les tests négatifs attendus (doublon, rollback, etc.)
+          réémettent inutilement des traces dans la console.
+          
         IMPORTANT :
         - les lignes "Hibernate: ..." émises par "spring.jpa.show-sql=true"
           ne sont PAS pilotées par Log4j2 ;
-        - elles doivent être coupées dans application-test.properties.
+        - elles doivent être coupées dans application-test.properties ;
+        - une stack trace écrite directement par le runner de tests
+          n'est pas pilotée par Log4j2 ;
+        - en revanche, les traces écrites par Spring / Hibernate via leur
+          système de logs peuvent être neutralisées ici.
     -->
 
     <Properties>
@@ -39,18 +45,20 @@
 
         <!--
             Niveau Spring global.
-            ERROR recommandé pour les tests silencieux.
+            ERROR permet de ne laisser remonter que l'essentiel
+            si une catégorie spécifique n'est pas coupée plus bas.
         -->
         <Property name="SPRING_LEVEL">ERROR</Property>
 
         <!--
             Niveau Hibernate global.
-            ERROR recommandé pour les tests silencieux.
+            ERROR permet de ne laisser remonter que l'essentiel
+            si une catégorie spécifique n'est pas coupée plus bas.
         -->
         <Property name="HIBERNATE_LEVEL">ERROR</Property>
 
         <!--
-            Pattern lisible, détaillé, proche de l'esprit conservé dans le chat.
+            Pattern lisible et compact pour les tests.
             %M = méthode appelante.
         -->
         <Property name="CONSOLE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %c{1} %M - %msg%n</Property>
@@ -110,15 +118,11 @@
             =================================================================
             LOGGER APPLICATIF DU PROJET
             =================================================================
-            OFF pour éviter les FATAL / DEBUG parasites pendant les tests
-            négatifs ou les objets proxy.
+            OFF pour éviter les logs applicatifs parasites pendant les tests,
+            y compris dans les scénarios négatifs attendus.
         -->
         <Logger name="levy.daniel" level="${APP_LEVEL}" additivity="false" includeLocation="true">
             <AppenderRef ref="Console"/>
-            <!--
-                RollingFile volontairement désactivé.
-                Décommenter seulement si l'on souhaite réécrire sur disque.
-            -->
             <!-- <AppenderRef ref="RollingFile"/> -->
         </Logger>
 
@@ -126,7 +130,7 @@
             =================================================================
             SPRING
             =================================================================
-            On garde un niveau haut pour ne pas noyer la console Maven.
+            Niveau global Spring.
         -->
         <Logger name="org.springframework" level="${SPRING_LEVEL}" additivity="false" includeLocation="true">
             <AppenderRef ref="Console"/>
@@ -135,8 +139,8 @@
 
         <!--
             Transactions Spring :
-            OFF recommandé pour supprimer les traces du type
-            JpaTransactionManager getTransaction / doBegin / doCommit / rollback.
+            OFF pour supprimer le détail transactionnel
+            et les messages de rollback attendus.
         -->
         <Logger name="org.springframework.transaction" level="OFF" additivity="false" includeLocation="true">
             <AppenderRef ref="Console"/>
@@ -144,10 +148,40 @@
         </Logger>
 
         <!--
+            Intercepteur transactionnel Spring :
+            OFF pour éviter les traces autour des commits / rollbacks
+            attendus dans les tests négatifs.
+        -->
+        <Logger name="org.springframework.transaction.interceptor" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
             JPA Spring :
-            OFF recommandé pour supprimer le détail transactionnel ORM.
+            OFF pour supprimer le détail ORM côté Spring.
         -->
         <Logger name="org.springframework.orm.jpa" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Contexte transactionnel des tests Spring :
+            OFF pour éviter les messages de gestion transactionnelle
+            spécifiques aux tests d'intégration.
+        -->
+        <Logger name="org.springframework.test.context.transaction" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Gestionnaire de contexte Spring Test :
+            OFF pour éviter le bruit de cycle de vie des tests
+            lorsqu'un scénario négatif attendu provoque un rollback.
+        -->
+        <Logger name="org.springframework.test.context.TestContextManager" level="OFF" additivity="false" includeLocation="true">
             <AppenderRef ref="Console"/>
             <!-- <AppenderRef ref="RollingFile"/> -->
         </Logger>
@@ -156,7 +190,7 @@
             =================================================================
             HIBERNATE
             =================================================================
-            Niveau global Hibernate : ERROR.
+            Niveau global Hibernate.
         -->
         <Logger name="org.hibernate" level="${HIBERNATE_LEVEL}" additivity="false" includeLocation="true">
             <AppenderRef ref="Console"/>
@@ -205,6 +239,38 @@
         </Logger>
 
         <!--
+            AIDEUR SQL EXCEPTION HIBERNATE :
+            OFF pour supprimer les messages d'erreur SQL attendus
+            dans les tests négatifs, par exemple un doublon provoquant
+            une violation de contrainte d'unicité.
+        -->
+        <Logger name="org.hibernate.engine.jdbc.spi.SqlExceptionHelper" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Conversion des exceptions Hibernate :
+            OFF pour éviter les messages techniques redondants
+            lorsqu'une exception SQL attendue est déjà testée
+            côté JUnit.
+        -->
+        <Logger name="org.hibernate.exception" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
+            Mappage interne des exceptions Hibernate :
+            OFF pour éviter les traces supplémentaires autour des
+            exceptions de persistance attendues.
+        -->
+        <Logger name="org.hibernate.internal.ExceptionMapperStandardImpl" level="OFF" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <!-- <AppenderRef ref="RollingFile"/> -->
+        </Logger>
+
+        <!--
             Loggers possibles à activer ponctuellement pour diagnostic fin.
             Conservés COMMENTÉS pour apprentissage.
         -->
@@ -228,9 +294,6 @@
         -->
         <Root level="${ROOT_LEVEL}">
             <AppenderRef ref="Console"/>
-            <!--
-                Référence RollingFile conservée mais désactivée par commentaire.
-            -->
             <!-- <AppenderRef ref="RollingFile"/> -->
         </Root>
 

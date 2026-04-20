@@ -487,28 +487,185 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 	
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>
-     * Vérifier que <code>creer(TypeProduit)</code> :
-     * (1) crée réellement une ligne en base,
-     * (2) rend l'objet retrouvable,
-     * (3) ne "wipe" pas les données seedées.
-     * </p>
-     *
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
+     * <p>garantit que creer(null) :</p>
      * <ul>
-     * <li><code>creer</code> retourne un {@link TypeProduit} non {@code null} avec un ID non {@code null}.</li>
-     * <li>La colonne <code>TYPE_PRODUIT</code> est effectivement écrite en base
-     * (preuve par lecture SQL directe via {@link #lireLibelleTypeProduitEnBase(Long)}).</li>
-     * <li>La liste seedée reste présente après création.</li>
+     * <li>jette une {@link ExceptionAppliParamNull}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_CREER_KO_PARAM_NULL}</li>
+     * <li>n'écrit rien dans le stockage</li>
      * </ul>
-     *
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName(DN_CREER_NULL)
+    @Test
+    public void testCreerNull() {
+    	
+    	/* ARRANGE - ACT - ASSERT */
+    	/* Garantit que this.service.creer(null)
+    	 * - jette une ExceptionAppliParamNull
+    	 * - émet un message MESSAGE_CREER_KO_PARAM_NULL.
+    	 */
+        assertThatThrownBy(() -> this.service.creer(null))
+            .isInstanceOf(ExceptionAppliParamNull.class)
+            .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que creer(blank) :</p>
      * <ul>
-     * <li>Le test est exécuté hors transaction de test
-     * (<code>@Transactional(NOT_SUPPORTED)</code>) pour éviter toute ambiguïté liée au cache ORM.</li>
-     * <li>Nettoyage physique en base en <code>finally</code> pour garantir l'isolation,
-     * même si une assertion échoue.</li>
+     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK}</li>
+     * <li>n'écrit rien dans le stockage</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName(DN_CREER_BLANK)
+    @Test
+    public void testCreerBlank() {
+    	
+    	/* ARRANGE :
+    	 * prépare un objet métier dont le libellé est blank,
+    	 * afin de vérifier le contrôle applicatif du PORT
+    	 * avant toute tentative d'accès au stockage réel.
+    	 */
+        final TypeProduit blank = new TypeProduit(BLANK);
+        
+        /* ACT - ASSERT :
+         * garantit que this.service.creer(blank)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet un message MESSAGE_CREER_KO_LIBELLE_BLANK.
+         */
+        assertThatThrownBy(() -> this.service.creer(blank))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que si l'appelant tente creer(...)
+     * avec un libellé déjà présent en base :</p>
+     * <ul>
+     * <li>le stockage réel refuse la création du doublon ;</li>
+     * <li>l'exception observable en intégration
+     * est une {@link org.springframework.transaction.UnexpectedRollbackException} ;</li>
+     * <li>aucune nouvelle ligne n'est créée en base ;</li>
+     * <li>l'unique ligne seedée portant déjà ce libellé
+     * reste inchangée.</li>
+     * </ul>
+     * <p>Ce test vérifie donc le comportement réellement visible
+     * à travers le proxy transactionnel Spring/Hibernate,
+     * sans réinterroger JPA après l'échec attendu.</p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(libellé existant) : jette UnexpectedRollbackException et ne crée aucune nouvelle ligne")
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testCreerLibelleExistant() throws Exception {
+
+        /* ARRANGE :
+         * lit d'abord l'état physique initial de la base
+         * par SQL direct, afin de disposer d'une preuve indépendante
+         * du contexte Hibernate.
+         *
+         * On vérifie ici :
+         * - le nombre total de lignes ;
+         * - le nombre de lignes portant déjà le libellé VETEMENT ;
+         * - l'identifiant de la ligne seedée existante.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM TYPES_PRODUIT",
+                Long.class);
+
+        final Long countLibelleAvant = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM TYPES_PRODUIT WHERE UPPER(TYPE_PRODUIT) = UPPER(?)",
+                Long.class,
+                VETEMENT);
+
+        final Long idSeedAvant = this.jdbcTemplate.queryForObject(
+                "SELECT ID_TYPE_PRODUIT FROM TYPES_PRODUIT WHERE UPPER(TYPE_PRODUIT) = UPPER(?)",
+                Long.class,
+                VETEMENT);
+
+        final TypeProduit aCreer = new TypeProduit(VETEMENT);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countLibelleAvant).isEqualTo(1L);
+        assertThat(idSeedAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * sollicite la méthode creer(...)
+         * avec un libellé déjà présent.
+         *
+         * Au comportement réel observé en intégration,
+         * le rollback transactionnel est visible côté test
+         * sous la forme d'une UnexpectedRollbackException.
+         */        
+        assertThatThrownBy(() -> this.service.creer(aCreer))
+            .isInstanceOf(org.springframework.transaction.UnexpectedRollbackException.class);
+        
+        /* ASSERT :
+         * contrôle ensuite par SQL direct
+         * qu'aucun effet de bord n'a été produit en base.
+         *
+         * On évite volontairement tout nouvel appel JPA ici,
+         * pour ne pas réutiliser un contexte de persistance
+         * potentiellement marqué en erreur après l'échec attendu.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM TYPES_PRODUIT",
+                Long.class);
+
+        final Long countLibelleApres = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM TYPES_PRODUIT WHERE UPPER(TYPE_PRODUIT) = UPPER(?)",
+                Long.class,
+                VETEMENT);
+
+        final Long idSeedApres = this.jdbcTemplate.queryForObject(
+                "SELECT ID_TYPE_PRODUIT FROM TYPES_PRODUIT WHERE UPPER(TYPE_PRODUIT) = UPPER(?)",
+                Long.class,
+                VETEMENT);
+
+        /* Garantit qu'aucune nouvelle ligne
+         * n'a été créée dans la table.
+         */
+        assertThat(countApres).isEqualTo(countAvant);
+
+        /* Garantit qu'il n'existe toujours
+         * qu'une seule ligne portant ce libellé.
+         */
+        assertThat(countLibelleApres).isEqualTo(1L);
+
+        /* Garantit enfin que la ligne seedée initiale
+         * est restée strictement la même.
+         */
+        assertThat(idSeedApres).isEqualTo(idSeedAvant);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que creer(OK) :</p>
+     * <ul>
+     * <li>crée réellement une ligne en base</li>
+     * <li>retourne un {@link TypeProduit} persistant</li>
+     * <li>retourne un objet métier portant un identifiant généré</li>
+     * <li>rend la donnée retrouvable en base et via le service</li>
+     * <li>ne supprime ni n'altère les données seedées</li>
      * </ul>
      * </div>
      *
@@ -519,149 +676,205 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testCreerOK() throws Exception {
-
+    	
+    	/* ARRANGE :
+    	 * prépare un objet métier valide à créer
+    	 * et mémorise le nombre de lignes avant création.
+    	 *
+    	 * Le test est volontairement exécuté hors transaction de test
+    	 * pour prouver une écriture physique réelle en base,
+    	 * puis réaliser un nettoyage physique explicite en finally.
+    	 */
         final long countAvant = this.service.count();
-
         final TypeProduit aCreer = new TypeProduit(NOUVEAU_TYPE_1);
+        
+        /* ACT :
+         * sollicite la méthode creer(...)
+         * dans un scénario nominal complet de persistance réelle.
+         */
         final TypeProduit cree = this.service.creer(aCreer);
-
+        
+        /* ASSERT :
+         * garantit d'abord que l'objet métier retourné
+         * est bien persistant et correctement renseigné.
+         */
         assertThat(cree).isNotNull();
         assertThat(cree.getIdTypeProduit()).isNotNull().isPositive();
         assertThat(cree.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_1);
-
+        
         final Long id = cree.getIdTypeProduit();
-
-        /* IMPORTANT : test hors transaction de test -> la création est réelle en base.
-         * On nettoie donc physiquement en base en finally. */
+        
         try {
-
+        	
+        	/* Garantit que la création augmente bien le nombre total
+        	 * de lignes dans le stockage réel.
+        	 */
             final long countApres = this.service.count();
             assertThat(countApres).isEqualTo(countAvant + 1L);
-
-            /* PREUVE BD INATTAQUABLE :
-             * lecture SQL directe de la colonne TYPE_PRODUIT (bypass Hibernate). */
+            
+            /* Garantit physiquement en base
+             * qu'une seule ligne porte bien l'identifiant créé.
+             */
+            assertThat(compterTypeProduitEnBase(id)).isEqualTo(1L);
+            
+            /* Garantit physiquement en base
+             * que la colonne TYPE_PRODUIT a bien été écrite
+             * avec le libellé métier attendu.
+             */
             final String libelleEnBase = lireLibelleTypeProduitEnBase(id);
             assertThat(libelleEnBase).isEqualTo(NOUVEAU_TYPE_1);
-
-            /* Double-check par le service (doit être cohérent avec la base). */
+            
+            /* Garantit que l'objet nouvellement créé
+             * est bien retrouvable via le service.
+             */
             final TypeProduit relu = this.service.findById(id);
             assertThat(relu).isNotNull();
+            assertThat(relu.getIdTypeProduit()).isEqualTo(id);
             assertThat(relu.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_1);
-
-            /* Les données seedées doivent rester présentes. */
+            
+            /* Garantit enfin que les données seedées
+             * restent présentes après la création.
+             */
             final List<TypeProduit> liste = this.service.rechercherTous();
             assertThat(liste)
                 .extracting(TypeProduit::getTypeProduit)
                 .contains(VETEMENT, BAZAR, OUTILLAGE, TOURISME, VESTONS, NOUVEAU_TYPE_1);
-
+            
         } finally {
-
-            /* Nettoyage physique :
-             * on ne dépend pas uniquement de truncate-test.sql. */
+        	
+        	/* Nettoyage physique :
+        	 * supprime explicitement la ligne créée,
+        	 * afin de garantir l'isolation du test
+        	 * même en cas d'échec d'assertion en amont.
+        	 */
             supprimerTypeProduitEnBase(id);
-
+            
         }
-
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Vérifie que `creer(null)` respecte le contrat du port :
-     * jette une {@link ExceptionAppliParamNull}.</p>
-     * </div>
-     */
-    @Tag(TAG_CREER)
-    @DisplayName(DN_CREER_NULL)
-    @Test
-    public void testCreerNull() {
-    	
-        assertThatThrownBy(() -> this.service.creer(null))
-            .isInstanceOf(ExceptionAppliParamNull.class)
-            .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
         
     } // __________________________________________________________________
     
     
-
+    
     /**
      * <div>
-     * <p>Vérifie que `creer(blank)` respecte le contrat du port :
-     * jette une {@link ExceptionAppliLibelleBlank}.</p>
+     * <p>garantit que plusieurs appels successifs à creer(...) :</p>
+     * <ul>
+     * <li>créent plusieurs lignes distinctes en base</li>
+     * <li>attribuent des identifiants différents à chaque objet créé</li>
+     * <li>rendent chaque création retrouvable séparément</li>
+     * <li>augmentent le compteur total du nombre exact de créations</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_CREER)
-    @DisplayName(DN_CREER_BLANK)
+    @DisplayName("creer(plusieurs créations) : crée plusieurs lignes distinctes et toutes retrouvables")
     @Test
-    public void testCreerBlank() {
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testCreerPlusieurs() throws Exception {
     	
-        final TypeProduit blank = new TypeProduit(BLANK);
-        assertThatThrownBy(() -> this.service.creer(blank))
-            .isInstanceOf(ExceptionAppliLibelleBlank.class)
-            .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
+    	/* ARRANGE :
+    	 * mémorise le nombre total avant création
+    	 * puis prépare deux créations nominales distinctes.
+    	 */
+        final long countAvant = this.service.count();
+        
+        Long id1 = null;
+        Long id2 = null;
+        
+        try {
+        	
+        	/* ACT :
+        	 * exécute deux créations successives
+        	 * sur deux libellés différents.
+        	 */
+            final TypeProduit cree1 = this.service.creer(new TypeProduit(NOUVEAU_TYPE_1));
+            final TypeProduit cree2 = this.service.creer(new TypeProduit(NOUVEAU_TYPE_2));
+            
+            /* ASSERT :
+             * garantit d'abord que les deux objets retournés
+             * sont persistants et distincts.
+             */
+            assertThat(cree1).isNotNull();
+            assertThat(cree2).isNotNull();
+            assertThat(cree1.getIdTypeProduit()).isNotNull().isPositive();
+            assertThat(cree2.getIdTypeProduit()).isNotNull().isPositive();
+            assertThat(cree1.getIdTypeProduit()).isNotEqualTo(cree2.getIdTypeProduit());
+            assertThat(cree1.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_1);
+            assertThat(cree2.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_2);
+            
+            id1 = cree1.getIdTypeProduit();
+            id2 = cree2.getIdTypeProduit();
+            
+            /* Garantit que le compteur total
+             * augmente exactement de deux lignes.
+             */
+            final long countApres = this.service.count();
+            assertThat(countApres).isEqualTo(countAvant + 2L);
+            
+            /* Garantit physiquement en base
+             * que chaque identifiant correspond à une ligne réelle.
+             */
+            assertThat(compterTypeProduitEnBase(id1)).isEqualTo(1L);
+            assertThat(compterTypeProduitEnBase(id2)).isEqualTo(1L);
+            
+            /* Garantit physiquement en base
+             * que chaque ligne porte le bon libellé métier.
+             */
+            assertThat(lireLibelleTypeProduitEnBase(id1)).isEqualTo(NOUVEAU_TYPE_1);
+            assertThat(lireLibelleTypeProduitEnBase(id2)).isEqualTo(NOUVEAU_TYPE_2);
+            
+            /* Garantit que chaque création
+             * est retrouvable séparément via le service.
+             */
+            final TypeProduit relu1 = this.service.findById(id1);
+            final TypeProduit relu2 = this.service.findById(id2);
+            assertThat(relu1).isNotNull();
+            assertThat(relu2).isNotNull();
+            assertThat(relu1.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_1);
+            assertThat(relu2.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_2);
+            
+            /* Garantit enfin que la liste globale
+             * contient à la fois les données seedées
+             * et les deux nouveaux types créés.
+             */
+            final List<TypeProduit> liste = this.service.rechercherTous();
+            assertThat(liste)
+                .extracting(TypeProduit::getTypeProduit)
+                .contains(
+                        VETEMENT,
+                        BAZAR,
+                        OUTILLAGE,
+                        TOURISME,
+                        VESTONS,
+                        NOUVEAU_TYPE_1,
+                        NOUVEAU_TYPE_2);
+            
+        } finally {
+        	
+        	/* Nettoyage physique :
+        	 * supprime explicitement les lignes créées,
+        	 * en commençant par la seconde puis la première,
+        	 * afin de garantir l'isolation du test.
+        	 */
+            if (id2 != null) {
+                supprimerTypeProduitEnBase(id2);
+            }
+            if (id1 != null) {
+                supprimerTypeProduitEnBase(id1);
+            }
+            
+        }
         
     } // __________________________________________________________________
+
+
+    
+    // ======================== RechercherTous ============================
+
     
     
-
-    /**
-	 * <div>
-	 * <p>Vérifie que `creer(libellé existant)` jette une exception si le libellé existe déjà.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_CREER)
-	@DisplayName("creer(libellé existant) - jette une exception si le libellé existe déjà")
-	@Test
-	public void testCreerLibelleExistant() throws Exception {
-		
-	    final TypeProduit existant = this.service.findByLibelle(VETEMENT);
-	    assertThat(existant).isNotNull();
-	    final TypeProduit aCreer = new TypeProduit(VETEMENT);
-	    assertThatThrownBy(() -> this.service.creer(aCreer))
-	        .isInstanceOf(Exception.class);
-	    
-	} // ________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>Vérifie que `creer(plusieurs créations)` fonctionne correctement.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_CREER)
-	@DisplayName("creer(plusieurs créations) - vérifie la création multiple")
-	@Test
-	public void testCreerPlusieurs() throws Exception {
-		
-	    final long countAvant = this.service.count();
-	    final TypeProduit cree1 = this.service.creer(new TypeProduit(NOUVEAU_TYPE_1));
-	    final TypeProduit cree2 = this.service.creer(new TypeProduit(NOUVEAU_TYPE_2));
-	    assertThat(cree1).isNotNull();
-	    assertThat(cree2).isNotNull();
-	    assertThat(cree1.getIdTypeProduit()).isNotEqualTo(cree2.getIdTypeProduit());
-	    final long countApres = this.service.count();
-	    assertThat(countApres).isEqualTo(countAvant + 2L);
-	    final TypeProduit relu1 = this.service.findById(cree1.getIdTypeProduit());
-	    final TypeProduit relu2 = this.service.findById(cree2.getIdTypeProduit());
-	    assertThat(relu1).isNotNull();
-	    assertThat(relu2).isNotNull();
-	    assertThat(relu1.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_1);
-	    assertThat(relu2.getTypeProduit()).isEqualTo(NOUVEAU_TYPE_2);
-	    
-	} // ________________________________________________________________
-
-
-
-	// ========================== RECHERCHE ===============================
-	
-	
-	
 	/**
 	 * <div>
 	 * <p>
