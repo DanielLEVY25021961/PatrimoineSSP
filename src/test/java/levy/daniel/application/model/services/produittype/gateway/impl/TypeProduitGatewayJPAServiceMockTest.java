@@ -1352,6 +1352,120 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .containsExactly(VETEMENT, OUTILLAGE);
 
     } // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>garantit que si l'appelant construit une {@link RequetePage}
+     * avec {@code pageSize == 0} :</p>
+     * <ul>
+     * <li>la taille invalide n'est pas conservée telle quelle ;</li>
+     * <li>la {@link RequetePage} normalise en amont cette taille
+     * vers {@link RequetePage#TAILLE_DEFAUT} ;</li>
+     * <li>le service transmet donc au DAO un {@link Pageable}
+     * cohérent avec cette taille par défaut ;</li>
+     * <li>il retourne enfin un {@link ResultatPage} cohérent
+     * avec la page renvoyée par le DAO.</li>
+     * </ul>
+     * <p>Ce test verrouille donc le comportement réel observé
+     * sur l'entrée publique {@code new RequetePage(0, 0, ...)} :
+     * le {@code pageSize} nul est absorbé par la normalisation
+     * de {@link RequetePage} avant la délégation au stockage.</p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(pageSize == 0) : garantit la normalisation en taille par défaut avant l'appel DAO")
+    @Test
+    public void testRechercherTousParPagePageSizeZero() throws Exception {
+
+        /* ARRANGE :
+         * prépare une requête métier dont l'appelant demande
+         * explicitement une taille zéro.
+         *
+         * Le point important à verrouiller ici est le comportement réel
+         * de l'entrée publique :
+         * la RequetePage ne conserve pas 0,
+         * elle le remplace par la taille par défaut.
+         */
+        final RequetePage requete
+            = new RequetePage(0, 0, new ArrayList<TriSpec>());
+
+        /* Prépare ensuite une page DAO cohérente avec cette taille par défaut,
+         * ainsi qu'un captor Mockito pour récupérer le Pageable
+         * réellement transmis au DAO.
+         *
+         * Le captor permet de prouver concrètement que le DAO mocké avec Mockito
+         * ne reçoit jamais pageSize == 0,
+         * mais bien la taille normalisée.
+         */
+        final List<TypeProduitJPA> contenuJPA = Arrays.asList(
+                fabriquerTypeProduitJPA(VETEMENT, ID_1),
+                fabriquerTypeProduitJPA(OUTILLAGE, ID_2));
+
+        final Page<TypeProduitJPA> page = creerPage(
+                contenuJPA,
+                RequetePage.PAGE_DEFAUT,
+                RequetePage.TAILLE_DEFAUT,
+                2L);
+
+        final ArgumentCaptor<Pageable> captor
+            = ArgumentCaptor.forClass(Pageable.class);
+
+        /* Simule un DAO qui renvoie une page valide
+         * quel que soit le Pageable reçu.
+         *
+         * Le but n'est pas de tester Spring Data,
+         * mais de verrouiller ce que le service envoie réellement
+         * au DAO après normalisation de la requête.
+         */
+        when(this.typeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+
+        /* ACT :
+         * sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         *
+         * Le scénario prouve ici qu'une demande initiale pageSize == 0
+         * n'entraîne pas d'Exception
+         * et aboutit à une pagination exploitable.
+         */
+        final ResultatPage<TypeProduit> resultat
+            = this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * garantit d'abord que le DAO mocké avec Mockito
+         * a bien été interrogé,
+         * puis permet d'inspecter le Pageable réellement transmis.
+         */
+        verify(this.typeProduitDaoJPA).findAll(captor.capture());
+
+        final Pageable pageable = captor.getValue();
+
+        /* Garantit que le cœur du comportement réel est respecté :
+         * la taille zéro demandée par l'appelant
+         * a déjà été normalisée en taille par défaut
+         * avant l'appel au stockage.
+         */
+        assertThat(pageable).isNotNull();
+        assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(pageable.getSort().isSorted()).isFalse();
+
+        /* Garantit que le service restitue ensuite
+         * un ResultatPage métier cohérent
+         * avec la page DAO renvoyée.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(resultat.getTotalElements()).isEqualTo(2L);
+        assertThat(resultat.getContent())
+            .extracting(TypeProduit::getTypeProduit)
+            .containsExactly(VETEMENT, OUTILLAGE);
+
+    } // __________________________________________________________________
     
     
 
