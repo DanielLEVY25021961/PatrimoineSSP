@@ -4899,90 +4899,251 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>count() : délègue count() au DAO et retourne sa valeur.</p>
+     * <p>garantit que count() en scénario nominal :</p>
+     * <ul>
+     * <li>délègue le comptage au DAO via {@code count()}</li>
+     * <li>retourne la valeur de comptage renvoyée par le stockage</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count() : délègue count() au DAO et retourne sa valeur")
+    @DisplayName("count() nominal : délègue au DAO et retourne la valeur de comptage")
     @Test
     public void testCount() throws Exception {
     	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via count(),
+         * alors le DAO mocké avec Mockito devra répondre TOTAL_10".
+         *
+         * On simule donc volontairement un stockage
+         * contenant TOTAL_10 enregistrements.
+         */
         when(this.typeProduitDaoJPA.count()).thenReturn(TOTAL_10);
-        
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         final long resultat = this.service.count();
-        
+
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * - délègue le comptage au DAO
+         * - retourne la valeur de comptage renvoyée par le stockage.
+         */
         assertThat(resultat).isEqualTo(TOTAL_10);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * via la méthode count().
+         */
         verify(this.typeProduitDaoJPA).count();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>count() : retourne 0 si le stockage est vide.</p>
+     * <p>garantit que count() sur stockage vide :</p>
+     * <ul>
+     * <li>délègue le comptage au DAO via {@code count()}</li>
+     * <li>retourne {@code 0}</li>
+     * <li>appelle le DAO une fois</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count() : retourne 0 si le stockage est vide")
+    @DisplayName("count() stockage vide : délègue au DAO et retourne 0")
     @Test
     public void testCountZero() throws Exception {
     	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via count(),
+         * alors le DAO mocké avec Mockito devra répondre TOTAL_0".
+         *
+         * On simule donc volontairement un stockage vide.
+         */
         when(this.typeProduitDaoJPA.count()).thenReturn(TOTAL_0);
-        
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         final long resultat = this.service.count();
-        
+
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * - délègue le comptage au DAO
+         * - retourne 0 lorsque le stockage est vide.
+         */
         assertThat(resultat).isEqualTo(TOTAL_0);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * via la méthode count().
+         */
         verify(this.typeProduitDaoJPA).count();
         
-    } // _________________________________________________________________
-    
-    
+    } // __________________________________________________________________
+
+
 
     /**
      * <div>
-     * <p>count(KO DAO) : wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * <p>garantit que count(KO DAO message non nul) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code count()}</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
+    @DisplayName("count(KO DAO message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
     public void testCountExceptionDAO() {
     	
-        when(this.typeProduitDaoJPA.count()).thenThrow(new RuntimeException(MSG_BOOM));
-        
-        assertThatThrownBy(() -> this.service.count())
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via count(),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message MSG_BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le comptage.
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
+        when(this.typeProduitDaoJPA.count()).thenThrow(causeDao);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.count()
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.count());
+
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * via la méthode count().
+         */
         verify(this.typeProduitDaoJPA).count();
         
-    } // _________________________________________________________________
-    
-    
-    
+    } // __________________________________________________________________
+
+
+
     /**
      * <div>
-     * <p>count(valeur négative) :
-     * retourne la valeur telle quelle.</p>
+     * <p>garantit que count(KO DAO message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code count()}</li>
+     * </ul>
      * </div>
-     * @throws Exception
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count(valeur négative) : retourne la valeur telle quelle")
+    @DisplayName("count(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testCountValeurNegative() throws Exception {
+    public void testCountExceptionDAOMsgNull() {
+    	
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via count(),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le comptage,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
 
-        when(this.typeProduitDaoJPA.count()).thenReturn(-1L);
+        when(this.typeProduitDaoJPA.count()).thenThrow(causeDao);
 
-        final long resultat = this.service.count();
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.count()
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.count());
 
-        assertThat(resultat).isEqualTo(-1L);
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * via la méthode count().
+         */
         verify(this.typeProduitDaoJPA).count();
         
-    } // _________________________________________________________________
+    } // __________________________________________________________________
     
 
 
