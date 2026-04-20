@@ -4316,193 +4316,577 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>delete(null) : jette {@link ExceptionAppliParamNull}.</p>
+     * <p>garantit que delete(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_DELETE_KO_PARAM_NULL}</li>
+     * <li>n'appelle pas le DAO</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(null) : jette ExceptionAppliParamNull")
+    @DisplayName("delete(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
     @Test
     public void testDeleteNull() {
     	
+        /* ARRANGE - ACT - ASSERT */
+        /* Garantit que this.service.delete(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet un message MESSAGE_DELETE_KO_PARAM_NULL.
+         */
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL);
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
         verifyNoInteractions(this.typeProduitDaoJPA);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>delete(ID null) : jette {@link ExceptionAppliParamNonPersistent}
-     * avec {@link TypeProduitGatewayIService#MESSAGE_DELETE_KO_ID_NULL}.</p>
+     * <p>garantit que delete(ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNonPersistent}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#MESSAGE_DELETE_KO_ID_NULL}</li>
+     * <li>n'appelle pas le DAO</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(ID null) : jette ExceptionAppliParamNonPersistent")
+    @DisplayName("delete(ID null) : jette ExceptionAppliParamNonPersistent et n'appelle pas le DAO")
     @Test
     public void testDeleteIdNull() {
     	
+        /* ARRANGE */
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
-        
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionAppliParamNonPersistent
+         * - émet un message MESSAGE_DELETE_KO_ID_NULL.
+         */
         assertThatThrownBy(() -> this.service.delete(metier))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL);
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
         verifyNoInteractions(this.typeProduitDaoJPA);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>delete(findById retourne null) : jette {@link ExceptionTechniqueGateway}
-     * KO_STOCKAGE, et ne supprime pas.</p>
+     * <p>garantit que delete(findById retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune suppression</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(findById retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @DisplayName("delete(findById retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE et ne supprime pas")
     @Test
     public void testDeleteFindByIdDAORetourneNull() {
     	
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
-        
+        /* ARRANGE */
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
-        
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre null".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne null au lieu d'un Optional<TypeProduitJPA>,
+         * ce qui doit être interprété comme une anomalie technique
+         * de stockage.
+         */
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message ERREUR_TECHNIQUE_KO_STOCKAGE
+         *   lorsque le stockage retourne null sur findById(...).
+         */
         assertThatThrownBy(() -> this.service.delete(metier))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune suppression n'a été déclenchée,
+         * puisque le chargement de l'objet persistant a échoué
+         * avant toute destruction.
+         */
         verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>delete(KO DAO sur findById) : wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * <p>garantit que delete(KO DAO sur findById message non nul) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune suppression</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(KO DAO sur findById) : jette ExceptionTechniqueGateway (wrap)")
+    @DisplayName("delete(KO DAO sur findById message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
     public void testDeleteExceptionDAOFindById() {
     	
-        when(this.typeProduitDaoJPA.findById(ID_1))
-            .thenThrow(new RuntimeException(MSG_BOOM));
-        
+        /* ARRANGE */
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
-        
-        assertThatThrownBy(() -> this.service.delete(metier))
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message MSG_BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le chargement de l'objet persistant à supprimer.
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune suppression n'a été déclenchée,
+         * puisque l'échec technique est survenu
+         * avant toute destruction.
+         */
         verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>delete(entity inexistante) : ne fait rien, ne supprime pas.</p>
+     * <p>garantit que delete(KO DAO sur findById message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune suppression</li>
+     * </ul>
      * </div>
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(KO DAO sur findById message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @Test
+    public void testDeleteExceptionDAOFindByIdMsgNull() {
+    	
+        /* ARRANGE */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le chargement de l'objet persistant à supprimer,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE). */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune suppression n'a été déclenchée,
+         * puisque l'échec technique est survenu
+         * avant toute destruction.
+         */
+        verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
+        
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que delete(entity inexistante dans le stockage) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune suppression</li>
+     * </ul>
+     * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(entity inexistante) : ne fait rien")
+    @DisplayName("delete(entity inexistante dans le stockage) : ne fait rien et ne supprime pas")
     @Test
     public void testDeleteEntityInexistante() throws Exception {
     	
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
-        
+        /* ARRANGE */
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
-        
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * Optional.empty()".
+         *
+         * On simule donc volontairement un stockage
+         * qui ne trouve aucun TypeProduit persistant
+         * pour l'identifiant demandé.
+         */
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         this.service.delete(metier);
-        
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - ne lève aucune exception
+         * - ne déclenche aucune suppression
+         *   lorsque l'objet à supprimer n'existe pas dans le stockage.
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'aucune suppression n'a été déclenchée,
+         * puisqu'aucun objet persistant n'a été trouvé
+         * à supprimer dans le stockage.
+         */
         verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>delete(ID inexistant) : ne fait rien et ne lève pas d'exception.</p>
+     * <p>garantit que delete(OK) :</p>
+     * <ul>
+     * <li>charge l'objet persistant courant via {@code findById(...)}</li>
+     * <li>déclenche la suppression dans le stockage via {@code delete(...)}</li>
+     * <li>supprime l'objet persistant correspondant à l'identifiant demandé</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(ID inexistant) : ne fait rien et ne lève pas d'exception")
-    @Test
-    public void testDeleteIdInexistant() throws Exception {
-    	
-        when(this.typeProduitDaoJPA.findById(ID_INEXISTANT)).thenReturn(Optional.empty());
-        
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_INEXISTANT);
-        
-        this.service.delete(metier); // Pas d'exception attendue
-        
-        verify(this.typeProduitDaoJPA).findById(ID_INEXISTANT);
-        verify(this.typeProduitDaoJPA, never()).delete(any(TypeProduitJPA.class));
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>delete(OK) : délègue delete() au DAO avec l'entity persistée.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_DELETE)
-    @DisplayName("delete(OK) : délègue delete() au DAO")
+    @DisplayName("delete(OK) : charge l'objet persistant et délègue la suppression au DAO")
     @Test
     public void testDeleteOK() throws Exception {
     	
+        /* ARRANGE */
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
-        
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * l'objet persistant actuellement stocké".
+         *
+         * On simule donc volontairement un objet persistant courant
+         * portant le libellé VETEMENT.
+         */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
-        
+
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         this.service.delete(metier);
-        
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - charge bien l'objet persistant courant
+         * - délègue ensuite sa suppression au DAO.
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
         verify(this.typeProduitDaoJPA).delete(persistee);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>delete(KO DAO) : wrappe en {@link ExceptionTechniqueGateway}.</p>
+     * <p>garantit que delete(KO DAO sur delete message non nul) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de suppression via {@code delete(...)}</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(KO DAO) : jette ExceptionTechniqueGateway (wrap)")
+    @DisplayName("delete(KO DAO sur delete message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
     public void testDeleteExceptionDAO() {
     	
+        /* ARRANGE */
         final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
-        
+
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
-        
-        org.mockito.Mockito.doThrow(new RuntimeException(MSG_BOOM))
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule doThrow(...).when(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via delete(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message MSG_BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment de la destruction de l'objet persistant.
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
+        org.mockito.Mockito.doThrow(causeDao)
             .when(this.typeProduitDaoJPA).delete(any(TypeProduitJPA.class));
-        
+
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
-        
-        assertThatThrownBy(() -> this.service.delete(metier))
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when / doThrow du ARRANGE). */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine MSG_BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
         verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'une tentative de suppression a bien eu lieu,
+         * ce qui prouve que l'échec technique observé
+         * provient bien du delete(...).
+         */
+        verify(this.typeProduitDaoJPA).delete(persistee);
+        
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que delete(KO DAO sur delete message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de suppression via {@code delete(...)}</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(KO DAO sur delete message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @Test
+    public void testDeleteExceptionDAOMsgNull() {
+    	
+        /* ARRANGE */
+        final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(persistee));
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule doThrow(...).when(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via delete(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment de la destruction de l'objet persistant,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        org.mockito.Mockito.doThrow(causeDao)
+            .when(this.typeProduitDaoJPA).delete(any(TypeProduitJPA.class));
+
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when / doThrow du ARRANGE). */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = org.assertj.core.api.Assertions.catchThrowable(
+                    () -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.typeProduitDaoJPA).findById(ID_1);
+
+        /* Garantit qu'une tentative de suppression a bien eu lieu,
+         * ce qui prouve que l'échec technique observé
+         * provient bien du delete(...).
+         */
         verify(this.typeProduitDaoJPA).delete(persistee);
         
     } // __________________________________________________________________
