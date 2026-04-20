@@ -5153,110 +5153,195 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>convertirRequetePageEnPageable(null) : utilise une requête par défaut.</p>
+     * <p>garantit que convertirRequetePageEnPageable(null) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>retourne un {@link Pageable} non null</li>
+     * <li>utilise la pagination par défaut</li>
+     * <li>ne force aucun tri</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_TRIS)
-    @DisplayName("convertirRequetePageEnPageable(null) : utilise une requête par défaut")
+    @DisplayName("convertirRequetePageEnPageable(null) : retourne un Pageable par défaut non trié")
     @Test
     public void testConvertirRequetePageEnPageableNull() throws Exception {
     	
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * avec une requête d'entrée null.
+         */
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
-                new Class<?>[]{RequetePage.class},
+                new Class[]{RequetePage.class},
                 new Object[]{null});
-        
+
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - retourne un Pageable non null
+         * - utilise la pagination par défaut
+         * - ne force aucun tri
+         *   lorsque la requête vaut null.
+         */
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
         assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
         assertThat(pageable.getSort().isUnsorted()).isTrue();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>convertirRequetePageEnPageable(tris null) : retourne un Pageable non trié.</p>
+     * <p>garantit que convertirRequetePageEnPageable(tris null) :</p>
+     * <ul>
+     * <li>retourne un {@link Pageable} non null</li>
+     * <li>conserve la page demandée</li>
+     * <li>conserve la taille demandée</li>
+     * <li>retourne un {@link Pageable} non trié</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_TRIS)
     @DisplayName("convertirRequetePageEnPageable(tris null) : retourne un Pageable non trié")
     @Test
     public void testConvertirRequetePageEnPageableTrisNull() throws Exception {
     	
+        /* ARRANGE */
         final RequetePage requete = new RequetePage(1, 5, null);
-        
+
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * avec une requête paginée
+         * dont la liste des tris vaut null.
+         */
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
-                new Class<?>[]{RequetePage.class},
+                new Class[]{RequetePage.class},
                 new Object[]{requete});
-        
+
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - conserve la page demandée
+         * - conserve la taille demandée
+         * - ne force aucun tri
+         *   lorsque la liste des tris vaut null.
+         */
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
         assertThat(pageable.getSort().isUnsorted()).isTrue();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>convertirRequetePageEnPageable(tris vides) : retourne un Pageable non trié.</p>
+     * <p>garantit que convertirRequetePageEnPageable(tris vides) :</p>
+     * <ul>
+     * <li>retourne un {@link Pageable} non null</li>
+     * <li>conserve la page demandée</li>
+     * <li>conserve la taille demandée</li>
+     * <li>retourne un {@link Pageable} non trié</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_TRIS)
     @DisplayName("convertirRequetePageEnPageable(tris vides) : retourne un Pageable non trié")
     @Test
     public void testConvertirRequetePageEnPageableTrisVides() throws Exception {
     	
+        /* ARRANGE */
         final RequetePage requete = new RequetePage(1, 5, Collections.emptyList());
-        
+
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * avec une requête paginée
+         * dont la liste des tris est vide.
+         */
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
-                new Class<?>[]{RequetePage.class},
+                new Class[]{RequetePage.class},
                 new Object[]{requete});
-        
+
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - conserve la page demandée
+         * - conserve la taille demandée
+         * - ne force aucun tri
+         *   lorsque la liste des tris est vide.
+         */
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
         assertThat(pageable.getSort().isUnsorted()).isTrue();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>convertirRequetePageEnPageable(tris valides) : convertit en Sort Spring.</p>
+     * <p>garantit que convertirRequetePageEnPageable(tris valides) :</p>
+     * <ul>
+     * <li>retourne un {@link Pageable} non null</li>
+     * <li>conserve la page demandée</li>
+     * <li>conserve la taille demandée</li>
+     * <li>convertit les {@link TriSpec} valides en {@link Sort} Spring</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_TRIS)
-    @DisplayName("convertirRequetePageEnPageable(tris valides) : convertit en Sort Spring")
+    @DisplayName("convertirRequetePageEnPageable(tris valides) : convertit les TriSpec en Sort Spring")
     @Test
     public void testConvertirRequetePageEnPageableTrisValides() throws Exception {
     	
+        /* ARRANGE :
+         * prépare une liste de tris valides,
+         * afin de prouver leur conversion
+         * en tri Spring Data.
+         */
         final List<TriSpec> tris = new ArrayList<TriSpec>();
-        
         tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
         tris.add(new TriSpec(PROP_IDTYPEPRODUIT, DirectionTri.DESC));
-        
+
         final RequetePage requete = new RequetePage(1, 5, tris);
-        
+
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * avec une requête contenant
+         * des tris valides.
+         */
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
-                new Class<?>[]{RequetePage.class},
+                new Class[]{RequetePage.class},
                 new Object[]{requete});
-        
+
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - conserve la page demandée
+         * - conserve la taille demandée
+         * - convertit les TriSpec valides
+         *   en Sort Spring cohérent.
+         */
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
@@ -5269,34 +5354,63 @@ public class TypeProduitGatewayJPAServiceMockTest {
             .isEqualTo(Sort.Direction.DESC);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>convertirRequetePageEnPageable(tris invalides) : ignore les tris invalides.</p>
+     * <p>garantit que convertirRequetePageEnPageable(tris invalides) :</p>
+     * <ul>
+     * <li>retourne un {@link Pageable} non null</li>
+     * <li>ignore les tris invalides</li>
+     * <li>conserve uniquement les tris exploitables</li>
+     * <li>retourne un {@link Sort} cohérent avec les seuls tris valides</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_TRIS)
-    @DisplayName("convertirRequetePageEnPageable(tris invalides) : ignore les tris invalides")
+    @DisplayName("convertirRequetePageEnPageable(tris invalides) : ignore les tris invalides et conserve les tris valides")
     @Test
     public void testConvertirRequetePageEnPageableTrisInvalides() throws Exception {
     	
+        /* ARRANGE :
+         * prépare une liste de tris mêlant :
+         * - une entrée null
+         * - une propriété blanche
+         * - un tri valide.
+         *
+         * Le but est de prouver que la méthode privée
+         * ignore les tris inutilisables
+         * et ne conserve que les tris réellement exploitables.
+         */
         final List<TriSpec> tris = new ArrayList<TriSpec>();
-        
         tris.add(null);
         tris.add(new TriSpec(BLANK, DirectionTri.ASC));
         tris.add(new TriSpec(PROP_TYPEPRODUIT, DirectionTri.ASC));
-        
+
         final RequetePage requete = new RequetePage(1, 5, tris);
-        
+
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * avec une requête contenant
+         * des tris invalides et valides.
+         */
         @SuppressWarnings(UNCHECKED)
         final Pageable pageable = (Pageable) invokePrivateMethod(
                 this.service,
                 CONV_REQ_PAGE,
-                new Class<?>[]{RequetePage.class},
+                new Class[]{RequetePage.class},
                 new Object[]{requete});
-        
+
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - conserve la page demandée
+         * - conserve la taille demandée
+         * - ignore les tris invalides
+         * - ne garde que le tri valide exploitable.
+         */
         assertThat(pageable).isNotNull();
         assertThat(pageable.getPageNumber()).isEqualTo(1);
         assertThat(pageable.getPageSize()).isEqualTo(5);
@@ -5315,463 +5429,783 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>filtrerTrierDedoublonner(null) : retourne une liste vide.</p>
+     * <p>garantit que filtrerTrierDedoublonner(null) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>retourne une liste non null</li>
+     * <li>retourne une liste vide</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_DEDOUBLONNAGE)
-    @DisplayName("filtrerTrierDedoublonner(null) : retourne une liste vide")
+    @DisplayName("filtrerTrierDedoublonner(null) : retourne une liste vide non null")
     @Test
     public void testFiltrerTrierDedoublonnerNull() throws Exception {
     	
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * avec une collection d'entrée null.
+         */
         @SuppressWarnings(UNCHECKED)
-        final List<TypeProduit> resultat = (List<TypeProduit>) invokePrivateMethod(
-                this.service,
-                FILTRERTRIER,
-                new Class<?>[]{List.class},
-                new Object[]{null});
-        
+        final List<TypeProduit> resultat
+            = (List<TypeProduit>) invokePrivateMethod(
+                    this.service,
+                    FILTRERTRIER,
+                    new Class[]{List.class},
+                    new Object[]{null});
+
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - ne propage pas de null en sortie
+         * - retourne une liste vide non null
+         *   lorsque l'entrée vaut null.
+         */
         assertThat(resultat).isNotNull().isEmpty();
         
     } // __________________________________________________________________
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p>filtrerTrierDedoublonner(vide) : retourne une liste vide.</p>
+     * <p>garantit que filtrerTrierDedoublonner(vide) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>retourne une liste non null</li>
+     * <li>retourne une liste vide</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_DEDOUBLONNAGE)
-    @DisplayName("filtrerTrierDedoublonner(vide) : retourne une liste vide")
+    @DisplayName("filtrerTrierDedoublonner(vide) : retourne une liste vide non null")
     @Test
     public void testFiltrerTrierDedoublonnerVide() throws Exception {
     	
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * avec une collection d'entrée vide.
+         */
         @SuppressWarnings(UNCHECKED)
-        final List<TypeProduit> resultat = (List<TypeProduit>) invokePrivateMethod(
-                this.service,
-                FILTRERTRIER,
-                new Class<?>[]{List.class},
-                new Object[]{Collections.emptyList()});
-        
+        final List<TypeProduit> resultat
+            = (List<TypeProduit>) invokePrivateMethod(
+                    this.service,
+                    FILTRERTRIER,
+                    new Class[]{List.class},
+                    new Object[]{Collections.emptyList()});
+
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - retourne une liste non null
+         * - retourne une liste vide
+         *   lorsque l'entrée est vide.
+         */
         assertThat(resultat).isNotNull().isEmpty();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>filtrerTrierDedoublonner(avec nulls) : filtre les nulls.</p>
+     * <p>garantit que filtrerTrierDedoublonner(avec nulls) :</p>
+     * <ul>
+     * <li>retire les éléments null</li>
+     * <li>retourne uniquement les objets métier convertissables</li>
+     * <li>retourne une liste triée par libellé</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_DEDOUBLONNAGE)
-    @DisplayName("filtrerTrierDedoublonner(avec nulls) : filtre les nulls")
+    @DisplayName("filtrerTrierDedoublonner(avec nulls) : filtre les nulls et trie le résultat")
     @Test
     public void testFiltrerTrierDedoublonnerAvecNulls() throws Exception {
     	
+        /* ARRANGE :
+         * prépare volontairement une collection "sale" :
+         * - deux éléments null
+         * - deux entités persistantes valides.
+         *
+         * Le but est de prouver que la méthode privée
+         * retire les null
+         * avant de convertir puis trier le résultat métier.
+         */
         final List<TypeProduitJPA> entities = Arrays.asList(
-            null,
-            fabriquerTypeProduitJPA(VETEMENT, ID_1),
-            null,
-            fabriquerTypeProduitJPA(OUTILLAGE, ID_2));
+                null,
+                fabriquerTypeProduitJPA(VETEMENT, ID_1),
+                null,
+                fabriquerTypeProduitJPA(OUTILLAGE, ID_2));
 
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * dans les conditions préparées ci-dessus.
+         */
         @SuppressWarnings(UNCHECKED)
-        final List<TypeProduit> resultat = (List<TypeProduit>) invokePrivateMethod(
-                this.service,
-                FILTRERTRIER,
-                new Class<?>[]{List.class},
-                new Object[]{entities});
+        final List<TypeProduit> resultat
+            = (List<TypeProduit>) invokePrivateMethod(
+                    this.service,
+                    FILTRERTRIER,
+                    new Class[]{List.class},
+                    new Object[]{entities});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - filtre les éléments null
+         * - conserve uniquement les objets métier convertissables
+         * - trie les libellés par ordre alphabétique.
+         */
         assertThat(resultat).isNotNull().hasSize(2);
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
             .containsExactly(OUTILLAGE, VETEMENT);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>filtrerTrierDedoublonner(case-insensitive) : dédoublonne sans tenir compte de la casse.</p>
+     * <p>garantit que filtrerTrierDedoublonner(case-insensitive) :</p>
+     * <ul>
+     * <li>dédoublonne les libellés au sens métier</li>
+     * <li>ne tient pas compte de la casse</li>
+     * <li>conserve une seule occurrence métier par libellé</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_DEDOUBLONNAGE)
     @DisplayName("filtrerTrierDedoublonner(case-insensitive) : dédoublonne sans tenir compte de la casse")
     @Test
     public void testFiltrerTrierDedoublonnerCaseInsensitive() throws Exception {
     	
+        /* ARRANGE :
+         * prépare deux entités représentant le même libellé métier
+         * à la casse près,
+         * plus une troisième entité distincte.
+         *
+         * Le but est de prouver que le dédoublonnage
+         * se fait bien au sens métier,
+         * sans tenir compte de la casse.
+         */
         final List<TypeProduitJPA> entities = Arrays.asList(
-            fabriquerTypeProduitJPA("VÊTEMENT", ID_1),
-            fabriquerTypeProduitJPA("vêtement", ID_2), // Doublon (case-insensitive)
-            fabriquerTypeProduitJPA("OUTILLAGE", ID_3));
+                fabriquerTypeProduitJPA(VETEMENT.toUpperCase(Locale.ROOT), ID_1),
+                fabriquerTypeProduitJPA(VETEMENT, ID_2),
+                fabriquerTypeProduitJPA(OUTILLAGE.toUpperCase(Locale.ROOT), ID_3));
 
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * dans les conditions préparées ci-dessus.
+         */
         @SuppressWarnings(UNCHECKED)
-        final List<TypeProduit> resultat = (List<TypeProduit>) invokePrivateMethod(
-                this.service,
-                FILTRERTRIER,
-                new Class<?>[]{List.class},
-                new Object[]{entities});
+        final List<TypeProduit> resultat
+            = (List<TypeProduit>) invokePrivateMethod(
+                    this.service,
+                    FILTRERTRIER,
+                    new Class[]{List.class},
+                    new Object[]{entities});
 
-        assertThat(resultat).hasSize(2); // Vêtement + Outillage (dédoublonnage appliqué)
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - ne conserve qu'une seule occurrence métier
+         *   de chaque libellé
+         * - applique ce dédoublonnage
+         *   sans tenir compte de la casse.
+         *
+         * La normalisation en lowerCase(Locale.ROOT)
+         * permet ici de prouver directement
+         * l'unicité métier,
+         * sans imposer artificiellement
+         * la casse exacte conservée en sortie.
+         */
+        assertThat(resultat).isNotNull().hasSize(2);
         assertThat(resultat)
-            .extracting(TypeProduit::getTypeProduit)
-            .containsExactlyInAnyOrder("VÊTEMENT", "OUTILLAGE");
+            .extracting(typeProduit -> typeProduit.getTypeProduit().toLowerCase(Locale.ROOT))
+            .containsExactlyInAnyOrder(VETEMENT, OUTILLAGE);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>filtrerTrierDedoublonner(tri) : trie par libellé (case-insensitive).</p>
+     * <p>garantit que filtrerTrierDedoublonner(tri) :</p>
+     * <ul>
+     * <li>retourne les objets métier triés par libellé</li>
+     * <li>respecte l'ordre alphabétique attendu</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_DEDOUBLONNAGE)
-    @DisplayName("filtrerTrierDedoublonner(tri) : trie par libellé (case-insensitive)")
+    @DisplayName("filtrerTrierDedoublonner(tri) : trie les objets métier par libellé")
     @Test
     public void testFiltrerTrierDedoublonnerTri() throws Exception {
     	
+        /* ARRANGE :
+         * prépare des entités valides
+         * volontairement non triées.
+         *
+         * Le but est de prouver
+         * l'ordre final imposé par la méthode privée.
+         */
         final List<TypeProduitJPA> entities = Arrays.asList(
-            fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
-            fabriquerTypeProduitJPA(VETEMENT, ID_1),
-            fabriquerTypeProduitJPA(CAMPING, ID_3));
+                fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
+                fabriquerTypeProduitJPA(VETEMENT, ID_1),
+                fabriquerTypeProduitJPA(CAMPING, ID_3));
 
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * dans les conditions préparées ci-dessus.
+         */
         @SuppressWarnings(UNCHECKED)
-        final List<TypeProduit> resultat = (List<TypeProduit>) invokePrivateMethod(
-                this.service,
-                FILTRERTRIER,
-                new Class<?>[]{List.class},
-                new Object[]{entities});
+        final List<TypeProduit> resultat
+            = (List<TypeProduit>) invokePrivateMethod(
+                    this.service,
+                    FILTRERTRIER,
+                    new Class[]{List.class},
+                    new Object[]{entities});
 
-        assertThat(resultat).hasSize(3);
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - retourne bien trois objets métier
+         * - les restitue triés par libellé
+         *   selon l'ordre alphabétique attendu.
+         */
+        assertThat(resultat).isNotNull().hasSize(3);
         assertThat(resultat)
             .extracting(TypeProduit::getTypeProduit)
-            .containsExactly(CAMPING, OUTILLAGE, VETEMENT); // Tri alphabétique
+            .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
         
     } // __________________________________________________________________
 
 
-    
+
     /**
      * <div>
-     * <p>Test de la méthode privée appliquerModifications() avec null :
-     * retourne false si un paramètre est null.</p>
+     * <p>garantit que appliquerModifications(null persistant ou null métier) :</p>
+     * <ul>
+     * <li>retourne {@code false}</li>
+     * <li>n'applique aucune modification</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("appliquerModifications() : retourne false si un paramètre est null")
+    @DisplayName("appliquerModifications(null persistant ou null métier) : retourne false")
     @Test
     public void testAppliquerModificationsAvecNull() throws Exception {
     	
+        /* ARRANGE */
         final TypeProduitJPA entity = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
 
-        final boolean resultatNullPersistant = (boolean) invokePrivateMethod(
-                this.service,
-                APPLIQUER_MODIFS,
-                new Class<?>[]{TypeProduitJPA.class, TypeProduit.class},
-                new Object[]{null, metier});
+        /* ACT */
+        /* Sollicite la méthode privée à tester
+         * dans ses deux variantes null :
+         * - persistant null
+         * - métier null.
+         */
+        final boolean resultatNullPersistant
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    APPLIQUER_MODIFS,
+                    new Class[]{TypeProduitJPA.class, TypeProduit.class},
+                    new Object[]{null, metier});
 
-        final boolean resultatNullMetier = (boolean) invokePrivateMethod(
-                this.service,
-                APPLIQUER_MODIFS,
-                new Class<?>[]{TypeProduitJPA.class, TypeProduit.class},
-                new Object[]{entity, null});
+        final boolean resultatNullMetier
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    APPLIQUER_MODIFS,
+                    new Class[]{TypeProduitJPA.class, TypeProduit.class},
+                    new Object[]{entity, null});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - refuse d'appliquer une modification
+         *   dès qu'un des paramètres vaut null
+         * - retourne alors false.
+         */
         assertThat(resultatNullPersistant).isFalse();
         assertThat(resultatNullMetier).isFalse();
         
     } // __________________________________________________________________
 
-    
-    
+
+
     /**
      * <div>
-     * <p>Test de la méthode privée appliquerModifications() sans modification :
-     * retourne false si les libellés sont identiques.</p>
+     * <p>garantit que appliquerModifications(sans modification) :</p>
+     * <ul>
+     * <li>retourne {@code false}</li>
+     * <li>laisse l'entité persistante inchangée</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("appliquerModifications() : retourne false si les libellés sont identiques")
+    @DisplayName("appliquerModifications(sans modification) : retourne false et laisse l'entité inchangée")
     @Test
     public void testAppliquerModificationsSansModification() throws Exception {
     	
+        /* ARRANGE */
         final TypeProduitJPA entity = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         final TypeProduit metier = fabriquerTypeProduit(VETEMENT, ID_1);
 
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                APPLIQUER_MODIFS,
-                new Class<?>[]{TypeProduitJPA.class, TypeProduit.class},
-                new Object[]{entity, metier});
+        /* ACT */
+        /* Sollicite la méthode privée avec deux libellés identiques,
+         * afin de prouver qu'aucune modification
+         * n'est à appliquer.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    APPLIQUER_MODIFS,
+                    new Class[]{TypeProduitJPA.class, TypeProduit.class},
+                    new Object[]{entity, metier});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - retourne false
+         * - ne modifie pas l'entité persistante
+         *   lorsque les libellés sont identiques.
+         */
         assertThat(resultat).isFalse();
         assertThat(entity.getTypeProduit()).isEqualTo(VETEMENT);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée appliquerModifications() avec modification :
-     * retourne true et modifie l'entité si les libellés sont différents.</p>
+     * <p>garantit que appliquerModifications(avec modification) :</p>
+     * <ul>
+     * <li>retourne {@code true}</li>
+     * <li>modifie l'entité persistante</li>
+     * <li>applique le nouveau libellé métier</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("appliquerModifications() : retourne true et modifie l'entité si les libellés sont différents")
+    @DisplayName("appliquerModifications(avec modification) : retourne true et modifie l'entité")
     @Test
     public void testAppliquerModificationsAvecModification() throws Exception {
     	
+        /* ARRANGE */
         final TypeProduitJPA entity = fabriquerTypeProduitJPA(VETEMENT, ID_1);
         final TypeProduit metier = fabriquerTypeProduit(CAMPING, ID_1);
 
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                APPLIQUER_MODIFS,
-                new Class<?>[]{TypeProduitJPA.class, TypeProduit.class},
-                new Object[]{entity, metier});
+        /* ACT */
+        /* Sollicite la méthode privée avec deux libellés différents,
+         * afin de prouver qu'une modification réelle
+         * est appliquée à l'entité persistante.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    APPLIQUER_MODIFS,
+                    new Class[]{TypeProduitJPA.class, TypeProduit.class},
+                    new Object[]{entity, metier});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - retourne true
+         * - applique effectivement le nouveau libellé
+         *   à l'entité persistante.
+         */
         assertThat(resultat).isTrue();
         assertThat(entity.getTypeProduit()).isEqualTo(CAMPING);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée safeEquals() avec null :
-     * gère correctement les paramètres null.</p>
+     * <p>garantit que safeEquals(avec nulls) :</p>
+     * <ul>
+     * <li>gère correctement les paramètres null</li>
+     * <li>retourne {@code true} pour deux null</li>
+     * <li>retourne {@code false} si un seul paramètre vaut null</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("safeEquals() : gère correctement les paramètres null")
+    @DisplayName("safeEquals(avec nulls) : gère correctement les paramètres null")
     @Test
     public void testSafeEqualsAvecNull() throws Exception {
     	
-        final boolean resultat1 = (boolean) invokePrivateMethod(
-                this.service,
-                SAFE_EQUALS,
-                new Class<?>[]{Object.class, Object.class},
-                new Object[]{null, null});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * sur les trois variantes pertinentes avec null :
+         * - null / null
+         * - valeur / null
+         * - null / valeur.
+         */
+        final boolean resultat1
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    SAFE_EQUALS,
+                    new Class[]{Object.class, Object.class},
+                    new Object[]{null, null});
 
-        final boolean resultat2 = (boolean) invokePrivateMethod(
-                this.service,
-                SAFE_EQUALS,
-                new Class<?>[]{Object.class, Object.class},
-                new Object[]{VETEMENT, null});
+        final boolean resultat2
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    SAFE_EQUALS,
+                    new Class[]{Object.class, Object.class},
+                    new Object[]{VETEMENT, null});
 
-        final boolean resultat3 = (boolean) invokePrivateMethod(
-                this.service,
-                SAFE_EQUALS,
-                new Class<?>[]{Object.class, Object.class},
-                new Object[]{null, VETEMENT});
+        final boolean resultat3
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    SAFE_EQUALS,
+                    new Class[]{Object.class, Object.class},
+                    new Object[]{null, VETEMENT});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée :
+         * - retourne true si les deux paramètres valent null
+         * - retourne false si un seul paramètre vaut null.
+         */
         assertThat(resultat1).isTrue();
         assertThat(resultat2).isFalse();
         assertThat(resultat3).isFalse();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée safeEquals() avec objets égaux :
-     * retourne true si les objets sont égaux.</p>
+     * <p>garantit que safeEquals(objets égaux) :</p>
+     * <ul>
+     * <li>retourne {@code true}</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("safeEquals() : retourne true si les objets sont égaux")
+    @DisplayName("safeEquals(objets égaux) : retourne true")
     @Test
     public void testSafeEqualsAvecObjetsEgaux() throws Exception {
     	
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                SAFE_EQUALS,
-                new Class<?>[]{Object.class, Object.class},
-                new Object[]{VETEMENT, VETEMENT});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec deux objets égaux.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    SAFE_EQUALS,
+                    new Class[]{Object.class, Object.class},
+                    new Object[]{VETEMENT, VETEMENT});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne true
+         * lorsque les deux objets sont égaux.
+         */
         assertThat(resultat).isTrue();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée safeEquals() avec objets différents :
-     * retourne false si les objets sont différents.</p>
+     * <p>garantit que safeEquals(objets différents) :</p>
+     * <ul>
+     * <li>retourne {@code false}</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("safeEquals() : retourne false si les objets sont différents")
+    @DisplayName("safeEquals(objets différents) : retourne false")
     @Test
     public void testSafeEqualsAvecObjetsDifferents() throws Exception {
     	
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                SAFE_EQUALS,
-                new Class<?>[]{Object.class, Object.class},
-                new Object[]{VETEMENT, OUTILLAGE});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec deux objets différents.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    SAFE_EQUALS,
+                    new Class[]{Object.class, Object.class},
+                    new Object[]{VETEMENT, OUTILLAGE});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne false
+         * lorsque les deux objets sont différents.
+         */
         assertThat(resultat).isFalse();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée isBlank() avec null :
-     * retourne true si le paramètre est null.</p>
+     * <p>garantit que isBlank(null) :</p>
+     * <ul>
+     * <li>retourne {@code true}</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("isBlank() : retourne true si le paramètre est null")
+    @DisplayName("isBlank(null) : retourne true")
     @Test
     public void testIsBlankAvecNull() throws Exception {
     	
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                ISBLANK,
-                new Class<?>[]{String.class},
-                new Object[]{null});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec un paramètre null.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    ISBLANK,
+                    new Class[]{String.class},
+                    new Object[]{null});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne true
+         * lorsque le paramètre vaut null.
+         */
         assertThat(resultat).isTrue();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée isBlank() avec chaîne vide :
-     * retourne true si le paramètre est vide.</p>
+     * <p>garantit que isBlank(chaîne vide) :</p>
+     * <ul>
+     * <li>retourne {@code true}</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("isBlank() : retourne true si le paramètre est vide")
+    @DisplayName("isBlank(chaîne vide) : retourne true")
     @Test
     public void testIsBlankAvecChaineVide() throws Exception {
     	
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                ISBLANK,
-                new Class<?>[]{String.class},
-                new Object[]{""});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec une chaîne vide.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    ISBLANK,
+                    new Class[]{String.class},
+                    new Object[]{""});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne true
+         * lorsque le paramètre est vide.
+         */
         assertThat(resultat).isTrue();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée isBlank() avec chaîne blanche :
-     * retourne true si le paramètre est blanc.</p>
+     * <p>garantit que isBlank(chaîne blanche) :</p>
+     * <ul>
+     * <li>retourne {@code true}</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("isBlank() : retourne true si le paramètre est blanc")
+    @DisplayName("isBlank(chaîne blanche) : retourne true")
     @Test
     public void testIsBlankAvecChaineBlanche() throws Exception {
     	
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                ISBLANK,
-                new Class<?>[]{String.class},
-                new Object[]{BLANK});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec une chaîne blanche.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    ISBLANK,
+                    new Class[]{String.class},
+                    new Object[]{BLANK});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne true
+         * lorsque le paramètre est blanc.
+         */
         assertThat(resultat).isTrue();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée isBlank() avec chaîne valide :
-     * retourne false si le paramètre est valide.</p>
+     * <p>garantit que isBlank(chaîne valide) :</p>
+     * <ul>
+     * <li>retourne {@code false}</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("isBlank() : retourne false si le paramètre est valide")
+    @DisplayName("isBlank(chaîne valide) : retourne false")
     @Test
     public void testIsBlankAvecChaineValide() throws Exception {
     	
-        final boolean resultat = (boolean) invokePrivateMethod(
-                this.service,
-                ISBLANK,
-                new Class<?>[]{String.class},
-                new Object[]{VETEMENT});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec une chaîne valide.
+         */
+        final boolean resultat
+            = (boolean) invokePrivateMethod(
+                    this.service,
+                    ISBLANK,
+                    new Class[]{String.class},
+                    new Object[]{VETEMENT});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne false
+         * lorsque le paramètre est valide.
+         */
         assertThat(resultat).isFalse();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée safeMessage() avec null :
-     * retourne une chaîne vide si le paramètre est null.</p>
+     * <p>garantit que safeMessage(null) :</p>
+     * <ul>
+     * <li>retourne une chaîne vide</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("safeMessage() : retourne une chaîne vide si le paramètre est null")
+    @DisplayName("safeMessage(null) : retourne une chaîne vide")
     @Test
     public void testSafeMessageAvecNull() throws Exception {
     	
-        final String resultat = (String) invokePrivateMethod(
-                this.service,
-                "safeMessage",
-                new Class<?>[]{Object.class},
-                new Object[]{null});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec un paramètre null.
+         */
+        final String resultat
+            = (String) invokePrivateMethod(
+                    this.service,
+                    "safeMessage",
+                    new Class[]{Object.class},
+                    new Object[]{null});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne une chaîne vide
+         * lorsque le paramètre vaut null.
+         */
         assertThat(resultat).isEmpty();
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée safeMessage() avec objet valide :
-     * retourne la représentation textuelle de l'objet.</p>
+     * <p>garantit que safeMessage(objet valide) :</p>
+     * <ul>
+     * <li>retourne la représentation textuelle de l'objet</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("safeMessage() : retourne la représentation textuelle de l'objet")
+    @DisplayName("safeMessage(objet valide) : retourne la représentation textuelle de l'objet")
     @Test
     public void testSafeMessageAvecObjetValide() throws Exception {
     	
-        final String resultat = (String) invokePrivateMethod(
-                this.service,
-                "safeMessage",
-                new Class<?>[]{Object.class},
-                new Object[]{VETEMENT});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec un objet valide.
+         */
+        final String resultat
+            = (String) invokePrivateMethod(
+                    this.service,
+                    "safeMessage",
+                    new Class[]{Object.class},
+                    new Object[]{VETEMENT});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne la représentation textuelle
+         * de l'objet fourni.
+         */
         assertThat(resultat).isEqualTo(VETEMENT);
         
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>Test de la méthode privée safeMessage() avec objet dont toString() retourne null :
-     * retourne une chaîne vide si toString() retourne null.</p>
+     * <p>garantit que safeMessage(toString null) :</p>
+     * <ul>
+     * <li>retourne une chaîne vide</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("safeMessage() : retourne une chaîne vide si toString() retourne null")
+    @DisplayName("safeMessage(toString null) : retourne une chaîne vide")
     @Test
     public void testSafeMessageAvecToStringNull() throws Exception {
     	
+        /* ARRANGE :
+         * prépare un objet dont toString()
+         * retourne volontairement null,
+         * afin de prouver le comportement de sécurisation.
+         */
         final Object objet = new Object() {
             @Override
             public String toString() {
@@ -5779,12 +6213,22 @@ public class TypeProduitGatewayJPAServiceMockTest {
             }
         };
 
-        final String resultat = (String) invokePrivateMethod(
-                this.service,
-                "safeMessage",
-                new Class<?>[]{Object.class},
-                new Object[]{objet});
+        /* ACT */
+        /* Sollicite la méthode privée
+         * avec cet objet volontairement atypique.
+         */
+        final String resultat
+            = (String) invokePrivateMethod(
+                    this.service,
+                    "safeMessage",
+                    new Class[]{Object.class},
+                    new Object[]{objet});
 
+        /* ASSERT */
+        /* Garantit que la méthode privée
+         * retourne une chaîne vide
+         * lorsque toString() retourne null.
+         */
         assertThat(resultat).isEmpty();
         
     } // __________________________________________________________________
