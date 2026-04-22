@@ -4037,7 +4037,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
      * <li>propage une cause non null ;</li>
      * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké with Mockito.</li>
+     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
      * </ul>
      * </div>
      */
@@ -4178,7 +4178,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>retourne un parent non null ;</li>
      * <li>retourne le libellé parent attendu ;</li>
      * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké with Mockito.</li>
+     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
      * </ul>
      * </div>
      *

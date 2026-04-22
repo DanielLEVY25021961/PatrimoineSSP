@@ -73,279 +73,296 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 @ContextConfiguration(classes = ProduitGatewayJPAServiceIntegrationTest.ConfigTest.class)
 public class ProduitGatewayJPAServiceIntegrationTest {
 
-    // *************************** CONSTANTES ******************************/
+    // ************************* CONSTANTES ******************************/
 
     /**
      * <div>
-     * <p>Profil Spring : "test".</p>
+     * <p>"test"</p>
      * </div>
      */
     public static final String PROFILE_TEST = "test";
 
     /**
      * <div>
-     * <p>Script SQL truncate (classpath).</p>
+     * <p>"classpath:truncate-test.sql"</p>
      * </div>
      */
-    public static final String CLASSPATH_TRUNCATE_SQL = "classpath:truncate-test.sql";
+    public static final String CLASSPATH_TRUNCATE_SQL 
+    	= "classpath:truncate-test.sql";
 
     /**
      * <div>
-     * <p>Script SQL data (classpath).</p>
+     * <p>"classpath:data-test.sql"</p>
      * </div>
      */
-    public static final String CLASSPATH_DATA_SQL = "classpath:data-test.sql";
+    public static final String CLASSPATH_DATA_SQL 
+    	= "classpath:data-test.sql";
 
     /**
      * <div>
-     * <p>Qualifier Spring du service gateway.</p>
+     * <p>"ProduitGatewayJPAService"</p>
      * </div>
      */
-    public static final String QUALIFIER_SERVICE = "ProduitGatewayJPAService";
+    public static final String QUALIFIER_SERVICE 
+    	= "ProduitGatewayJPAService";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests de création.</p>
+     * <p>"servicesGateway-Creer"</p>
      * </div>
      */
     public static final String TAG_CREER = "servicesGateway-Creer";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests de recherche.</p>
+     * <p>"servicesGateway-Rechercher"</p>
      * </div>
      */
     public static final String TAG_RECHERCHER = "servicesGateway-Rechercher";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests de recherche par objet métier.</p>
+     * <p>"servicesGateway-FindByObjetMetier"</p>
      * </div>
      */
-    public static final String TAG_FINDBYOBJETMETIER = "servicesGateway-FindByObjetMetier";
+    public static final String TAG_FINDBYOBJETMETIER 
+    	= "servicesGateway-FindByObjetMetier";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests de recherche rapide.</p>
+     * <p>"servicesGateway-RechercherRapide"</p>
      * </div>
      */
-    public static final String TAG_RECHERCHER_RAPIDE = "servicesGateway-RechercherRapide";
+    public static final String TAG_RECHERCHER_RAPIDE 
+    	= "servicesGateway-RechercherRapide";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests d'update.</p>
+     * <p>"servicesGateway-Update"</p>
      * </div>
      */
     public static final String TAG_UPDATE = "servicesGateway-Update";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests de delete.</p>
+     * <p>"servicesGateway-Delete"</p>
      * </div>
      */
     public static final String TAG_DELETE = "servicesGateway-Delete";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests de count.</p>
+     * <p>"servicesGateway-Count"</p>
      * </div>
      */
     public static final String TAG_COUNT = "servicesGateway-Count";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests de pagination.</p>
+     * <p>"servicesGateway-Pagination"</p>
      * </div>
      */
     public static final String TAG_PAGINATION = "servicesGateway-Pagination";
 
     /**
      * <div>
-     * <p>Tag JUnit : tests béton.</p>
+     * <p>"servicesGateway-Beton"</p>
      * </div>
      */
     public static final String TAG_BETON = "servicesGateway-Beton";
 
     /**
      * <div>
-     * <p>Locale par défaut.</p>
-     * </div>
-     */
-    public static final Locale LOCALE_DEFAUT = Locale.getDefault();
-
-    /**
-     * <div>
-     * <p>Chaîne vide : "".</p>
+     * <p>""</p>
      * </div>
      */
     public static final String CHAINE_VIDE = "";
 
     /**
      * <div>
-     * <p>"   ".</p>
+     * <p>"   "</p>
      * </div>
      */
     public static final String BLANK = "   ";
 
     /**
      * <div>
-     * <p>"chemise".</p>
+     * <p>"chemise"</p>
      * </div>
      */
     public static final String CHEMISE = "chemise";
 
     /**
      * <div>
-     * <p>"chemise à manches longues pour homme".</p>
+     * <p>"chemise à manches longues pour homme"</p>
      * </div>
      */
-    public static final String CHEMISE_ML_HOMME = "chemise à manches longues pour homme";
+    public static final String CHEMISE_ML_HOMME 
+    	= "chemise à manches longues pour homme";
 
     /**
      * <div>
-     * <p>"chemise à manches courtes pour homme".</p>
+     * <p>"chemise à manches courtes pour homme"</p>
      * </div>
      */
-    public static final String CHEMISE_MC_HOMME = "chemise à manches courtes pour homme";
+    public static final String CHEMISE_MC_HOMME 
+    	= "chemise à manches courtes pour homme";
 
     /**
      * <div>
-     * <p>"sweatshirt pour homme".</p>
+     * <p>"sweatshirt pour homme"</p>
      * </div>
      */
     public static final String SWEAT_HOMME = "sweatshirt pour homme";
 
     /**
      * <div>
-     * <p>Suffix de modif.</p>
+     * <p>" (modifié)"</p>
      * </div>
      */
     public static final String SUFFIX_MODIF = " (modifié)";
 
     /**
      * <div>
-     * <p>Produit temporaire à supprimer.</p>
+     * <p>"temp-produit-a-supprimer"</p>
      * </div>
      */
-    public static final String TEMP_PRODUIT_A_SUPPRIMER = "temp-produit-a-supprimer";
+    public static final String TEMP_PRODUIT_A_SUPPRIMER 
+    	= "temp-produit-a-supprimer";
 
     /**
      * <div>
-     * <p>Produit temporaire à modifier.</p>
+     * <p>"temp-produit-a-modifier"</p>
      * </div>
      */
-    public static final String TEMP_PRODUIT_A_MODIFIER = "temp-produit-a-modifier";
+    public static final String TEMP_PRODUIT_A_MODIFIER 
+    	= "temp-produit-a-modifier";
 
     /**
      * <div>
-     * <p>Valeur introuvable (pour forcer PAS_DE_RESULTAT).</p>
+     * <p>"###___introuvable___###"</p>
      * </div>
      */
     public static final String INTROUVABLE = "###___introuvable___###";
 
     /**
      * <div>
-     * <p>Propriété de tri (Entity) : "produit".</p>
+     * <p>"produit"</p>
      * </div>
      */
     public static final String PROP_TRI_PRODUIT = "produit";
 
     /**
      * <div>
-     * <p>DisplayName : "creer(null) - jette ExceptionAppliParamNull (contrat du port)".</p>
+     * <p>"creer(null) - jette ExceptionAppliParamNull (contrat du port)"</p>
      * </div>
      */
-    public static final String DN_CREER_NULL = "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
+    public static final String DN_CREER_NULL 
+    	= "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
 
     /**
      * <div>
-     * <p>DisplayName : "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)".</p>
+     * <p>"creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)"</p>
      * </div>
      */
-    public static final String DN_CREER_BLANK = "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    public static final String DN_CREER_BLANK 
+    	= "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
     /**
      * <div>
-     * <p>DisplayName : "creer(parent null) - jette ExceptionAppliParentNull (contrat du port)".</p>
+     * <p>"creer(parent null) - jette ExceptionAppliParentNull (contrat du port)"</p>
      * </div>
      */
-    public static final String DN_CREER_PARENT_NULL = "creer(parent null) - jette ExceptionAppliParentNull (contrat du port)";
+    public static final String DN_CREER_PARENT_NULL 
+    	= "creer(parent null) - jette ExceptionAppliParentNull (contrat du port)";
 
     /**
      * <div>
-     * <p>DisplayName : "creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés".</p>
+     * <p>"creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés"</p>
      * </div>
      */
-    public static final String DN_CREER_NOMINAL = "creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
+    public static final String DN_CREER_NOMINAL 
+    	= "creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
 
     /**
      * <div>
-     * <p>DisplayName : "rechercherTous() - retourne la liste seedée (triée, sans doublons)".</p>
+     * <p>"rechercherTous() - retourne la liste seedée (triée, sans doublons)"</p>
      * </div>
      */
-    public static final String DN_RECHERCHER_TOUS = "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
+    public static final String DN_RECHERCHER_TOUS 
+    	= "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
 
     /**
      * <div>
-     * <p>DisplayName : "findByLibelle(inexistant) - retourne une liste vide".</p>
+     * <p>"findByLibelle(inexistant) - retourne une liste vide"</p>
      * </div>
      */
-    public static final String DN_FINDBYLIBELLE_INEXISTANT = "findByLibelle(inexistant) - retourne une liste vide";
+    public static final String DN_FINDBYLIBELLE_INEXISTANT 
+    	= "findByLibelle(inexistant) - retourne une liste vide";
 
     /**
      * <div>
-     * <p>DisplayName : "findByLibelleRapide(contenu inexistant) - retourne une liste vide".</p>
+     * <p>"findByLibelleRapide(contenu inexistant) - retourne une liste vide"</p>
      * </div>
      */
-    public static final String DN_FINDBYLIBELLERAPIDE_INEXISTANT = "findByLibelleRapide(contenu inexistant) - retourne une liste vide";
+    public static final String DN_FINDBYLIBELLERAPIDE_INEXISTANT 
+    	= "findByLibelleRapide(contenu inexistant) - retourne une liste vide";
 
     /**
      * <div>
-     * <p>DisplayName : "update(parent modifié) - met à jour le parent".</p>
+     * <p>"update(parent modifié) - met à jour le parent"</p>
      * </div>
      */
-    public static final String DN_UPDATE_PARENT_MODIFIE = "update(parent modifié) - met à jour le parent";
+    public static final String DN_UPDATE_PARENT_MODIFIE 
+    	= "update(parent modifié) - met à jour le parent";
 
     /**
      * <div>
-     * <p>DisplayName : "findAllByParent(nominal) - retourne les enfants du parent".</p>
+     * <p>"findAllByParent(nominal) - retourne les enfants du parent"</p>
      * </div>
      */
-    public static final String DN_FINDALLBYPARENT_NOMINAL = "findAllByParent(nominal) - retourne les enfants du parent";
+    public static final String DN_FINDALLBYPARENT_NOMINAL 
+    	= "findAllByParent(nominal) - retourne les enfants du parent";
 
     /**
      * <div>
-     * <p>DisplayName : "findById(nominal) - retourne l'objet métier correspondant".</p>
+     * <p>"findById(nominal) - retourne l'objet métier correspondant"</p>
      * </div>
      */
-    public static final String DN_FINDBYID_NOMINAL = "findById(nominal) - retourne l'objet métier correspondant";
+    public static final String DN_FINDBYID_NOMINAL 
+    	= "findById(nominal) - retourne l'objet métier correspondant";
 
     /**
      * <div>
-     * <p>DisplayName : "update(nominal) - modifie le stockage et retourne l'objet modifié".</p>
+     * <p>"update(nominal) - modifie le stockage et retourne l'objet modifié"</p>
      * </div>
      */
-    public static final String DN_UPDATE_NOMINAL = "update(nominal) - modifie le stockage et retourne l'objet modifié";
+    public static final String DN_UPDATE_NOMINAL 
+    	= "update(nominal) - modifie le stockage et retourne l'objet modifié";
 
-    /** DisplayName : "update(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_UPDATE_NULL = "update(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "update(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_UPDATE_NULL 
+    	= "update(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_UPDATE_BLANK = "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_UPDATE_BLANK 
+    	= "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
     /**
      * <div>
-     * <p>DisplayName : "delete(nominal) - supprime l'élément et le rend introuvable".</p>
+     * <p>"delete(nominal) - supprime l'élément et le rend introuvable"</p>
      * </div>
      */
-    public static final String DN_DELETE_NOMINAL = "delete(nominal) - supprime l'élément et le rend introuvable";
+    public static final String DN_DELETE_NOMINAL 
+    	= "delete(nominal) - supprime l'élément et le rend introuvable";
 
     /**
      * <div>
-     * <p>DisplayName : "count() - cohérent avec le DAO".</p>
+     * <p>"count() - cohérent avec le DAO"</p>
      * </div>
      */
-    public static final String DN_COUNT_NOMINAL = "count() - cohérent avec le DAO";
+    public static final String DN_COUNT_NOMINAL 
+    	= "count() - cohérent avec le DAO";
 
     // Messages d'erreur (alignés sur ProduitGatewayIService)
     /**
@@ -485,8 +502,21 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
     /** Message d'erreur : MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT. */
     public static final String MSG_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTANT = ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT;
+    
+    /**
+     * "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?"
+     */
+    public static final String SELECT_COUNT_FROM_PRODUITS_WHERE 
+    	= "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?";
 
     // *************************** ATTRIBUTS *******************************/
+
+    /**
+     * <div>
+     * <p>Locale par défaut = {@code Locale.getDefault()}</p>
+     * </div>
+     */
+    public static final Locale LOCALE_DEFAUT = Locale.getDefault();
 
     /**
      * <div>
@@ -566,133 +596,6 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     public static final class ConfigTest { // NOPMD by danyl on 03/02/2026 05:03
         // Configuration minimale
     }
-
-    
-    
-    // ============================== OUTILS ===============================
-
-    
-    
-    /**
-     * <div>
-     * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} par libellé.</p>
-     * </div>
-     *
-     * @param pLibelleParent : String : 
-     * libellé du SousTypeProduit
-     * @return Long : ID persistant
-     */
-    private Long retrouverIdParentPersistantParLibelle(
-    		final String pLibelleParent) {
-    	
-        final SousTypeProduitJPA enfant = this.sousTypeProduitDaoJPA
-            .findBySousTypeProduitIgnoreCase(pLibelleParent).get(0);
-        assertThat(enfant).isNotNull();
-        assertThat(enfant.getIdSousTypeProduit()).isNotNull();
-        return enfant.getIdSousTypeProduit();
-        
-    } // __________________________________________________________________
-
-    
-    
-    /**
-     * <div>
-     * <p>Vérifie la suppression physique en base via JdbcTemplate.</p>
-     * </div>
-     *
-     * @param pId Long ID de l'entité supprimée
-     */
-    private void verifierSuppressionEnBase(final Long pId) {
-    	
-        final Integer count = this.jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?", // NOPMD by danyl on 26/02/2026 15:18
-            Integer.class, pId
-        );
-        assertThat(count)
-            .as("L'enregistrement doit être physiquement supprimé de la base")
-            .isEqualTo(0);
-        
-    } // __________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
-     * <p>Lit le libellé PRODUIT physiquement en base (bypass Hibernate).</p>
-     * </div>
-     *
-     * @param pId Long : ID_PRODUIT.
-     * @return String : valeur de la colonne PRODUIT.
-     */
-    private String lireLibelleProduitEnBase(final Long pId) {
-    	
-        return this.jdbcTemplate.queryForObject(
-            "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?",
-            String.class, pId
-        );
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Lit l'ID du parent (SOUS_TYPE_PRODUIT) physiquement en base (bypass Hibernate).</p>
-     * </div>
-     *
-     * @param pId Long : ID_PRODUIT.
-     * @return Long : valeur de la colonne SOUS_TYPE_PRODUIT.
-     */
-    private Long lireIdParentEnBase(final Long pId) {
-    	
-        return this.jdbcTemplate.queryForObject(
-            "SELECT SOUS_TYPE_PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?",
-            Long.class, pId
-        );
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Retrouve l'ID d'un SousTypeProduit persistant par son libellé (physiquement en base).</p>
-     * </div>
-     *
-     * @param pLibelleParent String : SOUS_TYPE_PRODUIT.
-     * @return Long : ID_SOUS_TYPE_PRODUIT.
-     */
-    private Long retrouverIdParentPersistantParLibelleEnBase(final String pLibelleParent) {
-        return this.jdbcTemplate.queryForObject(
-            "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = ?",
-            Long.class, pLibelleParent
-        );
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Restaure physiquement en base un Produit (libellé + parent) pour garantir l'isolation des tests.</p>
-     * </div>
-     *
-     * @param pId Long : ID_PRODUIT.
-     * @param pLibelle String : PRODUIT.
-     * @param pIdParent Long : SOUS_TYPE_PRODUIT.
-     */
-    private void restaurerProduitEnBase(
-            final Long pId,
-            final String pLibelle,
-            final Long pIdParent) {
-
-        final int updated = this.jdbcTemplate.update(
-            "UPDATE PRODUITS SET PRODUIT = ?, SOUS_TYPE_PRODUIT = ? WHERE ID_PRODUIT = ?",
-            pLibelle, pIdParent, pId
-        );
-
-        assertThat(updated)
-            .as("La restauration en base doit modifier exactement 1 ligne.")
-            .isEqualTo(1);
-        
-    } // __________________________________________________________________
     
     
 
@@ -954,7 +857,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
             /* PREUVE BD INATTAQUABLE : lecture SQL directe (bypass Hibernate). */
             final Integer countEnBase = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
+                SELECT_COUNT_FROM_PRODUITS_WHERE,
                 Integer.class, idCree
             );
             assertThat(countEnBase)
@@ -2002,7 +1905,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
             /* Vérification SQL avant suppression. */
             final Integer countAvant = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
+                SELECT_COUNT_FROM_PRODUITS_WHERE,
                 Integer.class, idCree
             );
             assertThat(countAvant).isEqualTo(1);
@@ -2017,7 +1920,7 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
             /* Vérification SQL après suppression : preuve BD. */
             final Integer countApres = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?",
+                SELECT_COUNT_FROM_PRODUITS_WHERE,
                 Integer.class, idCree
             );
             assertThat(countApres).isEqualTo(0);
@@ -2087,6 +1990,137 @@ public class ProduitGatewayJPAServiceIntegrationTest {
             .isEqualTo(countSql.longValue());
 
     } // __________________________________________________________________
+
     
-}
+    
+    // ============================== OUTILS ===============================
+
+    
+    
+    /**
+     * <div>
+     * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} par libellé.</p>
+     * </div>
+     *
+     * @param pLibelleParent : String : 
+     * libellé du SousTypeProduit
+     * @return Long : ID persistant
+     */
+    private Long retrouverIdParentPersistantParLibelle(
+    		final String pLibelleParent) {
+    	
+        final SousTypeProduitJPA enfant = this.sousTypeProduitDaoJPA
+            .findBySousTypeProduitIgnoreCase(pLibelleParent).get(0);
+        assertThat(enfant).isNotNull();
+        assertThat(enfant.getIdSousTypeProduit()).isNotNull();
+        
+        return enfant.getIdSousTypeProduit();
+        
+    } // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>Vérifie la suppression physique en base via JdbcTemplate.</p>
+     * </div>
+     *
+     * @param pId Long ID de l'entité supprimée
+     */
+    private void verifierSuppressionEnBase(final Long pId) {
+    	
+        final Integer count = this.jdbcTemplate.queryForObject(
+            SELECT_COUNT_FROM_PRODUITS_WHERE, // NOPMD by danyl on 26/02/2026 15:18
+            Integer.class, pId
+        );
+        assertThat(count)
+            .as("L'enregistrement doit être physiquement supprimé de la base")
+            .isEqualTo(0);
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>Lit le libellé PRODUIT physiquement en base (bypass Hibernate).</p>
+     * </div>
+     *
+     * @param pId Long : ID_PRODUIT.
+     * @return String : valeur de la colonne PRODUIT.
+     */
+    private String lireLibelleProduitEnBase(final Long pId) {
+    	
+        return this.jdbcTemplate.queryForObject(
+            "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?",
+            String.class, pId
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Lit l'ID du parent (SOUS_TYPE_PRODUIT) physiquement en base (bypass Hibernate).</p>
+     * </div>
+     *
+     * @param pId Long : ID_PRODUIT.
+     * @return Long : valeur de la colonne SOUS_TYPE_PRODUIT.
+     */
+    private Long lireIdParentEnBase(final Long pId) {
+    	
+        return this.jdbcTemplate.queryForObject(
+            "SELECT SOUS_TYPE_PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?",
+            Long.class, pId
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Retrouve l'ID d'un SousTypeProduit persistant par son libellé (physiquement en base).</p>
+     * </div>
+     *
+     * @param pLibelleParent String : SOUS_TYPE_PRODUIT.
+     * @return Long : ID_SOUS_TYPE_PRODUIT.
+     */
+    private Long retrouverIdParentPersistantParLibelleEnBase(final String pLibelleParent) {
+    	
+        return this.jdbcTemplate.queryForObject(
+            "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE SOUS_TYPE_PRODUIT = ?",
+            Long.class, pLibelleParent
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Restaure physiquement en base un Produit (libellé + parent) pour garantir l'isolation des tests.</p>
+     * </div>
+     *
+     * @param pId Long : ID_PRODUIT.
+     * @param pLibelle String : PRODUIT.
+     * @param pIdParent Long : SOUS_TYPE_PRODUIT.
+     */
+    private void restaurerProduitEnBase(
+            final Long pId,
+            final String pLibelle,
+            final Long pIdParent) {
+
+        final int updated = this.jdbcTemplate.update(
+            "UPDATE PRODUITS SET PRODUIT = ?, SOUS_TYPE_PRODUIT = ? WHERE ID_PRODUIT = ?",
+            pLibelle, pIdParent, pId
+        );
+
+        assertThat(updated)
+            .as("La restauration en base doit modifier exactement 1 ligne.")
+            .isEqualTo(1);
+        
+    } // __________________________________________________________________
+
+
+    
+} // FIN DE LA CLASSE ProduitGatewayJPAServiceIntegrationTest.-------------
 

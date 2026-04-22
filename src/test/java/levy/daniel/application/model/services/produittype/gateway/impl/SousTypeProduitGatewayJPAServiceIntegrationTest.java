@@ -20,7 +20,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -341,6 +340,84 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /** "count() - cohérent avec le DAO" */
     public static final String DN_COUNT_NOMINAL = "count() - cohérent avec le DAO";
+    
+    /**
+     * "findByLibelle(null) - jette ExceptionAppliLibelleBlank (contrat du port)"
+     */
+    public static final String DN_FINDBYLIBELLE_NULL
+        = "findByLibelle(null) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    
+    /**
+     * "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT"
+     */
+    public static final String SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT 
+    	= "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT";
+    
+    /**
+     * "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?"
+     */
+    public static final String SELECT_STP_FROM_STP_WHERE_ID 
+    	= "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?";
+    
+    /**
+     * "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?"
+     */
+    public static final String SELECT_TP_FROM_STP_WHERE_ID 
+    	= "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?";
+    
+    /**
+     * "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?"
+     */
+    public static final String SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT 
+    	= "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?";
+
+    /**
+     * "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?"
+     */
+    public static final String SELECT_PARAM_ID_FROM_STP_WHERE_LIBELLE_AND_PARENT 
+    	= "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?";
+    
+    /**
+     * "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?)"
+     */
+    public static final String SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE
+        = "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?)";
+
+    /**
+     * "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) ORDER BY ID_SOUS_TYPE_PRODUIT"
+     */
+    public static final String SELECT_PARAM_IDS_FROM_STP_WHERE_LIBELLE
+        = "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) ORDER BY ID_SOUS_TYPE_PRODUIT";
+    
+    /**
+     * "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) LIKE UPPER(?)"
+     */
+    public static final String SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_LIKE
+        = "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) LIKE UPPER(?)";
+
+    /**
+     * "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) LIKE UPPER(?) ORDER BY ID_SOUS_TYPE_PRODUIT"
+     */
+    public static final String SELECT_PARAM_IDS_FROM_STP_WHERE_LIBELLE_LIKE
+        = "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) LIKE UPPER(?) ORDER BY ID_SOUS_TYPE_PRODUIT";
+    
+    /**
+     * "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE TYPE_PRODUIT = ?"
+     */
+    public static final String SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_PARENT
+        = "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE TYPE_PRODUIT = ?";
+
+    /**
+     * "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE TYPE_PRODUIT = ? ORDER BY ID_SOUS_TYPE_PRODUIT"
+     */
+    public static final String SELECT_PARAM_IDS_FROM_STP_WHERE_PARENT
+        = "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE TYPE_PRODUIT = ? ORDER BY ID_SOUS_TYPE_PRODUIT";
+    
+    /**
+     * "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?"
+     */
+    public static final String SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID
+        = "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?";
 
     // ************************* ATTRIBUTS *******************************/
 
@@ -441,43 +518,73 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     
     
     
-    // =============================== CREER ==============================
+    // =============================== CREER ================================
 
 
 
-	/**
+    /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de null sur creer(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(null) jette {@link ExceptionAppliParamNull} 
-     * avec MESSAGE_CREER_KO_PARAM_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que creer(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARAM_NULL} ;</li>
+     * <li>n'écrit rien dans le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_NULL)
     @Test
     public void testCreerParamNullExceptionAppliParamNull() {
-    	
+
+        /* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.creer(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet un message MESSAGE_CREER_KO_PARAM_NULL.
+         */
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * relit ensuite l'état physique de la base
+         * après l'échec contractuel,
+         * afin de prouver que l'appel
+         * n'a produit aucun effet d'écriture.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
     
-    
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de libellé blank sur creer(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(libellé blank) jette {@link ExceptionAppliLibelleBlank} 
-     * avec MESSAGE_CREER_KO_LIBELLE_BLANK.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que creer(libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'écrit rien dans le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
@@ -485,212 +592,597 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testCreerLibelleBlankExceptionAppliLibelleBlank() {
     	
+    	/* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* 
+         * prépare un objet métier valide sur le parent,
+         * mais avec un libellé enfant blank,
+         * afin de vérifier le contrôle applicatif du PORT
+         * avant toute tentative d'accès au stockage réel.
+         */
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, BLANK, parent);
 
+        /* ACT - ASSERT :
+         * garantit que this.service.creer(stp)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet un message MESSAGE_CREER_KO_LIBELLE_BLANK.
+         */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
         
+        /* ASSERT :
+         * relit ensuite l'état physique de la base
+         * après l'échec contractuel,
+         * afin de prouver que l'appel
+         * n'a produit aucun effet d'écriture.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
 
-    
-    
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de parent null sur creer(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(parent null) jette {@link ExceptionAppliParentNull} 
-     * avec MESSAGE_CREER_KO_PARENT_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que creer(parent null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParentNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NULL} ;</li>
+     * <li>n'écrit rien dans le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_PARENT_NULL)
     @Test
     public void testCreerParentNullExceptionAppliParentNull() {
-    	
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, null);
 
+    	/* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* 
+         * prépare un sous-type à créer sans parent,
+         * afin de vérifier le contrôle contractuel
+         * du parent obligatoire.
+         */
+        final SousTypeProduit stp 
+        	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, null);
+
+        /* ACT - ASSERT :
+         * garantit que this.service.creer(stp)
+         * - jette une ExceptionAppliParentNull
+         * - émet un message MESSAGE_CREER_KO_PARENT_NULL.
+         */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL);
-        
+
+        /* ASSERT :
+         * relit ensuite l'état physique de la base
+         * après l'échec contractuel,
+         * afin de prouver que l'appel
+         * n'a produit aucun effet d'écriture.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de libellé parent blank sur creer(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(parent libellé blank) jette {@link ExceptionAppliLibelleBlank} 
-     * avec MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que creer(parent libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK} ;</li>
+     * <li>n'écrit rien dans le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_PARENT_LIBELLE_BLANK)
     @Test
     public void testCreerParentLibelleBlankExceptionAppliLibelleBlank() {
-    	
-        final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
+    	/* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* 
+         * prépare un parent avec libellé blank,
+         * afin de vérifier le contrôle contractuel
+         * sur le parent de l'objet à créer.
+         */
+        final TypeProduit parent 
+        	= new TypeProduit(Long.valueOf(1L), BLANK);
+        final SousTypeProduit stp 
+        	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
+
+        /* ACT - ASSERT :
+         * garantit que this.service.creer(stp)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet un message MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK.
+         */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK);
-        
+
+        /* ASSERT :
+         * relit ensuite l'état physique de la base
+         * après l'échec contractuel,
+         * afin de prouver que l'appel
+         * n'a produit aucun effet d'écriture.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de persistance du parent sur creer(pObject) 
-     * (id parent null).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(parent id null) jette 
-     * {@link ExceptionTechniqueGatewayNonPersistent} 
-     * avec préfixe MESSAGE_CREER_KO_PARENT_NON_PERSISTENT.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que creer(parent ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet un message commençant par
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NON_PERSISTENT} ;</li>
+     * <li>n'écrit rien dans le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_PARENT_NON_PERSISTANT)
     @Test
     public void testCreerParentIdNullExceptionTechniqueGatewayNonPersistent() {
-    	
-        final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
+    	/* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* 
+         * prépare un parent non persistant
+         * dont l'identifiant est null,
+         * afin de vérifier le contrôle de persistance
+         * sur le parent.
+         */
+        final TypeProduit parent 
+        	= new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
+        final SousTypeProduit stp 
+        	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
+
+        /* ACT - ASSERT :
+         * garantit que this.service.creer(stp)
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet un message MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT.
+         */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
-            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-        
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * relit ensuite l'état physique de la base
+         * après l'échec contractuel,
+         * afin de prouver que l'appel
+         * n'a produit aucun effet d'écriture.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de persistance du parent sur creer(pObject) (parent absent).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(parent absent) jette {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe MESSAGE_CREER_KO_PARENT_NON_PERSISTENT.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que creer(parent absent) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet un message commençant par
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NON_PERSISTENT} ;</li>
+     * <li>n'écrit rien dans le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_PARENT_NON_PERSISTANT)
     @Test
     public void testCreerParentAbsentExceptionTechniqueGatewayNonPersistent() {
-    	
-        final TypeProduit parent = new TypeProduit(ID_INEXISTANT, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
+
+    	/* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* 
+         * prépare un parent portant un identifiant inexistant,
+         * afin de vérifier le contrôle de persistance réelle
+         * du parent dans le stockage.
+         */
+        final TypeProduit parent 
+        	= new TypeProduit(ID_INEXISTANT, LIBELLE_PARENT_VETEMENT);
+        final SousTypeProduit stp 
+        	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
+
+        /* ACT - ASSERT :
+         * garantit que this.service.creer(stp)
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet un message MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT.
+         */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
-            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-        
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * relit ensuite l'état physique de la base
+         * après l'échec contractuel,
+         * afin de prouver que l'appel
+         * n'a produit aucun effet d'écriture.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le fonctionnement nominal de creer(pObject) 
-     * avec preuve d'écriture en base.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>creer(nominal) retourne un {@link SousTypeProduit} non null, 
-     * avec ID renseigné.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <p>garantit que si l'appelant tente creer(...)
+     * avec un libellé déjà présent pour le même parent :</p>
      * <ul>
-     * <li>Le count() augmente de 1.</li>
-     * <li>Preuve “BD” : lecture SQL directe (JdbcTemplate) 
-     * après l’appel (contourne Hibernate).</li>
-     * <li>Test hors transaction de test : 
-     * {@code @Transactional(NOT_SUPPORTED)}.</li>
-     * <li>Nettoyage physique en finally (isolation), 
-     * même si une assertion échoue.</li>
+     * <li>le stockage réel refuse la création du doublon ;</li>
+     * <li>l'exception observable en intégration
+     * est une {@link org.springframework.transaction.UnexpectedRollbackException} ;</li>
+     * <li>aucune nouvelle ligne n'est créée en base ;</li>
+     * <li>l'unique ligne seedée correspondant déjà au couple
+     * (parent, sous-type) reste inchangée.</li>
+     * </ul>
+     * <p>Ce test vérifie donc le comportement réellement visible
+     * à travers le proxy transactionnel Spring/Hibernate,
+     * sans se contenter de l'état du cache JPA.</p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(libellé existant sous même parent) - jette UnexpectedRollbackException et ne crée aucune nouvelle ligne")
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testCreerLibelleExistant() throws Exception {
+
+        /* ARRANGE :
+         * lit d'abord l'état physique initial de la base
+         * par SQL direct, afin de disposer d'une preuve indépendante
+         * du contexte Hibernate.
+         *
+         * Le doublon testé ici porte sur le couple :
+         * - parent = vêtement
+         * - sous-type = vêtement pour homme
+         */
+        final Long idParentVetement =
+                retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* 
+         * Lit directement en base le nombre de lignes
+         * correspondant déjà au couple métier :
+         * - sous-type = LIBELLE_ENFANT_VETEMENT_HOMME
+         * - parent = idParentVetement
+         *
+         * La comparaison sur le libellé est faite
+         * sans tenir compte de la casse,
+         * afin de vérifier l'existence réelle d'un doublon fonctionnel
+         * avant l'appel du service.
+         * 
+         * - LIBELLE_ENFANT_VETEMENT_HOMME injecté dans le premier ?
+         * - idParentVetement injecté dans le second ?
+         */
+        final Long countCoupleAvant = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParentVetement);
+
+        final Long idSeedAvant = this.jdbcTemplate.queryForObject(
+                "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParentVetement);
+
+        final SousTypeProduit aCreer = new SousTypeProduit(
+                null,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                new TypeProduit(idParentVetement, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countCoupleAvant).isEqualTo(1L);
+        assertThat(idSeedAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * sollicite la méthode creer(...)
+         * avec un couple (parent, sous-type) déjà présent.
+         *
+         * Au comportement réel observé en intégration,
+         * le rollback transactionnel est visible côté test
+         * sous la forme d'une UnexpectedRollbackException.
+         */
+        assertThatThrownBy(() -> this.service.creer(aCreer))
+            .isInstanceOf(org.springframework.transaction.UnexpectedRollbackException.class);
+
+        /* ASSERT :
+         * contrôle ensuite par SQL direct
+         * qu'aucun effet de bord n'a été produit en base.
+         *
+         * On évite volontairement tout raisonnement basé sur le cache Hibernate.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final Long countCoupleApres = this.jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParentVetement);
+
+        final Long idSeedApres = this.jdbcTemplate.queryForObject(
+                "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParentVetement);
+
+        /* Garantit qu'aucune nouvelle ligne
+         * n'a été créée dans la table.
+         */
+        assertThat(countApres).isEqualTo(countAvant);
+
+        /* Garantit qu'il n'existe toujours
+         * qu'une seule ligne portant ce couple fonctionnel.
+         */
+        assertThat(countCoupleApres).isEqualTo(1L);
+
+        /* Garantit enfin que la ligne seedée initiale
+         * est restée strictement la même.
+         */
+        assertThat(idSeedApres).isEqualTo(idSeedAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que creer(nominal) :</p>
+     * <ul>
+     * <li>crée réellement une ligne en base ;</li>
+     * <li>retourne un {@link SousTypeProduit} persistant ;</li>
+     * <li>retourne un objet métier portant un identifiant généré ;</li>
+     * <li>écrit le bon libellé enfant et la bonne clé étrangère parent en base ;</li>
+     * <li>rend la donnée retrouvable après neutralisation explicite du contexte Hibernate ;</li>
+     * <li>ne supprime ni n'altère les données seedées.</li>
      * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_NOMINAL)
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testCreerNominalOk() throws Exception {
-    	
-        final long avant = this.service.count();
+
+        /* ARRANGE :
+         * mémorise d'abord l'état physique de la base
+         * via JdbcTemplate, afin de disposer d'une preuve indépendante
+         * du contexte Hibernate.
+         *
+         * Le test est volontairement exécuté hors transaction de test
+         * pour prouver une écriture physique réelle en base,
+         * puis réaliser un nettoyage physique explicite en finally.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
 
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit aCreer = new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
+        final SousTypeProduit aCreer = new SousTypeProduit(
+                null,
+                LIBELLE_NOUVEAU_PULL,
+                new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT :
+         * sollicite la méthode creer(...)
+         * dans un scénario nominal complet de persistance réelle.
+         */
         final SousTypeProduit cree = this.service.creer(aCreer);
 
+        /* ASSERT :
+         * garantit d'abord que l'objet métier retourné
+         * est bien persistant et correctement renseigné.
+         */
         assertThat(cree).isNotNull();
-        assertThat(cree.getIdSousTypeProduit()).isNotNull();
+        assertThat(cree.getIdSousTypeProduit()).isNotNull().isPositive();
         assertThat(cree.getSousTypeProduit()).isEqualTo(LIBELLE_NOUVEAU_PULL);
         assertThat(cree.getTypeProduit()).isNotNull();
         assertThat(cree.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
+        assertThat(cree.getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_VETEMENT);
 
         final Long idCree = cree.getIdSousTypeProduit();
 
         try {
-        	
-            final long apres = this.service.count();
-            assertThat(apres).isEqualTo(avant + 1L);
 
-            /* PREUVE BD INATTAQUABLE : lecture SQL directe (bypass Hibernate). */
+            /* ASSERT :
+             * contrôle ensuite physiquement la base par SQL direct,
+             * pour prouver l'écriture réelle et non un simple effet de cache.
+             */
+            final Long countApres = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
             final Integer countEnBase = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-                Integer.class, idCree
-            );
+                    SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                    Integer.class,
+                    idCree);
+
+            final String libelleEnBase = this.jdbcTemplate.queryForObject(
+                    SELECT_STP_FROM_STP_WHERE_ID,
+                    String.class,
+                    idCree);
+
+            final Long parentEnBase = this.jdbcTemplate.queryForObject(
+                    SELECT_TP_FROM_STP_WHERE_ID,
+                    Long.class,
+                    idCree);
+
+            /* Garantit que la création augmente bien
+             * le nombre total de lignes.
+             */
+            assertThat(countApres).isEqualTo(countAvant + 1L);
+
+            /* Garantit physiquement qu'une seule ligne
+             * porte bien l'identifiant créé.
+             */
             assertThat(countEnBase)
                 .as("La ligne doit exister physiquement en base après creer()")
                 .isEqualTo(1);
 
-            final String libelleEnBase = this.jdbcTemplate.queryForObject(
-                "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?", // NOPMD by danyl on 26/02/2026 00:55
-                String.class, idCree
-            );
+            /* Garantit physiquement en base
+             * l'écriture du bon libellé métier enfant.
+             */
             assertThat(libelleEnBase).isEqualTo(LIBELLE_NOUVEAU_PULL);
 
-            final Long parentEnBase = this.jdbcTemplate.queryForObject(
-                "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?", // NOPMD by danyl on 26/02/2026 00:55
-                Long.class, idCree
-            );
+            /* Garantit physiquement en base
+             * l'écriture de la bonne clé étrangère parent.
+             */
             assertThat(parentEnBase).isEqualTo(idParent);
 
-            /* Double-check via service. */
+            /* Neutralise explicitement le contexte Hibernate
+             * avant toute relecture via le service,
+             * pour éviter d'être leurré par le cache.
+             */
+            this.entityManager.clear();
+
+            /* Garantit que l'objet nouvellement créé
+             * est bien retrouvable via le service
+             * après neutralisation du contexte de persistance.
+             */
             final SousTypeProduit relu = this.service.findById(idCree);
             assertThat(relu).isNotNull();
+            assertThat(relu.getIdSousTypeProduit()).isEqualTo(idCree);
             assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_NOUVEAU_PULL);
+            assertThat(relu.getTypeProduit()).isNotNull();
+            assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
+
+            /* Garantit enfin que les données seedées
+             * restent présentes après la création.
+             */
+            final List<SousTypeProduit> liste = this.service.rechercherTous();
+            assertThat(liste)
+                .extracting(SousTypeProduit::getSousTypeProduit)
+                .contains(
+                        LIBELLE_ENFANT_VETEMENT_HOMME,
+                        LIBELLE_ENFANT_VETEMENT_FEMME,
+                        LIBELLE_ENFANT_VETEMENT_ENFANT,
+                        LIBELLE_NOUVEAU_PULL);
 
         } finally {
 
-            /* Nettoyage physique : le test n'est pas rollbacké (NOT_SUPPORTED). */
+            /* Nettoyage physique :
+             * supprime explicitement la ligne créée,
+             * afin de garantir l'isolation du test
+             * même en cas d'échec d'assertion en amont.
+             */
             if (idCree != null) {
                 this.jdbcTemplate.update(
-                    "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-                    idCree
-                );
+                        "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                        idCree);
             }
 
         }
-    } // __________________________________________________________________
 
+    } // __________________________________________________________________
+    
     
     
     // ======================== RechercherTous ============================
@@ -699,294 +1191,898 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier rechercherTous() sur base initialisée.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>rechercherTous() retourne une liste non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>La liste contient au moins les données seed (data-test.sql).</p>
+     * <p>garantit que rechercherTous() sur la base seedée :</p>
+     * <ul>
+     * <li>retourne une liste non null et non vide ;</li>
+     * <li>retourne exactement les libellés physiquement présents en base ;</li>
+     * <li>retourne autant d'objets métier que de lignes présentes en base ;</li>
+     * <li>retourne une liste triée par libellé et sans doublon ;</li>
+     * <li>retourne des objets métier portant chacun un parent non null.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_RECHERCHER_TOUS)
     @Test
     public void testRechercherTousNominalOk() throws Exception {
-    	
-        final List<SousTypeProduit> liste = this.service.rechercherTous();
 
-        assertThat(liste).isNotNull().isNotEmpty();
-        assertThat(liste).extracting(SousTypeProduit::getSousTypeProduit)
-            .contains(LIBELLE_ENFANT_VETEMENT_HOMME, LIBELLE_ENFANT_VETEMENT_FEMME, LIBELLE_ENFANT_VETEMENT_ENFANT);
-        
+        /* ARRANGE :
+         * lit d'abord l'état physique actuel de la base
+         * via JdbcTemplate, afin de disposer d'une référence
+         * indépendante d'Hibernate.
+         *
+         * Ce test vérifie ensuite que la liste renvoyée par le service
+         * correspond exactement à cet état physique.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+                "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT",
+                String.class);
+
+        assertThat(countEnBase).isNotNull().isPositive();
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+
+        /* Ordonne la référence SQL
+         * selon le même critère métier attendu côté service :
+         * tri alphabétique insensible à la casse.
+         */
+        libellesEnBase.sort(String.CASE_INSENSITIVE_ORDER);
+
+        /* ACT :
+         * sollicite la recherche complète
+         * sur la base seedée.
+         */
+        final List<SousTypeProduit> resultats = this.service.rechercherTous();
+
+        /* ASSERT :
+         * vérifie d'abord que la méthode retourne
+         * une liste exploitable.
+         */
+        assertThat(resultats).isNotNull().isNotEmpty();
+
+        /* Vérifie ensuite que le nombre d'objets métier retournés
+         * correspond exactement au nombre de lignes présentes en base.
+         */
+        assertThat(resultats).hasSize(countEnBase.intValue());
+
+        final List<String> libellesResultats = resultats.stream()
+                .map(SousTypeProduit::getSousTypeProduit)
+                .toList();
+
+        /* Vérifie que les libellés renvoyés par le service
+         * correspondent exactement aux libellés physiquement présents en base.
+         */
+        assertThat(libellesResultats).containsExactlyElementsOf(libellesEnBase);
+
+        /* Vérifie enfin les propriétés attendues côté service :
+         * pas de doublon métier, ordre alphabétique
+         * et parent non null sur chaque objet métier.
+         */
+        assertThat(libellesResultats).doesNotHaveDuplicates();
+        assertThat(libellesResultats).isSortedAccordingTo(String.CASE_INSENSITIVE_ORDER);
+        assertThat(resultats)
+            .allSatisfy(stp -> {
+                assertThat(stp).isNotNull();
+                assertThat(stp.getTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getIdTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getTypeProduit()).isNotBlank();
+            });
+
     } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que rechercherTous() sur une base vidée :</p>
+     * <ul>
+     * <li>retourne une liste non null ;</li>
+     * <li>retourne une liste vide ;</li>
+     * <li>reste cohérent avec l'état physique vide de la base.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(base vide) - retourne une liste vide non null")
+    @Test
+    @Sql(
+        scripts = SousTypeProduitGatewayJPAServiceIntegrationTest.CLASSPATH_TRUNCATE_SQL,
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    public void testRechercherTousBaseVide() throws Exception {
+
+        /* ARRANGE :
+         * remplace pour ce test la préparation standard
+         * par le seul script de vidage,
+         * afin d'obtenir une base réellement vide.
+         *
+         * Ce test vérifie ensuite que le service
+         * reste cohérent avec cet état physique.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countEnBase).isNotNull().isZero();
+
+        /* ACT :
+         * sollicite la recherche complète
+         * sur une base ne contenant aucune ligne.
+         */
+        final List<SousTypeProduit> resultats = this.service.rechercherTous();
+
+        /* ASSERT :
+         * vérifie que la méthode ne retourne jamais null,
+         * même lorsque le stockage réel est vide.
+         */
+        assertThat(resultats).isNotNull().isEmpty();
+
+    } // __________________________________________________________________    
     
     
 
     // ===================== rechercherTousParPage =====================
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier rechercherTousParPage(null) (requête par défaut).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>rechercherTousParPage(null) retourne un {@link ResultatPage} 
-     * non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>content non null.</p>
+     * <p>garantit que rechercherTousParPage(null) :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne un contenu non null ;</li>
+     * <li>retourne un total cohérent avec l'état physique de la base ;</li>
+     * <li>applique les paramètres par défaut de pagination ;</li>
+     * <li>retourne des objets métier portant chacun un parent non null.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage - null -> nominal")
+    @DisplayName("rechercherTousParPage(null) - applique la pagination par défaut et reste cohérent avec la base")
     @Test
     public void testRechercherTousParPageParamNullNominalOk() throws Exception {
-    	
-        final ResultatPage<SousTypeProduit> resultat 
-        	= this.service.rechercherTousParPage(null);
 
+        /* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * afin de disposer d'une référence indépendante d'Hibernate
+         * pour le nombre total de lignes.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countEnBase).isNotNull().isPositive();
+
+        /* ACT :
+         * sollicite la pagination avec une requête null,
+         * ce qui doit conduire le service
+         * à appliquer les paramètres par défaut.
+         */
+        final ResultatPage<SousTypeProduit> resultat =
+                this.service.rechercherTousParPage(null);
+
+        /* ASSERT :
+         * vérifie d'abord la cohérence générale de la page retournée.
+         */
         assertThat(resultat).isNotNull();
         assertThat(resultat.getContent()).isNotNull();
         assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
         assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
-        assertThat(resultat.getTotalElements()).isPositive();
-        
+        assertThat(resultat.getTotalElements()).isEqualTo(countEnBase);
+
+        /* Vérifie ensuite que la taille du contenu retourné
+         * correspond exactement à la taille de la première page attendue.
+         */
+        assertThat(resultat.getContent())
+            .hasSize(Math.min(countEnBase.intValue(), RequetePage.TAILLE_DEFAUT));
+
+        /* Vérifie enfin que les objets métier retournés
+         * restent cohérents et exploitables.
+         */
+        assertThat(resultat.getContent())
+            .allSatisfy(stp -> {
+                assertThat(stp).isNotNull();
+                assertThat(stp.getSousTypeProduit()).isNotBlank();
+                assertThat(stp.getTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getIdTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getTypeProduit()).isNotBlank();
+            });
+
     } // __________________________________________________________________
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier rechercherTousParPage(RequetePage avec tris valides).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>rechercherTousParPage(tris valides) retourne un 
-     * {@link ResultatPage} non null avec contenu trié.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Le contenu est trié selon les spécifications.</p>
+     * <p>garantit que rechercherTousParPage(tris valides) :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne un contenu trié selon la spécification demandée ;</li>
+     * <li>retourne un total cohérent avec l'état physique de la base ;</li>
+     * <li>retourne exactement le segment attendu de l'état physique trié.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_PAGINATION)
     @DisplayName(DN_RECHERCHER_TOUS_PAR_PAGE_TRI)
     @Test
     public void testRechercherTousParPageTrisValidesOk() throws Exception {
-    	
+
+        /* ARRANGE :
+         * lit d'abord directement en base
+         * les libellés physiquement présents,
+         * déjà ordonnés selon le tri métier demandé,
+         * afin de disposer d'une référence indépendante d'Hibernate.
+         */
+        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+                "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT ORDER BY UPPER(SOUS_TYPE_PRODUIT) ASC",
+                String.class);
+
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(libellesEnBase).isNotNull().isNotEmpty();
+        assertThat(countEnBase).isNotNull().isPositive();
+
         final RequetePage requete = new RequetePage();
+        requete.setPageNumber(0);
+        requete.setPageSize(2);
         requete.getTris().add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
 
-        final ResultatPage<SousTypeProduit> resultat = this.service.rechercherTousParPage(requete);
+        /* ACT :
+         * sollicite la pagination sur la première page
+         * avec taille 2 et tri ascendant sur le libellé enfant.
+         */
+        final ResultatPage<SousTypeProduit> resultat =
+                this.service.rechercherTousParPage(requete);
 
+        /* ASSERT :
+         * vérifie d'abord la cohérence générale de la page.
+         */
         assertThat(resultat).isNotNull();
-        assertThat(resultat.getContent()).isNotNull().isNotEmpty();
+        assertThat(resultat.getContent()).isNotNull().hasSize(2);
+        assertThat(resultat.getPageNumber()).isEqualTo(0);
+        assertThat(resultat.getPageSize()).isEqualTo(2);
+        assertThat(resultat.getTotalElements()).isEqualTo(countEnBase);
+
+        final List<String> libellesPage = resultat.getContent().stream()
+                .map(SousTypeProduit::getSousTypeProduit)
+                .toList();
+
+        /* Vérifie ensuite que le contenu retourné
+         * correspond exactement aux deux premiers libellés
+         * de l'état physique trié.
+         */
+        assertThat(libellesPage)
+            .containsExactlyElementsOf(libellesEnBase.subList(0, 2));
+
+        /* Vérifie enfin le tri alphabétique du contenu retourné
+         * et la cohérence des parents portés par les objets métier.
+         */
+        assertThat(libellesPage).isSortedAccordingTo(String.CASE_INSENSITIVE_ORDER);
         assertThat(resultat.getContent())
-            .extracting(SousTypeProduit::getSousTypeProduit)
-            .isSortedAccordingTo(String.CASE_INSENSITIVE_ORDER);
-        
+            .allSatisfy(stp -> {
+                assertThat(stp).isNotNull();
+                assertThat(stp.getTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getIdTypeProduit()).isNotNull();
+            });
+
     } // __________________________________________________________________
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier rechercherTousParPage(pageNumber > nombre de pages).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>rechercherTousParPage(page vide) retourne 
-     * un {@link ResultatPage} avec contenu vide.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Le totalElements reste cohérent.</p>
+     * <p>garantit que rechercherTousParPage(page hors bornes) :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne un contenu vide ;</li>
+     * <li>retourne un total cohérent avec l'état physique de la base ;</li>
+     * <li>conserve les paramètres demandés de pagination.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(page hors bornes) - retourne une page vide cohérente")
+    @Test
+    public void testRechercherTousParPagePageVideOk() throws Exception {
+
+        /* ARRANGE :
+         * lit d'abord l'état physique de la base
+         * puis construit une requête dont le numéro de page
+         * dépasse très largement le nombre de pages disponibles.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countEnBase).isNotNull().isPositive();
+
+        final RequetePage requete = new RequetePage();
+        requete.setPageNumber(999);
+        requete.setPageSize(2);
+        requete.getTris().add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
+
+        /* ACT :
+         * sollicite la pagination sur une page hors bornes.
+         */
+        final ResultatPage<SousTypeProduit> resultat =
+                this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * vérifie que la page retournée
+         * reste exploitable et cohérente.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getContent()).isNotNull().isEmpty();
+        assertThat(resultat.getPageNumber()).isEqualTo(999);
+        assertThat(resultat.getPageSize()).isEqualTo(2);
+        assertThat(resultat.getTotalElements()).isEqualTo(countEnBase);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que rechercherTousParPage(...) sur une base vidée :</p>
+     * <ul>
+     * <li>retourne une page non null ;</li>
+     * <li>retourne un contenu vide ;</li>
+     * <li>retourne un total à zéro ;</li>
+     * <li>reste cohérent avec l'état physique vide de la base.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_PAGINATION)
     @DisplayName(DN_RECHERCHER_TOUS_PAR_PAGE_VIDE)
     @Test
-    public void testRechercherTousParPagePageVideOk() throws Exception {
-    	
+    @Sql(
+        scripts = SousTypeProduitGatewayJPAServiceIntegrationTest.CLASSPATH_TRUNCATE_SQL,
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    public void testRechercherTousParPageBaseVide() throws Exception {
+
+        /* ARRANGE :
+         * prépare pour ce test une base réellement vide
+         * en ne rejouant que le script de vidage.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countEnBase).isNotNull().isZero();
+
         final RequetePage requete = new RequetePage();
-        requete.setPageNumber(999); // Page inexistante
+        requete.setPageNumber(0);
+        requete.setPageSize(10);
 
-        final ResultatPage<SousTypeProduit> resultat = this.service.rechercherTousParPage(requete);
+        /* ACT :
+         * sollicite la pagination
+         * sur une base ne contenant aucune ligne.
+         */
+        final ResultatPage<SousTypeProduit> resultat =
+                this.service.rechercherTousParPage(requete);
 
+        /* ASSERT :
+         * vérifie que la page retournée
+         * reste exploitable et cohérente.
+         */
         assertThat(resultat).isNotNull();
         assertThat(resultat.getContent()).isNotNull().isEmpty();
-        assertThat(resultat.getTotalElements()).isPositive();
-        
+        assertThat(resultat.getPageNumber()).isEqualTo(0);
+        assertThat(resultat.getPageSize()).isEqualTo(10);
+        assertThat(resultat.getTotalElements()).isZero();
+
     } // __________________________________________________________________
     
 
     
     // ======================== findByObjetMetier =========================
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de null sur findByObjetMetier(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(null) jette {@link ExceptionAppliParamNull} 
-     * avec MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que findByObjetMetier(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
     @DisplayName(DN_FINDBYOBJETMETIER_NULL)
     @Test
     public void testFindByObjetMetierParamNullExceptionAppliParamNull() {
-    	
+
+        /* ARRANGE :
+         * lit d'abord l'état physique de la base,
+         * afin de pouvoir prouver ensuite
+         * qu'une méthode purement de lecture
+         * n'a pas modifié le stockage réel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByObjetMetier(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet le message MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL 
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findByObjetMetier(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * relit ensuite l'état physique de la base
+         * pour prouver l'absence de toute écriture réelle.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de libellé blank 
-     * sur findByObjetMetier(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(libellé blank) jette
-     *  {@link ExceptionAppliLibelleBlank} avec 
-     *  MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que findByObjetMetier(libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
     @DisplayName(DN_FINDBYOBJETMETIER_BLANK)
     @Test
     public void testFindByObjetMetierLibelleBlankExceptionAppliLibelleBlank() {
-    	
+
+        /* ARRANGE :
+         * lit d'abord l'état physique de la base,
+         * puis prépare un objet métier dont le libellé enfant est blank,
+         * avec un parent réellement persistant.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, BLANK, parent);
 
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByObjetMetier(stp)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK 
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
-        
+
+        /* ASSERT :
+         * prouve ensuite que la base n'a subi aucune altération.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de parent null 
-     * sur findByObjetMetier(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(parent null) jette 
-     * {@link ExceptionAppliParentNull} avec 
-     * MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que findByObjetMetier(parent null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParentNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
     @DisplayName(DN_FINDBYOBJETMETIER_PARENT_NULL)
     @Test
     public void testFindByObjetMetierParentNullExceptionAppliParentNull() {
-    	
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, null);
 
+        /* ARRANGE :
+         * lit l'état physique initial de la base,
+         * puis prépare un objet métier sans parent.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final SousTypeProduit stp =
+                new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, null);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByObjetMetier(stp)
+         * - jette une ExceptionAppliParentNull
+         * - émet le message MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL 
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL);
-        
+
+        /* ASSERT :
+         * prouve ensuite l'absence de modification réelle en base.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de libellé parent blank 
-     * sur findByObjetMetier(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(parent libellé blank) jette 
-     * {@link ExceptionAppliLibelleBlank} avec 
-     * MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que findByObjetMetier(parent libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
     @DisplayName(DN_FINDBYOBJETMETIER_PARENT_LIBELLE_BLANK)
     @Test
     public void testFindByObjetMetierParentLibelleBlankExceptionAppliLibelleBlank() {
-    	
-        final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
 
+        /* ARRANGE :
+         * lit l'état physique initial de la base,
+         * puis prépare un objet métier dont le parent a un libellé blank.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
+        final SousTypeProduit stp =
+                new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByObjetMetier(stp)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK 
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK);
-        
+
+        /* ASSERT :
+         * prouve ensuite l'absence de modification réelle en base.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de persistance du parent sur 
-     * findByObjetMetier(pObject) (id parent null).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(parent id null) jette 
-     * {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe 
-     * MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que findByObjetMetier(parent ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet un message commençant par
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
     @DisplayName(DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT)
     @Test
     public void testFindByObjetMetierParentIdNullExceptionTechniqueGatewayNonPersistent() {
-    	
-        final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
 
+        /* ARRANGE :
+         * lit l'état physique initial de la base,
+         * puis prépare un objet métier dont le parent n'est pas persistant
+         * car son identifiant est null.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
+        final SousTypeProduit stp =
+                new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByObjetMetier(stp)
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet le préfixe contractuel suivi du libellé du parent.
+         */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
-            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-        
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * prouve ensuite l'absence de modification réelle en base.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findByObjetMetier(nominal) sur donnée seed.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByObjetMetier(trouvé) retourne un 
-     * {@link SousTypeProduit} non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Libellé et parent cohérents.</p>
+     * <p>garantit que findByObjetMetier(parent absent en base) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet un message commençant par
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     */
+    @Tag(TAG_FINDBYOBJETMETIER)
+    @DisplayName("findByObjetMetier(parent absent) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)")
+    @Test
+    public void testFindByObjetMetierParentAbsentExceptionTechniqueGatewayNonPersistent() {
+
+        /* ARRANGE :
+         * lit l'état physique initial de la base,
+         * puis prépare un objet métier dont le parent porte un identifiant inexistant,
+         * afin de vérifier le contrôle de persistance réelle en base.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final TypeProduit parent = new TypeProduit(ID_INEXISTANT, LIBELLE_PARENT_VETEMENT);
+        final SousTypeProduit stp =
+                new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByObjetMetier(stp)
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet le préfixe contractuel suivi du libellé du parent.
+         */
+        assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * prouve ensuite l'absence de modification réelle en base.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que findByObjetMetier(objet introuvable sous un parent persistant) :</p>
+     * <ul>
+     * <li>retourne {@code null} ;</li>
+     * <li>n'altère pas le stockage réel ;</li>
+     * <li>reste cohérent avec l'absence physique du couple métier en base.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_FINDBYOBJETMETIER)
+    @DisplayName("findByObjetMetier(introuvable) - retourne null sans altérer la base")
+    @Test
+    public void testFindByObjetMetierAbsentRetourneNull() throws Exception {
+
+        /* ARRANGE :
+         * lit d'abord l'état physique de la base,
+         * puis prépare un objet métier portant un parent réellement persistant
+         * mais un libellé enfant inexistant sous ce parent.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+
+        final Long countCoupleAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT,
+                Long.class,
+                LIBELLE_INEXISTANT,
+                idParent);
+
+        final SousTypeProduit probe = new SousTypeProduit(
+                null,
+                LIBELLE_INEXISTANT,
+                new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countCoupleAvant).isZero();
+
+        /* Neutralise explicitement le contexte Hibernate
+         * avant l'appel de lecture,
+         * afin d'éviter tout raisonnement biaisé par le cache.
+         */
+        this.entityManager.clear();
+
+        /* ACT :
+         * sollicite la recherche par objet métier
+         * sur un couple métier physiquement absent de la base.
+         */
+        final SousTypeProduit resultat = this.service.findByObjetMetier(probe);
+
+        /* ASSERT :
+         * garantit que le service retourne bien null
+         * lorsque le couple métier recherché n'existe pas.
+         */
+        assertThat(resultat).isNull();
+
+        /* Vérifie aussi que cette simple lecture
+         * n'a produit aucune modification réelle de la base.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que findByObjetMetier(nominal) :</p>
+     * <ul>
+     * <li>retourne l'objet métier correspondant au couple recherché ;</li>
+     * <li>retourne l'identifiant physiquement présent en base ;</li>
+     * <li>retourne le bon libellé enfant et le bon parent ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_FINDBYOBJETMETIER)
     @DisplayName(DN_FINDBYOBJETMETIER_NOMINAL)
     @Test
     public void testFindByObjetMetierNominalOk() throws Exception {
-    	
+
+        /* ARRANGE :
+         * lit d'abord directement la base
+         * pour retrouver le parent persistant
+         * puis l'identifiant exact du sous-type attendu.
+         *
+         * Cette référence SQL sert ensuite
+         * à comparer le résultat du service
+         * à l'état physique réel du stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
 
-        final SousTypeProduit probe = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
+        final Long countCoupleAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT,
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParent);
 
+        final Long idTrouveEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_PARAM_ID_FROM_STP_WHERE_LIBELLE_AND_PARENT,
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParent);
+
+        final SousTypeProduit probe = new SousTypeProduit(
+                null,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countCoupleAvant).isEqualTo(1L);
+        assertThat(idTrouveEnBase).isNotNull();
+
+        /* Neutralise explicitement le contexte Hibernate
+         * avant la lecture métier,
+         * afin de vérifier un comportement réellement observable.
+         */
+        this.entityManager.clear();
+
+        /* ACT :
+         * sollicite la recherche par objet métier
+         * sur un couple physiquement présent en base.
+         */
         final SousTypeProduit trouve = this.service.findByObjetMetier(probe);
 
+        /* ASSERT :
+         * vérifie d'abord que le service retourne bien
+         * un objet métier exploitable.
+         */
         assertThat(trouve).isNotNull();
+
+        /* Vérifie ensuite que l'identifiant retourné,
+         * le libellé enfant et le parent
+         * correspondent exactement à l'état physique de la base.
+         */
+        assertThat(trouve.getIdSousTypeProduit()).isEqualTo(idTrouveEnBase);
         assertThat(trouve.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
         assertThat(trouve.getTypeProduit()).isNotNull();
         assertThat(trouve.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
-        
+        assertThat(trouve.getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_VETEMENT);
+
+        /* Vérifie enfin qu'une méthode de lecture
+         * n'a pas altéré le stockage réel.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
     
 
@@ -997,857 +2093,2188 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de blank sur findByLibelle(pLibelle).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelle(blank) jette {@link ExceptionAppliLibelleBlank} 
-     * avec MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que findByLibelle(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName(DN_FINDBYLIBELLE_NULL)
+    @Test
+    public void testFindByLibelleNull() {
+
+        /* ARRANGE :
+         * compte d'abord (en SQL) le nombre d'enregistrements 
+         * dans le stockage afin de pouvoir prouver ensuite
+         * que service.findByLibelle(...) ne produit aucune écriture 
+         * dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByLibelle(null)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK 
+         * (message contractuel).
+         */
+        assertThatThrownBy(() -> this.service.findByLibelle(null))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK);
+
+        /* ASSERT :
+         * compte finalement (en SQL) le nombre d'enregistrements 
+         * dans le stockage pour prouver que service.findByLibelle(...) 
+         * n'a pas touché au stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que findByLibelle(blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDBYLIBELLE_BLANK)
     @Test
-    public void testFindByLibelleBlankExceptionAppliLibelleBlank() {
-    	
+    public void testFindByLibelleBlank() {
+
+    	/* ARRANGE :
+         * compte d'abord (en SQL) le nombre d'enregistrements 
+         * dans le stockage afin de pouvoir prouver ensuite
+         * que service.findByLibelle(...) ne produit aucune écriture 
+         * dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.findByLibelle(BLANK)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK 
+         * (message contractuel).
+         */
         assertThatThrownBy(() -> this.service.findByLibelle(BLANK))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK);
-        
+
+        /* ASSERT :
+         * compte finalement (en SQL) le nombre d'enregistrements 
+         * dans le stockage pour prouver que service.findByLibelle(...) 
+         * n'a pas touché au stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findByLibelle(libellé inexistant).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelle(inexistant) retourne une liste vide.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune exception.</p>
+     * <p>garantit que findByLibelle(inexistant) :</p>
+     * <ul>
+     * <li>retourne une liste non null et vide ;</li>
+     * <li>reste cohérent avec l'absence physique de ligne correspondante
+     * dans le stockage ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDBYLIBELLE_INEXISTANT)
     @Test
     public void testFindByLibelleInexistantVideOk() throws Exception {
-    	
-        final List<SousTypeProduit> liste = this.service.findByLibelle(LIBELLE_INEXISTANT);
-        assertThat(liste).isNotNull().isEmpty();
+
+        /* ARRANGE :
+         * vérifie d'abord par SQL direct
+         * qu'aucune ligne ne porte le libellé LIBELLE_INEXISTANT,
+         * sans tenir compte des majuscules/minuscules.
+         *
+         * Le test compare ensuite le résultat du service
+         * à cet état physique de référence.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* countCorrespondancesEnBase = nombre d'objets trouvés en base 
+         * possédant un libellé LIBELLE_INEXISTANT directement par SQL */
+        final Long countCorrespondancesEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE,
+                Long.class,
+                LIBELLE_INEXISTANT);
+
+        assertThat(countAvant).isNotNull();
         
+        /* Assure que countCorrespondancesEnBase 
+         * n'est pas null mais vaut zéro. */
+        assertThat(countCorrespondancesEnBase).isNotNull().isZero();
+
+        /* Neutralise explicitement le contexte Hibernate
+         * avant l'appel de lecture,
+         * afin d'éviter tout raisonnement biaisé par le cache.
+         */
+        this.entityManager.clear();
+
+        /* ACT :
+         * sollicite service.findByLibelle(...)
+         * avec le libellé LIBELLE_INEXISTANT,
+         * absent du stockage réel (prouvé pae SQL).
+         */
+        final List<SousTypeProduit> liste 
+        	= this.service.findByLibelle(LIBELLE_INEXISTANT);
+
+        /* ASSERT :
+         * vérifie que le service retourne une liste vide (pas null)
+         * lors de service.findByLibelle(...) avec un libellé inexistant 
+         * dans le stockage.
+         */
+        assertThat(liste).isNotNull().isEmpty();
+
+        /* 
+         * Vérifie enfin que service.findByLibelle(...)
+         * n'a pas altéré le stockage réel.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findByLibelle(nominal) sur donnée seed.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelle(trouvé) retourne une liste non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>La liste contient au moins un élément correspondant.</p>
+     * <p>garantit que findByLibelle(trouvé) :</p>
+     * <ul>
+     * <li>retourne une liste non null et non vide ;</li>
+     * <li>retourne exactement les identifiants physiquement présents en base
+     * pour ce libellé ;</li>
+     * <li>retourne uniquement le libellé recherché ;</li>
+     * <li>retourne des objets métier portant chacun un parent non null ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDBYLIBELLE_NOMINAL)
     @Test
     public void testFindByLibelleNominalOk() throws Exception {
-    	
-        final List<SousTypeProduit> liste = this.service.findByLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
 
+        /* ARRANGE :
+         * lit d'abord l'état physique réel de la base
+         * pour le libellé exact LIBELLE_ENFANT_VETEMENT_HOMME.
+         *
+         * Le test compare ensuite la réponse du service
+         * à cette référence indépendante d'Hibernate.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final Long countCorrespondancesEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE,
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        final List<Long> idsEnBase = this.jdbcTemplate.queryForList(
+                SELECT_PARAM_IDS_FROM_STP_WHERE_LIBELLE,
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countCorrespondancesEnBase).isNotNull().isPositive();
+        assertThat(idsEnBase).isNotNull().isNotEmpty();
+
+        /* Neutralise explicitement le contexte Hibernate
+         * avant l'appel de lecture,
+         * afin d'éviter tout raisonnement biaisé par le cache.
+         */
+        this.entityManager.clear();
+
+        /* ACT :
+         * sollicite la recherche par libellé exact
+         * avec le libellé LIBELLE_ENFANT_VETEMENT_HOMME.
+         */
+        final List<SousTypeProduit> liste =
+                this.service.findByLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        /* ASSERT :
+         * vérifie d'abord que la méthode retourne
+         * une liste exploitable.
+         */
         assertThat(liste).isNotNull().isNotEmpty();
-        assertThat(liste).extracting(SousTypeProduit::getSousTypeProduit)
-            .contains(LIBELLE_ENFANT_VETEMENT_HOMME);
-        
+        assertThat(liste).hasSize(countCorrespondancesEnBase.intValue());
+
+        final List<Long> idsRetournes = liste.stream()
+                .map(SousTypeProduit::getIdSousTypeProduit)
+                .sorted()
+                .toList();
+
+        /* Vérifie ensuite que les identifiants renvoyés par le service
+         * correspondent exactement aux identifiants physiquement présents en base
+         * pour le libellé LIBELLE_ENFANT_VETEMENT_HOMME.
+         */
+        assertThat(idsRetournes).containsExactlyElementsOf(idsEnBase);
+
+        /* Vérifie aussi que tous les objets métier retournés
+         * portent bien le libellé recherché
+         * et un parent non null.
+         */
+        assertThat(liste)
+            .allSatisfy(stp -> {
+                assertThat(stp).isNotNull();
+                assertThat(stp.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+                assertThat(stp.getTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getIdTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getTypeProduit()).isNotBlank();
+            });
+
+        /* 
+         * Vérifie enfin que service.findByLibelle(...)
+         * n'a pas altéré le stockage réel.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
     
     
 
     // ======================== findByLibelleRapide =======================
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de null sur findByLibelleRapide(pLibelle).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelleRapide(null) jette {@link ExceptionAppliParamNull} 
-     * avec MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que findByLibelleRapide(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER_RAPIDE)
     @DisplayName(DN_FINDBYLIBELLERAPIDE_NULL)
     @Test
     public void testFindByLibelleRapideParamNullExceptionAppliParamNull() {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.findByLibelleRapide(null)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParamNull
+         * - émet le message MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
-	 * <div>
-	 * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-	 * <p>Vérifier findByLibelleRapide(contenu inexistant).</p>
-	 * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-	 * <p>findByLibelleRapide(inexistant) retourne une liste vide.</p>
-	 * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-	 * <p>Aucune exception.</p>
-	 * </div>
-	 */
-	@Tag(TAG_RECHERCHER_RAPIDE)
-	@DisplayName(DN_FINDBYLIBELLERAPIDE_INEXISTANT)
-	@Test
-	public void testFindByLibelleRapideInexistantVideOk() throws Exception {
-		
-	    final List<SousTypeProduit> liste = this.service.findByLibelleRapide(CONTENU_PARTIEL_INEXISTANT);
-	    assertThat(liste).isNotNull().isEmpty();
-	    
-	} // __________________________________________________________________
-
-
-
-	/**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findByLibelleRapide(blank mais 
-     * pas null) -> rechercherTous().</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelleRapide(blank) retourne une liste non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Liste cohérente avec rechercherTous().</p>
+     * <p>garantit que findByLibelleRapide(contenu inexistant) :</p>
+     * <ul>
+     * <li>retourne une liste non null et vide ;</li>
+     * <li>reste cohérent avec l'absence de ligne correspondante en base ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER_RAPIDE)
+    @DisplayName(DN_FINDBYLIBELLERAPIDE_INEXISTANT)
+    @Test
+    public void testFindByLibelleRapideInexistantVideOk() throws Exception {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* Lit le nombre de lignes dont le libellé contient
+         * CONTENU_PARTIEL_INEXISTANT, sans tenir compte de la casse.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_LIKE,
+                Long.class,
+                "%" + CONTENU_PARTIEL_INEXISTANT + "%");
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countEnBase).isNotNull().isZero();
+
+        /* ACT :
+         * appelle this.service.findByLibelleRapide(CONTENU_PARTIEL_INEXISTANT).
+         */
+        final List<SousTypeProduit> liste =
+                this.service.findByLibelleRapide(CONTENU_PARTIEL_INEXISTANT);
+
+        /* ASSERT :
+         * vérifie que la liste retournée est vide.
+         */
+        assertThat(liste).isNotNull().isEmpty();
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que findByLibelleRapide(blank) :</p>
+     * <ul>
+     * <li>retourne une liste non null ;</li>
+     * <li>retourne la même liste que rechercherTous() ;</li>
+     * <li>reste cohérent avec le nombre de lignes présentes en base ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER_RAPIDE)
     @DisplayName(DN_FINDBYLIBELLERAPIDE_BLANK)
     @Test
     public void testFindByLibelleRapideBlankRetourneTous() throws Exception {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull().isPositive();
+
+        /* ACT :
+         * appelle rechercherTous()
+         * puis appelle findByLibelleRapide(BLANK).
+         */
         final List<SousTypeProduit> tous = this.service.rechercherTous();
         final List<SousTypeProduit> rapide = this.service.findByLibelleRapide(BLANK);
 
+        /* ASSERT :
+         * vérifie que findByLibelleRapide(BLANK)
+         * retourne la même liste que rechercherTous().
+         */
         assertThat(rapide).isNotNull();
-        assertThat(rapide).hasSameSizeAs(tous);
-        
+        assertThat(rapide).hasSize(countAvant.intValue());
+        assertThat(rapide)
+            .extracting(SousTypeProduit::getIdSousTypeProduit)
+            .containsExactlyElementsOf(
+                    tous.stream()
+                        .map(SousTypeProduit::getIdSousTypeProduit)
+                        .toList());
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findByLibelleRapide(nominal) sur contenu partiel.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findByLibelleRapide(partiel) retourne une liste non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Liste non vide.</p>
+     * <p>garantit que findByLibelleRapide(nominal) :</p>
+     * <ul>
+     * <li>retourne une liste non null et non vide ;</li>
+     * <li>retourne exactement les IDs présents en base
+     * pour le contenu recherché ;</li>
+     * <li>reste insensible à la casse ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER_RAPIDE)
     @DisplayName(DN_FINDBYLIBELLERAPIDE_NOMINAL)
     @Test
     public void testFindByLibelleRapideNominalOk() throws Exception {
-    	
-        final List<SousTypeProduit> liste 
-        	= this.service.findByLibelleRapide(CONTENU_PARTIEL_VET);
 
-        assertThat(liste).isNotNull().isNotEmpty();
-        assertThat(liste).extracting(SousTypeProduit::getSousTypeProduit)
-            .allMatch(libelle -> libelle.contains(CONTENU_PARTIEL_VET));
-        
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* Lit le nombre de lignes dont le libellé contient
+         * CONTENU_PARTIEL_VET, sans tenir compte de la casse.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_LIKE,
+                Long.class,
+                "%" + CONTENU_PARTIEL_VET + "%");
+
+        /* Lit les IDs présents en base
+         * pour le contenu CONTENU_PARTIEL_VET.
+         */
+        final List<Long> idsEnBase = this.jdbcTemplate.queryForList(
+                SELECT_PARAM_IDS_FROM_STP_WHERE_LIBELLE_LIKE,
+                Long.class,
+                "%" + CONTENU_PARTIEL_VET + "%");
+
+        final String contenuMaj = CONTENU_PARTIEL_VET.toUpperCase(LOCALE_DEFAUT);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countEnBase).isNotNull().isPositive();
+        assertThat(idsEnBase).isNotNull().isNotEmpty();
+
+        /* ACT :
+         * appelle findByLibelleRapide(CONTENU_PARTIEL_VET)
+         * puis appelle findByLibelleRapide(contenuMaj).
+         */
+        final List<SousTypeProduit> liste =
+                this.service.findByLibelleRapide(CONTENU_PARTIEL_VET);
+
+        final List<SousTypeProduit> listeMaj =
+                this.service.findByLibelleRapide(contenuMaj);
+
+        /* ASSERT :
+         * vérifie que les deux appels retournent
+         * le même nombre de lignes que la base.
+         */
+        assertThat(liste).isNotNull().hasSize(countEnBase.intValue());
+        assertThat(listeMaj).isNotNull().hasSize(countEnBase.intValue());
+
+        final List<Long> idsRetournes = liste.stream()
+                .map(SousTypeProduit::getIdSousTypeProduit)
+                .sorted()
+                .toList();
+
+        final List<Long> idsRetournesMaj = listeMaj.stream()
+                .map(SousTypeProduit::getIdSousTypeProduit)
+                .sorted()
+                .toList();
+
+        /* Vérifie que les IDs retournés
+         * correspondent aux IDs présents en base.
+         */
+        assertThat(idsRetournes).containsExactlyElementsOf(idsEnBase);
+        assertThat(idsRetournesMaj).containsExactlyElementsOf(idsEnBase);
+
+        /* Vérifie que chaque libellé retourné
+         * contient bien CONTENU_PARTIEL_VET.
+         */
+        assertThat(liste)
+            .allSatisfy(stp -> {
+                assertThat(stp).isNotNull();
+                assertThat(stp.getSousTypeProduit().toUpperCase(LOCALE_DEFAUT))
+                    .contains(CONTENU_PARTIEL_VET.toUpperCase(LOCALE_DEFAUT));
+                assertThat(stp.getTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getIdTypeProduit()).isNotNull();
+            });
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
     
     
     
     // ========================= findAllByParent ==========================
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de null sur findAllByParent(pParent).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findAllByParent(null) jette {@link ExceptionAppliParentNull} 
-     * avec MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune lecture DAO enfant.</p>
+     * <p>garantit que findAllByParent(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParentNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDALLBYPARENT_NULL)
     @Test
     public void testFindAllByParentParamNullExceptionAppliParentNull() {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.findAllByParent(null)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParentNull
+         * - émet le message MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findAllByParent(null))
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle du libellé parent blank 
-     * sur findAllByParent(pParent).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findAllByParent(parent libellé blank) jette 
-     * {@link ExceptionAppliLibelleBlank} avec 
-     * MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune lecture DAO enfant.</p>
+     * <p>garantit que findAllByParent(parent libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDALLBYPARENT_LIBELLE_BLANK)
     @Test
     public void testFindAllByParentParentLibelleBlankExceptionAppliLibelleBlank() {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
 
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.findAllByParent(parent)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findAllByParent(parent))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_LIBELLE_PARENT_BLANK);
-        
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de persistance du parent sur 
-     * findAllByParent(pParent) (id null).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findAllByParent(parent id null) jette 
-     * {@link ExceptionTechniqueGatewayNonPersistent} avec préfixe 
-     * MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune lecture DAO enfant.</p>
+     * <p>garantit que findAllByParent(parent ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT}
+     * + {@link #LIBELLE_PARENT_VETEMENT} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDALLBYPARENT_NON_PERSISTANT)
     @Test
-    public void testFindAllByParentParentNonPersistantExceptionTechniqueGatewayNonPersistent() {
-    	
+    public void testFindAllByParentParentIdNullExceptionTechniqueGatewayNonPersistent() {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
 
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.findAllByParent(parent)
+         * et vérifie que l'appel
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet le message MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT
+         *   + LIBELLE_PARENT_VETEMENT
+         *   (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findAllByParent(parent))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
-            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT);
-        
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findAllByParent(nominal) sur parent seed.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findAllByParent(nominal) retourne une liste non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Liste non vide.</p>
+     * <p>garantit que findAllByParent(parent absent) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT}
+     * + {@link #LIBELLE_PARENT_VETEMENT} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName(DN_FINDALLBYPARENT_NON_PERSISTANT)
+    @Test
+    public void testFindAllByParentParentAbsentExceptionTechniqueGatewayNonPersistent() {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final TypeProduit parent = new TypeProduit(ID_INEXISTANT, LIBELLE_PARENT_VETEMENT);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.findAllByParent(parent)
+         * et vérifie que l'appel
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet le message MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT
+         *   + LIBELLE_PARENT_VETEMENT
+         *   (message contractuel attendu).
+         */
+        assertThatThrownBy(() -> this.service.findAllByParent(parent))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que findAllByParent(parent sans enfant) :</p>
+     * <ul>
+     * <li>retourne une liste non null et vide ;</li>
+     * <li>reste cohérent avec l'absence d'enfant en base pour ce parent ;</li>
+     * <li>n'altère pas le stockage réel des sous-types.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("findAllByParent(parent sans enfant) - retourne une liste vide")
+    @Test
+    public void testFindAllByParentParentSansEnfantRetourneListeVide() throws Exception {
+
+        /* ARRANGE :
+         * lit le nombre de sous-types avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* Crée un parent persistant sans enfant. */
+        this.jdbcTemplate.update(
+                "INSERT INTO TYPES_PRODUIT (TYPE_PRODUIT) VALUES (?)",
+                LIBELLE_PARENT_CHAUSSURE);
+
+        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_CHAUSSURE);
+        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_CHAUSSURE);
+
+        /* Lit le nombre d'enfants en base pour ce parent. */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_PARENT,
+                Long.class,
+                idParent);
+
+        assertThat(countEnBase).isNotNull().isZero();
+
+        /* ACT :
+         * appelle this.service.findAllByParent(parent).
+         */
+        final List<SousTypeProduit> liste = this.service.findAllByParent(parent);
+
+        /* ASSERT :
+         * vérifie que la liste retournée est vide.
+         */
+        assertThat(liste).isNotNull().isEmpty();
+
+        /* Relit le nombre de sous-types après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+    
+
+
+    /**
+     * <div>
+     * <p>garantit que findAllByParent(nominal) :</p>
+     * <ul>
+     * <li>retourne une liste non null et non vide ;</li>
+     * <li>retourne exactement les IDs présents en base pour ce parent ;</li>
+     * <li>retourne uniquement des enfants du parent demandé ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDALLBYPARENT_NOMINAL)
     @Test
     public void testFindAllByParentNominalOk() throws Exception {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
 
+        /* Lit le nombre d'enfants en base
+         * pour le parent LIBELLE_PARENT_VETEMENT.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_PARENT,
+                Long.class,
+                idParent);
+
+        /* Lit les IDs présents en base
+         * pour le parent LIBELLE_PARENT_VETEMENT.
+         */
+        final List<Long> idsEnBase = this.jdbcTemplate.queryForList(
+                SELECT_PARAM_IDS_FROM_STP_WHERE_PARENT,
+                Long.class,
+                idParent);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countEnBase).isNotNull().isPositive();
+        assertThat(idsEnBase).isNotNull().isNotEmpty();
+
+        /* ACT :
+         * appelle this.service.findAllByParent(parent).
+         */
         final List<SousTypeProduit> liste = this.service.findAllByParent(parent);
 
-        assertThat(liste).isNotNull().isNotEmpty();
+        /* ASSERT :
+         * vérifie que la liste retournée
+         * contient le bon nombre d'éléments.
+         */
+        assertThat(liste).isNotNull().hasSize(countEnBase.intValue());
+
+        final List<Long> idsRetournes = liste.stream()
+                .map(SousTypeProduit::getIdSousTypeProduit)
+                .sorted()
+                .toList();
+
+        /* Vérifie que les IDs retournés
+         * correspondent aux IDs présents en base.
+         */
+        assertThat(idsRetournes).containsExactlyElementsOf(idsEnBase);
+
+        /* Vérifie que tous les objets retournés
+         * portent bien le parent demandé.
+         */
         assertThat(liste)
-        .extracting(SousTypeProduit::getTypeProduit)  // Extrait d'abord le TypeProduit
-        .extracting("idTypeProduit")  // Puis extrait la propriété idTypeProduit par nom
-        .containsOnly(idParent);
-        
+            .allSatisfy(stp -> {
+                assertThat(stp).isNotNull();
+                assertThat(stp.getTypeProduit()).isNotNull();
+                assertThat(stp.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
+                assertThat(stp.getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_VETEMENT);
+            });
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
     
-
     
-    // ============================ findById ==============================
+    
+    // ============================== findById ============================
 
 
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de null sur findById(pId).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findById(null) jette {@link ExceptionAppliParamNull} 
-     * avec MESSAGE_FINDBYID_KO_PARAM_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune lecture DAO.</p>
+     * <p>garantit que findById(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYID_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDBYID_NULL)
     @Test
-    public void testFindByIdParamNullExceptionAppliParamNull() {
-    	
+    public void testFindByIdNull() {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.findById(null)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParamNull
+         * - émet le message MESSAGE_FINDBYID_KO_PARAM_NULL
+         *   (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.findById(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findById(absent).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findById(absent) retourne null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Pas d'exception.</p>
+     * <p>garantit que findById(absent) :</p>
+     * <ul>
+     * <li>retourne {@code null} ;</li>
+     * <li>reste cohérent avec l'absence de ligne en base
+     * pour l'identifiant demandé ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDBYID_ABSENT)
     @Test
-    public void testFindByIdAbsentNull() throws Exception {
-    	
-        final SousTypeProduit retour = this.service.findById(ID_INEXISTANT);
-        assertThat(retour).isNull();
-        
+    public void testFindByIdAbsentRetourneNull() throws Exception {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* Lit le nombre de lignes en base
+         * pour l'identifiant ID_INEXISTANT.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                Long.class,
+                ID_INEXISTANT);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countEnBase).isNotNull().isZero();
+
+        /* ACT :
+         * appelle this.service.findById(ID_INEXISTANT).
+         */
+        final SousTypeProduit resultat = this.service.findById(ID_INEXISTANT);
+
+        /* ASSERT :
+         * vérifie que la méthode retourne null.
+         */
+        assertThat(resultat).isNull();
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier findById(nominal) sur ID seed.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>findById(trouvé) retourne un {@link SousTypeProduit} non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Libellé cohérent.</p>
+     * <p>garantit que findById(nominal) :</p>
+     * <ul>
+     * <li>retourne un objet métier non null ;</li>
+     * <li>retourne l'identifiant demandé ;</li>
+     * <li>retourne le bon libellé enfant ;</li>
+     * <li>retourne le bon parent ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
     @DisplayName(DN_FINDBYID_NOMINAL)
     @Test
     public void testFindByIdNominalOk() throws Exception {
-    	
-        final Long id = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
-        final SousTypeProduit retour = this.service.findById(id);
 
-        assertThat(retour).isNotNull();
-        assertThat(retour.getIdSousTypeProduit()).isEqualTo(id);
-        assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
-        
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final Long idEnfant = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        /* Lit le nombre de lignes en base
+         * pour l'identifiant idEnfant.
+         */
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
+
+        /* Lit le libellé enfant en base
+         * pour l'identifiant idEnfant.
+         */
+        final String libelleEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_STP_FROM_STP_WHERE_ID,
+                String.class,
+                idEnfant);
+
+        /* Lit l'identifiant du parent en base
+         * pour l'identifiant idEnfant.
+         */
+        final Long idParentEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countEnBase).isNotNull().isEqualTo(1L);
+        assertThat(libelleEnBase).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+        assertThat(idParentEnBase).isNotNull();
+
+        /* ACT :
+         * appelle this.service.findById(idEnfant).
+         */
+        final SousTypeProduit resultat = this.service.findById(idEnfant);
+
+        /* ASSERT :
+         * vérifie que l'objet retourné n'est pas null
+         * et porte le bon identifiant.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdSousTypeProduit()).isEqualTo(idEnfant);
+
+        /* Vérifie que l'objet retourné
+         * porte le bon libellé enfant.
+         */
+        assertThat(resultat.getSousTypeProduit()).isEqualTo(libelleEnBase);
+
+        /* Vérifie que l'objet retourné
+         * porte le bon parent.
+         */
+        assertThat(resultat.getTypeProduit()).isNotNull();
+        assertThat(resultat.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentEnBase);
+        assertThat(resultat.getTypeProduit().getTypeProduit()).isNotBlank();
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
     
 
     
-    // ============================= update ===============================
-    
-    
-    
+    // =============================== update =============================
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de null sur update(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(null) jette {@link ExceptionAppliParamNull} 
-     * avec MESSAGE_UPDATE_KO_PARAM_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que update(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_UPDATE_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_NULL)
     @Test
     public void testUpdateParamNullExceptionAppliParamNull() {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.update(null)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParamNull
+         * - émet le message MESSAGE_UPDATE_KO_PARAM_NULL 
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle du libellé blank sur update(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(libellé blank) jette {@link ExceptionAppliLibelleBlank} 
-     * avec MESSAGE_UPDATE_KO_LIBELLE_BLANK.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que update(blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_BLANK)
     @Test
     public void testUpdateLibelleBlankExceptionAppliLibelleBlank() {
-    	
-        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit stp = new SousTypeProduit(Long.valueOf(1L), BLANK, parent);
 
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        Long.valueOf(1L),
+                        BLANK,
+                        new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.update(stp)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_UPDATE_KO_LIBELLE_BLANK 
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.update(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
-        
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de non-persistance du paramètre sur update(pObject) (id null).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(id null) jette {@link ExceptionAppliParamNonPersistent} avec préfixe MESSAGE_UPDATE_KO_NON_PERSISTENT.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune écriture en base.</p>
+     * <p>garantit que update(id null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_UPDATE_KO_NON_PERSISTENT}
+     * + {@link #LIBELLE_ENFANT_VETEMENT_HOMME} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_ID_NULL)
     @Test
     public void testUpdateIdNullExceptionAppliParamNonPersistent() {
-    	
-        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_FEMME, parent);
 
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        null,
+                        LIBELLE_ENFANT_VETEMENT_HOMME,
+                        new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.update(stp)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParamNonPersistent
+         * - émet le message MESSAGE_UPDATE_KO_NON_PERSISTENT
+         *   + LIBELLE_ENFANT_VETEMENT_HOMME
+         *   (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.update(stp))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
-            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT + LIBELLE_ENFANT_VETEMENT_FEMME);
-        
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT
+                            + LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier update(absent) -> null.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(absent) retourne null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Pas d'exception.</p>
+     * <p>garantit que update(parent null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParentNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_UPDATE_KO_PARENT_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent null) - jette ExceptionAppliParentNull (contrat du port)")
+    @Test
+    public void testUpdateParentNullExceptionAppliParentNull() {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final SousTypeProduit stp =
+                new SousTypeProduit(Long.valueOf(1L), LIBELLE_ENFANT_VETEMENT_HOMME, null);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.update(stp)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParentNull
+         * - émet le message MESSAGE_UPDATE_KO_PARENT_NULL 
+         * (message contractuel attendu).
+         */
+        assertThatThrownBy(() -> this.service.update(stp))
+            .isInstanceOf(ExceptionAppliParentNull.class)
+            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NULL);
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(parent libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
+    @Test
+    public void testUpdateParentLibelleBlankExceptionAppliLibelleBlank() {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        Long.valueOf(1L),
+                        LIBELLE_ENFANT_VETEMENT_HOMME,
+                        new TypeProduit(Long.valueOf(1L), BLANK));
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.update(stp)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK 
+         * (message contractuel attendu).
+         */
+        assertThatThrownBy(() -> this.service.update(stp))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK);
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(parent ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT}
+     * + {@link #LIBELLE_PARENT_VETEMENT} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent ID null) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)")
+    @Test
+    public void testUpdateParentIdNullExceptionTechniqueGatewayNonPersistent() {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        Long.valueOf(1L),
+                        LIBELLE_ENFANT_VETEMENT_HOMME,
+                        new TypeProduit(null, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.update(stp)
+         * et vérifie que l'appel
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet le message MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+         *   + LIBELLE_PARENT_VETEMENT
+         *   (message contractuel attendu).
+         */
+        assertThatThrownBy(() -> this.service.update(stp))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(parent absent) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT}
+     * + {@link #LIBELLE_PARENT_VETEMENT} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent absent) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)")
+    @Test
+    public void testUpdateParentAbsentExceptionTechniqueGatewayNonPersistent() {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        Long.valueOf(1L),
+                        LIBELLE_ENFANT_VETEMENT_HOMME,
+                        new TypeProduit(ID_INEXISTANT, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.update(stp)
+         * et vérifie que l'appel
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet le message MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+         *   + LIBELLE_PARENT_VETEMENT
+         *   (message contractuel attendu).
+         */
+        assertThatThrownBy(() -> this.service.update(stp))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(
+                    SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+                            + LIBELLE_PARENT_VETEMENT);
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(absent) :</p>
+     * <ul>
+     * <li>retourne {@code null} ;</li>
+     * <li>reste cohérent avec l'absence de ligne en base
+     * pour l'identifiant demandé ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_ABSENT)
     @Test
-    public void testUpdateAbsentNull() throws Exception {
-    	
+    public void testUpdateAbsentRetourneNull() throws Exception {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit stp = new SousTypeProduit(ID_INEXISTANT, LIBELLE_A_SUPPRIMER, parent);
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        ID_INEXISTANT,
+                        LIBELLE_ENFANT_VETEMENT_HOMME,
+                        new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT));
 
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                Long.class,
+                ID_INEXISTANT);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countEnBase).isNotNull().isZero();
+
+        /* ACT :
+         * appelle this.service.update(stp).
+         */
         final SousTypeProduit retour = this.service.update(stp);
+
+        /* ASSERT :
+         * vérifie que la méthode retourne null.
+         */
         assertThat(retour).isNull();
-        
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier update(nominal) avec changement de parent, avec preuve de mise à jour en base.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(parent modifié) retourne un {@link SousTypeProduit} avec le nouveau parent.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
+     * <p>garantit que update(nominal) :</p>
      * <ul>
-     * <li>Le parent est réellement mis à jour en base (preuve JDBC).</li>
-     * <li>Le test choisit un parent existant et différent du parent initial (sinon test inutile).</li>
-     * <li>Test hors transaction de test : {@code @Transactional(NOT_SUPPORTED)}.</li>
-     * <li>Restauration physique du parent en finally (isolation).</li>
+     * <li>retourne un objet non null ;</li>
+     * <li>conserve le même identifiant ;</li>
+     * <li>modifie le libellé en base ;</li>
+     * <li>rend la modification retrouvable via le service ;</li>
+     * <li>n'ajoute ni ne supprime aucune ligne.</li>
      * </ul>
      * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName(DN_UPDATE_PARENT_MODIFIE)
-    @Test
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void testUpdateParentModifieOk() throws Exception {
-        final Long idEnfant = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_FEMME);
-        final Long idParentInitial = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-
-        /* Référence “physique” : état initial en base (bypass Hibernate). */
-        final String libelleAvant = this.jdbcTemplate.queryForObject(
-            "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-            String.class, idEnfant
-        );
-        final Long parentAvant = this.jdbcTemplate.queryForObject(
-            "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-            Long.class, idEnfant
-        );
-        assertThat(parentAvant)
-            .as("Le parent initial en base doit être 'vêtement' (seed data)")
-            .isEqualTo(idParentInitial);
-
-        /* Choisit un parent EXISTANT et DIFFÉRENT de 'vêtement' (sinon le test ne prouve rien). */
-        final List<TypeProduitJPA> parents = this.typeProduitDaoJPA.findAll();
-        assertThat(parents).isNotNull().isNotEmpty();
-
-        Long idNouveauParent = null;
-        String libelleNouveauParent = null;
-
-        for (final TypeProduitJPA p : parents) {
-            if (p != null
-                    && p.getIdTypeProduit() != null
-                    && p.getTypeProduit() != null
-                    && !p.getTypeProduit().equalsIgnoreCase(LIBELLE_PARENT_VETEMENT)) {
-                idNouveauParent = p.getIdTypeProduit();
-                libelleNouveauParent = p.getTypeProduit();
-                break;
-            }
-        }
-
-        assertThat(idNouveauParent)
-            .as("Il doit exister en base au moins un TypeProduit différent de 'vêtement' (seed data).")
-            .isNotNull();
-        assertThat(libelleNouveauParent).isNotBlank();
-        assertThat(idNouveauParent).isNotEqualTo(idParentInitial);
-
-        try {
-            final TypeProduit nouveauParent = new TypeProduit(idNouveauParent, libelleNouveauParent);
-            final SousTypeProduit aMettreAJour = new SousTypeProduit(
-                idEnfant, LIBELLE_ENFANT_VETEMENT_FEMME, nouveauParent
-            );
-
-            final SousTypeProduit maj = this.service.update(aMettreAJour);
-
-            assertThat(maj).isNotNull();
-            assertThat(maj.getTypeProduit()).isNotNull();
-            assertThat(maj.getTypeProduit().getIdTypeProduit()).isEqualTo(idNouveauParent);
-
-            /* PREUVE BD INATTAQUABLE : lecture SQL directe du FK parent après update(). */
-            final Long parentEnBase = this.jdbcTemplate.queryForObject(
-                "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-                Long.class, idEnfant
-            );
-            assertThat(parentEnBase).isEqualTo(idNouveauParent);
-
-            /* Double-check via service. */
-            final SousTypeProduit relu = this.service.findById(idEnfant);
-            assertThat(relu).isNotNull();
-            assertThat(relu.getTypeProduit()).isNotNull();
-            assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idNouveauParent);
-
-        } finally {
-
-            /* Restauration physique (test non rollbacké). */
-            this.jdbcTemplate.update(
-                "UPDATE SOUS_TYPES_PRODUIT SET SOUS_TYPE_PRODUIT = ?, TYPE_PRODUIT = ? WHERE ID_SOUS_TYPE_PRODUIT = ?",
-                libelleAvant, parentAvant, idEnfant
-            );
-
-        }
-    } // __________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier update(nominal) : modification du libellé avec preuve de mise à jour en base.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>update(nominal) retourne un {@link SousTypeProduit} non null.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <ul>
-     * <li>Libellé mis à jour.</li>
-     * <li>Preuve “BD” : lecture SQL directe (JdbcTemplate) après l’appel (contourne Hibernate).</li>
-     * <li>Test hors transaction de test : {@code @Transactional(NOT_SUPPORTED)}.</li>
-     * <li>Restauration physique du libellé en finally (isolation).</li>
-     * </ul>
-     * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_UPDATE)
     @DisplayName(DN_UPDATE_NOMINAL)
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testUpdateNominalOk() throws Exception {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final Long idEnfant = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_FEMME);
-        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+        final Long idParentAvant = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
 
-        /* État initial “physique” (référence) : bypass Hibernate. */
-        final String libelleAvant = this.jdbcTemplate.queryForObject(
-            "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-            String.class, idEnfant
-        );
-        final Long parentAvant = this.jdbcTemplate.queryForObject(
-            "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-            Long.class, idEnfant
-        );
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        idEnfant,
+                        LIBELLE_MODIFIE_FEMME,
+                        new TypeProduit(idParentAvant, LIBELLE_PARENT_VETEMENT));
 
-        try {
-            final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
-            final SousTypeProduit stp = new SousTypeProduit(idEnfant, LIBELLE_MODIFIE_FEMME, parent);
+        assertThat(countAvant).isNotNull();
+        assertThat(idParentAvant).isNotNull();
 
-            final SousTypeProduit maj = this.service.update(stp);
+        /* ACT :
+         * appelle this.service.update(stp).
+         */
+        final SousTypeProduit retour = this.service.update(stp);
 
-            assertThat(maj).isNotNull();
-            assertThat(maj.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
-            assertThat(maj.getTypeProduit()).isNotNull();
-            assertThat(maj.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
+        /* ASSERT :
+         * vérifie l'objet retourné.
+         */
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
+        assertThat(retour.getTypeProduit()).isNotNull();
+        assertThat(retour.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentAvant);
 
-            /* PREUVE BD INATTAQUABLE : lecture SQL directe après update(). */
-            final String libelleEnBase = this.jdbcTemplate.queryForObject(
-                "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-                String.class, idEnfant
-            );
-            assertThat(libelleEnBase).isEqualTo(LIBELLE_MODIFIE_FEMME);
+        /* Lit le libellé en base après l'update. */
+        final String libelleEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_STP_FROM_STP_WHERE_ID,
+                String.class,
+                idEnfant);
 
-            final Long parentEnBase = this.jdbcTemplate.queryForObject(
-                "SELECT TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-                Long.class, idEnfant
-            );
-            assertThat(parentEnBase).isEqualTo(idParent);
+        /* Lit le parent en base après l'update. */
+        final Long idParentEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
 
-            /* Double-check via service. */
-            final SousTypeProduit relu = this.service.findById(idEnfant);
-            assertThat(relu).isNotNull();
-            assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
+        assertThat(libelleEnBase).isEqualTo(LIBELLE_MODIFIE_FEMME);
+        assertThat(idParentEnBase).isEqualTo(idParentAvant);
 
-        } finally {
+        this.entityManager.clear();
 
-            /* Restauration physique (test non rollbacké). */
-            this.jdbcTemplate.update(
-                "UPDATE SOUS_TYPES_PRODUIT SET SOUS_TYPE_PRODUIT = ?, TYPE_PRODUIT = ? WHERE ID_SOUS_TYPE_PRODUIT = ?",
-                libelleAvant, parentAvant, idEnfant
-            );
+        /* Relit l'objet via le service. */
+        final SousTypeProduit relu = this.service.findById(idEnfant);
 
-        }
+        assertThat(relu).isNotNull();
+        assertThat(relu.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_MODIFIE_FEMME);
+        assertThat(relu.getTypeProduit()).isNotNull();
+        assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentAvant);
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(parent modifié) :</p>
+     * <ul>
+     * <li>retourne un objet non null ;</li>
+     * <li>conserve le même identifiant ;</li>
+     * <li>modifie la clé étrangère parent en base ;</li>
+     * <li>rend la modification retrouvable via le service ;</li>
+     * <li>n'ajoute ni ne supprime aucune ligne.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName(DN_UPDATE_PARENT_MODIFIE)
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testUpdateParentModifieOk() throws Exception {
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        final Long idEnfant = retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        /* Crée un nouveau parent persistant. */
+        this.jdbcTemplate.update(
+                "INSERT INTO TYPES_PRODUIT (TYPE_PRODUIT) VALUES (?)",
+                LIBELLE_PARENT_CHAUSSURE);
+
+        final Long idNouveauParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_CHAUSSURE);
+
+        final SousTypeProduit stp =
+                new SousTypeProduit(
+                        idEnfant,
+                        LIBELLE_ENFANT_VETEMENT_HOMME,
+                        new TypeProduit(idNouveauParent, LIBELLE_PARENT_CHAUSSURE));
+
+        assertThat(countAvant).isNotNull();
+        assertThat(idNouveauParent).isNotNull();
+
+        /* ACT :
+         * appelle this.service.update(stp).
+         */
+        final SousTypeProduit retour = this.service.update(stp);
+
+        /* ASSERT :
+         * vérifie l'objet retourné.
+         */
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+        assertThat(retour.getTypeProduit()).isNotNull();
+        assertThat(retour.getTypeProduit().getIdTypeProduit()).isEqualTo(idNouveauParent);
+        assertThat(retour.getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_CHAUSSURE);
+
+        /* Lit le parent en base après l'update. */
+        final Long idParentEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
+
+        /* Lit le libellé en base après l'update. */
+        final String libelleEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_STP_FROM_STP_WHERE_ID,
+                String.class,
+                idEnfant);
+
+        assertThat(idParentEnBase).isEqualTo(idNouveauParent);
+        assertThat(libelleEnBase).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        this.entityManager.clear();
+
+        /* Relit l'objet via le service. */
+        final SousTypeProduit relu = this.service.findById(idEnfant);
+
+        assertThat(relu).isNotNull();
+        assertThat(relu.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(relu.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+        assertThat(relu.getTypeProduit()).isNotNull();
+        assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idNouveauParent);
+        assertThat(relu.getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_CHAUSSURE);
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
     
 
     
     // ============================= delete ===============================
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de null sur delete(pObject).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>delete(null) jette {@link ExceptionAppliParamNull} avec MESSAGE_DELETE_KO_PARAM_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune suppression en base.</p>
+     * <p>garantit que delete(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_DELETE_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
     @DisplayName(DN_DELETE_NULL)
     @Test
     public void testDeleteParamNullExceptionAppliParamNull() {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.delete(null)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParamNull
+         * - émet le message MESSAGE_DELETE_KO_PARAM_NULL 
+         * (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
 
-    
-    
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier le contrôle de non-persistance sur 
-     * delete(pObject) (id null).</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>delete(id null) jette {@link ExceptionAppliParamNonPersistent} 
-     * avec MESSAGE_DELETE_KO_ID_NULL.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Aucune suppression en base.</p>
+     * <p>garantit que delete(id null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link SousTypeProduitGatewayIService#MESSAGE_DELETE_KO_ID_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
     @DisplayName(DN_DELETE_ID_NULL)
     @Test
     public void testDeleteIdNullExceptionAppliParamNonPersistent() {
-    	
+
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, LIBELLE_A_SUPPRIMER, parent);
 
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * appelle this.service.delete(stp)
+         * et vérifie que l'appel
+         * - jette une ExceptionAppliParamNonPersistent
+         * - émet le message MESSAGE_DELETE_KO_ID_NULL
+         *   (message contractuel attendu).
+         */
         assertThatThrownBy(() -> this.service.delete(stp))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL);
-        
-    } // __________________________________________________________________
 
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
     
-    
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier delete(absent) ne supprime rien.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>delete(absent) n'échoue pas.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Le count() reste identique.</p>
+     * <p>garantit que delete(absent) :</p>
+     * <ul>
+     * <li>ne jette pas d'exception ;</li>
+     * <li>ne supprime aucune ligne ;</li>
+     * <li>reste cohérent avec l'absence de ligne en base
+     * pour l'identifiant demandé.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_DELETE)
     @DisplayName(DN_DELETE_ABSENT)
     @Test
     public void testDeleteAbsentNeFaitRien() throws Exception {
-    	
-        final long avant = this.service.count();
 
-        final Long idParent = retrouverIdParentPersistantParLibelle(
-        		LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(
-        		idParent, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit stp = new SousTypeProduit(
-        		ID_INEXISTANT, LIBELLE_A_SUPPRIMER, parent);
+        /* ARRANGE :
+         * lit le nombre de lignes avant l'appel.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
 
+        final Long countEnBase = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                Long.class,
+                ID_INEXISTANT);
+
+        final SousTypeProduit stp =
+                new SousTypeProduit(ID_INEXISTANT, LIBELLE_INEXISTANT, null);
+
+        assertThat(countAvant).isNotNull();
+        assertThat(countEnBase).isNotNull().isZero();
+
+        /* ACT :
+         * appelle this.service.delete(stp).
+         */
         this.service.delete(stp);
 
-        final long apres = this.service.count();
-        assertThat(apres).isEqualTo(avant);
-        
+        /* ASSERT :
+         * relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // __________________________________________________________________
 
- 
-    
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Test d'intégration pour vérifier
-     * le comportement nominal de la suppression
-     * d'un {@link SousTypeProduit} via le service
-     * {@link SousTypeProduitGatewayIService}.</p>
-     *
-     * <p style="font-weight:bold;">SCÉNARIO TESTÉ :</p>
-     * <ol>
-     * <li>Vérification de l'état initial (3 enregistrements seedés)</li>
-     * <li>Création d'un nouvel enregistrement (ID attendu: 4)</li>
-     * <li>Suppression de l'enregistrement créé</li>
-     * <li>Vérification que la suppression est effective :
-     *   <ul>
-     *   <li>L'entité n'est plus trouvée via vérification directe en base</li>
-     *   <li>Le count revient à 3</li>
-     *   </ul>
-     * </li>
-     * </ol>
-     *
-     * <p style="font-weight:bold;">SOLUTION TECHNIQUE :</p>
+     * <p>garantit que delete(nominal) :</p>
      * <ul>
-     * <li>Utilisation de @Transactional(propagation = Propagation.NEVER) 
-     * pour éviter les transactions imbriquées</li>
-     * <li>Vérification directe via JdbcTemplate (contourne Hibernate)</li>
-     * <li>Suppression via EntityManager.remove() + flush() pour forcer l'exécution</li>
+     * <li>crée une ligne à supprimer ;</li>
+     * <li>supprime réellement cette ligne en base ;</li>
+     * <li>rend l'objet introuvable via le service ;</li>
+     * <li>ramène le nombre total de lignes à son niveau initial.</li>
      * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_DELETE)
     @DisplayName(DN_DELETE_NOMINAL)
     @Test
-    @Transactional(propagation = Propagation.NEVER) // Désactive les transactions imbriquées
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
-    @Sql(scripts = {CLASSPATH_TRUNCATE_SQL, CLASSPATH_DATA_SQL},
-         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testDeleteNominalOk() throws Exception {
-    	
-        // =============================================
-        // 1. VÉRIFICATION DE L'ÉTAT INITIAL
-        // =============================================
-        final long avant = this.service.count();
-        assertThat(avant)
-            .as("Le nombre initial d'enregistrements doit être 3 (seed data)")
-            .isEqualTo(3L);
 
-        // =============================================
-        // 2. CRÉATION D'UN ÉLÉMENT À SUPPRIMER
-        // =============================================
-        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
-        final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
-        final SousTypeProduit cree = this.service.creer(
-            new SousTypeProduit(null, LIBELLE_A_SUPPRIMER, parent)
-        );
+        Long idSupprime = null;
 
-        // Vérification de la persistance de l'objet créé
-        assertThat(cree).isNotNull();
-        assertThat(cree.getIdSousTypeProduit()).isNotNull();
-        /* Debug ponctuel de diagnostic local : à laisser désactivé pour garder les tests silencieux.
-        System.out.println("[DEBUG] ID créé : " + cree.getIdSousTypeProduit());
-        */
+        try {
 
-        // Vérification directe via JdbcTemplate avant suppression
-        final Integer countAvant = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-            Integer.class, cree.getIdSousTypeProduit()
-        );
-        assertThat(countAvant)
-            .as("L'enregistrement doit exister en base avant suppression")
-            .isEqualTo(1);
+            /* ARRANGE :
+             * lit (en SQL) le nombre de lignes dans le stockage 
+             * avant la création.
+             */
+            final Long countAvant = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
 
-        // =============================================
-        // 3. SUPPRESSION
-        // =============================================
-        this.service.delete(cree);
+            final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+            final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
 
-        // =============================================
-        // 4. VÉRIFICATIONS POST-SUPPRESSION
-        // =============================================
-        verifierSuppressionEnBase(cree.getIdSousTypeProduit());
+            assertThat(countAvant).isNotNull();
 
-        // Vérification finale du count global
-        final long apres = this.service.count();
-        assertThat(apres)
-            .as("Le nombre d'enregistrements doit revenir à 3 après suppression")
-            .isEqualTo(3L);
-        
+            /* 
+             * Crée un objet métier dédié au test 
+             * via un appel à service.creer(...). 
+             */
+            final SousTypeProduit cree = this.service.creer(
+                    new SousTypeProduit(null, LIBELLE_A_SUPPRIMER, parent));
+
+            assertThat(cree).isNotNull();
+            assertThat(cree.getIdSousTypeProduit()).isNotNull();
+
+            idSupprime = cree.getIdSousTypeProduit();
+
+            /* Lit (en SQL) le nombre de lignes dans le stockage 
+             * après la création d'un objet métier. */
+            final Long countApresCreation = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
+            /* Lit (en SQL) le nombre de lignes dans le stockage 
+             * possédant l'ID créé. */
+            final Long countEnBaseAvantDelete = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                    Long.class,
+                    idSupprime);
+
+            assertThat(countApresCreation).isEqualTo(countAvant + 1L);
+            assertThat(countEnBaseAvantDelete).isEqualTo(1L);
+
+            /* ACT :
+             * appelle this.service.delete(cree).
+             */
+            this.service.delete(cree);
+
+            /* ASSERT :
+             * vérifie que service.delete(...) 
+             * a détruit la ligne crée dans le stockage.
+             */
+            this.verifierSuppressionEnBase(idSupprime);
+
+            /* Relit (en SQL) le nombre de lignes après la suppression
+             * et vérifie que le total revient au niveau initial.
+             */
+            final Long countApresDelete = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
+            assertThat(countApresDelete).isEqualTo(countAvant);
+
+        } finally {
+
+            /* 
+             * Nettoyage de sécurité :
+             * supprime la ligne si elle existe encore.
+             */
+            if (idSupprime != null) {
+                final Integer countRestant = this.jdbcTemplate.queryForObject(
+                        SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                        Integer.class,
+                        idSupprime);
+
+                if (countRestant != null && countRestant.intValue() > 0) {
+                    this.jdbcTemplate.update(
+                            "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                            idSupprime);
+                }
+            }
+
+        }
+
     } // __________________________________________________________________
     
     
 
     // ============================== Count ===============================
-    
-    
-    
+
+
+
     /**
      * <div>
-     * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
-     * <p>Vérifier count() nominal.</p>
-     * <p style="font-weight:bold;">CONTRAT TECHNIQUE :</p>
-     * <p>count() retourne un long >= 0.</p>
-     * <p style="font-weight:bold;">GARANTIES TECHNIQUES et METIER :</p>
-     * <p>Cohérent avec le DAO.</p>
+     * <p>garantit que count() sur la base seedée :</p>
+     * <ul>
+     * <li>retourne un total >= 0 ;</li>
+     * <li>retourne le même total que le DAO ;</li>
+     * <li>retourne le même total que le stockage réel lu en SQL.</li>
+     * </ul>
      * </div>
+     *
+     * @throws Exception
      */
     @Tag(TAG_COUNT)
     @DisplayName(DN_COUNT_NOMINAL)
     @Test
     public void testCountNominalOk() throws Exception {
-    	
+
+        /* ARRANGE :
+         * lit le total en base via SQL.
+         */
+        final Long viaSql = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* ACT :
+         * lit le total via le service
+         * puis via le DAO.
+         */
         final long viaService = this.service.count();
         final long viaDao = this.sousTypeProduitDaoJPA.count();
 
+        /* ASSERT :
+         * vérifie que count() retourne un total >= 0.
+         */
         assertThat(viaService).isGreaterThanOrEqualTo(0L);
+
+        /* Vérifie que count() retourne
+         * le même total que le DAO.
+         */
         assertThat(viaService).isEqualTo(viaDao);
-        
+
+        /* Vérifie que count() retourne
+         * le même total que le stockage réel.
+         */
+        assertThat(viaSql).isNotNull();
+        assertThat(viaService).isEqualTo(viaSql.longValue());
+
     } // __________________________________________________________________
-    
+
+
+
+    /**
+     * <div>
+     * <p>garantit que count() sur une base vide :</p>
+     * <ul>
+     * <li>retourne zéro ;</li>
+     * <li>retourne le même total que le DAO ;</li>
+     * <li>retourne le même total que le stockage réel lu en SQL.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_COUNT)
+    @DisplayName("count(base vide) - retourne 0")
+    @Test
+    @Sql(
+        scripts = SousTypeProduitGatewayJPAServiceIntegrationTest.CLASSPATH_TRUNCATE_SQL,
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
+    public void testCountZero() throws Exception {
+
+        /* ARRANGE :
+         * lit le total en base via SQL.
+         */
+        final Long viaSql = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* ACT :
+         * lit le total via le service
+         * puis via le DAO.
+         */
+        final long viaService = this.service.count();
+        final long viaDao = this.sousTypeProduitDaoJPA.count();
+
+        /* ASSERT :
+         * vérifie que le stockage réel est vide.
+         */
+        assertThat(viaSql).isNotNull().isZero();
+
+        /* Vérifie que count() retourne 0. */
+        assertThat(viaService).isZero();
+
+        /* Vérifie que count() retourne
+         * le même total que le DAO.
+         */
+        assertThat(viaService).isEqualTo(viaDao);
+
+    } // __________________________________________________________________    
 
     
     
@@ -1866,7 +4293,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 		
 	    // Vérification de l'absence de l'enregistrement
 	    final Integer count = jdbcTemplate.queryForObject(
-	        "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+	        SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
 	        Integer.class, idSupprime
 	    );
 	
