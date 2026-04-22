@@ -210,7 +210,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
             SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK;
 
     /** 
-     * div>
+     * <div>
 	 * <p>"Anomalie applicative
 	 * - l'objet métier passé en paramètre a un parent null."</p>
 	 * </div>
@@ -514,7 +514,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     
 
-    // ************************* METHODES ********************************/
+    // **************************** TESTS ********************************/
     
     
     
@@ -6047,9 +6047,6 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         verify(this.entityManager, never()).flush();
 
     } // __________________________________________________________________    
-    
-
-    // ============================== Count ===============================
     
     
 

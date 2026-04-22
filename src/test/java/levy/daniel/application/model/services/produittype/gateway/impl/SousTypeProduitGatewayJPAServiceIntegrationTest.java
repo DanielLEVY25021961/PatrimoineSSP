@@ -91,213 +91,266 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 @ContextConfiguration(classes = SousTypeProduitGatewayJPAServiceIntegrationTest.ConfigTest.class)
 public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
-    // *************************** CONSTANTES ******************************/
+    // ************************* CONSTANTES ******************************/
 
-    /** Profil Spring : "test". */
+    /** "test" */
     public static final String PROFILE_TEST = "test";
 
-    /** Script SQL truncate (classpath). */
+    /** "classpath:truncate-test.sql" */
     public static final String CLASSPATH_TRUNCATE_SQL = "classpath:truncate-test.sql";
 
-    /** Script SQL data (classpath). */
+    /** "classpath:data-test.sql" */
     public static final String CLASSPATH_DATA_SQL = "classpath:data-test.sql";
 
-    /** Qualifier Spring du service gateway. */
+    /** "SousTypeProduitGatewayJPAService" */
     public static final String QUALIFIER_SERVICE = "SousTypeProduitGatewayJPAService";
 
-    /** Tag JUnit : tests de création. */
+    /** "servicesGateway-Creer" */
     public static final String TAG_CREER = "servicesGateway-Creer";
 
-    /** Tag JUnit : tests de recherche. */
+    /** "servicesGateway-Rechercher" */
     public static final String TAG_RECHERCHER = "servicesGateway-Rechercher";
 
-    /** Tag JUnit : tests de recherche par objet métier. */
+    /** "servicesGateway-FindByObjetMetier" */
     public static final String TAG_FINDBYOBJETMETIER = "servicesGateway-FindByObjetMetier";
 
-    /** Tag JUnit : tests de recherche rapide. */
+    /** "servicesGateway-RechercherRapide" */
     public static final String TAG_RECHERCHER_RAPIDE = "servicesGateway-RechercherRapide";
 
-    /** Tag JUnit : tests de pagination. */
+    /** "servicesGateway-Pagination" */
     public static final String TAG_PAGINATION = "servicesGateway-Pagination";
 
-    /** Tag JUnit : tests d'update. */
+    /** "servicesGateway-Update" */
     public static final String TAG_UPDATE = "servicesGateway-Update";
 
-    /** Tag JUnit : tests de delete. */
+    /** "servicesGateway-Delete" */
     public static final String TAG_DELETE = "servicesGateway-Delete";
 
-    /** Tag JUnit : tests de count. */
+    /** "servicesGateway-Count" */
     public static final String TAG_COUNT = "servicesGateway-Count";
 
-    /** Locale par défaut. */
-    public static final Locale LOCALE_DEFAUT = Locale.getDefault();
-
-    /** Chaîne vide : "". */
+    /** "" */
     public static final String CHAINE_VIDE = "";
 
-    /** Blank : "   ". */
+    /** "   " */
     public static final String BLANK = "   ";
     
-    /** Libellé inexistant : "Inexistant". */
+    /** "Inexistant" */
     public static final String LIBELLE_INEXISTANT = "Inexistant";
 
-    /** Contenu partiel inexistant : "xyz". */
+    /** "xyz" */
     public static final String CONTENU_PARTIEL_INEXISTANT = "xyz";
 
-    /** DisplayName : "rechercherTousParPage(tris valides) - retourne une page triée". */
-    public static final String DN_RECHERCHER_TOUS_PAR_PAGE_TRI = "rechercherTousParPage(tris valides) - retourne une page triée";
+    /** 
+     * "rechercherTousParPage(tris valides) - retourne une page triée" 
+     */
+    public static final String DN_RECHERCHER_TOUS_PAR_PAGE_TRI 
+    	= "rechercherTousParPage(tris valides) - retourne une page triée";
 
-    /** DisplayName : "rechercherTousParPage(page vide) - retourne une page vide". */
-    public static final String DN_RECHERCHER_TOUS_PAR_PAGE_VIDE = "rechercherTousParPage(page vide) - retourne une page vide";
+    /** 
+     * "rechercherTousParPage(page vide) - retourne une page vide" 
+     */
+    public static final String DN_RECHERCHER_TOUS_PAR_PAGE_VIDE 
+    	= "rechercherTousParPage(page vide) - retourne une page vide";
 
-    /** DisplayName : "findByLibelle(inexistant) - retourne une liste vide". */
-    public static final String DN_FINDBYLIBELLE_INEXISTANT = "findByLibelle(inexistant) - retourne une liste vide";
+    /** 
+     * "findByLibelle(inexistant) - retourne une liste vide" */
+    public static final String DN_FINDBYLIBELLE_INEXISTANT 
+    	= "findByLibelle(inexistant) - retourne une liste vide";
 
-    /** DisplayName : "findByLibelleRapide(contenu inexistant) - retourne une liste vide". */
-    public static final String DN_FINDBYLIBELLERAPIDE_INEXISTANT = "findByLibelleRapide(contenu inexistant) - retourne une liste vide";
+    /** "findByLibelleRapide(contenu inexistant) - retourne une liste vide" */
+    public static final String DN_FINDBYLIBELLERAPIDE_INEXISTANT 
+    	= "findByLibelleRapide(contenu inexistant) - retourne une liste vide";
 
-    /** DisplayName : "update(parent modifié) - met à jour le parent". */
-    public static final String DN_UPDATE_PARENT_MODIFIE = "update(parent modifié) - met à jour le parent";
+    /** "update(parent modifié) - met à jour le parent" */
+    public static final String DN_UPDATE_PARENT_MODIFIE 
+    	= "update(parent modifié) - met à jour le parent";
 
-    /** Libellé parent existant (data-test.sql) : "vêtement". */
+    /** "vêtement" */
     public static final String LIBELLE_PARENT_VETEMENT = "vêtement";
 
-    /** Libellé parent existant (data-test.sql) : "Chaussure". */
+    /** "Chaussure" */
     public static final String LIBELLE_PARENT_CHAUSSURE = "Chaussure";
 
-    /** Libellé enfant existant (data-test.sql) : "vêtement pour homme". */
-    public static final String LIBELLE_ENFANT_VETEMENT_HOMME = "vêtement pour homme";
+    /** "vêtement pour homme" */
+    public static final String LIBELLE_ENFANT_VETEMENT_HOMME 
+    	= "vêtement pour homme";
 
-    /** Libellé enfant existant (data-test.sql) : "vêtement pour femme". */
-    public static final String LIBELLE_ENFANT_VETEMENT_FEMME = "vêtement pour femme";
+    /** "vêtement pour femme" */
+    public static final String LIBELLE_ENFANT_VETEMENT_FEMME 
+    	= "vêtement pour femme";
 
-    /** Libellé enfant existant (data-test.sql) : "vêtement pour enfant". */
-    public static final String LIBELLE_ENFANT_VETEMENT_ENFANT = "vêtement pour enfant";
+    /** "vêtement pour enfant" */
+    public static final String LIBELLE_ENFANT_VETEMENT_ENFANT 
+    	= "vêtement pour enfant";
 
-    /** Contenu partiel existant dans les libellés enfants seed : "vêt". */
+    /** "vêt" */
     public static final String CONTENU_PARTIEL_VET = "vêt";
 
-    /** Contenu partiel : "sh". */
+    /** "sh" */
     public static final String CONTENU_PARTIEL_SH = "sh";
 
-    /** Libellé pour création : "Pull". */
+    /** "Pull" */
     public static final String LIBELLE_NOUVEAU_PULL = "Pull";
 
-    /** Libellé pour modification : "vêtement pour femme modifié". */
-    public static final String LIBELLE_MODIFIE_FEMME = "vêtement pour femme modifié";
+    /** "vêtement pour femme modifié" */
+    public static final String LIBELLE_MODIFIE_FEMME 
+    	= "vêtement pour femme modifié";
 
-    /** Libellé pour suppression : "à supprimer". */
+    /** "à supprimer" */
     public static final String LIBELLE_A_SUPPRIMER = "à supprimer";
 
-    /** ID inexistant. */
+    /** 999_999L */
     public static final Long ID_INEXISTANT = Long.valueOf(999_999L);
 
-    /** DisplayName : "creer(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_CREER_NULL = "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "creer(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_CREER_NULL 
+    	= "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_CREER_BLANK = "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_CREER_BLANK 
+    	= "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "creer(parent null) - jette ExceptionAppliParentNull (contrat du port)". */
-    public static final String DN_CREER_PARENT_NULL = "creer(parent null) - jette ExceptionAppliParentNull (contrat du port)";
+    /** "creer(parent null) - jette ExceptionAppliParentNull (contrat du port)" */
+    public static final String DN_CREER_PARENT_NULL 
+    	= "creer(parent null) - jette ExceptionAppliParentNull (contrat du port)";
 
-    /** DisplayName : "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_CREER_PARENT_LIBELLE_BLANK = "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_CREER_PARENT_LIBELLE_BLANK 
+    	= "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "creer(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)". */
-    public static final String DN_CREER_PARENT_NON_PERSISTANT = "creer(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
+    /** "creer(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)" */
+    public static final String DN_CREER_PARENT_NON_PERSISTANT 
+    	= "creer(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** DisplayName : "creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés". */
-    public static final String DN_CREER_NOMINAL = "creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
+    /** "creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés" */
+    public static final String DN_CREER_NOMINAL 
+    	= "creer(nominal) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
 
-    /** DisplayName : "rechercherTous() - retourne la liste seedée (triée, sans doublons)". */
-    public static final String DN_RECHERCHER_TOUS = "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
+    /** "rechercherTous() - retourne la liste seedée (triée, sans doublons)" */
+    public static final String DN_RECHERCHER_TOUS 
+    	= "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
 
-    /** DisplayName : "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_NULL = "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_NULL 
+    	= "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_BLANK = "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_BLANK 
+    	= "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_PARENT_NULL = "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)";
+    /** "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_PARENT_NULL 
+    	= "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_PARENT_LIBELLE_BLANK = "findByObjetMetier(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "findByObjetMetier(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_PARENT_LIBELLE_BLANK 
+    	= "findByObjetMetier(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT = "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
+    /** "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT 
+    	= "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(nominal) - retourne l'objet métier correspondant". */
-    public static final String DN_FINDBYOBJETMETIER_NOMINAL = "findByObjetMetier(nominal) - retourne l'objet métier correspondant";
+    /** "findByObjetMetier(nominal) - retourne l'objet métier correspondant" */
+    public static final String DN_FINDBYOBJETMETIER_NOMINAL 
+    	= "findByObjetMetier(nominal) - retourne l'objet métier correspondant";
 
-    /** DisplayName : "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_FINDBYLIBELLE_BLANK = "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_FINDBYLIBELLE_BLANK 
+    	= "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "findByLibelle(nominal) - retourne la liste des correspondances". */
-    public static final String DN_FINDBYLIBELLE_NOMINAL = "findByLibelle(nominal) - retourne la liste des correspondances";
+    /** "findByLibelle(nominal) - retourne la liste des correspondances" */
+    public static final String DN_FINDBYLIBELLE_NOMINAL 
+    	= "findByLibelle(nominal) - retourne la liste des correspondances";
 
-    /** DisplayName : "findByLibelleRapide(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_FINDBYLIBELLERAPIDE_NULL = "findByLibelleRapide(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "findByLibelleRapide(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_FINDBYLIBELLERAPIDE_NULL 
+    	= "findByLibelleRapide(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "findByLibelleRapide(blank) - délègue à rechercherTous()". */
-    public static final String DN_FINDBYLIBELLERAPIDE_BLANK = "findByLibelleRapide(blank) - délègue à rechercherTous()";
+    /** "findByLibelleRapide(blank) - délègue à rechercherTous()" */
+    public static final String DN_FINDBYLIBELLERAPIDE_BLANK 
+    	= "findByLibelleRapide(blank) - délègue à rechercherTous()";
 
-    /** DisplayName : "findByLibelleRapide(nominal) - retourne les correspondances partielles". */
-    public static final String DN_FINDBYLIBELLERAPIDE_NOMINAL = "findByLibelleRapide(nominal) - retourne les correspondances partielles";
+    /** "findByLibelleRapide(nominal) - retourne les correspondances partielles" */
+    public static final String DN_FINDBYLIBELLERAPIDE_NOMINAL 
+    	= "findByLibelleRapide(nominal) - retourne les correspondances partielles";
 
-    /** DisplayName : "findAllByParent(null) - jette ExceptionAppliParentNull (contrat du port)". */
-    public static final String DN_FINDALLBYPARENT_NULL = "findAllByParent(null) - jette ExceptionAppliParentNull (contrat du port)";
+    /** "findAllByParent(null) - jette ExceptionAppliParentNull (contrat du port)" */
+    public static final String DN_FINDALLBYPARENT_NULL 
+    	= "findAllByParent(null) - jette ExceptionAppliParentNull (contrat du port)";
 
-    /** DisplayName : "findAllByParent(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_FINDALLBYPARENT_LIBELLE_BLANK = "findAllByParent(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "findAllByParent(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_FINDALLBYPARENT_LIBELLE_BLANK 
+    	= "findAllByParent(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "findAllByParent(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)". */
-    public static final String DN_FINDALLBYPARENT_NON_PERSISTANT = "findAllByParent(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
+    /** "findAllByParent(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)" */
+    public static final String DN_FINDALLBYPARENT_NON_PERSISTANT 
+    	= "findAllByParent(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** DisplayName : "findAllByParent(nominal) - retourne les enfants du parent". */
-    public static final String DN_FINDALLBYPARENT_NOMINAL = "findAllByParent(nominal) - retourne les enfants du parent";
+    /** "findAllByParent(nominal) - retourne les enfants du parent" */
+    public static final String DN_FINDALLBYPARENT_NOMINAL 
+    	= "findAllByParent(nominal) - retourne les enfants du parent";
 
-    /** DisplayName : "findById(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_FINDBYID_NULL = "findById(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "findById(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_FINDBYID_NULL 
+    	= "findById(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "findById(absent) - retourne null". */
-    public static final String DN_FINDBYID_ABSENT = "findById(absent) - retourne null";
+    /** "findById(absent) - retourne null" */
+    public static final String DN_FINDBYID_ABSENT 
+    	= "findById(absent) - retourne null";
 
-    /** DisplayName : "findById(nominal) - retourne l'objet métier correspondant". */
-    public static final String DN_FINDBYID_NOMINAL = "findById(nominal) - retourne l'objet métier correspondant";
+    /** "findById(nominal) - retourne l'objet métier correspondant" */
+    public static final String DN_FINDBYID_NOMINAL 
+    	= "findById(nominal) - retourne l'objet métier correspondant";
 
-    /** DisplayName : "update(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_UPDATE_NULL = "update(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "update(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_UPDATE_NULL 
+    	= "update(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_UPDATE_BLANK = "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_UPDATE_BLANK 
+    	= "update(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "update(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)". */
-    public static final String DN_UPDATE_ID_NULL = "update(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)";
+    /** "update(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)" */
+    public static final String DN_UPDATE_ID_NULL 
+    	= "update(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)";
 
-    /** DisplayName : "update(absent) - retourne null". */
-    public static final String DN_UPDATE_ABSENT = "update(absent) - retourne null";
+    /** "update(absent) - retourne null" */
+    public static final String DN_UPDATE_ABSENT 
+    	= "update(absent) - retourne null";
 
-    /** DisplayName : "update(nominal) - modifie le stockage et retourne l'objet modifié". */
-    public static final String DN_UPDATE_NOMINAL = "update(nominal) - modifie le stockage et retourne l'objet modifié";
+    /** "update(nominal) - modifie le stockage et retourne l'objet modifié" */
+    public static final String DN_UPDATE_NOMINAL 
+    	= "update(nominal) - modifie le stockage et retourne l'objet modifié";
 
-    /** DisplayName : "delete(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_DELETE_NULL = "delete(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "delete(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_DELETE_NULL 
+    	= "delete(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "delete(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)". */
-    public static final String DN_DELETE_ID_NULL = "delete(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)";
+    /** "delete(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)" */
+    public static final String DN_DELETE_ID_NULL 
+    	= "delete(id null) - jette ExceptionAppliParamNonPersistent (contrat du port)";
 
-    /** DisplayName : "delete(absent) - ne fait rien". */
-    public static final String DN_DELETE_ABSENT = "delete(absent) - ne fait rien";
+    /** "delete(absent) - ne fait rien" */
+    public static final String DN_DELETE_ABSENT 
+    	= "delete(absent) - ne fait rien";
 
-    /** DisplayName : "delete(nominal) - supprime l'élément et le rend introuvable". */
-    public static final String DN_DELETE_NOMINAL = "delete(nominal) - supprime l'élément et le rend introuvable";
+    /** "delete(nominal) - supprime l'élément et le rend introuvable" */
+    public static final String DN_DELETE_NOMINAL 
+    	= "delete(nominal) - supprime l'élément et le rend introuvable";
 
-    /** DisplayName : "count() - cohérent avec le DAO". */
+    /** "count() - cohérent avec le DAO" */
     public static final String DN_COUNT_NOMINAL = "count() - cohérent avec le DAO";
 
-    // *************************** ATTRIBUTS *******************************/
+    // ************************* ATTRIBUTS *******************************/
+
+
+    /**
+     * <div> 
+     * <p>Locale par défaut : {@code Locale.getDefault()} </p>
+     * </div> 
+     */
+    public static final Locale LOCALE_DEFAUT = Locale.getDefault();
 
     /**
      * <div>
@@ -310,7 +363,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p>DAO parent (accès aux IDs persistés pour préparer les objets métier).</p>
+     * <p>DAO parent 
+     * (accès aux IDs persistés pour préparer les objets métier).</p>
      * </div>
      */
     @Autowired
@@ -333,13 +387,16 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     private EntityManager entityManager;
     
     /**
-     * 
+     * <div>
+     * <p>JdbcTemplate pour manimuler directement la base en SQL 
+     * sans passer par Hibernate (risques avec le cache Hibernate).</p>
+     * </div>
      */
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
 
-    // ************************* METHODES **********************************/
+    // ************************ CONSTRUCTEUR *****************************/
 
     /**
      * <div>
@@ -350,8 +407,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         super();
     }
 
-    // ===================== CONFIGURATION SPRING =====================
+    
+    
+    // ===================== CONFIGURATION SPRING =======================//
 
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">
@@ -373,92 +434,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @EntityScan(basePackageClasses = {SousTypeProduitJPA.class, TypeProduitJPA.class})
     public static final class ConfigTest { // NOPMD by danyl on 01/02/2026 00:00
     }
-
-    
-    
-    // ============================== OUTILS ===============================
-
-    
-    
-    /**
-     * <div>
-     * <p>Retrouve l'ID persistant d'un {@link TypeProduitJPA} 
-     * par libellé.</p>
-     * </div>
-     *
-     * @param pLibelleParent : String : 
-     * libellé du TypeProduit
-     * @return Long :  ID persistant
-     */
-    private Long retrouverIdParentPersistantParLibelle(
-    		final String pLibelleParent) {
-    	
-        final TypeProduitJPA parent = this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(pLibelleParent);
-        assertThat(parent).isNotNull();
-        assertThat(parent.getIdTypeProduit()).isNotNull();
-        return parent.getIdTypeProduit();
-        
-    } // __________________________________________________________________
-    
     
 
-    /**
-     * <div>
-     * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} 
-     * par libellé.</p>
-     * </div>
-     *
-     * @param pLibelleEnfant : String
-     * @return Long
-     */
-    private Long retrouverIdEnfantPersistantParLibelle(
-    		final String pLibelleEnfant) {
-    	
-        final List<SousTypeProduitJPA> enfants 
-        = this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(pLibelleEnfant);
-        assertThat(enfants).isNotNull().isNotEmpty();
-        final SousTypeProduitJPA enfant = enfants.get(0);
-        assertThat(enfant).isNotNull();
-        assertThat(enfant.getIdSousTypeProduit()).isNotNull();
-        return enfant.getIdSousTypeProduit();
-        
-    } // __________________________________________________________________
+    
+    // =========================== TESTS ================================//
     
     
-
-    // ============================== TESTS ================================
     
-    
-
-    // ===================== creer =====================
-    
-    
-
-    /**
-	 * Vérifie la suppression directement en base via JdbcTemplate
-	 * (contourne complètement Hibernate et son cache)
-	 *
-	 * @param idSupprime L'ID de l'entité supprimée à vérifier
-	 * @throws Exception
-	 */
-	private void verifierSuppressionEnBase(final Long idSupprime) throws Exception {
-		
-	    // Vérification de l'absence de l'enregistrement
-	    final Integer count = jdbcTemplate.queryForObject(
-	        "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
-	        Integer.class, idSupprime
-	    );
-	
-	    assertThat(count)
-	        .as("L'enregistrement doit être physiquement supprimé de la base (expected: 0, actual: " + count + ")")
-	        .isEqualTo(0);
-	
-	    // Vérification supplémentaire via le service
-	    assertThat(this.service.findById(idSupprime))
-	        .as("Le service ne doit plus trouver l'objet supprimé")
-	        .isNull();
-	    
-	} // __________________________________________________________________
+    // =============================== CREER ==============================
 
 
 
@@ -707,12 +690,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
         }
     } // __________________________________________________________________
+
     
     
-    
-    // ===================== rechercherTous =====================
-    
-    
+    // ======================== RechercherTous ============================
+
+
 
     /**
      * <div>
@@ -831,9 +814,9 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     } // __________________________________________________________________
     
 
-
-    // ===================== findByObjetMetier =====================
-
+    
+    // ======================== findByObjetMetier =========================
+    
     
     
     /**
@@ -1006,11 +989,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
-    
 
-    // ===================== findByLibelle =====================
     
-    
+    // ========================== findByLibelle ===========================
+
+
 
     /**
      * <div>
@@ -1083,10 +1066,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     
     
 
-    // ===================== findByLibelleRapide =====================
+    // ======================== findByLibelleRapide =======================
     
     
-
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -1184,11 +1167,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     } // __________________________________________________________________
     
     
-
-    // ===================== findAllByParent =====================
+    
+    // ========================= findAllByParent ==========================
     
     
-
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -1297,12 +1280,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
-    
-
-    // ===================== findById =====================
 
     
-    
+    // ============================ findById ==============================
+
+
+
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -1373,10 +1356,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
+
     
-
-    // ===================== update =====================
-
+    // ============================= update ===============================
+    
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -1653,10 +1638,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         }
     } // __________________________________________________________________
     
+
     
-
-    // ===================== delete =====================
-
+    // ============================= delete ===============================
+    
     
     
     /**
@@ -1833,15 +1818,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .isEqualTo(3L);
         
     } // __________________________________________________________________
+    
+    
 
+    // ============================== Count ===============================
     
     
     
-    
-    
-     
-    // ===================== count =====================
-
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -1865,4 +1848,91 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
-}
+
+    
+    
+    // ============================ OUTILS ================================
+
+
+
+    /**
+	 * Vérifie la suppression directement en base via JdbcTemplate
+	 * (contourne complètement Hibernate et son cache)
+	 *
+	 * @param idSupprime L'ID de l'entité supprimée à vérifier
+	 * @throws Exception
+	 */
+	private void verifierSuppressionEnBase(final Long idSupprime) throws Exception {
+		
+	    // Vérification de l'absence de l'enregistrement
+	    final Integer count = jdbcTemplate.queryForObject(
+	        "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+	        Integer.class, idSupprime
+	    );
+	
+	    assertThat(count)
+	        .as("L'enregistrement doit être physiquement supprimé de la base (expected: 0, actual: " + count + ")")
+	        .isEqualTo(0);
+	
+	    // Vérification supplémentaire via le service
+	    assertThat(this.service.findById(idSupprime))
+	        .as("Le service ne doit plus trouver l'objet supprimé")
+	        .isNull();
+	    
+	} // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>Retrouve l'ID persistant d'un {@link TypeProduitJPA} 
+     * par libellé.</p>
+     * </div>
+     *
+     * @param pLibelleParent : String : 
+     * libellé du TypeProduit
+     * @return Long :  ID persistant
+     */
+    private Long retrouverIdParentPersistantParLibelle(
+    		final String pLibelleParent) {
+    	
+        final TypeProduitJPA parent 
+        = this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(pLibelleParent);
+        
+        assertThat(parent).isNotNull();
+        assertThat(parent.getIdTypeProduit()).isNotNull();
+        
+        return parent.getIdTypeProduit();
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} 
+     * par libellé.</p>
+     * </div>
+     *
+     * @param pLibelleEnfant : String
+     * @return Long
+     */
+    private Long retrouverIdEnfantPersistantParLibelle(
+    		final String pLibelleEnfant) {
+    	
+        final List<SousTypeProduitJPA> enfants 
+        = this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(pLibelleEnfant);
+        
+        assertThat(enfants).isNotNull().isNotEmpty();
+        
+        final SousTypeProduitJPA enfant = enfants.get(0);
+        assertThat(enfant).isNotNull();
+        assertThat(enfant.getIdSousTypeProduit()).isNotNull();
+        
+        return enfant.getIdSousTypeProduit();
+        
+    } // __________________________________________________________________
+    
+
+    
+} // FIN DE LA CLASSE SousTypeProduitGatewayJPAServiceIntegrationTest.-----
