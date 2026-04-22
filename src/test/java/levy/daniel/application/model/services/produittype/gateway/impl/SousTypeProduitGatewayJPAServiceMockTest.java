@@ -499,6 +499,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     // ============================== INIT ================================
 
+    
+    
     /**
      * <div>
      * <p>Initialise le service avec des DAO mockés.</p>
@@ -1331,7 +1333,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * vérifie que :
          * this.service.rechercherTous() avec DAO.findAll() retourne null
          * - jette une ExceptionTechniqueGateway
-         * - avec une message MSG_ERREUR_TECH_KO_STOCKAGE
+         * - avec un message MSG_ERREUR_TECH_KO_STOCKAGE
          */
         assertThatThrownBy(() -> this.service.rechercherTous())
             .isInstanceOf(ExceptionTechniqueGateway.class)
@@ -4231,7 +4233,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         /* 
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure that:
+         * Assure que :
          * - typeProduitDaoJPA.findById(ID_1) a été appelé une fois.
          * - sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA) a été appelé une fois.
          */

@@ -73,61 +73,61 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 @ExtendWith(MockitoExtension.class)
 public class ProduitGatewayJPAServiceMockTest {
 
-    // *************************** CONSTANTES ******************************/
-
-    /** Tag JUnit : tests de création. */
-    public static final String TAG_CREER = "servicesGateway-Creer";
+    // ************************* CONSTANTES ******************************/
     
     /**
      * "resource"
      */
     public static final String RESOURCE = "resource";
+    
+    /** "servicesGateway-Creer" */
+    public static final String TAG_CREER = "servicesGateway-Creer";
 
-    /** Tag JUnit : tests de recherche. */
+    /** "servicesGateway-Rechercher" */
     public static final String TAG_RECHERCHER = "servicesGateway-Rechercher";
 
-    /** Tag JUnit : tests d'update. */
+    /** "servicesGateway-Update" */
     public static final String TAG_UPDATE = "servicesGateway-Update";
 
-    /** Tag JUnit : tests de delete. */
+    /** "servicesGateway-Delete" */
     public static final String TAG_DELETE = "servicesGateway-Delete";
 
-    /** Tag JUnit : tests de count. */
+    /** "servicesGateway-Count" */
     public static final String TAG_COUNT = "servicesGateway-Count";
 
-    /** Tag JUnit : tests de pagination. */
+    /** "servicesGateway-Pagination" */
     public static final String TAG_PAGINATION = "servicesGateway-Pagination";
 
-    /** Tag JUnit : tests béton. */
+    /** "servicesGateway-Beton" */
     public static final String TAG_BETON = "servicesGateway-Beton";
 
-    /** Locale par défaut. */
-    public static final Locale LOCALE_DEFAUT = Locale.getDefault();
-
-    /** "vêtement". */
+    /** "vêtement" */
     public static final String VETEMENT = "vêtement";
 
-    /** "vêtement pour homme". */
+    /** "vêtement pour homme" */
     public static final String VETEMENT_HOMME = "vêtement pour homme";
 
-    /** "vêtement pour femme". */
+    /** "vêtement pour femme" */
     public static final String VETEMENT_FEMME = "vêtement pour femme";
 
-    /** "chemise". */
+    /** "chemise" */
     public static final String CHEMISE = "chemise";
 
-    /** "chemise à manches longues pour homme". */
-    public static final String CHEMISE_ML_HOMME = "chemise à manches longues pour homme";
+    /** "chemise à manches longues pour homme" */
+    public static final String CHEMISE_ML_HOMME 
+    	= "chemise à manches longues pour homme";
 
-    /** "chemise à manches courtes pour homme". */
-    public static final String CHEMISE_MC_HOMME = "chemise à manches courtes pour homme";
+    /** "chemise à manches courtes pour homme" */
+    public static final String CHEMISE_MC_HOMME 
+    	= "chemise à manches courtes pour homme";
     
     /**
      * "chemise à manches longues pour femme"
      */
-    public static final String CHEMISE_ML_FEMME = "chemise à manches longues pour femme";
+    public static final String CHEMISE_ML_FEMME 
+    	= "chemise à manches longues pour femme";
 
-    /** "sweatshirt pour homme". */
+    /** "sweatshirt pour homme" */
     public static final String SWEAT_HOMME = "sweatshirt pour homme";
 
     /** "   " */
@@ -136,78 +136,181 @@ public class ProduitGatewayJPAServiceMockTest {
     /** "boom" */
     public static final String BOOM = "boom";
 
-    /** Suffix de modif. */
+    /** " (modifié)" */
     public static final String SUFFIX_MODIF = " (modifié)";
 
-    /** Propriété de tri (Entity) : "produit". */
+    /** "produit" */
     public static final String PROP_TRI_PRODUIT = "produit";
 
-    /** Page number : 0. */
+    /** 0 */
     public static final int PAGE_0 = 0;
 
-    /** Page size : 5. */
+    /** 5 */
     public static final int SIZE_5 = 5;
 
-    /** Total elements : 10L. */
+    /** 10L */
     public static final long TOTAL_10 = 10L;
 
-    /** Message attendu : "Erreur Technique lors du stockage : ". */
-    public static final String MSG_PREFIX_ERREUR_TECH = ProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE;
+    /** "Erreur Technique lors du stockage : " */
+    public static final String MSG_PREFIX_ERREUR_TECH 
+    	= ProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE;
 
-    /** Message attendu : "Erreur Technique - Le stockage a retourné null.". */
-    public static final String MSG_ERREUR_TECH_KO_STOCKAGE = ProduitGatewayIService.ERREUR_TECHNIQUE_KO_STOCKAGE;
+    /** "Erreur Technique - Le stockage a retourné null." */
+    public static final String MSG_ERREUR_TECH_KO_STOCKAGE 
+    	= ProduitGatewayIService.ERREUR_TECHNIQUE_KO_STOCKAGE;
 
-    /** Message attendu : MESSAGE_CREER_KO_PARAM_NULL. */
-    public static final String MSG_CREER_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet métier passé en paramètre est null."</p>
+	 * </div>
+     */
+    public static final String MSG_CREER_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL;
 
-    /** Message attendu : MESSAGE_CREER_KO_LIBELLE_BLANK. */
-    public static final String MSG_CREER_KO_LIBELLE_BLANK = ProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un libellé blank
+	 * (null ou que des espaces)."</p>
+	 * </div> 
+     */
+    public static final String MSG_CREER_KO_LIBELLE_BLANK 
+    	= ProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK;
 
-    /** Message attendu : MESSAGE_CREER_KO_PARENT_NULL. */
-    public static final String MSG_CREER_KO_PARENT_NULL = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un parent null."</p>
+	 * </div>
+     */
+    public static final String MSG_CREER_KO_PARENT_NULL 
+    	= ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL;
     
-    /** Message attendu : MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK. */
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - le parent de l'objet à créer a un libellé blank
+	 * (null ou que des espaces)."</p>
+	 * </div> 
+     */
     public static final String MSG_CREER_KO_LIBELLE_PARENT_BLANK
         = ProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK;
 
-    /** Message attendu : MESSAGE_CREER_KO_PARENT_NON_PERSISTENT (préfixe). */
+    /** 
+     * <div>
+	 * <p>""Anomalie applicative - 
+	 * le parent de l'objet que vous voulez créer n'existe
+	 * pas déjà dans le stockage : "</p>
+	 * </div> 
+     */
     public static final String MSG_CREER_KO_PARENT_NON_PERSISTENT
         = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT;
 
-    /** Libellé trop long pour forcer une exception sur save(). */
+    /** "X".repeat(10_000) */
     public static final String LIBELLE_TROP_LONG = "X".repeat(10_000);
 
-    /** Message attendu : MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK. */
-    public static final String MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK = ProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - le libellé passé en paramètre est un 
+	 * libellé blank (null ou que des espaces)."</p>
+	 * </div> 
+     */
+    public static final String MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK 
+    	= ProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK;
 
-    /** Message attendu : MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL. */
-    public static final String MSG_FINDBYLIBELLERAPIDE_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - le contenu passé en paramètre est null."</p>
+	 * </div> 
+     */
+    public static final String MSG_FINDBYLIBELLERAPIDE_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL;
 
-    /** Message attendu : MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL. */
-    public static final String MSG_FINDALLBYPARENT_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet métier passé en paramètre est null."</p>
+	 * </div>
+     */
+    public static final String MSG_FINDALLBYPARENT_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL;
 
-    /** Message attendu : MESSAGE_FINDBYID_KO_PARAM_NULL. */
-    public static final String MSG_FINDBYID_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - l'identifiant passé en paramètre est null."</p>
+	 * </div>
+     */
+    public static final String MSG_FINDBYID_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL;
 
-    /** Message attendu : MESSAGE_UPDATE_KO_PARAM_NULL. */
-    public static final String MSG_UPDATE_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet métier passé en paramètre est null."</p>
+	 * </div>
+     */
+    public static final String MSG_UPDATE_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL;
 
-    /** Message attendu : MESSAGE_UPDATE_KO_LIBELLE_BLANK. */
-    public static final String MSG_UPDATE_KO_LIBELLE_BLANK = ProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un libellé blank
+	 * (null ou que des espaces)."</p>
+	 * </div> 
+     */
+    public static final String MSG_UPDATE_KO_LIBELLE_BLANK 
+    	= ProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK;
 
-    /** Message attendu : MESSAGE_UPDATE_KO_NON_PERSISTENT (préfixe). */
-    public static final String MSG_UPDATE_PREFIX_NON_PERSISTENT = ProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet que vous voulez modifier n'est pas persistant
+	 * (ID null) : "</p>
+	 * </div> 
+     */
+    public static final String MSG_UPDATE_PREFIX_NON_PERSISTENT 
+    	= ProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT;
 
-    /** Message attendu : MESSAGE_UPDATE_KO_PARENT_NULL. */
-    public static final String MSG_UPDATE_KO_PARENT_NULL = ProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un parent null."</p>
+	 * </div>
+     */
+    public static final String MSG_UPDATE_KO_PARENT_NULL 
+    	= ProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NULL;
 
-    /** Message attendu : MESSAGE_DELETE_KO_PARAM_NULL. */
-    public static final String MSG_DELETE_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet métier passé en paramètre est null."</p>
+	 * </div>
+     */
+    public static final String MSG_DELETE_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL;
 
-    /** Message attendu : MESSAGE_DELETE_KO_ID_NULL. */
-    public static final String MSG_DELETE_KO_ID_NULL = ProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un ID null."</p>
+	 * </div>
+     */
+    public static final String MSG_DELETE_KO_ID_NULL 
+    	= ProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL;
 
-    // *************************** ATTRIBUTS *******************************/
+    // ************************** ATTRIBUTS ******************************/
+    
+    /**
+     * <div> 
+     * <p>Locale par défaut = {@code Locale.getDefault()} </p>
+     * </div> 
+     */
+    public static final Locale LOCALE_DEFAUT = Locale.getDefault();
 
     /**
      * <div>
@@ -235,14 +338,30 @@ public class ProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>Service testé (injection des mocks).</p>
+     * <p>Service {@link ProduitGatewayJPAService}  
+     * <span style="font-weight:bold;">réel</span> 
+     * testé (avec injection des mocks).</p>
+     * <ul>
+     * <li>le service réel est instancié dans la méthode {@link #init()} 
+     * avant chaque test (@BeforeEach).</li>
+     * <li>@InjectMocks demande à Mockito de créer l’instance du service 
+     * puis d’y injecter automatiquement les dépendances mockées déclarées 
+     * dans la classe de test, typiquement les champs annotés avec @Mock.</li> 
+     * <li>@InjectMocks ne crée donc pas un mock du service. 
+     * Il crée ou prépare le service réel, puis il y injecte 
+     * les mocks disponibles.</li>
+     * </ul>
      * </div>
      */
     @InjectMocks
     private ProduitGatewayJPAService service;
+    
+    
 
-    // ************************* METHODES **********************************/
+    // ************************* CONSTRUCTEURS ***************************/
 
+    
+    
     /**
      * <div>
      * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
@@ -252,6 +371,12 @@ public class ProduitGatewayJPAServiceMockTest {
         super();
     }
 
+    
+
+    // ============================== INIT ================================
+
+    
+    
     /**
      * <div>
      * <p>Initialise le service avant chaque test.</p>
@@ -264,119 +389,16 @@ public class ProduitGatewayJPAServiceMockTest {
                 this.sousTypeProduitDaoJPA);
     }
 
-    // ============================ OUTILS TESTS ===========================
+    
 
-    /**
-     * <div>
-     * <p>Fabrique un Produit métier minimal.</p>
-     * </div>
-     *
-     * @param pLibelle : String
-     * @param pId : Long
-     * @param pParent : SousTypeProduitI
-     * @return Produit
-     */
-    private Produit fabriquerProduitMetier(
-            final String pLibelle,
-            final Long pId,
-            final SousTypeProduitI pParent) {
+    // **************************** TESTS ********************************/
+    
+    
+    
+    // =============================== CREER ==============================
 
-        final Produit produit = new Produit();
-        produit.setIdProduit(pId);
-        produit.setProduit(pLibelle);
-        produit.setSousTypeProduit(pParent);
-        return produit;
-    }
 
-    /**
-     * <div>
-     * <p>Fabrique un parent métier persistant.</p>
-     * </div>
-     *
-     * @param pLibelleSousType : String
-     * @return SousTypeProduitI
-     */
-    private SousTypeProduit fabriquerParentMetierPersistant(final String pLibelleSousType) {
-        final TypeProduit typeProduit = new TypeProduit();
-        typeProduit.setIdTypeProduit(1L);
-        typeProduit.setTypeProduit(VETEMENT);
-
-        final SousTypeProduit parent = new SousTypeProduit();
-        parent.setIdSousTypeProduit(1L);
-        parent.setSousTypeProduit(pLibelleSousType);
-        parent.setTypeProduit(typeProduit);
-
-        return parent;
-    }
-
-    /**
-     * <div>
-     * <p>Fabrique une entity ProduitJPA minimale.</p>
-     * </div>
-     *
-     * @param pLibelleProduit : String
-     * @param pLibelleSousType : String
-     * @return ProduitJPA
-     */
-    private ProduitJPA fabriquerProduitJPA(
-            final String pLibelleProduit,
-            final String pLibelleSousType) {
-
-        final TypeProduitJPA typeProduitJPA = new TypeProduitJPA();
-        typeProduitJPA.setIdTypeProduit(1L);
-        typeProduitJPA.setTypeProduit(VETEMENT);
-
-        final SousTypeProduitJPA sousTypeProduitJPA = new SousTypeProduitJPA();
-        sousTypeProduitJPA.setIdSousTypeProduit(1L);
-        sousTypeProduitJPA.setSousTypeProduit(pLibelleSousType);
-        sousTypeProduitJPA.setTypeProduit(typeProduitJPA);
-
-        final ProduitJPA produitJPA = new ProduitJPA();
-        produitJPA.setProduit(pLibelleProduit);
-        produitJPA.setSousTypeProduit(sousTypeProduitJPA);
-
-        return produitJPA;
-    }
-
-    /**
-     * <div>
-     * <p>Fabrique un parent JPA persistant.</p>
-     * </div>
-     *
-     * @param pLibelleSousType : String
-     * @return SousTypeProduitJPA
-     */
-    private SousTypeProduitJPA fabriquerParentJPAPersistant(final String pLibelleSousType) {
-        final TypeProduitJPA typeProduitJPA = new TypeProduitJPA();
-        typeProduitJPA.setIdTypeProduit(1L);
-        typeProduitJPA.setTypeProduit(VETEMENT);
-
-        final SousTypeProduitJPA parentJPA = new SousTypeProduitJPA();
-        parentJPA.setIdSousTypeProduit(1L);
-        parentJPA.setSousTypeProduit(pLibelleSousType);
-        parentJPA.setTypeProduit(typeProduitJPA);
-
-        return parentJPA;
-    }
-
-    /**
-     * <div>
-     * <p>Retourne une chaîne vide si p est null.</p>
-     * </div>
-     *
-     * @param p : Object
-     * @return String
-     */
-    private static String safeMessage(final Object p) {
-        if (p == null) {
-            return "";
-        }
-        final String s = p.toString();
-        return (s != null) ? s : "";
-    }
-
-    // =============================== CREER ===============================
-
+    
     /**
      * <div>
      * <p>creer(null) lève ExceptionAppliParamNull.</p>
@@ -665,12 +687,12 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.entityManager);
         
     } // __________________________________________________________________
-    
-    
 
-    // ============================ RECHERCHER =============================
     
     
+    // ======================== RechercherTous ============================
+
+
 
     /**
      * <div>
@@ -806,6 +828,10 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
     
+    // ================== rechercherTousParPage ===========================
+    
+    
+    
     /**
      * <div>
      * <p>rechercherTousParPage(DAO retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
@@ -921,10 +947,6 @@ public class ProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
-    
-    
-    
-    // ============================= PAGINATION ============================
 	
 	
 	
@@ -960,6 +982,8 @@ public class ProduitGatewayJPAServiceMockTest {
 	    verifyNoInteractions(this.entityManager);
 	    
 	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
@@ -1006,7 +1030,13 @@ public class ProduitGatewayJPAServiceMockTest {
 	    verifyNoInteractions(this.entityManager);
 	    
 	} // __________________________________________________________________
+    
 
+    
+    // ======================== findByObjetMetier =========================
+    
+    
+    
 	/**
      * <div>
      * <p>findByObjetMetier(null) lève ExceptionAppliParamNull.</p>
@@ -1349,8 +1379,12 @@ public class ProduitGatewayJPAServiceMockTest {
 
     } // __________________________________________________________________
     
- 
+
     
+    // ========================== findByLibelle ===========================
+
+
+
     /**
      * <div>
      * <p>findByLibelle(blank) lève ExceptionAppliLibelleBlank.</p>
@@ -1551,6 +1585,10 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
 
+    // ======================== findByLibelleRapide =======================
+    
+    
+    
     /**
      * <div>
      * <p>findByLibelleRapide(null) lève ExceptionAppliParamNull.</p>
@@ -1774,7 +1812,13 @@ public class ProduitGatewayJPAServiceMockTest {
 	    verify(this.produitDaoJPA, times(1)).findByProduitContainingIgnoreCase("INCONNU");
 	    
 	} // __________________________________________________________________
-
+    
+    
+    
+    // ========================= findAllByParent ==========================
+    
+    
+    
 	/**
      * <div>
      * <p>findAllByParent(null) lève ExceptionAppliParentNull.</p>
@@ -2036,6 +2080,8 @@ public class ProduitGatewayJPAServiceMockTest {
 	    verify(this.produitDaoJPA, times(1)).findAllBySousTypeProduit(any(SousTypeProduitJPA.class));
 	    
 	} // __________________________________________________________________
+	
+	
 
 	/**
      * <div>
@@ -2082,7 +2128,11 @@ public class ProduitGatewayJPAServiceMockTest {
 
     } // __________________________________________________________________
     
+
     
+    // ============================ findById ==============================
+
+
 
     /**
      * <div>
@@ -2211,11 +2261,11 @@ public class ProduitGatewayJPAServiceMockTest {
 
     } // __________________________________________________________________
     
-    
 
-    // =============================== UPDATE ==============================
     
-
+    // ============================= update ===============================
+    
+    
     
     /**
      * <div>
@@ -2780,13 +2830,13 @@ public class ProduitGatewayJPAServiceMockTest {
 	    verifyNoInteractions(this.entityManager);
 
 	} // __________________________________________________________________
-	
     
 
-    // =============================== DELETE ==============================
-
     
-	
+    // ============================= delete ===============================
+    
+    
+    
     /**
      * <div>
      * <p>delete(null) lève ExceptionAppliParamNull.</p>
@@ -3054,7 +3104,7 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
 
-    // =============================== COUNT ===============================
+    // ============================== Count ===============================
     
     
     
@@ -3105,7 +3155,7 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
 
-    // ===================== TESTS BETON (sanity / invariants) =====================
+    // ============== TESTS BETON (sanity / invariants) ===================
     
 
     /**
@@ -3123,5 +3173,141 @@ public class ProduitGatewayJPAServiceMockTest {
         
     } // __________________________________________________________________
 
+
+
+    // ============================ OUTILS TESTS ===========================
+
     
-}
+    
+    /**
+     * <div>
+     * <p>Fabrique un Produit métier minimal.</p>
+     * </div>
+     *
+     * @param pLibelle : String
+     * @param pId : Long
+     * @param pParent : SousTypeProduitI
+     * @return Produit
+     */
+    private Produit fabriquerProduitMetier(
+            final String pLibelle,
+            final Long pId,
+            final SousTypeProduitI pParent) {
+
+        final Produit produit = new Produit();
+        produit.setIdProduit(pId);
+        produit.setProduit(pLibelle);
+        produit.setSousTypeProduit(pParent);
+        
+        return produit;
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Fabrique un parent métier persistant.</p>
+     * </div>
+     *
+     * @param pLibelleSousType : String
+     * @return SousTypeProduitI
+     */
+    private SousTypeProduit fabriquerParentMetierPersistant(
+    		final String pLibelleSousType) {
+    	
+        final TypeProduit typeProduit = new TypeProduit();
+        typeProduit.setIdTypeProduit(1L);
+        typeProduit.setTypeProduit(VETEMENT);
+
+        final SousTypeProduit parent = new SousTypeProduit();
+        parent.setIdSousTypeProduit(1L);
+        parent.setSousTypeProduit(pLibelleSousType);
+        parent.setTypeProduit(typeProduit);
+
+        return parent;
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Fabrique une entity ProduitJPA minimale.</p>
+     * </div>
+     *
+     * @param pLibelleProduit : String
+     * @param pLibelleSousType : String
+     * @return ProduitJPA
+     */
+    private ProduitJPA fabriquerProduitJPA(
+            final String pLibelleProduit,
+            final String pLibelleSousType) {
+
+        final TypeProduitJPA typeProduitJPA = new TypeProduitJPA();
+        typeProduitJPA.setIdTypeProduit(1L);
+        typeProduitJPA.setTypeProduit(VETEMENT);
+
+        final SousTypeProduitJPA sousTypeProduitJPA = new SousTypeProduitJPA();
+        sousTypeProduitJPA.setIdSousTypeProduit(1L);
+        sousTypeProduitJPA.setSousTypeProduit(pLibelleSousType);
+        sousTypeProduitJPA.setTypeProduit(typeProduitJPA);
+
+        final ProduitJPA produitJPA = new ProduitJPA();
+        produitJPA.setProduit(pLibelleProduit);
+        produitJPA.setSousTypeProduit(sousTypeProduitJPA);
+
+        return produitJPA;
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Fabrique un parent JPA persistant.</p>
+     * </div>
+     *
+     * @param pLibelleSousType : String
+     * @return SousTypeProduitJPA
+     */
+    private SousTypeProduitJPA fabriquerParentJPAPersistant(
+    		final String pLibelleSousType) {
+    	
+        final TypeProduitJPA typeProduitJPA = new TypeProduitJPA();
+        typeProduitJPA.setIdTypeProduit(1L);
+        typeProduitJPA.setTypeProduit(VETEMENT);
+
+        final SousTypeProduitJPA parentJPA = new SousTypeProduitJPA();
+        parentJPA.setIdSousTypeProduit(1L);
+        parentJPA.setSousTypeProduit(pLibelleSousType);
+        parentJPA.setTypeProduit(typeProduitJPA);
+
+        return parentJPA;
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Retourne une chaîne vide si p est null.</p>
+     * </div>
+     *
+     * @param p : Object
+     * @return String
+     */
+    private static String safeMessage(final Object p) {
+    	
+        if (p == null) {
+            return "";
+        }
+        
+        final String s = p.toString();
+        return (s != null) ? s : "";
+        
+    } // __________________________________________________________________
+    
+    
+    
+} // FIN DE LA CLASSE ProduitGatewayJPAServiceMockTest.--------------------
