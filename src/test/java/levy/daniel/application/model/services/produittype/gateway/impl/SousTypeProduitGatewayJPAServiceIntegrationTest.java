@@ -96,13 +96,16 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public static final String PROFILE_TEST = "test";
 
     /** "classpath:truncate-test.sql" */
-    public static final String CLASSPATH_TRUNCATE_SQL = "classpath:truncate-test.sql";
+    public static final String CLASSPATH_TRUNCATE_SQL 
+    	= "classpath:truncate-test.sql";
 
     /** "classpath:data-test.sql" */
-    public static final String CLASSPATH_DATA_SQL = "classpath:data-test.sql";
+    public static final String CLASSPATH_DATA_SQL 
+    	= "classpath:data-test.sql";
 
     /** "SousTypeProduitGatewayJPAService" */
-    public static final String QUALIFIER_SERVICE = "SousTypeProduitGatewayJPAService";
+    public static final String QUALIFIER_SERVICE 
+    	= "SousTypeProduitGatewayJPAService";
 
     /** "servicesGateway-Creer" */
     public static final String TAG_CREER = "servicesGateway-Creer";
@@ -111,10 +114,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public static final String TAG_RECHERCHER = "servicesGateway-Rechercher";
 
     /** "servicesGateway-FindByObjetMetier" */
-    public static final String TAG_FINDBYOBJETMETIER = "servicesGateway-FindByObjetMetier";
+    public static final String TAG_FINDBYOBJETMETIER 
+    	= "servicesGateway-FindByObjetMetier";
 
     /** "servicesGateway-RechercherRapide" */
-    public static final String TAG_RECHERCHER_RAPIDE = "servicesGateway-RechercherRapide";
+    public static final String TAG_RECHERCHER_RAPIDE 
+    	= "servicesGateway-RechercherRapide";
 
     /** "servicesGateway-Pagination" */
     public static final String TAG_PAGINATION = "servicesGateway-Pagination";
@@ -418,6 +423,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      */
     public static final String SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID
         = "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?";
+    
+    /**
+     * "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?"
+     */
+    public static final String DELETE_FROM_STP_WHERE_ID_STP 
+    	= "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?";
 
     // ************************* ATTRIBUTS *******************************/
 
@@ -1175,7 +1186,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
              */
             if (idCree != null) {
                 this.jdbcTemplate.update(
-                        "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                        DELETE_FROM_STP_WHERE_ID_STP,
                         idCree);
             }
 
@@ -1592,8 +1603,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     } // __________________________________________________________________
     
-
     
+        
     // ======================== findByObjetMetier =========================
 
 
@@ -3702,7 +3713,221 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     } // __________________________________________________________________
 
+    
+    
+    /**
+     * <div>
+     * <p>garantit que update(sans modification) :</p>
+     * <ul>
+     * <li>retourne un objet non null ;</li>
+     * <li>retourne l'objet persistant inchangé ;</li>
+     * <li>ne modifie ni le libellé ni le parent en base ;</li>
+     * <li>n'ajoute ni ne supprime aucune ligne.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(sans modification) - retourne l'objet persistant inchangé")
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testUpdateSansModificationOk() throws Exception {
 
+        /* ARRANGE :
+         * lit (en SQL) le nombre d'enregistrements dans le stockage 
+         * avant l'appel du service.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        /* Trouve un ID existant dans le stockage. */
+        final Long idEnfant 
+        	= retrouverIdEnfantPersistantParLibelle(
+        			LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        /* 
+         * Lit (en SQL) le libellé enfant dans le stockage 
+         * pour l'ID testé. */
+        final String libelleAvant = this.jdbcTemplate.queryForObject(
+                SELECT_STP_FROM_STP_WHERE_ID,
+                String.class,
+                idEnfant);
+
+        /* Lit l'ID parent existant dans le stockage pour l'ID testé. */
+        final Long idParentAvant = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
+
+        /* Instancie un objet métier existant forcément dans le stockage. */
+        final SousTypeProduit stp = new SousTypeProduit(
+                idEnfant,
+                libelleAvant,
+                new TypeProduit(idParentAvant, LIBELLE_PARENT_VETEMENT));
+
+        assertThat(countAvant).isNotNull();
+        assertThat(libelleAvant).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+        assertThat(idParentAvant).isNotNull();
+
+        /* ACT :
+         * appelle this.service.update(stp)
+         * sans modifier les données persistées.
+         */
+        final SousTypeProduit retour = this.service.update(stp);
+
+        /* ASSERT :
+         * vérifie que l'objet retourné est inchangé.
+         */
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(retour.getSousTypeProduit()).isEqualTo(libelleAvant);
+        assertThat(retour.getTypeProduit()).isNotNull();
+        assertThat(retour.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentAvant);
+
+        /* Lit le libellé enfant en base après l'appel. */
+        final String libelleApres = this.jdbcTemplate.queryForObject(
+                SELECT_STP_FROM_STP_WHERE_ID,
+                String.class,
+                idEnfant);
+
+        /* Lit l'ID parent en base après l'appel. */
+        final Long idParentApres = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
+
+        assertThat(libelleApres).isEqualTo(libelleAvant);
+        assertThat(idParentApres).isEqualTo(idParentAvant);
+
+        this.entityManager.clear();
+
+        /* Relit l'objet via le service. */
+        final SousTypeProduit relu = this.service.findById(idEnfant);
+
+        assertThat(relu).isNotNull();
+        assertThat(relu.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(relu.getSousTypeProduit()).isEqualTo(libelleAvant);
+        assertThat(relu.getTypeProduit()).isNotNull();
+        assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentAvant);
+
+        /* Relit le nombre de lignes après l'appel
+         * et vérifie que le total n'a pas changé.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que update(sans modification) :</p>
+     * <ul>
+     * <li>retourne un objet métier non null ;</li>
+     * <li>retourne l'objet persistant inchangé ;</li>
+     * <li>ne modifie rien dans le stockage ;</li>
+     * <li>reste cohérent avec une relecture par le service.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(sans modification) - retourne l'objet persistant inchangé")
+    @Test
+    public void testUpdateSansModification() throws Exception {
+
+        /* ARRANGE :
+         * trouve un objet existant dans le stockage.
+         */
+        final Long idEnfant =
+                retrouverIdEnfantPersistantParLibelle(LIBELLE_ENFANT_VETEMENT_HOMME);
+
+        /* Lit (en SQL) le libellé enfant dans le stockage. */
+        final String libelleAvant = this.jdbcTemplate.queryForObject(
+                SELECT_STP_FROM_STP_WHERE_ID,
+                String.class,
+                idEnfant);
+
+        /* Lit (en SQL) l'ID du parent dans le stockage. */
+        final Long idParentAvant = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
+
+        /* Lit (en SQL) le nombre d'enregistrements dans le stockage. */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+        
+        assertThat(libelleAvant).isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+        assertThat(idParentAvant).isNotNull();
+        assertThat(countAvant).isNotNull();
+
+        /* Instancie un objet métier identique à l'existant. */
+        final SousTypeProduit sansModification = new SousTypeProduit(
+                idEnfant,
+                libelleAvant,
+                new TypeProduit(idParentAvant, LIBELLE_PARENT_VETEMENT));
+
+        /* ACT :
+         * appelle this.service.update(sansModification)
+         * sans la moindre modification par rapport à l'existant.
+         */
+        final SousTypeProduit retour = this.service.update(sansModification);
+
+        /* ASSERT :
+         * vérifie que l'application ne réagit pas
+         * et ne modifie rien.
+         */
+        assertThat(retour).isNotNull();
+        assertThat(retour).isNotSameAs(sansModification);
+        assertThat(retour.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(retour.getSousTypeProduit()).isEqualTo(libelleAvant);
+        assertThat(retour.getTypeProduit()).isNotNull();
+        assertThat(retour.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentAvant);
+
+        /* Lit (en SQL) le libellé enfant dans le stockage après update(...). */
+        final String libelleApres = this.jdbcTemplate.queryForObject(
+                SELECT_STP_FROM_STP_WHERE_ID,
+                String.class,
+                idEnfant);
+
+        /* Lit (en SQL) l'ID du parent dans le stockage après update(...). */
+        final Long idParentApres = this.jdbcTemplate.queryForObject(
+                SELECT_TP_FROM_STP_WHERE_ID,
+                Long.class,
+                idEnfant);
+
+        /* Lit (en SQL) le nombre d'enregistrements dans le stockage après update(...). */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(libelleApres).isEqualTo(libelleAvant);
+        assertThat(idParentApres).isEqualTo(idParentAvant);
+        assertThat(countApres).isEqualTo(countAvant);
+
+        this.entityManager.clear();
+
+        /* Relit l'objet par le service. */
+        final SousTypeProduit relu = this.service.findById(idEnfant);
+
+        assertThat(relu).isNotNull();
+        assertThat(relu.getIdSousTypeProduit()).isEqualTo(idEnfant);
+        assertThat(relu.getSousTypeProduit()).isEqualTo(libelleAvant);
+        assertThat(relu.getTypeProduit()).isNotNull();
+        assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idParentAvant);
+
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -3797,8 +4022,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     } // __________________________________________________________________
 
-
-
+    
+    
     /**
      * <div>
      * <p>garantit que update(parent modifié) :</p>
@@ -4160,7 +4385,123 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
                 if (countRestant != null && countRestant.intValue() > 0) {
                     this.jdbcTemplate.update(
-                            "DELETE FROM SOUS_TYPES_PRODUIT WHERE ID_SOUS_TYPE_PRODUIT = ?",
+                            DELETE_FROM_STP_WHERE_ID_STP,
+                            idSupprime);
+                }
+            }
+
+        }
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que delete(double suppression) :</p>
+     * <ul>
+     * <li>supprime réellement la ligne lors du premier appel ;</li>
+     * <li>ne réagit pas lors du second appel ;</li>
+     * <li>ne recrée rien dans le stockage ;</li>
+     * <li>laisse le nombre total d'enregistrements inchangé après le second appel.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(double suppression) - ne réagit pas au second appel")
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testDeleteDoubleSuppression() throws Exception {
+
+        Long idSupprime = null;
+
+        try {
+
+            /* ARRANGE :
+             * lit (en SQL) le nombre d'enregistrements
+             * dans le stockage avant création.
+             */
+            final Long countAvant = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+            
+            assertThat(countAvant).isNotNull();
+
+            /* 
+             * Crée un parent de l'objet métier 
+             * forcément existant dans le stockage. */
+            final Long idParent =
+                    retrouverIdParentPersistantParLibelle(
+                    		LIBELLE_PARENT_VETEMENT);
+
+            final TypeProduit parent =
+                    new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
+           
+
+            /* 
+             * Crée un objet métier persistant 
+             * dédié au test (à supprimer). */
+            final SousTypeProduit cree = this.service.creer(
+                    new SousTypeProduit(null, LIBELLE_A_SUPPRIMER, parent));
+
+            assertThat(cree).isNotNull();
+            assertThat(cree.getIdSousTypeProduit()).isNotNull();
+
+            idSupprime = cree.getIdSousTypeProduit();
+
+            /* ACT :
+             * appelle une première fois this.service.delete(cree).
+             */
+            this.service.delete(cree);
+
+            /* ASSERT :
+             * vérifie la suppression réelle dans le stockage.
+             */
+            this.verifierSuppressionEnBase(idSupprime);
+
+            final Long countApresPremiereSuppression 
+            	= this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
+            assertThat(countApresPremiereSuppression).isEqualTo(countAvant);
+
+            /* ACT :
+             * appelle une seconde fois this.service.delete(cree)
+             * sur le même objet déjà supprimé.
+             */
+            this.service.delete(cree);
+
+            /* ASSERT :
+             * vérifie que le stockage reste inchangé
+             * après ce second appel.
+             */
+            this.verifierSuppressionEnBase(idSupprime);
+
+            final Long countApresSecondeSuppression 
+            	= this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
+            assertThat(countApresSecondeSuppression)
+            	.isEqualTo(countApresPremiereSuppression);
+
+        } finally {
+
+            /* Nettoyage de sécurité :
+             * supprime la ligne si elle existe encore dans le stockage.
+             */
+            if (idSupprime != null) {
+                final Integer countRestant = this.jdbcTemplate.queryForObject(
+                        SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                        Integer.class,
+                        idSupprime);
+
+                if (countRestant != null && countRestant.intValue() > 0) {
+                    this.jdbcTemplate.update(
+                            DELETE_FROM_STP_WHERE_ID_STP,
                             idSupprime);
                 }
             }
@@ -4274,8 +4615,128 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          */
         assertThat(viaService).isEqualTo(viaDao);
 
-    } // __________________________________________________________________    
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que count() suit l'état du stockage :</p>
+     * <ul>
+     * <li>retourne le total initial du stockage ;</li>
+     * <li>augmente de 1 après creer(...) ;</li>
+     * <li>revient au total initial après delete(...) ;</li>
+     * <li>reste cohérent avec les lectures SQL directes.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_COUNT)
+    @DisplayName("count(après création puis suppression) - suit l'état du stockage")
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void testCountApresCreationPuisSuppression() throws Exception {
 
+        Long idCree = null;
+
+        try {
+
+            /* ARRANGE :
+             * lit (en SQL) le nombre d'enregistrements
+             * dans le stockage avant création.
+             */
+            final Long countAvantSql = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
+            /* Lit le nombre d'enregistrements
+             * dans le stockage via le service.
+             */
+            final long countAvantService = this.service.count();
+            
+            assertThat(countAvantSql).isNotNull();
+            assertThat(countAvantService).isEqualTo(countAvantSql.longValue());
+
+            /* Recherche un parent forcément existant dans le stockage. */
+            final Long idParent =
+                    retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+            final TypeProduit parent =
+                    new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
+
+            /* ACT :
+             * appelle this.service.creer(...)
+             * pour ajouter un nouvel objet dans le stockage.
+             */
+            final SousTypeProduit cree = this.service.creer(
+                    new SousTypeProduit(null, LIBELLE_A_SUPPRIMER, parent));
+
+            assertThat(cree).isNotNull();
+            assertThat(cree.getIdSousTypeProduit()).isNotNull();
+
+            idCree = cree.getIdSousTypeProduit();
+
+            /* ASSERT :
+             * lit (en SQL) le nombre d'enregistrements
+             * dans le stockage après création.
+             */
+            final Long countApresCreationSql = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
+            /* Lit le nombre d'enregistrements
+             * dans le stockage via le service après création.
+             */
+            final long countApresCreationService = this.service.count();
+
+            assertThat(countApresCreationSql).isNotNull();
+            assertThat(countApresCreationSql).isEqualTo(countAvantSql + 1L);
+            assertThat(countApresCreationService).isEqualTo(countApresCreationSql.longValue());
+
+            /* ACT :
+             * appelle this.service.delete(cree).
+             */
+            this.service.delete(cree);
+
+            /* ASSERT :
+             * lit (en SQL) le nombre d'enregistrements
+             * dans le stockage après suppression.
+             */
+            final Long countApresSuppressionSql = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                    Long.class);
+
+            /* Lit le nombre d'enregistrements
+             * dans le stockage via le service après suppression.
+             */
+            final long countApresSuppressionService = this.service.count();
+
+            assertThat(countApresSuppressionSql).isNotNull();
+            assertThat(countApresSuppressionSql).isEqualTo(countAvantSql);
+            assertThat(countApresSuppressionService).isEqualTo(countApresSuppressionSql.longValue());
+
+        } finally {
+
+            /* Nettoyage de sécurité :
+             * supprime la ligne si elle existe encore dans le stockage.
+             */
+            if (idCree != null) {
+                final Integer countRestant = this.jdbcTemplate.queryForObject(
+                        SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_ID,
+                        Integer.class,
+                        idCree);
+
+                if (countRestant != null && countRestant.intValue() > 0) {
+                    this.jdbcTemplate.update(
+                            DELETE_FROM_STP_WHERE_ID_STP,
+                            idCree);
+                }
+            }
+
+        }
+
+    } // __________________________________________________________________
+    
     
     
     // ============================ OUTILS ================================
@@ -4283,7 +4744,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
 
     /**
-	 * Vérifie la suppression directement en base via JdbcTemplate
+	 * Vérifie au moyen d'assertions assertJ 
+	 * la suppression directement en base via JdbcTemplate
 	 * (contourne complètement Hibernate et son cache)
 	 *
 	 * @param idSupprime L'ID de l'entité supprimée à vérifier
