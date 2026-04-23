@@ -484,6 +484,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
 
+    
     // ************************ CONSTRUCTEUR *****************************/
 
     /**
@@ -529,7 +530,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     
     
     
-    // =============================== CREER ================================
+    // =============================== CREER ==============================
 
 
 
@@ -550,10 +551,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testCreerParamNullExceptionAppliParamNull() {
 
         /* ARRANGE :
-         * lit d'abord l'état physique de la base
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu.
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -564,17 +566,19 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         /* ACT - ASSERT :
          * garantit que this.service.creer(null)
          * - jette une ExceptionAppliParamNull
-         * - émet un message MESSAGE_CREER_KO_PARAM_NULL.
+         * - émet un message MESSAGE_CREER_KO_PARAM_NULL 
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
 
         /* ASSERT :
-         * relit ensuite l'état physique de la base
-         * après l'échec contractuel,
-         * afin de prouver que l'appel
-         * n'a produit aucun effet d'écriture.
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -604,10 +608,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testCreerLibelleBlankExceptionAppliLibelleBlank() {
     	
     	/* ARRANGE :
-         * lit d'abord l'état physique de la base
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu.
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -628,17 +633,19 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         /* ACT - ASSERT :
          * garantit que this.service.creer(stp)
          * - jette une ExceptionAppliLibelleBlank
-         * - émet un message MESSAGE_CREER_KO_LIBELLE_BLANK.
+         * - émet un message MESSAGE_CREER_KO_LIBELLE_BLANK 
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
         
         /* ASSERT :
-         * relit ensuite l'état physique de la base
-         * après l'échec contractuel,
-         * afin de prouver que l'appel
-         * n'a produit aucun effet d'écriture.
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -668,10 +675,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testCreerParentNullExceptionAppliParentNull() {
 
     	/* ARRANGE :
-         * lit d'abord l'état physique de la base
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu.
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -697,10 +705,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL);
 
         /* ASSERT :
-         * relit ensuite l'état physique de la base
-         * après l'échec contractuel,
-         * afin de prouver que l'appel
-         * n'a produit aucun effet d'écriture.
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -730,10 +739,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testCreerParentLibelleBlankExceptionAppliLibelleBlank() {
 
     	/* ARRANGE :
-         * lit d'abord l'état physique de la base
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu.
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -761,10 +771,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK);
 
         /* ASSERT :
-         * relit ensuite l'état physique de la base
-         * après l'échec contractuel,
-         * afin de prouver que l'appel
-         * n'a produit aucun effet d'écriture.
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -794,10 +805,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testCreerParentIdNullExceptionTechniqueGatewayNonPersistent() {
 
     	/* ARRANGE :
-         * lit d'abord l'état physique de la base
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu.
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -828,10 +840,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                             + LIBELLE_PARENT_VETEMENT);
 
         /* ASSERT :
-         * relit ensuite l'état physique de la base
-         * après l'échec contractuel,
-         * afin de prouver que l'appel
-         * n'a produit aucun effet d'écriture.
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -862,10 +875,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
 
     	/* ARRANGE :
-         * lit d'abord l'état physique de la base
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu.
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -895,10 +909,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                             + LIBELLE_PARENT_VETEMENT);
 
         /* ASSERT :
-         * relit ensuite l'état physique de la base
-         * après l'échec contractuel,
-         * afin de prouver que l'appel
-         * n'a produit aucun effet d'écriture.
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -3271,8 +3286,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testUpdateParamNullExceptionAppliParamNull() {
 
-        /* ARRANGE :
-         * lit le nombre de lignes avant l'appel.
+    	/* ARRANGE :
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -3292,8 +3311,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL);
 
         /* ASSERT :
-         * relit le nombre de lignes après l'appel
-         * et vérifie que le total n'a pas changé.
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel,
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,

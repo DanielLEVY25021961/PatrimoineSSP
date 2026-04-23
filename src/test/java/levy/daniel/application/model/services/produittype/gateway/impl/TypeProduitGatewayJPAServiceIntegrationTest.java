@@ -59,7 +59,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * dans le présent test via {@link ConfigTest}</li>
  * <li>Des scripts SQL pour initialiser la base :
  * <code>truncate-test.sql</code> puis <code>data-test.sql</code></li>
- * <li>Un profil SPRING "test" activé par le test.</li>
+ * <li>Un profile-group SPRING "test-jpa" activé par le test.</li>
  * </ul>
  *
  * <p>
@@ -83,7 +83,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 @ContextConfiguration(classes = TypeProduitGatewayJPAServiceIntegrationTest.ConfigTest.class)
 public class TypeProduitGatewayJPAServiceIntegrationTest {
 
-    // *************************** CONSTANTES ******************************/
+    // ************************* CONSTANTES ******************************/
 
     /** "test" */
     public static final String PROFILE_TEST = "test";
@@ -466,9 +466,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // ************************* METHODES **********************************/
     
-
+    
+    // ************************ CONSTRUCTEUR *****************************/
+    
     /**
      * <div>
      * <p>CONSTRUCTEUR D'ARITE 1.</p>
@@ -486,7 +487,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
     
     
- // =============================== CONFIGURATION =========================
+    // ===================== CONFIGURATION SPRING =======================//
+
     
     
     /**
@@ -513,130 +515,11 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
     
     
-    // =========================== OUTILS TESTS =========================
-
-    
-    
-    /**
-     * <div>
-     * <p>Vérifie que la liste est triée par libellé (ordre naturel).</p>
-     * </div>
-     *
-     * @param pListe : List&lt;TypeProduit&gt
-     */
-    private static void assertListeTrieeParLibelle(
-    		final List<TypeProduit> pListe) {
-    	
-        if ((pListe == null) || (pListe.size() < 2)) {
-            return;
-        }
-
-        for (int i = 0; i < pListe.size() - 1; i++) {
-            final String courant = pListe.get(i).getTypeProduit();
-            final String suivant = pListe.get(i + 1).getTypeProduit();
-            assertThat(Comparator.<String>naturalOrder().compare(courant, suivant))
-                .isLessThanOrEqualTo(0);
-        }
-    } // __________________________________________________________________
-    
-    
-    
-    // ========================= HELPERS ===================================
-    
-  
-    
-    /**
-     * <div>
-     * <p>Lit le libellé TYPE_PRODUIT physiquement 
-     * en base (bypass Hibernate).</p>
-     * </div>
-     *
-     * @param pId Long : ID_TYPE_PRODUIT.
-     * @return String : valeur de la colonne TYPE_PRODUIT.
-     */
-    private String lireLibelleTypeProduitEnBase(final Long pId) {
-    	
-        return this.jdbcTemplate.queryForObject(
-            "SELECT TYPE_PRODUIT FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
-            String.class, pId
-        );
-    } // __________________________________________________________________
+    // =============================== TESTS ==============================
     
     
 
-    /**
-     * <div>
-     * <p>Compte physiquement en base les lignes 
-     * TYPES_PRODUIT pour un ID donné.</p>
-     * </div>
-     *
-     * @param pId Long : ID_TYPE_PRODUIT.
-     * @return Long : nombre de lignes (0 ou 1 attendu).
-     */
-    private Long compterTypeProduitEnBase(final Long pId) {
-    	
-        return this.jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
-            Long.class, pId
-        );
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Restaure physiquement en base un TypeProduit 
-     * (libellé) pour isoler les tests.</p>
-     * </div>
-     *
-     * @param pId Long : ID_TYPE_PRODUIT.
-     * @param pLibelle String : TYPE_PRODUIT.
-     */
-    private void restaurerTypeProduitEnBase(
-            final Long pId,
-            final String pLibelle) {
-
-        final int updated = this.jdbcTemplate.update(
-            "UPDATE TYPES_PRODUIT SET TYPE_PRODUIT = ? WHERE ID_TYPE_PRODUIT = ?",
-            pLibelle, pId
-        );
-
-        assertThat(updated)
-            .as("La restauration en base doit modifier exactement 1 ligne.")
-            .isEqualTo(1);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>Supprime physiquement en base 
-     * un TypeProduit par ID (nettoyage test).</p>
-     * </div>
-     *
-     * @param pId Long : ID_TYPE_PRODUIT.
-     */
-    private void supprimerTypeProduitEnBase(final Long pId) {
-
-        final int deleted = this.jdbcTemplate.update(
-            "DELETE FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
-            pId
-        );
-
-        assertThat(deleted)
-            .as("La suppression en base doit modifier exactement 1 ligne.")
-            .isEqualTo(1);
-        
-    } // __________________________________________________________________
-
-    
-
-    // =============================== TESTS ===============================
-    
-    
-
-    // ============================ CREER ================================
+    // ============================ CREER =================================
     
     
 	
@@ -647,7 +530,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionAppliParamNull}</li>
      * <li>émet un message
      * {@link TypeProduitGatewayIService#MESSAGE_CREER_KO_PARAM_NULL}</li>
-     * <li>n'écrit rien dans le stockage</li>
+     * <li>n'écrit rien dans le stockage réel</li>
      * </ul>
      * </div>
      */
@@ -656,14 +539,42 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testCreerNull() {
     	
-    	/* ARRANGE - ACT - ASSERT */
-    	/* Garantit que this.service.creer(null)
+    	/* ARRANGE :
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+    	
+    	/* ACT - ASSERT :
+    	 * Garantit que this.service.creer(null)
     	 * - jette une ExceptionAppliParamNull
-    	 * - émet un message MESSAGE_CREER_KO_PARAM_NULL.
+    	 * - émet un message MESSAGE_CREER_KO_PARAM_NULL 
+    	 * (message contractuel attendu).
     	 */
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
+        
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
         
     } // __________________________________________________________________
     
@@ -671,12 +582,12 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     
     /**
      * <div>
-     * <p>garantit que creer(blank) :</p>
+     * <p>garantit que creer(...) avec un libellé blank :</p>
      * <ul>
      * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
      * <li>émet un message
      * {@link TypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK}</li>
-     * <li>n'écrit rien dans le stockage</li>
+     * <li>n'écrit rien dans le stockage réel</li>
      * </ul>
      * </div>
      */
@@ -686,24 +597,49 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testCreerBlank() {
     	
     	/* ARRANGE :
-    	 * prépare un objet métier dont le libellé est blank,
-    	 * afin de vérifier le contrôle applicatif du PORT
-    	 * avant toute tentative d'accès au stockage réel.
-    	 */
-        final TypeProduit blank = new TypeProduit(BLANK);
-        
-        /* ACT - ASSERT :
-         * garantit que this.service.creer(blank)
-         * - jette une ExceptionAppliLibelleBlank
-         * - émet un message MESSAGE_CREER_KO_LIBELLE_BLANK.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
          */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* prépare un objet métier
+    	 * dont le libellé est blank. */
+        final TypeProduit blank = new TypeProduit(BLANK);
+    	
+    	/* ACT - ASSERT :
+    	 * Garantit que this.service.creer(blank)
+    	 * - jette une ExceptionAppliLibelleBlank
+    	 * - émet un message MESSAGE_CREER_KO_LIBELLE_BLANK 
+    	 * (message contractuel attendu).
+    	 */
         assertThatThrownBy(() -> this.service.creer(blank))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_BLANK);
         
-    } // __________________________________________________________________
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+        
+    } // __________________________________________________________________    
     
-    
+
     
     /**
      * <div>
@@ -2604,7 +2540,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>jette une {@link ExceptionAppliParamNull} ;</li>
      * <li>émet le message
-     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_PARAM_NULL}.</li>
+     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
      * </ul>
      * </div>
      */
@@ -2612,17 +2549,44 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_NULL)
     @Test
     public void testUpdateNull() {
-    	
-        /* ARRANGE - ACT - ASSERT :
-         * vérifie que l'appel avec un paramètre null
-         * jette une ExceptionAppliParamNull
-         * avec un message MESSAGE_UPDATE_KO_PARAM_NULL
-         * (contrat du port).
+
+        /* ARRANGE :
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
+         * garantit que this.service.update(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet le message MESSAGE_UPDATE_KO_PARAM_NULL
+         *   (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.update(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel,
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // _________________________________________________________________
     
     
@@ -2633,7 +2597,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
-     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK}.</li>
+     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
      * </ul>
      * </div>
      */
@@ -2641,25 +2606,52 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_LIBELLE_NULL)
     @Test
     public void testUpdateLibelleNull() {
-    	
+
         /* ARRANGE :
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        /* 
          * prépare un objet métier persistant en apparence
          * dont le libellé vaut null,
-         * afin de vérifier le contrôle applicatif
-         * effectué avant toute mise à jour réelle.
+         * afin de vérifier le contrôle applicatif du PORT
+         * avant toute tentative de mise à jour réelle.
          */
         final TypeProduit libelleNull = new TypeProduit(Long.valueOf(1L), null);
-        
+
+        assertThat(countAvant).isNotNull();
+
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un libellé null
-         * jette une ExceptionAppliLibelleBlank
-         * avec un message MESSAGE_UPDATE_KO_LIBELLE_BLANK
-         * (contrat du port).
+         * garantit que this.service.update(libelleNull)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_UPDATE_KO_LIBELLE_BLANK
+         *   (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.update(libelleNull))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
-        
+
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel,
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // _________________________________________________________________
     
     
@@ -2670,7 +2662,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
-     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK}.</li>
+     * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
      * </ul>
      * </div>
      */
@@ -2678,25 +2671,52 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_BLANK)
     @Test
     public void testUpdateBlank() {
-    	
+
         /* ARRANGE :
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        /* 
          * prépare un objet métier persistant en apparence
          * dont le libellé est blank (espaces),
-         * afin de vérifier le contrôle applicatif
-         * effectué avant toute mise à jour réelle.
+         * afin de vérifier le contrôle applicatif du PORT
+         * avant toute tentative de mise à jour réelle.
          */
         final TypeProduit blank = new TypeProduit(Long.valueOf(1L), BLANK);
-        
+
+        assertThat(countAvant).isNotNull();
+
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un libellé blank (espaces)
-         * jette une ExceptionAppliLibelleBlank
-         * avec un message MESSAGE_UPDATE_KO_LIBELLE_BLANK
-         * (contrat du port).
+         * garantit que this.service.update(blank)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message MESSAGE_UPDATE_KO_LIBELLE_BLANK
+         *   (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.update(blank))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK);
-        
+
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel,
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // _________________________________________________________________
     
     
@@ -2708,7 +2728,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionAppliParamNonPersistent} ;</li>
      * <li>émet le message
      * {@link TypeProduitGatewayIService#MESSAGE_UPDATE_KO_NON_PERSISTENT}
-     * suivi du libellé porté par l'objet.</li>
+     * suivi du libellé porté par l'objet ;</li>
+     * <li>n'altère pas le stockage réel.</li>
      * </ul>
      * </div>
      */
@@ -2716,25 +2737,53 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_ID_NULL)
     @Test
     public void testUpdateIdNull() {
-    	
+
         /* ARRANGE :
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        /*
          * prépare un objet métier non persistant
          * dont l'identifiant est null,
          * afin de vérifier le contrôle de persistance
-         * imposé par le contrat du port.
+         * imposé par le contrat du port
+         * avant toute tentative de mise à jour réelle.
          */
         final TypeProduit nonPersistant = new TypeProduit(VETEMENT);
-        
+
+        assertThat(countAvant).isNotNull();
+
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un ID null
-         * jette une ExceptionAppliParamNonPersistent
-         * avec un message MESSAGE_UPDATE_KO_NON_PERSISTENT + VETEMENT
-         * (contrat du port).
+         * garantit que this.service.update(nonPersistant)
+         * - jette une ExceptionAppliParamNonPersistent
+         * - émet le message MESSAGE_UPDATE_KO_NON_PERSISTENT + VETEMENT
+         *   (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.update(nonPersistant))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT + VETEMENT);
-        
+
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel,
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // _________________________________________________________________
     
     
@@ -2745,7 +2794,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>retourne {@code null} ;</li>
      * <li>reste cohérent avec l'absence physique de ligne correspondante
-     * dans le stockage.</li>
+     * dans le stockage ;</li>
+     * <li>n'altère pas le stockage réel.</li>
      * </ul>
      * </div>
      *
@@ -2755,33 +2805,59 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_UPDATE_INEXISTANTE)
     @Test
     public void testUpdateEntityInexistante() throws Exception {
-    	
+
         /* ARRANGE :
-         * vérifie d'abord par SQL direct
-         * qu'aucune ligne ne porte cet identifiant.
-         *
-         * Le test compare ensuite le résultat du service
-         * à cet état physique de référence.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service,
+         * afin de pouvoir prouver ensuite
+         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+        
+        assertThat(countAvant).isNotNull();
+
+        /* 
+         * vérifie ensuite par SQL direct
+         * qu'aucune ligne ne portant un identifiant ID_INEXISTANTE
+         * n'existe dans le stockage.
          */
         final Long countEnBase = compterTypeProduitEnBase(ID_INEXISTANTE);
 
         assertThat(countEnBase).isNotNull().isZero();
-
-        final TypeProduit inexistante = new TypeProduit(ID_INEXISTANTE, VETEMENT);
-
+        
+        /* Instancie un objet métier forcément inexistant dans le stockage 
+         * vu son ID ID_INEXISTANTE. */
+        final TypeProduit inexistante 
+        	= new TypeProduit(ID_INEXISTANTE, VETEMENT);
+       
         /* ACT :
-         * sollicite la mise à jour
-         * d'un objet dont l'identifiant n'existe pas en base.
+         * appelle service.update(...) en passant cet objet forcément 
+         * inexistant dans le stockage.
          */
         final TypeProduit retour = this.service.update(inexistante);
 
         /* ASSERT :
-         * vérifie que le service reste cohérent
-         * avec l'absence physique de ligne correspondante.
-         * Assure que service.update(inexistante) retourne null.
+         * vérifie que service.update(inexistant) retourne null.
          */
         assertThat(retour).isNull();
-        
+
+        /* ASSERT :
+         * compte enfin (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'appel,
+         * afin de prouver que cette tentative de mise à jour
+         * n'a produit aucune altération réelle du stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // _________________________________________________________________
     
     
@@ -2792,8 +2868,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>retourne un objet métier non null ;</li>
      * <li>retourne un objet distinct de l'objet fourni en entrée ;</li>
-     * <li>ne modifie pas l'état physique de la base ;</li>
-     * <li>reste cohérent avec une relecture par le service.</li>
+     * <li>ne modifie pas le stockage réel ;</li>
+     * <li>retourne l'état persistant inchangé.</li>
      * </ul>
      * </div>
      *
@@ -2805,50 +2881,86 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testUpdateSansModification() throws Exception {
     	
         /* ARRANGE :
-         * lit d'abord la ligne seedée de référence,
-         * puis mémorise son état physique en base.
-         *
-         * Le test vérifie ensuite qu'une mise à jour sans modification
-         * ne change pas le stockage réel.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service.
          */
-        final TypeProduit seed = this.service.findByLibelle(VETEMENT);
-        assertThat(seed).isNotNull();
-        assertThat(seed.getIdTypeProduit()).isNotNull();
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
-        final Long id = seed.getIdTypeProduit();
+        assertThat(countAvant).isNotNull();
+
+        /* 
+         * lit ensuite l'identifiant physique réel
+         * du type produit seedé VETEMENT.
+         */
+        final Long id = this.jdbcTemplate.queryForObject(
+                SELECT_PARAM_ID_FROM_TYPES_PRODUIT,
+                Long.class,
+                VETEMENT);
+
+        assertThat(id).isNotNull();
+
+        /* 
+         * vérifie ensuite par SQL direct
+         * que la ligne ciblée existe bien dans le stockage.
+         */
+        final Long countLigneAvant = compterTypeProduitEnBase(id);
+
+        assertThat(countLigneAvant).isNotNull().isEqualTo(1L);
+
+        /* 
+         * lit enfin le libellé physique réel
+         * de la ligne ciblée avant l'appel du service.
+         */
         final String libelleAvant = lireLibelleTypeProduitEnBase(id);
+
         assertThat(libelleAvant).isEqualTo(VETEMENT);
 
+        /* Instancie un objet métier portant exactement
+         * les mêmes données que la ligne persistée. */
         final TypeProduit sansModif = new TypeProduit(id, VETEMENT);
 
         /* ACT :
-         * sollicite la mise à jour
-         * avec exactement les mêmes données métier.
+         * appelle service.update(...)
+         * en passant un objet métier strictement identique
+         * à la ligne persistée.
          */
         final TypeProduit retour = this.service.update(sansModif);
 
         /* ASSERT :
-         * vérifie d'abord que le service retourne
-         * un objet métier exploitable et distinct de l'entrée.
+         * vérifie que service.update(...)
+         * retourne un objet métier exploitable,
+         * distinct de l'objet fourni en entrée,
+         * mais cohérent avec l'état persistant inchangé.
          */
         assertThat(retour).isNotNull();
         assertThat(retour).isNotSameAs(sansModif);
         assertThat(retour.getIdTypeProduit()).isEqualTo(id);
         assertThat(retour.getTypeProduit()).isEqualTo(VETEMENT);
 
-        /* Vérifie ensuite que l'état physique en base
-         * n'a subi aucune modification.
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'appel du service,
+         * afin de prouver qu'aucune écriture réelle
+         * n'a eu lieu dans le stockage.
          */
-        final String libelleApres = lireLibelleTypeProduitEnBase(id);
-        assertThat(libelleApres).isEqualTo(libelleAvant);
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
-        /* Vérifie enfin que la relecture par le service
-         * reste cohérente avec l'état physique inchangé.
-         */
-        final TypeProduit relu = this.service.findById(id);
-        assertThat(relu).isNotNull();
-        assertThat(relu.getIdTypeProduit()).isEqualTo(id);
-        assertThat(relu.getTypeProduit()).isEqualTo(libelleAvant);
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
+        /* Vérifie enfin que la ligne ciblée
+         * est restée strictement inchangée dans le stockage. */
+        final Long countLigneApres = compterTypeProduitEnBase(id);
+        final String libelleApres = lireLibelleTypeProduitEnBase(id);
+
+        assertThat(countLigneApres).isNotNull().isEqualTo(1L);
+        assertThat(libelleApres).isEqualTo(libelleAvant);
         
     } // _________________________________________________________________
     
@@ -2858,11 +2970,11 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <div>
      * <p>garantit que update(modification) :</p>
      * <ul>
-     * <li>retourne un objet non {@code null} portant le même ID ;</li>
-     * <li>modifie réellement la colonne TYPE_PRODUIT en base ;</li>
-     * <li>reste cohérent avec les relectures JDBC et service ;</li>
-     * <li>accepte aussi une seconde mise à jour en majuscules
-     * sur le même enregistrement.</li>
+     * <li>retourne un objet métier non null ;</li>
+     * <li>conserve le même identifiant ;</li>
+     * <li>modifie réellement le libellé dans le stockage ;</li>
+     * <li>n'altère pas le nombre total de lignes ;</li>
+     * <li>reste cohérent avec une relecture via le service.</li>
      * </ul>
      * </div>
      *
@@ -2873,94 +2985,113 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testUpdateAvecModification() throws Exception {
-
+    	
         /* ARRANGE :
-         * lit d'abord la ligne seedée de référence,
-         * puis mémorise son état physique initial en base.
-         *
-         * Le test est exécuté hors transaction de test
-         * pour prouver une écriture physique réelle,
-         * puis restaurer explicitement l'état initial en finally.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service.
          */
-        final TypeProduit seed = this.service.findByLibelle(TOURISME);
-        assertThat(seed).isNotNull();
-        assertThat(seed.getIdTypeProduit()).isNotNull();
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
-        final Long id = seed.getIdTypeProduit();
+        assertThat(countAvant).isNotNull();
 
+        /* 
+         * lit ensuite l'identifiant physique réel
+         * du type produit seedé TOURISME.
+         */
+        final Long id = this.jdbcTemplate.queryForObject(
+                SELECT_PARAM_ID_FROM_TYPES_PRODUIT,
+                Long.class,
+                TOURISME);
+
+        assertThat(id).isNotNull();
+
+        /* 
+         * vérifie ensuite par SQL direct
+         * que la ligne ciblée existe bien dans le stockage.
+         */
+        final Long countLigneAvant = compterTypeProduitEnBase(id);
+
+        assertThat(countLigneAvant).isNotNull().isEqualTo(1L);
+
+        /* 
+         * lit enfin le libellé physique réel
+         * de la ligne ciblée avant modification.
+         */
         final String libelleAvant = lireLibelleTypeProduitEnBase(id);
+
         assertThat(libelleAvant).isEqualTo(TOURISME);
 
         final String nouveauLibelle = TOURISME + SUFFIX_MODIF;
 
         try {
+        	
+            /* Instancie un objet métier portant
+             * une vraie modification de libellé. */
+            final TypeProduit aModifier = new TypeProduit(id, nouveauLibelle);
 
             /* ACT :
-             * sollicite une première mise à jour
-             * vers un nouveau libellé métier.
+             * appelle service.update(...)
+             * en passant un objet métier
+             * dont le libellé diffère de l'état persistant.
              */
-            final TypeProduit aModifier = new TypeProduit(id, nouveauLibelle);
             final TypeProduit retour = this.service.update(aModifier);
 
             /* ASSERT :
-             * vérifie d'abord que le service retourne
-             * un objet cohérent avec la ligne modifiée.
+             * vérifie que service.update(...)
+             * retourne un objet métier exploitable
+             * cohérent avec la modification demandée.
              */
             assertThat(retour).isNotNull();
             assertThat(retour.getIdTypeProduit()).isEqualTo(id);
             assertThat(retour.getTypeProduit()).isEqualTo(nouveauLibelle);
 
-            /* Vérifie ensuite physiquement en base
-             * que la colonne TYPE_PRODUIT a bien été modifiée.
+            /* ASSERT :
+             * compte ensuite (en SQL)
+             * le nombre d'enregistrements dans le stockage
+             * après l'appel du service,
+             * afin de prouver qu'une mise à jour
+             * ne modifie pas le nombre total de lignes.
              */
-            final String libelleEnBase = lireLibelleTypeProduitEnBase(id);
-            assertThat(libelleEnBase).isEqualTo(nouveauLibelle);
+            final Long countApres = this.jdbcTemplate.queryForObject(
+                    SELECT_COUNT_FROM_TYPES_PRODUIT,
+                    Long.class);
 
-            /* Vérifie enfin la cohérence
-             * de la relecture via le service.
-             */
+            assertThat(countApres).isNotNull();
+            assertThat(countApres).isEqualTo(countAvant);
+
+            /* Vérifie ensuite que la ligne ciblée
+             * existe toujours dans le stockage. */
+            final Long countLigneApres = compterTypeProduitEnBase(id);
+
+            assertThat(countLigneApres).isNotNull().isEqualTo(1L);
+
+            /* Vérifie enfin que le libellé physique réel
+             * a bien été modifié dans le stockage. */
+            final String libelleApres = lireLibelleTypeProduitEnBase(id);
+
+            assertThat(libelleApres).isEqualTo(nouveauLibelle);
+
+            /* Vérifie la cohérence
+             * avec une relecture via le service. */
             final TypeProduit relu = this.service.findById(id);
+
             assertThat(relu).isNotNull();
             assertThat(relu.getIdTypeProduit()).isEqualTo(id);
             assertThat(relu.getTypeProduit()).isEqualTo(nouveauLibelle);
-
-            /* ACT :
-             * sollicite ensuite une seconde mise à jour
-             * vers le même libellé en majuscules,
-             * afin de vérifier le comportement réel
-             * sur une nouvelle modification du même enregistrement.
-             */
-            final String upper = nouveauLibelle.toUpperCase(Locale.getDefault());
-            final TypeProduit aModifierCS = new TypeProduit(id, upper);
-            final TypeProduit retourCS = this.service.update(aModifierCS);
-
-            /* ASSERT :
-             * vérifie que cette seconde mise à jour
-             * est elle aussi répercutée en base et côté service.
-             */
-            assertThat(retourCS).isNotNull();
-            assertThat(retourCS.getIdTypeProduit()).isEqualTo(id);
-            assertThat(retourCS.getTypeProduit()).isEqualTo(upper);
-
-            final String libelleEnBaseCS = lireLibelleTypeProduitEnBase(id);
-            assertThat(libelleEnBaseCS).isEqualTo(upper);
-
-            final TypeProduit reluApresCS = this.service.findById(id);
-            assertThat(reluApresCS).isNotNull();
-            assertThat(reluApresCS.getIdTypeProduit()).isEqualTo(id);
-            assertThat(reluApresCS.getTypeProduit()).isEqualTo(upper);
-
+        	
         } finally {
-
-            /* Nettoyage physique :
-             * restaure explicitement le libellé initial,
-             * afin de garantir l'isolation du test.
-             */
+        	
+            /* Restaure physiquement en base
+             * le libellé initial,
+             * afin de garantir l'isolation du test. */
             restaurerTypeProduitEnBase(id, libelleAvant);
-
+        	
         }
-
-    } // ________________________________________________________________
+        
+    } // _________________________________________________________________
     
     
     
@@ -2971,7 +3102,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <li>ne lève pas d'exception ;</li>
      * <li>ne modifie pas la ligne ciblée ;</li>
      * <li>retourne l'état persistant inchangé de la ligne ciblée ;</li>
-     * <li>conserve inchangée la ligne portant déjà le libellé demandé.</li>
+     * <li>conserve inchangée la ligne portant déjà le libellé demandé ;</li>
+     * <li>n'altère pas le nombre total de lignes dans le stockage.</li>
      * </ul>
      * </div>
      *
@@ -2983,12 +3115,21 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testUpdateLibelleExistant() throws Exception {
 
         /* ARRANGE :
-         * lit d'abord les deux lignes seedées impliquées :
-         * - la ligne qui porte déjà le libellé cible ;
-         * - la ligne que l'on tente de modifier.
-         *
-         * Le test vérifie ensuite qu'une tentative de collision
-         * ne modifie aucun des deux états persistants.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /*
+         * lit ensuite les identifiants physiques réels
+         * des deux lignes impliquées dans le scénario :
+         * - celle qui porte déjà le libellé demandé ;
+         * - celle que l'on tente de modifier.
          */
         final Long idVETEMENT = this.jdbcTemplate.queryForObject(
                 SELECT_PARAM_ID_FROM_TYPES_PRODUIT,
@@ -3003,56 +3144,77 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(idVETEMENT).isNotNull();
         assertThat(idBAZAR).isNotNull();
 
+        /*
+         * vérifie ensuite par SQL direct
+         * qu'une seule ligne porte déjà le libellé demandé.
+         */
+        final Long countVETEMENTAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_TYPEPRODUIT_FROM_TYPES_PRODUIT,
+                Long.class,
+                VETEMENT);
+
+        assertThat(countVETEMENTAvant).isNotNull().isEqualTo(1L);
+
+        /*
+         * lit les libellés dans le stockage
+         * des deux lignes avant l'appel du service.
+         */
         final String libelleAvantVETEMENT = lireLibelleTypeProduitEnBase(idVETEMENT);
         final String libelleAvantBAZAR = lireLibelleTypeProduitEnBase(idBAZAR);
 
         assertThat(libelleAvantVETEMENT).isEqualTo(VETEMENT);
         assertThat(libelleAvantBAZAR).isEqualTo(BAZAR);
 
+        /* Instancie un objet métier qui tente
+         * d'attribuer à BAZAR un libellé déjà porté par VETEMENT. */
         final TypeProduit aModifier = new TypeProduit(idBAZAR, VETEMENT);
 
         /* ACT :
-         * sollicite la mise à jour
-         * en tentant d'attribuer à BAZAR
-         * un libellé déjà porté par VETEMENT.
+         * appelle service.update(...)
+         * avec un libellé déjà existant
+         * sur un autre enregistrement.
          */
         final TypeProduit retour = this.service.update(aModifier);
 
         /* ASSERT :
-         * vérifie d'abord qu'aucune exception n'est levée
-         * et que le service retourne l'état inchangé
+         * vérifie que service.update(...)
+         * retourne l'état persistant inchangé
          * de la ligne ciblée.
          */
         assertThat(retour).isNotNull();
         assertThat(retour.getIdTypeProduit()).isEqualTo(idBAZAR);
         assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
 
-        /* Vérifie ensuite physiquement en base
-         * que la ligne ciblée n'a pas été modifiée.
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'appel du service.
          */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
+        /* Vérifie qu'il n'existe toujours
+         * qu'une seule ligne portant le libellé demandé. */
+        final Long countVETEMENTApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_TYPEPRODUIT_FROM_TYPES_PRODUIT,
+                Long.class,
+                VETEMENT);
+
+        assertThat(countVETEMENTApres).isNotNull().isEqualTo(1L);
+
+        /* Vérifie enfin que les deux lignes physiques
+         * sont restées strictement inchangées. */
+        final String libelleApresVETEMENT = lireLibelleTypeProduitEnBase(idVETEMENT);
         final String libelleApresBAZAR = lireLibelleTypeProduitEnBase(idBAZAR);
+
+        assertThat(libelleApresVETEMENT).isEqualTo(libelleAvantVETEMENT);
         assertThat(libelleApresBAZAR).isEqualTo(libelleAvantBAZAR);
 
-        /* Vérifie aussi que la ligne portant déjà
-         * le libellé demandé reste inchangée.
-         */
-        final String libelleApresVETEMENT = lireLibelleTypeProduitEnBase(idVETEMENT);
-        assertThat(libelleApresVETEMENT).isEqualTo(libelleAvantVETEMENT);
-
-        /* Vérifie enfin la cohérence
-         * des relectures via le service.
-         */
-        final TypeProduit reluBAZAR = this.service.findById(idBAZAR);
-        assertThat(reluBAZAR).isNotNull();
-        assertThat(reluBAZAR.getIdTypeProduit()).isEqualTo(idBAZAR);
-        assertThat(reluBAZAR.getTypeProduit()).isEqualTo(BAZAR);
-
-        final TypeProduit reluVETEMENT = this.service.findById(idVETEMENT);
-        assertThat(reluVETEMENT).isNotNull();
-        assertThat(reluVETEMENT.getIdTypeProduit()).isEqualTo(idVETEMENT);
-        assertThat(reluVETEMENT.getTypeProduit()).isEqualTo(VETEMENT);
-
-    } // ________________________________________________________________
+    } // _________________________________________________________________
     
     
     
@@ -3066,7 +3228,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>jette une {@link ExceptionAppliParamNull} ;</li>
      * <li>émet le message
-     * {@link TypeProduitGatewayIService#MESSAGE_DELETE_KO_PARAM_NULL}.</li>
+     * {@link TypeProduitGatewayIService#MESSAGE_DELETE_KO_PARAM_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
      * </ul>
      * </div>
      */
@@ -3074,17 +3237,42 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName(DN_DELETE_NULL)
     @Test
     public void testDeleteNull() {
-    	
-        /* ARRANGE - ACT - ASSERT :
+
+        /* ARRANGE :
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* ACT - ASSERT :
          * vérifie que l'appel avec un objet métier null
          * jette une ExceptionAppliParamNull
          * avec un message MESSAGE_DELETE_KO_PARAM_NULL
-         * (contrat du port).
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL);
-        
+
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel,
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // _________________________________________________________________
     
     
@@ -3095,7 +3283,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>jette une {@link ExceptionAppliParamNonPersistent} ;</li>
      * <li>émet le message
-     * {@link TypeProduitGatewayIService#MESSAGE_DELETE_KO_ID_NULL}.</li>
+     * {@link TypeProduitGatewayIService#MESSAGE_DELETE_KO_ID_NULL} ;</li>
+     * <li>n'altère pas le stockage réel.</li>
      * </ul>
      * </div>
      */
@@ -3103,25 +3292,46 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @DisplayName("delete(ID null) - jette ExceptionAppliParamNonPersistent (contrat du port)")
     @Test
     public void testDeleteIdNull() {
-    	
+
         /* ARRANGE :
-         * prépare un objet métier non persistant
-         * dont l'identifiant est null,
-         * afin de vérifier le contrôle de persistance
-         * imposé par le contrat du port.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service.
          */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countAvant).isNotNull();
+
+        /* Instancie un objet métier non persistant
+         * dont l'identifiant est null. */
         final TypeProduit nonPersistant = new TypeProduit(VETEMENT);
-        
+
         /* ACT - ASSERT :
          * vérifie que l'appel avec un ID null
          * jette une ExceptionAppliParamNonPersistent
          * avec un message MESSAGE_DELETE_KO_ID_NULL
-         * (contrat du port).
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.delete(nonPersistant))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL);
-        
+
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'échec contractuel,
+         * afin de prouver que l'appel au service
+         * n'a produit aucune écriture dans le stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
+        assertThat(countApres).isEqualTo(countAvant);
+
     } // _________________________________________________________________
     
     
@@ -3131,9 +3341,9 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <p>garantit que delete(OK) :</p>
      * <ul>
      * <li>supprime réellement une ligne créée pour le test ;</li>
-     * <li>rend cet identifiant introuvable en base ;</li>
+     * <li>rend cet identifiant introuvable dans le stockage ;</li>
      * <li>rend cet identifiant introuvable via le service ;</li>
-     * <li>diminue le compteur total d'une unité.</li>
+     * <li>ramène le nombre total de lignes à sa valeur initiale.</li>
      * </ul>
      * </div>
      *
@@ -3146,12 +3356,21 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testDeleteOK() throws Exception {
     	
         /* ARRANGE :
-         * crée d'abord physiquement une ligne dédiée au test,
-         * afin de vérifier ensuite sa suppression réelle
-         * en passant à delete(...) un objet métier persistant.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant toute création.
          */
-        final long countAvantCreation = this.service.count();
+        final Long countAvantCreation = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
+        assertThat(countAvantCreation).isNotNull();
+
+        /* ACT :
+         * crée ensuite physiquement un enregistrement dédié au test,
+         * afin de disposer d'un objet persistant 
+         * à supprimer dans le stockage.
+         */
         final TypeProduit cree = this.service.creer(new TypeProduit(TEMP_A_SUPPRIMER));
 
         assertThat(cree).isNotNull();
@@ -3160,42 +3379,52 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         final Long id = cree.getIdTypeProduit();
 
-        final Long countLigneAvantDelete = compterTypeProduitEnBase(id);
-        assertThat(countLigneAvantDelete).isNotNull().isEqualTo(1L);
+        /* ASSERT :
+         * vérifie immédiatement par SQL direct
+         * que la création a bien ajouté une ligne réelle dans le stockage.
+         */
+        final Long countApresCreation = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
+        final Long countLigneAvantDelete = compterTypeProduitEnBase(id);
         final String libelleAvantDelete = lireLibelleTypeProduitEnBase(id);
+
+        assertThat(countApresCreation).isNotNull();
+        assertThat(countApresCreation).isEqualTo(countAvantCreation + 1L);
+        assertThat(countLigneAvantDelete).isNotNull().isEqualTo(1L);
         assertThat(libelleAvantDelete).isEqualTo(TEMP_A_SUPPRIMER);
 
-        final long countAvantDelete = this.service.count();
-        assertThat(countAvantDelete).isEqualTo(countAvantCreation + 1L);
-
+        /* Instancie l'objet métier persistant
+         * à passer à delete(...). */
         final TypeProduit aSupprimer = new TypeProduit(id, TEMP_A_SUPPRIMER);
 
         /* ACT :
-         * sollicite la suppression
-         * de la ligne nouvellement créée,
-         * en fournissant l'objet métier persistant correspondant.
+         * appelle service.delete(...)
+         * sur l'enregistrement nouvellement créée.
          */
         this.service.delete(aSupprimer);
 
         /* ASSERT :
-         * vérifie d'abord physiquement en base
-         * que la ligne n'existe plus.
+         * vérifie d'abord par SQL direct
+         * que l'enregistrement n'existe plus dans le stockage.
          */
+        final Long countApresDelete = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
         final Long countLigneApresDelete = compterTypeProduitEnBase(id);
+
+        assertThat(countApresDelete).isNotNull();
+        assertThat(countApresDelete).isEqualTo(countAvantCreation);
         assertThat(countLigneApresDelete).isNotNull().isZero();
 
-        /* Vérifie ensuite que la relecture via le service
+        /* Vérifie enfin que la relecture via le service
          * ne retrouve plus cet identifiant.
          */
         final TypeProduit relu = this.service.findById(id);
-        assertThat(relu).isNull();
 
-        /* Vérifie enfin que le compteur total
-         * est revenu à son niveau initial.
-         */
-        final long countApresDelete = this.service.count();
-        assertThat(countApresDelete).isEqualTo(countAvantCreation);
+        assertThat(relu).isNull();
         
     } // _________________________________________________________________
     
@@ -3206,8 +3435,8 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <p>garantit que delete(ID inexistant) :</p>
      * <ul>
      * <li>ne lève pas d'exception ;</li>
-     * <li>ne modifie pas l'état physique de la base ;</li>
-     * <li>laisse le compteur total inchangé.</li>
+     * <li>ne modifie pas l'état physique du stockage ;</li>
+     * <li>laisse inchangé le nombre total de lignes.</li>
      * </ul>
      * </div>
      *
@@ -3220,35 +3449,49 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     	
         /* ARRANGE :
          * vérifie d'abord par SQL direct
-         * qu'aucune ligne ne porte cet identifiant,
-         * puis mémorise l'état global du stockage.
+         * qu'aucune ligne ne porte cet identifiant.
          */
         final Long countLigneAvant = compterTypeProduitEnBase(ID_INEXISTANTE);
+
         assertThat(countLigneAvant).isNotNull().isZero();
 
-        final long countAvant = this.service.count();
+        /* 
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant l'appel du service.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
+        assertThat(countAvant).isNotNull();
+
+        /* Instancie un objet métier portant
+         * un identifiant absent du stockage. */
         final TypeProduit inexistant = new TypeProduit(ID_INEXISTANTE, TEMP_A_SUPPRIMER);
 
         /* ACT :
-         * sollicite la suppression
-         * avec un objet métier portant un identifiant
-         * absent du stockage réel.
-         *
-         * Le scénario attendu est l'absence d'exception.
+         * appelle service.delete(...)
+         * avec un objet métier
+         * dont l'identifiant n'existe pas dans le stockage.
          */
         this.service.delete(inexistant);
 
         /* ASSERT :
-         * vérifie que l'état physique reste inchangé.
+         * vérifie d'abord que l'identifiant
+         * reste absent du stockage après l'appel.
          */
         final Long countLigneApres = compterTypeProduitEnBase(ID_INEXISTANTE);
+
         assertThat(countLigneApres).isNotNull().isZero();
 
-        /* Vérifie enfin que le compteur global
-         * n'a pas été modifié.
-         */
-        final long countApres = this.service.count();
+        /* Vérifie enfin que le nombre total de lignes
+         * reste strictement inchangé dans le stockage. */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull();
         assertThat(countApres).isEqualTo(countAvant);
         
     } // _________________________________________________________________
@@ -3262,7 +3505,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * <li>ne lève pas d'exception lors du second appel ;</li>
      * <li>la première suppression efface bien la ligne créée ;</li>
      * <li>la seconde suppression ne recrée rien ;</li>
-     * <li>le compteur total reste stable après le second appel.</li>
+     * <li>le nombre total de lignes reste stable après le second appel.</li>
      * </ul>
      * </div>
      *
@@ -3275,62 +3518,93 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testDeleteDoubleSuppression() throws Exception {
     	
         /* ARRANGE :
-         * crée d'abord physiquement une ligne dédiée au test,
-         * afin de vérifier ensuite deux suppressions successives
-         * sur le même objet métier persistant.
+         * compte d'abord (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * avant toute création.
          */
-        final long countAvantCreation = this.service.count();
+        final Long countAvantCreation = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
-        final TypeProduit cree = this.service.creer(new TypeProduit(TEMP_A_SUPPRIMER));
+        assertThat(countAvantCreation).isNotNull();
+
+        /* ACT :
+         * crée ensuite physiquement un enregistrement dédié au test,
+         * afin de disposer d'un objet persistant à essayer de 
+         * supprimer deux fois dans le stockage.
+         */
+        final TypeProduit cree 
+        	= this.service.creer(new TypeProduit(TEMP_A_SUPPRIMER));
 
         assertThat(cree).isNotNull();
         assertThat(cree.getIdTypeProduit()).isNotNull().isPositive();
 
         final Long id = cree.getIdTypeProduit();
 
-        final Long countLigneAvant = compterTypeProduitEnBase(id);
-        assertThat(countLigneAvant).isNotNull().isEqualTo(1L);
+        /* ASSERT :
+         * vérifie immédiatement par SQL direct
+         * que la création a bien ajouté un enregistrement dans le stockage.
+         */
+        final Long countApresCreation = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
 
+        final Long countLigneAvantDelete = compterTypeProduitEnBase(id);
+
+        assertThat(countApresCreation).isNotNull();
+        assertThat(countApresCreation).isEqualTo(countAvantCreation + 1L);
+        assertThat(countLigneAvantDelete).isNotNull().isEqualTo(1L);
+
+        /* Instancie l'objet métier persistant
+         * à passer à delete(...). */
         final TypeProduit aSupprimer = new TypeProduit(id, TEMP_A_SUPPRIMER);
 
         /* ACT :
-         * sollicite une première suppression
-         * qui doit effacer physiquement la ligne.
+         * appelle une première fois service.delete(...),
+         * ce qui doit supprimer physiquement l'enregistrement 
+         * dans le stockage.
          */
         this.service.delete(aSupprimer);
 
         /* ASSERT :
          * vérifie que la première suppression
-         * a bien supprimé la ligne.
+         * a bien effacé l'enregistrement dans le stockage.
          */
+        final Long countApresPremierDelete = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
         final Long countLigneApresPremierDelete = compterTypeProduitEnBase(id);
+
+        assertThat(countApresPremierDelete).isNotNull();
+        assertThat(countApresPremierDelete).isEqualTo(countAvantCreation);
         assertThat(countLigneApresPremierDelete).isNotNull().isZero();
 
-        final long countApresPremierDelete = this.service.count();
-        assertThat(countApresPremierDelete).isEqualTo(countAvantCreation);
-
         /* ACT :
-         * sollicite ensuite une seconde suppression
+         * appelle une seconde fois service.delete(...)
          * sur le même objet déjà supprimé.
-         *
-         * Le scénario attendu est l'absence d'exception.
          */
         this.service.delete(aSupprimer);
 
         /* ASSERT :
          * vérifie que la seconde suppression
-         * ne modifie pas l'état physique déjà vide.
+         * ne modifie pas le stockage.
          */
+        final Long countApresSecondDelete = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_TYPES_PRODUIT,
+                Long.class);
+
         final Long countLigneApresSecondDelete = compterTypeProduitEnBase(id);
+
+        assertThat(countApresSecondDelete).isNotNull();
+        assertThat(countApresSecondDelete).isEqualTo(countAvantCreation);
         assertThat(countLigneApresSecondDelete).isNotNull().isZero();
 
-        /* Vérifie enfin que le compteur global
-         * reste stable après ce second appel.
+        /* Vérifie enfin que la relecture via le service
+         * ne retrouve plus cet identifiant.
          */
-        final long countApresSecondDelete = this.service.count();
-        assertThat(countApresSecondDelete).isEqualTo(countAvantCreation);
-
         final TypeProduit relu = this.service.findById(id);
+
         assertThat(relu).isNull();
         
     } // _________________________________________________________________
@@ -3359,43 +3633,45 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testCountOK() throws Exception {
     	
         /* ARRANGE :
-         * lit d'abord l'état physique réel de la base
-         * via JdbcTemplate,
-         * puis prépare une relecture métier complète
-         * via rechercherTous().
-         *
-         * Le test vérifie ensuite que count()
-         * reste cohérent avec ces deux références.
+         * lit d'abord (en SQL) le nombre réel d'enregistrements
+         * dans le stockage.
          */
         final Long countEnBase = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_TYPES_PRODUIT,
                 Long.class);
 
-        final List<TypeProduit> liste = this.service.rechercherTous();
-
         assertThat(countEnBase).isNotNull().isPositive();
-        assertThat(liste).isNotNull().isNotEmpty();
 
         /* ACT :
-         * sollicite le comptage métier
-         * dans le scénario nominal de la base seedée.
+         * compte le nombre d'enregistrements dans le stockage 
+         * via service.count()
          */
         final long count = this.service.count();
+        
+        /*
+         * lit la liste complète d'enregistrements dans le stockage 
+         * via service.rechercherTous()
+         */
+        final List<TypeProduit> liste = this.service.rechercherTous();
 
         /* ASSERT :
-         * vérifie d'abord que count()
-         * retourne un total positif.
+         * vérifie d'abord que service.count()
+         * retourne un total strictement positif.
          */
         assertThat(count).isPositive();
 
-        /* Vérifie ensuite la cohérence
-         * avec la lecture physique de la base.
+        /* 
+         * Vérifie ensuite que service.count() retourne le 
+         * même nombre d'enregistrements que la lecture SQL directe.
          */
         assertThat(count).isEqualTo(countEnBase.longValue());
 
-        /* Vérifie enfin la cohérence
-         * avec la recherche complète métier.
+        /* 
+         * Vérifie enfin que service.count()
+         * retourne le même nombre d'enregistrements 
+         * que le nombre d'items fourni par service.rechercherTous().
          */
+        assertThat(liste).isNotNull().isNotEmpty();
         assertThat(count).isEqualTo(liste.size());
         
     } // ________________________________________________________________
@@ -3404,7 +3680,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     
     /**
      * <div>
-     * <p>garantit que count() sur une base vidée :</p>
+     * <p>garantit que count() sur un stockage vide :</p>
      * <ul>
      * <li>retourne zéro ;</li>
      * <li>retourne le même total que la lecture SQL directe ;</li>
@@ -3415,7 +3691,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * @throws Exception
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count(base vide) - retourne zéro et reste cohérent avec SQL et rechercherTous()")
+    @DisplayName("count(stockage vide) - retourne zéro et reste cohérent avec SQL et rechercherTous()")
     @Test
     @Sql(
         scripts = TypeProduitGatewayJPAServiceIntegrationTest.CLASSPATH_TRUNCATE_SQL,
@@ -3424,39 +3700,44 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public void testCountBaseVide() throws Exception {
     	
         /* ARRANGE :
-         * prépare pour ce test une base réellement vide
-         * en ne rejouant que le script de vidage,
-         * puis lit cet état physique directement en base.
+         * lit d'abord (en SQL) le nombre réel d'enregistrements
+         * dans le stockage vide.
          */
         final Long countEnBase = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_TYPES_PRODUIT,
                 Long.class);
 
-        final List<TypeProduit> liste = this.service.rechercherTous();
-
         assertThat(countEnBase).isNotNull().isZero();
-        assertThat(liste).isNotNull().isEmpty();
 
         /* ACT :
-         * sollicite le comptage métier
-         * sur une base ne contenant aucune ligne.
+         * compte le nombre d'enregistrements dans le stockage 
+         * via service.count()
          */
         final long count = this.service.count();
+        
+        /* 
+         * lit la liste complète d'enregistrements dans le stockage 
+         * via service.rechercherTous() 
+         */
+        final List<TypeProduit> liste = this.service.rechercherTous();
 
         /* ASSERT :
-         * vérifie d'abord que count()
-         * retourne bien zéro.
+         * vérifie d'abord que service.count() retourne bien zéro.
          */
         assertThat(count).isZero();
 
-        /* Vérifie ensuite la cohérence
-         * avec la lecture physique de la base.
+        /* 
+         * Vérifie que service.count() retourne 
+         * le même nombre d'enregistrements (0) que la lecture SQL directe.
          */
         assertThat(count).isEqualTo(countEnBase.longValue());
 
-        /* Vérifie enfin la cohérence
-         * avec la recherche complète métier.
+        /* 
+         * Vérifie enfin que service.count()
+         * retourne le même nombre d'enregistrements (0) 
+         * que le nombre d'items fourni par service.rechercherTous().
          */
+        assertThat(liste).isNotNull().isEmpty();
         assertThat(count).isEqualTo(liste.size());
         
     } // ________________________________________________________________
@@ -3477,16 +3758,14 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
      * @throws Exception
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count(après création puis suppression) - suit exactement l'état physique de la base")
+    @DisplayName("count(après création puis suppression) - suit exactement l'état physique du stockage")
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testCountApresCreationPuisSuppression() throws Exception {
     	
-        /* ARRANGE :
-         * lit d'abord l'état physique initial de la base,
-         * puis crée une ligne dédiée au test,
-         * afin de vérifier que count()
-         * suit exactement les variations du stockage réel.
+    	/* ARRANGE :
+         * lit d'abord (en SQL) le nombre réel d'enregistrements
+         * dans le stockage.
          */
         final Long countEnBaseAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_TYPES_PRODUIT,
@@ -3494,9 +3773,21 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         assertThat(countEnBaseAvant).isNotNull().isPositive();
 
+        /* ACT :
+         * compte le nombre d'enregistrements dans le stockage 
+         * via service.count()
+         */
         final long countAvant = this.service.count();
+
+        /* ASSERT :
+         * Vérifie ensuite que service.count() retourne le 
+         * même nombre d'enregistrements que la lecture SQL directe.
+         */
         assertThat(countAvant).isEqualTo(countEnBaseAvant.longValue());
 
+        /* ACT :
+         * crée ensuite un enregistrement dans le stockage dédié au test.
+         */
         final TypeProduit cree = this.service.creer(new TypeProduit(TEMP_A_SUPPRIMER));
 
         assertThat(cree).isNotNull();
@@ -3507,45 +3798,76 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         try {
         	
-            /* ACT :
-             * sollicite un premier comptage
-             * après création effective d'une ligne.
-             */
-            final long countApresCreation = this.service.count();
-
             /* ASSERT :
-             * vérifie d'abord la cohérence
-             * avec la lecture SQL directe après création.
+             * vérifie immédiatement par SQL direct
+             * que la création a bien ajouté une ligne réelle
+             * dans le stockage.
              */
             final Long countEnBaseApresCreation = this.jdbcTemplate.queryForObject(
                     SELECT_COUNT_FROM_TYPES_PRODUIT,
                     Long.class);
 
-            assertThat(countEnBaseApresCreation).isNotNull();
-            assertThat(countApresCreation).isEqualTo(countAvant + 1L);
-            assertThat(countApresCreation).isEqualTo(countEnBaseApresCreation.longValue());
+            final Long countLigneApresCreation = compterTypeProduitEnBase(id);
 
-            final TypeProduit aSupprimer = new TypeProduit(id, TEMP_A_SUPPRIMER);
+            assertThat(countEnBaseApresCreation).isNotNull();
+            assertThat(countEnBaseApresCreation)
+                .isEqualTo(countEnBaseAvant + 1L);
+            assertThat(countLigneApresCreation).isNotNull().isEqualTo(1L);
 
             /* ACT :
-             * supprime ensuite la ligne créée,
-             * puis sollicite un second comptage.
+             * appelle ensuite service.count()
+             * après création effective de l'enregistrement 
+             * de test dans le stockage.
              */
-            this.service.delete(aSupprimer);
-            final long countApresSuppression = this.service.count();
+            final long countApresCreation = this.service.count();
 
             /* ASSERT :
-             * vérifie enfin que count()
-             * revient exactement à sa valeur initiale
-             * et reste cohérent avec SQL après suppression.
+             * vérifie que service.count()
+             * retourne la même valeur que la lecture SQL
+             * après création.
+             */
+            assertThat(countApresCreation)
+                .isEqualTo(countEnBaseApresCreation.longValue());
+
+            /* Instancie l'objet métier persistant
+             * à supprimer. */
+            final TypeProduit aSupprimer 
+            	= new TypeProduit(id, TEMP_A_SUPPRIMER);
+
+            /* ACT :
+             * supprime ensuite l'enregistrement de test créée.
+             */
+            this.service.delete(aSupprimer);
+
+            /* ASSERT :
+             * vérifie immédiatement par SQL direct
+             * que l'enregistrement a bien disparu du stockage.
              */
             final Long countEnBaseApresSuppression = this.jdbcTemplate.queryForObject(
                     SELECT_COUNT_FROM_TYPES_PRODUIT,
                     Long.class);
 
+            final Long countLigneApresSuppression = compterTypeProduitEnBase(id);
+
             assertThat(countEnBaseApresSuppression).isNotNull();
+            assertThat(countEnBaseApresSuppression)
+                .isEqualTo(countEnBaseAvant);
+            assertThat(countLigneApresSuppression).isNotNull().isZero();
+
+            /* ACT :
+             * appelle enfin service.count()
+             * après suppression effective.
+             */
+            final long countApresSuppression = this.service.count();
+
+            /* ASSERT :
+             * vérifie que service.count()
+             * revient exactement à sa valeur initiale
+             * toujours égale à celle fournie par lecture SQL directe.
+             */
+            assertThat(countApresSuppression)
+                .isEqualTo(countEnBaseApresSuppression.longValue());
             assertThat(countApresSuppression).isEqualTo(countAvant);
-            assertThat(countApresSuppression).isEqualTo(countEnBaseApresSuppression.longValue());
 
             final TypeProduit relu = this.service.findById(id);
             assertThat(relu).isNull();
@@ -3553,9 +3875,9 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         } finally {
         	
             /* Nettoyage défensif :
-             * si la suppression métier n'a pas eu lieu
+             * si l'enregistrement existe encore dans le stockage
              * avant une éventuelle assertion en échec,
-             * supprime explicitement la ligne restante.
+             * le supprime explicitement.
              */
             final Long countLigne = compterTypeProduitEnBase(id);
             if ((countLigne != null) && (countLigne.longValue() == 1L)) {
@@ -3564,8 +3886,123 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         	
         }
         
-    } // ________________________________________________________________
+    } // ________________________________________________________________   
+    
+    
+    
+    // ========================= HELPERS ===================================
 
     
     
-}
+    /**
+     * <div>
+     * <p>Vérifie que la liste est triée par libellé (ordre naturel).</p>
+     * </div>
+     *
+     * @param pListe : List&lt;TypeProduit&gt
+     */
+    private static void assertListeTrieeParLibelle(
+    		final List<TypeProduit> pListe) {
+    	
+        if ((pListe == null) || (pListe.size() < 2)) {
+            return;
+        }
+
+        for (int i = 0; i < pListe.size() - 1; i++) {
+            final String courant = pListe.get(i).getTypeProduit();
+            final String suivant = pListe.get(i + 1).getTypeProduit();
+            assertThat(Comparator.<String>naturalOrder().compare(courant, suivant))
+                .isLessThanOrEqualTo(0);
+        }
+    } // __________________________________________________________________
+    
+    
+        
+    /**
+     * <div>
+     * <p>Lit le libellé TYPE_PRODUIT physiquement 
+     * en base (bypass Hibernate).</p>
+     * </div>
+     *
+     * @param pId Long : ID_TYPE_PRODUIT.
+     * @return String : valeur de la colonne TYPE_PRODUIT.
+     */
+    private String lireLibelleTypeProduitEnBase(final Long pId) {
+    	
+        return this.jdbcTemplate.queryForObject(
+            "SELECT TYPE_PRODUIT FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+            String.class, pId
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Compte physiquement en base les lignes 
+     * TYPES_PRODUIT pour un ID donné.</p>
+     * </div>
+     *
+     * @param pId Long : ID_TYPE_PRODUIT.
+     * @return Long : nombre de lignes (0 ou 1 attendu).
+     */
+    private Long compterTypeProduitEnBase(final Long pId) {
+    	
+        return this.jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+            Long.class, pId
+        );
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Restaure physiquement en base un TypeProduit 
+     * (libellé) pour isoler les tests.</p>
+     * </div>
+     *
+     * @param pId Long : ID_TYPE_PRODUIT.
+     * @param pLibelle String : TYPE_PRODUIT.
+     */
+    private void restaurerTypeProduitEnBase(
+            final Long pId,
+            final String pLibelle) {
+
+        final int updated = this.jdbcTemplate.update(
+            "UPDATE TYPES_PRODUIT SET TYPE_PRODUIT = ? WHERE ID_TYPE_PRODUIT = ?",
+            pLibelle, pId
+        );
+
+        assertThat(updated)
+            .as("La restauration en base doit modifier exactement 1 ligne.")
+            .isEqualTo(1);
+        
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>Supprime physiquement en base 
+     * un TypeProduit par ID (nettoyage test).</p>
+     * </div>
+     *
+     * @param pId Long : ID_TYPE_PRODUIT.
+     */
+    private void supprimerTypeProduitEnBase(final Long pId) {
+
+        final int deleted = this.jdbcTemplate.update(
+            "DELETE FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+            pId
+        );
+
+        assertThat(deleted)
+            .as("La suppression en base doit modifier exactement 1 ligne.")
+            .isEqualTo(1);
+        
+    } // __________________________________________________________________
+
+    
+    
+} // FIN DE LA CLASSE TypeProduitGatewayJPAServiceIntegrationTest.---------
