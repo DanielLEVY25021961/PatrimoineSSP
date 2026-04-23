@@ -97,7 +97,17 @@ Les tests de persistance verrouillent :
 - les rattachements / détachements ;
 - les invariants techniques propres à la persistance.
 
-### 4.5) Règle de frontière
+### 4.5) Règle de preuve DAO
+
+La couche `couche_persistance` ne porte pas de batterie de tests DAO dédiée.
+
+La preuve des appels DAO spécifiques et du comportement observable associé est réalisée par :
+- les tests Mock de la couche Gateway ;
+- les tests d’intégration de la couche Gateway.
+
+En conséquence, la couche `couche_persistance` ne doit pas dupliquer massivement cette preuve au niveau DAO, sauf besoin nouveau explicite.
+
+### 4.6) Règle de frontière
 
 La couche `couche_persistance` ne doit pas absorber :
 - les DTO ;
