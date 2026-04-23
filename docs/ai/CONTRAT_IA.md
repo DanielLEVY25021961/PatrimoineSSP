@@ -1153,6 +1153,46 @@ Cas explicitement visés :
 Conséquence projet :
 - GitHub en `LF` et bundle OFFLINE en `CRLF` ne doivent jamais produire un faux statut **MODIFIÉ** tant que le contenu texte normalisé est identique.
 
+### 28.17 RT-LECTURE-DEPENDANCES-METHODE-01 (VALIDÉ) — Relecture obligatoire du contrat, de la classe cible, des dépendances utiles et des tests concernés
+
+Objectif : éliminer définitivement les analyses Java incomplètes fondées sur une lecture partielle de la seule classe cible ou sur un souvenir de dépendances non revérifiées.
+
+Règle prioritaire invariante :
+- Avant toute analyse, audit, synthèse, validation, comparaison ou génération de code concernant une méthode Java, l’IA NE DOIT JAMAIS raisonner de mémoire.
+- L’IA DOIT relire strictement au SHA courant :
+  1. le contrat / PORT / interface applicable à la méthode ;
+  2. la classe cible ;
+  3. la méthode exacte concernée ;
+  4. toutes les dépendances utiles à la compréhension réelle de cette méthode ;
+  5. les tests concernés.
+- L’IA DOIT travailler méthode par méthode, une seule méthode à la fois.
+
+Dépendances utiles à relire selon le cas :
+- PORT, interface ou contrat porté ou consommé ;
+- super-classe et interfaces implémentées ;
+- classes métier manipulées ;
+- DTO, entities, mappers, repositories, gateways, services ;
+- utilitaires, constantes, exceptions, annotations ;
+- classes parentes, enfants, agrégées ou associées ;
+- classes appelées directement ou indirectement dès lors qu’elles influencent le comportement observé ;
+- tests Mock, tests d’intégration et toute classe de référence utile à la méthode.
+
+Ordre canonique de lecture :
+- d’abord le contrat ;
+- ensuite la classe cible ;
+- ensuite les dépendances utiles à la méthode exacte ;
+- enfin les tests concernés.
+
+Règle de conclusion :
+- L’IA NE DOIT PAS conclure sur une méthode si une dépendance utile n’a pas été relue.
+- Si une dépendance utile n’a pas encore été relue, l’IA DOIT déclarer explicitement que la lecture est incomplète, puis relire cette dépendance avant toute conclusion.
+- L’IA NE DOIT PAS extrapoler à partir d’une autre classe “semblable”, d’une conclusion antérieure, d’un souvenir de lecture ou d’une analogie rapide.
+
+Conséquence :
+- Toute conclusion sur une méthode Java doit pouvoir être retracée à la séquence explicite : contrat -> classe cible -> méthode exacte -> dépendances utiles -> tests concernés.
+
+---
+
 ## 29) Gouvernance canonique par couches (sacralisation progressive)
 
 Objectif : permettre à l’IA de découvrir la structure complète de l’application, les contrats applicables et les formalismes associés, de façon **couche par couche**, avec un bootstrap reproductible, audit-ready et indépendant de la mémoire interne.
@@ -1274,10 +1314,13 @@ Règles :
 
 ### 29.7 Sacralisation de `couche_configuration_tests`
 
-La couche canonique `couche_configuration_tests` a vocation à regrouper l’ensemble des fichiers racine, build, CI et configuration de tests permettant à l’IA de comprendre comment construire, tester et valider les couches déjà vertes du projet.
+La couche canonique `couche_configuration_tests` a vocation à regrouper l’ensemble des fichiers racine, build, CI, profils Spring, configuration applicative, configuration de logs et ressources de tests permettant à l’IA de comprendre comment construire, configurer, tester et valider les couches déjà vertes du projet.
 
-Sous-couche logique admise :
+Sous-couches logiques admises :
 - `couche_configuration_tests.racine_build_ci`
+- `couche_configuration_tests.configuration`
+
+#### `couche_configuration_tests.racine_build_ci`
 
 Cette sous-couche comprend au minimum :
 - `.gitattributes`
@@ -1287,17 +1330,38 @@ Cette sous-couche comprend au minimum :
 - `scripts/test_couches_validees.sh`
 - `.github/workflows/maven.yml`
 
+#### `couche_configuration_tests.configuration`
+
+Cette sous-couche comprend au minimum :
+- `pom.xml`
+- `src/main/resources/application.properties`
+- `src/main/resources/application-dev.properties`
+- `src/main/resources/application-prod.properties`
+- `src/main/resources/application-jpa.properties`
+- `src/main/resources/application-desktop.properties`
+- `src/main/resources/application-web.properties`
+- `src/main/resources/application-xml.properties`
+- `src/main/resources/Log4j2.xml`
+- `src/test/resources/application-test.properties`
+- `src/test/resources/Log4j2-test.xml`
+- `src/test/resources/data-test.sql`
+- `src/test/resources/truncate-test.sql`
+
 Règles :
 - le script shell de lancement des tests validés ne doit pas être figé sur un nombre de couches ;
 - son nom canonique devient `scripts/test_couches_validees.sh` ;
 - ce script doit rester évolutif : il commence par jouer les tests des couches déjà validées, en particulier les services UC, puis il devra intégrer les tests des Controllers et des Vues lorsqu’ils seront créés et validés ;
-- l’objectif est de disposer d’un build Maven jouant tous les tests déjà validés et passant verts.
+- l’objectif est de disposer d’un build Maven jouant tous les tests déjà validés et passant verts ;
+- la sous-couche `configuration` doit permettre à l’IA de relire les profils Spring réellement utilisés pour les audits de configuration/tests ;
+- la sous-couche `configuration` doit couvrir les fichiers `src/main/resources` et `src/test/resources` nécessaires pour comprendre le comportement effectif de l’application et des tests.
 
 La couche `couche_configuration_tests` doit donc permettre à l’IA de retrouver comme un tout cohérent :
 - les règles racine du dépôt ;
 - le build Maven ;
 - le point d’entrée CI ;
 - le script des couches validées ;
+- les profils Spring applicatifs ;
+- la configuration de logs applicative et de tests ;
 - les ressources de test déjà sacralisées.
 
 ### 29.8 Sacralisation de `couche_metier`
