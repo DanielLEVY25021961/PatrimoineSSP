@@ -198,16 +198,20 @@ couches:
         - docs/contrats/gateway/TypeProduitGatewayJPAService.md
 
     couche_configuration_tests:
-      statut: declared
+      statut: validated_locked
       mandatory_pre_read: false
       packs:
         - configuration_racine_build_ci
         - configuration
       sous_couches:
         - couche_configuration_tests.racine_build_ci
+        - couche_configuration_tests.configuration
+      sous_couches_statuts:
+        couche_configuration_tests.racine_build_ci: validated_locked
+        couche_configuration_tests.configuration: validated_locked
 
     couche_metier:
-      statut: declared
+      statut: validated_locked
       mandatory_pre_read: false
       packs:
         - metier

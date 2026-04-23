@@ -161,9 +161,17 @@ packs:
       - ".github/workflows/maven.yml"
 
   configuration:
-    description: "Configuration build + ressources de tests."
+    description: "Configuration applicative, profils Spring, logs applicatifs et ressources de tests."
     paths:
       - "pom.xml"
+      - "src/main/resources/application.properties"
+      - "src/main/resources/application-dev.properties"
+      - "src/main/resources/application-prod.properties"
+      - "src/main/resources/application-jpa.properties"
+      - "src/main/resources/application-desktop.properties"
+      - "src/main/resources/application-web.properties"
+      - "src/main/resources/application-xml.properties"
+      - "src/main/resources/Log4j2.xml"
       - "src/test/resources/truncate-test.sql"
       - "src/test/resources/data-test.sql"
       - "src/test/resources/application-test.properties"
@@ -425,16 +433,20 @@ couches:
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
 
     couche_configuration_tests:
-      statut: "declared"
+      statut: "validated_locked"
       mandatory_pre_read: false
       packs:
         - "configuration_racine_build_ci"
         - "configuration"
       sous_couches:
         - "couche_configuration_tests.racine_build_ci"
+        - "couche_configuration_tests.configuration"
+      sous_couches_statuts:
+        couche_configuration_tests.racine_build_ci: "validated_locked"
+        couche_configuration_tests.configuration: "validated_locked"
 
     couche_metier:
-      statut: "declared"
+      statut: "validated_locked"
       mandatory_pre_read: false
       packs:
         - "metier"
@@ -501,8 +513,8 @@ couches:
         - "docs/contrats/gateway/SousTypeProduitGatewayJPAService.md"
         - "docs/contrats/gateway/TypeProduitGatewayJPAService.md"
       sous_couches_statuts:
-        couche_services.gateway: validated_locked
-        couche_services.uc: validated_locked
+        couche_services.gateway: "validated_locked"
+        couche_services.uc: "validated_locked"
 
     couche_controllers:
       statut: "reserved"
