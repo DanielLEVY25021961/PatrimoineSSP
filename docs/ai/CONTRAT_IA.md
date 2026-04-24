@@ -222,6 +222,88 @@ Sortie :
 - comparaison implémentation vs tests
 - options de correction
 
+## RT-FENETRE-ANALYSE-SHA-FIGE-01 — Fenêtre d’analyse à SHA figé
+
+### Objet
+Cette règle a pour but d’accélérer les **analyses simples successives** portant sur un même périmètre déjà relu, sans sacrifier la sûreté de lecture au SHA courant.
+
+### Principe
+Par dérogation limitée à la règle générale de relecture avant chaque réponse, l’IA peut ouvrir une **fenêtre d’analyse à SHA figé** après une **relecture stricte initiale complète** du périmètre annoncé par l’utilisateur.
+
+Cette dérogation est **strictement réservée aux analyses simples**.  
+Elle ne s’applique **jamais** au codage, à l’audit complet, à la validation formelle, à la synthèse engageante, ni à toute réponse fondée sur un périmètre non relu.
+
+### Activation
+La fenêtre d’analyse n’est ouverte que si les conditions suivantes sont toutes réunies :
+
+1. l’utilisateur annonce explicitement un périmètre d’analyse, par exemple :
+   - « nous allons analyser les tests de `creer(...)` dans `SousTypeProduitGatewayJPAServiceIntegrationTest.java` » ;
+2. le SHA courant est connu et figé ;
+3. l’IA a relu strictement au SHA courant :
+   - le fichier cible ;
+   - la méthode exacte ;
+   - les dépendances utiles à la compréhension réelle ;
+   - les tests homologues ou liés utiles ;
+4. l’IA consigne une **PREUVE DE LECTURE** complète à l’ouverture de cette fenêtre.
+
+### Effet
+Tant que la fenêtre reste valide, l’IA peut répondre aux **sous-questions d’analyse simple** en s’appuyant sur cette lecture déjà effectuée, **sans relire au SHA avant chaque sous-question**.
+
+L’IA doit alors raisonner à partir de cette **mémoire de travail locale du chat**, et non d’une mémoire générale ou d’une mémoire long terme.
+
+### Portée
+La fenêtre d’analyse est strictement limitée :
+- au **SHA figé** à l’ouverture ;
+- au **périmètre explicitement annoncé** par l’utilisateur ;
+- aux **dépendances déjà relues** ;
+- aux **questions d’analyse simple** qui restent dans ce périmètre.
+
+### Invalidation immédiate
+La fenêtre d’analyse devient immédiatement invalide dans les cas suivants :
+
+1. l’utilisateur annonce un **nouveau SHA** ;
+2. un **commit/push** nouveau est signalé ;
+3. l’utilisateur élargit le périmètre à :
+   - une autre classe ;
+   - une autre méthode ;
+   - un autre fichier ;
+   - une dépendance utile non encore relue ;
+4. l’utilisateur demande :
+   - de coder ;
+   - un audit complet ;
+   - une validation formelle ;
+   - une synthèse engageante ;
+   - une conclusion dépassant le périmètre relu ;
+5. l’IA détecte qu’une dépendance utile n’a pas été relue ;
+6. l’IA a le moindre doute sur l’actualité ou l’exhaustivité de la lecture disponible.
+
+Dans tous ces cas, l’IA doit :
+- déclarer la fenêtre invalide ;
+- refaire une **relecture stricte au SHA courant** ;
+- produire une nouvelle **PREUVE DE LECTURE** avant de conclure.
+
+### Interdictions
+La fenêtre d’analyse à SHA figé ne doit jamais :
+- servir à éviter une relecture devenue nécessaire ;
+- être invoquée si le SHA a changé ;
+- être utilisée pour produire du code ;
+- remplacer la relecture stricte exigée pour un audit, une validation ou une livraison ;
+- reposer sur une mémoire long terme à la place d’une lecture locale contrôlée.
+
+### Règle de sûreté
+En cas de doute, l’IA doit toujours choisir la solution la plus sûre :
+- **invalider la fenêtre** ;
+- **relire strictement au SHA courant** ;
+- **reconstituer proprement le périmètre**.
+
+### Formulation opérationnelle
+La fenêtre d’analyse autorise uniquement ceci :
+
+- **une relecture stricte initiale complète** du périmètre annoncé ;
+- puis **des réponses d’analyse simple successives** dans ce même périmètre et au même SHA ;
+- sans nouvelle relecture au SHA entre ces sous-questions ;
+- jusqu’à invalidation explicite ou implicite de la fenêtre.
+
 ### MODE CODER (patch)
 
 Activé uniquement si le message contient explicitement : **"coder"**

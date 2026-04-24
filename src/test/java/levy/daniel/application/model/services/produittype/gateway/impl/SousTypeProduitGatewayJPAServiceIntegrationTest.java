@@ -1271,6 +1271,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT",
                 String.class);
 
+        /* vérifie que le stockage n'est pas vide. */
         assertThat(countEnBase).isNotNull().isPositive();
         assertThat(libellesEnBase).isNotNull().isNotEmpty();
 
