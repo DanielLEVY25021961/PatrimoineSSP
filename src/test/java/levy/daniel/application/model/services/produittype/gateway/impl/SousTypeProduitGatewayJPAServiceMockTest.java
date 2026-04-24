@@ -1646,9 +1646,16 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * prépare une requête paginée avec un TriSpec invalide,
          * puis configure le DAO mocké avec Mockito
          * pour retourner une page nominale.
+         * 
+         * Ne pas utiliser requete.getTris().add(...),
+         * car getTris() retourne une copie défensive.
          */
-        final RequetePage requete = new RequetePage();
-        requete.getTris().add(new TriSpec(null, DirectionTri.ASC));
+    	final List<TriSpec> tris = new ArrayList<TriSpec>();
+        tris.add(new TriSpec(null, DirectionTri.ASC));
+        
+        final int pageSize = 2;
+        final RequetePage requete = new RequetePage(0, pageSize, tris);
+        
 
         final TypeProduitJPA parentJPA =
                 fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);

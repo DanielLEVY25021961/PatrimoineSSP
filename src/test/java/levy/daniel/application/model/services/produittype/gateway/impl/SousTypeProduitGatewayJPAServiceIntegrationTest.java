@@ -1397,7 +1397,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>retourne une page non null ;</li>
      * <li>retourne un contenu non null ;</li>
-     * <li>retourne un total cohérent avec l'état physique de la base ;</li>
+     * <li>retourne un total cohérent avec l'état physique du stockage ;</li>
      * <li>applique les paramètres par défaut de pagination ;</li>
      * <li>retourne des objets métier portant chacun un parent non null.</li>
      * </ul>
