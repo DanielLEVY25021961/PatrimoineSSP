@@ -24,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -541,7 +542,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionAppliParamNull} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARAM_NULL} ;</li>
-     * <li>n'écrit rien dans le stockage réel.</li>
+     * <li>n'écrit rien dans le stockage.</li>
      * </ul>
      * </div>
      */
@@ -553,15 +554,15 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         /* ARRANGE :
          * compte d'abord (en SQL)
          * le nombre d'enregistrements dans le stockage
-         * avant l'appel du service,
-         * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         * avant l'appel du service afin de pouvoir prouver ensuite
+         * qu'aucune écriture n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countAvant).isNotNull();
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* ACT - ASSERT :
          * garantit que this.service.creer(null)
@@ -577,14 +578,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * compte ensuite (en SQL)
          * le nombre d'enregistrements dans le stockage
          * après l'échec contractuel
-         * afin de prouver que l'appel au service
+         * afin de prouver que l'appel service.creer(null)
          * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countApres).isNotNull();
+        assertThat(countApres).isNotNull().isNotZero();
         assertThat(countApres).isEqualTo(countAvant);
 
     } // __________________________________________________________________
@@ -598,7 +599,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK} ;</li>
-     * <li>n'écrit rien dans le stockage réel.</li>
+     * <li>n'écrit rien dans le stockage.</li>
      * </ul>
      * </div>
      */
@@ -612,26 +613,27 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         * qu'aucune écriture n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countAvant).isNotNull();
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* 
          * prépare un objet métier valide sur le parent,
          * mais avec un libellé enfant blank,
          * afin de vérifier le contrôle applicatif du PORT
-         * avant toute tentative d'accès au stockage réel.
+         * avant toute tentative d'accès au stockage.
          */
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, BLANK, parent);
 
         /* ACT - ASSERT :
-         * garantit que this.service.creer(stp)
+         * garantit que service.creer(stp)
          * - jette une ExceptionAppliLibelleBlank
          * - émet un message MESSAGE_CREER_KO_LIBELLE_BLANK 
          * (message contractuel attendu).
@@ -644,14 +646,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * compte ensuite (en SQL)
          * le nombre d'enregistrements dans le stockage
          * après l'échec contractuel
-         * afin de prouver que l'appel au service
+         * afin de prouver que l'appel service.creer(stp)
          * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countApres).isNotNull();
+        assertThat(countApres).isNotNull().isNotZero();
         assertThat(countApres).isEqualTo(countAvant);
 
     } // __________________________________________________________________
@@ -665,7 +667,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionAppliParentNull} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NULL} ;</li>
-     * <li>n'écrit rien dans le stockage réel.</li>
+     * <li>n'écrit rien dans le stockage.</li>
      * </ul>
      * </div>
      */
@@ -679,13 +681,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         * qu'aucune écriture n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countAvant).isNotNull();
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* 
          * prépare un sous-type à créer sans parent,
@@ -696,9 +699,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, null);
 
         /* ACT - ASSERT :
-         * garantit que this.service.creer(stp)
+         * garantit que l'appel service.creer(stp)
          * - jette une ExceptionAppliParentNull
-         * - émet un message MESSAGE_CREER_KO_PARENT_NULL.
+         * - émet un message MESSAGE_CREER_KO_PARENT_NULL 
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliParentNull.class)
@@ -708,14 +712,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * compte ensuite (en SQL)
          * le nombre d'enregistrements dans le stockage
          * après l'échec contractuel
-         * afin de prouver que l'appel au service
+         * afin de prouver que l'appel service.creer(stp)
          * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countApres).isNotNull();
+        assertThat(countApres).isNotNull().isNotZero();
         assertThat(countApres).isEqualTo(countAvant);
 
     } // __________________________________________________________________
@@ -729,7 +733,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK} ;</li>
-     * <li>n'écrit rien dans le stockage réel.</li>
+     * <li>n'écrit rien dans le stockage.</li>
      * </ul>
      * </div>
      */
@@ -743,13 +747,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         * qu'aucune écriture n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countAvant).isNotNull();
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* 
          * prépare un parent avec libellé blank,
@@ -762,9 +767,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
         /* ACT - ASSERT :
-         * garantit que this.service.creer(stp)
+         * garantit que l'appel service.creer(stp)
          * - jette une ExceptionAppliLibelleBlank
-         * - émet un message MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK.
+         * - émet un message MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK 
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
@@ -774,14 +780,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * compte ensuite (en SQL)
          * le nombre d'enregistrements dans le stockage
          * après l'échec contractuel
-         * afin de prouver que l'appel au service
+         * afin de prouver que l'appel service.creer(stp)
          * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countApres).isNotNull();
+        assertThat(countApres).isNotNull().isNotZero();
         assertThat(countApres).isEqualTo(countAvant);
 
     } // __________________________________________________________________
@@ -795,7 +801,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NON_PERSISTENT} ;</li>
-     * <li>n'écrit rien dans le stockage réel.</li>
+     * <li>n'écrit rien dans le stockage.</li>
      * </ul>
      * </div>
      */
@@ -809,13 +815,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         * qu'aucune écriture n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countAvant).isNotNull();
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* 
          * prépare un parent non persistant
@@ -829,9 +836,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
         /* ACT - ASSERT :
-         * garantit que this.service.creer(stp)
+         * garantit que l'appel service.creer(stp)
          * - jette une ExceptionTechniqueGatewayNonPersistent
-         * - émet un message MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT.
+         * - émet un message MESSAGE_CREER_KO_PARENT_NON_PERSISTENT 
+         * + LIBELLE_PARENT_VETEMENT (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
@@ -843,14 +851,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * compte ensuite (en SQL)
          * le nombre d'enregistrements dans le stockage
          * après l'échec contractuel
-         * afin de prouver que l'appel au service
+         * afin de prouver que l'appel service.creer(stp)
          * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countApres).isNotNull();
+        assertThat(countApres).isNotNull().isNotZero();
         assertThat(countApres).isEqualTo(countAvant);
 
     } // __________________________________________________________________
@@ -864,7 +872,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NON_PERSISTENT} ;</li>
-     * <li>n'écrit rien dans le stockage réel.</li>
+     * <li>n'écrit rien dans le stockage.</li>
      * </ul>
      * </div>
      */
@@ -873,19 +881,19 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testCreerParentAbsentExceptionTechniqueGatewayNonPersistent() {
 
-
     	/* ARRANGE :
          * compte d'abord (en SQL)
          * le nombre d'enregistrements dans le stockage
          * avant l'appel du service,
          * afin de pouvoir prouver ensuite
-         * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+         * qu'aucune écriture n'a eu lieu dans le stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countAvant).isNotNull();
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* 
          * prépare un parent portant un identifiant inexistant,
@@ -898,9 +906,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         	= new SousTypeProduit(null, LIBELLE_NOUVEAU_PULL, parent);
 
         /* ACT - ASSERT :
-         * garantit que this.service.creer(stp)
+         * garantit que l'appel service.creer(stp)
          * - jette une ExceptionTechniqueGatewayNonPersistent
-         * - émet un message MESSAGE_CREER_KO_PARENT_NON_PERSISTENT + LIBELLE_PARENT_VETEMENT.
+         * - émet un message MESSAGE_CREER_KO_PARENT_NON_PERSISTENT 
+         * + LIBELLE_PARENT_VETEMENT (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
@@ -912,14 +921,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * compte ensuite (en SQL)
          * le nombre d'enregistrements dans le stockage
          * après l'échec contractuel
-         * afin de prouver que l'appel au service
+         * afin de prouver que l'appel service.creer(stp)
          * n'a produit aucune écriture dans le stockage.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        assertThat(countApres).isNotNull();
+        assertThat(countApres).isNotNull().isNotZero();
         assertThat(countApres).isEqualTo(countAvant);
 
     } // __________________________________________________________________
@@ -929,14 +938,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     /**
      * <div>
      * <p>garantit que si l'appelant tente creer(...)
-     * avec un libellé déjà présent pour le même parent :</p>
+     * avec un libellé déjà présent pour le même parent (doublon) :</p>
      * <ul>
-     * <li>le stockage réel refuse la création du doublon ;</li>
+     * <li>le stockage refuse la création du doublon ;</li>
      * <li>l'exception observable en intégration
-     * est une {@link org.springframework.transaction.UnexpectedRollbackException} ;</li>
-     * <li>aucune nouvelle ligne n'est créée en base ;</li>
-     * <li>l'unique ligne seedée correspondant déjà au couple
-     * (parent, sous-type) reste inchangée.</li>
+     * est une {@link UnexpectedRollbackException} ;</li>
+     * <li>aucun nouvel enregistrement n'est créé dans le stockage ;</li>
+     * <li>l'unique enregistrement dans le stockage correspondant à l'objet métier doublon reste inchangé.</li>
      * </ul>
      * <p>Ce test vérifie donc le comportement réellement visible
      * à travers le proxy transactionnel Spring/Hibernate,
@@ -946,15 +954,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * @throws Exception
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(libellé existant sous même parent) - jette UnexpectedRollbackException et ne crée aucune nouvelle ligne")
+    @DisplayName("creer(doublon) - jette UnexpectedRollbackException et ne crée aucun nouvel enregistrement")
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void testCreerLibelleExistant() throws Exception {
 
         /* ARRANGE :
-         * lit d'abord l'état physique initial de la base
-         * par SQL direct, afin de disposer d'une preuve indépendante
-         * du contexte Hibernate.
+         * lit d'abord le stockage par SQL direct afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
          *
          * Le doublon testé ici porte sur le couple :
          * - parent = vêtement
@@ -966,10 +973,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
+        
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* 
-         * Lit directement en base le nombre de lignes
-         * correspondant déjà au couple métier :
+         * Lit directement (en SQL) dans le stockage le nombre 
+         * d'enregistrements correspondant déjà à l'objet métier :
          * - sous-type = LIBELLE_ENFANT_VETEMENT_HOMME
          * - parent = idParentVetement
          *
@@ -998,26 +1008,26 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 LIBELLE_ENFANT_VETEMENT_HOMME,
                 new TypeProduit(idParentVetement, LIBELLE_PARENT_VETEMENT));
 
-        assertThat(countAvant).isNotNull();
+       
         assertThat(countCoupleAvant).isEqualTo(1L);
         assertThat(idSeedAvant).isNotNull();
 
         /* ACT - ASSERT :
          * sollicite la méthode creer(...)
-         * avec un couple (parent, sous-type) déjà présent.
+         * avec un objet métier déjà présent.
          *
-         * Au comportement réel observé en intégration,
-         * le rollback transactionnel est visible côté test
+         * le rollback transactionnel est visible dans le test
          * sous la forme d'une UnexpectedRollbackException.
          */
         assertThatThrownBy(() -> this.service.creer(aCreer))
-            .isInstanceOf(org.springframework.transaction.UnexpectedRollbackException.class);
+            .isInstanceOf(UnexpectedRollbackException.class);
 
         /* ASSERT :
          * contrôle ensuite par SQL direct
-         * qu'aucun effet de bord n'a été produit en base.
+         * qu'aucun effet de bord n'a été produit dans le stockage.
          *
-         * On évite volontairement tout raisonnement basé sur le cache Hibernate.
+         * On évite volontairement tout raisonnement 
+         * basé sur le cache Hibernate.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1035,13 +1045,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 LIBELLE_ENFANT_VETEMENT_HOMME,
                 idParentVetement);
 
-        /* Garantit qu'aucune nouvelle ligne
-         * n'a été créée dans la table.
+        /* Garantit qu'aucun nouvel enregistrement
+         * n'a été créée dans le stockage.
          */
         assertThat(countApres).isEqualTo(countAvant);
 
         /* Garantit qu'il n'existe toujours
-         * qu'une seule ligne portant ce couple fonctionnel.
+         * qu'un seul enregistrement pour cet objet métier.
          */
         assertThat(countCoupleApres).isEqualTo(1L);
 
@@ -1058,10 +1068,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <div>
      * <p>garantit que creer(nominal) :</p>
      * <ul>
-     * <li>crée réellement une ligne en base ;</li>
+     * <li>crée réellement un enregistrement dans le stockage ;</li>
      * <li>retourne un {@link SousTypeProduit} persistant ;</li>
      * <li>retourne un objet métier portant un identifiant généré ;</li>
-     * <li>écrit le bon libellé enfant et la bonne clé étrangère parent en base ;</li>
+     * <li>écrit le bon libellé enfant et la bonne clé étrangère parent 
+     * dans le stockage ;</li>
      * <li>rend la donnée retrouvable après neutralisation explicite du contexte Hibernate ;</li>
      * <li>ne supprime ni n'altère les données seedées.</li>
      * </ul>
@@ -1076,12 +1087,12 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testCreerNominalOk() throws Exception {
 
         /* ARRANGE :
-         * mémorise d'abord l'état physique de la base
+         * Lit directement (en SQL) dans le stockage
          * via JdbcTemplate, afin de disposer d'une preuve indépendante
          * du contexte Hibernate.
          *
          * Le test est volontairement exécuté hors transaction de test
-         * pour prouver une écriture physique réelle en base,
+         * pour prouver une écriture dans le stockage,
          * puis réaliser un nettoyage physique explicite en finally.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
@@ -1095,11 +1106,11 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 LIBELLE_NOUVEAU_PULL,
                 new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT));
 
-        assertThat(countAvant).isNotNull();
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
         /* ACT :
-         * sollicite la méthode creer(...)
-         * dans un scénario nominal complet de persistance réelle.
+         * appelle service.creer(aCreer)
          */
         final SousTypeProduit cree = this.service.creer(aCreer);
 
@@ -1119,8 +1130,9 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         try {
 
             /* ASSERT :
-             * contrôle ensuite physiquement la base par SQL direct,
-             * pour prouver l'écriture réelle et non un simple effet de cache.
+             * contrôle ensuite physiquement le stockage par SQL direct,
+             * pour prouver l'écriture réelle dans le stockage 
+             * et non un simple effet de cache Hibernate.
              */
             final Long countApres = this.jdbcTemplate.queryForObject(
                     SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1141,36 +1153,42 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                     Long.class,
                     idCree);
 
-            /* Garantit que la création augmente bien
+            /* 
+             * Garantit que l'appel service.creer(aCreer) augmente bien
              * le nombre total de lignes.
              */
             assertThat(countApres).isEqualTo(countAvant + 1L);
 
-            /* Garantit physiquement qu'une seule ligne
-             * porte bien l'identifiant créé.
+            /* 
+             * Garantit physiquement qu'un seul enregistrement 
+             * dans le stockage porte bien l'identifiant créé.
              */
             assertThat(countEnBase)
                 .as("La ligne doit exister physiquement en base après creer()")
                 .isEqualTo(1);
 
-            /* Garantit physiquement en base
-             * l'écriture du bon libellé métier enfant.
+            /* 
+             * Assure l'écriture du bon libellé de l'objet métier 
+             * dans le stockage.
              */
             assertThat(libelleEnBase).isEqualTo(LIBELLE_NOUVEAU_PULL);
 
-            /* Garantit physiquement en base
-             * l'écriture de la bonne clé étrangère parent.
+            /* 
+             * Assure l'écriture de la bonne clé étrangère parent 
+             * de l'objet métier dans le stockage.
              */
             assertThat(parentEnBase).isEqualTo(idParent);
 
-            /* Neutralise explicitement le contexte Hibernate
-             * avant toute relecture via le service,
-             * pour éviter d'être leurré par le cache.
+            /* 
+             * Neutralise explicitement le contexte Hibernate
+             * avant toute relecture via le service pour éviter 
+             * d'être leurré par le cache Hibernate.
              */
             this.entityManager.clear();
 
-            /* Garantit que l'objet nouvellement créé
-             * est bien retrouvable via le service
+            /* 
+             * Garantit que l'objet nouvellement créé
+             * est bien retrouvable via l'appel service.findById(idCree)
              * après neutralisation du contexte de persistance.
              */
             final SousTypeProduit relu = this.service.findById(idCree);
@@ -1180,8 +1198,9 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             assertThat(relu.getTypeProduit()).isNotNull();
             assertThat(relu.getTypeProduit().getIdTypeProduit()).isEqualTo(idParent);
 
-            /* Garantit enfin que les données seedées
-             * restent présentes après la création.
+            /* 
+             * Garantit enfin que les données seedées
+             * restent présentes après l'appel service.creer(aCreer).
              */
             final List<SousTypeProduit> liste = this.service.rechercherTous();
             assertThat(liste)
@@ -1195,7 +1214,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         } finally {
 
             /* Nettoyage physique :
-             * supprime explicitement la ligne créée,
+             * supprime l'enregistrement créé dans le stockage,
              * afin de garantir l'isolation du test
              * même en cas d'échec d'assertion en amont.
              */
@@ -1217,11 +1236,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p>garantit que rechercherTous() sur la base seedée :</p>
+     * <p>garantit que rechercherTous() sur le stockage seedé :</p>
      * <ul>
      * <li>retourne une liste non null et non vide ;</li>
-     * <li>retourne exactement les libellés physiquement présents en base ;</li>
-     * <li>retourne autant d'objets métier que de lignes présentes en base ;</li>
+     * <li>retourne exactement les libellés physiquement 
+     * présents dans le stockage ;</li>
+     * <li>retourne autant d'objets métier que 
+     * d'enregistrements présents dans le stockage ;</li>
      * <li>retourne une liste triée par libellé et sans doublon ;</li>
      * <li>retourne des objets métier portant chacun un parent non null.</li>
      * </ul>
@@ -1235,9 +1256,9 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testRechercherTousNominalOk() throws Exception {
 
         /* ARRANGE :
-         * lit d'abord l'état physique actuel de la base
-         * via JdbcTemplate, afin de disposer d'une référence
-         * indépendante d'Hibernate.
+         * Lit directement (en SQL) dans le stockage
+         * via JdbcTemplate afin de disposer d'une preuve indépendante
+         * du contexte Hibernate.
          *
          * Ce test vérifie ensuite que la liste renvoyée par le service
          * correspond exactement à cet état physique.
@@ -1253,26 +1274,29 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(countEnBase).isNotNull().isPositive();
         assertThat(libellesEnBase).isNotNull().isNotEmpty();
 
-        /* Ordonne la référence SQL
+        /* 
+         * Ordonne la référence SQL
          * selon le même critère métier attendu côté service :
          * tri alphabétique insensible à la casse.
          */
         libellesEnBase.sort(String.CASE_INSENSITIVE_ORDER);
 
         /* ACT :
-         * sollicite la recherche complète
-         * sur la base seedée.
+         * sollicite service.rechercherTous()
+         * sur le stockage seedé.
          */
         final List<SousTypeProduit> resultats = this.service.rechercherTous();
 
         /* ASSERT :
          * vérifie d'abord que la méthode retourne
-         * une liste exploitable.
+         * une liste exploitable (non null et non vide).
          */
         assertThat(resultats).isNotNull().isNotEmpty();
 
-        /* Vérifie ensuite que le nombre d'objets métier retournés
-         * correspond exactement au nombre de lignes présentes en base.
+        /* 
+         * Vérifie ensuite que le nombre d'objets métier retournés
+         * correspond exactement au nombre d'enregistrements 
+         * dans le stockage.
          */
         assertThat(resultats).hasSize(countEnBase.intValue());
 
@@ -1280,12 +1304,15 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 .map(SousTypeProduit::getSousTypeProduit)
                 .toList();
 
-        /* Vérifie que les libellés renvoyés par le service
-         * correspondent exactement aux libellés physiquement présents en base.
+        /* 
+         * Vérifie que les libellés renvoyés par le service
+         * correspondent exactement aux libellés physiquement 
+         * présents dans le stockage.
          */
         assertThat(libellesResultats).containsExactlyElementsOf(libellesEnBase);
 
-        /* Vérifie enfin les propriétés attendues côté service :
+        /* 
+         * Vérifie enfin les propriétés attendues côté service :
          * pas de doublon métier, ordre alphabétique
          * et parent non null sur chaque objet métier.
          */
@@ -1305,18 +1332,17 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p>garantit que rechercherTous() sur une base vidée :</p>
+     * <p>garantit que rechercherTous() sur un stockage vidé :</p>
      * <ul>
      * <li>retourne une liste non null ;</li>
      * <li>retourne une liste vide ;</li>
-     * <li>reste cohérent avec l'état physique vide de la base.</li>
      * </ul>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(base vide) - retourne une liste vide non null")
+    @DisplayName("rechercherTous(stockage vide) - retourne une liste vide non null")
     @Test
     @Sql(
         scripts = SousTypeProduitGatewayJPAServiceIntegrationTest.CLASSPATH_TRUNCATE_SQL,
@@ -1326,8 +1352,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
         /* ARRANGE :
          * remplace pour ce test la préparation standard
-         * par le seul script de vidage,
-         * afin d'obtenir une base réellement vide.
+         * par le seul script de vidage 
+         * afin d'obtenir un stockage réellement vide.
          *
          * Ce test vérifie ensuite que le service
          * reste cohérent avec cet état physique.
@@ -1336,17 +1362,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
+        /*
+         * Assure que le stockage est vide.
+         */
         assertThat(countEnBase).isNotNull().isZero();
 
         /* ACT :
-         * sollicite la recherche complète
-         * sur une base ne contenant aucune ligne.
+         * appelle service.rechercherTous()
+         * sur le stockage vide.
          */
         final List<SousTypeProduit> resultats = this.service.rechercherTous();
 
         /* ASSERT :
-         * vérifie que la méthode ne retourne jamais null,
-         * même lorsque le stockage réel est vide.
+         * - assure que service.rechercherTous() ne retourne jamais null,
+         * même lorsque le stockage est vide.
+         * - assure que service.rechercherTous() retourne une liste vide 
+         * lorsque le stockage est vide.
          */
         assertThat(resultats).isNotNull().isEmpty();
 
@@ -1373,14 +1404,14 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * @throws Exception
      */
     @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(null) - applique la pagination par défaut et reste cohérent avec la base")
+    @DisplayName("rechercherTousParPage(null) - applique la pagination par défaut et reste cohérent avec le stockage")
     @Test
     public void testRechercherTousParPageParamNullNominalOk() throws Exception {
 
         /* ARRANGE :
-         * lit d'abord l'état physique de la base
-         * afin de disposer d'une référence indépendante d'Hibernate
-         * pour le nombre total de lignes.
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
          */
         final Long countEnBase = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1433,7 +1464,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>retourne une page non null ;</li>
      * <li>retourne un contenu trié selon la spécification demandée ;</li>
-     * <li>retourne un total cohérent avec l'état physique de la base ;</li>
+     * <li>retourne un total cohérent avec l'état physique du stockage ;</li>
      * <li>retourne exactement le segment attendu de l'état physique trié.</li>
      * </ul>
      * </div>
@@ -1446,7 +1477,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testRechercherTousParPageTrisValidesOk() throws Exception {
 
         /* ARRANGE :
-         * lit d'abord directement en base
+         * lit d'abord (en SQL) directement dans le stockage
          * les libellés physiquement présents,
          * déjà ordonnés selon le tri métier demandé,
          * afin de disposer d'une référence indépendante d'Hibernate.
@@ -1487,14 +1518,16 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 .map(SousTypeProduit::getSousTypeProduit)
                 .toList();
 
-        /* Vérifie ensuite que le contenu retourné
+        /* 
+         * Vérifie ensuite que le contenu retourné
          * correspond exactement aux deux premiers libellés
          * de l'état physique trié.
          */
         assertThat(libellesPage)
             .containsExactlyElementsOf(libellesEnBase.subList(0, 2));
 
-        /* Vérifie enfin le tri alphabétique du contenu retourné
+        /* 
+         * Vérifie enfin le tri alphabétique du contenu retourné
          * et la cohérence des parents portés par les objets métier.
          */
         assertThat(libellesPage).isSortedAccordingTo(String.CASE_INSENSITIVE_ORDER);
@@ -1515,7 +1548,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
      * <ul>
      * <li>retourne une page non null ;</li>
      * <li>retourne un contenu vide ;</li>
-     * <li>retourne un total cohérent avec l'état physique de la base ;</li>
+     * <li>retourne un total égal au nombre d'enregistrements 
+     * dans le stockage ;</li>
      * <li>conserve les paramètres demandés de pagination.</li>
      * </ul>
      * </div>
@@ -1527,24 +1561,32 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testRechercherTousParPagePageVideOk() throws Exception {
 
-        /* ARRANGE :
-         * lit d'abord l'état physique de la base
-         * puis construit une requête dont le numéro de page
-         * dépasse très largement le nombre de pages disponibles.
+    	/* ARRANGE :
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
          */
         final Long countEnBase = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
+        /*
+         * Assure que le stockage n'est pas vide.
+         */
         assertThat(countEnBase).isNotNull().isPositive();
 
+        /* 
+         * construit une requête dont le numéro de page
+         * dépasse très largement le nombre de pages disponibles.
+         */
         final RequetePage requete = new RequetePage();
         requete.setPageNumber(999);
         requete.setPageSize(2);
         requete.getTris().add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
 
         /* ACT :
-         * sollicite la pagination sur une page hors bornes.
+         * sollicite service.rechercherTousParPage(requete) 
+         * sur une page hors bornes.
          */
         final ResultatPage<SousTypeProduit> resultat =
                 this.service.rechercherTousParPage(requete);
@@ -1565,12 +1607,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p>garantit que rechercherTousParPage(...) sur une base vidée :</p>
+     * <p>garantit que rechercherTousParPage(...) sur un stockage vide :</p>
      * <ul>
      * <li>retourne une page non null ;</li>
      * <li>retourne un contenu vide ;</li>
-     * <li>retourne un total à zéro ;</li>
-     * <li>reste cohérent avec l'état physique vide de la base.</li>
+     * <li>retourne un total d'enregistrements dans 
+     * le stockage égal à zéro ;</li>
+     * <li>reste cohérent avec le stockage vide.</li>
      * </ul>
      * </div>
      *
@@ -1586,13 +1629,17 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testRechercherTousParPageBaseVide() throws Exception {
 
         /* ARRANGE :
-         * prépare pour ce test une base réellement vide
-         * en ne rejouant que le script de vidage.
+         * remplace pour ce test la préparation standard
+         * par le seul script de vidage 
+         * afin d'obtenir un stockage réellement vide.
          */
         final Long countEnBase = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
+        /*
+         * Assure que le stockage est vide.
+         */
         assertThat(countEnBase).isNotNull().isZero();
 
         final RequetePage requete = new RequetePage();
@@ -1600,8 +1647,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         requete.setPageSize(10);
 
         /* ACT :
-         * sollicite la pagination
-         * sur une base ne contenant aucune ligne.
+         * appelle service.rechercherTousParPage(requete)
+         * sur le stockage vide.
          */
         final ResultatPage<SousTypeProduit> resultat =
                 this.service.rechercherTousParPage(requete);
@@ -1640,11 +1687,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testFindByObjetMetierParamNullExceptionAppliParamNull() {
 
-        /* ARRANGE :
-         * lit d'abord l'état physique de la base,
-         * afin de pouvoir prouver ensuite
-         * qu'une méthode purement de lecture
-         * n'a pas modifié le stockage réel.
+    	/* ARRANGE :
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1663,8 +1709,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
 
         /* ASSERT :
-         * relit ensuite l'état physique de la base
-         * pour prouver l'absence de toute écriture réelle.
+         * Compte ensuite directement (en SQL) le nombre d'enregistrements
+         * dans le stockage pour prouver l'absence de toute écriture réelle.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1692,20 +1738,24 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testFindByObjetMetierLibelleBlankExceptionAppliLibelleBlank() {
 
-        /* ARRANGE :
-         * lit d'abord l'état physique de la base,
-         * puis prépare un objet métier dont le libellé enfant est blank,
-         * avec un parent réellement persistant.
-         */
+    	/* ARRANGE :
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
+         */        
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
+        
+        assertThat(countAvant).isNotNull();
 
+        /* 
+         * prépare un objet métier dont le libellé enfant est blank,
+         * avec un parent réellement persistant.
+         */
         final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
         final TypeProduit parent = new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp = new SousTypeProduit(null, BLANK, parent);
-
-        assertThat(countAvant).isNotNull();
 
         /* ACT - ASSERT :
          * garantit que this.service.findByObjetMetier(stp)
@@ -1718,7 +1768,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
 
         /* ASSERT :
-         * prouve ensuite que la base n'a subi aucune altération.
+         * Compte ensuite directement (en SQL) le nombre d'enregistrements
+         * dans le stockage pour prouver l'absence de toute écriture réelle.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1746,18 +1797,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testFindByObjetMetierParentNullExceptionAppliParentNull() {
 
-        /* ARRANGE :
-         * lit l'état physique initial de la base,
-         * puis prépare un objet métier sans parent.
-         */
+    	/* ARRANGE :
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
+         */ 
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
+        assertThat(countAvant).isNotNull();
+        
+        /* 
+         * prépare un objet métier sans parent.
+         */
         final SousTypeProduit stp =
                 new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, null);
-
-        assertThat(countAvant).isNotNull();
 
         /* ACT - ASSERT :
          * garantit que this.service.findByObjetMetier(stp)
@@ -1770,7 +1825,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL);
 
         /* ASSERT :
-         * prouve ensuite l'absence de modification réelle en base.
+         * Compte ensuite directement (en SQL) le nombre d'enregistrements
+         * dans le stockage pour prouver l'absence de toute écriture réelle.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1798,19 +1854,23 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testFindByObjetMetierParentLibelleBlankExceptionAppliLibelleBlank() {
 
-        /* ARRANGE :
-         * lit l'état physique initial de la base,
-         * puis prépare un objet métier dont le parent a un libellé blank.
-         */
+    	/* ARRANGE :
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
+         */ 
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
+        
+        assertThat(countAvant).isNotNull();
 
+        /* 
+         * puis prépare un objet métier dont le parent a un libellé blank.
+         */
         final TypeProduit parent = new TypeProduit(Long.valueOf(1L), BLANK);
         final SousTypeProduit stp =
                 new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
-
-        assertThat(countAvant).isNotNull();
 
         /* ACT - ASSERT :
          * garantit que this.service.findByObjetMetier(stp)
@@ -1823,7 +1883,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             .hasMessage(SousTypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK);
 
         /* ASSERT :
-         * prouve ensuite l'absence de modification réelle en base.
+         * Compte ensuite directement (en SQL) le nombre d'enregistrements
+         * dans le stockage pour prouver l'absence de toute écriture réelle.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1851,25 +1912,30 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testFindByObjetMetierParentIdNullExceptionTechniqueGatewayNonPersistent() {
 
-        /* ARRANGE :
-         * lit l'état physique initial de la base,
-         * puis prépare un objet métier dont le parent n'est pas persistant
-         * car son identifiant est null.
-         */
+    	/* ARRANGE :
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
+         */         
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
+        assertThat(countAvant).isNotNull();
+        
+        /* 
+         * prépare un objet métier dont le parent n'est pas persistant
+         * car son identifiant est null.
+         */
         final TypeProduit parent = new TypeProduit(null, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp =
                 new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
 
-        assertThat(countAvant).isNotNull();
-
         /* ACT - ASSERT :
          * garantit que this.service.findByObjetMetier(stp)
          * - jette une ExceptionTechniqueGatewayNonPersistent
-         * - émet le préfixe contractuel suivi du libellé du parent.
+         * - émet le préfixe contractuel suivi du libellé du parent 
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
@@ -1878,7 +1944,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                             + LIBELLE_PARENT_VETEMENT);
 
         /* ASSERT :
-         * prouve ensuite l'absence de modification réelle en base.
+         * Compte ensuite directement (en SQL) le nombre d'enregistrements
+         * dans le stockage pour prouver l'absence de toute écriture réelle.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -1892,7 +1959,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(parent absent en base) :</p>
+     * <p>garantit que findByObjetMetier(parent absent dans le stockage) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
      * <li>émet un message commençant par
@@ -1906,25 +1973,33 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testFindByObjetMetierParentAbsentExceptionTechniqueGatewayNonPersistent() {
 
-        /* ARRANGE :
-         * lit l'état physique initial de la base,
-         * puis prépare un objet métier dont le parent porte un identifiant inexistant,
-         * afin de vérifier le contrôle de persistance réelle en base.
+    	/* ARRANGE :
+         * Compte directement (en SQL) le nombre d'enregistrements 
+         * dans le stockage via JdbcTemplate afin de disposer 
+         * d'une preuve indépendante du contexte Hibernate.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
+        assertThat(countAvant).isNotNull();
+        
+        /* 
+         * prépare un objet métier dont le parent 
+         * porte un identifiant inexistant,
+         * afin de vérifier le contrôle de 
+         * persistance réelle dans le stockage.
+         */
         final TypeProduit parent = new TypeProduit(ID_INEXISTANT, LIBELLE_PARENT_VETEMENT);
         final SousTypeProduit stp =
                 new SousTypeProduit(null, LIBELLE_ENFANT_VETEMENT_HOMME, parent);
 
-        assertThat(countAvant).isNotNull();
-
         /* ACT - ASSERT :
          * garantit que this.service.findByObjetMetier(stp)
          * - jette une ExceptionTechniqueGatewayNonPersistent
-         * - émet le préfixe contractuel suivi du libellé du parent.
+         * - émet le message MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT 
+         * + LIBELLE_PARENT_VETEMENT
+         * (message contractuel attendu).
          */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
@@ -1933,7 +2008,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                             + LIBELLE_PARENT_VETEMENT);
 
         /* ASSERT :
-         * prouve ensuite l'absence de modification réelle en base.
+         * Compte ensuite directement (en SQL) le nombre d'enregistrements
+         * dans le stockage pour prouver l'absence de toute écriture réelle.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -2005,8 +2081,9 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          */
         assertThat(resultat).isNull();
 
-        /* Vérifie aussi que cette simple lecture
-         * n'a produit aucune modification réelle de la base.
+        /* ASSERT :
+         * Compte ensuite directement (en SQL) le nombre d'enregistrements
+         * dans le stockage pour prouver l'absence de toute écriture réelle.
          */
         final Long countApres = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -2037,19 +2114,20 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public void testFindByObjetMetierNominalOk() throws Exception {
 
         /* ARRANGE :
-         * lit d'abord directement la base
+         * lit d'abord (en SQL) directement dans le stockage
          * pour retrouver le parent persistant
          * puis l'identifiant exact du sous-type attendu.
          *
-         * Cette référence SQL sert ensuite
-         * à comparer le résultat du service
-         * à l'état physique réel du stockage.
+         * Cette référence SQL sert ensuite à comparer 
+         * le résultat de service.findByObjetMetier(...)
+         * à l'état réel du stockage.
          */
         final Long countAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        final Long idParent = retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+        final Long idParent 
+        	= retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
 
         final Long countCoupleAvant = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT,
@@ -2072,15 +2150,16 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(countCoupleAvant).isEqualTo(1L);
         assertThat(idTrouveEnBase).isNotNull();
 
-        /* Neutralise explicitement le contexte Hibernate
-         * avant la lecture métier,
-         * afin de vérifier un comportement réellement observable.
+        /* 
+         * Neutralise explicitement le contexte Hibernate
+         * avant la lecture via service.findByObjetMetier(...)
+         * afin d'éviter des effets indésirables du cache Hibernate.
          */
         this.entityManager.clear();
 
         /* ACT :
-         * sollicite la recherche par objet métier
-         * sur un couple physiquement présent en base.
+         * appelle service.findByObjetMetier(...)
+         * sur un objet métier réellement présent dans le stockage.
          */
         final SousTypeProduit trouve = this.service.findByObjetMetier(probe);
 
