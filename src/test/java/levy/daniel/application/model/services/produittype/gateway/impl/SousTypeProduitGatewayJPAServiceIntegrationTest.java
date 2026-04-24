@@ -6,6 +6,7 @@ package levy.daniel.application.model.services.produittype.gateway.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -1484,22 +1485,31 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * déjà ordonnés selon le tri métier demandé,
          * afin de disposer d'une référence indépendante d'Hibernate.
          */
-        final List<String> libellesEnBase = this.jdbcTemplate.queryForList(
+        final List<String> libellesStockage = this.jdbcTemplate.queryForList(
                 "SELECT SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT ORDER BY UPPER(SOUS_TYPE_PRODUIT) ASC",
                 String.class);
 
-        final Long countEnBase = this.jdbcTemplate.queryForObject(
+        final Long countStockage = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
-        /* Vérifie que le stockage n'est pas vide. */
-        assertThat(libellesEnBase).isNotNull().isNotEmpty();
-        assertThat(countEnBase).isNotNull().isPositive();
+        final int pageSize = 2;
 
-        final RequetePage requete = new RequetePage();
-        requete.setPageNumber(0);
-        requete.setPageSize(2);
-        requete.getTris().add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
+        /* Vérifie que le stockage contient assez d'enregistrements. */
+        assertThat(libellesStockage).isNotNull().hasSizeGreaterThanOrEqualTo(pageSize);
+        assertThat(countStockage).isNotNull().isGreaterThanOrEqualTo(Long.valueOf(pageSize));
+
+        /* 
+         * construit une liste de tris explicite,
+         * puis l'injecte dans la RequetePage.
+         *
+         * Ne pas utiliser requete.getTris().add(...),
+         * car getTris() retourne une copie défensive.
+         */
+        final List<TriSpec> tris = new ArrayList<TriSpec>();
+        tris.add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
+
+        final RequetePage requete = new RequetePage(0, pageSize, tris);
 
         /* ACT :
          * sollicite la pagination sur la première page
@@ -1512,10 +1522,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * vérifie d'abord la cohérence générale de la page.
          */
         assertThat(resultat).isNotNull();
-        assertThat(resultat.getContent()).isNotNull().hasSize(2);
+        assertThat(resultat.getContent()).isNotNull().hasSize(pageSize);
         assertThat(resultat.getPageNumber()).isEqualTo(0);
-        assertThat(resultat.getPageSize()).isEqualTo(2);
-        assertThat(resultat.getTotalElements()).isEqualTo(countEnBase);
+        assertThat(resultat.getPageSize()).isEqualTo(pageSize);
+        assertThat(resultat.getTotalElements()).isEqualTo(countStockage);
 
         final List<String> libellesPage = resultat.getContent().stream()
                 .map(SousTypeProduit::getSousTypeProduit)
@@ -1527,7 +1537,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * de l'état physique trié.
          */
         assertThat(libellesPage)
-            .containsExactlyElementsOf(libellesEnBase.subList(0, 2));
+            .containsExactlyElementsOf(libellesStockage.subList(0, pageSize));
 
         /* 
          * Vérifie enfin le tri alphabétique du contenu retourné
@@ -1542,7 +1552,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
             });
 
     } // __________________________________________________________________
-
+    
 
 
     /**
@@ -1564,28 +1574,35 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     @Test
     public void testRechercherTousParPagePageHorsBorne() throws Exception {
 
-    	/* ARRANGE :
+        /* ARRANGE :
          * Compte directement (en SQL) le nombre d'enregistrements 
          * dans le stockage via JdbcTemplate afin de disposer 
          * d'une preuve indépendante du contexte Hibernate.
          */
-        final Long countEnBase = this.jdbcTemplate.queryForObject(
+        final Long countStockage = this.jdbcTemplate.queryForObject(
                 SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
                 Long.class);
 
         /*
          * Assure que le stockage n'est pas vide.
          */
-        assertThat(countEnBase).isNotNull().isPositive();
+        assertThat(countStockage).isNotNull().isPositive();
+
+        /* 
+         * construit une liste de tris explicite,
+         * puis l'injecte dans la RequetePage.
+         *
+         * Ne pas utiliser requete.getTris().add(...),
+         * car getTris() retourne une copie défensive.
+         */
+        final List<TriSpec> tris = new ArrayList<TriSpec>();
+        tris.add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
 
         /* 
          * construit une requête dont le numéro de page
          * dépasse très largement le nombre de pages disponibles.
          */
-        final RequetePage requete = new RequetePage();
-        requete.setPageNumber(999);
-        requete.setPageSize(2);
-        requete.getTris().add(new TriSpec("sousTypeProduit", DirectionTri.ASC));
+        final RequetePage requete = new RequetePage(999, 2, tris);
 
         /* ACT :
          * sollicite service.rechercherTousParPage(requete) 
@@ -1602,10 +1619,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(resultat.getContent()).isNotNull().isEmpty();
         assertThat(resultat.getPageNumber()).isEqualTo(999);
         assertThat(resultat.getPageSize()).isEqualTo(2);
-        assertThat(resultat.getTotalElements()).isEqualTo(countEnBase);
+        assertThat(resultat.getTotalElements()).isEqualTo(countStockage);
 
     } // __________________________________________________________________
-
+    
 
 
     /**
