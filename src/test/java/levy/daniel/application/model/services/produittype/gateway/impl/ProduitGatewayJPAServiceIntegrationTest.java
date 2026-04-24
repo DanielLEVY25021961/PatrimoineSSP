@@ -386,122 +386,190 @@ public class ProduitGatewayJPAServiceIntegrationTest {
      */
     public static final String MSG_CREER_KO_PARENT_NULL = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NULL;
     
-    /** DisplayName : "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
+    /** "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
     public static final String DN_CREER_PARENT_LIBELLE_BLANK
         = "creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "creer(parent id null) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)". */
+    /** "creer(parent id null) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)" */
     public static final String DN_CREER_PARENT_ID_NULL
         = "creer(parent id null) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** DisplayName : "creer(save jette Exception) - wrap en ExceptionTechniqueGateway (contrat du port)". */
+    /** "creer(save jette Exception) - wrap en ExceptionTechniqueGateway (contrat du port)" */
     public static final String DN_CREER_SAVE_EXCEPTION
         = "creer(save jette Exception) - wrap en ExceptionTechniqueGateway (contrat du port)";
 
-    /** Message d'erreur : MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK. */
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - le parent de l'objet à créer a un libellé blank
+	 * (null ou que des espaces)."</p>
+	 * </div> 
+     */
     public static final String MSG_CREER_KO_LIBELLE_PARENT_BLANK
         = ProduitGatewayIService.MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK;
 
-    /** Message d'erreur : MESSAGE_CREER_KO_PARENT_NON_PERSISTENT (préfixe). */
+    /** 
+     * <div>
+	 * <p>""Anomalie applicative - 
+	 * le parent de l'objet que vous voulez créer n'existe
+	 * pas déjà dans le stockage : "</p>
+	 * </div> 
+     */
     public static final String MSG_CREER_KO_PARENT_NON_PERSISTENT
         = ProduitGatewayIService.MESSAGE_CREER_KO_PARENT_NON_PERSISTENT;
 
-    /** Message attendu : "Erreur Technique lors du stockage : ". */
+    /** 
+     * <div>
+	 * <p>"Erreur Technique lors du stockage : "</p>
+	 * </div> 
+     */
     public static final String MSG_PREFIX_ERREUR_TECH
         = ProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE;
 
-    /** Libellé trop long pour forcer une exception sur save(). */
+    /** "X".repeat(10_000) */
     public static final String LIBELLE_TROP_LONG = "X".repeat(10_000);
     
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_FINDBYID_KO_PARAM_NULL.</p>
-     * </div>
+	 * <p>"Anomalie applicative 
+	 * - l'identifiant passé en paramètre est null."</p>
+	 * </div>
      */
-    public static final String MSG_FINDBYID_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL;
+    public static final String MSG_FINDBYID_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_UPDATE_KO_PARAM_NULL.</p>
-     * </div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet métier passé en paramètre est null."</p>
+	 * </div>
      */
-    public static final String MSG_UPDATE_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL;
+    public static final String MSG_UPDATE_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_UPDATE_KO_PARAM_NULL;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_UPDATE_KO_LIBELLE_BLANK.</p>
-     * </div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un libellé blank
+	 * (null ou que des espaces)."</p>
+	 * </div>
      */
-    public static final String MSG_UPDATE_KO_LIBELLE_BLANK = ProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK;
+    public static final String MSG_UPDATE_KO_LIBELLE_BLANK 
+    	= ProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_BLANK;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_UPDATE_KO_NON_PERSISTENT.</p>
-     * </div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet que vous voulez modifier n'est pas persistant
+	 * (ID null) : "</p>
+	 * </div>
      */
-    public static final String MSG_UPDATE_KO_NON_PERSISTENT = ProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT;
+    public static final String MSG_UPDATE_KO_NON_PERSISTENT 
+    	= ProduitGatewayIService.MESSAGE_UPDATE_KO_NON_PERSISTENT;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_DELETE_KO_PARAM_NULL.</p>
-     * </div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet métier passé en paramètre est null."</p>
+	 * </div>
      */
-    public static final String MSG_DELETE_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL;
+    public static final String MSG_DELETE_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_DELETE_KO_PARAM_NULL;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_DELETE_KO_ID_NULL.</p>
-     * </div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un ID null."</p>
+	 * </div>
      */
-    public static final String MSG_DELETE_KO_ID_NULL = ProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL;
+    public static final String MSG_DELETE_KO_ID_NULL 
+    	= ProduitGatewayIService.MESSAGE_DELETE_KO_ID_NULL;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK.</p>
-     * </div>
+	 * <p>"Anomalie applicative
+	 * - le libellé passé en paramètre est un 
+	 * libellé blank (null ou que des espaces)."</p>
+	 * </div>
      */
-    public static final String MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK = ProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK;
+    public static final String MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK 
+    	= ProduitGatewayIService.MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL.</p>
-     * </div>
+	 * <p>"Anomalie applicative 
+	 * - le contenu passé en paramètre est null."</p>
+	 * </div>
      */
-    public static final String MSG_FINDBYLIBELLERAPIDE_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL;
+    public static final String MSG_FINDBYLIBELLERAPIDE_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL;
 
     /**
      * <div>
-     * <p>Message d'erreur : MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL.</p>
-     * </div>
+	 * <p>"Anomalie applicative 
+	 * - l'objet métier passé en paramètre est null."</p>
+	 * </div>
      */
-    public static final String MSG_FINDALLBYPARENT_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL;
+    public static final String MSG_FINDALLBYPARENT_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDALLBYPARENT_KO_PARAM_NULL;
     
-    /** DisplayName : "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_NULL = "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)";
+    /** "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_NULL 
+    	= "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_BLANK = "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
+    /** "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_BLANK 
+    	= "findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_PARENT_NULL = "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)";
+    /** "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_PARENT_NULL 
+    	= "findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)". */
-    public static final String DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT = "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
+    /** "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)" */
+    public static final String DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT 
+    	= "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** DisplayName : "findByObjetMetier(nominal) - retourne l'objet métier correspondant". */
-    public static final String DN_FINDBYOBJETMETIER_NOMINAL = "findByObjetMetier(nominal) - retourne l'objet métier correspondant";
+    /** "findByObjetMetier(nominal) - retourne l'objet métier correspondant" */
+    public static final String DN_FINDBYOBJETMETIER_NOMINAL 
+    	= "findByObjetMetier(nominal) - retourne l'objet métier correspondant";
 
-    /** Message d'erreur : MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL. */
-    public static final String MSG_FINDBYOBJETMETIER_KO_PARAM_NULL = ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 *  - le paramètre pObject ne doit pas être null."</p>
+	 * </div> 
+     */
+    public static final String MSG_FINDBYOBJETMETIER_KO_PARAM_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL;
 
-    /** Message d'erreur : MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK. */
-    public static final String MSG_FINDBYOBJETMETIER_KO_LIBELLE_BLANK = ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 *  - le libellé de pObject passé en paramètre
+	 *  ne doit pas être blank."</p>
+	 * </div> 
+     */
+    public static final String MSG_FINDBYOBJETMETIER_KO_LIBELLE_BLANK 
+    	= ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK;
 
-    /** Message d'erreur : MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL. */
-    public static final String MSG_FINDBYOBJETMETIER_KO_PARENT_NULL = ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative
+	 * - l'objet métier passé en paramètre a un parent null."</p>
+	 * </div> 
+     */
+    public static final String MSG_FINDBYOBJETMETIER_KO_PARENT_NULL 
+    	= ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL;
 
-    /** Message d'erreur : MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT. */
-    public static final String MSG_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTANT = ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT;
+    /** 
+     * <div>
+	 * <p>"Anomalie applicative 
+	 * - le parent de l'objet que vous voulez créer n'existe
+	 * pas déjà dans le stockage : "</p>
+	 * </div>
+     */
+    public static final String MSG_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTANT 
+    	= ProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT;
     
     /**
      * "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?"
@@ -529,7 +597,8 @@ public class ProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p>DAO parent (accès aux IDs persistés pour préparer les objets métier).</p>
+     * <p>DAO parent 
+     * (accès aux IDs persistés pour préparer les objets métier).</p>
      * </div>
      */
     @Autowired
@@ -559,7 +628,9 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // ************************* METHODES **********************************/
+
+    
+    // ************************ CONSTRUCTEUR *****************************/
 
     /**
      * <div>
@@ -570,8 +641,12 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         super();
     }
 
-    // ===================== CONFIGURATION SPRING =====================
+    
+    
+    // ===================== CONFIGURATION SPRING =======================//
 
+    
+    
     /**
      * <div>
      * <p style="font-weight:bold;">Classe interne de configuration Spring.</p>
@@ -600,12 +675,12 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     
 
     // =============================== TESTS ===============================
+    
+    
+    
+    // =============================== CREER ==============================
 
-    
-    
-    // ===================== CREER =====================
-    
-    
+
 
     /**
      * <div>
@@ -893,9 +968,9 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     
     
     
-    // ===================== RECHERCHER =====================
-    
-    
+    // ======================== RechercherTous ============================
+
+
 
     /**
      * <div>
@@ -928,8 +1003,8 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     } // __________________________________________________________________
     
     
-    
- // ===================== PAGINATION =====================
+
+    // ===================== rechercherTousParPage =====================
 
 
 
@@ -1035,6 +1110,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     
     
     
+    // ======================== findByObjetMetier =========================
+
+
+
     /**
      * <div>
      * <p style="font-weight:bold;">INTENTION TECHNIQUE :</p>
@@ -1181,7 +1260,11 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
+
     
+    // ========================== findByLibelle ===========================
+
+
 
     /**
      * <div>
@@ -1246,6 +1329,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     } // __________________________________________________________________
     
     
+
+    // ======================== findByLibelleRapide =======================
+
+
 
     /**
      * <div>
@@ -1314,6 +1401,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     } // __________________________________________________________________
     
     
+    
+    // ========================= findAllByParent ==========================
+
+
 
     /**
      * <div>
@@ -1439,6 +1530,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
     } // __________________________________________________________________
     
     
+    
+    // ============================== findById ============================
+
+
 
     /**
      * <div>
@@ -1518,11 +1613,11 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
-    
 
-    // ===================== UPDATE =====================
     
-    
+    // =============================== update =============================
+
+
 
     /**
      * <div>
@@ -1738,11 +1833,11 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         
     } // __________________________________________________________________
     
+
     
-    
-    // ===================== DELETE =====================
-    
-    
+    // ============================= delete ===============================
+
+
 
     /**
      * <div>
@@ -1942,10 +2037,10 @@ public class ProduitGatewayJPAServiceIntegrationTest {
         }
 
     } // __________________________________________________________________
+    
+    
 
-    
-    
-    // ===================== COUNT =====================
+    // ============================== Count ===============================
 
 
 
@@ -1990,13 +2085,13 @@ public class ProduitGatewayJPAServiceIntegrationTest {
             .isEqualTo(countSql.longValue());
 
     } // __________________________________________________________________
+    
+    
+    
+    // ============================ OUTILS ================================
 
-    
-    
-    // ============================== OUTILS ===============================
 
-    
-    
+
     /**
      * <div>
      * <p>Retrouve l'ID persistant d'un {@link SousTypeProduitJPA} par libellé.</p>
