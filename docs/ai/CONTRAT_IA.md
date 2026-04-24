@@ -561,6 +561,44 @@ Sacralisation :
 - elle doit être relue avant tout audit, diagnostic, refactoring ou validation finale portant sur des tests de SERVICE GATEWAY ;
 - elle s’applique en priorité à toute méthode de PORT GATEWAY et à l’ensemble des classes de tests Mock / Intégration / autres tests associés à cette méthode.
 
+#### 15.2.7) Formalisme local validé dans les tests d’intégration SERVICE GATEWAY
+
+Interdiction absolue :
+
+- ne jamais réinventer un nouveau formalisme de test lorsqu’un formalisme local a déjà été lu, corrigé et validé dans les méthodes précédentes du même fichier ou du même bloc ;
+- ne jamais créer gratuitement de nouveaux types de commentaires, de nouvelles tournures, de nouveaux critères de preuve ou un nouvel ordre d’assertions lorsque les méthodes précédentes fournissent déjà un modèle adapté ;
+- ne jamais traiter chaque méthode comme si elle repartait de zéro alors qu’un patron local existe déjà ;
+- ne jamais affaiblir une preuve déjà stabilisée dans les méthodes voisines.
+
+Règle obligatoire :
+
+Avant toute génération, correction, audit ou validation d’un test d’intégration SERVICE GATEWAY, l’IA doit relire les méthodes précédentes déjà validées du même bloc ou, à défaut, du même fichier de test.
+
+L’IA doit en déduire et reprendre :
+
+1. la forme des Javadocs ;
+2. les tournures déjà validées ;
+3. les commentaires de bloc déjà validés ;
+4. l’ordre des instructions ;
+5. l’ordre des lectures SQL ;
+6. l’ordre des assertions ;
+7. la structure `ARRANGE / ACT / ASSERT` ;
+8. le vocabulaire métier et probatoire ;
+9. le niveau de preuve attendu ;
+10. les preuves finales d’absence d’écriture ou d’altération du stockage.
+
+Forme générale attendue :
+
+- la Javadoc commence par `garantit que méthode(scénario) :` ;
+- la Javadoc liste uniquement les garanties observables ;
+- les tests d’exception sur stockage seedé commencent par une lecture SQL `countAvant` ;
+- lorsque le scénario suppose un stockage seedé non vide, l’assertion suivante doit être précédée du commentaire stabilisé :
+
+```java
+/* vérifie que le stockage n'est pas vide. */
+assertThat(countAvant).isNotNull().isNotZero();
+```
+
 ---
 
 ## 16) Règles d’architecture
