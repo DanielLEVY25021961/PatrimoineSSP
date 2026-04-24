@@ -897,7 +897,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
         /* 
          * prépare un parent portant un identifiant inexistant,
-         * afin de vérifier le contrôle de persistance réelle
+         * afin de vérifier le contrôle de persistance
          * du parent dans le stockage.
          */
         final TypeProduit parent 
@@ -992,13 +992,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
          * - idParentVetement injecté dans le second ?
          */
         final Long countCoupleAvant = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT,
                 Long.class,
                 LIBELLE_ENFANT_VETEMENT_HOMME,
                 idParentVetement);
 
         final Long idSeedAvant = this.jdbcTemplate.queryForObject(
-                "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                SELECT_PARAM_ID_FROM_STP_WHERE_LIBELLE_AND_PARENT,
                 Long.class,
                 LIBELLE_ENFANT_VETEMENT_HOMME,
                 idParentVetement);
@@ -1034,13 +1034,13 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
                 Long.class);
 
         final Long countCoupleApres = this.jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT,
                 Long.class,
                 LIBELLE_ENFANT_VETEMENT_HOMME,
                 idParentVetement);
 
         final Long idSeedApres = this.jdbcTemplate.queryForObject(
-                "SELECT ID_SOUS_TYPE_PRODUIT FROM SOUS_TYPES_PRODUIT WHERE UPPER(SOUS_TYPE_PRODUIT) = UPPER(?) AND TYPE_PRODUIT = ?",
+                SELECT_PARAM_ID_FROM_STP_WHERE_LIBELLE_AND_PARENT,
                 Long.class,
                 LIBELLE_ENFANT_VETEMENT_HOMME,
                 idParentVetement);
@@ -1164,7 +1164,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
              * dans le stockage porte bien l'identifiant créé.
              */
             assertThat(countEnBase)
-                .as("La ligne doit exister physiquement en base après creer()")
+                .as("L'enregistrement doit exister physiquement dans le stockage après service.creer(...) : ")
                 .isEqualTo(1);
 
             /* 
