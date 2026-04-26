@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -574,52 +576,172 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
     
-    @Tag(TAG_CREER)
-    @DisplayName("creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
-    @Test
-    public void testCreerParentLibelleBlank() {
-    	/**/
-    }
-
-    
-    
-    @Tag(TAG_CREER)
-    @DisplayName("creer(parent ID null) - jette ExceptionTechniqueGatewayNonPersistent")
-    @Test
-    public void testCreerParentIdNull() {
-    	/**/
-    }
-    
-
     /**
      * <div>
-     * <p>creer(parent non persistant) lève ExceptionTechniqueGatewayNonPersistent.</p>
-     * <p>Scénarios couverts :</p>
+     * <p>garantit que creer(parent libellé blank) :</p>
      * <ul>
-     *   <li>Parent avec ID mais introuvable en base.</li>
-     *   <li>Message d'erreur exact attendu.</li>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK} ;</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(parent non persistant) - ExceptionTechniqueGatewayNonPersistent")
+    @DisplayName("creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
+    @Test
+    public void testCreerParentLibelleBlank() {
+
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * mais avec un parent dont le libellé est blank,
+         * afin de vérifier le contrôle applicatif
+         * effectué avant toute tentative d'accès au stockage.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(BLANK);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        /* ARRANGE - ACT - ASSERT :
+         * vérifie que l'appel service.creer(...)
+         * avec un objet métier dont le parent a un libellé blank
+         * jette une ExceptionAppliLibelleBlank
+         * avec le message MSG_CREER_KO_LIBELLE_PARENT_BLANK
+         * (message contractuel du port).
+         */
+        assertThatThrownBy(() -> this.service.creer(produit))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(MSG_CREER_KO_LIBELLE_PARENT_BLANK);
+
+        /*
+         * Vérifie ensuite qu'aucun accès au stockage
+         * n'a été tenté pour ce scénario traité
+         * par la gestion des mauvais paramètres avant tout appel des DAO.
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - produitDaoJPA n'a jamais été appelé ;
+         */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.produitDaoJPA);
+
+    } // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>garantit que creer(parent ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NON_PERSISTENT}
+     * suivi du libellé du parent ;</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(parent ID null) - jette ExceptionTechniqueGatewayNonPersistent")
+    @Test
+    public void testCreerParentIdNull() {
+
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * mais avec un parent dont l'identifiant est null,
+         * afin de vérifier le contrôle de persistance
+         * effectué avant toute recherche DAO.
+         */
+        final SousTypeProduit parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        parent.setIdSousTypeProduit(null);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        /* ACT - ASSERT :
+         * vérifie que l'appel service.creer(...)
+         * avec un objet métier dont le parent n'est pas persistant (ID null)
+         * jette une ExceptionTechniqueGatewayNonPersistent
+         * avec le message MSG_CREER_KO_PARENT_NON_PERSISTENT
+         * suivi du libellé du parent
+         * (message contractuel du port).
+         */
+        assertThatThrownBy(() -> this.service.creer(produit))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(MSG_CREER_KO_PARENT_NON_PERSISTENT + VETEMENT_HOMME);
+
+        /*
+         * Vérifie ensuite qu'aucun accès au stockage
+         * n'a été tenté pour ce scénario traité
+         * par le contrôle de persistance du parent avant tout appel des DAO.
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - produitDaoJPA n'a jamais été appelé ;
+         */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.produitDaoJPA);
+
+    } // __________________________________________________________________
+    
+    
+
+    /**
+     * <div>
+     * <p>garantit que creer(parent absent DAO) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent} ;</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NON_PERSISTENT}
+     * suivi du libellé du parent ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>n'appelle pas le DAO objet métier.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(parent absent DAO) - jette ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testCreerParentAbsent() {
     	
-        // --- 1. DONNÉES ---
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * et un parent persistant en apparence,
+         * mais absent du DAO parent mocké avec Mockito.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
-        // --- 2. MOCKS ---
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké retourne Optional.empty().
+         */
         when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.empty());
 
-        // --- 3. EXÉCUTION + VÉRIFICATION ---
-        assertThatThrownBy(() -> this.service.creer(p))
+        /* ACT - ASSERT :
+         * vérifie que l'appel service.creer(...)
+         * avec un objet métier dont le parent est absent du DAO
+         * jette une ExceptionTechniqueGatewayNonPersistent
+         * avec le message MSG_CREER_KO_PARENT_NON_PERSISTENT
+         * suivi du libellé du parent
+         * (message contractuel du port).
+         */
+        assertThatThrownBy(() -> this.service.creer(produit))
             .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
-            .hasMessage("Anomalie applicative - le parent de l'objet que vous voulez créer n'existe pas déjà dans le stockage : vêtement pour homme");
+            .hasMessage(MSG_CREER_KO_PARENT_NON_PERSISTENT + VETEMENT_HOMME);
 
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA n'a jamais été appelé.
+         */
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verifyNoInteractions(this.produitDaoJPA);
         
@@ -628,129 +750,653 @@ public class ProduitGatewayJPAServiceMockTest {
     
 
     /**
-     *  .
-     *
+     * <div>
+     * <p>garantit que creer(DAO parent jette RuntimeException avec message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>contient le message technique d'origine ;</li>
+     * <li>propage la cause technique d'origine ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>n'appelle pas le DAO objet métier.</li>
+     * </ul>
+     * </div>
      */
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO parent message non null) - jette ExceptionTechniqueGateway")
     @Test
     public void testCreerParentDaoExceptionMessageNonNull() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
 
-        when(this.sousTypeProduitDaoJPA.findById(1L)).thenThrow(new RuntimeException(BOOM));
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * et un parent persistant en apparence,
+         * puis configure le DAO parent mocké avec Mockito
+         * pour jeter une RuntimeException avec message non null.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
-        assertThatThrownBy(() -> this.service.creer(p))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        final RuntimeException ex = new RuntimeException(BOOM);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké jette l'Exception ex.
+         */
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenThrow(ex);
+
+        /* ACT :
+         * sollicite la méthode service.creer(...)
+         * dans les conditions imposées par le mock (clause when).
+         * - exécute this.service.creer(...),
+         * - intercepte toute exception éventuellement levée,
+         * - puis stocke cette exception dans la variable throwable
+         * de type Throwable.
+         */
+        final Throwable throwable =
+                Assertions.catchThrowable(
+                        () -> this.service.creer(produit));
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
+         */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(BOOM);
+        assertThat(throwable.getCause()).isSameAs(ex);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA n'a jamais été appelé.
+         */
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verifyNoInteractions(this.produitDaoJPA);
-        
-    } // __________________________________________________________________
 
+    } // __________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>garantit que creer(DAO parent jette RuntimeException avec message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>propage la cause technique d'origine ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>n'appelle pas le DAO objet métier.</li>
+     * </ul>
+     * </div>
+     */
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO parent message null) - jette ExceptionTechniqueGateway")
     @Test
     public void testCreerParentDaoExceptionMessageNull() {
-    	/**/
-    }
+
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * et un parent persistant en apparence,
+         * puis configure le DAO parent mocké avec Mockito
+         * pour jeter une RuntimeException sans message.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        final RuntimeException ex = new RuntimeException((String) null);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké jette l'Exception ex.
+         */
+        when(this.sousTypeProduitDaoJPA.findById(1L)).thenThrow(ex);
+
+        /* ACT :
+         * sollicite la méthode service.creer(...)
+         * dans les conditions imposées par le mock (clause when).
+         * - exécute this.service.creer(...),
+         * - intercepte toute exception éventuellement levée,
+         * - puis stocke cette exception dans la variable throwable
+         * de type Throwable.
+         */
+        final Throwable throwable =
+                Assertions.catchThrowable(
+                        () -> this.service.creer(produit));
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel
+         * et la cause propagée.
+         */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable.getCause()).isSameAs(ex);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA n'a jamais été appelé.
+         */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verifyNoInteractions(this.produitDaoJPA);
+
+    } // __________________________________________________________________
+    
     
 
     /**
      * <div>
-     * <p>creer(save retourne null) lève ExceptionTechniqueGateway.</p>
+     * <p>garantit que creer(DAO.save(...) retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE} ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>appelle le DAO objet métier pour sauvegarde.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(save retourne null) - ExceptionTechniqueGateway")
+    @DisplayName("creer(DAO.save(...) retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testCreerSaveRetourneNull() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
 
-        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * et un parent persistant en apparence,
+         * afin de provoquer ensuite un retour null
+         * du DAO objet métier lors de la sauvegarde.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké retourne le parent JPA persistant.
+         */
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
+
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.save(...)
+         * sur le DAO objet métier mocké retourne null.
+         */
         when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(null);
 
-        assertThatThrownBy(() -> this.service.creer(p))
+        /* ACT - ASSERT :
+         * vérifie que l'appel service.creer(...)
+         * avec un stockage retournant null à la sauvegarde
+         * jette une ExceptionTechniqueGateway
+         * avec le message MSG_ERREUR_TECH_KO_STOCKAGE
+         * (message contractuel du port).
+         */
+        assertThatThrownBy(() -> this.service.creer(produit))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-        
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA.save(...) a été appelé une fois.
+         */
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
-        
-    } // __________________________________________________________________
 
+    } // __________________________________________________________________
     
     
+    
+    /**
+     * <div>
+     * <p>garantit que creer(DAO save jette RuntimeException avec message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>contient le message technique d'origine ;</li>
+     * <li>propage la cause technique d'origine ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>appelle le DAO objet métier pour sauvegarde.</li>
+     * </ul>
+     * </div>
+     */
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO save message non null) - jette ExceptionTechniqueGateway")
     @Test
     public void testCreerDaoSaveExceptionMessageNonNull() {
-    	/**/
-    }    
 
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * et un parent persistant en apparence,
+         * puis configure le DAO objet métier mocké avec Mockito
+         * pour jeter une RuntimeException avec message non null
+         * lors de la sauvegarde.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké retourne le parent JPA persistant.
+         */
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
+
+        final RuntimeException ex = new RuntimeException(BOOM);
+
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.save(...)
+         * sur le DAO objet métier mocké jette l'Exception ex.
+         */
+        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenThrow(ex);
+
+        /* ACT :
+         * sollicite la méthode service.creer(...)
+         * dans les conditions imposées par le mock (clause when).
+         * - exécute this.service.creer(...),
+         * - intercepte toute exception éventuellement levée,
+         * - puis stocke cette exception dans la variable throwable
+         * de type Throwable.
+         */
+        final Throwable throwable =
+                Assertions.catchThrowable(
+                        () -> this.service.creer(produit));
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
+         */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(BOOM);
+        assertThat(throwable.getCause()).isSameAs(ex);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA.save(...) a été appelé une fois.
+         */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
     
+    
+    
+    /**
+     * <div>
+     * <p>garantit que creer(DAO save jette RuntimeException avec message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>propage la cause technique d'origine ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>appelle le DAO objet métier pour sauvegarde.</li>
+     * </ul>
+     * </div>
+     */
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO save message null) - jette ExceptionTechniqueGateway")
     @Test
     public void testCreerDaoSaveExceptionMessageNull() {
-    	/**/
-    }
+
+        /* ARRANGE :
+         * prépare un objet métier avec un libellé valide,
+         * et un parent persistant en apparence,
+         * puis configure le DAO objet métier mocké avec Mockito
+         * pour jeter une RuntimeException sans message
+         * lors de la sauvegarde.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké retourne le parent JPA persistant.
+         */
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
+
+        final RuntimeException ex = new RuntimeException((String) null);
+
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.save(...)
+         * sur le DAO objet métier mocké jette l'Exception ex.
+         */
+        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenThrow(ex);
+
+        /* ACT :
+         * sollicite la méthode service.creer(...)
+         * dans les conditions imposées par le mock (clause when).
+         * - exécute this.service.creer(...),
+         * - intercepte toute exception éventuellement levée,
+         * - puis stocke cette exception dans la variable throwable
+         * de type Throwable.
+         */
+        final Throwable throwable =
+                Assertions.catchThrowable(
+                        () -> this.service.creer(produit));
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel
+         * et la cause propagée.
+         */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable.getCause()).isSameAs(ex);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA.save(...) a été appelé une fois.
+         */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+    
+    
+    /**
+     * <div>
+     * <p>garantit que si le stockage refuse creer(...) pour cause de doublon fonctionnel :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>conserve le message technique d'origine ;</li>
+     * <li>propage l'exception technique cause ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>appelle le DAO objet métier pour sauvegarde.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_CREER)
+    @DisplayName("creer(doublon) - jette ExceptionTechniqueGateway")
+    @Test
+    public void testCreerDoublon() {
+
+        /* ARRANGE :
+         * prépare un objet métier valide,
+         * avec un parent persistant en apparence.
+         * Le doublon n'est pas simulé au niveau métier,
+         * mais au niveau du stockage au moment du save(...).
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        final SousTypeProduitJPA parentJPA =
+                this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké retourne le parent JPA persistant,
+         * afin d'atteindre réellement la tentative de sauvegarde
+         * de l'objet métier.
+         */
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+
+        /* Prépare l'exception technique d'intégrité levée par le stockage :
+         * elle représente ici un refus de création
+         * pour cause de doublon fonctionnel sur le couple
+         * produit / sous-type produit.
+         */
+        final String messageTechnique = "contrainte d'unicité violée";
+        final DataIntegrityViolationException causeDao =
+                new DataIntegrityViolationException(messageTechnique);
+
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.save(...)
+         * sur le DAO objet métier mocké jette l'Exception causeDao.
+         */
+        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenThrow(causeDao);
+
+        /* ACT :
+         * sollicite la méthode service.creer(...)
+         * dans les conditions imposées par le mock (clause when).
+         * - exécute this.service.creer(...),
+         * - intercepte toute exception éventuellement levée,
+         * - puis stocke cette exception dans la variable throwable
+         * de type Throwable.
+         */
+        final Throwable throwable =
+                Assertions.catchThrowable(
+                        () -> this.service.creer(produit));
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
+         */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(messageTechnique);
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA.save(...) a été appelé une fois.
+         */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
     
 
     
+    /**
+     * <div>
+     * <p>garantit que creer(parent avec caractères spéciaux) :</p>
+     * <ul>
+     * <li>retourne un objet métier non null ;</li>
+     * <li>retourne le libellé objet métier attendu ;</li>
+     * <li>retourne un parent non null ;</li>
+     * <li>retourne le libellé parent attendu ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>appelle le DAO objet métier pour sauvegarde.</li>
+     * </ul>
+     * </div>
+     * @throws Exception 
+     */
     @Tag(TAG_CREER)
     @DisplayName("creer(parent avec caractères spéciaux) - retourne un objet métier cohérent")
     @Test
     public void testCreerParentCaracteresSpeciaux() throws Exception {
-    	/**/
-    }
+
+        /* ARRANGE :
+         * prépare un scénario nominal
+         * avec un parent contenant des caractères spéciaux,
+         * afin de vérifier que le service ne déforme pas
+         * les libellés métier.
+         */
+        final String libelleParentSpecial =
+                "vêtement/homme_été-2026";
+
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(libelleParentSpecial);
+
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        final SousTypeProduitJPA parentJPA =
+                this.fabriquerParentJPAPersistant(libelleParentSpecial);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké retourne le parent JPA persistant.
+         */
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+
+        final ProduitJPA sauvegardeJPA =
+                this.fabriquerProduitJPA(CHEMISE_ML_HOMME, libelleParentSpecial);
+        sauvegardeJPA.setIdProduit(1L);
+
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.save(...)
+         * sur le DAO objet métier mocké retourne un ProduitJPA.
+         */
+        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(sauvegardeJPA);
+
+        /* ACT :
+         * sollicite la méthode creer(...)
+         * dans un scénario nominal complet.
+         */
+        final Produit retour = this.service.creer(produit);
+
+        /* ASSERT :
+         * vérifie que l'objet métier retourné
+         * est cohérent avec les données sauvegardées.
+         */
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdProduit()).isEqualTo(1L);
+        assertThat(retour.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(retour.getSousTypeProduit()).isNotNull();
+        assertThat(retour.getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(libelleParentSpecial);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA.save(...) a été appelé une fois.
+         */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
 
 
     
     /**
      * <div>
-     * <p>creer(nominal) retourne un objet métier non null.</p>
+     * <p>garantit que creer(nominal) :</p>
+     * <ul>
+     * <li>retourne un objet métier non null ;</li>
+     * <li>retourne l'identifiant objet métier attendu ;</li>
+     * <li>retourne le libellé objet métier attendu ;</li>
+     * <li>retourne un parent non null ;</li>
+     * <li>retourne le libellé parent attendu ;</li>
+     * <li>appelle le DAO parent ;</li>
+     * <li>appelle le DAO objet métier pour sauvegarde.</li>
+     * </ul>
      * </div>
-     * @throws Exception
+     * @throws Exception 
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(nominal) - OK")
+    @DisplayName("creer(nominal) - retourne un objet métier cohérent")
     @Test
     public void testCreerNominal() throws Exception {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
 
-        final ProduitJPA retourDAO = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        retourDAO.setIdProduit(1L);
+        /* ARRANGE :
+         * prépare un scénario nominal complet
+         * avec un parent persistant et un save(...) réussi.
+         */
+        final SousTypeProduitI parent =
+                this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
+        final Produit produit = new Produit();
+        produit.setProduit(CHEMISE_ML_HOMME);
+        produit.setSousTypeProduit(parent);
+
+        final SousTypeProduitJPA parentJPA =
+                this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        /* Condition du Mock :
+         * L'appel sousTypeProduitDaoJPA.findById(1L)
+         * sur le DAO parent mocké retourne le parent JPA persistant.
+         */
         when(this.sousTypeProduitDaoJPA.findById(1L))
-            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(retourDAO);
+            .thenReturn(Optional.of(parentJPA));
 
-        final Produit cree = this.service.creer(p);
+        final ProduitJPA sauvegardeJPA =
+                this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        sauvegardeJPA.setIdProduit(1L);
 
-        assertThat(cree).isNotNull();
-        assertThat(cree.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
-        assertThat(cree.getIdProduit()).isNotNull();
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.save(...)
+         * sur le DAO objet métier mocké retourne un ProduitJPA.
+         */
+        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(sauvegardeJPA);
 
+        /* ACT :
+         * sollicite la méthode creer(...)
+         * dans un scénario nominal complet.
+         */
+        final Produit retour = this.service.creer(produit);
+
+        /* ASSERT :
+         * vérifie que l'objet métier retourné
+         * est cohérent avec les données sauvegardées.
+         */
+        assertThat(retour).isNotNull();
+        assertThat(retour.getIdProduit()).isEqualTo(1L);
+        assertThat(retour.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(retour.getSousTypeProduit()).isNotNull();
+        assertThat(retour.getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_HOMME);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - sousTypeProduitDaoJPA.findById(1L) a été appelé une fois ;
+         * - produitDaoJPA.save(...) a été appelé une fois.
+         */
         verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
         verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
-        
-    } // __________________________________________________________________
 
+    } // __________________________________________________________________
+    
     
     
     // ======================== RechercherTous ============================
@@ -759,136 +1405,504 @@ public class ProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>rechercherTous(findAll retourne null) lève ExceptionTechniqueGateway.</p>
+     * <p>garantit que si DAO.findAll() retourne null :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE} ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code findAll()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(DAO null) - ExceptionTechniqueGateway")
+    @DisplayName("rechercherTous(DAO.findAll() retourne null) - jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
-    public void testRechercherTousDaoNullExceptionTechniqueGateway() {
-    	
+    public void testRechercherTousDAORetourneNull() {
+
+        /* ARRANGE :
+         * configure le DAO objet métier mocké avec Mockito
+         * pour que DAO.findAll() retourne null au lieu d'une liste.
+         */
         when(this.produitDaoJPA.findAll()).thenReturn(null);
 
+        /* ACT - ASSERT :
+         * vérifie que :
+         * this.service.rechercherTous() avec DAO.findAll() retourne null
+         * - jette une ExceptionTechniqueGateway
+         * - avec un message MSG_ERREUR_TECH_KO_STOCKAGE
+         * (message contractuel du port).
+         */
         assertThatThrownBy(() -> this.service.rechercherTous())
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-        
-        verify(this.produitDaoJPA, times(1)).findAll();
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - produitDaoJPA.findAll() a été appelé une fois ;
+         * - le DAO parent n'a jamais été appelé.
+         */
+        verify(this.produitDaoJPA).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
+
     } // __________________________________________________________________
     
     
 
     /**
      * <div>
-     * <p>rechercherTous(findAll vide) retourne une liste vide.</p>
+     * <p>garantit que si DAO.findAll() retourne une liste vide :</p>
+     * <ul>
+     * <li>retourne une {@link List} non null ;</li>
+     * <li>retourne une liste vide ;</li>
+     * <li>ne jette aucune exception ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code findAll()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(DAO vide) - liste vide")
+    @DisplayName("rechercherTous(DAO.findAll() retourne liste vide) : retourne une liste vide non null")
     @Test
-    public void testRechercherTousVideOk() throws Exception {
-    	
+    public void testRechercherTousDAORetourneVide() throws Exception {
+
+        /* ARRANGE :
+         * configure le DAO objet métier mocké avec Mockito
+         * pour que DAO.findAll() retourne une liste vide.
+         */
         when(this.produitDaoJPA.findAll()).thenReturn(Collections.emptyList());
 
+        /* ACT :
+         * appelle this.service.rechercherTous()
+         * dans le scénario où le stockage est vide.
+         */
         final List<Produit> retour = this.service.rechercherTous();
 
-        assertThat(retour).isNotNull();
-        assertThat(retour).isEmpty();
-        
-        verify(this.produitDaoJPA, times(1)).findAll();
+        /* ASSERT :
+         * vérifie que la méthode retourne bien
+         * une liste non nulle, mais vide.
+         */
+        assertThat(retour).isNotNull().isEmpty();
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - produitDaoJPA.findAll() a été appelé une fois ;
+         * - le DAO parent n'a jamais été appelé.
+         */
+        verify(this.produitDaoJPA).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que rechercherTous(KO DAO message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>conserve le message technique d'origine ;</li>
+     * <li>propage l'exception technique cause ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code findAll()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(KO DAO message non null) - jette ExceptionTechniqueGateway")
+    @Test
+    public void testRechercherTousDaoExceptionMessageNonNull() {
+
+        /* ARRANGE :
+         * configure le DAO objet métier mocké avec Mockito
+         * pour que DAO.findAll()
+         * jette une RuntimeException avec message non null.
+         */
+        final RuntimeException ex = new RuntimeException(BOOM);
+        when(this.produitDaoJPA.findAll()).thenThrow(ex);
+
+        /* ACT :
+         * sollicite la méthode rechercherTous()
+         * dans les conditions imposées par le mock (clause when).
+         * - exécute this.service.rechercherTous(),
+         * - intercepte toute exception éventuellement levée,
+         * - puis stocke cette exception dans la variable throwable
+         * de type Throwable.
+         */
+        final Throwable throwable =
+                Assertions.catchThrowable(() -> this.service.rechercherTous());
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
+         */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(BOOM);
+        assertThat(throwable.getCause()).isSameAs(ex);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - produitDaoJPA.findAll() a été appelé une fois ;
+         * - le DAO parent n'a jamais été appelé.
+         */
+        verify(this.produitDaoJPA).findAll();
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
+    
+    
+      
+    /**
+     * <div>
+     * <p>garantit que si DAO.findAll() jette une exception technique 
+     * avec message null :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique ;</li>
+     * <li>propage l'exception technique cause ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code findAll()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non null")
+    @Test
+    public void testRechercherTousDaoExceptionMessageNull() {
+
+        /* ARRANGE :
+         * configure le DAO objet métier mocké avec Mockito
+         * pour que DAO.findAll()
+         * jette une RuntimeException sans message.
+         */
+        final RuntimeException ex = new RuntimeException((String) null);
+        when(this.produitDaoJPA.findAll()).thenThrow(ex);
+
+        /* ACT :
+         * sollicite la méthode rechercherTous()
+         * dans les conditions imposées par le mock (clause when).
+         * - exécute this.service.rechercherTous(),
+         * - intercepte toute exception éventuellement levée,
+         * - puis stocke cette exception dans la variable throwable
+         * de type Throwable.
+         */
+        final Throwable throwable =
+                Assertions.catchThrowable(() -> this.service.rechercherTous());
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel,
+         * le message sûr non null
+         * et la cause propagée.
+         */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(RuntimeException.class.getName());
+        assertThat(throwable.getCause()).isSameAs(ex);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - produitDaoJPA.findAll() a été appelé une fois ;
+         * - le DAO parent n'a jamais été appelé.
+         */
+        verify(this.produitDaoJPA).findAll();
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
     } // __________________________________________________________________
     
     
 
     /**
      * <div>
-     * <p>rechercherTous(nominal) retourne une liste filtrée/triee/dédoublonnée.</p>
+     * <p>garantit que si DAO.findAll() retourne une liste
+     * contenant des nulls, des doublons fonctionnels
+     * et deux couples métier distincts partageant le même libellé produit :</p>
+     * <ul>
+     * <li>retourne une {@link List} non null ;</li>
+     * <li>filtre les éléments null ;</li>
+     * <li>dédoublonne les résultats au sens métier
+     * sur le couple produit / sous-type produit ;</li>
+     * <li>conserve deux produits portant le même libellé
+     * lorsqu'ils appartiennent à deux parents différents ;</li>
+     * <li>trie les résultats par parent puis par libellé produit ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code findAll()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
+     * <p>Ce test prouve explicitement la règle contractuelle
+     * d'unicité métier sur le couple produit / sous-type produit.</p>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(nominal) - liste filtrée/triee/dédoublonnée")
+    @DisplayName("rechercherTous(nulls + doublons de couple) : filtre, dédoublonne et trie")
     @Test
-    public void testRechercherTousNominalOk() throws Exception {
-    	
-        final ProduitJPA femmeChemise = this.fabriquerProduitJPA(CHEMISE, VETEMENT_FEMME);
-        femmeChemise.setIdProduit(10L);
+    public void testRechercherTousTriDedoublonnage() throws Exception {
 
-        final ProduitJPA femmeSweat = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_FEMME);
-        femmeSweat.setIdProduit(11L);
+        /* ARRANGE :
+         * prépare une liste renvoyée par le DAO objet métier mocké
+         * contenant :
+         * - des valeurs null à filtrer ;
+         * - un doublon fonctionnel sur le couple
+         *   produit / sous-type produit ;
+         * - deux produits ayant le même libellé,
+         *   mais des parents différents, donc non doublons ;
+         * - un ordre initial volontairement non trié.
+         */
+        final ProduitJPA chemiseHomme =
+                this.fabriquerProduitJPA(CHEMISE, VETEMENT_HOMME);
+        chemiseHomme.setIdProduit(20L);
 
-        final ProduitJPA hommeChemiseMc = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
-        hommeChemiseMc.setIdProduit(20L);
+        final ProduitJPA doublonChemiseHomme =
+                this.fabriquerProduitJPA(CHEMISE, VETEMENT_HOMME);
+        doublonChemiseHomme.setIdProduit(999L);
 
-        final ProduitJPA hommeChemiseMl = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        hommeChemiseMl.setIdProduit(21L);
+        final ProduitJPA chemiseFemme =
+                this.fabriquerProduitJPA(CHEMISE, VETEMENT_FEMME);
+        chemiseFemme.setIdProduit(10L);
 
-        /* Doublon métier (même libellé Produit + même parent) -> doit être dédoublonné. */
-        final ProduitJPA doublonHommeChemiseMc = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
-        doublonHommeChemiseMc.setIdProduit(999L);
+        final ProduitJPA sweatFemme =
+                this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_FEMME);
+        sweatFemme.setIdProduit(11L);
 
-        final List<ProduitJPA> liste = Arrays.asList(
-                null,
-                hommeChemiseMl,
-                doublonHommeChemiseMc,
-                femmeSweat,
-                hommeChemiseMc,
-                null,
-                femmeChemise);
+        final ProduitJPA chemiseMcHomme =
+                this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        chemiseMcHomme.setIdProduit(21L);
 
-        when(this.produitDaoJPA.findAll()).thenReturn(liste);
+        final List<ProduitJPA> entities = new ArrayList<ProduitJPA>();
+        entities.add(chemiseMcHomme);
+        entities.add(null);
+        entities.add(doublonChemiseHomme);
+        entities.add(sweatFemme);
+        entities.add(chemiseHomme);
+        entities.add(null);
+        entities.add(chemiseFemme);
 
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.findAll()
+         * sur le DAO objet métier mocké retourne la liste entities.
+         */
+        when(this.produitDaoJPA.findAll()).thenReturn(entities);
+
+        /* ACT :
+         * sollicite la méthode service.rechercherTous()
+         * dans un scénario contenant nulls, doublons et tri métier.
+         */
         final List<Produit> retour = this.service.rechercherTous();
 
-        /* Filtrage des null + dédoublonnage. */
+        /* ASSERT :
+         * vérifie d'abord que la méthode retourne
+         * une liste exploitable, filtrée et dédoublonnée.
+         */
         assertThat(retour).isNotNull();
         assertThat(retour).doesNotContainNull();
         assertThat(retour).hasSize(4);
 
-        /* Vérifie l'ordre : parent puis libellé (insensible à la casse). */
-        assertThat(retour)
-            .extracting(p -> p.getSousTypeProduit().getSousTypeProduit())
-            .containsExactly(VETEMENT_FEMME, VETEMENT_FEMME, VETEMENT_HOMME, VETEMENT_HOMME);
+        /* Vérifie ensuite l'ordre final attendu :
+         * - parent vêtement pour femme / produit chemise ;
+         * - parent vêtement pour femme / produit sweatshirt pour homme ;
+         * - parent vêtement pour homme / produit chemise ;
+         * - parent vêtement pour homme / produit chemise à manches courtes pour homme.
+         */
+        assertThat(retour.get(0).getSousTypeProduit()).isNotNull();
+        assertThat(retour.get(0).getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_FEMME);
+        assertThat(retour.get(0).getProduit()).isEqualTo(CHEMISE);
 
-        assertThat(retour)
-            .extracting(Produit::getProduit)
-            .containsExactly(CHEMISE, SWEAT_HOMME, CHEMISE_MC_HOMME, CHEMISE_ML_HOMME);
+        assertThat(retour.get(1).getSousTypeProduit()).isNotNull();
+        assertThat(retour.get(1).getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_FEMME);
+        assertThat(retour.get(1).getProduit()).isEqualTo(SWEAT_HOMME);
 
-        verify(this.produitDaoJPA, times(1)).findAll();
-        verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
-    } // __________________________________________________________________    
-    
+        assertThat(retour.get(2).getSousTypeProduit()).isNotNull();
+        assertThat(retour.get(2).getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_HOMME);
+        assertThat(retour.get(2).getProduit()).isEqualTo(CHEMISE);
 
-    
-    /**
-     * <div>
-     * <p>rechercherTous(findAll jette Exception) wrap en ExceptionTechniqueGateway.</p>
-     * </div>
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(findAll jette Exception) - ExceptionTechniqueGateway")
-    @Test
-    public void testRechercherTousDaoFindAllJetteExceptionTechniqueGateway() throws Exception {
+        assertThat(retour.get(3).getSousTypeProduit()).isNotNull();
+        assertThat(retour.get(3).getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_HOMME);
+        assertThat(retour.get(3).getProduit()).isEqualTo(CHEMISE_MC_HOMME);
 
-        when(this.produitDaoJPA.findAll()).thenThrow(new RuntimeException(BOOM));
-
-        assertThatThrownBy(() -> this.service.rechercherTous())
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-
-        verify(this.produitDaoJPA, times(1)).findAll();
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - produitDaoJPA.findAll() a été appelé une fois ;
+         * - le DAO parent n'a jamais été appelé.
+         */
+        verify(this.produitDaoJPA).findAll();
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
     } // __________________________________________________________________
     
+
+
+    /**
+     * <div>
+     * <p>garantit que rechercherTous(nominal) :</p>
+     * <ul>
+     * <li>retourne une liste non null ;</li>
+     * <li>filtre les valeurs null ;</li>
+     * <li>dédoublonne les doublons fonctionnels ;</li>
+     * <li>retourne une liste triée par parent puis par libellé produit ;</li>
+     * <li>conserve un parent non null sur les objets métier retournés ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code findAll()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_RECHERCHER)
+    @DisplayName("rechercherTous(nominal) - filtre, trie et dédoublonne")
+    @Test
+    public void testRechercherTousNominal() throws Exception {
+
+        /* ARRANGE :
+         * prépare une liste renvoyée par le DAO objet métier mocké
+         * contenant :
+         * - des valeurs null à filtrer ;
+         * - deux doublons fonctionnels sur le même libellé produit
+         *   et le même parent ;
+         * - un ordre initial non trié.
+         *
+         * Ce scénario permet de vérifier en une seule fois
+         * le filtrage, le tri, le dédoublonnage
+         * et la conservation du parent métier.
+         */
+        final ProduitJPA femmeChemise =
+                this.fabriquerProduitJPA(CHEMISE, VETEMENT_FEMME);
+        femmeChemise.setIdProduit(10L);
+
+        final ProduitJPA femmeSweat =
+                this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_FEMME);
+        femmeSweat.setIdProduit(11L);
+
+        final ProduitJPA hommeChemiseMc =
+                this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        hommeChemiseMc.setIdProduit(20L);
+
+        final ProduitJPA hommeChemiseMl =
+                this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        hommeChemiseMl.setIdProduit(21L);
+
+        final ProduitJPA doublonHommeChemiseMc =
+                this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        doublonHommeChemiseMc.setIdProduit(999L);
+
+        final List<ProduitJPA> entities = new ArrayList<ProduitJPA>();
+        entities.add(null);
+        entities.add(hommeChemiseMl);
+        entities.add(doublonHommeChemiseMc);
+        entities.add(femmeSweat);
+        entities.add(hommeChemiseMc);
+        entities.add(null);
+        entities.add(femmeChemise);
+
+        /* Condition du Mock :
+         * L'appel produitDaoJPA.findAll()
+         * sur le DAO objet métier mocké retourne la liste entities.
+         */
+        when(this.produitDaoJPA.findAll()).thenReturn(entities);
+
+        /* ACT :
+         * sollicite la méthode service.rechercherTous()
+         * dans un scénario nominal complet.
+         */
+        final List<Produit> retour = this.service.rechercherTous();
+
+        /* ASSERT :
+         * vérifie d'abord que la méthode retourne
+         * une liste exploitable, filtrée et dédoublonnée.
+         */
+        assertThat(retour).isNotNull();
+        assertThat(retour).doesNotContainNull();
+        assertThat(retour).hasSize(4);
+
+        /* Vérifie ensuite l'ordre final attendu :
+         * - parent vêtement pour femme / produit chemise ;
+         * - parent vêtement pour femme / produit sweatshirt pour homme ;
+         * - parent vêtement pour homme / produit chemise à manches courtes pour homme ;
+         * - parent vêtement pour homme / produit chemise à manches longues pour homme.
+         */
+        /* 
+         * La lambda ci-dessous est appliquée à chaque Produit p de la liste retour.
+         *
+         * Pour chaque Produit :
+         * - p représente l'objet métier Produit courant ;
+         * - p.getSousTypeProduit() récupère son parent métier SousTypeProduit ;
+         * - p.getSousTypeProduit().getSousTypeProduit() récupère le libellé
+         *   de ce parent.
+         *
+         * L'assertion extrait donc la liste des libellés des parents
+         * des produits retournés, dans leur ordre réel de retour.
+         */
+        assertThat(retour)
+            .extracting(p -> p.getSousTypeProduit().getSousTypeProduit())
+            .containsExactly(
+                    VETEMENT_FEMME,
+                    VETEMENT_FEMME,
+                    VETEMENT_HOMME,
+                    VETEMENT_HOMME);
+
+        /*
+         * Produit::getProduit est une référence de méthode.
+         * Produit::getProduit est équivalent à p -> p.getProduit()
+         *
+         * Elle est appliquée à chaque Produit de la liste retour.
+         * Pour chaque Produit courant, elle appelle getProduit()
+         * afin d'extraire uniquement le libellé du produit.
+         *
+         * L'assertion compare donc la liste des libellés produits
+         * retournés, dans leur ordre réel, avec l'ordre attendu.
+         */
+        assertThat(retour)
+            .extracting(Produit::getProduit)
+            .containsExactly(
+                    CHEMISE,
+                    SWEAT_HOMME,
+                    CHEMISE_MC_HOMME,
+                    CHEMISE_ML_HOMME);
+
+        /* Vérifie enfin que les objets métier retournés
+         * conservent un parent non null.
+         */
+        assertThat(retour)
+            .extracting(Produit::getSousTypeProduit)
+            .doesNotContainNull();
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - produitDaoJPA.findAll() a été appelé une fois ;
+         * - le DAO parent n'a jamais été appelé.
+         */
+        verify(this.produitDaoJPA).findAll();
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
     
-    
+
+            
     // ================== rechercherTousParPage ===========================
     
     

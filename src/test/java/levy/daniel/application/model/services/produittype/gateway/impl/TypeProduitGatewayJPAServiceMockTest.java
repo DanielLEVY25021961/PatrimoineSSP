@@ -372,7 +372,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que si DAO.save(entity) retourne null :</p>
+     * <p>garantit que creer(DAO.save(...) retourne null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway}</li>
      * <li>émet le message
@@ -383,9 +383,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @DisplayName("creer(DAO.save(...) retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
-    public void testCreerDAORetourneNull() {
+    public void testCreerSaveRetourneNull() {
     	
     	/* ARRANGE :
     	 * prépare un objet métier valide pour atteindre réellement l'appel DAO.
@@ -427,156 +427,6 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que si le stockage refuse creer(...) pour cause de doublon fonctionnel :</p>
-     * <ul>
-     * <li>le SERVICE GATEWAY JPA jette une {@link ExceptionTechniqueGateway}</li>
-     * <li>émet un message commençant par
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
-     * <li>conserve un message technique sûr dérivé de l'exception de stockage</li>
-     * <li>propage l'exception technique cause</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     */
-    @Tag(TAG_CREER)
-    @DisplayName("creer(doublon stockage) : jette ExceptionTechniqueGateway et propage la cause")
-    @Test
-    public void testCreerDoublon() {
-    	
-    	/* ARRANGE :
-    	 * prépare un objet métier valide.
-    	 * Le doublon n'est pas simulé au niveau métier,
-    	 * mais au niveau du stockage au moment du save(...).
-    	 * On utilise un libellé valide pour atteindre réellement l'appel DAO.
-    	 */
-    	final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
-    	
-    	/* Prépare l'exception technique d'intégrité levée par le stockage :
-    	 * elle représente ici un refus de création pour cause de doublon fonctionnel.
-    	 * Le message technique d'origine doit être conservé dans le message final
-    	 * de l'ExceptionTechniqueGateway.
-    	 */
-    	final String messageTechnique = "contrainte d'unicité violée";
-    	final DataIntegrityViolationException causeDao
-    		= new DataIntegrityViolationException(messageTechnique);
-    	
-    	/* Simule un refus du stockage pour cause de doublon fonctionnel :
-    	 * le DAO mocké jette une exception technique d'intégrité au moment du save(...).
-    	 */
-    	when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
-    		.thenThrow(causeDao);
-    	
-    	/* ACT :
-    	 * exécute une seule fois this.service.creer(aCreer)
-    	 * et capture l'exception réellement levée,
-    	 * afin de contrôler ensuite séparément :
-    	 * - le type de l'exception,
-    	 * - son message,
-    	 * - et sa cause technique d'origine.
-    	 */
-    	final Throwable throwable
-    		= org.assertj.core.api.Assertions.catchThrowable(
-    				() -> this.service.creer(aCreer));
-    	
-    	/* ASSERT :
-    	 * garantit que this.service.creer(aCreer)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-    	 * - conserve le message technique d'origine
-    	 * - propage l'exception technique cause.
-    	 */
-    	assertThat(throwable)
-    		.isInstanceOf(ExceptionTechniqueGateway.class)
-    		.hasMessageContaining(TypeProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE)
-    		.hasMessageContaining(messageTechnique);
-    	
-    	/* Garantit que la cause technique d'origine
-    	 * est bien propagée par l'ExceptionTechniqueGateway.
-    	 */
-    	assertThat(throwable.getCause()).isSameAs(causeDao);
-    	
-    	/* Garantit que le DAO mocké a bien été appelé une fois.
-    	 * Cela prouve que l'échec observé provient bien du stockage
-    	 * au moment de la tentative de persistance.
-    	 */
-    	verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
-    	
-    } // __________________________________________________________________
-    
-    
-        
-    /**
-     * <div>
-     * <p>garantit que creer(OK) :</p>
-     * <ul>
-     * <li>appelle le DAO pour persister un {@link TypeProduitJPA}</li>
-     * <li>envoie au DAO une entité JPA sans identifiant initial</li>
-     * <li>envoie au DAO une entité JPA portant le bon libellé métier</li>
-     * <li>retourne un {@link TypeProduit} persistant</li>
-     * <li>retourne un objet métier portant l'identifiant généré par le stockage</li>
-     * <li>retourne un objet métier portant le bon libellé</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_CREER)
-    @DisplayName("creer(OK) : persiste via le DAO et retourne l'objet métier persisté")
-    @Test
-    public void testCreerOK() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * prépare un objet métier valide à créer,
-    	 * une entité JPA simulant le retour du stockage après save(...),
-    	 * et un captor pour contrôler précisément ce qui a été envoyé au DAO.
-    	 */
-        final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
-        final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
-        final ArgumentCaptor<TypeProduitJPA> captor
-        	= ArgumentCaptor.forClass(TypeProduitJPA.class);
-
-        /* Simule un DAO qui persiste correctement l'entité
-         * et retourne une entité JPA portant l'identifiant généré ID_1.
-         */
-        when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
-            .thenReturn(persistee);
-
-        /* ACT :
-         * exécute la création métier via le service GATEWAY JPA.
-         */
-        final TypeProduit resultat = this.service.creer(aCreer);
-
-        /* ASSERT :
-         * garantit que le DAO mocké a bien été appelé
-         * avec une entité JPA construite à partir de l'objet métier d'entrée.
-         */
-        verify(this.typeProduitDaoJPA).save(captor.capture());
-
-        /* Garantit que l'entité envoyée au DAO :
-         * - n'est pas null
-         * - ne porte pas encore d'identifiant
-         * - porte bien le libellé métier attendu.
-         */
-        final TypeProduitJPA envoyeAuDAO = captor.getValue();
-        assertThat(envoyeAuDAO).isNotNull();
-        assertThat(envoyeAuDAO.getIdTypeProduit()).isNull();
-        assertThat(envoyeAuDAO.getTypeProduit()).isEqualTo(VETEMENT);
-
-        /* Garantit que l'objet métier retourné par le service :
-         * - n'est pas null
-         * - porte l'identifiant généré par le stockage
-         * - porte le bon libellé métier.
-         */
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
-        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
-        
-    } // __________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
      * <p>garantit que si le DAO jette une exception technique pendant creer(...) :</p>
      * <ul>
      * <li>le SERVICE GATEWAY JPA jette une {@link ExceptionTechniqueGateway}</li>
@@ -591,7 +441,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
-    public void testCreerKOExceptionDAO() {
+    public void testCreerDaoSaveExceptionMessageNonNull() {
 
         /* ARRANGE :
          * prépare un objet métier valide pour atteindre réellement l'appel DAO.
@@ -657,7 +507,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testCreerKOExceptionDAOMsgNull() {
+    public void testCreerDaoSaveExceptionMessageNull() {
     	
     	/* ARRANGE :
     	 * prépare un objet métier valide pour atteindre réellement l'appel DAO.
@@ -711,26 +561,176 @@ public class TypeProduitGatewayJPAServiceMockTest {
     	verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
     	
     } // __________________________________________________________________
+
+    
+    
+    /**
+	 * <div>
+	 * <p>garantit que si le stockage refuse creer(...) pour cause de doublon fonctionnel :</p>
+	 * <ul>
+	 * <li>le SERVICE GATEWAY JPA jette une {@link ExceptionTechniqueGateway}</li>
+	 * <li>émet un message commençant par
+	 * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+	 * <li>conserve un message technique sûr dérivé de l'exception de stockage</li>
+	 * <li>propage l'exception technique cause</li>
+	 * <li>appelle le DAO une fois</li>
+	 * </ul>
+	 * </div>
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName("creer(doublon) : jette ExceptionTechniqueGateway et propage la cause")
+	@Test
+	public void testCreerDoublon() {
+		
+		/* ARRANGE :
+		 * prépare un objet métier valide.
+		 * Le doublon n'est pas simulé au niveau métier,
+		 * mais au niveau du stockage au moment du save(...).
+		 * On utilise un libellé valide pour atteindre réellement l'appel DAO.
+		 */
+		final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
+		
+		/* Prépare l'exception technique d'intégrité levée par le stockage :
+		 * elle représente ici un refus de création pour cause de doublon fonctionnel.
+		 * Le message technique d'origine doit être conservé dans le message final
+		 * de l'ExceptionTechniqueGateway.
+		 */
+		final String messageTechnique = "contrainte d'unicité violée";
+		final DataIntegrityViolationException causeDao
+			= new DataIntegrityViolationException(messageTechnique);
+		
+		/* Simule un refus du stockage pour cause de doublon fonctionnel :
+		 * le DAO mocké jette une exception technique d'intégrité au moment du save(...).
+		 */
+		when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
+			.thenThrow(causeDao);
+		
+		/* ACT :
+		 * exécute une seule fois this.service.creer(aCreer)
+		 * et capture l'exception réellement levée,
+		 * afin de contrôler ensuite séparément :
+		 * - le type de l'exception,
+		 * - son message,
+		 * - et sa cause technique d'origine.
+		 */
+		final Throwable throwable
+			= org.assertj.core.api.Assertions.catchThrowable(
+					() -> this.service.creer(aCreer));
+		
+		/* ASSERT :
+		 * garantit que this.service.creer(aCreer)
+		 * - jette une ExceptionTechniqueGateway
+		 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+		 * - conserve le message technique d'origine
+		 * - propage l'exception technique cause.
+		 */
+		assertThat(throwable)
+			.isInstanceOf(ExceptionTechniqueGateway.class)
+			.hasMessageContaining(TypeProduitGatewayIService.ERREUR_TECHNIQUE_STOCKAGE)
+			.hasMessageContaining(messageTechnique);
+		
+		/* Garantit que la cause technique d'origine
+		 * est bien propagée par l'ExceptionTechniqueGateway.
+		 */
+		assertThat(throwable.getCause()).isSameAs(causeDao);
+		
+		/* Garantit que le DAO mocké a bien été appelé une fois.
+		 * Cela prouve que l'échec observé provient bien du stockage
+		 * au moment de la tentative de persistance.
+		 */
+		verify(this.typeProduitDaoJPA).save(any(TypeProduitJPA.class));
+		
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>garantit que creer(OK) :</p>
+	 * <ul>
+	 * <li>appelle le DAO pour persister un {@link TypeProduitJPA}</li>
+	 * <li>envoie au DAO une entité JPA sans identifiant initial</li>
+	 * <li>envoie au DAO une entité JPA portant le bon libellé métier</li>
+	 * <li>retourne un {@link TypeProduit} persistant</li>
+	 * <li>retourne un objet métier portant l'identifiant généré par le stockage</li>
+	 * <li>retourne un objet métier portant le bon libellé</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName("creer(OK) : persiste via le DAO et retourne l'objet métier persisté")
+	@Test
+	public void testCreerNominal() throws Exception {
+		
+		/* ARRANGE :
+		 * prépare un objet métier valide à créer,
+		 * une entité JPA simulant le retour du stockage après save(...),
+		 * et un captor pour contrôler précisément ce qui a été envoyé au DAO.
+		 */
+	    final TypeProduit aCreer = fabriquerTypeProduit(VETEMENT, null);
+	    final TypeProduitJPA persistee = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+	    final ArgumentCaptor<TypeProduitJPA> captor
+	    	= ArgumentCaptor.forClass(TypeProduitJPA.class);
+	
+	    /* Simule un DAO qui persiste correctement l'entité
+	     * et retourne une entité JPA portant l'identifiant généré ID_1.
+	     */
+	    when(this.typeProduitDaoJPA.save(any(TypeProduitJPA.class)))
+	        .thenReturn(persistee);
+	
+	    /* ACT :
+	     * exécute la création métier via le service GATEWAY JPA.
+	     */
+	    final TypeProduit resultat = this.service.creer(aCreer);
+	
+	    /* ASSERT :
+	     * garantit que le DAO mocké a bien été appelé
+	     * avec une entité JPA construite à partir de l'objet métier d'entrée.
+	     */
+	    verify(this.typeProduitDaoJPA).save(captor.capture());
+	
+	    /* Garantit que l'entité envoyée au DAO :
+	     * - n'est pas null
+	     * - ne porte pas encore d'identifiant
+	     * - porte bien le libellé métier attendu.
+	     */
+	    final TypeProduitJPA envoyeAuDAO = captor.getValue();
+	    assertThat(envoyeAuDAO).isNotNull();
+	    assertThat(envoyeAuDAO.getIdTypeProduit()).isNull();
+	    assertThat(envoyeAuDAO.getTypeProduit()).isEqualTo(VETEMENT);
+	
+	    /* Garantit que l'objet métier retourné par le service :
+	     * - n'est pas null
+	     * - porte l'identifiant généré par le stockage
+	     * - porte le bon libellé métier.
+	     */
+	    assertThat(resultat).isNotNull();
+	    assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
+	    assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
+	    
+	} // __________________________________________________________________
     
     
 
     // ======================== RechercherTous ============================
 
-    
-    
-    /**
+
+
+	/**
      * <div>
      * <p>garantit que si DAO.findAll() retourne null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway}</li>
      * <li>émet le message
      * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
-     * <li>appelle le DAO une fois</li>
+     * <li>appelle une seule fois le DAO mocké avec Mockito.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @DisplayName("rechercherTous(DAO.findAll() retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testRechercherTousDAORetourneNull() {
     	
@@ -771,9 +771,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(liste vide) : retourne une liste vide non null")
+    @DisplayName("rechercherTous(DAO.findAll() retourne liste vide) : retourne une liste vide non null")
     @Test
-    public void testRechercherTousVide() throws Exception {
+    public void testRechercherTousDAORetourneVide() throws Exception {
     	
     	/* ARRANGE :
     	 * simule un stockage vide.
@@ -808,87 +808,6 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que si DAO.findAll() retourne une liste
-     * contenant des nulls et deux libellés fonctionnellement identiques
-     * ne différant que par la casse :</p>
-     * <ul>
-     * <li>retourne une {@link List} non null</li>
-     * <li>filtre les éléments null</li>
-     * <li>dédoublonne les résultats au sens métier
-     * sans tenir compte de la casse</li>
-     * <li>trie les résultats par libellé</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * <p>Ce test prouve donc explicitement la règle contractuelle
-     * d'unicité métier sur le libellé,
-     * même lorsque le stockage contient deux valeurs
-     * ne différant que par la casse.</p>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(nulls + doublons de casse) : filtre, dédoublonne sans tenir compte de la casse et trie")
-    @Test
-    public void testRechercherTousOKTriDedoublonnage() throws Exception {
-
-        /* ARRANGE :
-         * simule un DAO qui retourne :
-         * - un élément null
-         * - deux objets fonctionnellement identiques
-         *   portant le même libellé à la casse près
-         * - plusieurs libellés non triés.
-         *
-         * Le service doit :
-         * - filtrer le null,
-         * - ne conserver qu'un seul "vêtement" au sens métier,
-         * - puis trier le résultat final.
-         */
-        final String vetementMajuscule = VETEMENT.toUpperCase(Locale.ROOT);
-
-        final List<TypeProduitJPA> contenu = Arrays.asList(
-                fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
-                null,
-                fabriquerTypeProduitJPA(VETEMENT, ID_1),
-                fabriquerTypeProduitJPA(vetementMajuscule, ID_3),
-                fabriquerTypeProduitJPA(CAMPING, ID_4));
-
-        when(this.typeProduitDaoJPA.findAll()).thenReturn(contenu);
-
-        /* ACT :
-         * exécute la recherche complète via le service GATEWAY JPA.
-         */
-        final List<TypeProduit> resultat = this.service.rechercherTous();
-
-        /* ASSERT :
-         * garantit que this.service.rechercherTous()
-         * - retourne une liste non null,
-         * - filtre l'élément null,
-         * - ne conserve qu'une seule occurrence métier de "vêtement"
-         *   après normalisation de la casse,
-         * - trie les libellés par ordre alphabétique.
-         *
-         * La normalisation en lowerCase(Locale.ROOT) est volontaire :
-         * elle permet de prouver directement l'unicité métier
-         * sans imposer artificiellement la casse exacte
-         * conservée par l'implémentation.
-         */
-        assertThat(resultat).isNotNull().hasSize(3);
-        assertThat(resultat)
-            .extracting(typeProduit -> typeProduit.getTypeProduit().toLowerCase(Locale.ROOT))
-            .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
-
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * via la méthode findAll().
-         */
-        verify(this.typeProduitDaoJPA).findAll();
-
-    } // __________________________________________________________________
-    
-    
-    
-    /**
-     * <div>
      * <p>garantit que si DAO.findAll() jette une exception technique 
      * avec message non nul :</p>
      * <ul>
@@ -902,9 +821,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("rechercherTous(KO DAO message non nul) : jette ExceptionTechniqueGateway et conserve le message technique")
+    @DisplayName("rechercherTous(KO DAO message non null) - jette ExceptionTechniqueGateway")
     @Test
-    public void testRechercherTousExceptionDAOMessagePreserve() {
+    public void testRechercherTousDaoExceptionMessageNonNull() {
 
     	/* ARRANGE :
     	 * simule un DAO qui jette une exception technique avec message non nul
@@ -971,7 +890,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_RECHERCHER)
     @DisplayName("rechercherTous(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testRechercherTousExceptionDAOMsgNull() {
+    public void testRechercherTousDaoExceptionMessageNull() {
 
     	/* ARRANGE :
     	 * simule un DAO qui jette une exception technique sans message
@@ -1028,11 +947,172 @@ public class TypeProduitGatewayJPAServiceMockTest {
     
     
     
+	/**
+	 * <div>
+	 * <p>garantit que si DAO.findAll() retourne une liste
+	 * contenant des nulls et deux libellés fonctionnellement identiques
+	 * ne différant que par la casse :</p>
+	 * <ul>
+	 * <li>retourne une {@link List} non null</li>
+	 * <li>filtre les éléments null</li>
+	 * <li>dédoublonne les résultats au sens métier
+	 * sans tenir compte de la casse</li>
+	 * <li>trie les résultats par libellé</li>
+	 * <li>appelle le DAO une fois</li>
+	 * </ul>
+	 * <p>Ce test prouve donc explicitement la règle contractuelle
+	 * d'unicité métier sur le libellé,
+	 * même lorsque le stockage contient deux valeurs
+	 * ne différant que par la casse.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER)
+	@DisplayName("rechercherTous(nulls + doublons de casse) : filtre, dédoublonne sans tenir compte de la casse et trie")
+	@Test
+	public void testRechercherTousTriDedoublonnage() throws Exception {
+	
+	    /* ARRANGE :
+	     * simule un DAO qui retourne :
+	     * - un élément null
+	     * - deux objets fonctionnellement identiques
+	     *   portant le même libellé à la casse près
+	     * - plusieurs libellés non triés.
+	     *
+	     * Le service doit :
+	     * - filtrer le null,
+	     * - ne conserver qu'un seul "vêtement" au sens métier,
+	     * - puis trier le résultat final.
+	     */
+	    final String vetementMajuscule = VETEMENT.toUpperCase(Locale.ROOT);
+	
+	    final List<TypeProduitJPA> contenu = Arrays.asList(
+	            fabriquerTypeProduitJPA(OUTILLAGE, ID_2),
+	            null,
+	            fabriquerTypeProduitJPA(VETEMENT, ID_1),
+	            fabriquerTypeProduitJPA(vetementMajuscule, ID_3),
+	            fabriquerTypeProduitJPA(CAMPING, ID_4));
+	
+	    when(this.typeProduitDaoJPA.findAll()).thenReturn(contenu);
+	
+	    /* ACT :
+	     * exécute la recherche complète via le service GATEWAY JPA.
+	     */
+	    final List<TypeProduit> resultat = this.service.rechercherTous();
+	
+	    /* ASSERT :
+	     * garantit que this.service.rechercherTous()
+	     * - retourne une liste non null,
+	     * - filtre l'élément null,
+	     * - ne conserve qu'une seule occurrence métier de "vêtement"
+	     *   après normalisation de la casse,
+	     * - trie les libellés par ordre alphabétique.
+	     *
+	     * La normalisation en lowerCase(Locale.ROOT) est volontaire :
+	     * elle permet de prouver directement l'unicité métier
+	     * sans imposer artificiellement la casse exacte
+	     * conservée par l'implémentation.
+	     */
+	    assertThat(resultat).isNotNull().hasSize(3);
+	    assertThat(resultat)
+	        .extracting(typeProduit -> typeProduit.getTypeProduit().toLowerCase(Locale.ROOT))
+	        .containsExactly(CAMPING, OUTILLAGE, VETEMENT);
+	
+	    /* Garantit que le DAO mocké a bien été appelé une fois
+	     * via la méthode findAll().
+	     */
+	    verify(this.typeProduitDaoJPA).findAll();
+	
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTous(nominal) :</p>
+	 * <ul>
+	 * <li>retourne une liste non null ;</li>
+	 * <li>filtre les valeurs null ;</li>
+	 * <li>dédoublonne les doublons fonctionnels ;</li>
+	 * <li>retourne une liste triée ;</li>
+	 * <li>appelle le DAO une fois via {@code findAll()}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER)
+	@DisplayName("rechercherTous(nominal) - filtre, trie et dédoublonne")
+	@Test
+	public void testRechercherTousNominal() throws Exception {
+
+		/* ARRANGE :
+		 * prépare une liste renvoyée par le DAO mocké avec Mockito
+		 * contenant :
+		 * - une valeur null à filtrer ;
+		 * - deux doublons fonctionnels sur le même libellé ;
+		 * - un ordre initial non trié.
+		 *
+		 * Ce scénario permet de vérifier en une seule fois
+		 * le filtrage, le tri et le dédoublonnage.
+		 */
+		final TypeProduitJPA e1 = fabriquerTypeProduitJPA(OUTILLAGE, ID_2);
+		final TypeProduitJPA e2 = fabriquerTypeProduitJPA(VETEMENT, ID_1);
+		final TypeProduitJPA e3 = fabriquerTypeProduitJPA(VETEMENT, ID_3);
+		final TypeProduitJPA e4 = fabriquerTypeProduitJPA(CAMPING, ID_4);
+
+		final List<TypeProduitJPA> entities = new ArrayList<TypeProduitJPA>();
+		entities.add(e1);
+		entities.add(null);
+		entities.add(e2);
+		entities.add(e3);
+		entities.add(e4);
+
+		/* Condition du Mock :
+		 * L'appel typeProduitDaoJPA.findAll()
+		 * sur le DAO objet métier mocké retourne la liste entities.
+		 */
+		when(this.typeProduitDaoJPA.findAll()).thenReturn(entities);
+
+		/* ACT :
+		 * sollicite la méthode service.rechercherTous()
+		 * dans un scénario nominal complet.
+		 */
+		final List<TypeProduit> retour = this.service.rechercherTous();
+
+		/* ASSERT :
+		 * vérifie d'abord que la méthode retourne
+		 * une liste exploitable.
+		 */
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(3);
+
+		/* Vérifie ensuite que :
+		 * - les valeurs null ont été filtrées ;
+		 * - les doublons fonctionnels ont été supprimés ;
+		 * - l'ordre final est trié par libellé.
+		 */
+		assertThat(retour)
+			.extracting(TypeProduit::getTypeProduit)
+			.containsExactly(CAMPING, OUTILLAGE, VETEMENT);
+
+		/* 
+		 * Vérifie que la méthode findAll()
+		 * du DAO typeProduitDaoJPA mocké avec Mockito
+		 * a bien été appelée une fois.
+		 */
+		verify(this.typeProduitDaoJPA).findAll();
+
+	} // _________________________________________________________________
+	
+    
+    
     // ================== rechercherTousParPage ===========================
     
     
 
-    /**
+	/**
      * <div>
      * <p>garantit que si {@code rechercherTousParPage(null)} est appelé :</p>
      * <ul>
@@ -1184,7 +1264,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
         verify(this.typeProduitDaoJPA).findAll(any(Pageable.class));
 
     } // __________________________________________________________________
-    
+
     
     
     /**
