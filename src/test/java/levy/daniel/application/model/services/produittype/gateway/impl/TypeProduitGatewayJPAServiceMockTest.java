@@ -245,7 +245,8 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>DAO mocké.</p>
+     * <p>Mock du DAO pour l'objet métier 
+     * {@link TypeProduit}.</p>
      * </div>
      */
     @Mock
@@ -316,13 +317,18 @@ public class TypeProduitGatewayJPAServiceMockTest {
     	/* ARRANGE - ACT - ASSERT */
     	/* Garantit que this.service.creer(null)
     	 * - jette une ExceptionAppliParamNull
-    	 * - émet un message MESSAGE_CREER_KO_PARAM_NULL.
+    	 * - émet un message MESSAGE_CREER_KO_PARAM_NULL 
+    	 * (message contractuel du port).
     	 */
         assertThatThrownBy(() -> this.service.creer(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_CREER_KO_PARAM_NULL);
         
         /* Garantit que le DAO mocké n'a pas été appelé. */
+        /* - verify(..., never()).méthode(...) = preuve ciblée 
+         * sur une méthode critique précise.
+         * - verifyNoInteractions(mock) = preuve globale 
+         * que le mock entier n'a pas été touché.*/
         verifyNoInteractions(this.typeProduitDaoJPA);
         
     } // __________________________________________________________________
@@ -331,7 +337,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que creer(blank) :</p>
+     * <p>garantit que creer(libellé blank) :</p>
      * <ul>
      * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
      * <li>émet un
@@ -341,9 +347,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(blank) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
+    @DisplayName("creer(libellé blank) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
     @Test
-    public void testCreerBlank() {
+    public void testCreerLibelleBlank() {
     	
     	/* ARRANGE */
         final TypeProduit metier = new TypeProduit(BLANK);
@@ -435,7 +441,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName("creer(doublon stockage) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
-    public void testCreerDoublonFonctionnelRefuseParStockage() {
+    public void testCreerDoublon() {
     	
     	/* ARRANGE :
     	 * prépare un objet métier valide.

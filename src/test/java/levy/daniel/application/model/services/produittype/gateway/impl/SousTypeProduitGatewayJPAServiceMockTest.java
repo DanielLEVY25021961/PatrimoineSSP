@@ -12,6 +12,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -449,7 +450,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>Mock du DAO pour {@link SousTypeProduit} (enfant).</p>
+     * <p>Mock du DAO pour l'objet métier 
+     * {@link SousTypeProduit} (enfant).</p>
      * </div>
      */
     @Mock
@@ -457,7 +459,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>Mock du DAO pour {@link TypeProduit} (parent).</p>
+     * <p>Mock du DAO pour le parent {@link TypeProduit}.</p>
      * </div>
      */
     @Mock
@@ -473,7 +475,26 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>Service testé (injection des mocks).</p>
+     * <p>Service {@link SousTypeProduitGatewayJPAService}  
+     * <span style="font-weight:bold;">réel</span> 
+     * testé (avec injection des mocks).</p>
+     * <ul>
+     * <li>le service réel est instancié dans la méthode {@link #init()} 
+     * avant chaque test (@BeforeEach).</li>
+     * <li>@InjectMocks demande à Mockito de créer l’instance du service 
+     * puis d’y injecter automatiquement les dépendances mockées déclarées 
+     * dans la classe de test, typiquement les champs annotés avec @Mock.</li> 
+     * <li>@InjectMocks ne crée donc pas un mock du service. 
+     * Il crée ou prépare le service réel, puis il y injecte 
+     * les mocks disponibles.</li>
+     * <li>Initialise le service réel avec ses deux DAO mockés, 
+     * puis injecte explicitement
+     * l'EntityManager mocké parce que SousTypeProduitGatewayJPAService l'utilise
+     * comme collaborateur technique pour certains scénarios Hibernate/cache.
+     * Dans cette classe, vérifier verifyNoInteractions(entityManager) 
+     * est donc probant : le mock de l'EntityManager est réellement 
+     * relié au service testé.</li>
+     * </ul>
      * </div>
      */
     @InjectMocks
@@ -529,8 +550,10 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que creer(null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionAppliParamNull} ;</li>
-     * <li>émet le message {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARAM_NULL} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>émet le message 
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARAM_NULL} ;</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier (enfant), 
+     * ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -552,20 +575,27 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         /* 
          * Vérifie ensuite qu'aucun accès au stockage
          * n'a été tenté pour ce scénario traité 
-         * par la gestion des mauvais paramètres avant tout appel des DAO.
+         * par la gestion des mauvais paramètres avant tout appel des DAO
+         * ou de l'EntityManager.
          * - typeProduitDaoJPA.findById(...) n'a jamais été appelé.
          * - sousTypeProduitDaoJPA.save(...) n'a jamais été appelé.
+         * - entityManager n'a jamais été appelé.
          */
+        /* - verify(..., never()).méthode(...) = preuve ciblée 
+         * sur une méthode critique précise.
+         * - verifyNoInteractions(mock) = preuve globale 
+         * que le mock entier n'a pas été touché.*/
         verify(this.typeProduitDaoJPA, never()).findById(anyLong());
         verify(this.sousTypeProduitDaoJPA, never()).save(any(SousTypeProduitJPA.class));
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
-
+    
 
 
     /**
      * <div>
-     * <p>garantit que creer(blank) :</p>
+     * <p>garantit que creer(libellé blank) :</p>
      * <ul>
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK} ;</li>
@@ -576,7 +606,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName(DN_CREER_BLANK)
     @Test
-    public void testCreerBlank() {
+    public void testCreerLibelleBlank() {
 
         /* ARRANGE :
          * prépare un sous-type dont le libellé est blank,

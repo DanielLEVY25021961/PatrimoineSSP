@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import levy.daniel.application.model.metier.produittype.Produit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.metier.produittype.TypeProduitI;
@@ -57,7 +58,9 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * CLASSE SousTypeProduitGatewayJPAService.java :
  * </p>
  * <p style="font-weight:bold;">ADAPTER SERVICE GATEWAY</p>
- *
+ * </div>
+ * 
+ * <div>
  * <p>
  * Cette classe modélise :
  * un <span style="font-weight:bold;">SERVICE</span> chargé de :
@@ -73,17 +76,39 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * au moyen d'un <span style="font-weight:bold;">
  * Repository (DAO) JPA</span>.</li>
  * </ul>
- *
+ * </div>
+ * 
+ * <div>
  * <p>
  * ADAPTER GATEWAY JPA implémentant le PORT GATEWAY
  * {@link SousTypeProduitGatewayIService}.
  * </p>
+ * </div>
  *
+ * <div>
  * <p>
  * Stratégie : en cas de problème dans la couche stockage,
  * jeter une Exception circonstanciée conforme
  * aux constantes contractuelles décrites dans le PORT GATEWAY.
  * </p>
+ * </div>
+ * 
+ * <div>
+ * <p>{@link SousTypeProduit} est un objet métier intermédiaire :</p>
+ * <ul>
+ * <li>il possède un parent {@link TypeProduit} ;</li>
+ * <li>il peut être référencé par des enfants {@link Produit} ;</li>
+ * <li>sa suppression est donc plus sensible qu’une suppression 
+ * de feuille métier ;</li>
+ * <li>pour certaines opérations critiques comme delete(...), 
+ * le service utilise directement un {@link EntityManager} ;</li>
+ * <li>cela permet de forcer remove(...) puis flush(...) et 
+ * d’éviter qu’un état encore présent dans le cache Hibernate masque 
+ * le résultat réel dans le stockage ;</li>
+ * <li>ce choix est spécifique à ce Gateway et 
+ * ne doit pas être généralisé mécaniquement au parent {@link TypeProduit} 
+ * ou aux enfants {@link Produit}.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
