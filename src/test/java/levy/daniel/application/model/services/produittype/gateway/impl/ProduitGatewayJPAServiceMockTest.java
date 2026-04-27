@@ -2297,7 +2297,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @Tag(TAG_RECHERCHER)
     @DisplayName("findByObjetMetier(null) - ExceptionAppliParamNull")
     @Test
-    public void testFindByObjetMetierParamNullExceptionAppliParamNull() {
+    public void testFindByObjetMetierNull() {
 
         assertThatThrownBy(() -> this.service.findByObjetMetier(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
@@ -2316,9 +2316,9 @@ public class ProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("findByObjetMetier(libellé blank) - ExceptionAppliLibelleBlank")
+    @DisplayName("findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
-    public void testFindByObjetMetierLibelleBlankExceptionAppliLibelleBlank() {
+    public void testFindByObjetMetierLibelleBlank() {
 
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 

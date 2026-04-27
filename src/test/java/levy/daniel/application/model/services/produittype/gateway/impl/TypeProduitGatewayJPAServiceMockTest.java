@@ -2292,7 +2292,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(libellé null) :</p>
+     * <p>garantit que findByObjetMetier(libellé blank) :</p>
      * <ul>
      * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
      * <li>émet un
@@ -2302,9 +2302,9 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(libellé null) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
+    @DisplayName("findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
-    public void testFindByObjetMetierLibelleNull() {
+    public void testFindByObjetMetierLibelleBlank() {
     	
     	/* ARRANGE */
         final TypeProduit metier = fabriquerTypeProduit(null, null);
@@ -2323,42 +2323,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
         
     } // __________________________________________________________________
     
-    
-
-    /**
-     * <div>
-     * <p>garantit que findByObjetMetier(libellé blank) :</p>
-     * <ul>
-     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
-     * <li>émet un
-     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK}</li>
-     * <li>n'appelle pas le DAO</li>
-     * </ul>
-     * </div>
-     */
-    @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(libellé blank) : jette ExceptionAppliLibelleBlank et n'appelle pas le DAO")
-    @Test
-    public void testFindByObjetMetierLibelleBlank() {
-    	
-    	/* ARRANGE */
-        final TypeProduit metier = fabriquerTypeProduit(BLANK, null);
-    	
-    	/* ACT - ASSERT */
-    	/* Garantit que this.service.findByObjetMetier(metier)
-    	 * - jette une ExceptionAppliLibelleBlank
-    	 * - émet un message MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK.
-    	 */
-        assertThatThrownBy(() -> this.service.findByObjetMetier(metier))
-            .isInstanceOf(ExceptionAppliLibelleBlank.class)
-            .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
         
-        /* Garantit que le DAO mocké n'a pas été appelé. */
-        verifyNoInteractions(this.typeProduitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
 
     /**
      * <div>

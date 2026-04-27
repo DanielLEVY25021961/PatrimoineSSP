@@ -26,6 +26,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -1907,62 +1908,121 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	@DisplayName("rechercherTousParPage(RequetePage null) : garantit l'usage de la pagination par défaut sans Exception")
 	@Test
 	public void testRechercherTousParPageNull() throws Exception {
-	
+
 	    /* ARRANGE :
-	     * configure le DAO mocké avec Mockito
-	     * pour que la méthode findAll(Pageable)
-	     * retourne une page contenant deux éléments.
+	     * prépare un contenu JPA simple,
+	     * une Page Spring cohérente avec la pagination par défaut,
+	     * et un captor Mockito pour récupérer le Pageable
+	     * réellement transmis par le service au DAO.
 	     */
-	    final TypeProduitJPA parentJPA =
-	            fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
-	
-	    final List<SousTypeProduitJPA> contenu =
-	            new ArrayList<SousTypeProduitJPA>();
-	    contenu.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_1, ID_1, parentJPA));
-	    contenu.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_2, ID_2, parentJPA));
-	
-	    final Page<SousTypeProduitJPA> page =
-	            new PageImpl<SousTypeProduitJPA>(
-	                    contenu,
-	                    PageRequest.of(PAGE_0, SIZE_5),
-	                    TOTAL_10);
-	
-	    /* Condition du Mock typeProduitDaoJPA :
-	     * L'appel sousTypeProduitDaoJPA.findAll(Pageable) sur le DAO mocké 
-	     * retourne une Page.
+	    final TypeProduitJPA parentJPA
+	        = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+
+	    final List<SousTypeProduitJPA> contenuJPA
+	        = new ArrayList<SousTypeProduitJPA>();
+	    contenuJPA.add(fabriquerSousTypeProduitJPA(
+	            LIBELLE_ENFANT_1, ID_1, parentJPA));
+	    contenuJPA.add(fabriquerSousTypeProduitJPA(
+	            LIBELLE_ENFANT_2, ID_2, parentJPA));
+
+	    final Page<SousTypeProduitJPA> page
+	        = new PageImpl<SousTypeProduitJPA>(
+	                contenuJPA,
+	                PageRequest.of(
+	                        RequetePage.PAGE_DEFAUT,
+	                        RequetePage.TAILLE_DEFAUT),
+	                2L);
+
+	    /*
+	     * Crée un ArgumentCaptor Mockito capable de capturer
+	     * l'argument de type Pageable réellement transmis au DAO.
+	     *
+	     * Ici, le test ne veut pas seulement vérifier que
+	     * sousTypeProduitDaoJPA.findAll(...) a été appelé.
+	     * Il veut aussi inspecter le Pageable construit par le service :
+	     * - numéro de page ;
+	     * - taille de page ;
+	     * - présence ou absence de tri.
+	     *
+	     * ArgumentCaptor.forClass(Pageable.class) indique donc à Mockito
+	     * quel type d'argument devra être capturé lors du verify(...).
+	     *
+	     * Le captor est indispensable ici :
+	     * sans lui, on pourrait seulement vérifier que findAll(...) a été appelé ;
+	     * avec lui, on peut contrôler concrètement
+	     * le numéro de page, la taille et l'absence de tri.
+	     */
+	    final ArgumentCaptor<Pageable> captor
+	        = ArgumentCaptor.forClass(Pageable.class);
+
+	    /*
+	     * Configuration du Mock :
+	     * Simule un DAO qui renvoie une page valide
+	     * quel que soit le Pageable reçu.
+	     *
+	     * Le but du test n'est pas de vérifier le DAO,
+	     * mais de prouver comment le service compense
+	     * la requête null avant de déléguer au stockage.
 	     */
 	    when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
-	
+
 	    /* ACT :
-	     * appelle this.service.rechercherTousParPage(null)
-	     * dans le scénario où la requête paginée est null.
+	     * appelle le service avec une requête null.
+	     *
+	     * Le contrat impose alors :
+	     * - aucune Exception ;
+	     * - utilisation d'une pagination par défaut ;
+	     * - délégation au DAO avec un Pageable cohérent.
 	     */
-	    final ResultatPage<SousTypeProduit> resultat =
-	            this.service.rechercherTousParPage(null);
-	
+	    final ResultatPage<SousTypeProduit> resultat
+	        = this.service.rechercherTousParPage(null);
+
 	    /* ASSERT :
-	     * vérifie que le service retourne bien
-	     * une enveloppe paginée exploitable et cohérente.
+	     * garantit d'abord que le service a bien appelé le DAO,
+	     * puis permet d'inspecter le Pageable réellement transmis.
+	     */
+	    verify(this.sousTypeProduitDaoJPA).findAll(captor.capture());
+
+	    final Pageable pageable = captor.getValue();
+
+	    /* Garantit que lorsque l'entrée vaut null,
+	     * le service fabrique bien une pagination par défaut
+	     * avant l'appel DAO.
+	     */
+	    assertThat(pageable).isNotNull();
+	    assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+	    assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+	    assertThat(pageable.getSort().isSorted()).isFalse();
+
+	    /* Garantit que le service restitue ensuite
+	     * un ResultatPage cohérent avec la page DAO reçue :
+	     * même pagination, bon total, bon contenu métier.
 	     */
 	    assertThat(resultat).isNotNull();
-	    assertThat(resultat.getContent()).isNotNull().hasSize(2);
-	    assertThat(resultat.getPageNumber()).isEqualTo(PAGE_0);
-	    assertThat(resultat.getPageSize()).isEqualTo(SIZE_5);
-	    assertThat(resultat.getTotalElements()).isEqualTo(TOTAL_10);
-	
-	    /* Vérifie que le contenu métier retourné
-	     * correspond aux deux éléments de la page DAO.
-	     */
+	    assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+	    assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+	    assertThat(resultat.getTotalElements()).isEqualTo(2L);
 	    assertThat(resultat.getContent())
 	        .extracting(SousTypeProduit::getSousTypeProduit)
 	        .containsExactly(LIBELLE_ENFANT_1, LIBELLE_ENFANT_2);
-	
-	    /* Vérifie que la méthode findAll(Pageable)
-	     * du DAO sousTypeProduitDaoJPA mocké avec Mockito 
-	     * a bien été appelée une fois.
+
+	    /* Garantit que les objets métier retournés
+	     * conservent un parent non null et cohérent.
 	     */
-	    verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
-	
+	    assertThat(resultat.getContent().get(0).getTypeProduit()).isNotNull();
+	    assertThat(resultat.getContent().get(0).getTypeProduit().getTypeProduit())
+	        .isEqualTo(LIBELLE_PARENT_1);
+
+	    assertThat(resultat.getContent().get(1).getTypeProduit()).isNotNull();
+	    assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
+	        .isEqualTo(LIBELLE_PARENT_1);
+
+	    /* Garantit que ce scénario paginé ne sollicite
+	     * ni le DAO parent ni l'EntityManager.
+	     */
+	    verifyNoInteractions(this.typeProduitDaoJPA);
+	    verifyNoInteractions(this.entityManager);
+
 	} // __________________________________________________________________
 	
 	
@@ -1986,9 +2046,52 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTousParPage(DAO retourne null) : garantit ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testRechercherTousParPageDAORetourneNull() {
-    	/**/
-    }
 
+        /* ARRANGE :
+         * Configuration du Mock :
+         * prépare une situation anormale côté DAO :
+         * au lieu de renvoyer une Page Spring,
+         * le stockage renvoie null.
+         *
+         * Ce scénario ne correspond pas à un résultat métier vide ;
+         * il correspond à un dysfonctionnement technique
+         * que le service doit refuser explicitement.
+         */
+        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(null);
+
+        /* ACT - ASSERT :
+         * appelle le service avec une requête valide
+         * pour isoler précisément le cas testé :
+         * l'erreur doit provenir du retour DAO null,
+         * et non d'un problème de paramètre d'entrée.
+         *
+         * Le contrat impose alors au service de jeter
+         * une ExceptionTechniqueGateway
+         * avec le message ERREUR_TECHNIQUE_KO_STOCKAGE.
+         */
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* ASSERT :
+         * garantit que le service a bien tenté
+         * d'interroger le DAO objet métier via findAll(...).
+         *
+         * Le but de ce test n'est pas de contrôler le détail du Pageable,
+         * mais de prouver la réaction contractuelle du service
+         * quand le DAO répond null.
+         */
+        verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
+
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
+    
 
     /**
      * <div>
@@ -2008,162 +2111,262 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * </div>
      */
-	@Tag(TAG_PAGINATION)
-	@DisplayName("rechercherTousParPage(retourne contenu null) : garantit ExceptionTechniqueGateway KO_STOCKAGE")
-	@Test
-	public void testRechercherTousParPageContenuNull() {
-	
-	    /* ARRANGE :
-	     * configure le DAO mocké avec Mockito
-	     * pour que la méthode findAll(Pageable)
-	     * retourne une Page dont getContent() retourne null.
-	     */
-	    final Page<SousTypeProduitJPA> pageMock = org.mockito.Mockito.mock(Page.class);
-	    when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(pageMock);
-	    when(pageMock.getContent()).thenReturn(null);
-	
-	    /* ACT - ASSERT :
-	     * vérifie que :
-	     * this.service.rechercherTousParPage(new RequetePage())
-	     * avec page.getContent() retourne null
-	     * jette une ExceptionTechniqueGateway
-	     * avec un message MSG_ERREUR_TECH_KO_STOCKAGE.
-	     */
-	    assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
-	        .isInstanceOf(ExceptionTechniqueGateway.class)
-	        .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-	
-	    /* Vérifie que la méthode findAll(Pageable)
-	     * du DAO sousTypeProduitDaoJPA mocké avec Mockito 
-	     * a bien été appelée une fois.
-	     */
-	    verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
-	
-	} // __________________________________________________________________
-	
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(retourne contenu null) : garantit ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testRechercherTousParPageContenuNull() {
+
+        /* ARRANGE :
+         * Configuration du Mock :
+         * fabrique une fausse Page Spring avec Mockito.
+         *
+         * Le but n'est pas de construire une vraie page valide,
+         * mais de simuler un retour DAO techniquement incohérent :
+         * l'objet Page existe, mais son contenu interne vaut null.
+         *
+         * Cela permet de prouver que le service contrôle aussi
+         * la cohérence interne de la page reçue,
+         * et pas seulement l'existence de l'objet Page lui-même.
+         */
+        final Page<SousTypeProduitJPA> pageMock
+            = org.mockito.Mockito.mock(Page.class);
+        when(pageMock.getContent()).thenReturn(null);
+
+        /* Simule ensuite un DAO qui renvoie cette page incohérente
+         * lorsque le service l'appelle en pagination.
+         *
+         * Le scénario préparé est donc :
+         * DAO.findAll(...) ne renvoie pas null,
+         * mais renvoie une Page inutilisable car son contenu est null.
+         */
+        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(pageMock);
+
+        /* ACT - ASSERT :
+         * appelle le service avec une requête valide
+         * pour isoler précisément l'anomalie testée.
+         *
+         * Le contrat impose alors qu'une page dont le contenu vaut null
+         * ne soit pas acceptée comme une page vide normale,
+         * mais traitée comme un défaut technique de stockage.
+         */
+        assertThatThrownBy(() -> this.service.rechercherTousParPage(new RequetePage()))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* ASSERT :
+         * garantit que le service a bien interrogé
+         * le DAO objet métier.
+         *
+         * Le cœur du test n'est pas ici le détail du Pageable,
+         * mais la réaction contractuelle du service
+         * face à une Page existante mais incohérente.
+         */
+        verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
+
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
 	
 	
     /**
-	 * <div>
-	 * <p>garantit que si une erreur technique survient pendant l'accès au DAO :</p>
-	 * <ul>
-	 * <li>le service ne laisse pas remonter l'Exception brute du stockage ;</li>
-	 * <li>il la transforme en {@link ExceptionTechniqueGateway} ;</li>
-	 * <li>il construit un message technique conforme au contrat ;</li>
-	 * <li>il y ajoute un message sûr dérivé de l'Exception cause ;</li>
-	 * <li>il conserve l'Exception technique initiale comme cause.</li>
-	 * </ul>
-	 * <p>Ce test prouve donc la réaction contractuelle du service
-	 * face à une panne technique du stockage,
-	 * et non un simple échec fonctionnel métier.</p>
-	 * </div>
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName("rechercherTousParPage(KO DAO) : garantit ExceptionTechniqueGateway avec message sûr et cause propagée")
-	@Test
-	public void testRechercherTousParPageDAOExceptionMessageNonNull() {
+     * <div>
+     * <p>garantit que si une erreur technique survient pendant l'accès au DAO :</p>
+     * <ul>
+     * <li>le service ne laisse pas remonter l'Exception brute du stockage ;</li>
+     * <li>il la transforme en {@link ExceptionTechniqueGateway} ;</li>
+     * <li>il construit un message technique conforme au contrat ;</li>
+     * <li>il conserve le message technique d'origine ;</li>
+     * <li>il conserve l'Exception technique initiale comme cause ;</li>
+     * <li>il n'appelle ni le DAO parent, ni l'EntityManager.</li>
+     * </ul>
+     * <p>Ce test prouve donc la réaction contractuelle du service
+     * face à une panne technique du stockage,
+     * et non un simple échec fonctionnel métier.</p>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(KO DAO message non null) : garantit ExceptionTechniqueGateway avec message et cause propagés")
+    @Test
+    public void testRechercherTousParPageDAOExceptionMessageNonNull() {
 
         /* ARRANGE :
-         * configure le DAO mocké avec Mockito
-         * pour que la méthode findAll(Pageable)
-         * jette une RuntimeException avec message non null.
+         * Configuration du Mock :
+         * simule une panne technique côté DAO objet métier.
+         *
+         * Le DAO ne renvoie ni page valide ni valeur null :
+         * il échoue brutalement en lançant une RuntimeException.
+         *
+         * Le message LIBELLE_ENFANT_1 est volontairement non null,
+         * afin de prouver que le service l'intègre bien
+         * dans le message final sécurisé de l'ExceptionTechniqueGateway.
+         *
+         * La cause est stockée dans une variable dédiée
+         * pour pouvoir vérifier ensuite que l'ExceptionTechniqueGateway
+         * propage exactement cette instance,
+         * et pas seulement une RuntimeException quelconque.
          */
-        final RuntimeException ex = new RuntimeException(LIBELLE_ENFANT_1);
-        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenThrow(ex);
+        final RuntimeException causeDao = new RuntimeException(LIBELLE_ENFANT_1);
+
+        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class)))
+            .thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.rechercherTousParPage(RequetePage)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.rechercherTousParPage(RequetePage), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois le service avec une requête valide
+         * afin d'isoler précisément le scénario testé :
+         * l'échec doit venir du stockage,
+         * pas du paramètre d'entrée.
+         *
+         * On capture ensuite l'exception réellement levée
+         * pour contrôler séparément son type, son message
+         * et sa cause technique d'origine.
          */
-        final Throwable throwable =
-                Assertions.catchThrowable(
-                        () -> this.service.rechercherTousParPage(new RequetePage()));
+        final Throwable throwable
+            = Assertions.catchThrowable(
+                    () -> this.service.rechercherTousParPage(new RequetePage()));
 
         /* ASSERT :
-         * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * garantit que le service :
+         * - requalifie l'exception brute en ExceptionTechniqueGateway ;
+         * - conserve le préfixe technique attendu ;
+         * - conserve le message technique d'origine LIBELLE_ENFANT_1.
          */
-        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
-        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(LIBELLE_ENFANT_1);
 
-        /* Vérifie que la méthode findAll(Pageable)
-         * du DAO sousTypeProduitDaoJPA mocké avec Mockito 
-         * a bien été appelée une fois.
+        /* Garantit que la cause technique initiale
+         * reste bien propagée exactement.
+         *
+         * isSameAs(causeDao) est plus fort que
+         * hasCauseInstanceOf(RuntimeException.class) :
+         * on ne prouve pas seulement le type de la cause,
+         * on prouve que la cause est l'instance exacte
+         * jetée par le DAO mocké.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le service a bien tenté
+         * d'accéder au stockage via le DAO objet métier.
          */
         verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
 
-	} // __________________________________________________________________
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
 	
-	
-	
-	/**
-	 * <div>
-	 * <p>garantit que si une erreur technique survient pendant l'accès au DAO
-	 * et que cette erreur ne porte aucun message :</p>
-	 * <ul>
-	 * <li>le service ne laisse pas remonter l'Exception brute du stockage ;</li>
-	 * <li>il la transforme en {@link ExceptionTechniqueGateway} ;</li>
-	 * <li>il construit un message technique conforme au contrat ;</li>
-	 * <li>il y ajoute un message sûr non nul dérivé de l'Exception cause ;</li>
-	 * <li>il conserve l'Exception technique initiale comme cause.</li>
-	 * </ul>
-	 * <p>Ce test complète le cas KO DAO avec message non nul :</p>
-	 * <ul>
-	 * <li>l'autre test prouve la conservation d'un message existant ;</li>
-	 * <li>celui-ci prouve le comportement de sécurisation
-	 * quand le message d'origine vaut {@code null}.</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Tag(TAG_PAGINATION)
-	@DisplayName("rechercherTousParPage(KO DAO message null) : garantit ExceptionTechniqueGateway avec message sûr non nul")
-	@Test
-	public void testRechercherTousParPageDAOExceptionMessageNull() {
+		
+    /**
+     * <div>
+     * <p>garantit que si une erreur technique survient pendant l'accès au DAO
+     * et que cette erreur ne porte aucun message :</p>
+     * <ul>
+     * <li>le service ne laisse pas remonter l'Exception brute du stockage ;</li>
+     * <li>il la transforme en {@link ExceptionTechniqueGateway} ;</li>
+     * <li>il construit un message technique conforme au contrat ;</li>
+     * <li>il fabrique un message sûr non nul dérivé de l'Exception cause ;</li>
+     * <li>il conserve l'Exception technique initiale comme cause ;</li>
+     * <li>il n'appelle ni le DAO parent, ni l'EntityManager.</li>
+     * </ul>
+     * <p>Ce test complète le cas KO DAO avec message non null :</p>
+     * <ul>
+     * <li>l'autre test prouve la conservation d'un message existant ;</li>
+     * <li>celui-ci prouve le comportement de sécurisation
+     * quand le message d'origine vaut {@code null}.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_PAGINATION)
+    @DisplayName("rechercherTousParPage(KO DAO message null) : garantit ExceptionTechniqueGateway avec message sûr non nul")
+    @Test
+    public void testRechercherTousParPageDAOExceptionMessageNull() {
 
         /* ARRANGE :
-         * configure le DAO mocké avec Mockito
-         * pour que la méthode findAll(Pageable)
-         * jette une RuntimeException sans message.
+         * Configuration du Mock :
+         * simule une panne technique côté DAO objet métier
+         * dont le message d'origine vaut null.
+         *
+         * Ce cas est important car le contrat n'autorise jamais
+         * un message final null dans l'ExceptionTechniqueGateway :
+         * le service doit donc construire un message sûr.
+         *
+         * La cause est stockée dans une variable dédiée
+         * pour pouvoir vérifier ensuite que l'ExceptionTechniqueGateway
+         * propage exactement cette instance,
+         * et pas seulement une RuntimeException quelconque.
          */
-        final RuntimeException ex = new RuntimeException((String) null);
-        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenThrow(ex);
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class)))
+            .thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.rechercherTousParPage(RequetePage)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.rechercherTousParPage(RequetePage), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois le service avec une requête valide
+         * afin d'isoler précisément le scénario testé :
+         * l'échec doit venir du stockage,
+         * pas du paramètre d'entrée.
+         *
+         * On capture ensuite l'exception réellement levée
+         * pour contrôler séparément son type, son message
+         * et sa cause technique d'origine.
          */
-        final Throwable throwable =
-                Assertions.catchThrowable(
-                        () -> this.service.rechercherTousParPage(new RequetePage()));
+        final Throwable throwable
+            = Assertions.catchThrowable(
+                    () -> this.service.rechercherTousParPage(new RequetePage()));
 
         /* ASSERT :
-         * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * garantit que le service :
+         * - requalifie l'exception brute en ExceptionTechniqueGateway ;
+         * - conserve le préfixe technique attendu ;
+         * - fabrique malgré tout un message sûr non nul.
+         *
+         * Avec l'implémentation actuelle de safeMessage(e),
+         * ce texte sûr provient au minimum de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela contient au moins le nom de classe.
          */
-        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
-        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
 
-        /* Vérifie que la méthode findAll(Pageable)
-         * du DAO sousTypeProduitDaoJPA mocké avec Mockito 
-         * a bien été appelée une fois.
+        /* Garantit que la cause technique initiale
+         * reste bien propagée exactement.
+         *
+         * isSameAs(causeDao) est plus fort que
+         * hasCauseInstanceOf(RuntimeException.class) :
+         * on ne prouve pas seulement le type de la cause,
+         * on prouve que la cause est l'instance exacte
+         * jetée par le DAO mocké.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le service a bien tenté
+         * d'accéder au stockage via le DAO objet métier.
          */
         verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
 
-	} // __________________________________________________________________
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
 	
 	
-	
-	/**
+    /**
      * <div>
      * <p>garantit que si l'appelant construit une {@link RequetePage}
      * avec {@code pageSize == 0} :</p>
@@ -2188,88 +2391,272 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTousParPage(pageSize == 0) : garantit la normalisation en taille par défaut avant l'appel DAO")
     @Test
     public void testRechercherTousParPagePageSizeZero() throws Exception {
-    	/**/
+
+        /* ARRANGE : 
+         * prépare une requête métier dont l'appelant demande
+         * explicitement une taille zéro.
+         *
+         * Le point important ici est le comportement réel
+         * du Service :
+         * la RequetePage ne conserve pas la taille 0,
+         * le service la remplace par la taille par défaut.
+         */
+        final RequetePage requete
+            = new RequetePage(0, 0, new ArrayList<TriSpec>());
+
+        /* Prépare ensuite une page DAO cohérente avec cette taille par défaut,
+         * ainsi qu'un captor Mockito pour récupérer le Pageable
+         * réellement transmis au DAO.
+         *
+         * Le captor permet de prouver concrètement que le DAO mocké avec Mockito
+         * ne reçoit jamais pageSize == 0,
+         * mais bien la taille normalisée.
+         */
+        final TypeProduitJPA parentJPA
+            = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+
+        final List<SousTypeProduitJPA> contenuJPA
+            = new ArrayList<SousTypeProduitJPA>();
+        contenuJPA.add(fabriquerSousTypeProduitJPA(
+                LIBELLE_ENFANT_1, ID_1, parentJPA));
+        contenuJPA.add(fabriquerSousTypeProduitJPA(
+                LIBELLE_ENFANT_2, ID_2, parentJPA));
+
+        final Page<SousTypeProduitJPA> page
+            = new PageImpl<SousTypeProduitJPA>(
+                    contenuJPA,
+                    PageRequest.of(
+                            RequetePage.PAGE_DEFAUT,
+                            RequetePage.TAILLE_DEFAUT),
+                    2L);
+
+        final ArgumentCaptor<Pageable> captor
+            = ArgumentCaptor.forClass(Pageable.class);
+
+        /* Simule un DAO qui renvoie une page valide
+         * quel que soit le Pageable reçu.
+         *
+         * Le but n'est pas de tester Spring Data,
+         * mais de verrouiller ce que le service envoie réellement
+         * au DAO après normalisation de la requête.
+         */
+        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+
+        /* ACT :
+         * sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock.
+         *
+         * Le scénario prouve ici qu'une demande initiale pageSize == 0
+         * n'entraîne pas d'Exception
+         * et aboutit à une pagination exploitable.
+         */
+        final ResultatPage<SousTypeProduit> resultat
+            = this.service.rechercherTousParPage(requete);
+
+        /* ASSERT :
+         * garantit d'abord que le DAO mocké avec Mockito
+         * a bien été interrogé,
+         * puis permet d'inspecter le Pageable réellement transmis.
+         */
+        verify(this.sousTypeProduitDaoJPA).findAll(captor.capture());
+
+        final Pageable pageable = captor.getValue();
+
+        /* Garantit que le cœur du comportement réel est respecté :
+         * la taille zéro demandée par l'appelant
+         * a déjà été normalisée en taille par défaut
+         * avant l'appel au stockage.
+         */
+        assertThat(pageable).isNotNull();
+        assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(pageable.getSort().isSorted()).isFalse();
+
+        /* Garantit que le service restitue ensuite
+         * un ResultatPage métier cohérent
+         * avec la page DAO renvoyée.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(resultat.getTotalElements()).isEqualTo(2L);
+        assertThat(resultat.getContent())
+            .extracting(SousTypeProduit::getSousTypeProduit)
+            .containsExactly(LIBELLE_ENFANT_1, LIBELLE_ENFANT_2);
+
+        /* Garantit que les objets métier retournés
+         * conservent un parent non null et cohérent.
+         */
+        assertThat(resultat.getContent().get(0).getTypeProduit()).isNotNull();
+        assertThat(resultat.getContent().get(0).getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_1);
+
+        assertThat(resultat.getContent().get(1).getTypeProduit()).isNotNull();
+        assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_1);
+
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
     } // __________________________________________________________________
     
 		
 	
-	/**
+    /**
      * <div>
-     * <p>garantit que rechercherTousParPage(tris invalides) :</p>
+     * <p>garantit que si une {@link RequetePage} contient des consignes de tri :</p>
      * <ul>
-     * <li>retourne un {@link ResultatPage} non null ;</li>
-     * <li>ignore les tris invalides sans échec ;</li>
-     * <li>retourne un contenu cohérent avec la page renvoyée par le DAO ;</li>
-     * <li>appelle une seule fois la méthode findAll(Pageable)
-     * du DAO mocké avec Mockito.</li>
+     * <li>le service convertit les consignes de tri valides en Sort Spring ;</li>
+     * <li>il ignore les consignes de tri inutilisables
+     * (entrée {@code null}, propriété vide) ;</li>
+     * <li>il transmet au DAO un {@link Pageable} cohérent
+     * avec la page, la taille et le tri demandés ;</li>
+     * <li>il retourne enfin un {@link ResultatPage} cohérent
+     * avec la page renvoyée par le DAO.</li>
+     * </ul>
+     * <p>Ce test prouve donc à la fois :</p>
+     * <ul>
+     * <li>la conversion technique de {@link TriSpec} vers Sort Spring ;</li>
+     * <li>le filtrage des tris invalides avant l'appel DAO ;</li>
+     * <li>la cohérence du résultat métier restitué par le service.</li>
      * </ul>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(tris invalides) - ignore les tris invalides et reste nominal")
+    @DisplayName("rechercherTousParPage(avec tri) : garantit la conversion de TriSpec en Sort Spring")
     @Test
     public void testRechercherTousParPageAvecTri() throws Exception {
 
         /* ARRANGE :
-         * prépare une requête paginée avec un TriSpec invalide,
-         * puis configure le DAO mocké avec Mockito
-         * pour retourner une page nominale.
-         * 
-         * Ne pas utiliser requete.getTris().add(...),
-         * car getTris() retourne une copie défensive.
+         * prépare une requête paginée contenant à la fois :
+         * - des tris invalides à ignorer ;
+         * - des tris valides à convertir en Sort Spring.
+         *
+         * Prépare aussi une page DAO cohérente
+         * et un captor Mockito pour récupérer le Pageable
+         * réellement transmis par le service au DAO.
+         *
+         * Le captor est utile ici pour prouver concrètement
+         * la conversion de la RequetePage :
+         * bonne page, bonne taille, bon tri Spring.
          */
-    	final List<TriSpec> tris = new ArrayList<TriSpec>();
-        tris.add(new TriSpec(null, DirectionTri.ASC));
-        
-        final int pageSize = 2;
-        final RequetePage requete = new RequetePage(0, pageSize, tris);
-        
+        final String propSousTypeProduit = "sousTypeProduit";
+        final String propIdSousTypeProduit = "idSousTypeProduit";
 
-        final TypeProduitJPA parentJPA =
-                fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+        final List<TriSpec> tris = new ArrayList<TriSpec>();
+        tris.add(null);
+        tris.add(new TriSpec(BLANK, DirectionTri.ASC));
+        tris.add(new TriSpec(propSousTypeProduit, DirectionTri.ASC));
+        tris.add(new TriSpec(propIdSousTypeProduit, DirectionTri.DESC));
 
-        final List<SousTypeProduitJPA> contenu =
-                new ArrayList<SousTypeProduitJPA>();
-        contenu.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_1, ID_1, parentJPA));
+        final RequetePage requete = new RequetePage(1, 3, tris);
 
-        final Page<SousTypeProduitJPA> page =
-                new PageImpl<SousTypeProduitJPA>(
-                        contenu,
-                        PageRequest.of(PAGE_0, SIZE_5),
-                        TOTAL_10);
+        final TypeProduitJPA parentJPA
+            = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
 
-        /* Condition du Mock typeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findAll(Pageable) sur le DAO mocké 
-         * retourne une Page.
+        final List<SousTypeProduitJPA> contenuJPA
+            = new ArrayList<SousTypeProduitJPA>();
+        contenuJPA.add(fabriquerSousTypeProduitJPA(
+                LIBELLE_ENFANT_1, ID_1, parentJPA));
+
+        final Page<SousTypeProduitJPA> page
+            = new PageImpl<SousTypeProduitJPA>(
+                    contenuJPA,
+                    PageRequest.of(1, 3),
+                    TOTAL_10);
+
+        final ArgumentCaptor<Pageable> captor
+            = ArgumentCaptor.forClass(Pageable.class);
+
+        /*
+         * Configuration du Mock :
+         * Simule un DAO qui renvoie une page techniquement valide
+         * quel que soit le Pageable reçu.
+         *
+         * Le but du test n'est pas d'éprouver le DAO,
+         * mais de vérifier la manière dont le service
+         * construit l'appel DAO puis reconstruit le résultat métier.
          */
         when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
 
         /* ACT :
-         * appelle this.service.rechercherTousParPage(requete)
-         * avec un tri invalide dans la requête.
+         * appelle le service avec une requête paginée
+         * qui contient volontairement des tris invalides et valides.
+         *
+         * Le test prouve ainsi que le service
+         * ne recopie pas aveuglément la liste des tris reçus :
+         * il la nettoie puis construit un Pageable exploitable par Spring Data.
          */
-        final ResultatPage<SousTypeProduit> resultat =
-                this.service.rechercherTousParPage(requete);
+        final ResultatPage<SousTypeProduit> resultat
+            = this.service.rechercherTousParPage(requete);
 
         /* ASSERT :
-         * vérifie que le service ne tombe pas en échec
-         * et retourne bien la page nominale du DAO.
+         * garantit d'abord que le DAO a bien été appelé,
+         * puis permet d'inspecter le Pageable transmis.
+         *
+         * C'est le cœur de la preuve :
+         * on ne vérifie pas seulement que le service fonctionne,
+         * on vérifie précisément ce qu'il envoie au stockage.
+         */
+        verify(this.sousTypeProduitDaoJPA).findAll(captor.capture());
+
+        final Pageable pageable = captor.getValue();
+
+        /* Garantit que la pagination a été correctement transmise :
+         * le service conserve la page et la taille demandées.
+         */
+        assertThat(pageable).isNotNull();
+        assertThat(pageable.getPageNumber()).isEqualTo(1);
+        assertThat(pageable.getPageSize()).isEqualTo(3);
+
+        /* Garantit que les TriSpec valides
+         * ont été convertis en Sort Spring
+         * et que les entrées nulles ou techniquement inutilisables
+         * n'ont pas pollué le tri final.
+         */
+        final org.springframework.data.domain.Sort sort = pageable.getSort();
+
+        assertThat(sort.isSorted()).isTrue();
+
+        assertThat(sort.getOrderFor(propSousTypeProduit)).isNotNull();
+        assertThat(sort.getOrderFor(propSousTypeProduit).getDirection())
+            .isEqualTo(org.springframework.data.domain.Sort.Direction.ASC);
+
+        assertThat(sort.getOrderFor(propIdSousTypeProduit)).isNotNull();
+        assertThat(sort.getOrderFor(propIdSousTypeProduit).getDirection())
+            .isEqualTo(org.springframework.data.domain.Sort.Direction.DESC);
+
+        assertThat(sort.getOrderFor(BLANK)).isNull();
+
+        /* Garantit que le service restitue ensuite
+         * un ResultatPage métier cohérent
+         * avec la page DAO reçue en retour.
          */
         assertThat(resultat).isNotNull();
-        assertThat(resultat.getContent()).isNotNull().hasSize(1);
+        assertThat(resultat.getPageNumber()).isEqualTo(1);
+        assertThat(resultat.getPageSize()).isEqualTo(3);
+        assertThat(resultat.getTotalElements()).isEqualTo(TOTAL_10);
+        assertThat(resultat.getContent()).hasSize(1);
         assertThat(resultat.getContent().get(0).getSousTypeProduit())
             .isEqualTo(LIBELLE_ENFANT_1);
-        assertThat(resultat.getPageNumber()).isEqualTo(PAGE_0);
-        assertThat(resultat.getPageSize()).isEqualTo(SIZE_5);
-        assertThat(resultat.getTotalElements()).isEqualTo(TOTAL_10);
 
-        /* Vérifie que la méthode findAll(Pageable)
-         * du DAO sousTypeProduitDaoJPA mocké avec Mockito 
-         * a bien été appelée une fois.
+        /* Garantit que l'objet métier retourné
+         * conserve un parent non null et cohérent.
          */
-        verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
+        assertThat(resultat.getContent().get(0).getTypeProduit()).isNotNull();
+        assertThat(resultat.getContent().get(0).getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_1);
+
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -2282,10 +2669,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <ul>
      * <li>le service ne propage pas ces {@code null}
      * dans le contenu métier retourné ;</li>
-     * <li>il conserve uniquement les {@link TypeProduitJPA}
+     * <li>il conserve uniquement les {@link SousTypeProduitJPA}
      * effectivement convertissables ;</li>
+     * <li>il conserve les parents {@link TypeProduitJPA}
+     * portés par les Entities valides ;</li>
      * <li>il retourne donc un contenu métier propre,
-     * sans élément {@code null} parasite.</li>
+     * sans élément {@code null} parasite ;</li>
+     * <li>il n'appelle ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
      * <p>Ce test documente ainsi une règle de robustesse
      * pendant la conversion de la page DAO vers la page métier.</p>
@@ -2297,7 +2687,104 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     @DisplayName("rechercherTousParPage(contenu avec nulls) : garantit l'exclusion des nulls lors de la conversion")
     @Test
     public void testRechercherTousParPageContenuAvecNulls() throws Exception {
-    	/**/
+
+        /* ARRANGE :
+         * prépare une page DAO techniquement exploitable,
+         * mais volontairement "sale" :
+         * elle contient deux Entities valides
+         * et un élément null intercalé.
+         *
+         * Le but du test est de prouver que le service
+         * nettoie ce contenu pendant la conversion métier,
+         * au lieu de recopier aveuglément le null.
+         */
+        final TypeProduitJPA parentJPA
+            = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+
+        final List<SousTypeProduitJPA> contenuJPA
+            = new ArrayList<SousTypeProduitJPA>();
+        contenuJPA.add(fabriquerSousTypeProduitJPA(
+                LIBELLE_ENFANT_1, ID_1, parentJPA));
+        contenuJPA.add(null);
+        contenuJPA.add(fabriquerSousTypeProduitJPA(
+                LIBELLE_ENFANT_2, ID_2, parentJPA));
+
+        final Page<SousTypeProduitJPA> page
+            = new PageImpl<SousTypeProduitJPA>(
+                    contenuJPA,
+                    PageRequest.of(
+                            RequetePage.PAGE_DEFAUT,
+                            RequetePage.TAILLE_DEFAUT),
+                    3L);
+
+        /*
+         * Configuration du Mock :
+         * Simule un DAO qui renvoie une page non null,
+         * dont le contenu est lui-même non null,
+         * mais contient un élément null parasite.
+         *
+         * Ce scénario n'est donc pas un KO technique du stockage :
+         * la Page existe, son content existe,
+         * mais le service doit filtrer les éléments non convertissables.
+         */
+        when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+
+        /* ACT :
+         * appelle le service avec une requête neutre.
+         *
+         * Le point observé ici est la conversion métier :
+         * les SousTypeProduitJPA valides doivent être convertis,
+         * tandis que les entrées null doivent être ignorées.
+         */
+        final ResultatPage<SousTypeProduit> resultat
+            = this.service.rechercherTousParPage(new RequetePage());
+
+        /* ASSERT :
+         * garantit d'abord que le service
+         * a bien interrogé le DAO objet métier.
+         */
+        verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
+
+        /* Garantit que le contenu métier final
+         * ne contient plus le null parasite,
+         * mais seulement les objets métier réellement convertis.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getContent()).isNotNull();
+        assertThat(resultat.getContent()).hasSize(2);
+
+        assertThat(resultat.getContent())
+            .extracting(SousTypeProduit::getSousTypeProduit)
+            .containsExactly(LIBELLE_ENFANT_1, LIBELLE_ENFANT_2);
+
+        /* Garantit que les objets métier retournés
+         * conservent un parent non null et cohérent.
+         */
+        assertThat(resultat.getContent().get(0).getTypeProduit()).isNotNull();
+        assertThat(resultat.getContent().get(0).getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_1);
+
+        assertThat(resultat.getContent().get(1).getTypeProduit()).isNotNull();
+        assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_1);
+
+        /* Garantit que les métadonnées de pagination
+         * restent cohérentes avec la Page Spring renvoyée par le DAO.
+         *
+         * Le totalElements reste celui annoncé par la Page DAO :
+         * il représente la métadonnée de pagination du stockage,
+         * pas la taille du contenu métier après filtrage des nulls.
+         */
+        assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+        assertThat(resultat.getTotalElements()).isEqualTo(3L);
+
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
+
     } // __________________________________________________________________
     
     
@@ -2307,10 +2794,21 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que rechercherTousParPage(retourne page vide) :</p>
      * <ul>
      * <li>retourne un {@link ResultatPage} non null ;</li>
+     * <li>retourne un contenu non null ;</li>
      * <li>retourne un contenu vide ;</li>
-     * <li>retourne des métadonnées cohérentes ;</li>
+     * <li>retourne des métadonnées cohérentes avec la page vide
+     * renvoyée par le stockage ;</li>
      * <li>appelle une seule fois la méthode findAll(Pageable)
-     * du DAO mocké avec Mockito.</li>
+     * du DAO mocké avec Mockito ;</li>
+     * <li>n'appelle ni le DAO parent, ni l'EntityManager.</li>
+     * </ul>
+     * <p>Ce test distingue explicitement une page vide valide
+     * d'une anomalie technique de stockage :</p>
+     * <ul>
+     * <li>une Page Spring {@code null} est un KO technique ;</li>
+     * <li>un contenu de Page {@code null} est un KO technique ;</li>
+     * <li>une Page Spring non null contenant une liste vide
+     * est un résultat valide.</li>
      * </ul>
      * </div>
      *
@@ -2322,47 +2820,68 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testRechercherTousParPagePageVide() throws Exception {
 
         /* ARRANGE :
-         * configure le DAO mocké avec Mockito
-         * pour que la méthode findAll(Pageable)
-         * retourne une page vide.
+         * prépare une Page Spring non null,
+         * techniquement exploitable,
+         * mais dont le contenu métier est vide.
+         *
+         * Ce scénario ne représente pas une anomalie du stockage :
+         * le DAO répond correctement avec une page existante,
+         * contenant simplement zéro élément.
          */
-        final List<SousTypeProduitJPA> contenu =
-                new ArrayList<SousTypeProduitJPA>();
+        final List<SousTypeProduitJPA> contenu
+            = new ArrayList<SousTypeProduitJPA>();
 
-        final Page<SousTypeProduitJPA> page =
-                new PageImpl<SousTypeProduitJPA>(
-                        contenu,
-                        PageRequest.of(PAGE_0, SIZE_5),
-                        0L);
+        final Page<SousTypeProduitJPA> page
+            = new PageImpl<SousTypeProduitJPA>(
+                    contenu,
+                    PageRequest.of(
+                            RequetePage.PAGE_DEFAUT,
+                            RequetePage.TAILLE_DEFAUT),
+                    0L);
 
-        /* Condition du Mock typeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findAll(Pageable) sur le DAO mocké 
-         * retourne une Page.
+        /*
+         * Configuration du Mock :
+         * Simule un DAO qui renvoie une page vide valide
+         * lors de l'appel paginé.
          */
         when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
 
         /* ACT :
-         * appelle this.service.rechercherTousParPage(new RequetePage())
-         * dans le scénario où la page DAO est vide.
+         * appelle le service avec une requête neutre.
+         *
+         * Le service doit accepter ce retour du stockage
+         * et le convertir en ResultatPage métier vide,
+         * sans jeter d'ExceptionTechniqueGateway.
          */
-        final ResultatPage<SousTypeProduit> resultat =
-                this.service.rechercherTousParPage(new RequetePage());
+        final ResultatPage<SousTypeProduit> resultat
+            = this.service.rechercherTousParPage(new RequetePage());
 
         /* ASSERT :
-         * vérifie que la méthode retourne
-         * une page vide, mais exploitable.
+         * garantit que le DAO mocké avec Mockito
+         * a bien été interrogé une fois via findAll(Pageable).
+         */
+        verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
+
+        /* Garantit que la page métier retournée est exploitable :
+         * elle existe, son contenu existe,
+         * mais ce contenu est vide.
          */
         assertThat(resultat).isNotNull();
         assertThat(resultat.getContent()).isNotNull().isEmpty();
-        assertThat(resultat.getPageNumber()).isEqualTo(PAGE_0);
-        assertThat(resultat.getPageSize()).isEqualTo(SIZE_5);
+
+        /* Garantit que les métadonnées de pagination
+         * restent cohérentes avec la page vide renvoyée
+         * par le stockage.
+         */
+        assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+        assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
         assertThat(resultat.getTotalElements()).isZero();
 
-        /* Vérifie que la méthode findAll(Pageable)
-         * du DAO sousTypeProduitDaoJPA mocké avec Mockito 
-         * a bien été appelée une fois.
+        /* Garantit que ce scénario paginé ne sollicite
+         * ni le DAO parent ni l'EntityManager.
          */
-        verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -2371,12 +2890,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     /**
 	 * <div>
 	 * <p>garantit que si {@code rechercherTousParPage(new RequetePage())}
-	 * est appelé avec une requête non nulle mais neutre :</p>
+	 * est appelé avec une requête non nulle mais neutre 
+	 * (new RequetePage()) :</p>
 	 * <ul>
-	 * <li>le service convertit cette requête métier neutre
-	 * en un {@link Pageable} Spring cohérent ;</li>
+	 * <li>le service convertit cette requête métier neutre 
+	 * (new RequetePage()) en un {@link Pageable} Spring cohérent ;</li>
 	 * <li>il transmet au DAO la pagination par défaut
-	 * portée par cette requête neutre ;</li>
+	 * portée par cette requête neutre (new RequetePage()) ;</li>
 	 * <li>il ne force aucun tri lorsqu'aucune consigne de tri
 	 * n'est demandée ;</li>
 	 * <li>il retourne un {@link ResultatPage} cohérent
@@ -2471,7 +2991,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
+    @DisplayName("findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
     public void testFindByObjetMetierLibelleBlank() {
 
