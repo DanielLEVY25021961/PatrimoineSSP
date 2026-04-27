@@ -149,24 +149,100 @@ Priorité des demandes :
 
 ### 6.1 Lecture d’un fichier transmis via le chat (fallback contrôlé)
 
-Objectif : permettre la continuité de travail lorsque GitHub est indisponible et/ou pour valider l’intégrité d’un fichier transmis par l’Utilisateur.
+Objectif : permettre la continuité de travail lorsque GitHub est indisponible, lorsqu’un fichier est transmis directement par l’Utilisateur dans le chat, ou lorsqu’une correction utilisateur doit être contrôlée dans une fenêtre de travail active.
 
 Règles :
 - Le fichier transmis via le chat est traité comme une **source `CHAT`**.
-- L’IA doit :
-  1. lire le contenu **tel quel**,
-  2. calculer **taille**, **nombre de lignes** et **SHA-256**,
-  3. comparer avec la version correspondante disponible (baseline et/ou bundle OFFLINE et/ou GitHub si lisible) :
-     - **texte** : comparaison **ligne à ligne** (CRLF/LF normalisés),
-     - **binaire** : comparaison **octet à octet** (rare en chat).
+- La lecture de référence d’un fichier transmis via le chat est la lecture directe locale du dernier fichier disponible sous :
 
-- Si le contenu `CHAT` est **strictement identique** à une source considérée saine (baseline consolidée à jour, ou bundle OFFLINE validé, ou GitHub@SHA lu parfaitement) :
-  - le fichier `CHAT` est considéré **intègre**,
-  - il peut être **mémorisé** et **écrasé** en baseline,
+```text
+/mnt/data/<fichierPasseDansLeChat>
+```
+
+- L’IA doit :
+  1. lire directement le fichier local courant ;
+  2. calculer **taille**, **nombre de lignes** et **SHA-256** ;
+  3. comparer avec la version correspondante disponible lorsque cette comparaison est possible :
+     - **baseline consolidée active** ;
+     - et/ou **bundle OFFLINE validé** ;
+     - et/ou **GitHub@SHA** si lisible ;
+  4. contrôler les méthodes ou zones réellement concernées ;
+  5. décider explicitement si le fichier `CHAT` est :
+     - identique à une source saine ;
+     - une correction utilisateur cohérente ;
+     - une régression ;
+     - ou un fichier non contrôlable.
+
+- Si le contenu `CHAT` est **strictement identique** à une source considérée saine :
+  - le fichier `CHAT` est considéré **intègre** ;
+  - il peut être **mémorisé** et **écrasé** en baseline ;
   - puis la baseline est **consolidée**.
 
-- Si une différence est constatée, ou si l’IA ne peut pas comparer :
+- Si le contenu `CHAT` diffère de la baseline active mais correspond à une correction utilisateur transmise dans une fenêtre de travail active :
+  - l’IA doit appliquer `RT-LECTURE-CHAT_02` ;
+  - la différence ne constitue pas en elle-même un incident ;
+  - si la correction est cohérente, la baseline et la fenêtre active doivent être consolidées avec le fichier corrigé ;
+  - si la correction régresse une règle ou une correction déjà consolidée, l’IA doit refuser la consolidation et conserver la baseline active précédente.
+
+- Si la différence est inexpliquée, non contrôlable, incohérente, ou si l’IA ne peut pas comparer suffisamment le fichier :
   ➜ signaler explicitement **"incident de lecture via le chat"** et **suspendre** analyse/génération.
+
+
+### 6.1.1 RT-LECTURE-CHAT_01 — Lecture des fichiers transmis par le chat
+
+Lorsqu’un fichier est transmis en pièce jointe dans le chat, la lecture de référence est la lecture directe locale du dernier fichier disponible sous :
+
+```text
+/mnt/data/<fichierPasseDansLeChat>
+```
+
+Cette lecture directe locale est obligatoire avant toute analyse, validation, correction, génération de code ou consolidation portant sur ce fichier.
+
+L’IA ne doit jamais conclure à partir :
+
+- d’un extrait tronqué ;
+- d’un ancien `file_id` ;
+- d’un résultat `file_search` partiel ;
+- d’une version antérieure du fichier ;
+- d’une mémoire conversationnelle ;
+- d’une supposition.
+
+Avant toute conclusion, l’IA doit rapporter au minimum :
+
+- le chemin local lu ;
+- le SHA-256 du fichier local ;
+- la taille du fichier en octets ;
+- le nombre de lignes ;
+- les lignes exactes de la méthode ou de la zone cible contrôlée.
+
+En cas de contradiction entre `file_search`, une capture écran, une mémoire conversationnelle, une ancienne pièce jointe et la lecture directe locale, la lecture directe locale du dernier fichier joint sous `/mnt/data/<fichierPasseDansLeChat>` fait foi.
+
+
+### 6.1.2 RT-LECTURE-CHAT_02 — Détection et consolidation automatique des fichiers joints
+
+Lorsqu’une fenêtre de travail est active et que l’utilisateur transmet un fichier en pièce jointe dans le chat, l’IA doit automatiquement lire le dernier fichier joint par lecture directe locale sous :
+
+```text
+/mnt/data/<fichierPasseDansLeChat>
+```
+
+Après cette lecture, l’IA doit automatiquement :
+
+1. identifier le fichier joint comme nouvelle version candidate ;
+2. calculer son SHA-256, sa taille en octets et son nombre de lignes ;
+3. détecter les modifications apportées par l’utilisateur par rapport à la baseline active ;
+4. contrôler les méthodes ou zones modifiées ;
+5. vérifier que les corrections sont cohérentes avec le contrat, la fenêtre active et le formalisme consolidé ;
+6. si les corrections sont OK, consolider automatiquement la baseline et la fenêtre de travail active avec ce fichier corrigé.
+
+L’IA ne doit pas attendre une demande supplémentaire de consolidation lorsque l’utilisateur transmet un fichier corrigé dans une fenêtre de travail active.
+
+Si le fichier joint régresse une correction déjà consolidée, l’IA doit refuser la consolidation, signaler explicitement la régression et conserver la baseline active précédente.
+
+Cette règle complète `RT-LECTURE-CHAT_01` :
+
+- `RT-LECTURE-CHAT_01` définit le mode de lecture obligatoire ;
+- `RT-LECTURE-CHAT_02` définit le comportement automatique après lecture du fichier joint.
 
 ---
 
