@@ -2890,39 +2890,184 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     /**
 	 * <div>
 	 * <p>garantit que si {@code rechercherTousParPage(new RequetePage())}
-	 * est appelé avec une requête non nulle mais neutre 
-	 * (new RequetePage()) :</p>
+	 * est appelé avec une requête non nulle mais 
+	 * neutre (sans aucun paramètre : new RequetePage()) :</p>
 	 * <ul>
-	 * <li>le service convertit cette requête métier neutre 
-	 * (new RequetePage()) en un {@link Pageable} Spring cohérent ;</li>
+	 * <li>le service convertit cette RequetePage présente mais neutre
+	 * (sans aucun paramètre : new RequetePage()) 
+	 * en un {@link Pageable} Spring cohérent ;</li>
 	 * <li>il transmet au DAO la pagination par défaut
-	 * portée par cette requête neutre (new RequetePage()) ;</li>
+	 * portée par cette RequetePage présente mais neutre
+	 * (sans aucun paramètre : new RequetePage()) ;</li>
 	 * <li>il ne force aucun tri lorsqu'aucune consigne de tri
 	 * n'est demandée ;</li>
 	 * <li>il retourne un {@link ResultatPage} cohérent
-	 * avec la page renvoyée par le DAO.</li>
+	 * avec la page renvoyée par le DAO ;</li>
+	 * <li>il conserve le parent des objets métier retournés.</li>
 	 * </ul>
 	 * <p>Ce test complète le cas {@code rechercherTousParPage(null)} :</p>
 	 * <ul>
 	 * <li>le test {@code null} prouve le remplacement d'une requête absente ;</li>
 	 * <li>celui-ci prouve la conversion correcte
-	 * d'une requête présente mais neutre.</li>
+	 * d'une RequetePage présente mais neutre
+	 * (sans aucun paramètre : new RequetePage()).</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_PAGINATION)
-	@DisplayName("rechercherTousParPage(requête neutre) : garantit la conversion nominale en Pageable Spring")
+	@DisplayName("rechercherTousParPage(new RequetePage()) : garantit la conversion en Pageable Spring par défaut sans tri")
 	@Test
 	public void testRechercherTousParPageNominalRequeteNeutre() throws Exception {
-		/**/
-	} // __________________________________________________________________
+	
+	    /* ARRANGE :
+	     * prépare un contenu JPA simple,
+	     * une Page Spring cohérente avec la pagination par défaut,
+	     * et un captor Mockito pour récupérer le Pageable
+	     * réellement transmis par le service au DAO.
+	     *
+	     * Le captor est utile ici pour prouver qu'une RequetePage
+	     * présente mais neutre (sans aucun paramètre : new RequetePage()) 
+	     * est correctement convertie
+	     * en pagination Spring exploitable par le stockage.
+	     */
+	    final TypeProduitJPA parentJPA
+	        = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
 
+	    final List<SousTypeProduitJPA> contenuJPA
+	        = new ArrayList<SousTypeProduitJPA>();
+	    contenuJPA.add(fabriquerSousTypeProduitJPA(
+	            LIBELLE_ENFANT_1, ID_1, parentJPA));
+	    contenuJPA.add(fabriquerSousTypeProduitJPA(
+	            LIBELLE_ENFANT_2, ID_2, parentJPA));
+	
+	    final Page<SousTypeProduitJPA> page
+	        = new PageImpl<SousTypeProduitJPA>(
+	                contenuJPA,
+	                PageRequest.of(
+	                        RequetePage.PAGE_DEFAUT,
+	                        RequetePage.TAILLE_DEFAUT),
+	                2L);
+
+	    /*
+         * Crée un ArgumentCaptor Mockito capable de capturer
+         * l'argument de type Pageable réellement transmis au DAO.
+         *
+         * Ici, le test ne veut pas seulement vérifier que
+         * sousTypeProduitDaoJPA.findAll(...) a été appelé.
+         * Il veut aussi inspecter le Pageable construit par le service :
+         * - numéro de page ;
+         * - taille de page ;
+         * - tri réellement transmis au stockage.
+         */
+	    final ArgumentCaptor<Pageable> captor
+	        = ArgumentCaptor.forClass(Pageable.class);
+	
+	    /* 
+	     * Configuration du Mock : 
+	     * Simule un DAO qui renvoie une page techniquement valide.
+	     *
+	     * Le but du test n'est pas d'éprouver le DAO,
+	     * mais de vérifier la conversion :
+	     * RequetePage présente mais neutre
+	     * (sans aucun paramètre : new RequetePage())
+	     * -> Pageable Spring -> ResultatPage métier.
+	     */
+	    when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+	
+	    /* ACT :
+	     * appelle le service avec une RequetePage présente,
+	     * mais laissée dans son état neutre
+	     * (sans aucun paramètre : new RequetePage()) par défaut.
+	     *
+	     * Le contrat impose alors au service de la convertir
+	     * en Pageable cohérent, sans Exception.
+	     */
+	    final ResultatPage<SousTypeProduit> resultat
+	        = this.service.rechercherTousParPage(new RequetePage());
+	
+	    /* ASSERT :
+	     * garantit d'abord que le service a bien interrogé le DAO,
+	     * puis permet d'inspecter concrètement le Pageable transmis.
+	     */
+	    verify(this.sousTypeProduitDaoJPA).findAll(captor.capture());
+	
+	    final Pageable pageable = captor.getValue();
+	
+	    /* Garantit que le cœur du scénario nominal est respecté :
+	     * une RequetePage présente mais neutre
+	     * (sans aucun paramètre : new RequetePage())
+	     * est bien convertie
+	     * en pagination Spring par défaut, sans tri imposé.
+	     */
+	    assertThat(pageable).isNotNull();
+	    assertThat(pageable.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+	    assertThat(pageable.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+	    assertThat(pageable.getSort().isSorted()).isFalse();
+	
+	    /* Garantit que le service reconstruit ensuite
+	     * un ResultatPage métier cohérent
+	     * avec les informations de pagination et le contenu DAO.
+	     */
+	    assertThat(resultat).isNotNull();
+	    assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
+	    assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
+	    assertThat(resultat.getTotalElements()).isEqualTo(2L);
+	    assertThat(resultat.getContent())
+	        .extracting(SousTypeProduit::getSousTypeProduit)
+	        .containsExactly(LIBELLE_ENFANT_1, LIBELLE_ENFANT_2);
+
+	    /* Garantit que les objets métier retournés
+	     * conservent un parent non null et cohérent.
+	     */
+	    assertThat(resultat.getContent().get(0).getTypeProduit()).isNotNull();
+	    assertThat(resultat.getContent().get(0).getTypeProduit().getTypeProduit())
+	        .isEqualTo(LIBELLE_PARENT_1);
+
+	    assertThat(resultat.getContent().get(1).getTypeProduit()).isNotNull();
+	    assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
+	        .isEqualTo(LIBELLE_PARENT_1);
+
+	    /* Garantit que ce scénario paginé ne sollicite
+	     * ni le DAO parent ni l'EntityManager.
+	     */
+	    verifyNoInteractions(this.typeProduitDaoJPA);
+	    verifyNoInteractions(this.entityManager);
+	
+	} // __________________________________________________________________
+	
 	
 	
 	/**
-	 *  .
+	 * <div>
+	 * <p>garantit que rechercherTousParPage(OK) avec une requête explicite :</p>
+	 * <ul>
+	 * <li>convertit une {@link RequetePage} non nulle,
+	 * non neutre, en {@link Pageable} Spring ;</li>
+	 * <li>transmet au DAO la page et la taille explicitement demandées ;</li>
+	 * <li>ne force aucun tri lorsqu'aucune consigne de tri
+	 * n'est demandée ;</li>
+	 * <li>retourne un {@link ResultatPage} non null ;</li>
+	 * <li>retourne des métadonnées cohérentes avec la page
+	 * renvoyée par le stockage ;</li>
+	 * <li>retourne le contenu métier converti attendu ;</li>
+	 * <li>conserve le parent métier des sous-types retournés ;</li>
+	 * <li>appelle une seule fois la méthode findAll(Pageable)
+	 * du DAO mocké avec Mockito ;</li>
+	 * <li>n'appelle ni le DAO parent, ni l'EntityManager.</li>
+	 * </ul>
+	 * <p>Ce test complète les scénarios précédents :</p>
+	 * <ul>
+	 * <li>{@code rechercherTousParPage(null)} prouve le remplacement
+	 * d'une requête absente ;</li>
+	 * <li>{@code rechercherTousParPage(new RequetePage())} prouve
+	 * la conversion d'une RequetePage présente mais neutre
+	 * (sans aucun paramètre : new RequetePage()) ;</li>
+	 * <li>ce test prouve le cas nominal avec une pagination
+	 * explicitement demandée par l'appelant.</li>
+	 * </ul>
+	 * </div>
 	 *
 	 * @throws Exception
 	 */
@@ -2930,7 +3075,131 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	@DisplayName("rechercherTousParPage(OK) : garantit le bon fonctionnement de la pagination")
 	@Test
 	public void testRechercherTousParPageNominal() throws Exception {
-		/**/
+		
+	    /* ARRANGE :
+	     * prépare une requête paginée explicite.
+	     *
+	     * Contrairement au test rechercherTousParPage(new RequetePage()),
+	     * qui utilise une RequetePage présente mais neutre
+	     * (sans aucun paramètre : new RequetePage()),
+	     * l'appelant demande ici volontairement :
+	     * - la page 1 ;
+	     * - une taille de page de 2 ;
+	     * - aucun tri.
+	     *
+	     * Ce scénario prouve donc la conversion nominale
+	     * d'une RequetePage réellement renseignée,
+	     * sans anomalie de stockage et sans tri à convertir.
+	     */
+	    final RequetePage requete
+	        = new RequetePage(1, 2, new ArrayList<TriSpec>());
+	    
+	    /* Prépare une page DAO techniquement valide
+	     * correspondant à la pagination explicitement demandée.
+	     *
+	     * Le contenu est volontairement simple et propre :
+	     * ce test ne porte ni sur le filtrage des nulls,
+	     * ni sur le tri,
+	     * ni sur le dédoublonnage.
+	     * Ces comportements sont déjà prouvés par d'autres tests.
+	     */
+	    final TypeProduitJPA parentJPA
+	        = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+
+	    final List<SousTypeProduitJPA> contenuJPA
+	        = new ArrayList<SousTypeProduitJPA>();
+	    contenuJPA.add(fabriquerSousTypeProduitJPA(
+	            LIBELLE_ENFANT_1, ID_1, parentJPA));
+	    contenuJPA.add(fabriquerSousTypeProduitJPA(
+	            LIBELLE_ENFANT_2, ID_2, parentJPA));
+	    
+	    final Page<SousTypeProduitJPA> page
+	        = new PageImpl<SousTypeProduitJPA>(
+	                contenuJPA,
+	                PageRequest.of(1, 2),
+	                TOTAL_10);
+	    
+	    /*
+	     * Crée un ArgumentCaptor Mockito capable de capturer
+	     * l'argument de type Pageable réellement transmis au DAO.
+	     *
+	     * Ici, le captor permet de prouver concrètement
+	     * que la RequetePage explicite a bien été convertie
+	     * en Pageable Spring avec :
+	     * - le bon numéro de page ;
+	     * - la bonne taille de page ;
+	     * - aucun tri parasite.
+	     */
+	    final ArgumentCaptor<Pageable> captor
+	        = ArgumentCaptor.forClass(Pageable.class);
+	    
+	    /*
+	     * Configuration du Mock :
+	     * Simule un DAO qui renvoie une page valide
+	     * lorsque le service interroge le stockage en pagination.
+	     */
+	    when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
+	    
+	    /* ACT :
+	     * appelle le service avec une requête paginée explicite.
+	     *
+	     * Le service doit convertir cette requête en Pageable,
+	     * interroger le DAO,
+	     * puis reconstruire un ResultatPage métier cohérent.
+	     */
+	    final ResultatPage<SousTypeProduit> resultat
+	        = this.service.rechercherTousParPage(requete);
+	    
+	    /* ASSERT :
+	     * garantit d'abord que le DAO mocké avec Mockito
+	     * a bien été interrogé une fois,
+	     * puis récupère le Pageable réellement transmis.
+	     */
+	    verify(this.sousTypeProduitDaoJPA).findAll(captor.capture());
+	    
+	    final Pageable pageable = captor.getValue();
+	    
+	    /* Garantit que la pagination explicite demandée
+	     * par l'appelant est bien celle transmise au stockage.
+	     */
+	    assertThat(pageable).isNotNull();
+	    assertThat(pageable.getPageNumber()).isEqualTo(1);
+	    assertThat(pageable.getPageSize()).isEqualTo(2);
+	    assertThat(pageable.getSort().isSorted()).isFalse();
+	    
+	    /* Garantit que le service retourne une page métier exploitable
+	     * et cohérente avec la page renvoyée par le stockage.
+	     */
+	    assertThat(resultat).isNotNull();
+	    assertThat(resultat.getPageNumber()).isEqualTo(1);
+	    assertThat(resultat.getPageSize()).isEqualTo(2);
+	    assertThat(resultat.getTotalElements()).isEqualTo(TOTAL_10);
+	    
+	    /* Garantit que le contenu JPA retourné par le DAO
+	     * est correctement converti en contenu métier,
+	     * sans modifier l'ordre fourni par la page du stockage.
+	     */
+	    assertThat(resultat.getContent())
+	        .extracting(SousTypeProduit::getSousTypeProduit)
+	        .containsExactly(LIBELLE_ENFANT_1, LIBELLE_ENFANT_2);
+
+	    /* Garantit que les objets métier retournés
+	     * conservent un parent non null et cohérent.
+	     */
+	    assertThat(resultat.getContent().get(0).getTypeProduit()).isNotNull();
+	    assertThat(resultat.getContent().get(0).getTypeProduit().getTypeProduit())
+	        .isEqualTo(LIBELLE_PARENT_1);
+
+	    assertThat(resultat.getContent().get(1).getTypeProduit()).isNotNull();
+	    assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
+	        .isEqualTo(LIBELLE_PARENT_1);
+
+	    /* Garantit que ce scénario paginé ne sollicite
+	     * ni le DAO parent ni l'EntityManager.
+	     */
+	    verifyNoInteractions(this.typeProduitDaoJPA);
+	    verifyNoInteractions(this.entityManager);
+	    
 	} // __________________________________________________________________
     
     
