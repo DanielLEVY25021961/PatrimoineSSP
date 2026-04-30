@@ -2351,68 +2351,6 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(non trouvé) :</p>
-     * <ul>
-     * <li>délègue la recherche au DAO avec le bon libellé métier ;</li>
-     * <li>retourne {@code null} si le stockage ne trouve aucun
-     * objet persistant correspondant ;</li>
-     * <li>ne jette aucune exception ;</li>
-     * <li>appelle le DAO une fois.</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(non trouvé) - retourne null")
-    @Test
-    public void testFindByObjetMetierNonTrouve() throws Exception {
-
-        /* ARRANGE :
-         * prépare un objet métier valide
-         * dont le libellé doit être recherché dans le stockage.
-         */
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
-
-        /*
-         * Configuration du Mock :
-         * L'appel typeProduitDaoJPA.findByTypeProduitIgnoreCase(...)
-         * sur le DAO objet métier mocké retourne null.
-         *
-         * Ce scénario simule un stockage qui ne trouve
-         * aucun TypeProduit persistant correspondant
-         * au libellé métier recherché.
-         */
-        when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
-            .thenReturn(null);
-
-        /* ACT :
-         * appelle service.findByObjetMetier(metier)
-         * dans le scénario où aucun objet persistant ne correspond.
-         */
-        final TypeProduit resultat = this.service.findByObjetMetier(metier);
-
-        /* ASSERT :
-         * vérifie que la méthode retourne null
-         * lorsque le libellé métier recherché
-         * n'est pas trouvé dans le stockage.
-         */
-        assertThat(resultat).isNull();
-
-        /* Garantit que le DAO mocké n'a pas été appelé. */
-        /* - verify(..., never()).méthode(...) = preuve ciblée 
-         * sur une méthode critique précise.
-         * - verifyNoInteractions(mock) = preuve globale 
-         * que le mock entier n'a pas été touché. */
-        verify(this.typeProduitDaoJPA, times(1))
-            .findByTypeProduitIgnoreCase(VETEMENT);
-
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
      * <p>garantit que findByObjetMetier(KO DAO message non null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
@@ -2550,6 +2488,68 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	
 
     /**
+	 * <div>
+	 * <p>garantit que findByObjetMetier(non trouvé) :</p>
+	 * <ul>
+	 * <li>délègue la recherche au DAO avec le bon libellé métier ;</li>
+	 * <li>retourne {@code null} si le stockage ne trouve aucun
+	 * objet persistant correspondant ;</li>
+	 * <li>ne jette aucune exception ;</li>
+	 * <li>appelle le DAO une fois.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FINDBYOBJETMETIER)
+	@DisplayName("findByObjetMetier(non trouvé) - retourne null")
+	@Test
+	public void testFindByObjetMetierNonTrouve() throws Exception {
+	
+	    /* ARRANGE :
+	     * prépare un objet métier valide
+	     * dont le libellé doit être recherché dans le stockage.
+	     */
+	    final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+	
+	    /*
+	     * Configuration du Mock :
+	     * L'appel typeProduitDaoJPA.findByTypeProduitIgnoreCase(...)
+	     * sur le DAO objet métier mocké retourne null.
+	     *
+	     * Ce scénario simule un stockage qui ne trouve
+	     * aucun TypeProduit persistant correspondant
+	     * au libellé métier recherché.
+	     */
+	    when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
+	        .thenReturn(null);
+	
+	    /* ACT :
+	     * appelle service.findByObjetMetier(metier)
+	     * dans le scénario où aucun objet persistant ne correspond.
+	     */
+	    final TypeProduit resultat = this.service.findByObjetMetier(metier);
+	
+	    /* ASSERT :
+	     * vérifie que la méthode retourne null
+	     * lorsque le libellé métier recherché
+	     * n'est pas trouvé dans le stockage.
+	     */
+	    assertThat(resultat).isNull();
+	
+	    /* Garantit que le DAO mocké n'a pas été appelé. */
+	    /* - verify(..., never()).méthode(...) = preuve ciblée 
+	     * sur une méthode critique précise.
+	     * - verifyNoInteractions(mock) = preuve globale 
+	     * que le mock entier n'a pas été touché. */
+	    verify(this.typeProduitDaoJPA, times(1))
+	        .findByTypeProduitIgnoreCase(VETEMENT);
+	
+	} // __________________________________________________________________
+
+
+
+	/**
      * <div>
      * <p>garantit que findByObjetMetier(OK) :</p>
      * <ul>

@@ -3270,7 +3270,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByObjetMetierLibelleBlank() {
 
         /* ARRANGE :
-         * prépare un sous-type dont le libellé est blank,
+         * prépare un objet métier dont le libellé est blank,
          * afin de vérifier le contrôle applicatif
          * effectué avant toute recherche réelle.
          */
@@ -3531,9 +3531,10 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>n'appelle pas la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>conserve le message technique d'origine du DAO parent ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>n'appelle ni le DAO objet métier, ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -3543,44 +3544,55 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByObjetMetierParentDaoExceptionMessageNonNull() {
 
         /* ARRANGE :
-         * configure le DAO parent mocké avec Mockito
-         * pour que la méthode findById(ID_1)
-         * jette une RuntimeException avec message non null.
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la vérification du parent
+         * dans le stockage.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
-        final RuntimeException ex = new RuntimeException(LIBELLE_PARENT_1);
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenThrow(ex);
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * jette une RuntimeException avec message non null.
+         */
+        final RuntimeException causeDao = new RuntimeException(LIBELLE_PARENT_1);
+
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.findByObjetMetier(...)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.findByObjetMetier(...), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois service.findByObjetMetier(stp)
+         * et capture l'exception réellement levée.
          */
-        final Throwable throwable =
-                Assertions.catchThrowable(() -> this.service.findByObjetMetier(stp));
+        final Throwable throwable
+            = Assertions.catchThrowable(
+                    () -> this.service.findByObjetMetier(stp));
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son message contractuel sécurisé
+         * et le message technique d'origine du DAO parent.
          */
-        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
-        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(LIBELLE_PARENT_1);
 
-        /* 
+        /* Vérifie que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier n'a jamais été appelé ;
+         * - l'EntityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3593,56 +3605,68 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>n'appelle pas la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>n'appelle ni le DAO objet métier, ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO parent message null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByObjetMetier(KO DAO parent message null) - jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
     public void testFindByObjetMetierParentDaoExceptionMessageNull() {
 
         /* ARRANGE :
-         * configure le DAO parent mocké avec Mockito
-         * pour que la méthode findById(ID_1)
-         * jette une RuntimeException sans message.
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la vérification du parent
+         * dans le stockage.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
-        final RuntimeException ex = new RuntimeException((String) null);
-        when(this.typeProduitDaoJPA.findById(ID_1)).thenThrow(ex);
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * jette une RuntimeException sans message.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.findByObjetMetier(...)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.findByObjetMetier(...), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois service.findByObjetMetier(stp)
+         * et capture l'exception réellement levée.
          */
-        final Throwable throwable =
-                Assertions.catchThrowable(() -> this.service.findByObjetMetier(stp));
+        final Throwable throwable
+            = Assertions.catchThrowable(
+                    () -> this.service.findByObjetMetier(stp));
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son message contractuel sécurisé
+         * et le message sûr dérivé de l'exception sans message.
          */
-        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
-        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
 
-        /* 
+        /* Vérifie que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier n'a jamais été appelé ;
+         * - l'EntityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3655,63 +3679,62 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE} ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>appelle le DAO objet métier une fois avec le parent JPA trouvé ;</li>
+     * <li>n'appelle pas l'EntityManager.</li>
      * </ul>
+     * <p>Ce test distingue un retour {@code null} du DAO objet métier
+     * d'une liste vide valide : ici, le retour {@code null}
+     * est traité comme une anomalie technique de stockage.</p>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(findAllByTypeProduit retourne null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByObjetMetier(findAllByTypeProduit retourne null) - jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByObjetMetierDaoRetourneNull() {
 
         /* ARRANGE :
-         * configure le DAO parent mocké avec Mockito
-         * pour que findById(ID_1) retourne le parent,
-         * puis configure le DAO enfant mocké avec Mockito
-         * pour que findAllByTypeProduit(parentJPA) retourne null.
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche
+         * de l'objet métier dans le stockage.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
-        
-        /* 
-         * Condition du Mock typeProduitDaoJPA :
-         * L'appel typeProduitDaoJPA.findById(...) 
-         * sur le DAO mocké 
-         * retourne Optional.of(parentJPA).
+
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * retourne le parent JPA attendu.
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
-        
-        /* 
-         * Condition du Mock sousTypeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findAllByTypeProduit(...) 
-         * sur le DAO mocké 
+
+        /* Configure le DAO objet métier mocké avec Mockito
+         * pour que findAllByTypeProduit(parentJPA)
          * retourne null.
          */
         when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenReturn(null);
 
         /* ACT - ASSERT :
-         * vérifie que :
-         * this.service.findByObjetMetier(stp)
-         * avec DAO.findAllByTypeProduit(parentJPA) retourne null
-         * jette une ExceptionTechniqueGateway
-         * avec un message MSG_ERREUR_TECH_KO_STOCKAGE.
+         * vérifie que le retour null du DAO objet métier
+         * n'est pas interprété comme une absence de résultat,
+         * mais comme une anomalie technique de stockage.
          */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
 
-        /* 
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) a été appelé.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier a été appelé une fois avec parentJPA ;
+         * - l'EntityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA).findAllByTypeProduit(parentJPA);
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verify(this.sousTypeProduitDaoJPA, times(1)).findAllByTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3719,80 +3742,82 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(KO DAO enfant message non null) :</p>
+     * <p>garantit que findByObjetMetier(KO DAO objet métier message non null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>conserve le message technique d'origine du DAO objet métier ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>appelle le DAO objet métier une fois avec le parent JPA trouvé ;</li>
+     * <li>n'appelle pas l'EntityManager.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO enfant message non null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByObjetMetier(KO DAO objet métier message non null) - jette ExceptionTechniqueGateway")
     @Test
     public void testFindByObjetMetierDaoExceptionMessageNonNull() {
 
         /* ARRANGE :
-         * configure le DAO parent mocké avec Mockito
-         * pour que findById(ID_1) retourne le parent,
-         * puis configure le DAO enfant mocké avec Mockito
-         * pour que la méthode findAllByTypeProduit(parentJPA)
-         * jette une RuntimeException avec message non null.
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche
+         * de l'objet métier dans le stockage.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
-        
-        /* 
-         * Condition du Mock typeProduitDaoJPA :
-         * L'appel typeProduitDaoJPA.findById(...) 
-         * sur le DAO mocké 
-         * retourne Optional.of(parentJPA).
+
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * retourne le parent JPA attendu.
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
 
-        final RuntimeException ex = new RuntimeException(LIBELLE_ENFANT_1);
-        
-        /* 
-         * Condition du Mock sousTypeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findAllByTypeProduit(...) 
-         * sur le DAO mocké 
-         * jette une Exception ex.
+        /* Configure le DAO objet métier mocké avec Mockito
+         * pour que findAllByTypeProduit(parentJPA)
+         * jette une RuntimeException avec message non null.
          */
-        when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenThrow(ex);
+        final RuntimeException causeDao = new RuntimeException(LIBELLE_ENFANT_1);
+
+        when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.findByObjetMetier(...)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.findByObjetMetier(...), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois service.findByObjetMetier(stp)
+         * et capture l'exception réellement levée.
          */
-        final Throwable throwable =
-                Assertions.catchThrowable(() -> this.service.findByObjetMetier(stp));
+        final Throwable throwable
+            = Assertions.catchThrowable(
+                    () -> this.service.findByObjetMetier(stp));
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son message contractuel sécurisé
+         * et le message technique d'origine du DAO objet métier.
          */
-        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
-        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(LIBELLE_ENFANT_1);
 
-        /* 
+        /* Vérifie que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) a été appelé.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier a été appelé une fois avec parentJPA ;
+         * - l'EntityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA).findAllByTypeProduit(parentJPA);
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verify(this.sousTypeProduitDaoJPA, times(1)).findAllByTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3800,80 +3825,82 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(KO DAO enfant message null) :</p>
+     * <p>garantit que findByObjetMetier(KO DAO objet métier message null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>appelle le DAO objet métier une fois avec le parent JPA trouvé ;</li>
+     * <li>n'appelle pas l'EntityManager.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO enfant message null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByObjetMetier(KO DAO objet métier message null) - jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
     public void testFindByObjetMetierDaoExceptionMessageNull() {
 
         /* ARRANGE :
-         * configure le DAO parent mocké avec Mockito
-         * pour que findById(ID_1) retourne le parent,
-         * puis configure le DAO enfant mocké avec Mockito
-         * pour que la méthode findAllByTypeProduit(parentJPA)
-         * jette une RuntimeException sans message.
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche
+         * de l'objet métier dans le stockage.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
-        
-        /* 
-         * Condition du Mock typeProduitDaoJPA :
-         * L'appel typeProduitDaoJPA.findById(...) 
-         * sur le DAO mocké 
-         * retourne Optional.of(parentJPA).
+
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * retourne le parent JPA attendu.
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
 
-        final RuntimeException ex = new RuntimeException((String) null);
-        
-        /* 
-         * Condition du Mock sousTypeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findAllByTypeProduit(...) 
-         * sur le DAO mocké 
-         * jette une Exception ex.
+        /* Configure le DAO objet métier mocké avec Mockito
+         * pour que findAllByTypeProduit(parentJPA)
+         * jette une RuntimeException sans message.
          */
-        when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenThrow(ex);
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.findByObjetMetier(...)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.findByObjetMetier(...), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois service.findByObjetMetier(stp)
+         * et capture l'exception réellement levée.
          */
-        final Throwable throwable =
-                Assertions.catchThrowable(() -> this.service.findByObjetMetier(stp));
+        final Throwable throwable
+            = Assertions.catchThrowable(
+                    () -> this.service.findByObjetMetier(stp));
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son message contractuel sécurisé
+         * et le message sûr dérivé de l'exception sans message.
          */
-        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
-        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
 
-        /* 
+        /* Vérifie que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) a été appelé.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier a été appelé une fois avec parentJPA ;
+         * - l'EntityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA).findAllByTypeProduit(parentJPA);
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verify(this.sousTypeProduitDaoJPA, times(1)).findAllByTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3883,9 +3910,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <div>
      * <p>garantit que findByObjetMetier(non trouvé) :</p>
      * <ul>
-     * <li>retourne {@code null} ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>ne jette aucune exception ;</li>
+     * <li>retourne {@code null} lorsque la liste non null
+     * retournée par le DAO objet métier ne contient pas
+     * le libellé recherché ;</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>appelle le DAO objet métier une fois avec le parent JPA trouvé ;</li>
+     * <li>n'appelle pas l'EntityManager.</li>
      * </ul>
      * </div>
      *
@@ -3897,58 +3928,56 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByObjetMetierNonTrouve() throws Exception {
 
         /* ARRANGE :
-         * configure le DAO parent mocké avec Mockito
-         * pour que findById(ID_1) retourne le parent,
-         * puis configure le DAO enfant mocké avec Mockito
-         * pour que findAllByTypeProduit(parentJPA)
-         * retourne une liste ne contenant pas le libellé recherché.
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche
+         * de l'objet métier dans le stockage.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_3, null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
-        
-        /* 
-         * Condition du Mock typeProduitDaoJPA :
-         * L'appel typeProduitDaoJPA.findById(...) 
-         * sur le DAO mocké 
-         * retourne Optional.of(parentJPA).
+
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * retourne le parent JPA attendu.
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
 
         final List<SousTypeProduitJPA> entities = new ArrayList<SousTypeProduitJPA>();
         entities.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_1, ID_2, parentJPA));
         entities.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_2, ID_3, parentJPA));
-        
-        /* 
-         * Condition du Mock sousTypeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findAllByTypeProduit(...) 
-         * sur le DAO mocké 
-         * retourne une liste entities.
+
+        /* Configure le DAO objet métier mocké avec Mockito
+         * pour que findAllByTypeProduit(parentJPA)
+         * retourne une liste non null
+         * ne contenant pas le libellé recherché.
          */
         when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenReturn(entities);
 
         /* ACT :
-         * appelle this.service.findByObjetMetier(stp)
+         * appelle service.findByObjetMetier(stp)
          * dans le scénario où aucun élément ne correspond.
          */
         final SousTypeProduit retour = this.service.findByObjetMetier(stp);
 
         /* ASSERT :
          * vérifie que la méthode retourne null
-         * lorsque le libellé recherché n'est pas trouvé.
+         * lorsque le libellé recherché n'est pas trouvé
+         * dans la liste retournée par le DAO objet métier.
          */
         assertThat(retour).isNull();
 
-        /* 
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) a été appelé.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier a été appelé une fois avec parentJPA ;
+         * - l'EntityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA).findAllByTypeProduit(parentJPA);
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verify(this.sousTypeProduitDaoJPA, times(1)).findAllByTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3956,42 +3985,42 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(trouvé) :</p>
+     * <p>garantit que findByObjetMetier(OK) :</p>
      * <ul>
-     * <li>retourne un objet métier non null ;</li>
-     * <li>retourne le libellé enfant attendu ;</li>
-     * <li>retourne un parent non null ;</li>
-     * <li>retourne le libellé parent attendu ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>appelle la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>ne jette aucune exception ;</li>
+     * <li>retourne un {@link SousTypeProduit} non null lorsque la liste non null
+     * retournée par le DAO objet métier contient le libellé recherché ;</li>
+     * <li>ignore les éléments {@code null} présents dans la liste retournée ;</li>
+     * <li>retourne un objet métier converti portant le bon identifiant ;</li>
+     * <li>retourne un objet métier converti portant le bon libellé ;</li>
+     * <li>retourne un parent non null portant le bon identifiant ;</li>
+     * <li>retourne un parent portant le bon libellé ;</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>appelle le DAO objet métier une fois avec le parent JPA trouvé ;</li>
+     * <li>n'appelle pas l'EntityManager.</li>
      * </ul>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(trouvé) - retourne un objet métier cohérent")
+    @DisplayName("findByObjetMetier(OK) - délègue aux DAO et retourne l'objet métier converti")
     @Test
-    public void testFindByObjetMetierTrouve() throws Exception {
+    public void testFindByObjetMetierNominal() throws Exception {
 
         /* ARRANGE :
-         * configure le DAO parent mocké avec Mockito
-         * pour que findById(ID_1) retourne le parent,
-         * puis configure le DAO enfant mocké avec Mockito
-         * pour que findAllByTypeProduit(parentJPA)
-         * retourne une liste contenant un null
-         * et l'élément recherché.
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche
+         * de l'objet métier dans le stockage.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_2, null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
-        
-        /* 
-         * Condition du Mock typeProduitDaoJPA :
-         * L'appel typeProduitDaoJPA.findById(...) 
-         * sur le DAO mocké 
-         * retourne Optional.of(parentJPA).
+
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * retourne le parent JPA attendu.
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
 
@@ -3999,41 +4028,50 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         entities.add(null);
         entities.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_1, ID_2, parentJPA));
         entities.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_2, ID_3, parentJPA));
-        
-        /* 
-         * Condition du Mock sousTypeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findAllByTypeProduit(...) 
-         * sur le DAO mocké 
-         * retourne une liste entities.
+
+        /* Configure le DAO objet métier mocké avec Mockito
+         * pour que findAllByTypeProduit(parentJPA)
+         * retourne une liste non null
+         * contenant un élément null,
+         * un élément non correspondant,
+         * puis l'élément recherché.
          */
         when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenReturn(entities);
 
         /* ACT :
-         * appelle this.service.findByObjetMetier(stp)
-         * dans le scénario où l'élément recherché est présent.
+         * appelle service.findByObjetMetier(stp)
+         * dans le scénario nominal où l'élément recherché est présent.
          */
         final SousTypeProduit retour = this.service.findByObjetMetier(stp);
 
         /* ASSERT :
-         * vérifie que la méthode retourne bien
-         * un objet métier cohérent avec les données mockées.
+         * vérifie que la méthode retourne un objet métier converti
+         * portant l'identifiant et le libellé issus du stockage.
          */
         assertThat(retour).isNotNull();
+        assertThat(retour.getIdSousTypeProduit()).isEqualTo(ID_3);
         assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_2);
+
+        /* Vérifie que le parent métier retourné
+         * est non null et cohérent avec le parent JPA trouvé.
+         */
         assertThat(retour.getTypeProduit()).isNotNull();
+        assertThat(retour.getTypeProduit().getIdTypeProduit()).isEqualTo(ID_1);
         assertThat(retour.getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_1);
 
-        /* 
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) a été appelé.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier a été appelé une fois avec parentJPA ;
+         * - l'EntityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA).findAllByTypeProduit(parentJPA);
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verify(this.sousTypeProduitDaoJPA, times(1)).findAllByTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
 
-    } // __________________________________________________________________    
+    } // __________________________________________________________________
     
 
     
