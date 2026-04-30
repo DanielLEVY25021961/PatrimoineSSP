@@ -2937,7 +2937,7 @@ public class ProduitGatewayJPAServiceMockTest {
      * @throws Exception
      */
     @Tag(TAG_PAGINATION)
-    @DisplayName("rechercherTousParPage(nominal) : garantit la pagination explicite sans tri")
+    @DisplayName("rechercherTousParPage(OK) : garantit le bon fonctionnement de la pagination")
     @Test
     public void testRechercherTousParPageNominal() throws Exception {
 
@@ -3298,14 +3298,14 @@ public class ProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>findByObjetMetier(pas trouvé) retourne null.</p>
+     * <p>findByObjetMetier(non trouvé) retourne null.</p>
      * </div>
      * @throws Exception
      */
     @Tag(TAG_RECHERCHER)
-    @DisplayName("findByObjetMetier(pas trouvé) - retourne null")
+    @DisplayName("findByObjetMetier(non trouvé) : délègue au DAO et retourne null")
     @Test
-    public void testFindByObjetMetierPasTrouveRetourneNull() throws Exception {
+    public void testFindByObjetMetierNonTrouve() throws Exception {
 
         final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 

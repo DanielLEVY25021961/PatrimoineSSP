@@ -2268,34 +2268,39 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     
     
-	/**
+    /**
      * <div>
      * <p>garantit que findByObjetMetier(null) :</p>
      * <ul>
-     * <li>jette une {@link ExceptionAppliParamNull}</li>
-     * <li>émet un
-     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL}</li>
-     * <li>n'appelle pas le DAO</li>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL} ;</li>
+     * <li>n'appelle pas le DAO.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
+    @DisplayName("findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)")
     @Test
     public void testFindByObjetMetierNull() {
-    	
-    	/* ARRANGE - ACT - ASSERT */
-    	/* Garantit que this.service.findByObjetMetier(null)
-    	 * - jette une ExceptionAppliParamNull
-    	 * - émet un message MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL.
-    	 */
+
+        /* ARRANGE - ACT - ASSERT :
+         * vérifie que l'appel avec un objet métier null
+         * jette une ExceptionAppliParamNull
+         * avec le message MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL
+         * (contrat du port).
+         */
         assertThatThrownBy(() -> this.service.findByObjetMetier(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL);
-        
+
         /* Garantit que le DAO mocké n'a pas été appelé. */
+        /* - verify(..., never()).méthode(...) = preuve ciblée 
+         * sur une méthode critique précise.
+         * - verifyNoInteractions(mock) = preuve globale 
+         * que le mock entier n'a pas été touché. */
         verifyNoInteractions(this.typeProduitDaoJPA);
-        
+
     } // __________________________________________________________________
     
     
@@ -2304,10 +2309,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * <div>
      * <p>garantit que findByObjetMetier(libellé blank) :</p>
      * <ul>
-     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
-     * <li>émet un
-     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK}</li>
-     * <li>n'appelle pas le DAO</li>
+     * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
+     * <li>émet le message
+     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK} ;</li>
+     * <li>n'appelle pas le DAO.</li>
      * </ul>
      * </div>
      */
@@ -2315,22 +2320,31 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @DisplayName("findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
     public void testFindByObjetMetierLibelleBlank() {
-    	
-    	/* ARRANGE */
-        final TypeProduit metier = fabriquerTypeProduit(null, null);
-    	
-    	/* ACT - ASSERT */
-    	/* Garantit que this.service.findByObjetMetier(metier)
-    	 * - jette une ExceptionAppliLibelleBlank
-    	 * - émet un message MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK.
-    	 */
+
+        /* ARRANGE :
+         * prépare un objet métier dont le libellé est blank,
+         * afin de vérifier le contrôle applicatif
+         * effectué avant toute recherche réelle.
+         */
+        final TypeProduit metier = fabriquerTypeProduit(BLANK, null);
+
+        /* ACT - ASSERT :
+         * vérifie que l'appel avec un libellé blank
+         * jette une ExceptionAppliLibelleBlank
+         * avec le message MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK
+         * (contrat du port).
+         */
         assertThatThrownBy(() -> this.service.findByObjetMetier(metier))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
-        
+
         /* Garantit que le DAO mocké n'a pas été appelé. */
+        /* - verify(..., never()).méthode(...) = preuve ciblée 
+         * sur une méthode critique précise.
+         * - verifyNoInteractions(mock) = preuve globale 
+         * que le mock entier n'a pas été touché. */
         verifyNoInteractions(this.typeProduitDaoJPA);
-        
+
     } // __________________________________________________________________
     
         
@@ -2339,278 +2353,264 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * <div>
      * <p>garantit que findByObjetMetier(non trouvé) :</p>
      * <ul>
-     * <li>délègue la recherche au DAO avec le bon libellé métier</li>
-     * <li>retourne {@code null} si le stockage ne trouve aucun objet persistant</li>
-     * <li>appelle le DAO une fois</li>
+     * <li>délègue la recherche au DAO avec le bon libellé métier ;</li>
+     * <li>retourne {@code null} si le stockage ne trouve aucun
+     * objet persistant correspondant ;</li>
+     * <li>ne jette aucune exception ;</li>
+     * <li>appelle le DAO une fois.</li>
      * </ul>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(non trouvé) : délègue au DAO et retourne null")
+    @DisplayName("findByObjetMetier(non trouvé) - retourne null")
     @Test
     public void testFindByObjetMetierNonTrouve() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le libellé VETEMENT via findByTypeProduitIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra répondre null".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui ne trouve aucun TypeProduit persistant
-    	 * pour ce libellé métier.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "non trouvé".
-    	 */
+
+        /* ARRANGE :
+         * prépare un objet métier valide
+         * dont le libellé doit être recherché dans le stockage.
+         */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+
+        /*
+         * Configuration du Mock :
+         * L'appel typeProduitDaoJPA.findByTypeProduitIgnoreCase(...)
+         * sur le DAO objet métier mocké retourne null.
+         *
+         * Ce scénario simule un stockage qui ne trouve
+         * aucun TypeProduit persistant correspondant
+         * au libellé métier recherché.
+         */
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
             .thenReturn(null);
-        
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
-    	
-    	/* ACT */
+
+        /* ACT :
+         * appelle service.findByObjetMetier(metier)
+         * dans le scénario où aucun objet persistant ne correspond.
+         */
         final TypeProduit resultat = this.service.findByObjetMetier(metier);
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByObjetMetier(metier)
-    	 * - délègue la recherche au DAO avec le libellé métier VETEMENT
-    	 * - retourne null si le stockage ne trouve aucun objet persistant.
-    	 */
+
+        /* ASSERT :
+         * vérifie que la méthode retourne null
+         * lorsque le libellé métier recherché
+         * n'est pas trouvé dans le stockage.
+         */
         assertThat(resultat).isNull();
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * avec le bon libellé métier.
-         */
-        verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-        
+
+        /* Garantit que le DAO mocké n'a pas été appelé. */
+        /* - verify(..., never()).méthode(...) = preuve ciblée 
+         * sur une méthode critique précise.
+         * - verifyNoInteractions(mock) = preuve globale 
+         * que le mock entier n'a pas été touché. */
+        verify(this.typeProduitDaoJPA, times(1))
+            .findByTypeProduitIgnoreCase(VETEMENT);
+
     } // __________________________________________________________________
     
     
 
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(trouvé) :</p>
+     * <p>garantit que findByObjetMetier(KO DAO message non null) :</p>
      * <ul>
-     * <li>délègue la recherche au DAO avec le bon libellé métier</li>
-     * <li>retourne un {@link TypeProduit} non null si le stockage trouve un objet persistant</li>
-     * <li>retourne un objet métier converti portant le bon identifiant</li>
-     * <li>retourne un objet métier converti portant le bon libellé</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(trouvé) : délègue au DAO et retourne l'objet métier converti")
-    @Test
-    public void testFindByObjetMetierTrouve() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le libellé VETEMENT via findByTypeProduitIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra répondre
-    	 * un TypeProduitJPA persistant portant l'identifiant ID_1".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui trouve bien un TypeProduit persistant
-    	 * pour ce libellé métier.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "trouvé".
-    	 */
-        when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
-            .thenReturn(fabriquerTypeProduitJPA(VETEMENT, ID_1));
-        
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
-        final TypeProduit resultat = this.service.findByObjetMetier(metier);
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByObjetMetier(metier)
-    	 * - délègue la recherche au DAO avec le libellé métier VETEMENT
-    	 * - retourne un objet métier non null
-    	 * - convertit correctement l'identifiant et le libellé
-    	 *   de l'objet persistant trouvé.
-    	 */
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
-        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * avec le bon libellé métier.
-         */
-        verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>garantit que findByObjetMetier(KO DAO) :</p>
-     * <ul>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
-     * <li>conserve le message technique d'origine du DAO</li>
-     * <li>propage comme cause l'exception technique d'origine</li>
-     * <li>appelle le DAO une fois</li>
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>conserve le message technique d'origine du DAO ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO une fois avec le bon libellé métier.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO) : jette ExceptionTechniqueGateway et propage la cause")
+    @DisplayName("findByObjetMetier(KO DAO message non null) - jette ExceptionTechniqueGateway")
     @Test
-    public void testFindByObjetMetierExceptionDAO() {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenThrow(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le libellé VETEMENT via findByTypeProduitIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra lancer
-    	 * une RuntimeException portant le message MSG_BOOM".
-    	 *
-    	 * On simule donc volontairement une panne technique du stockage
-    	 * pendant la recherche par libellé métier.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réaction
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "KO DAO".
-    	 */
-    	final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
-    	
+    public void testFindByObjetMetierDAOExceptionMessageNonNull() {
+
+        /* ARRANGE :
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche dans le stockage.
+         */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+
+        /* Configure le DAO mocké avec Mockito
+         * pour que findByTypeProduitIgnoreCase(VETEMENT)
+         * jette une RuntimeException avec message non null.
+         */
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
             .thenThrow(causeDao);
-        
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
+
+        /* ACT :
+         * exécute une seule fois service.findByObjetMetier(metier)
+         * et capture l'exception réellement levée.
+         */
         final Throwable throwable
             = org.assertj.core.api.Assertions.catchThrowable(
                     () -> this.service.findByObjetMetier(metier));
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByObjetMetier(metier)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-    	 * - conserve le message technique d'origine MSG_BOOM.
-    	 */
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son message contractuel sécurisé
+         * et le message technique d'origine.
+         */
         assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(MSG_BOOM);
-        
-        /* Garantit que la cause technique d'origine
+
+        /* Vérifie que la cause technique d'origine
          * est bien propagée par l'ExceptionTechniqueGateway.
          */
         assertThat(throwable.getCause()).isSameAs(causeDao);
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec la dépendance mockée.
+         * Assure que le DAO objet métier a été appelé une fois
          * avec le bon libellé métier.
          */
-        verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-        
+        verify(this.typeProduitDaoJPA, times(1))
+            .findByTypeProduitIgnoreCase(VETEMENT);
+
     } // __________________________________________________________________
     
-    
-    
+
+		
     /**
      * <div>
      * <p>garantit que findByObjetMetier(KO DAO message null) :</p>
      * <ul>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
-     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
-     * <li>propage comme cause l'exception technique d'origine</li>
-     * <li>appelle le DAO une fois</li>
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>émet un message sûr non nul dérivé de l'exception technique ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO une fois avec le bon libellé métier.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @DisplayName("findByObjetMetier(KO DAO message null) - jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testFindByObjetMetierExceptionDAOMsgNull() {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenThrow(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le libellé VETEMENT via findByTypeProduitIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra lancer
-    	 * une RuntimeException sans message".
-    	 *
-    	 * On simule donc volontairement une panne technique du stockage
-    	 * pendant la recherche par libellé métier,
-    	 * avec un message technique d'origine null.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réaction
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "KO DAO message null".
-    	 */
-    	final RuntimeException causeDao = new RuntimeException((String) null);
-    	
+    public void testFindByObjetMetierDAOExceptionMessageNull() {
+
+        /* ARRANGE :
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche dans le stockage.
+         */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+
+        /* Configure le DAO mocké avec Mockito
+         * pour que findByTypeProduitIgnoreCase(VETEMENT)
+         * jette une RuntimeException sans message.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
         when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
             .thenThrow(causeDao);
-        
-        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
+
+        /* ACT :
+         * exécute une seule fois service.findByObjetMetier(metier)
+         * et capture l'exception réellement levée.
+         */
         final Throwable throwable
             = org.assertj.core.api.Assertions.catchThrowable(
                     () -> this.service.findByObjetMetier(metier));
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByObjetMetier(metier)
-    	 * - jette une ExceptionTechniqueGateway
-    	 * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-    	 * - n'émet pas un message null
-    	 * - utilise un texte sûr dérivé de l'exception technique.
-    	 *
-    	 * Ici, avec l'implémentation actuelle de safeMessage(e),
-    	 * le texte sûr dérivé provient de e.toString().
-    	 * Pour une RuntimeException sans message,
-    	 * cela donne au minimum le nom de classe java.lang.RuntimeException.
-    	 */
+
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son message contractuel sécurisé
+         * et le message sûr dérivé de l'exception sans message.
+         */
         assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(RuntimeException.class.getName());
-        
-        /* Garantit que la cause technique d'origine
+
+        /* Vérifie que la cause technique d'origine
          * est bien propagée par l'ExceptionTechniqueGateway.
          */
         assertThat(throwable.getCause()).isSameAs(causeDao);
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec la dépendance mockée.
+         * Assure que le DAO objet métier a été appelé une fois
          * avec le bon libellé métier.
          */
-        verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-        
+        verify(this.typeProduitDaoJPA, times(1))
+            .findByTypeProduitIgnoreCase(VETEMENT);
+
+    } // __________________________________________________________________
+    
+	
+
+    /**
+     * <div>
+     * <p>garantit que findByObjetMetier(OK) :</p>
+     * <ul>
+     * <li>délègue la recherche au DAO avec le bon libellé métier ;</li>
+     * <li>retourne un {@link TypeProduit} non null lorsque le DAO
+     * retourne un objet persistant correspondant ;</li>
+     * <li>retourne un objet métier converti portant le bon identifiant ;</li>
+     * <li>retourne un objet métier converti portant le bon libellé ;</li>
+     * <li>appelle le DAO une fois avec le bon libellé métier.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_FINDBYOBJETMETIER)
+    @DisplayName("findByObjetMetier(OK) - délègue au DAO et retourne l'objet métier converti")
+    @Test
+    public void testFindByObjetMetierNominal() throws Exception {
+
+        /* ARRANGE :
+         * prépare un objet métier valide
+         * dont le libellé doit être recherché dans le stockage.
+         */
+        final TypeProduit metier = fabriquerTypeProduit(VETEMENT, null);
+
+        /*
+         * Configuration du Mock :
+         * L'appel typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT)
+         * sur le DAO objet métier mocké retourne un TypeProduitJPA
+         * persistant portant l'identifiant ID_1.
+         *
+         * Ce scénario simule un stockage qui retourne
+         * un TypeProduit persistant correspondant
+         * au libellé métier recherché.
+         */
+        when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
+            .thenReturn(fabriquerTypeProduitJPA(VETEMENT, ID_1));
+
+        /* ACT :
+         * appelle service.findByObjetMetier(metier)
+         * dans le scénario nominal.
+         */
+        final TypeProduit resultat = this.service.findByObjetMetier(metier);
+
+        /* ASSERT :
+         * vérifie que la méthode retourne un objet métier converti
+         * portant l'identifiant et le libellé issus du stockage.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
+        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec la dépendance mockée.
+         * Assure que le DAO objet métier a été appelé une fois
+         * avec le bon libellé métier.
+         */
+        verify(this.typeProduitDaoJPA, times(1))
+            .findByTypeProduitIgnoreCase(VETEMENT);
+
     } // __________________________________________________________________
     
     
@@ -2700,71 +2700,6 @@ public class TypeProduitGatewayJPAServiceMockTest {
     	 * - retourne null si le stockage ne trouve aucun objet persistant.
     	 */
         assertThat(resultat).isNull();
-        
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * avec le bon libellé métier.
-         */
-        verify(this.typeProduitDaoJPA).findByTypeProduitIgnoreCase(VETEMENT);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>garantit que findByLibelle(trouvé) :</p>
-     * <ul>
-     * <li>délègue la recherche au DAO avec le bon libellé métier</li>
-     * <li>retourne un {@link TypeProduit} non null si le stockage trouve un objet persistant</li>
-     * <li>retourne un objet métier converti portant le bon identifiant</li>
-     * <li>retourne un objet métier converti portant le bon libellé</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findByLibelle(trouvé) : délègue au DAO et retourne l'objet métier converti")
-    @Test
-    public void testFindByLibelleTrouve() throws Exception {
-    	
-    	/* ARRANGE :
-    	 * configure ici le comportement du DAO mocké avec Mockito.
-    	 *
-    	 * La formule when(...).thenReturn(...) signifie :
-    	 * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-    	 * avec le libellé VETEMENT via findByTypeProduitIgnoreCase(...),
-    	 * alors le DAO mocké avec Mockito devra répondre
-    	 * un TypeProduitJPA persistant portant l'identifiant ID_1".
-    	 *
-    	 * On simule donc volontairement un stockage
-    	 * qui trouve bien un TypeProduit persistant
-    	 * pour ce libellé métier.
-    	 *
-    	 * Le but n'est pas de tester le DAO réel,
-    	 * mais de maîtriser sa réponse
-    	 * afin de prouver comment le service réagit
-    	 * au cas contractuel "trouvé".
-    	 */
-        when(this.typeProduitDaoJPA.findByTypeProduitIgnoreCase(VETEMENT))
-            .thenReturn(fabriquerTypeProduitJPA(VETEMENT, ID_1));
-    	
-    	/* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester 
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
-        final TypeProduit resultat = this.service.findByLibelle(VETEMENT);
-    	
-    	/* ASSERT */
-    	/* Garantit que this.service.findByLibelle(VETEMENT)
-    	 * - délègue la recherche au DAO avec le libellé métier VETEMENT
-    	 * - retourne un objet métier non null
-    	 * - convertit correctement l'identifiant et le libellé
-    	 *   de l'objet persistant trouvé.
-    	 */
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
-        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
         
         /* Garantit que le DAO mocké a bien été appelé une fois
          * avec le bon libellé métier.

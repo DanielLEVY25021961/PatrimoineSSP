@@ -3215,7 +3215,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliParamNull} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARAM_NULL} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier,
+     * ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -3234,15 +3235,18 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_FINDBYOBJETMETIER_KO_PARAM_NULL);
 
-        /* 
-         * Vérifie ensuite les interactions réelles
-         * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) n'a jamais été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+        /*
+         * Vérifie ensuite qu'aucun accès au stockage
+         * n'a été tenté pour ce scénario traité
+         * par la gestion des mauvais paramètres avant tout appel
+         * des DAO ou de l'EntityManager.
+         * - typeProduitDaoJPA n'a jamais été appelé ;
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - entityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA, never()).findById(anyLong());
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3255,7 +3259,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_BLANK} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier,
+     * ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -3282,15 +3287,18 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_FINDBYOBJETMETIER_KO_LIBELLE_BLANK);
 
-        /* 
-         * Vérifie ensuite les interactions réelles
-         * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) n'a jamais été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+        /*
+         * Vérifie ensuite qu'aucun accès au stockage
+         * n'a été tenté pour ce scénario traité
+         * par la gestion des mauvais paramètres avant tout appel
+         * des DAO ou de l'EntityManager.
+         * - typeProduitDaoJPA n'a jamais été appelé ;
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - entityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA, never()).findById(anyLong());
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3303,7 +3311,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliParentNull} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NULL} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier,
+     * ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -3313,9 +3322,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByObjetMetierParentNull() {
 
         /* ARRANGE :
-         * prépare un sous-type sans parent,
+         * prépare un objet métier sans parent,
          * afin de vérifier le contrôle applicatif
-         * imposé par le contrat du port.
+         * avant tout appel de DAO imposé par le contrat du port.
          */
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, null);
 
@@ -3329,15 +3338,18 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionAppliParentNull.class)
             .hasMessage(MSG_FINDBYOBJETMETIER_KO_PARENT_NULL);
 
-        /* 
-         * Vérifie ensuite les interactions réelles
-         * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) n'a jamais été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+        /*
+         * Vérifie ensuite qu'aucun accès au stockage
+         * n'a été tenté pour ce scénario traité
+         * par la gestion des mauvais paramètres avant tout appel
+         * des DAO ou de l'EntityManager.
+         * - typeProduitDaoJPA n'a jamais été appelé ;
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - entityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA, never()).findById(anyLong());
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3350,7 +3362,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier,
+     * ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -3360,16 +3373,15 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByObjetMetierParentLibelleBlank() {
 
         /* ARRANGE :
-         * prépare un parent dont le libellé est blank,
+         * prépare un objet métier dont le parent porte un libellé blank,
          * afin de vérifier le contrôle applicatif
-         * effectué avant toute recherche réelle du parent.
+         * avant tout appel de DAO imposé par le contrat du port.
          */
         final TypeProduit parent = fabriquerTypeProduit(BLANK, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         /* ACT - ASSERT :
-         * vérifie que l'appel avec 
-         * un objet dont le parent a un libellé parent blank
+         * vérifie que l'appel avec un parent au libellé blank
          * jette une ExceptionAppliLibelleBlank
          * avec le message MSG_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK
          * (contrat du port).
@@ -3378,15 +3390,18 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK);
 
-        /* 
-         * Vérifie ensuite les interactions réelles
-         * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) n'a jamais été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+        /*
+         * Vérifie ensuite qu'aucun accès au stockage
+         * n'a été tenté pour ce scénario traité
+         * par la gestion des mauvais paramètres avant tout appel
+         * des DAO ou de l'EntityManager.
+         * - typeProduitDaoJPA n'a jamais été appelé ;
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - entityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA, never()).findById(anyLong());
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3400,7 +3415,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT}
      * suivi du libellé du parent ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent, ni le DAO objet métier,
+     * ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -3410,19 +3426,20 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByObjetMetierParentIdNull() {
 
         /* ARRANGE :
-         * prépare un parent non persistant
-         * dont l'identifiant est null,
+         * prépare un objet métier dont le parent n'est pas persistant
+         * car son identifiant est null,
          * afin de vérifier le contrôle de persistance
-         * effectué avant toute recherche DAO.
+         * avant tout appel de DAO imposé par le contrat du port.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, null);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         /* ACT - ASSERT :
-         * vérifie que l'appel this.service.findByObjetMetier(...)
-         * avec un objet dont le parent n'est pas persistant (id null)
+         * vérifie que l'appel avec un parent non persistant
+         * car son identifiant est null
          * jette une ExceptionTechniqueGatewayNonPersistent
-         * avec un message contenant MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT
+         * avec le message MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT
+         * complété par le libellé du parent
          * (contrat du port).
          */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
@@ -3430,15 +3447,18 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
             .hasMessage(construireMessageNonPersistent(
                     MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT, LIBELLE_PARENT_1));
 
-        /* 
-         * Vérifie ensuite les interactions réelles
-         * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) n'a jamais été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+        /*
+         * Vérifie ensuite qu'aucun accès au stockage
+         * n'a été tenté pour ce scénario traité
+         * par la gestion des mauvais paramètres avant tout appel
+         * des DAO ou de l'EntityManager.
+         * - typeProduitDaoJPA n'a jamais été appelé ;
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - entityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA, never()).findById(anyLong());
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -3452,8 +3472,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYOBJETMETIER_KO_PARENT_NON_PERSISTENT}
      * suivi du libellé du parent ;</li>
-     * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
-     * <li>n'appelle pas la méthode findAllByTypeProduit(...) du DAO enfant mocké avec Mockito.</li>
+     * <li>appelle le DAO parent une fois avec l'identifiant du parent ;</li>
+     * <li>n'appelle ni le DAO objet métier, ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -3463,19 +3483,24 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByObjetMetierParentAbsent() {
 
         /* ARRANGE :
-         * prépare un parent persistant en apparence,
-         * mais absent du DAO parent mocké avec Mockito.
+         * prépare un objet métier dont le parent est persistant
+         * en apparence, mais absent du DAO parent mocké
+         * avec Mockito.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
+        /* Condition du Mock :
+         * L'appel typeProduitDaoJPA.findById(ID_1)
+         * sur le DAO parent mocké retourne Optional.empty().
+         */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
 
         /* ACT - ASSERT :
-         * vérifie que l'appel this.service.findByObjetMetier(...)
-         * avec un objet dont le parent n'est pas trouvé par le DAO
+         * vérifie que l'appel avec un parent absent du stockage
          * jette une ExceptionTechniqueGatewayNonPersistent
-         * avec un message contenant MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT
+         * avec le message MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT
+         * complété par le libellé du parent
          * (contrat du port).
          */
         assertThatThrownBy(() -> this.service.findByObjetMetier(stp))
@@ -3483,20 +3508,22 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
             .hasMessage(construireMessageNonPersistent(
                     MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT, LIBELLE_PARENT_1));
 
-        /* 
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(...) a été appelé.
-         * - sousTypeProduitDaoJPA.findAllByTypeProduit(...) n'a jamais été appelé.
+         * Assure que :
+         * - typeProduitDaoJPA.findById(ID_1) a été appelé une fois ;
+         * - sousTypeProduitDaoJPA n'a jamais été appelé ;
+         * - entityManager n'a jamais été appelé.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        verify(this.sousTypeProduitDaoJPA, never()).findAllByTypeProduit(any(TypeProduitJPA.class));
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
     
-    
+        
     /**
      * <div>
      * <p>garantit que findByObjetMetier(KO DAO parent message non null) :</p>
@@ -3854,7 +3881,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(pas trouvé) :</p>
+     * <p>garantit que findByObjetMetier(non trouvé) :</p>
      * <ul>
      * <li>retourne {@code null} ;</li>
      * <li>appelle la méthode findById(...) du DAO parent mocké avec Mockito ;</li>
@@ -3865,9 +3892,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * @throws Exception
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(pas trouvé) - retourne null")
+    @DisplayName("findByObjetMetier(non trouvé) : délègue au DAO et retourne null")
     @Test
-    public void testFindByObjetMetierPasTrouve() throws Exception {
+    public void testFindByObjetMetierNonTrouve() throws Exception {
 
         /* ARRANGE :
          * configure le DAO parent mocké avec Mockito
