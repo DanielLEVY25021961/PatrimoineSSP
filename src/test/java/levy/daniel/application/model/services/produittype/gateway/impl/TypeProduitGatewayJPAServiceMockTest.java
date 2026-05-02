@@ -121,10 +121,16 @@ public class TypeProduitGatewayJPAServiceMockTest {
     public static final String TAG_CREER = "servicesGateway-Creer";
     
     /**
-     * "servicesGateway-Rechercher"
+     * "servicesGateway-RechercherTous"
      */
-    public static final String TAG_RECHERCHER = "servicesGateway-Rechercher";
-    
+    public static final String TAG_RECHERCHERTOUS = "servicesGateway-RechercherTous";
+
+    /**
+     * "servicesGateway-RechercherTousParPage"
+     */
+    public static final String TAG_RECHERCHERTOUSPARPAGE 
+    	= "servicesGateway-RechercherTousParPage";
+
     /**
      * "servicesGateway-FindByObjetMetier"
      */
@@ -138,17 +144,17 @@ public class TypeProduitGatewayJPAServiceMockTest {
     	= "servicesGateway-FindByLibelle";
     
     /**
-     * "servicesGateway-RechercherRapide"
+     * "servicesGateway-FindByLibelleRapide"
      */
-    public static final String TAG_RECHERCHER_RAPIDE 
-    	= "servicesGateway-RechercherRapide";
+    public static final String TAG_FINDBYLIBELLERAPIDE 
+    	= "servicesGateway-FindByLibelleRapide";
     
     /**
-     * "servicesGateway-Pagination"
+     * "servicesGateway-FindById"
      */
-    public static final String TAG_PAGINATION 
-    	= "servicesGateway-Pagination";
-   
+    public static final String TAG_FINDBYID 
+    	= "servicesGateway-FindById";
+      
     /**
      * "servicesGateway-Update"
      */
@@ -450,7 +456,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO message non nul) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
-    public void testCreerDaoSaveExceptionMessageNonNull() {
+    public void testCreerDAOSaveExceptionMessageNonNull() {
 
         /* ARRANGE :
          * prépare un objet métier valide pour atteindre réellement l'appel DAO.
@@ -520,7 +526,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName("creer(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testCreerDaoSaveExceptionMessageNull() {
+    public void testCreerDAOSaveExceptionMessageNull() {
     	
     	/* ARRANGE :
     	 * prépare un objet métier valide pour atteindre réellement l'appel DAO.
@@ -748,7 +754,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER)
+    @Tag(TAG_RECHERCHERTOUS)
     @DisplayName("rechercherTous(DAO.findAll() retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testRechercherTousDAORetourneNull() {
@@ -790,7 +796,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_RECHERCHER)
+    @Tag(TAG_RECHERCHERTOUS)
     @DisplayName("rechercherTous(DAO.findAll() retourne liste vide) : retourne une liste vide non null")
     @Test
     public void testRechercherTousDAORetourneVide() throws Exception {
@@ -841,10 +847,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER)
+    @Tag(TAG_RECHERCHERTOUS)
     @DisplayName("rechercherTous(KO DAO message non null) - jette ExceptionTechniqueGateway")
     @Test
-    public void testRechercherTousDaoExceptionMessageNonNull() {
+    public void testRechercherTousDAOExceptionMessageNonNull() {
 
     	/* ARRANGE :
     	 * Configuration du Mock : 
@@ -910,10 +916,10 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER)
+    @Tag(TAG_RECHERCHERTOUS)
     @DisplayName("rechercherTous(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testRechercherTousDaoExceptionMessageNull() {
+    public void testRechercherTousDAOExceptionMessageNull() {
 
     	/* ARRANGE :
     	 * Configuration du Mock : 
@@ -992,7 +998,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Tag(TAG_RECHERCHER)
+	@Tag(TAG_RECHERCHERTOUS)
 	@DisplayName("rechercherTous(nulls + doublons de casse) : filtre, dédoublonne sans tenir compte de la casse et trie")
 	@Test
 	public void testRechercherTousTriDedoublonnage() throws Exception {
@@ -1066,7 +1072,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Tag(TAG_RECHERCHER)
+	@Tag(TAG_RECHERCHERTOUS)
 	@DisplayName("rechercherTous(nominal) - filtre, trie et dédoublonne")
 	@Test
 	public void testRechercherTousNominal() throws Exception {
@@ -1152,7 +1158,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * quand la requête d'entrée vaut {@code null}.</p>
      * </div>
      */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(RequetePage null) : garantit l'usage de la pagination par défaut sans Exception")
     @Test
     public void testRechercherTousParPageNull() throws Exception {
@@ -1265,7 +1271,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * afin de prouver que l'échec vient bien du DAO.</p>
      * </div>
      */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(DAO retourne null) : garantit ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testRechercherTousParPageDAORetourneNull() {
@@ -1328,7 +1334,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * </div>
      */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(retourne contenu null) : garantit ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testRechercherTousParPageContenuNull() {
@@ -1398,7 +1404,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 * et non un simple échec fonctionnel métier.</p>
 	 * </div>
 	 */
-	@Tag(TAG_PAGINATION)
+	@Tag(TAG_RECHERCHERTOUSPARPAGE)
 	@DisplayName("rechercherTousParPage(KO DAO) : garantit ExceptionTechniqueGateway avec message sûr et cause propagée")
 	@Test
 	public void testRechercherTousParPageDAOExceptionMessageNonNull() {
@@ -1487,7 +1493,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 * </ul>
 	 * </div>
 	 */
-	@Tag(TAG_PAGINATION)
+	@Tag(TAG_RECHERCHERTOUSPARPAGE)
 	@DisplayName("rechercherTousParPage(KO DAO message null) : garantit ExceptionTechniqueGateway avec message sûr non nul")
 	@Test
 	public void testRechercherTousParPageDAOExceptionMessageNull() {
@@ -1569,7 +1575,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(pageSize == 0) : garantit la normalisation en taille par défaut avant l'appel DAO")
     @Test
     public void testRechercherTousParPagePageSizeZero() throws Exception {
@@ -1704,7 +1710,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(avec tri) : garantit la conversion de TriSpec en Sort Spring")
     @Test
     public void testRechercherTousParPageAvecTri() throws Exception {
@@ -1859,7 +1865,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(contenu avec nulls) : garantit l'exclusion des nulls lors de la conversion")
     @Test
     public void testRechercherTousParPageContenuAvecNulls() throws Exception {
@@ -1964,7 +1970,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(retourne page vide) - retourne une page vide cohérente")
     @Test
     public void testRechercherTousParPagePageVide() throws Exception {
@@ -2055,7 +2061,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-    @Tag(TAG_PAGINATION)
+    @Tag(TAG_RECHERCHERTOUSPARPAGE)
     @DisplayName("rechercherTousParPage(new RequetePage()) : garantit la conversion en Pageable Spring par défaut sans tri")
     @Test
     public void testRechercherTousParPageNominalRequeteNeutre() throws Exception {
@@ -2162,7 +2168,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Tag(TAG_PAGINATION)
+	@Tag(TAG_RECHERCHERTOUSPARPAGE)
 	@DisplayName("rechercherTousParPage(OK) : garantit le bon fonctionnement de la pagination")
 	@Test
 	public void testRechercherTousParPageNominal() throws Exception {
@@ -2715,7 +2721,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_FINDBYLIBELLE)
     @DisplayName("findByLibelle(KO DAO message non null) - jette ExceptionTechniqueGateway")
     @Test
-    public void testFindByLibelleDaoExceptionMessageNonNull() {
+    public void testFindByLibelleDAOExceptionMessageNonNull() {
 
         /* ARRANGE :
          * prépare un libellé métier valide
@@ -2784,7 +2790,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_FINDBYLIBELLE)
     @DisplayName("findByLibelle(KO DAO message null) - jette ExceptionTechniqueGateway avec message sûr non nul")
     @Test
-    public void testFindByLibelleDaoExceptionMessageNull() {
+    public void testFindByLibelleDAOExceptionMessageNull() {
 
         /* ARRANGE :
          * prépare un libellé métier valide
@@ -2972,14 +2978,14 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * <div>
      * <p>garantit que findByLibelleRapide(null) :</p>
      * <ul>
-     * <li>jette une {@link ExceptionAppliParamNull}</li>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
      * <li>émet un
-     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL}</li>
-     * <li>n'appelle pas le DAO</li>
+     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYLIBELLERAPIDE_KO_PARAM_NULL} ;</li>
+     * <li>n'appelle pas le DAO.</li>
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER_RAPIDE)
+    @Tag(TAG_FINDBYLIBELLERAPIDE)
     @DisplayName("findByLibelleRapide(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
     @Test
     public void testFindByLibelleRapideNull() {
@@ -3013,7 +3019,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_RECHERCHER_RAPIDE)
+    @Tag(TAG_FINDBYLIBELLERAPIDE)
     @DisplayName("findByLibelleRapide(blank) : délègue à findAll()")
     @Test
     public void testFindByLibelleRapideBlank() throws Exception {
@@ -3091,7 +3097,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER_RAPIDE)
+    @Tag(TAG_FINDBYLIBELLERAPIDE)
     @DisplayName("findByLibelleRapide(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByLibelleRapideDAORetourneNull() {
@@ -3154,7 +3160,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER_RAPIDE)
+    @Tag(TAG_FINDBYLIBELLERAPIDE)
     @DisplayName("findByLibelleRapide(KO DAO message non null) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
     public void testFindByLibelleRapideDAOExceptionMessageNonNull() {
@@ -3238,7 +3244,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
 	 * </ul>
 	 * </div>
 	 */
-	@Tag(TAG_RECHERCHER_RAPIDE)
+	@Tag(TAG_FINDBYLIBELLERAPIDE)
 	@DisplayName("findByLibelleRapide(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
 	@Test
 	public void testFindByLibelleRapideDAOExceptionMessageNull() {
@@ -3329,7 +3335,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_RECHERCHER_RAPIDE)
+    @Tag(TAG_FINDBYLIBELLERAPIDE)
     @DisplayName("findByLibelleRapide(non trouvé) : retourne une liste vide non null")
     @Test
     public void testFindByLibelleRapideNonTrouve() throws Exception {
@@ -3406,7 +3412,7 @@ public class TypeProduitGatewayJPAServiceMockTest {
      *
      * @throws Exception
      */
-    @Tag(TAG_RECHERCHER_RAPIDE)
+    @Tag(TAG_FINDBYLIBELLERAPIDE)
     @DisplayName("findByLibelleRapide(nominal) : filtre les null, trie et dédoublonne sans tenir compte de la casse")
     @Test
     public void testFindByLibelleRapideNominal() throws Exception {
@@ -3498,57 +3504,64 @@ public class TypeProduitGatewayJPAServiceMockTest {
 
     
     // ============================ findById ==============================
-
+    
     
     
     /**
      * <div>
      * <p>garantit que findById(null) :</p>
      * <ul>
-     * <li>jette une {@link ExceptionAppliParamNull}</li>
-     * <li>émet un
-     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYID_KO_PARAM_NULL}</li>
-     * <li>n'appelle pas le DAO</li>
+     * <li>jette une {@link ExceptionAppliParamNull} ;</li>
+     * <li>émet le message
+     * {@link TypeProduitGatewayIService#MESSAGE_FINDBYID_KO_PARAM_NULL} ;</li>
+     * <li>n'appelle pas le DAO.</li>
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(null) : jette ExceptionAppliParamNull et n'appelle pas le DAO")
+    @Tag(TAG_FINDBYID)
+    @DisplayName("findById(null) - jette ExceptionAppliParamNull (contrat du port)")
     @Test
     public void testFindByIdNull() {
-    	
-        /* ARRANGE - ACT - ASSERT */
-        /* Garantit que this.service.findById(null)
-         * - jette une ExceptionAppliParamNull
-         * - émet un message MESSAGE_FINDBYID_KO_PARAM_NULL.
+
+        /* ARRANGE - ACT - ASSERT :
+         * vérifie que l'appel this.service.findById(null)
+         * jette une ExceptionAppliParamNull
+         * avec le message MESSAGE_FINDBYID_KO_PARAM_NULL
+         * (message contractuel du port).
          */
         assertThatThrownBy(() -> this.service.findById(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(TypeProduitGatewayIService.MESSAGE_FINDBYID_KO_PARAM_NULL);
 
-        /* Garantit que le DAO mocké n'a pas été appelé. */
+        /* Vérifie qu'aucun accès au stockage n'a été tenté.
+         * Le contrôle applicatif sur l'identifiant null
+         * doit interrompre le traitement avant tout appel au DAO.
+         */
         verifyNoInteractions(this.typeProduitDaoJPA);
-        
+
     } // __________________________________________________________________
     
     
-
+    
     /**
      * <div>
      * <p>garantit que findById(DAO retourne null) :</p>
      * <ul>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet le message
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
-     * <li>appelle le DAO une fois avec le bon identifiant</li>
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE} ;</li>
+     * <li>appelle le DAO une fois avec le bon identifiant.</li>
      * </ul>
+     * <p>Ce test distingue un retour {@code null} du DAO
+     * d'un {@code Optional.empty()} valide : ici, le retour {@code null}
+     * est traité comme une anomalie technique de stockage.</p>
      * </div>
      */
-    @Tag(TAG_RECHERCHER)
+    @Tag(TAG_FINDBYID)
     @DisplayName("findById(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByIdDAORetourneNull() {
-    	
+
         /* ARRANGE :
          * configure ici le comportement du DAO mocké avec Mockito.
          *
@@ -3559,18 +3572,13 @@ public class TypeProduitGatewayJPAServiceMockTest {
          *
          * On simule donc volontairement un stockage
          * qui retourne null au lieu d'un Optional<TypeProduitJPA>.
-         *
-         * Le but n'est pas de tester le DAO réel,
-         * mais de maîtriser sa réponse
-         * afin de prouver comment le service réagit
-         * au cas contractuel "DAO retourne null".
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(null);
-        
-        /* ACT - ASSERT */
-        /* Garantit que this.service.findById(ID_1)
-         * - jette une ExceptionTechniqueGateway
-         * - émet exactement le message ERREUR_TECHNIQUE_KO_STOCKAGE.
+
+        /* ACT - ASSERT :
+         * vérifie que le retour null du DAO
+         * n'est pas interprété comme une absence de résultat,
+         * mais comme une anomalie technique de stockage.
          */
         assertThatThrownBy(() -> this.service.findById(ID_1))
             .isInstanceOf(ExceptionTechniqueGateway.class)
@@ -3579,159 +3587,30 @@ public class TypeProduitGatewayJPAServiceMockTest {
         /* Garantit que le DAO mocké a bien été appelé une fois
          * avec le bon identifiant.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+
     } // __________________________________________________________________
     
     
-
+    
     /**
      * <div>
-     * <p>garantit que findById(ID inexistant) :</p>
+     * <p>garantit que findById(KO DAO message non null) :</p>
      * <ul>
-     * <li>délègue la recherche au DAO avec le bon identifiant inexistant</li>
-     * <li>retourne {@code null} si le stockage ne trouve aucun
-     * objet persistant pour cet identifiant sans jeter d'Exception</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(ID inexistant) : délègue au DAO et retourne null")
-    @Test
-    public void testFindByIdInexistant() throws Exception {
-    	
-        /* ARRANGE :
-         * configure ici le comportement du DAO mocké avec Mockito.
-         *
-         * La formule when(...).thenReturn(...) signifie :
-         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-         * avec l'identifiant inexistant ID_INEXISTANT via findById(...),
-         * alors le DAO mocké avec Mockito devra répondre
-         * Optional.empty()".
-         *
-         * On simule donc volontairement un stockage
-         * qui ne trouve aucun TypeProduit persistant
-         * pour cet identifiant inexistant.
-         *
-         * Le but n'est pas de tester le DAO réel,
-         * mais de maîtriser sa réponse
-         * afin de prouver comment le service réagit
-         * au cas contractuel "ID inexistant".
-         */
-        when(this.typeProduitDaoJPA.findById(ID_INEXISTANT))
-            .thenReturn(Optional.empty());
-        
-        /* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
-         * dans les conditions voulues par le Mock (when du ARRANGE).
-         */
-        final TypeProduit resultat = this.service.findById(ID_INEXISTANT);
-        
-        /* ASSERT */
-        /* Garantit que this.service.findById(ID_INEXISTANT)
-         * retourne null
-         * lorsque le stockage ne trouve aucun objet persistant
-         * pour l'identifiant inexistant demandé.
-         */
-        assertThat(resultat).isNull();
-
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * avec le bon identifiant inexistant.
-         */
-        verify(this.typeProduitDaoJPA).findById(ID_INEXISTANT);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>garantit que findById(trouvé) :</p>
-     * <ul>
-     * <li>délègue la recherche au DAO avec le bon identifiant</li>
-     * <li>retourne un objet métier non null</li>
-     * <li>convertit correctement l'identifiant et le libellé
-     * de l'objet persistant trouvé</li>
-     * <li>appelle le DAO une fois</li>
-     * </ul>
-     * </div>
-     *
-     * @throws Exception
-     */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(trouvé) : délègue au DAO et retourne l'objet métier converti")
-    @Test
-    public void testFindByIdTrouve() throws Exception {
-    	
-        /* ARRANGE :
-         * configure ici le comportement du DAO mocké avec Mockito.
-         *
-         * La formule when(...).thenReturn(...) signifie :
-         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
-         * avec l'identifiant ID_1 via findById(...),
-         * alors le DAO mocké avec Mockito devra répondre
-         * Optional.of(...) contenant un TypeProduitJPA persistant
-         * portant l'identifiant ID_1 et le libellé VETEMENT".
-         *
-         * On simule donc volontairement un stockage
-         * qui trouve bien un TypeProduit persistant
-         * pour cet identifiant.
-         *
-         * Le but n'est pas de tester le DAO réel,
-         * mais de maîtriser sa réponse
-         * afin de prouver comment le service réagit
-         * au cas contractuel "trouvé".
-         */
-        when(this.typeProduitDaoJPA.findById(ID_1))
-            .thenReturn(Optional.of(fabriquerTypeProduitJPA(VETEMENT, ID_1)));
-        
-        /* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
-         * dans les conditions voulues par le Mock (when du ARRANGE).
-         */
-        final TypeProduit resultat = this.service.findById(ID_1);
-        
-        /* ASSERT */
-        /* Garantit que this.service.findById(ID_1)
-         * - délègue la recherche au DAO avec l'identifiant ID_1
-         * - retourne un objet métier non null
-         * - convertit correctement l'identifiant et le libellé
-         *   de l'objet persistant trouvé.
-         */
-        assertThat(resultat).isNotNull();
-        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
-        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
-
-        /* Garantit que le DAO mocké a bien été appelé une fois
-         * avec le bon identifiant.
-         */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>garantit que findById(KO DAO message non nul) :</p>
-     * <ul>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
-     * <li>conserve le message technique d'origine du DAO</li>
-     * <li>propage comme cause l'exception technique d'origine</li>
-     * <li>appelle le DAO une fois avec le bon identifiant</li>
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>conserve le message technique d'origine ;</li>
+     * <li>propage l'exception technique cause ;</li>
+     * <li>appelle le DAO une fois avec le bon identifiant.</li>
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(KO DAO message non nul) : jette ExceptionTechniqueGateway et propage la cause")
+    @Tag(TAG_FINDBYID)
+    @DisplayName("findById(KO DAO message non null) - jette ExceptionTechniqueGateway")
     @Test
-    public void testFindByIdExceptionDAO() {
-    	
+    public void testFindByIdDAOExceptionMessageNonNull() {
+
         /* ARRANGE :
          * configure ici le comportement du DAO mocké avec Mockito.
          *
@@ -3739,53 +3618,41 @@ public class TypeProduitGatewayJPAServiceMockTest {
          * "si, pendant le test, le service appelle le DAO mocké avec Mockito
          * avec l'identifiant ID_1 via findById(...),
          * alors le DAO mocké avec Mockito devra lancer
-         * une RuntimeException portant le message MSG_BOOM".
+         * une RuntimeException avec message non null".
          *
          * On simule donc volontairement une panne technique du stockage
          * pendant la recherche par identifiant.
-         *
-         * Le but n'est pas de tester le DAO réel,
-         * mais de maîtriser sa réaction
-         * afin de prouver comment le service réagit
-         * au cas contractuel "KO DAO message non nul".
          */
         final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
-    	
+
         when(this.typeProduitDaoJPA.findById(ID_1))
             .thenThrow(causeDao);
-        
-        /* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
-        /* Exécute une seule fois this.service.findById(ID_1)
+
+        /* ACT :
+         * exécute une seule fois this.service.findById(ID_1)
          * et capture l'exception réellement levée,
          * afin de contrôler ensuite son type, son message et sa cause.
          */
         final Throwable throwable
             = org.assertj.core.api.Assertions.catchThrowable(
                     () -> this.service.findById(ID_1));
-        
-        /* ASSERT */
-        /* Garantit que this.service.findById(ID_1)
-         * - jette une ExceptionTechniqueGateway
-         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-         * - conserve le message technique d'origine MSG_BOOM.
-         */
-        assertThat(throwable)
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(MSG_BOOM);
 
-        /* Garantit que la cause technique d'origine
-         * est bien propagée par l'ExceptionTechniqueGateway.
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
          */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(MSG_BOOM);
         assertThat(throwable.getCause()).isSameAs(causeDao);
 
         /* Garantit que le DAO mocké a bien été appelé une fois
          * avec le bon identifiant.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+
     } // __________________________________________________________________
     
     
@@ -3794,20 +3661,20 @@ public class TypeProduitGatewayJPAServiceMockTest {
      * <div>
      * <p>garantit que findById(KO DAO message null) :</p>
      * <ul>
-     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
-     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
-     * <li>émet un message sûr non nul dérivé de l'exception technique</li>
-     * <li>propage comme cause l'exception technique d'origine</li>
-     * <li>appelle le DAO une fois avec le bon identifiant</li>
+     * {@link TypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique ;</li>
+     * <li>propage l'exception technique cause ;</li>
+     * <li>appelle le DAO une fois avec le bon identifiant.</li>
      * </ul>
      * </div>
      */
-    @Tag(TAG_RECHERCHER)
-    @DisplayName("findById(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non nul")
+    @Tag(TAG_FINDBYID)
+    @DisplayName("findById(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non null")
     @Test
-    public void testFindByIdExceptionDAOMsgNull() {
-    	
+    public void testFindByIdDAOExceptionMessageNull() {
+
         /* ARRANGE :
          * configure ici le comportement du DAO mocké avec Mockito.
          *
@@ -3820,64 +3687,163 @@ public class TypeProduitGatewayJPAServiceMockTest {
          * On simule donc volontairement une panne technique du stockage
          * pendant la recherche par identifiant,
          * avec un message technique d'origine null.
-         *
-         * Le but n'est pas de tester le DAO réel,
-         * mais de maîtriser sa réaction
-         * afin de prouver comment le service réagit
-         * au cas contractuel "KO DAO message null".
          */
         final RuntimeException causeDao = new RuntimeException((String) null);
-    	
+
         when(this.typeProduitDaoJPA.findById(ID_1))
             .thenThrow(causeDao);
-        
-        /* ACT */
-        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
-         * dans les conditions voulues par le Mock (when du ARRANGE). */
-        /* Exécute une seule fois this.service.findById(ID_1)
+
+        /* ACT :
+         * exécute une seule fois this.service.findById(ID_1)
          * et capture l'exception réellement levée,
          * afin de contrôler ensuite son type, son message et sa cause.
          */
         final Throwable throwable
             = org.assertj.core.api.Assertions.catchThrowable(
                     () -> this.service.findById(ID_1));
-        
-        /* ASSERT */
-        /* Garantit que this.service.findById(ID_1)
-         * - jette une ExceptionTechniqueGateway
-         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
-         * - n'émet pas un message null
-         * - utilise un texte sûr dérivé de l'exception technique.
-         *
-         * Ici, avec l'implémentation actuelle de safeMessage(e),
-         * le texte sûr dérivé provient de e.toString().
-         * Pour une RuntimeException sans message,
-         * cela donne au minimum le nom de classe java.lang.RuntimeException.
-         */
-        assertThat(throwable)
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(RuntimeException.class.getName());
 
-        /* Garantit que la cause technique d'origine
-         * est bien propagée par l'ExceptionTechniqueGateway.
+        /* ASSERT :
+         * vérifie l'exception technique observable,
+         * son préfixe contractuel,
+         * le message sûr non null
+         * et la cause propagée.
          */
+        assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(RuntimeException.class.getName());
         assertThat(throwable.getCause()).isSameAs(causeDao);
 
         /* Garantit que le DAO mocké a bien été appelé une fois
          * avec le bon identifiant.
          */
-        verify(this.typeProduitDaoJPA).findById(ID_1);
-        
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que findById(non trouvé) :</p>
+     * <ul>
+     * <li>ne jette aucune exception ;</li>
+     * <li>retourne {@code null}
+     * lorsque le DAO retourne {@code Optional.empty()} ;</li>
+     * <li>appelle le DAO une fois avec le bon identifiant.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_FINDBYID)
+    @DisplayName("findById(non trouvé) : retourne null")
+    @Test
+    public void testFindByIdNonTrouve() throws Exception {
+
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant inexistant ID_INEXISTANT via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre Optional.empty()".
+         *
+         * On simule donc volontairement un stockage
+         * qui ne trouve aucun TypeProduit persistant
+         * pour cet identifiant.
+         */
+        when(this.typeProduitDaoJPA.findById(ID_INEXISTANT))
+            .thenReturn(Optional.empty());
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock.
+         */
+        final TypeProduit resultat = this.service.findById(ID_INEXISTANT);
+
+        /* ASSERT */
+        /* Garantit que this.service.findById(ID_INEXISTANT)
+         * retourne null
+         * lorsque le stockage ne trouve aucun objet persistant
+         * pour l'identifiant demandé.
+         */
+        assertThat(resultat).isNull();
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant.
+         */
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_INEXISTANT);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que findById(nominal) :</p>
+     * <ul>
+     * <li>délègue la recherche au DAO avec le bon identifiant ;</li>
+     * <li>retourne un objet métier non null ;</li>
+     * <li>convertit correctement l'identifiant persistant ;</li>
+     * <li>convertit correctement le libellé persistant ;</li>
+     * <li>appelle le DAO une fois avec le bon identifiant.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_FINDBYID)
+    @DisplayName("findById(nominal) : retourne l'objet métier converti")
+    @Test
+    public void testFindByIdNominal() throws Exception {
+
+        /* ARRANGE :
+         * configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant ID_1 via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre
+         * Optional.of(...) contenant un TypeProduitJPA persistant
+         * portant l'identifiant ID_1 et le libellé VETEMENT".
+         *
+         * On simule donc volontairement un stockage
+         * qui trouve un TypeProduit persistant pour cet identifiant.
+         */
+        when(this.typeProduitDaoJPA.findById(ID_1))
+            .thenReturn(Optional.of(fabriquerTypeProduitJPA(VETEMENT, ID_1)));
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock.
+         */
+        final TypeProduit resultat = this.service.findById(ID_1);
+
+        /* ASSERT */
+        /* Garantit que this.service.findById(ID_1)
+         * - délègue la recherche au DAO avec l'identifiant ID_1 ;
+         * - retourne un objet métier non null ;
+         * - convertit correctement l'identifiant et le libellé
+         *   de l'objet persistant trouvé.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdTypeProduit()).isEqualTo(ID_1);
+        assertThat(resultat.getTypeProduit()).isEqualTo(VETEMENT);
+
+        /* Garantit que le DAO mocké a bien été appelé une fois
+         * avec le bon identifiant.
+         */
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+
     } // __________________________________________________________________
     
     
 
     // ============================= update ===============================
-    
-    
 
-    /**
+
+    
+	/**
      * <div>
      * <p>garantit que update(paramètre null) :</p>
      * <ul>
