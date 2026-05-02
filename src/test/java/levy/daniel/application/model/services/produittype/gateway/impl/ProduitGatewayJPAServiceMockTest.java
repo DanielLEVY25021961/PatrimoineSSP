@@ -12,7 +12,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -6395,566 +6394,1232 @@ public class ProduitGatewayJPAServiceMockTest {
 
     
     // ============================= update ===============================
-    
-    
-    
-    /**
-     * <div>
-     * <p>update(null) lève ExceptionAppliParamNull.</p>
-     * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(null) - ExceptionAppliParamNull")
-    @Test
-    public void testUpdateNullExceptionAppliParamNull() {
-    	
-        assertThatThrownBy(() -> this.service.update(null))
-            .isInstanceOf(ExceptionAppliParamNull.class)
-            .hasMessage(MSG_UPDATE_KO_PARAM_NULL);
-        
-        verifyNoInteractions(this.produitDaoJPA);
-        verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>update(libellé blank) lève ExceptionAppliLibelleBlank.</p>
-     * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(blank) - ExceptionAppliLibelleBlank")
-    @Test
-    public void testUpdateBlankExceptionAppliLibelleBlank() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(BLANK);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(1L);
-
-        assertThatThrownBy(() -> this.service.update(p))
-            .isInstanceOf(ExceptionAppliLibelleBlank.class)
-            .hasMessage(MSG_UPDATE_KO_LIBELLE_BLANK);
-        
-        verifyNoInteractions(this.produitDaoJPA);
-        verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(id null) lève ExceptionAppliParamNonPersistent.</p>
-     * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(id null) - ExceptionAppliParamNonPersistent")
-    @Test
-    public void testUpdateIdNullExceptionAppliParamNonPersistent() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(null);
-
-        assertThatThrownBy(() -> this.service.update(p))
-            .isInstanceOf(ExceptionAppliParamNonPersistent.class)
-            .hasMessage(MSG_UPDATE_PREFIX_NON_PERSISTENT + CHEMISE_ML_HOMME);
-        
-        verifyNoInteractions(this.produitDaoJPA);
-        verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(parent null) lève ExceptionAppliParentNull.</p>
-     * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(parent null) - ExceptionAppliParentNull")
-    @Test
-    public void testUpdateParentNullExceptionAppliParentNull() {
-    	
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(null);
-        p.setIdProduit(1L);
-
-        assertThatThrownBy(() -> this.service.update(p))
-            .isInstanceOf(ExceptionAppliParentNull.class)
-            .hasMessage(MSG_UPDATE_KO_PARENT_NULL);
-        
-        verifyNoInteractions(this.produitDaoJPA);
-        verifyNoInteractions(this.sousTypeProduitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(parent non persistant) lève ExceptionTechniqueGatewayNonPersistent.</p>
-     * </div>
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(parent non persistant) - ExceptionTechniqueGatewayNonPersistent")
-    @Test
-    public void testUpdateParentNonPersistantExceptionTechniqueGatewayNonPersistent() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(1L);
-
-        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> this.service.update(p))
-            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
-            .hasMessage("Anomalie applicative - le parent de l'objet que vous voulez modifier n'existe pas déjà dans le stockage : vêtement pour homme");
-        
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-        verifyNoInteractions(this.produitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(id inconnu) retourne null.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(id inconnu) - retourne null")
-    @Test
-    public void testUpdateIdInconnuRetourneNull() throws Exception {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(99L);
-
-        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-        when(this.produitDaoJPA.findById(99L)).thenReturn(Optional.empty());
-
-        final Produit retour = this.service.update(p);
-
-        assertThat(retour).isNull();
-        
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-        verify(this.produitDaoJPA, times(1)).findById(99L);
-        verifyNoMoreInteractions(this.produitDaoJPA);
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(sans modification) retourne l'objet inchangé.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(sans modification) - objet inchangé")
-    @Test
-    public void testUpdateSansModificationOk() throws Exception {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-
-        final Produit aModifier = new Produit();
-        aModifier.setProduit(SWEAT_HOMME);
-        aModifier.setSousTypeProduit(parent);
-        aModifier.setIdProduit(30L);
-
-        final ProduitJPA persisteJPA = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_HOMME);
-        persisteJPA.setIdProduit(30L);
-
-        when(this.sousTypeProduitDaoJPA.findById(1L))
-            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-        when(this.produitDaoJPA.findById(30L)).thenReturn(Optional.of(persisteJPA));
-
-        final Produit retour = this.service.update(aModifier);
-
-        assertThat(retour).isNotNull();
-        assertThat(retour.getIdProduit()).isEqualTo(30L);
-        
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-        verify(this.produitDaoJPA, times(1)).findById(30L);
-        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(modif libellé) sauvegarde l'objet modifié.</p>
-     * </div>
-     * @throws Exception
-     */
-    @Tag(TAG_UPDATE)
-    @DisplayName("update(modif libellé) - sauvegarde l'objet modifié")
-    @Test
-    public void testUpdateAvecModificationLibelleOk() throws Exception {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-
-        final Produit aModifier = new Produit();
-        aModifier.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
-        aModifier.setSousTypeProduit(parent);
-        aModifier.setIdProduit(31L);
-
-        final ProduitJPA persisteJPA = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        persisteJPA.setIdProduit(31L);
-
-        when(this.sousTypeProduitDaoJPA.findById(1L))
-            .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-        when(this.produitDaoJPA.findById(31L)).thenReturn(Optional.of(persisteJPA));
-
-        final ProduitJPA sauveJPA = this.fabriquerProduitJPA(CHEMISE_ML_HOMME + SUFFIX_MODIF, VETEMENT_HOMME);
-        sauveJPA.setIdProduit(31L);
-
-        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(sauveJPA);
-
-        final Produit retour = this.service.update(aModifier);
-
-        assertThat(retour).isNotNull();
-        assertThat(retour.getIdProduit()).isEqualTo(31L);
-        assertThat(retour.getProduit()).isEqualTo(CHEMISE_ML_HOMME + SUFFIX_MODIF);
-        
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-        verify(this.produitDaoJPA, times(1)).findById(31L);
-        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
-        
-    } // __________________________________________________________________
-    
-    
-
-    /**
-     * <div>
-     * <p>update(modif parent) sauvegarde l'objet modifié.</p>
-     * <p>Scénarios couverts :</p>
+     * <p>garantit que update(null) :</p>
      * <ul>
-     *   <li>Modification du parent d'un produit (vêtement pour homme → vêtement pour femme).</li>
-     *   <li>Vérification que le nouveau parent est bien persistant.</li>
-     *   <li>Vérification que le produit est bien sauvegardé avec le nouveau parent.</li>
+     * <li>jette une {@link ExceptionAppliParamNull}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_PARAM_NULL}</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(modif parent) - sauvegarde l'objet modifié")
+    @DisplayName("update(null) : jette ExceptionAppliParamNull et n'appelle pas les DAO")
     @Test
-    public void testUpdateAvecModificationParentOk() throws Exception {
-    	
-        // --- 1. DONNÉES ---
-        // Parent initial : vêtement pour homme (ID=1L)
-        final SousTypeProduitI parentHomme = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        // Nouveau parent : vêtement pour femme (ID=2L)
-        final SousTypeProduitI parentFemme = new SousTypeProduit();
-        parentFemme.setIdSousTypeProduit(2L);
-        parentFemme.setSousTypeProduit(VETEMENT_FEMME);
-        final TypeProduit typeProduitFemme = new TypeProduit();
-        typeProduitFemme.setIdTypeProduit(1L);
-        typeProduitFemme.setTypeProduit(VETEMENT);
-        parentFemme.setTypeProduit(typeProduitFemme);
+    public void testUpdateNull() {
 
-        final Produit aModifier = new Produit();
-        aModifier.setProduit(SWEAT_HOMME);
-        aModifier.setSousTypeProduit(parentFemme);  // Nouveau parent
-        aModifier.setIdProduit(40L);
+        /* ARRANGE - ACT - ASSERT */
+        /* Garantit que this.service.update(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet un message MSG_UPDATE_KO_PARAM_NULL.
+         */
+        assertThatThrownBy(() -> this.service.update(null))
+            .isInstanceOf(ExceptionAppliParamNull.class)
+            .hasMessage(MSG_UPDATE_KO_PARAM_NULL);
 
-        // --- 2. MOCKS ---
-        // Vérification de la persistance du NOUVEAU parent (ID=2L)
-        final SousTypeProduitJPA parentFemmeJPA = new SousTypeProduitJPA();
-        parentFemmeJPA.setIdSousTypeProduit(2L);
-        parentFemmeJPA.setSousTypeProduit(VETEMENT_FEMME);
-        final TypeProduitJPA typeProduitFemmeJPA = new TypeProduitJPA();
-        typeProduitFemmeJPA.setIdTypeProduit(1L);
-        typeProduitFemmeJPA.setTypeProduit(VETEMENT);
-        parentFemmeJPA.setTypeProduit(typeProduitFemmeJPA);
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA, this.produitDaoJPA);
 
-        when(this.sousTypeProduitDaoJPA.findById(2L))
-            .thenReturn(Optional.of(parentFemmeJPA));  // Nouveau parent persistant
-
-        // Produit existant en base avec l'ANCIEN parent (ID=1L)
-        final ProduitJPA persisteJPA = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_HOMME);
-        persisteJPA.setIdProduit(40L);
-        when(this.produitDaoJPA.findById(40L)).thenReturn(Optional.of(persisteJPA));
-
-        // Produit sauvegardé avec le NOUVEAU parent
-        final ProduitJPA sauveJPA = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_FEMME);
-        sauveJPA.setIdProduit(40L);
-        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(sauveJPA);
-
-        // --- 3. EXÉCUTION ---
-        final Produit retour = this.service.update(aModifier);
-
-        // --- 4. VÉRIFICATIONS ---
-        assertThat(retour).isNotNull();
-        assertThat(retour.getIdProduit()).isEqualTo(40L);
-        assertThat(retour.getProduit()).isEqualTo(SWEAT_HOMME);
-        assertThat(retour.getSousTypeProduit().getSousTypeProduit()).isEqualTo(VETEMENT_FEMME);
-
-        // Vérification que seul le NOUVEAU parent (ID=2L) a été vérifié
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(2L);
-        verify(this.sousTypeProduitDaoJPA, never()).findById(1L);  // Ancien parent non vérifié
-        verify(this.produitDaoJPA, times(1)).findById(40L);
-        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
-        
     } // __________________________________________________________________
-    
-    
+
+
 
     /**
      * <div>
-     * <p>update(DAO save jette Exception) lève ExceptionTechniqueGateway.</p>
+     * <p>garantit que update(libellé null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK}</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_UPDATE)
-    @DisplayName("update(DAO save jette Exception) - ExceptionTechniqueGateway")
+    @DisplayName("update(libellé null) : jette ExceptionAppliLibelleBlank et n'appelle pas les DAO")
     @Test
-    public void testUpdateDAOSaveJetteExceptionTechniqueGateway() {
-    	
-        final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit aModifier = new Produit();
-        aModifier.setProduit(CHEMISE_MC_HOMME + SUFFIX_MODIF);
-        aModifier.setSousTypeProduit(parent);
-        aModifier.setIdProduit(50L);
+    public void testUpdateLibelleNull() {
 
-        final ProduitJPA persisteJPA = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
-        persisteJPA.setIdProduit(50L);
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(null, 1L, parent);
 
-        when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-        when(this.produitDaoJPA.findById(50L)).thenReturn(Optional.of(persisteJPA));
-        when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenThrow(new RuntimeException(BOOM));
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet un message MSG_UPDATE_KO_LIBELLE_BLANK.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(MSG_UPDATE_KO_LIBELLE_BLANK);
 
-        assertThatThrownBy(() -> this.service.update(aModifier))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        
-        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-        verify(this.produitDaoJPA, times(1)).findById(50L);
-        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
-        
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA, this.produitDaoJPA);
+
     } // __________________________________________________________________
-    
 
-    
+
+
     /**
-	 * <div>
-	 * <p>Test béton : vérifie que la méthode update() gère correctement
-	 * un parent modifié avec un libellé en majuscules/minuscules différentes.</p>
-	 * </div>
-	 */
-	@Tag(TAG_UPDATE)
-	@DisplayName("update(parent modifié case-sensitive) - OK")
-	@Test
-	public void testUpdateParentLibelleCaseSensitiveOk() throws Exception {
-		
-	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME.toUpperCase(LOCALE_DEFAUT));
-	
-	    final Produit aModifier = new Produit();
-	    aModifier.setProduit(SWEAT_HOMME);
-	    aModifier.setSousTypeProduit(parent);
-	    aModifier.setIdProduit(30L);
-	
-	    final ProduitJPA persisteJPA = this.fabriquerProduitJPA(SWEAT_HOMME, VETEMENT_HOMME);
-	    persisteJPA.setIdProduit(30L);
-	
-	    when(this.sousTypeProduitDaoJPA.findById(1L))
-	        .thenReturn(Optional.of(this.fabriquerParentJPAPersistant(VETEMENT_HOMME)));
-	    when(this.produitDaoJPA.findById(30L)).thenReturn(Optional.of(persisteJPA));
-	
-	    final Produit retour = this.service.update(aModifier);
-	
-	    assertThat(retour).isNotNull();
-	    assertThat(retour.getIdProduit()).isEqualTo(30L);
-	    
-	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-	    verify(this.produitDaoJPA, times(1)).findById(30L);
-	    verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
-	    
-	} // __________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>update(parent libellé blank) lève ExceptionAppliLibelleBlank.</p>
-	 * </div>
-	 */
-	@Tag(TAG_UPDATE)
-	@DisplayName("update(parent libellé blank) - ExceptionAppliLibelleBlank")
-	@Test
-	public void testUpdateParentLibelleBlankExceptionAppliLibelleBlank() {
+     * <div>
+     * <p>garantit que update(libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_BLANK}</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(libellé blank) : jette ExceptionAppliLibelleBlank et n'appelle pas les DAO")
+    @Test
+    public void testUpdateLibelleBlank() {
 
-	    final SousTypeProduitI parent = new SousTypeProduit();
-	    parent.setIdSousTypeProduit(1L);
-	    parent.setSousTypeProduit(BLANK);
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(BLANK, 1L, parent);
 
-	    final Produit p = new Produit();
-	    p.setProduit(CHEMISE_ML_HOMME);
-	    p.setSousTypeProduit(parent);
-	    p.setIdProduit(1L);
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet un message MSG_UPDATE_KO_LIBELLE_BLANK.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(MSG_UPDATE_KO_LIBELLE_BLANK);
 
-	    assertThatThrownBy(() -> this.service.update(p))
-	        .isInstanceOf(ExceptionAppliLibelleBlank.class)
-	        .hasMessage(ProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK);
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA, this.produitDaoJPA);
 
-	    verifyNoInteractions(this.produitDaoJPA);
-	    verifyNoInteractions(this.sousTypeProduitDaoJPA);
-
-	} // __________________________________________________________________
+    } // __________________________________________________________________
 
 
 
-	/**
-	 * <div>
-	 * <p>update(parent id null) lève ExceptionTechniqueGatewayNonPersistent.</p>
-	 * </div>
-	 */
-	@Tag(TAG_UPDATE)
-	@DisplayName("update(parent id null) - ExceptionTechniqueGatewayNonPersistent")
-	@Test
-	public void testUpdateParentIdNullExceptionTechniqueGatewayNonPersistent() {
+    /**
+     * <div>
+     * <p>garantit que update(ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNonPersistent}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_NON_PERSISTENT}
+     * suivi du libellé de l'objet métier</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(ID null) : jette ExceptionAppliParamNonPersistent et n'appelle pas les DAO")
+    @Test
+    public void testUpdateIdNull() {
 
-	    final SousTypeProduitI parent = new SousTypeProduit();
-	    parent.setIdSousTypeProduit(null);
-	    parent.setSousTypeProduit(VETEMENT_HOMME);
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, null, parent);
 
-	    final Produit p = new Produit();
-	    p.setProduit(CHEMISE_ML_HOMME);
-	    p.setSousTypeProduit(parent);
-	    p.setIdProduit(1L);
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionAppliParamNonPersistent
+         * - émet un message MSG_UPDATE_PREFIX_NON_PERSISTENT
+         *   suivi du libellé de l'objet métier.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionAppliParamNonPersistent.class)
+            .hasMessage(MSG_UPDATE_PREFIX_NON_PERSISTENT
+                    + safeMessage(CHEMISE_ML_HOMME));
 
-	    assertThatThrownBy(() -> this.service.update(p))
-	        .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
-	        .hasMessage(ProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT + VETEMENT_HOMME);
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA, this.produitDaoJPA);
 
-	    verifyNoInteractions(this.produitDaoJPA);
-	    verifyNoInteractions(this.sousTypeProduitDaoJPA);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>update(DAO.findById retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
-	 * </div>
-	 */
-	@Tag(TAG_UPDATE)
-	@DisplayName("update(DAO findById null) - ExceptionTechniqueGateway KO_STOCKAGE")
-	@Test
-	public void testUpdateDAOFindByIdNullExceptionTechniqueGateway() {
-
-	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-
-	    final Produit p = new Produit();
-	    p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
-	    p.setSousTypeProduit(parent);
-	    p.setIdProduit(1L);
-
-	    final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
-	    when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
-
-	    when(this.produitDaoJPA.findById(1L)).thenReturn(null);
-
-	    assertThatThrownBy(() -> this.service.update(p))
-	        .isInstanceOf(ExceptionTechniqueGateway.class)
-	        .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
-
-	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-	    verify(this.produitDaoJPA, times(1)).findById(1L);
-	    verify(this.produitDaoJPA, times(0)).save(any(ProduitJPA.class));
-
-	} // __________________________________________________________________
+    } // __________________________________________________________________
 
 
 
-	/**
-	 * <div>
-	 * <p>update(DAO.save retourne null) lève ExceptionTechniqueGateway KO_STOCKAGE.</p>
-	 * </div>
-	 */
-	@Tag(TAG_UPDATE)
-	@DisplayName("update(DAO save null) - ExceptionTechniqueGateway KO_STOCKAGE")
-	@Test
-	public void testUpdateDAOSaveNullExceptionTechniqueGateway() throws Exception {
+    /**
+     * <div>
+     * <p>garantit que update(parent null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParentNull}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_PARENT_NULL}</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent null) : jette ExceptionAppliParentNull et n'appelle pas les DAO")
+    @Test
+    public void testUpdateParentNull() {
 
-	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        /* ARRANGE */
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, null);
 
-	    final Produit p = new Produit();
-	    p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
-	    p.setSousTypeProduit(parent);
-	    p.setIdProduit(1L);
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionAppliParentNull
+         * - émet un message MSG_UPDATE_KO_PARENT_NULL.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionAppliParentNull.class)
+            .hasMessage(MSG_UPDATE_KO_PARENT_NULL);
 
-	    final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
-	    when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA, this.produitDaoJPA);
 
-	    final ProduitJPA persiste = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-	    persiste.setIdProduit(1L);
-	    when(this.produitDaoJPA.findById(1L)).thenReturn(Optional.of(persiste));
+    } // __________________________________________________________________
 
-	    when(this.produitDaoJPA.save(any(ProduitJPA.class))).thenReturn(null);
 
-	    assertThatThrownBy(() -> this.service.update(p))
-	        .isInstanceOf(ExceptionTechniqueGateway.class)
-	        .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
 
-	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-	    verify(this.produitDaoJPA, times(1)).findById(1L);
-	    verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+    /**
+     * <div>
+     * <p>garantit que update(parent libellé blank) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliLibelleBlank}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK}</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent libellé blank) : jette ExceptionAppliLibelleBlank et n'appelle pas les DAO")
+    @Test
+    public void testUpdateParentLibelleBlank() {
 
-	} // __________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>update(DAO.findById jette Exception) wrap 
-	 * en ExceptionTechniqueGateway.</p>
-	 * </div>
-	 */
-	@Tag(TAG_UPDATE)
-	@DisplayName("update(DAO findById jette Exception) - ExceptionTechniqueGateway (wrap)")
-	@Test
-	public void testUpdateDAOFindByIdJetteExceptionTechniqueGateway() {
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(BLANK);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
 
-	    final SousTypeProduitI parent = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionAppliLibelleBlank
+         * - émet le message contractuel du port
+         *   pour un libellé parent blank.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionAppliLibelleBlank.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_UPDATE_KO_LIBELLE_PARENT_BLANK);
 
-	    final Produit p = new Produit();
-	    p.setProduit(CHEMISE_ML_HOMME + SUFFIX_MODIF);
-	    p.setSousTypeProduit(parent);
-	    p.setIdProduit(1L);
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA, this.produitDaoJPA);
 
-	    final SousTypeProduitJPA parentJPA = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
-	    when(this.sousTypeProduitDaoJPA.findById(1L)).thenReturn(Optional.of(parentJPA));
+    } // __________________________________________________________________
 
-	    when(this.produitDaoJPA.findById(1L)).thenThrow(new RuntimeException(BOOM));
 
-	    assertThatThrownBy(() -> this.service.update(p))
-	        .isInstanceOf(ExceptionTechniqueGateway.class)
-	        .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH)
-	        .hasMessageContaining(BOOM);
 
-	    verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
-	    verify(this.produitDaoJPA, times(1)).findById(1L);
-	    verify(this.produitDaoJPA, times(0)).save(any(ProduitJPA.class));
+    /**
+     * <div>
+     * <p>garantit que update(parent ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT}
+     * suivi du libellé du parent</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent ID null) : jette ExceptionTechniqueGatewayNonPersistent et n'appelle pas les DAO")
+    @Test
+    public void testUpdateParentIdNull() {
 
-	} // __________________________________________________________________
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        parent.setIdSousTypeProduit(null);
+
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet un message MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+         *   suivi du libellé parent.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+                    + VETEMENT_HOMME);
+
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA, this.produitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(parent absent du stockage) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGatewayNonPersistent}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT}
+     * suivi du libellé du parent</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>n'appelle pas le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent absent du stockage) : jette ExceptionTechniqueGatewayNonPersistent")
+    @Test
+    public void testUpdateParentAbsent() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        /* Simule un parent absent du stockage. */
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.empty());
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGatewayNonPersistent
+         * - émet un message MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+         *   suivi du libellé parent.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionTechniqueGatewayNonPersistent.class)
+            .hasMessage(ProduitGatewayIService.MESSAGE_UPDATE_KO_PARENT_NON_PERSISTENT
+                    + VETEMENT_HOMME);
+
+        /* Garantit que le DAO parent a bien été appelé une fois. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit que l'absence du parent arrête le traitement
+         * avant tout accès au DAO objet métier.
+         */
+        verifyNoInteractions(this.produitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO parent message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>n'appelle pas le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO parent message non null) : jette ExceptionTechniqueGateway et propage la cause")
+    @Test
+    public void testUpdateParentDAOExceptionMessageNonNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final RuntimeException causeDao = new RuntimeException(BOOM);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.update(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - conserve le message technique d'origine BOOM
+         * - propage la cause DAO.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO parent a bien été appelé une fois. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit que l'échec technique du DAO parent
+         * arrête le traitement avant tout accès au DAO objet métier.
+         */
+        verifyNoInteractions(this.produitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO parent message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>n'appelle pas le DAO objet métier</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO parent message null) : jette ExceptionTechniqueGateway avec message sûr non null")
+    @Test
+    public void testUpdateParentDAOExceptionMessageNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.update(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message sûr non null
+         * - propage la cause DAO.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO parent a bien été appelé une fois. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit que l'échec technique du DAO parent
+         * arrête le traitement avant tout accès au DAO objet métier.
+         */
+        verifyNoInteractions(this.produitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(DAO.findById(...) objet métier retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(DAO.findById(...) objet métier retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testUpdateDAOFindByIdRetourneNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+
+        /* Simule un stockage qui retourne null au lieu
+         * d'un Optional<ProduitJPA>.
+         */
+        when(this.produitDaoJPA.findById(1L)).thenReturn(null);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message ERREUR_TECHNIQUE_KO_STOCKAGE.
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée. */
+        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(objet métier absent du stockage) :</p>
+     * <ul>
+     * <li>retourne {@code null}</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(objet métier absent du stockage) : retourne null et ne sauvegarde pas")
+    @Test
+    public void testUpdateAbsent() throws Exception {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+
+        /* Simule un stockage qui ne trouve aucun objet métier
+         * à modifier pour l'identifiant demandé.
+         */
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.empty());
+
+        /* ACT */
+        final Produit resultat = this.service.update(p);
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * retourne null lorsque l'objet métier est absent du stockage.
+         */
+        assertThat(resultat).isNull();
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée. */
+        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO objet métier findById message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO objet métier findById message non null) : jette ExceptionTechniqueGateway et propage la cause")
+    @Test
+    public void testUpdateDAOFindByIdExceptionMessageNonNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+        final RuntimeException causeDao = new RuntimeException(BOOM);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.update(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - conserve le message technique d'origine BOOM
+         * - propage la cause DAO.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée. */
+        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO objet métier findById message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO objet métier findById message null) : jette ExceptionTechniqueGateway avec message sûr non null")
+    @Test
+    public void testUpdateDAOFindByIdExceptionMessageNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.update(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message sûr non null
+         * - propage la cause DAO.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée. */
+        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(DAO.save(...) retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de sauvegarde via {@code save(...)}</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(DAO.save(...) retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @Test
+    public void testUpdateDAOSaveRetourneNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(
+                    CHEMISE_ML_HOMME + SUFFIX_MODIF, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+        when(this.produitDaoJPA.save(any(ProduitJPA.class)))
+            .thenReturn(null);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message ERREUR_TECHNIQUE_KO_STOCKAGE
+         *   lorsque le stockage retourne null sur save(...).
+         */
+        assertThatThrownBy(() -> this.service.update(p))
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO sur save message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de sauvegarde via {@code save(...)}</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO sur save message non null) : jette ExceptionTechniqueGateway et propage la cause")
+    @Test
+    public void testUpdateDAOSaveExceptionMessageNonNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(
+                    CHEMISE_ML_HOMME + SUFFIX_MODIF, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        final RuntimeException causeDao = new RuntimeException(BOOM);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+        when(this.produitDaoJPA.save(any(ProduitJPA.class)))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.update(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - conserve le message technique d'origine BOOM
+         * - propage la cause DAO.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(KO DAO sur save message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de sauvegarde via {@code save(...)}</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(KO DAO sur save message null) : jette ExceptionTechniqueGateway avec message sûr non null")
+    @Test
+    public void testUpdateDAOSaveExceptionMessageNull() {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(
+                    CHEMISE_ML_HOMME + SUFFIX_MODIF, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+        when(this.produitDaoJPA.save(any(ProduitJPA.class)))
+            .thenThrow(causeDao);
+
+        /* ACT */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.update(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message sûr non null
+         * - propage la cause DAO.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(sans modification) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>retourne l'objet persistant inchangé</li>
+     * <li>appelle le DAO parent une fois via {@code findById(...)}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(sans modification) : retourne l'objet persistant inchangé sans save()")
+    @Test
+    public void testUpdateSansModification() throws Exception {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+
+        /* ACT */
+        final Produit resultat = this.service.update(p);
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * retourne l'objet persistant inchangé.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdProduit()).isEqualTo(1L);
+        assertThat(resultat.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(resultat.getSousTypeProduit()).isNotNull();
+        assertThat(resultat.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(1L);
+        assertThat(resultat.getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_HOMME);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée. */
+        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(parent avec différence de casse seulement) :</p>
+     * <ul>
+     * <li>retourne un objet métier non null</li>
+     * <li>retourne le libellé objet métier attendu</li>
+     * <li>retourne le libellé parent réellement persistant</li>
+     * <li>ne déclenche aucune sauvegarde</li>
+     * </ul>
+     * <p>Ce test est didactique : il documente que le parent est comparé
+     * par identifiant et que le libellé réellement retourné est celui
+     * du parent persistant.</p>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent avec différence de casse seulement) : ne déclenche pas de save()")
+    @Test
+    public void testUpdateParentLibelleCaseSensitive() throws Exception {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(
+                    VETEMENT_HOMME.toUpperCase(Locale.ROOT));
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+
+        /* ACT */
+        final Produit resultat = this.service.update(p);
+
+        /* ASSERT */
+        /* Garantit que la différence de casse du libellé parent demandé
+         * ne déclenche pas de sauvegarde lorsque l'identifiant parent
+         * reste le même.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(resultat.getSousTypeProduit()).isNotNull();
+        assertThat(resultat.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(1L);
+        assertThat(resultat.getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_HOMME);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit qu'aucune sauvegarde n'a été déclenchée. */
+        verify(this.produitDaoJPA, never()).save(any(ProduitJPA.class));
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(modification de casse) :</p>
+     * <ul>
+     * <li>effectue une modification dans le stockage</li>
+     * <li>retourne l'objet persistant modifié</li>
+     * <li>préserve exactement la casse du nouveau libellé objet métier</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(modification de casse) : sauvegarde et préserve exactement la casse du nouveau libellé")
+    @Test
+    public void testUpdateModificationCasse() throws Exception {
+
+        /* ARRANGE */
+        final String nouveauLibelle
+            = CHEMISE_ML_HOMME.toUpperCase(Locale.ROOT);
+
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(nouveauLibelle, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        final ProduitJPA sauvegarde
+            = this.fabriquerProduitJPA(nouveauLibelle, VETEMENT_HOMME);
+        sauvegarde.setIdProduit(1L);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+        when(this.produitDaoJPA.save(any(ProduitJPA.class)))
+            .thenReturn(sauvegarde);
+
+        /* ACT */
+        final Produit resultat = this.service.update(p);
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * retourne l'objet persistant modifié
+         * en préservant exactement la casse demandée.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdProduit()).isEqualTo(1L);
+        assertThat(resultat.getProduit()).isEqualTo(nouveauLibelle);
+        assertThat(resultat.getSousTypeProduit()).isNotNull();
+        assertThat(resultat.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(1L);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit ce qui est envoyé au stockage. */
+        final ArgumentCaptor<ProduitJPA> captor
+            = ArgumentCaptor.forClass(ProduitJPA.class);
+        verify(this.produitDaoJPA, times(1)).save(captor.capture());
+        assertThat(captor.getValue().getIdProduit()).isEqualTo(1L);
+        assertThat(captor.getValue().getProduit()).isEqualTo(nouveauLibelle);
+        assertThat(captor.getValue().getSousTypeProduit()).isNotNull();
+        assertThat(captor.getValue().getSousTypeProduit().getIdSousTypeProduit())
+            .isEqualTo(1L);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(parent modifié) :</p>
+     * <ul>
+     * <li>effectue une modification dans le stockage ;</li>
+     * <li>retourne l'objet persistant modifié ;</li>
+     * <li>retourne le nouveau parent attendu ;</li>
+     * <li>appelle les DAO parent et objet métier.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(parent modifié) : sauvegarde dans le stockage et retourne le nouveau parent")
+    @Test
+    public void testUpdateParentModifie() throws Exception {
+
+        /* ARRANGE */
+        final SousTypeProduit parentNouveau
+            = this.fabriquerParentMetierPersistant(VETEMENT_FEMME);
+        parentNouveau.setIdSousTypeProduit(2L);
+
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, 1L, parentNouveau);
+
+        final SousTypeProduitJPA parentJPA2
+            = this.fabriquerParentJPAPersistant(VETEMENT_FEMME);
+        parentJPA2.setIdSousTypeProduit(2L);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        final ProduitJPA sauvegarde
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_FEMME);
+        sauvegarde.setIdProduit(1L);
+        sauvegarde.setSousTypeProduit(parentJPA2);
+
+        when(this.sousTypeProduitDaoJPA.findById(2L))
+            .thenReturn(Optional.of(parentJPA2));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+        when(this.produitDaoJPA.save(any(ProduitJPA.class)))
+            .thenReturn(sauvegarde);
+
+        /* ACT */
+        final Produit resultat = this.service.update(p);
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * retourne l'objet persistant modifié
+         * avec le nouveau parent demandé.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdProduit()).isEqualTo(1L);
+        assertThat(resultat.getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(resultat.getSousTypeProduit()).isNotNull();
+        assertThat(resultat.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(2L);
+        assertThat(resultat.getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_FEMME);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(2L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit ce qui est envoyé au stockage. */
+        final ArgumentCaptor<ProduitJPA> captor
+            = ArgumentCaptor.forClass(ProduitJPA.class);
+        verify(this.produitDaoJPA, times(1)).save(captor.capture());
+        assertThat(captor.getValue().getIdProduit()).isEqualTo(1L);
+        assertThat(captor.getValue().getProduit()).isEqualTo(CHEMISE_ML_HOMME);
+        assertThat(captor.getValue().getSousTypeProduit()).isNotNull();
+        assertThat(captor.getValue().getSousTypeProduit().getIdSousTypeProduit())
+            .isEqualTo(2L);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que update(OK) :</p>
+     * <ul>
+     * <li>charge le parent persistant via le DAO parent</li>
+     * <li>charge l'objet persistant courant via le DAO objet métier</li>
+     * <li>déclenche une modification dans le stockage via {@code save(...)}</li>
+     * <li>retourne l'objet persistant modifié</li>
+     * <li>conserve le même identifiant</li>
+     * <li>applique le nouveau libellé demandé</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_UPDATE)
+    @DisplayName("update(OK) : sauvegarde dans le stockage et retourne l'objet persistant modifié")
+    @Test
+    public void testUpdateNominal() throws Exception {
+
+        /* ARRANGE */
+        final SousTypeProduit parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+        final Produit p
+            = this.fabriquerProduitMetier(CHEMISE_MC_HOMME, 1L, parent);
+
+        final SousTypeProduitJPA parentJPA
+            = this.fabriquerParentJPAPersistant(VETEMENT_HOMME);
+
+        final ProduitJPA persiste
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        persiste.setIdProduit(1L);
+
+        final ProduitJPA sauvegarde
+            = this.fabriquerProduitJPA(CHEMISE_MC_HOMME, VETEMENT_HOMME);
+        sauvegarde.setIdProduit(1L);
+
+        when(this.sousTypeProduitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(parentJPA));
+        when(this.produitDaoJPA.findById(1L))
+            .thenReturn(Optional.of(persiste));
+        when(this.produitDaoJPA.save(any(ProduitJPA.class)))
+            .thenReturn(sauvegarde);
+
+        /* ACT */
+        final Produit resultat = this.service.update(p);
+
+        /* ASSERT */
+        /* Garantit que this.service.update(p)
+         * retourne l'objet persistant modifié
+         * avec le nouveau libellé demandé.
+         */
+        assertThat(resultat).isNotNull();
+        assertThat(resultat.getIdProduit()).isEqualTo(1L);
+        assertThat(resultat.getProduit()).isEqualTo(CHEMISE_MC_HOMME);
+        assertThat(resultat.getSousTypeProduit()).isNotNull();
+        assertThat(resultat.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(1L);
+        assertThat(resultat.getSousTypeProduit().getSousTypeProduit())
+            .isEqualTo(VETEMENT_HOMME);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.sousTypeProduitDaoJPA, times(1)).findById(1L);
+        verify(this.produitDaoJPA, times(1)).findById(1L);
+
+        /* Garantit ce qui est envoyé au stockage. */
+        final ArgumentCaptor<ProduitJPA> captor
+            = ArgumentCaptor.forClass(ProduitJPA.class);
+        verify(this.produitDaoJPA, times(1)).save(captor.capture());
+        assertThat(captor.getValue().getIdProduit()).isEqualTo(1L);
+        assertThat(captor.getValue().getProduit()).isEqualTo(CHEMISE_MC_HOMME);
+        assertThat(captor.getValue().getSousTypeProduit()).isNotNull();
+        assertThat(captor.getValue().getSousTypeProduit().getIdSousTypeProduit())
+            .isEqualTo(1L);
+
+    } // __________________________________________________________________
     
 
     
@@ -6964,259 +7629,812 @@ public class ProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>delete(null) lève ExceptionAppliParamNull.</p>
+     * <p>garantit que delete(null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNull}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_DELETE_KO_PARAM_NULL}</li>
+     * <li>n'appelle ni le DAO objet métier ni le DAO parent</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(null) - ExceptionAppliParamNull")
+    @DisplayName("delete(null) : jette ExceptionAppliParamNull et n'appelle pas les DAO")
     @Test
-    public void testDeleteNullExceptionAppliParamNull() {
+    public void testDeleteNull() {
 
+        /* ARRANGE - ACT - ASSERT */
+        /* Garantit que this.service.delete(null)
+         * - jette une ExceptionAppliParamNull
+         * - émet un message MSG_DELETE_KO_PARAM_NULL.
+         */
         assertThatThrownBy(() -> this.service.delete(null))
             .isInstanceOf(ExceptionAppliParamNull.class)
             .hasMessage(MSG_DELETE_KO_PARAM_NULL);
-        
+
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
     } // __________________________________________________________________
 
 
-    
+
     /**
      * <div>
-     * <p>delete(id null) lève ExceptionAppliParamNonPersistent.</p>
+     * <p>garantit que delete(ID null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionAppliParamNonPersistent}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#MESSAGE_DELETE_KO_ID_NULL}</li>
+     * <li>n'appelle ni le DAO objet métier ni le DAO parent</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(id null) - ExceptionAppliParamNonPersistent")
+    @DisplayName("delete(ID null) : jette ExceptionAppliParamNonPersistent et n'appelle pas les DAO")
     @Test
-    public void testDeleteIdNullExceptionAppliParamNonPersistent() {
+    public void testDeleteIdNull() {
 
-        final SousTypeProduitI parent 
-        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(null);
+        /* ARRANGE */
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
+        final Produit p = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, null, parent);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.delete(p)
+         * - jette une ExceptionAppliParamNonPersistent
+         * - émet un message MSG_DELETE_KO_ID_NULL.
+         */
         assertThatThrownBy(() -> this.service.delete(p))
             .isInstanceOf(ExceptionAppliParamNonPersistent.class)
             .hasMessage(MSG_DELETE_KO_ID_NULL);
-        
+
+        /* Garantit que les DAO mockés n'ont pas été appelés. */
         verifyNoInteractions(this.produitDaoJPA);
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
     } // __________________________________________________________________
 
 
-    
+
     /**
      * <div>
-     * <p>delete(DAO findById retourne null Optional) 
-     * lève ExceptionTechniqueGateway KO_STOCKAGE
-     * et ne supprime pas.</p>
+     * <p>garantit que delete(DAO.findById(...) retourne null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet le message
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE}</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche ni {@code delete(...)} ni {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(DAO findById null) - ExceptionTechniqueGateway KO_STOCKAGE")
+    @DisplayName("delete(DAO.findById(...) retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
-    public void testDeleteDAOFindByIdRetourneNullOptionalExceptionTechniqueGateway() {
+    public void testDeleteDAOFindByIdRetourneNull() {
 
-        final SousTypeProduitI parent 
-        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(71L);
+        /* ARRANGE */
+        final Long id = 71L;
 
-        when(this.produitDaoJPA.findById(71L)).thenReturn(null);
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
+        final Produit p = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant id via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre null".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne null au lieu d'un Optional<ProduitJPA>,
+         * ce qui doit être interprété comme une anomalie technique
+         * de stockage.
+         */
+        when(this.produitDaoJPA.findById(id)).thenReturn(null);
+
+        /* ACT - ASSERT */
+        /* Garantit que this.service.delete(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message ERREUR_TECHNIQUE_KO_STOCKAGE
+         *   lorsque le stockage retourne null sur findById(...).
+         */
         assertThatThrownBy(() -> this.service.delete(p))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
 
-        verify(this.produitDaoJPA, times(1)).findById(71L);
+        /* Garantit que le DAO objet métier a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+
+        /* Garantit que l'échec technique sur findById(...)
+         * arrête le traitement avant toute suppression et avant flush().
+         */
         verify(this.produitDaoJPA, never()).delete(any(ProduitJPA.class));
         verify(this.produitDaoJPA, never()).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
     } // __________________________________________________________________
 
 
-    
+
     /**
      * <div>
-     * <p>delete(KO DAO sur findById) wrappe 
-     * en ExceptionTechniqueGateway.</p>
+     * <p>garantit que delete(objet métier absent du stockage) :</p>
+     * <ul>
+     * <li>ne lève aucune exception</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche ni {@code delete(...)} ni {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(objet métier absent du stockage) : ne fait rien et ne supprime pas")
+    @Test
+    public void testDeleteAbsent() throws Exception {
+
+        /* ARRANGE */
+        final Long id = 71L;
+
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit p = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant id via findById(...),
+         * alors le DAO mocké avec Mockito devra répondre Optional.empty()".
+         *
+         * On simule donc volontairement un stockage
+         * qui ne trouve aucun Produit persistant
+         * pour l'identifiant demandé.
+         */
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.empty());
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        this.service.delete(p);
+
+        /* ASSERT */
+        /* Garantit que le DAO objet métier a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+
+        /* Garantit qu'aucune suppression n'a été déclenchée,
+         * puisqu'aucun objet persistant n'a été trouvé
+         * à supprimer dans le stockage.
+         */
+        verify(this.produitDaoJPA, never()).delete(any(ProduitJPA.class));
+        verify(this.produitDaoJPA, never()).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que delete(KO DAO sur findById message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche ni {@code delete(...)} ni {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(KO DAO sur findById) - ExceptionTechniqueGateway (wrap)")
+    @DisplayName("delete(KO DAO sur findById message non null) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
-    public void testDeleteDAOFindByIdJetteExceptionWrapExceptionTechniqueGateway() {
+    public void testDeleteDAOFindByIdExceptionMessageNonNull() {
 
-        final SousTypeProduitI parent 
-        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(71L);
+        /* ARRANGE */
+        final Long id = 71L;
 
-        when(this.produitDaoJPA.findById(71L))
-            .thenThrow(new RuntimeException(BOOM));
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
-        assertThatThrownBy(() -> this.service.delete(p))
+        final Produit p = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant id via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le chargement de l'objet persistant à supprimer.
+         */
+        final RuntimeException causeDao = new RuntimeException(BOOM);
+
+        when(this.produitDaoJPA.findById(id)).thenThrow(causeDao);
+
+        /* ACT */
+        /* Exécute une seule fois this.service.delete(p)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.delete(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
             .hasMessageContaining(BOOM);
 
-        verify(this.produitDaoJPA, times(1)).findById(71L);
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO objet métier a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+
+        /* Garantit que l'échec technique sur findById(...)
+         * arrête le traitement avant toute suppression et avant flush().
+         */
         verify(this.produitDaoJPA, never()).delete(any(ProduitJPA.class));
         verify(this.produitDaoJPA, never()).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
     } // __________________________________________________________________
 
 
-    
+
     /**
      * <div>
-     * <p>delete(absent) ne fait rien.</p>
+     * <p>garantit que delete(KO DAO sur findById message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>ne déclenche ni {@code delete(...)} ni {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
      * </div>
-     * @throws Exception
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(absent) - ne fait rien")
+    @DisplayName("delete(KO DAO sur findById message null) : jette ExceptionTechniqueGateway avec message sûr non null")
     @Test
-    public void testDeleteAbsentNeFaitRien() throws Exception {
+    public void testDeleteDAOFindByIdExceptionMessageNull() {
 
-        final SousTypeProduitI parent 
-        	= this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
-        final Produit p = new Produit();
-        p.setProduit(CHEMISE_ML_HOMME);
-        p.setSousTypeProduit(parent);
-        p.setIdProduit(71L);
+        /* ARRANGE */
+        final Long id = 71L;
 
-        when(this.produitDaoJPA.findById(71L)).thenReturn(Optional.empty());
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
 
-        this.service.delete(p);
+        final Produit p = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
 
-        verify(this.produitDaoJPA, times(1)).findById(71L);
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * avec l'identifiant id via findById(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le chargement de l'objet persistant à supprimer,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.produitDaoJPA.findById(id)).thenThrow(causeDao);
+
+        /* ACT */
+        /* Exécute une seule fois this.service.delete(p)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.delete(p));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(p)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO objet métier a bien été appelé une fois
+         * avec le bon identifiant via findById(...).
+         */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+
+        /* Garantit que l'échec technique sur findById(...)
+         * arrête le traitement avant toute suppression et avant flush().
+         */
         verify(this.produitDaoJPA, never()).delete(any(ProduitJPA.class));
         verify(this.produitDaoJPA, never()).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
     } // __________________________________________________________________
 
-    
+
 
     /**
      * <div>
-     * <p>delete(nominal) supprime via DAO.delete() + DAO.flush().</p>
+     * <p>garantit que delete(KO DAO sur delete message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de suppression via {@code delete(...)}</li>
+     * <li>ne déclenche pas {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
      * </div>
-     * @throws Exception
      */
     @Tag(TAG_DELETE)
-    @DisplayName("delete(nominal) - DAO.delete + flush")
+    @DisplayName("delete(KO DAO sur delete message non null) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
-    public void testDeleteNominalOk() throws Exception {
+    public void testDeleteDAODeleteExceptionMessageNonNull() {
 
+        /* ARRANGE */
         final Long id = 70L;
-        final ProduitJPA entity 
-        	= this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit metier = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        final ProduitJPA entity
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
         entity.setIdProduit(id);
 
-        final Produit metier 
-        	= this.fabriquerProduitMetier(CHEMISE_ML_HOMME, id,
-            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
 
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule doThrow(...).when(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via delete(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment de la suppression de l'objet persistant.
+         */
+        final RuntimeException causeDao = new RuntimeException(BOOM);
+
+        doThrow(causeDao)
+            .when(this.produitDaoJPA).delete(any(ProduitJPA.class));
+
+        /* ACT */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine BOOM.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+        verify(this.produitDaoJPA, times(1)).delete(entity);
+
+        /* Garantit que l'échec sur delete(...)
+         * arrête le traitement avant flush().
+         */
+        verify(this.produitDaoJPA, never()).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que delete(KO DAO sur delete message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>déclenche une tentative de suppression via {@code delete(...)}</li>
+     * <li>ne déclenche pas {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(KO DAO sur delete message null) : jette ExceptionTechniqueGateway avec message sûr non null")
+    @Test
+    public void testDeleteDAODeleteExceptionMessageNull() {
+
+        /* ARRANGE */
+        final Long id = 70L;
+
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit metier = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        final ProduitJPA entity
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(id);
+
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule doThrow(...).when(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via delete(...),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment de la suppression de l'objet persistant,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        doThrow(causeDao)
+            .when(this.produitDaoJPA).delete(any(ProduitJPA.class));
+
+        /* ACT */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+        verify(this.produitDaoJPA, times(1)).delete(entity);
+
+        /* Garantit que l'échec sur delete(...)
+         * arrête le traitement avant flush().
+         */
+        verify(this.produitDaoJPA, never()).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que delete(KO DAO sur flush message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>conserve le message technique d'origine du DAO</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>déclenche une suppression via {@code delete(...)}</li>
+     * <li>déclenche {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(KO DAO sur flush message non null) : jette ExceptionTechniqueGateway et propage la cause")
+    @Test
+    public void testDeleteDAOFlushExceptionMessageNonNull() {
+
+        /* ARRANGE */
+        final Long id = 70L;
+
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit metier = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        final ProduitJPA entity
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(id);
+
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
+        doNothing().when(this.produitDaoJPA).delete(any(ProduitJPA.class));
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule doThrow(...).when(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via flush(),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment du flush() suivant la suppression.
+         */
+        final RuntimeException causeDao = new RuntimeException(BOOM);
+
+        doThrow(causeDao).when(this.produitDaoJPA).flush();
+
+        /* ACT */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine BOOM.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+        verify(this.produitDaoJPA, times(1)).delete(entity);
+        verify(this.produitDaoJPA, times(1)).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que delete(KO DAO sur flush message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway}</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE}</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique</li>
+     * <li>propage comme cause l'exception technique d'origine</li>
+     * <li>appelle le DAO objet métier une fois via {@code findById(...)}</li>
+     * <li>déclenche une suppression via {@code delete(...)}</li>
+     * <li>déclenche {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(KO DAO sur flush message null) : jette ExceptionTechniqueGateway avec message sûr non null")
+    @Test
+    public void testDeleteDAOFlushExceptionMessageNull() {
+
+        /* ARRANGE */
+        final Long id = 70L;
+
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit metier = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        final ProduitJPA entity
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(id);
+
+        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
+        doNothing().when(this.produitDaoJPA).delete(any(ProduitJPA.class));
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule doThrow(...).when(...) signifie :
+         * "si, pendant le test, le service appelle le DAO mocké avec Mockito
+         * via flush(),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * au moment du flush() suivant la suppression,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        doThrow(causeDao).when(this.produitDaoJPA).flush();
+
+        /* ACT */
+        /* Exécute une seule fois this.service.delete(metier)
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.delete(metier));
+
+        /* ASSERT */
+        /* Garantit que this.service.delete(metier)
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit les appels DAO réellement attendus. */
+        verify(this.produitDaoJPA, times(1)).findById(id);
+        verify(this.produitDaoJPA, times(1)).delete(entity);
+        verify(this.produitDaoJPA, times(1)).flush();
+
+        /* Garantit que le DAO parent n'a pas été appelé. */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+
+    } // __________________________________________________________________
+
+
+
+    /**
+     * <div>
+     * <p>garantit que delete(OK) :</p>
+     * <ul>
+     * <li>charge l'objet persistant courant via {@code findById(...)}</li>
+     * <li>déclenche la suppression dans le stockage via {@code delete(...)}</li>
+     * <li>force l'exécution via {@code flush()}</li>
+     * <li>n'appelle pas le DAO parent</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_DELETE)
+    @DisplayName("delete(OK) : supprime l'objet persistant et déclenche flush()")
+    @Test
+    public void testDeleteNominal() throws Exception {
+
+        /* ARRANGE */
+        final Long id = 70L;
+
+        final SousTypeProduitI parent
+            = this.fabriquerParentMetierPersistant(VETEMENT_HOMME);
+
+        final Produit metier = this.fabriquerProduitMetier(
+                CHEMISE_ML_HOMME, id, parent);
+
+        final ProduitJPA entity
+            = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
+        entity.setIdProduit(id);
+
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * Le premier appel findById(...) trouve l'objet persistant courant.
+         * La suppression et le flush() sont simulés comme réussis.
+         */
         when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
         doNothing().when(this.produitDaoJPA).delete(any(ProduitJPA.class));
         doNothing().when(this.produitDaoJPA).flush();
 
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
         this.service.delete(metier);
 
+        /* ASSERT */
+        /* Garantit que le DAO objet métier a bien :
+         * - chargé l'objet persistant ;
+         * - reçu l'ordre de suppression ;
+         * - forcé l'exécution via flush().
+         */
         verify(this.produitDaoJPA, times(1)).findById(id);
         verify(this.produitDaoJPA, times(1)).delete(entity);
         verify(this.produitDaoJPA, times(1)).flush();
-        verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
-    } // __________________________________________________________________
-
-
-    
-    /**
-     * <div>
-     * <p>Test béton : delete() wrappe correctement 
-     * une Exception levée par DAO.delete().</p>
-     * </div>
-     */
-    @Tag(TAG_DELETE)
-    @DisplayName("delete(DAO.delete jette Exception) - ExceptionTechniqueGateway (wrap)")
-    @Test
-    public void testDeleteDAODeleteJetteExceptionWrapExceptionTechniqueGateway() {
-
-        final Long id = 70L;
-
-        final Produit metier = this.fabriquerProduitMetier(CHEMISE_ML_HOMME, id,
-            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-
-        final ProduitJPA entity = this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        entity.setIdProduit(id);
-
-        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
-        doThrow(new RuntimeException(BOOM))
-            .when(this.produitDaoJPA).delete(any(ProduitJPA.class));
-
-        assertThatThrownBy(() -> this.service.delete(metier))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(BOOM);
-
-        verify(this.produitDaoJPA, times(1)).findById(id);
-        verify(this.produitDaoJPA, times(1)).delete(entity);
-        verify(this.produitDaoJPA, never()).flush();
-        verifyNoInteractions(this.sousTypeProduitDaoJPA);
-
-    } // __________________________________________________________________
-
-
-    
-    /**
-     * <div>
-     * <p>Test béton : delete() wrappe correctement 
-     * une Exception levée par DAO.flush().</p>
-     * </div>
-     */
-    @Tag(TAG_DELETE)
-    @DisplayName("delete(DAO.flush jette Exception) - ExceptionTechniqueGateway (wrap)")
-    @Test
-    public void testDeleteDAOFlushJetteExceptionWrapExceptionTechniqueGateway() {
-
-        final Long id = 70L;
-
-        final Produit metier 
-        	= this.fabriquerProduitMetier(CHEMISE_ML_HOMME, id,
-            this.fabriquerParentMetierPersistant(VETEMENT_HOMME));
-
-        final ProduitJPA entity 
-        	= this.fabriquerProduitJPA(CHEMISE_ML_HOMME, VETEMENT_HOMME);
-        entity.setIdProduit(id);
-
-        when(this.produitDaoJPA.findById(id)).thenReturn(Optional.of(entity));
-        doNothing().when(this.produitDaoJPA).delete(any(ProduitJPA.class));
-        doThrow(new RuntimeException(BOOM))
-            .when(this.produitDaoJPA).flush();
-
-        assertThatThrownBy(() -> this.service.delete(metier))
-            .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
-            .hasMessageContaining(BOOM);
-
-        verify(this.produitDaoJPA, times(1)).findById(id);
-        verify(this.produitDaoJPA, times(1)).delete(entity);
-        verify(this.produitDaoJPA, times(1)).flush();
+        /* Garantit que le DAO parent n'a pas été appelé. */
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
 
     } // __________________________________________________________________
@@ -7227,45 +8445,268 @@ public class ProduitGatewayJPAServiceMockTest {
     
     
     
-	/**
+    /**
      * <div>
-     * <p>count(nominal) retourne le nombre d'éléments.</p>
+     * <p>garantit que count(stockage vide) :</p>
+     * <ul>
+     * <li>retourne {@code 0} ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code count()} ;</li>
+     * <li>n'appelle pas le DAO parent ;</li>
+     * <li>ne jette aucune exception.</li>
+     * </ul>
      * </div>
+     *
      * @throws Exception
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count(nominal) - retourne le nombre d'éléments")
+    @DisplayName("count(stockage vide) : retourne 0")
     @Test
-    public void testCountNominalOk() throws Exception {
+    public void testCountStockageVide() throws Exception {
     	
-        when(this.produitDaoJPA.count()).thenReturn(TOTAL_10);
+        /* ARRANGE */
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito via count(),
+         * alors le DAO mocké avec Mockito devra répondre 0L".
+         *
+         * On simule donc volontairement un stockage vide.
+         */
+        when(this.produitDaoJPA.count()).thenReturn(0L);
 
-        final long count = this.service.count();
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        final long resultat = this.service.count();
 
-        assertThat(count).isEqualTo(TOTAL_10);
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * retourne exactement le nombre d'objets indiqué
+         * par le stockage.
+         */
+        assertThat(resultat).isEqualTo(0L);
+
+        /* Garantit que le DAO objet métier mocké
+         * a bien été appelé une fois via la méthode count().
+         */
         verify(this.produitDaoJPA, times(1)).count();
+
+        /* Garantit que le DAO parent
+         * ne participe pas au comptage.
+         */
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         
     } // __________________________________________________________________
     
     
-
+    
     /**
      * <div>
-     * <p>count(DAO jette Exception) lève ExceptionTechniqueGateway.</p>
+     * <p>garantit que count(KO DAO message non null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>conserve le message technique d'origine du DAO ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code count()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
      * </div>
      */
     @Tag(TAG_COUNT)
-    @DisplayName("count(DAO jette Exception) - ExceptionTechniqueGateway")
+    @DisplayName("count(KO DAO message non null) : jette ExceptionTechniqueGateway et propage la cause")
     @Test
-    public void testCountDAOJetteExceptionTechniqueGateway() {
+    public void testCountDAOExceptionMessageNonNull() {
     	
-        when(this.produitDaoJPA.count()).thenThrow(new RuntimeException(BOOM));
+        /* ARRANGE */
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito via count(),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException portant le message BOOM".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le comptage.
+         */
+        final RuntimeException causeDao = new RuntimeException(BOOM);
 
-        assertThatThrownBy(() -> this.service.count())
+        when(this.produitDaoJPA.count()).thenThrow(causeDao);
+
+        /* ACT */
+        /* Exécute une seule fois this.service.count()
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.count());
+
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - conserve le message technique d'origine BOOM.
+         */
+        assertThat(throwable)
             .isInstanceOf(ExceptionTechniqueGateway.class)
-            .hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(BOOM);
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO objet métier mocké
+         * a bien été appelé une fois via la méthode count().
+         */
         verify(this.produitDaoJPA, times(1)).count();
+
+        /* Garantit que le DAO parent
+         * ne participe pas au comptage.
+         */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que count(KO DAO message null) :</p>
+     * <ul>
+     * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
+     * <li>émet un message commençant par
+     * {@link ProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique ;</li>
+     * <li>propage comme cause l'exception technique d'origine ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code count()} ;</li>
+     * <li>n'appelle pas le DAO parent.</li>
+     * </ul>
+     * </div>
+     */
+    @Tag(TAG_COUNT)
+    @DisplayName("count(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non null")
+    @Test
+    public void testCountDAOExceptionMessageNull() {
+    	
+        /* ARRANGE */
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito via count(),
+         * alors le DAO mocké avec Mockito devra lancer
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * pendant le comptage,
+         * avec un message technique d'origine null.
+         */
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
+        when(this.produitDaoJPA.count()).thenThrow(causeDao);
+
+        /* ACT */
+        /* Exécute une seule fois this.service.count()
+         * et capture l'exception réellement levée,
+         * afin de contrôler ensuite son type, son message et sa cause.
+         */
+        final Throwable throwable
+            = Assertions.catchThrowable(() -> this.service.count());
+
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * - jette une ExceptionTechniqueGateway
+         * - émet un message commençant par ERREUR_TECHNIQUE_STOCKAGE
+         * - n'émet pas un message null
+         * - utilise un texte sûr dérivé de l'exception technique.
+         *
+         * Ici, avec l'implémentation actuelle de safeMessage(e),
+         * le texte sûr dérivé provient de e.toString().
+         * Pour une RuntimeException sans message,
+         * cela donne au minimum le nom de classe java.lang.RuntimeException.
+         */
+        assertThat(throwable)
+            .isInstanceOf(ExceptionTechniqueGateway.class)
+            .hasMessageContaining(MSG_PREFIX_ERREUR_TECH)
+            .hasMessageContaining(RuntimeException.class.getName());
+
+        /* Garantit que la cause technique d'origine
+         * est bien propagée par l'ExceptionTechniqueGateway.
+         */
+        assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /* Garantit que le DAO objet métier mocké
+         * a bien été appelé une fois via la méthode count().
+         */
+        verify(this.produitDaoJPA, times(1)).count();
+
+        /* Garantit que le DAO parent
+         * ne participe pas au comptage.
+         */
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que count(OK) :</p>
+     * <ul>
+     * <li>retourne le nombre d'objets métier présents dans le stockage ;</li>
+     * <li>appelle le DAO objet métier une fois via {@code count()} ;</li>
+     * <li>n'appelle pas le DAO parent ;</li>
+     * <li>ne jette aucune exception.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_COUNT)
+    @DisplayName("count(OK) : retourne le nombre d'objets métier présents dans le stockage")
+    @Test
+    public void testCountNominal() throws Exception {
+    	
+        /* ARRANGE */
+        /* Configure ici le comportement du DAO mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito via count(),
+         * alors le DAO mocké avec Mockito devra répondre TOTAL_10".
+         *
+         * On simule donc volontairement un stockage contenant
+         * plusieurs Produit persistants.
+         */
+        when(this.produitDaoJPA.count()).thenReturn(TOTAL_10);
+
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock (when du ARRANGE).
+         */
+        final long resultat = this.service.count();
+
+        /* ASSERT */
+        /* Garantit que this.service.count()
+         * retourne exactement le nombre d'objets indiqué
+         * par le stockage.
+         */
+        assertThat(resultat).isEqualTo(TOTAL_10);
+
+        /* Garantit que le DAO objet métier mocké
+         * a bien été appelé une fois via la méthode count().
+         */
+        verify(this.produitDaoJPA, times(1)).count();
+
+        /* Garantit que le DAO parent
+         * ne participe pas au comptage.
+         */
         verifyNoInteractions(this.sousTypeProduitDaoJPA);
         
     } // __________________________________________________________________
