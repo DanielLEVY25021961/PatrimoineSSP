@@ -36,25 +36,25 @@ policy:
     couche_bootstrap_obligatoire: "couche_ia"
     dedoublonnage_paths: true
     tri_stable: true
-    livraison_fichiers_fragiles_complete_only: true
-    livraison_fichiers_fragiles_bloc_visible_obligatoire: true
-    livraison_fichiers_fragiles_prefixe_exact_obligatoire: "Chemin STS : <chemin exact dans le projet>"
-    livraison_fichiers_fragiles_un_fichier_un_bloc: true
-    livraison_fichiers_fragiles_bouton_copier_nominal: true
-    livraison_fichiers_fragiles_interdit_zip: true
-    livraison_fichiers_fragiles_interdit_fichier_joint_comme_mode_nominal: true
-    livraison_fichiers_fragiles_interdit_lien_seul: true
-    livraison_fichiers_fragiles_interdit_lien_comme_mode_nominal: true
-    livraison_fichiers_fragiles_interdit_renommage: true
-    livraison_fichiers_fragiles_interdit_omission: true
-    livraison_fichiers_fragiles_interdit_ellipsis: true
-    livraison_fichiers_fragiles_interdit_explication_dans_fichier: true
-    livraison_fichiers_fragiles_relecture_visuelle_chat_avant_copie: true
-    livraison_fichiers_fragiles_collage_direct_sts: true
-    livraison_fichiers_fragiles_commentaire_nom_fichier_prefere_si_format_compatible: true
-    livraison_fichiers_fragiles_conserver_entete_canonique_si_present: true
-    livraison_fichiers_fragiles_lien_si_trop_gros_seulement: true
-    livraison_fichiers_fragiles_livraison_multi_echanges_autorisee: true
+    livraison_code_methode_bloc_chat_obligatoire: true
+    livraison_code_methode_bloc_interdit_lien_telechargement_principal: true
+    livraison_code_methode_bloc_interdit_fichier_joint_principal: true
+    livraison_code_methode_bloc_copiable_sts_obligatoire: true
+    livraison_code_methode_bloc_chemin_sts_obligatoire: true
+    livraison_code_methode_bloc_snippet_interdit: true
+    livraison_code_methode_bloc_ellipsis_interdit: true
+    livraison_fichier_complet_fragile_complete_only: true
+    livraison_fichier_complet_fragile_remplacement_total_sts: true
+    livraison_fichier_complet_fragile_lien_telechargement_autorise_si_gros_ou_fragile: true
+    livraison_fichier_complet_fragile_interdit_patch_partiel: true
+    livraison_fichier_complet_fragile_interdit_modification_ligne_manuelle: true
+    livraison_fichier_complet_fragile_interdit_zip: true
+    livraison_fichier_complet_fragile_interdit_renommage: true
+    livraison_fichier_complet_fragile_interdit_omission: true
+    livraison_fichier_complet_fragile_interdit_ellipsis: true
+    livraison_fichier_complet_fragile_metadonnees_obligatoires_si_generation_locale: true
+    livraison_decision_methode_ou_bloc_egal_chat: true
+    livraison_decision_fichier_gros_ou_fragile_egal_fichier_complet_lien_possible: true
     comparaison_texte_eol_normalisee_obligatoire: true
     comparaison_texte_eof_separee_obligatoire: true
     text_comparison_mode: "canonical_eol_normalized"
@@ -64,6 +64,20 @@ policy:
     treat_normalized_text_identity_as_same_file: true
     consider_contrat_ia_same_across_sts_github_bundle_when_eol_only: true
     consider_perimetre_same_across_sts_github_bundle_when_eol_only: true
+    lecture_chat_dernier_file_id_normatif: true
+    lecture_chat_relecture_locale_apres_upload_obligatoire: true
+    lecture_chat_interdit_ancien_fichier_local_meme_nom_comme_verite: true
+    lecture_chat_interdit_etat_ancien_indirect_comme_verite: true
+    lecture_chat_interdit_ancien_file_search_comme_verite: true
+    lecture_chat_interdit_anciennes_metriques_comme_verite: true
+    lecture_chat_interdit_memoire_ou_baseline_comme_verite_avant_relecture: true
+    lecture_chat_preuve_depart_dernier_upload_obligatoire: true
+    lecture_chat_preuve_aucun_etat_ancien_indirect_exploite_obligatoire: true
+    lecture_chat_normalisation_eol_obligatoire: true
+    lecture_chat_controle_eof_separe_obligatoire: true
+    lecture_chat_interdit_incident_sync_sans_relecture_dernier_file_id: true
+    lecture_chat_preuve_file_id_taille_lignes_newlines_eof_sha256_obligatoire: true
+    lecture_chat_consolidation_uniquement_apres_correspondance_dernier_upload: true
 
 raw:
   template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"

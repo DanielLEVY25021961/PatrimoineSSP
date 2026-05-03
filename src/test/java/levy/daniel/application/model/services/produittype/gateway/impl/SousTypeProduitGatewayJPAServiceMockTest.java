@@ -372,17 +372,17 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public static final String TAG_CREER = "servicesGateway-Creer";
 
     /**
-     * "creer(null) - jette ExceptionAppliParamNull (contrat du port)"
+     * "creer(null) : jette ExceptionAppliParamNull (contrat du port)"
      */
     public static final String DN_CREER_NULL =
-            "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
+            "creer(null) : jette ExceptionAppliParamNull (contrat du port)";
 
     /**
-     * "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)"
+     * "creer(blank) : jette ExceptionAppliLibelleBlank (contrat du port)"
      */
     public static final String DN_CREER_BLANK =
-            "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
-       
+            "creer(blank) : jette ExceptionAppliLibelleBlank (contrat du port)";
+    
     /**
      * "servicesGateway-RechercherTous"
      */
@@ -607,7 +607,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que creer(libellé blank) :</p>
      * <ul>
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
-     * <li>émet le message {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK} ;</li>
+     * <li>émet le message 
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK} ;</li>
      * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
      * </ul>
      * </div>
@@ -655,13 +656,14 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que creer(parent null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionAppliParentNull} ;</li>
-     * <li>émet le message {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NULL} ;</li>
+     * <li>émet le message 
+     * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NULL} ;</li>
      * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(parent null) - jette ExceptionAppliParentNull (contrat du port)")
+    @DisplayName("creer(parent null) : jette ExceptionAppliParentNull (contrat du port)")
     @Test
     public void testCreerParentNull() {
 
@@ -709,7 +711,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
+    @DisplayName("creer(parent libellé blank) : jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
     public void testCreerParentLibelleBlank() {
 
@@ -759,7 +761,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(parent ID null) - jette ExceptionTechniqueGatewayNonPersistent")
+    @DisplayName("creer(parent ID null) : jette ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testCreerParentIdNull() {
 
@@ -812,7 +814,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(parent absent DAO) - jette ExceptionTechniqueGatewayNonPersistent")
+    @DisplayName("creer(parent absent DAO) : jette ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testCreerParentAbsent() {
 
@@ -831,7 +833,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* ACT - ASSERT :
          * vérifie que :
-         * this.service.creer(stp) avec stp sans parent
+         * this.service.creer(stp) avec un parent présent dans l'objet métier,
+         * mais absent du stockage
          * - jette une ExceptionTechniqueGatewayNonPersistent
          * - avec un message contenant MSG_CREER_PREFIX_PARENT_NON_PERSISTENT 
          * (message contractuel du port).
@@ -868,7 +871,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(KO DAO parent message non null) - jette ExceptionTechniqueGateway")
+    @DisplayName("creer(KO DAO parent message non null) : jette ExceptionTechniqueGateway")
     @Test
     public void testCreerParentDAOExceptionMessageNonNull() {
 
@@ -934,7 +937,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(KO DAO parent message null) - jette ExceptionTechniqueGateway")
+    @DisplayName("creer(KO DAO parent message null) : jette ExceptionTechniqueGateway")
     @Test
     public void testCreerParentDAOExceptionMessageNull() {
 
@@ -1001,7 +1004,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName("creer(DAO.save(...) retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
-    public void testCreerSaveRetourneNull() {
+    public void testCreerDAOSaveRetourneNull() {
 
         /* ARRANGE :
          * prépare un scénario où le parent existe,
@@ -1018,7 +1021,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * retourne Optional.of(parentJPA).
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
-        
+
         /* Condition du Mock sousTypeProduitDaoJPA :
          * L'appel sousTypeProduitDaoJPA.save(...) sur le DAO mocké 
          * retourne null.
@@ -1026,22 +1029,19 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         when(this.sousTypeProduitDaoJPA.save(any(SousTypeProduitJPA.class))).thenReturn(null);
 
         /* ACT - ASSERT :
-         * vérifie que :
-         * this.service.creer(stp) avec 
-         * sousTypeProduitDaoJPA.save(...) qui retourne null
-         * - jette une ExceptionTechniqueGateway
-         * - avec un message MSG_ERREUR_TECH_KO_STOCKAGE 
-         * (message contractuel du port).
+         * vérifie que l'appel service.creer(...) 
+         * jette une ExceptionTechniqueGateway
+         * avec le message MSG_ERREUR_TECH_KO_STOCKAGE.
          */
         assertThatThrownBy(() -> this.service.creer(stp))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
 
-        /* 
+        /*
          * Vérifie ensuite les interactions réelles
          * avec les dépendances mockées.
-         * Assure que : 
-         * - typeProduitDaoJPA.findById(ID_1) a été appelé une fois.
+         * Assure que :
+         * - typeProduitDaoJPA.findById(ID_1) a été appelé une fois ;
          * - sousTypeProduitDaoJPA.save(...) a été appelé une fois.
          */
         verify(this.typeProduitDaoJPA).findById(ID_1);
@@ -1053,30 +1053,32 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que creer(DAO save jette RuntimeException avec message non null) :</p>
+     * <p>garantit que creer(DAO.save(...) jette RuntimeException avec message non null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle findById(...) sur le parent puis save(...).</li>
+     * <li>propage une cause non null.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(KO DAO save message non null) - jette ExceptionTechniqueGateway")
+    @DisplayName("creer(KO DAO save message non null) : jette ExceptionTechniqueGateway")
     @Test
     public void testCreerDAOSaveExceptionMessageNonNull() {
 
         /* ARRANGE :
-         * prépare un scénario où le parent existe,
+         * prépare un parent existant,
          * puis configure le DAO enfant mocké avec Mockito
-         * pour jeter une RuntimeException avec message non null.
+         * pour jeter une RuntimeException avec message non null
+         * lors du save(...).
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+
+        final RuntimeException ex = new RuntimeException(MSG_BOOM);
         
         /* Condition du Mock typeProduitDaoJPA :
          * L'appel typeProduitDaoJPA.findById(ID_1) sur le DAO mocké 
@@ -1084,8 +1086,6 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
 
-        final RuntimeException ex = new RuntimeException(LIBELLE_ENFANT_1);
-        
         /* Condition du Mock sousTypeProduitDaoJPA :
          * L'appel sousTypeProduitDaoJPA.save(...) sur le DAO mocké 
          * jette l'Exception ex.
@@ -1127,30 +1127,31 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que creer(DAO save jette RuntimeException avec message null) :</p>
+     * <p>garantit que creer(DAO.save(...) jette RuntimeException avec message null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
-     * <li>émet un message commençant par
-     * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle findById(...) sur le parent puis save(...).</li>
+     * <li>émet un message sûr non null ;</li>
+     * <li>propage une cause non null.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(KO DAO save message null) - jette ExceptionTechniqueGateway")
+    @DisplayName("creer(KO DAO save message null) : jette ExceptionTechniqueGateway")
     @Test
     public void testCreerDAOSaveExceptionMessageNull() {
 
         /* ARRANGE :
-         * prépare un scénario où le parent existe,
+         * prépare un parent existant,
          * puis configure le DAO enfant mocké avec Mockito
-         * pour jeter une RuntimeException sans message.
+         * pour jeter une RuntimeException sans message
+         * lors du save(...).
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+
+        final RuntimeException ex = new RuntimeException((String) null);
         
         /* Condition du Mock typeProduitDaoJPA :
          * L'appel typeProduitDaoJPA.findById(ID_1) sur le DAO mocké 
@@ -1158,8 +1159,6 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          */
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
 
-        final RuntimeException ex = new RuntimeException((String) null);
-        
         /* Condition du Mock sousTypeProduitDaoJPA :
          * L'appel sousTypeProduitDaoJPA.save(...) sur le DAO mocké 
          * jette l'Exception ex.
@@ -1179,9 +1178,12 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son message sûr non null,
+         * son préfixe contractuel
+         * et la cause propagée.
          */
         assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
+        assertThat(throwable.getMessage()).isNotNull();
         assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
         assertThat(throwable.getCause()).isSameAs(ex);
 
@@ -1214,7 +1216,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(doublon) - jette ExceptionTechniqueGateway")
+    @DisplayName("creer(doublon) : jette ExceptionTechniqueGateway")
     @Test
     public void testCreerDoublon() {
 
@@ -1302,7 +1304,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * @throws Exception 
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(parent avec caractères spéciaux) - retourne un objet métier cohérent")
+    @DisplayName("creer(parent avec caractères spéciaux) : retourne un objet métier cohérent")
     @Test
     public void testCreerParentCaracteresSpeciaux() throws Exception {
 
@@ -1363,7 +1365,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que creer(nominal) :</p>
+     * <p>garantit que creer(OK) :</p>
      * <ul>
      * <li>retourne un objet métier non null ;</li>
      * <li>retourne le libellé enfant attendu ;</li>
@@ -1375,7 +1377,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * @throws Exception 
      */
     @Tag(TAG_CREER)
-    @DisplayName("creer(nominal) - retourne un objet métier cohérent")
+    @DisplayName("creer(OK) : retourne un objet métier cohérent")
     @Test
     public void testCreerNominal() throws Exception {
 
@@ -1431,7 +1433,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     } // __________________________________________________________________
 
     
-    
+       
     // ======================== RechercherTous ============================
 
 
@@ -1449,7 +1451,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_RECHERCHERTOUS)
-    @DisplayName("rechercherTous(DAO.findAll() retourne null) - jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @DisplayName("rechercherTous(DAO.findAll() retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testRechercherTousDAORetourneNull() {
 
@@ -1542,7 +1544,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         
     /**
      * <div>
-     * <p>garantit que rechercherTous(KO DAO message non null) :</p>
+     * <p>garantit que si DAO.findAll() jette une exception technique avec message non null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
@@ -1555,7 +1557,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_RECHERCHERTOUS)
-    @DisplayName("rechercherTous(KO DAO message non null) - jette ExceptionTechniqueGateway")
+    @DisplayName("rechercherTous(KO DAO message non null) : jette ExceptionTechniqueGateway")
     @Test
     public void testRechercherTousDAOExceptionMessageNonNull() {
 
@@ -1790,7 +1792,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que rechercherTous(nominal) :</p>
+     * <p>garantit que rechercherTous(OK) :</p>
      * <ul>
      * <li>retourne une liste non null ;</li>
      * <li>filtre les valeurs null ;</li>
@@ -1805,7 +1807,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * @throws Exception
      */
     @Tag(TAG_RECHERCHERTOUS)
-    @DisplayName("rechercherTous(nominal) - filtre, trie et dédoublonne")
+    @DisplayName("rechercherTous(OK) : filtre, trie et dédoublonne")
     @Test
     public void testRechercherTousNominal() throws Exception {
 
@@ -2024,8 +2026,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	    assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
 	        .isEqualTo(LIBELLE_PARENT_1);
 
-	    /* Garantit que ce scénario paginé ne sollicite
-	     * ni le DAO parent ni l'EntityManager.
+	    /* Garantit que service.rechercherTousParPage(null)
+	     * avec un DAO qui retourne une page valide
+	     * ne sollicite ni le DAO parent ni l'EntityManager.
 	     */
 	    verifyNoInteractions(this.typeProduitDaoJPA);
 	    verifyNoInteractions(this.entityManager);
@@ -2090,8 +2093,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          */
         verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que service.rechercherTousParPage(...)
+         * avec un DAO qui retourne null
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2170,8 +2174,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          */
         verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que service.rechercherTousParPage(...)
+         * avec une Page Spring dont le contenu est null
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2263,8 +2268,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          */
         verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que service.rechercherTousParPage(...)
+         * avec un DAO qui jette une exception technique avec message non null
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2281,7 +2287,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>le service ne laisse pas remonter l'Exception brute du stockage ;</li>
      * <li>il la transforme en {@link ExceptionTechniqueGateway} ;</li>
      * <li>il construit un message technique conforme au contrat ;</li>
-     * <li>il fabrique un message sûr non nul dérivé de l'Exception cause ;</li>
+     * <li>il fabrique un message sûr non null dérivé de l'Exception cause ;</li>
      * <li>il conserve l'Exception technique initiale comme cause ;</li>
      * <li>il n'appelle ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
@@ -2294,7 +2300,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_RECHERCHERTOUSPARPAGE)
-    @DisplayName("rechercherTousParPage(KO DAO message null) : garantit ExceptionTechniqueGateway avec message sûr non nul")
+    @DisplayName("rechercherTousParPage(KO DAO message null) : garantit ExceptionTechniqueGateway avec message sûr non null")
     @Test
     public void testRechercherTousParPageDAOExceptionMessageNull() {
 
@@ -2335,7 +2341,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * garantit que le service :
          * - requalifie l'exception brute en ExceptionTechniqueGateway ;
          * - conserve le préfixe technique attendu ;
-         * - fabrique malgré tout un message sûr non nul.
+         * - fabrique malgré tout un message sûr non null.
          *
          * Avec l'implémentation actuelle de safeMessage(e),
          * ce texte sûr provient au minimum de e.toString().
@@ -2363,8 +2369,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          */
         verify(this.sousTypeProduitDaoJPA).findAll(any(Pageable.class));
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que service.rechercherTousParPage(...)
+         * avec un DAO qui jette une exception technique avec message null
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2502,8 +2509,10 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
             .isEqualTo(LIBELLE_PARENT_1);
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que service.rechercherTousParPage(...)
+         * avec une RequetePage dont la taille demandée vaut 0
+         * et un DAO qui retourne une page valide
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2582,7 +2591,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /*
          * Configuration du Mock :
-         * Simule un DAO qui renvoie une page techniquement valide
+         * Simule un DAO qui renvoie une page techniquement exploitable
+         * (numéro de page, taille, total, contenu non null)
          * quel que soit le Pageable reçu.
          *
          * Le but du test n'est pas d'éprouver le DAO,
@@ -2659,8 +2669,10 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat.getContent().get(0).getTypeProduit().getTypeProduit())
             .isEqualTo(LIBELLE_PARENT_1);
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que service.rechercherTousParPage(...)
+         * avec une RequetePage contenant des tris valides et invalides
+         * et un DAO qui retourne une page valide
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2696,7 +2708,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testRechercherTousParPageContenuAvecNulls() throws Exception {
 
         /* ARRANGE :
-         * prépare une page DAO techniquement exploitable,
+         * prépare une page DAO techniquement exploitable
+         * (numéro de page, taille, total, contenu non null),
          * mais volontairement "sale" :
          * elle contient deux Entities valides
          * et un élément null intercalé.
@@ -2737,7 +2750,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
 
         /* ACT :
-         * appelle le service avec une requête neutre.
+         * appelle le service avec une requête neutre (RequetePage sans aucun paramètre : new RequetePage()).
          *
          * Le point observé ici est la conversion métier :
          * les SousTypeProduitJPA valides doivent être convertis,
@@ -2786,8 +2799,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
         assertThat(resultat.getTotalElements()).isEqualTo(3L);
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que service.rechercherTousParPage(...)
+         * avec un DAO qui retourne une Page Spring contenant des valeurs null
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2798,13 +2812,14 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que rechercherTousParPage(retourne page vide) :</p>
+     * <p>garantit que si le DAO retourne une Page Spring non null
+     * contenant une liste vide :</p>
      * <ul>
      * <li>retourne un {@link ResultatPage} non null ;</li>
      * <li>retourne un contenu non null ;</li>
      * <li>retourne un contenu vide ;</li>
      * <li>retourne des métadonnées cohérentes avec la page vide
-     * renvoyée par le stockage ;</li>
+     * renvoyée par le stockage (valeurs par défaut) ;</li>
      * <li>appelle une seule fois la méthode findAll(Pageable)
      * du DAO mocké avec Mockito ;</li>
      * <li>n'appelle ni le DAO parent, ni l'EntityManager.</li>
@@ -2822,13 +2837,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * @throws Exception
      */
     @Tag(TAG_RECHERCHERTOUSPARPAGE)
-    @DisplayName("rechercherTousParPage(retourne page vide) - retourne une page vide cohérente")
+    @DisplayName("rechercherTousParPage(retourne page vide) : retourne une page vide cohérente")
     @Test
     public void testRechercherTousParPagePageVide() throws Exception {
 
         /* ARRANGE :
          * prépare une Page Spring non null,
-         * techniquement exploitable,
+         * techniquement exploitable (numéro de page, taille, ...),
          * mais dont le contenu métier est vide.
          *
          * Ce scénario ne représente pas une anomalie du stockage :
@@ -2849,12 +2864,14 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         /*
          * Configuration du Mock :
          * Simule un DAO qui renvoie une page vide valide
-         * lors de l'appel paginé.
+         * lors de l'appel paginé DAO.findAll(Pageable).
          */
         when(this.sousTypeProduitDaoJPA.findAll(any(Pageable.class))).thenReturn(page);
 
         /* ACT :
-         * appelle le service avec une requête neutre.
+         * appelle le service avec une requête neutre 
+         * (RequetePage sans aucun paramètre : new RequetePage()) : 
+         * service.rechercherTousParPage(new RequetePage()).
          *
          * Le service doit accepter ce retour du stockage
          * et le convertir en ResultatPage métier vide,
@@ -2877,15 +2894,16 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat.getContent()).isNotNull().isEmpty();
 
         /* Garantit que les métadonnées de pagination
-         * restent cohérentes avec la page vide renvoyée
-         * par le stockage.
+         * restent cohérentes (valeurs par défaut) 
+         * avec la page vide renvoyée par le stockage (DAO).
          */
         assertThat(resultat.getPageNumber()).isEqualTo(RequetePage.PAGE_DEFAUT);
         assertThat(resultat.getPageSize()).isEqualTo(RequetePage.TAILLE_DEFAUT);
         assertThat(resultat.getTotalElements()).isZero();
 
-        /* Garantit que ce scénario paginé ne sollicite
-         * ni le DAO parent ni l'EntityManager.
+        /* Garantit que 
+         * service.rechercherTousParPage(...) avec un DAO qui retourne un ResultatPage vide 
+         * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
         verifyNoInteractions(this.entityManager);
@@ -2973,7 +2991,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	
 	    /* 
 	     * Configuration du Mock : 
-	     * Simule un DAO qui renvoie une page techniquement valide.
+	     * Simule un DAO qui renvoie une page techniquement exploitable
+         * (numéro de page, taille, total, contenu non null).
 	     *
 	     * Le but du test n'est pas d'éprouver le DAO,
 	     * mais de vérifier la conversion :
@@ -3036,8 +3055,10 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	    assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
 	        .isEqualTo(LIBELLE_PARENT_1);
 
-	    /* Garantit que ce scénario paginé ne sollicite
-	     * ni le DAO parent ni l'EntityManager.
+	    /* Garantit que service.rechercherTousParPage(new RequetePage())
+	     * avec une requête neutre (RequetePage sans aucun paramètre : new RequetePage())
+	     * et un DAO qui retourne une page valide
+	     * ne sollicite ni le DAO parent ni l'EntityManager.
 	     */
 	    verifyNoInteractions(this.typeProduitDaoJPA);
 	    verifyNoInteractions(this.entityManager);
@@ -3101,7 +3122,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	    final RequetePage requete
 	        = new RequetePage(1, 2, new ArrayList<TriSpec>());
 	    
-	    /* Prépare une page DAO techniquement valide
+	    /* Prépare une page DAO techniquement exploitable
+	     * (numéro de page, taille, total, contenu non null)
 	     * correspondant à la pagination explicitement demandée.
 	     *
 	     * Le contenu est volontairement simple et propre :
@@ -3201,8 +3223,10 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	    assertThat(resultat.getContent().get(1).getTypeProduit().getTypeProduit())
 	        .isEqualTo(LIBELLE_PARENT_1);
 
-	    /* Garantit que ce scénario paginé ne sollicite
-	     * ni le DAO parent ni l'EntityManager.
+	    /* Garantit que service.rechercherTousParPage(requete)
+	     * avec une requête paginée explicite
+	     * et un DAO qui retourne une page valide
+	     * ne sollicite ni le DAO parent ni l'EntityManager.
 	     */
 	    verifyNoInteractions(this.typeProduitDaoJPA);
 	    verifyNoInteractions(this.entityManager);
@@ -3228,12 +3252,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)")
+    @DisplayName("findByObjetMetier(null) : jette ExceptionAppliParamNull (contrat du port)")
     @Test
     public void testFindByObjetMetierNull() {
 
         /* ARRANGE - ACT - ASSERT :
-         * vérifie que l'appel avec un objet métier null
+         * vérifie que l'appel service.findByObjetMetier(...) 
+         * avec un objet métier null
          * jette une ExceptionAppliParamNull
          * avec le message MSG_FINDBYOBJETMETIER_KO_PARAM_NULL
          * (contrat du port).
@@ -3272,7 +3297,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
+    @DisplayName("findByObjetMetier(libellé blank) : jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
     public void testFindByObjetMetierLibelleBlank() {
 
@@ -3285,7 +3310,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         final SousTypeProduit stp = fabriquerSousTypeProduit(BLANK, null, parent);
 
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un libellé blank
+         * vérifie que l'appel service.findByObjetMetier(...) 
+         * avec un objet métier avec un libellé blank
          * jette une ExceptionAppliLibelleBlank
          * avec le message MSG_FINDBYOBJETMETIER_KO_LIBELLE_BLANK
          * (contrat du port).
@@ -3324,7 +3350,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(parent null) - jette ExceptionAppliParentNull (contrat du port)")
+    @DisplayName("findByObjetMetier(parent null) : jette ExceptionAppliParentNull (contrat du port)")
     @Test
     public void testFindByObjetMetierParentNull() {
 
@@ -3336,7 +3362,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, null);
 
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un parent null
+         * vérifie que l'appel service.findByObjetMetier(...) 
+         * avec un objet métier avec un parent null
          * jette une ExceptionAppliParentNull
          * avec le message MSG_FINDBYOBJETMETIER_KO_PARENT_NULL
          * (contrat du port).
@@ -3375,7 +3402,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)")
+    @DisplayName("findByObjetMetier(parent libellé blank) : jette ExceptionAppliLibelleBlank (contrat du port)")
     @Test
     public void testFindByObjetMetierParentLibelleBlank() {
 
@@ -3388,7 +3415,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un parent au libellé blank
+         * vérifie que l'appel service.findByObjetMetier(...) 
+         * avec un objet métier dont le parent a un libellé blank
          * jette une ExceptionAppliLibelleBlank
          * avec le message MSG_FINDBYOBJETMETIER_KO_LIBELLE_PARENT_BLANK
          * (contrat du port).
@@ -3428,7 +3456,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(parent ID null) - jette ExceptionTechniqueGatewayNonPersistent")
+    @DisplayName("findByObjetMetier(parent ID null) : jette ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testFindByObjetMetierParentIdNull() {
 
@@ -3442,7 +3470,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un parent non persistant
+         * vérifie que l'appel service.findByObjetMetier(...) 
+         * avec un objet métier dont le parent est non persistant
          * car son identifiant est null
          * jette une ExceptionTechniqueGatewayNonPersistent
          * avec le message MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT
@@ -3485,7 +3514,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(parent absent DAO) - jette ExceptionTechniqueGatewayNonPersistent")
+    @DisplayName("findByObjetMetier(parent absent DAO) : jette ExceptionTechniqueGatewayNonPersistent")
     @Test
     public void testFindByObjetMetierParentAbsent() {
 
@@ -3504,7 +3533,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.empty());
 
         /* ACT - ASSERT :
-         * vérifie que l'appel avec un parent absent du stockage
+         * vérifie que l'appel service.findByObjetMetier(...) 
+         * avec un objet métier dont le parent est absent du stockage
          * jette une ExceptionTechniqueGatewayNonPersistent
          * avec le message MSG_FINDBYOBJETMETIER_PREFIX_PARENT_NON_PERSISTENT
          * complété par le libellé du parent
@@ -3533,7 +3563,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(KO DAO parent message non null) :</p>
+     * <p>garantit que si typeProduitDaoJPA.findById(ID_1)
+     * jette une exception technique avec message non null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
@@ -3546,7 +3577,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO parent message non null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByObjetMetier(KO DAO parent message non null) : jette ExceptionTechniqueGateway")
     @Test
     public void testFindByObjetMetierParentDAOExceptionMessageNonNull() {
 
@@ -3607,12 +3638,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(KO DAO parent message null) :</p>
+     * <p>garantit que si typeProduitDaoJPA.findById(ID_1)
+     * jette une exception technique avec message null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>émet un message sûr non nul dérivé de l'exception technique ;</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique ;</li>
      * <li>propage comme cause l'exception technique d'origine ;</li>
      * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
      * <li>n'appelle ni le DAO objet métier, ni l'EntityManager.</li>
@@ -3620,7 +3652,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO parent message null) - jette ExceptionTechniqueGateway avec message sûr non nul")
+    @DisplayName("findByObjetMetier(KO DAO parent message null) : jette ExceptionTechniqueGateway avec message sûr non null")
     @Test
     public void testFindByObjetMetierParentDAOExceptionMessageNull() {
 
@@ -3681,7 +3713,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(findAllByTypeProduit retourne null) :</p>
+     * <p>garantit que si sousTypeProduitDaoJPA
+     * .findAllByTypeProduit(parentJPA) retourne null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet le message
@@ -3696,7 +3729,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(findAllByTypeProduit retourne null) - jette ExceptionTechniqueGateway KO_STOCKAGE")
+    @DisplayName("findByObjetMetier(findAllByTypeProduit retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByObjetMetierDAORetourneNull() {
 
@@ -3749,7 +3782,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(KO DAO objet métier message non null) :</p>
+     * <p>garantit que si sousTypeProduitDaoJPA
+     * .findAllByTypeProduit(parentJPA) jette une exception technique
+     * avec message non null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
@@ -3763,7 +3798,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO objet métier message non null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByObjetMetier(KO DAO objet métier message non null) : jette ExceptionTechniqueGateway")
     @Test
     public void testFindByObjetMetierDAOExceptionMessageNonNull() {
 
@@ -3832,12 +3867,14 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(KO DAO objet métier message null) :</p>
+     * <p>garantit que si sousTypeProduitDaoJPA
+     * .findAllByTypeProduit(parentJPA) jette une exception technique
+     * avec message null :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>émet un message sûr non nul dérivé de l'exception technique ;</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique ;</li>
      * <li>propage comme cause l'exception technique d'origine ;</li>
      * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
      * <li>appelle le DAO objet métier une fois avec le parent JPA trouvé ;</li>
@@ -3846,7 +3883,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </div>
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(KO DAO objet métier message null) - jette ExceptionTechniqueGateway avec message sûr non nul")
+    @DisplayName("findByObjetMetier(KO DAO objet métier message null) : jette ExceptionTechniqueGateway avec message sûr non null")
     @Test
     public void testFindByObjetMetierDAOExceptionMessageNull() {
 
@@ -3896,6 +3933,79 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * est bien propagée par l'ExceptionTechniqueGateway.
          */
         assertThat(throwable.getCause()).isSameAs(causeDao);
+
+        /*
+         * Vérifie ensuite les interactions réelles
+         * avec les dépendances mockées.
+         * Assure que :
+         * - le DAO parent a été appelé une fois avec ID_1 ;
+         * - le DAO objet métier a été appelé une fois avec parentJPA ;
+         * - l'EntityManager n'a jamais été appelé.
+         */
+        verify(this.typeProduitDaoJPA, times(1)).findById(ID_1);
+        verify(this.sousTypeProduitDaoJPA, times(1)).findAllByTypeProduit(parentJPA);
+        verifyNoInteractions(this.entityManager);
+
+    } // __________________________________________________________________
+    
+    
+    
+    /**
+     * <div>
+     * <p>garantit que si sousTypeProduitDaoJPA
+     * .findAllByTypeProduit(parentJPA) retourne une liste vide :</p>
+     * <ul>
+     * <li>ne jette aucune exception ;</li>
+     * <li>retourne {@code null} car aucun objet métier
+     * n'est attaché au parent persistant ;</li>
+     * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
+     * <li>appelle le DAO objet métier une fois avec le parent JPA trouvé ;</li>
+     * <li>n'appelle pas l'EntityManager.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_FINDBYOBJETMETIER)
+    @DisplayName("findByObjetMetier(parent sans objet métier) : retourne null")
+    @Test
+    public void testFindByObjetMetierParentSansObjetMetier() throws Exception {
+
+        /* ARRANGE :
+         * prépare un objet métier valide
+         * afin d'atteindre réellement la recherche
+         * de l'objet métier dans le stockage.
+         */
+        final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
+        final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
+
+        final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+
+        /* Configure le DAO parent mocké avec Mockito
+         * pour que findById(ID_1)
+         * retourne le parent JPA attendu.
+         */
+        when(this.typeProduitDaoJPA.findById(ID_1)).thenReturn(Optional.of(parentJPA));
+
+        /* Configure le DAO objet métier mocké avec Mockito
+         * pour que findAllByTypeProduit(parentJPA)
+         * retourne une liste vide non null.
+         */
+        when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA))
+            .thenReturn(new ArrayList<SousTypeProduitJPA>());
+
+        /* ACT :
+         * appelle service.findByObjetMetier(stp)
+         * dans le scénario où aucun objet métier
+         * n'est attaché au parent persistant.
+         */
+        final SousTypeProduit retour = this.service.findByObjetMetier(stp);
+
+        /* ASSERT :
+         * vérifie que la méthode retourne null
+         * lorsque le DAO objet métier retourne une liste vide non null.
+         */
+        assertThat(retour).isNull();
 
         /*
          * Vérifie ensuite les interactions réelles
@@ -4011,7 +4121,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * @throws Exception
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(OK) - délègue aux DAO et retourne l'objet métier converti")
+    @DisplayName("findByObjetMetier(OK) : délègue aux DAO et retourne l'objet métier converti")
     @Test
     public void testFindByObjetMetierNominal() throws Exception {
 

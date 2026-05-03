@@ -147,102 +147,189 @@ Priorité des demandes :
 1. Bundle OFFLINE valide
 2. Fichier transmis via le chat (coller le contenu ou pièce jointe)
 
-### 6.1 Lecture d’un fichier transmis via le chat (fallback contrôlé)
+### 6.1 Lecture d’un fichier transmis via le chat
 
-Objectif : permettre la continuité de travail lorsque GitHub est indisponible, lorsqu’un fichier est transmis directement par l’Utilisateur dans le chat, ou lorsqu’une correction utilisateur doit être contrôlée dans une fenêtre de travail active.
+Objectif : permettre la continuité de travail lorsqu’un fichier est transmis directement par l’Utilisateur dans le chat, lorsqu’une correction utilisateur doit être contrôlée dans une fenêtre de travail active, ou lorsqu’un fichier joint doit être consolidé.
 
-Règles :
-- Le fichier transmis via le chat est traité comme une **source `CHAT`**.
-- La lecture de référence d’un fichier transmis via le chat est la lecture directe locale du dernier fichier disponible sous :
+#### Principe normatif
 
-```text
-/mnt/data/<fichierPasseDansLeChat>
-```
+Pour tout fichier joint au chat, l’identité normative du fichier est le **dernier `file_id` uploadé par l’Utilisateur**.
 
-- L’IA doit :
-  1. lire directement le fichier local courant ;
-  2. calculer **taille**, **nombre de lignes** et **SHA-256** ;
-  3. comparer avec la version correspondante disponible lorsque cette comparaison est possible :
-     - **baseline consolidée active** ;
-     - et/ou **bundle OFFLINE validé** ;
-     - et/ou **GitHub@SHA** si lisible ;
-  4. contrôler les méthodes ou zones réellement concernées ;
-  5. décider explicitement si le fichier `CHAT` est :
-     - identique à une source saine ;
-     - une correction utilisateur cohérente ;
-     - une régression ;
-     - ou un fichier non contrôlable.
+Le chemin local `/mnt/data/<nomDuFichier>` est seulement un support de lecture. Il ne constitue jamais, à lui seul, l’identité du fichier joint.
 
-- Si le contenu `CHAT` est **strictement identique** à une source considérée saine :
-  - le fichier `CHAT` est considéré **intègre** ;
-  - il peut être **mémorisé** et **écrasé** en baseline ;
-  - puis la baseline est **consolidée**.
+Règles absolues :
+- le dernier `file_id` affiché dans le chat prime sur tout ancien fichier local portant le même nom ;
+- l’IA doit toujours repartir du dernier upload réel ;
+- l’IA ne doit jamais exploiter un état ancien ou indirect comme source de vérité ;
+- l’IA ne doit jamais conclure depuis un ancien `/mnt/data/<nomDuFichier>` ;
+- l’IA ne doit jamais conclure depuis un ancien résultat `file_search`, une ancienne métrique, une ancienne baseline ou une mémoire ;
+- l’IA ne doit jamais déclarer une contradiction de synchronisation sans avoir relu le dernier upload réel ;
+- l’IA ne doit jamais consolider un fichier dont l’identité n’a pas été reliée au dernier `file_id` uploadé.
 
-- Si le contenu `CHAT` diffère de la baseline active mais correspond à une correction utilisateur transmise dans une fenêtre de travail active :
-  - l’IA doit appliquer `RT-LECTURE-CHAT_02` ;
-  - la différence ne constitue pas en elle-même un incident ;
-  - si la correction est cohérente, la baseline et la fenêtre active doivent être consolidées avec le fichier corrigé ;
-  - si la correction régresse une règle ou une correction déjà consolidée, l’IA doit refuser la consolidation et conserver la baseline active précédente.
+#### Procédure obligatoire
 
-- Si la différence est inexpliquée, non contrôlable, incohérente, ou si l’IA ne peut pas comparer suffisamment le fichier :
-  ➜ signaler explicitement **"incident de lecture via le chat"** et **suspendre** analyse/génération.
+Avant toute analyse, audit, correction, validation, génération de code ou consolidation portant sur un fichier joint au chat, l’IA doit :
 
-
-### 6.1.1 RT-LECTURE-CHAT_01 — Lecture des fichiers transmis par le chat
-
-Lorsqu’un fichier est transmis en pièce jointe dans le chat, la lecture de référence est la lecture directe locale du dernier fichier disponible sous :
+1. identifier le dernier `file_id` uploadé par l’Utilisateur ;
+2. déclarer explicitement que ce dernier `file_id` est le point de départ réel de la lecture ;
+3. écarter tout état ancien ou indirect portant le même nom de fichier ;
+4. identifier le nom du fichier joint ;
+5. relire le fichier local correspondant après ce dernier upload, sous :
 
 ```text
-/mnt/data/<fichierPasseDansLeChat>
+/mnt/data/<nomDuFichier>
 ```
 
-Cette lecture directe locale est obligatoire avant toute analyse, validation, correction, génération de code ou consolidation portant sur ce fichier.
+6. calculer et rapporter :
+   - `file_id` ;
+   - chemin local lu ;
+   - taille en octets ;
+   - nombre de lignes logiques ;
+   - nombre de caractères `\n` ;
+   - présence ou absence d’un saut de ligne final ;
+   - SHA-256 ;
+   - lignes exactes contrôlées ;
+7. comparer avec la baseline active uniquement après cette lecture du dernier upload ;
+8. décider explicitement si le fichier joint est :
+   - identique à une source saine ;
+   - une correction utilisateur cohérente ;
+   - une régression ;
+   - ou un fichier non contrôlable.
+
+#### Interdictions
 
 L’IA ne doit jamais conclure à partir :
-
+- d’un état ancien ou indirect ;
 - d’un extrait tronqué ;
 - d’un ancien `file_id` ;
-- d’un résultat `file_search` partiel ;
-- d’une version antérieure du fichier ;
+- d’un ancien fichier local portant le même nom ;
+- d’une version antérieure sous `/mnt/data/<nomDuFichier>` ;
+- d’un résultat `file_search` ancien, partiel ou non rattaché au dernier `file_id` ;
+- d’anciennes métriques de taille, lignes, EOF ou SHA-256 ;
+- d’une capture écran seule ;
+- d’une baseline ;
 - d’une mémoire conversationnelle ;
 - d’une supposition.
 
-Avant toute conclusion, l’IA doit rapporter au minimum :
+#### Règle anti-récidive
 
-- le chemin local lu ;
-- le SHA-256 du fichier local ;
-- la taille du fichier en octets ;
-- le nombre de lignes ;
-- les lignes exactes de la méthode ou de la zone cible contrôlée.
+Il est strictement interdit de comparer un ancien `/mnt/data/<nomDuFichier>` à un dernier `file_id` sans relire le dernier upload réel, puis de conclure à une contradiction de synchronisation.
 
-En cas de contradiction entre `file_search`, une capture écran, une mémoire conversationnelle, une ancienne pièce jointe et la lecture directe locale, la lecture directe locale du dernier fichier joint sous `/mnt/data/<fichierPasseDansLeChat>` fait foi.
+Il est également strictement interdit d’exploiter un état ancien ou indirect pour juger un fichier joint : ancien résultat `file_search`, ancienne lecture locale, anciennes métriques, ancienne baseline, mémoire conversationnelle ou fichier portant le même nom mais antérieur au dernier upload.
 
+Si un fichier vient d’être ré-uploadé, l’IA doit d’abord considérer ce dernier `file_id` comme la vérité d’identité à contrôler.
+
+Si le chemin local `/mnt/data/<nomDuFichier>` semble ne pas correspondre au dernier `file_id` après relecture réelle, l’IA doit déclarer une **lecture locale non fiable**, suspendre l’analyse, ne pas consolider, et demander un nouveau ré-upload ou une source lisible complète.
+
+#### Règle de preuve
+
+Toute conclusion sur un fichier joint au chat doit commencer par un bloc `PREUVE DE LECTURE` contenant au minimum :
+
+```text
+Dernier fichier joint CHAT lu :
+file_id :
+Point de départ réel : dernier upload utilisateur
+État ancien/indirect exploité : non
+Chemin local lu :
+Taille :
+Nombre de lignes logiques :
+Nombre de caractères \n :
+Saut de ligne final :
+SHA-256 :
+Lignes contrôlées :
+```
+
+Sans ce bloc, la conclusion est invalide.
+
+### 6.1.1 RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01 — Lecture stricte du dernier fichier joint
+
+Lorsqu’un fichier est transmis en pièce jointe dans le chat, l’IA doit lire strictement le dernier fichier joint réel.
+
+L’identité du fichier lu est le couple :
+
+```text
+dernier file_id uploadé + chemin local relu après ce dernier upload
+```
+
+Le `file_id` est l’identité normative.
+Le chemin local est un support de lecture contrôlé.
+
+La lecture directe locale du chemin `/mnt/data/<nomDuFichier>` reste obligatoire, mais elle doit toujours être rattachée au dernier `file_id`.
+
+L’IA doit vérifier que la lecture locale correspond au dernier upload réel avant toute analyse.
+
+Si plusieurs fichiers portant le même nom sont envoyés successivement :
+- seul le dernier `file_id` est valide ;
+- les anciens fichiers locaux de même nom sont considérés non fiables tant que le dernier upload n’a pas été relu ;
+- aucune conclusion ne peut être tirée d’un ancien état local.
+
+Si le dernier fichier joint est complet et lisible :
+- l’IA l’analyse ;
+- l’IA contrôle ses métadonnées ;
+- l’IA peut le comparer à la baseline active ;
+- l’IA peut proposer ou effectuer la consolidation selon les règles applicables.
+
+Si le dernier fichier joint est incomplet, tronqué ou non contrôlable :
+- l’IA doit signaler explicitement l’incident ;
+- l’IA doit suspendre l’analyse ;
+- l’IA ne doit pas consolider.
 
 ### 6.1.2 RT-LECTURE-CHAT_02 — Détection et consolidation automatique des fichiers joints
 
-Lorsqu’une fenêtre de travail est active et que l’utilisateur transmet un fichier en pièce jointe dans le chat, l’IA doit automatiquement lire le dernier fichier joint par lecture directe locale sous :
-
-```text
-/mnt/data/<fichierPasseDansLeChat>
-```
+Lorsqu’une fenêtre de travail est active et que l’Utilisateur transmet un fichier en pièce jointe dans le chat, l’IA doit automatiquement lire le dernier fichier joint réel selon `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`.
 
 Après cette lecture, l’IA doit automatiquement :
 
-1. identifier le fichier joint comme nouvelle version candidate ;
-2. calculer son SHA-256, sa taille en octets et son nombre de lignes ;
-3. détecter les modifications apportées par l’utilisateur par rapport à la baseline active ;
-4. contrôler les méthodes ou zones modifiées ;
+1. identifier le dernier `file_id` comme nouvelle version candidate ;
+2. calculer son SHA-256, sa taille en octets, son nombre de lignes logiques, son nombre de caractères `\n` et son statut de saut de ligne final ;
+3. détecter les modifications apportées par l’Utilisateur par rapport à la baseline active ;
+4. contrôler les méthodes, zones ou sections réellement modifiées ;
 5. vérifier que les corrections sont cohérentes avec le contrat, la fenêtre active et le formalisme consolidé ;
 6. si les corrections sont OK, consolider automatiquement la baseline et la fenêtre de travail active avec ce fichier corrigé.
 
-L’IA ne doit pas attendre une demande supplémentaire de consolidation lorsque l’utilisateur transmet un fichier corrigé dans une fenêtre de travail active.
+L’IA ne doit pas attendre une demande supplémentaire de consolidation lorsque l’Utilisateur transmet un fichier corrigé dans une fenêtre de travail active et que les corrections sont validées.
 
 Si le fichier joint régresse une correction déjà consolidée, l’IA doit refuser la consolidation, signaler explicitement la régression et conserver la baseline active précédente.
 
-Cette règle complète `RT-LECTURE-CHAT_01` :
+Cette règle complète `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01` :
+- `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01` définit l’identité et le mode de lecture obligatoire du dernier fichier joint ;
+- `RT-LECTURE-CHAT_02` définit le comportement automatique après lecture validée du fichier joint.
 
-- `RT-LECTURE-CHAT_01` définit le mode de lecture obligatoire ;
-- `RT-LECTURE-CHAT_02` définit le comportement automatique après lecture du fichier joint.
+### 6.1.3 RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01 — Interdiction d’exploiter un état ancien ou indirect
+
+Objectif : empêcher toute erreur de lecture causée par l’utilisation d’un ancien état local, d’un résultat indirect ou d’une mémoire au lieu du dernier upload réel.
+
+Règle absolue :
+
+➡️ L’IA NE DOIT JAMAIS exploiter un état ancien ou indirect comme source de vérité pour un fichier joint au chat.
+
+Sont considérés comme états anciens ou indirects :
+- un ancien fichier local `/mnt/data/<nomDuFichier>` ;
+- un fichier local portant le même nom mais antérieur au dernier upload ;
+- un ancien `file_id` ;
+- un résultat `file_search` ancien, partiel ou non rattaché au dernier `file_id` ;
+- une ancienne métrique de taille, lignes, nombre de `\n`, EOF ou SHA-256 ;
+- une ancienne baseline ;
+- une mémoire conversationnelle ;
+- une conclusion issue d’un tour précédent ;
+- une capture écran ou un extrait non complet.
+
+Procédure obligatoire anti-récidive :
+1. repartir strictement du dernier `file_id` uploadé par l’Utilisateur ;
+2. relire directement le chemin local `/mnt/data/<nomDuFichier>` après ce dernier upload ;
+3. recalculer les métriques depuis les octets réellement lus ;
+4. appliquer la normalisation EOL pour les comparaisons texte ;
+5. contrôler l’EOF séparément ;
+6. afficher dans la `PREUVE DE LECTURE` que le point de départ réel est le dernier upload utilisateur ;
+7. afficher que l’état ancien ou indirect n’a pas été exploité ;
+8. seulement ensuite comparer, valider ou consolider.
+
+Interdiction de conclusion :
+- si l’IA n’a pas prouvé qu’elle est repartie du dernier upload réel, elle ne doit produire aucun verdict ;
+- si l’IA constate une contradiction entre un état ancien et le dernier upload, elle doit ignorer l’état ancien et relire le dernier upload ;
+- si le dernier upload ne peut pas être relu directement, l’IA doit suspendre l’analyse et demander un nouveau fichier.
+
+Cette règle complète et renforce `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`.
 
 ---
 
@@ -734,94 +821,121 @@ L’IA doit pouvoir être pilotée comme un collaborateur technique travaillant 
 
 ---
 
-## 22) Livraison des corrections — Règle de complétude (ANTI-SNIPPETS)
+## 22) Livraison des corrections — règle de complétude et de support de livraison
 
-Toute correction ou proposition de code fournie par l’IA doit être livrée sous la forme d’un **fichier complet directement intégrable dans STS**, sans nécessité d’édition manuelle intermédiaire.
+Toute correction ou proposition de code fournie par l’IA doit être livrée sous une forme directement exploitable dans STS, sans reconstruction manuelle par l’Utilisateur.
 
-Règles obligatoires :
-- L’IA doit fournir soit :
-  - la totalité d’un fichier ou d’une classe (ex : `docs/ai/CONTRAT_IA.md`, une classe Java complète),
-  - soit la totalité d’une méthode (ex : une méthode `creer()` complète dans un ADAPTER).
-- Le contenu fourni doit être :
-  - complet,
-  - cohérent,
-  - prêt à être copié-collé tel quel,
-  - compilable lorsque applicable,
-  - conforme aux conventions du projet.
+Principe directeur :
+
+➡️ **L’unité livrée doit correspondre exactement au geste d’intégration attendu dans STS.**
+
+Deux gestes d’intégration sont autorisés :
+1. copier-coller directement une méthode Java ou un bloc de méthodes Java dans la classe cible ;
+2. remplacer intégralement un fichier complet lorsque le fichier est gros, fragile ou difficile à corriger partiellement.
+
+L’IA doit donc choisir le support de livraison selon la nature réelle de la correction, et non par confort de génération.
+
+### 22.1) RT-LIVRAISON-CODE-METHODE-BLOC-CHAT-01 — Méthodes et blocs de méthodes Java
+
+Lorsqu’une correction porte sur :
+- une méthode Java ;
+- plusieurs méthodes Java ;
+- un bloc de méthodes Java ;
+- un bloc de tests JUnit/Mockito ;
+- un bloc de helpers Java ;
+- une portion autonome destinée à être copiée dans une classe Java existante ;
+
+l’IA doit livrer le code **directement dans le chat**, dans un bloc de code copiable et intégrable dans STS.
+
+Forme obligatoire :
+- annoncer le chemin STS exact de la classe cible ;
+- livrer le bloc complet dans le chat ;
+- utiliser un bloc de code adapté au langage, par exemple `java` ;
+- inclure toutes les méthodes nécessaires au bloc demandé ;
+- ne jamais remplacer la livraison principale par un lien de téléchargement.
 
 Interdictions absolues :
-- Fournir des fragments partiels (“snippets”)
-- Donner des instructions du type :
-  - « insérer ce code ligne X »
-  - « remplacer la ligne Y »
-  - « ajouter ceci après telle méthode »
-  - « modifier tel endroit manuellement »
-- Produire un patch nécessitant une reconstruction par l’utilisateur
-- Répartir une correction sur plusieurs messages
+- livrer un lien de téléchargement comme support principal pour une méthode ;
+- livrer un lien de téléchargement comme support principal pour un bloc de méthodes ;
+- livrer seulement un fichier externe lorsque l’Utilisateur doit copier une méthode ou un bloc de méthodes ;
+- livrer un snippet incomplet ;
+- écrire `...` ou omettre une partie du bloc ;
+- demander à l’Utilisateur de reconstituer le bloc ;
+- remplacer une livraison attendue dans le chat par un fichier joint.
 
-Principe :
+Si le bloc de méthodes est volumineux :
+- l’IA doit tout de même livrer le bloc dans le chat ;
+- elle peut, si nécessaire, le scinder en plusieurs blocs successifs dans le même échange ou dans plusieurs échanges ;
+- chaque bloc livré doit rester complet, ordonné et copiable ;
+- la scission ne doit jamais transformer la livraison en snippet à reconstruire.
 
-➡️ **L’utilisateur ne doit jamais avoir à reconstituer le code.**  
-➡️ **La livraison doit être immédiatement exploitable.**
+Un lien de téléchargement peut seulement être ajouté en complément, par exemple pour une classe complète très volumineuse, mais il ne remplace jamais la livraison principale du bloc de méthodes demandé.
 
-Cette règle s’applique à tous les modes produisant du code, en particulier le MODE CODER.
+### 22.2) RT-LIVRAISON-FICHIER-COMPLET-FRAGILE-01 — Fichiers complets gros ou fragiles
 
-### 22.1) Règle de livraison des fichiers fragiles (`.md`, `.yaml`, `.py`)
+Lorsqu’une correction porte sur un fichier complet gros, fragile ou difficile à corriger partiellement dans STS, l’IA doit livrer le **fichier complet**.
 
-Pour tout fichier `.md`, `.yaml` ou `.py`, l’IA ne doit jamais livrer :
-- un snippet ;
-- un extrait partiel ;
-- un bloc isolé ;
-- un fragment à recoller ;
-- un patch implicite ;
-- un `.zip`.
+Sont considérés comme fichiers fragiles, notamment :
+- les fichiers `.md` ;
+- les fichiers `.yaml` ou `.yml` ;
+- les fichiers `.py` ;
+- les contrats IA ;
+- les contrats locaux de couche ;
+- les fichiers dont l’indentation, les clôtures de blocs, les sauts de ligne ou la structure globale rendent risquée l’intégration d’un simple extrait.
 
-Règle obligatoire :
-- l’IA doit livrer **uniquement le fichier complet** ;
-- au bon format ;
-- avec la bonne structure ;
-- les bonnes indentations ;
-- les bonnes lignes vides ;
-- un contenu directement intégrable dans STS.
+Geste d’intégration attendu :
 
-Forme de livraison obligatoire :
-- directement dans le chat ;
-- **1 fichier = 1 bloc autonome complet** ;
-- chaque fichier doit être précédé de la ligne exacte : `Chemin STS : <chemin exact dans le projet>` ;
-- le chemin annoncé doit être le chemin réel exact du fichier dans le dépôt ;
-- sous forme d’un bloc de code autonome correspondant à un fichier complet ;
-- visible intégralement avant copie ;
-- avec le bouton **copier** du bloc comme mode nominal de récupération ;
-- sans archive `.zip` ;
-- sans fichier joint comme mode nominal ;
-- sans lien de téléchargement comme mode nominal.
+➡️ L’Utilisateur efface la totalité de l’ancien fichier dans STS et le remplace par le fichier complet livré par l’IA.
 
-Interdictions complémentaires :
-- un simple lien de téléchargement ne remplace jamais le bloc visible ;
-- un fichier joint ne remplace jamais le bloc visible ;
-- l’utilisateur doit toujours pouvoir relire le contenu complet dans le chat avant copie ;
-- l’IA ne doit jamais rebaptiser le fichier livré ;
-- l’IA ne doit jamais remplacer une partie du contenu par `...` ou par une omission implicite ;
-- l’IA ne doit jamais intercaler une explication à l’intérieur du fichier livré ;
-- l’utilisateur ne doit jamais avoir à reconstruire le résultat final.
+Forme de livraison nominale :
+- annoncer le chemin STS exact du fichier ;
+- livrer le fichier complet, au bon format, sans omission ;
+- garantir que le fichier est directement intégrable dans STS ;
+- fournir les métadonnées de contrôle lorsque le fichier est généré localement : taille, nombre de lignes, nombre de caractères `\n`, saut de ligne final, SHA-256.
 
-Préférence forte de présentation :
-- lorsqu’un fichier généré admet naturellement les commentaires sans effet de bord, l’IA doit préférer insérer en tête du fichier un commentaire portant son chemin exact ;
-- si le fichier possède déjà un en-tête canonique du projet, l’IA doit le conserver et l’utiliser comme forme prioritaire ;
-- cette préférence ne doit jamais casser le format du fichier ni contredire un en-tête déjà validé.
+Support de livraison :
+- si le fichier complet est d’une taille raisonnable pour le chat, l’IA peut le livrer directement dans un bloc de code complet ;
+- si le fichier complet est gros, fragile, ou si une livraison en bloc chat augmenterait le risque d’erreur de copie, l’IA peut livrer un lien de téléchargement vers le fichier complet ;
+- dans ce cas, le lien de téléchargement est autorisé parce que l’Utilisateur remplace tout le fichier dans STS, sans intégration partielle.
 
-Exception strictement encadrée :
-- si un fichier est trop gros pour être livré directement dans le chat, l’IA doit l’indiquer explicitement ;
-- dans ce seul cas, l’IA peut livrer un lien de téléchargement du fichier complet ;
-- cette exception doit rester exceptionnelle.
+Interdictions absolues :
+- livrer un extrait partiel d’un fichier fragile ;
+- livrer un patch à insérer manuellement dans un fichier fragile ;
+- demander à l’Utilisateur de modifier une ligne ou une section fragile à la main ;
+- livrer un `.zip` comme mode nominal ;
+- rebaptiser arbitrairement le fichier cible ;
+- remplacer une partie du fichier par `...` ;
+- intercaler des explications à l’intérieur du fichier livré.
 
-Règle de volumétrie :
-- l’IA peut et doit livrer en plusieurs fois (plusieurs échanges dans le chat) si l’ensemble des fichiers à livrer est trop lourd ;
-- cette fragmentation par échanges n’autorise jamais les snippets : chaque bloc doit rester un fichier complet autonome.
+### 22.3) Règle de décision obligatoire
 
-Conséquence :
-- pour tout fichier fragile déjà existant dans le dépôt, l’IA doit d’abord le relire intégralement avant de le réécrire ;
-- pour tout nouveau fichier fragile, l’IA doit livrer le fichier entier et jamais un extrait.
+Avant toute livraison de code, l’IA doit déterminer l’unité réelle demandée :
+
+| Unité demandée ou nécessaire | Support obligatoire |
+|---|---|
+| une méthode Java | bloc de code directement dans le chat |
+| un bloc de méthodes Java | bloc de code directement dans le chat |
+| un bloc de tests JUnit/Mockito | bloc de code directement dans le chat |
+| des helpers Java à copier dans une classe | bloc de code directement dans le chat |
+| une classe Java complète demandée comme fichier complet | fichier complet, chat ou lien selon volumétrie |
+| un fichier `.md`, `.yaml`, `.yml` ou `.py` complet et fragile | fichier complet, lien autorisé si gros ou fragile |
+| un contrat IA ou contrat local complet | fichier complet, lien autorisé si gros ou fragile |
+
+Règle courte :
+
+➡️ **Méthode ou bloc de méthodes = livraison dans le chat.**  
+➡️ **Fichier complet gros ou fragile = fichier complet, lien de téléchargement autorisé.**  
+➡️ **Snippet partiel = interdit.**
+
+### 22.4) Règle anti-récidive
+
+L’IA ne doit plus jamais utiliser un lien de téléchargement pour remplacer la livraison principale d’une méthode ou d’un bloc de méthodes.
+
+Si l’Utilisateur demande `coder` pour une méthode ou un bloc de méthodes, la réponse attendue est un bloc de code dans le chat.
+
+Si l’Utilisateur demande `coder` pour un fichier complet fragile, ou s’il précise qu’il va remplacer entièrement l’ancien fichier dans STS, la réponse attendue est le fichier complet, éventuellement par lien de téléchargement lorsque la taille ou la fragilité du fichier le justifie.
+
+Cette règle est prioritaire sur les habitudes de livraison antérieures.
 
 ## 23) Règle de couplage CODE/BUNDLE (Variante A — 2 SHAs)
 
@@ -1386,6 +1500,41 @@ Règle de conclusion :
 
 Conséquence :
 - Toute conclusion sur une méthode Java doit pouvoir être retracée à la séquence explicite : contrat -> classe cible -> méthode exacte -> dépendances utiles -> tests concernés.
+
+---
+
+### 28.18 RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01 (VALIDÉ) — Interdiction absolue d’exploiter un état ancien ou indirect
+
+Objectif : empêcher les erreurs récurrentes de lecture de fichiers joints au chat provoquées par l’utilisation d’un ancien état local, d’un résultat indirect ou d’une mémoire au lieu du dernier upload réel.
+
+Règle prioritaire invariante :
+- L’IA NE DOIT JAMAIS exploiter un état ancien ou indirect comme source de vérité pour un fichier joint au chat.
+- L’IA DOIT TOUJOURS repartir strictement du dernier `file_id` uploadé par l’Utilisateur.
+- L’IA DOIT TOUJOURS apporter la preuve qu’elle est repartie de la dernière version uploadée.
+
+États interdits comme source de vérité :
+- ancien `/mnt/data/<nomDuFichier>` ;
+- ancien `file_id` ;
+- ancien résultat `file_search` ;
+- ancienne métrique de taille, lignes, `\n`, EOF ou SHA-256 ;
+- ancienne baseline ;
+- mémoire long term ;
+- mémoire top-mind ;
+- fenêtre active ;
+- conclusion précédente ;
+- capture écran ou extrait partiel.
+
+Procédure obligatoire :
+1. identifier le dernier `file_id` ;
+2. relire directement `/mnt/data/<nomDuFichier>` après ce dernier upload ;
+3. recalculer taille, lignes, nombre de `\n`, EOF et SHA-256 ;
+4. comparer les fichiers texte après normalisation EOL ;
+5. contrôler l’EOF séparément ;
+6. déclarer dans la `PREUVE DE LECTURE` : `Point de départ réel : dernier upload utilisateur` ;
+7. déclarer dans la `PREUVE DE LECTURE` : `État ancien/indirect exploité : non`.
+
+Conséquence :
+- sans preuve de départ depuis le dernier upload réel, aucune analyse, aucun verdict, aucune mémorisation et aucune consolidation ne sont valides.
 
 ---
 

@@ -1,3 +1,4 @@
+# docs/ai/MANIFEST_IA.yaml
 # *********************************************************************
 # *********************** MANIFEST IA — UNIQUE ************************
 # *********************************************************************
@@ -106,6 +107,28 @@ lecture:
       - local_raw_byte_reading
       - strict_generics_verification
     stop_if_container_download_not_attempted: true
+  chat_attachment_reading:
+    rule_id: RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01
+    anti_stale_indirect_state_rule_id: RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01
+    required: true
+    identity_source: last_uploaded_file_id
+    local_path_is_support_only: true
+    require_file_id_report: true
+    require_latest_upload_starting_point_report: true
+    require_no_stale_indirect_state_report: true
+    require_local_reread_after_upload: true
+    require_size_lines_newlines_eof_sha256: true
+    require_eol_normalized_text_comparison: true
+    require_eof_separate_control: true
+    forbid_old_local_same_name_as_truth: true
+    forbid_old_file_id_as_truth: true
+    forbid_old_file_search_result_as_truth: true
+    forbid_old_metrics_as_truth: true
+    forbid_memory_as_truth_for_chat_attachment: true
+    forbid_baseline_as_truth_before_last_upload_read: true
+    forbid_stale_indirect_state_as_truth: true
+    forbid_declaring_sync_incident_without_rereading_last_file_id: true
+    forbid_consolidation_without_last_file_id_match: true
 
 garantie:
   reproducible: true
@@ -114,29 +137,40 @@ garantie:
   pack_resolution_shared: true
   baseline_consolidation_required: true
 
+livraison_code:
+  rule_id_method_block: RT-LIVRAISON-CODE-METHODE-BLOC-CHAT-01
+  method_or_block_direct_chat_required: true
+  method_or_block_download_link_forbidden_as_primary: true
+  method_or_block_file_attachment_forbidden_as_primary: true
+  method_or_block_complete_code_block_required: true
+  method_or_block_sts_path_required: true
+  method_or_block_snippet_forbidden: true
+  method_or_block_ellipsis_forbidden: true
+  method_or_block_multi_turn_allowed_if_needed: true
+  complete_java_class_file_delivery_allowed_when_requested: true
+
 livraison_fichiers_fragiles:
+  rule_id_complete_fragile_file: RT-LIVRAISON-FICHIER-COMPLET-FRAGILE-01
   extensions:
     - .md
     - .yaml
+    - .yml
     - .py
   complete_file_only: true
-  visible_code_block_required: true
   exact_prefix_line_required: "Chemin STS : "
-  one_file_one_block: true
-  copy_button_expected: true
+  full_replacement_in_sts_expected: true
+  download_link_allowed_for_complete_large_or_fragile_file: true
+  download_link_forbidden_for_method_or_block: true
   zip_forbidden: true
-  file_attachment_forbidden_as_nominal_mode: true
-  download_link_forbidden_as_nominal_mode: true
   file_renaming_forbidden: true
   omission_forbidden: true
   ellipsis_forbidden: true
   interleaved_explanation_inside_file_forbidden: true
-  visual_review_in_chat_before_copy_expected: true
-  direct_paste_into_sts_expected: true
-  filename_comment_header_preferred_when_format_allows: true
-  preserve_existing_canonical_header_if_present: true
-  download_link_only_if_too_large: true
-  multi_turn_delivery_allowed: true
+  metadata_required_when_generated_locally: true
+  require_size_lines_newlines_eof_sha256: true
+  direct_chat_allowed_when_file_size_reasonable: true
+  partial_patch_forbidden: true
+  manual_line_editing_forbidden: true
 
 text_comparison:
   mode: canonical_eol_normalized
