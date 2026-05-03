@@ -182,7 +182,7 @@ sur les 5 points suivants :
    réutiliser ou poser les constantes dans la zone des constantes,
    jamais de littéraux métier dispersés ;
 
-5. preuve BD en intégration :
+5. preuve dans le stockage en intégration :
    les tests d’intégration Produit doivent remonter
    au niveau de preuve SQL directe via `JdbcTemplate`
    déjà validé sur `TypeProduit` et `SousTypeProduit`.
@@ -197,7 +197,7 @@ Avant toute livraison de code Produit, l’IA doit vérifier explicitement que :
 - aucun stub Mockito inutile ne subsiste ;
 - aucune constante métier n’est laissée sous forme de littéral dispersé ;
 - aucun test d’intégration important n’est livré
-  avec un niveau de preuve BD inférieur à celui des classes de référence.
+  avec un niveau de preuve dans le stockage inférieur à celui des classes de référence.
 
 ## 8) Formalisme javadoc obligatoire dans le PORT UC
 

@@ -91,7 +91,7 @@ Elles ne doivent pas être rattachées à `couche_services.gateway`.
 ### 4.5) Règle de preuve
 
 Les tests Mock verrouillent le contrat observable et la délégation.
-Les tests d'intégration prouvent le comportement UC réel, le message final et, lorsque pertinent, la preuve BD.
+Les tests d'intégration prouvent le comportement UC réel, le message final et, lorsque pertinent, la preuve dans le stockage.
 
 ### 4.6) Règle de contrats locaux
 

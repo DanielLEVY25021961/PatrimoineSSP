@@ -26,7 +26,8 @@ variables:
 
 policy:
   priorite_absolue:
-    source_de_verite: "docs/ai/perimetre.yaml"
+    source_de_verite: "docs/ai/CONTRAT_IA.md"
+    source_de_verite_perimetre: "docs/ai/perimetre.yaml"
     rebuild_urls_sha_on_new_sha: true
     lecture_github_obligatoire: "RT-LECTURE-GITHUB-02"
     interdit_demander_urls_raw: true

@@ -186,7 +186,7 @@ sur les 5 points suivants :
    réutiliser ou poser les constantes dans la zone des constantes,
    jamais de littéraux métier dispersés ;
 
-5. preuve BD en intégration :
+5. preuve dans le stockage en intégration :
    conserver le niveau de preuve SQL directe via `JdbcTemplate`
    lorsque ce niveau de preuve est déjà validé dans le projet.
 
@@ -1416,42 +1416,42 @@ Pour `getMessage()`, les tests Mock doivent verrouiller au minimum :
 ### Point de vigilance pour les tests d’Intégration
 
 Pour `creer(...)`, le test d’intégration cible doit, à terme, prouver :
-- la création effective en base ;
+- la création effective dans le stockage ;
 - le rattachement effectif au parent ;
 - l’absence de doublon ;
 - la cohérence du message observable.
 
 Pour `rechercherTous()`, le test d’intégration cible doit, à terme, prouver :
 - la cohérence entre la liste retournée et `count()` ;
-- la présence réelle en base des lignes retournées ;
+- la présence réelle dans le stockage des lignes retournées ;
 - la cohérence du parent pour chaque sous-type vérifié ;
-- le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
+- le cas stockage vide avec `MESSAGE_RECHERCHE_VIDE`.
 
 Pour `rechercherTousString()`, le test d’intégration cible doit, à terme, prouver :
 - la présence des libellés créés dans la réponse ;
 - l’absence de doublon dans la réponse ;
 - l’absence de libellé blank dans la réponse ;
-- la présence physique en base des lignes correspondant aux libellés vérifiés ;
-- le cas base vide avec `MESSAGE_RECHERCHE_VIDE`.
+- la présence physique dans le stockage des lignes correspondant aux libellés vérifiés ;
+- le cas stockage vide avec `MESSAGE_RECHERCHE_VIDE`.
 
 Pour `rechercherTousParPage(...)`, le test d’intégration cible doit, à terme, prouver :
 - la cohérence entre la pagination retournée et `count()` ;
 - la cohérence de `pageNumber`, `pageSize` et `totalElements` ;
-- la présence réelle en base des lignes correspondant aux DTO paginés vérifiés ;
+- la présence réelle dans le stockage des lignes correspondant aux DTO paginés vérifiés ;
 - la cohérence du parent pour les sous-types vérifiés ;
 - le message exact `MESSAGE_RECHERCHE_PAGINEE_OK` en cas de succès.
 
 Pour `findByLibelle(...)`, le test d’intégration cible doit, à terme, prouver :
 - qu’un même libellé exact peut remonter plusieurs DTO ;
 - que ces DTO peuvent appartenir à des parents distincts ;
-- que les couples parent / sous-type existent physiquement en base ;
+- que les couples parent / sous-type existent physiquement dans le stockage ;
 - que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès ;
 - qu’un libellé introuvable retourne une liste vide avec `MESSAGE_OBJ_INTROUVABLE + libellé`.
 
 Pour `findByLibelleRapide(...)`, le test d’intégration cible doit, à terme, prouver :
 - que la recherche blank délègue à `rechercherTous()` ;
 - que la recherche introuvable retourne une liste vide avec `MESSAGE_RECHERCHE_VIDE` ;
-- que les DTO correspondant au fragment recherché existent physiquement en base ;
+- que les DTO correspondant au fragment recherché existent physiquement dans le stockage ;
 - que les objets hors cible ne sont pas attendus dans le résultat ;
 - que le message exact `MESSAGE_RECHERCHE_OK` est positionné en cas de succès.
 
@@ -1460,7 +1460,7 @@ Pour `findAllByParent(...)`, le test d’intégration cible doit, à terme, prou
 - qu’un parent absent est refusé ;
 - qu’un parent existant sans enfant retourne une liste vide avec `MESSAGE_RECHERCHE_VIDE` ;
 - que seuls les enfants du parent demandé sont retournés ;
-- que les couples parent / sous-type retournés existent physiquement en base ;
+- que les couples parent / sous-type retournés existent physiquement dans le stockage ;
 - que le message exact `MESSAGE_RECHERCHE_OK` est positionné en cas de succès.
 
 Pour `findByDTO(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -1468,13 +1468,13 @@ Pour `findByDTO(...)`, le test d’intégration cible doit, à terme, prouver :
 - qu’un parent absent retourne `null` avec `MESSAGE_RECHERCHE_VIDE` ;
 - qu’un couple `[parent, libellé]` introuvable retourne `null` avec `MESSAGE_RECHERCHE_VIDE` ;
 - que la recherche s’appuie bien sur le couple `[parent, libellé]` lorsque le même libellé existe sur plusieurs parents ;
-- que le DTO retourné correspond physiquement au couple demandé en base ;
+- que le DTO retourné correspond physiquement au couple demandé dans le stockage ;
 - que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès.
 
 Pour `findById(...)`, le test d’intégration cible doit, à terme, prouver :
 - qu’un `pId` null retourne `null` avec `MESSAGE_PARAM_NULL` ;
 - qu’un identifiant inexistant retourne `null` avec `MESSAGE_OBJ_INTROUVABLE + pId` ;
-- que l’objet relu correspond physiquement à l’enregistrement créé en base ;
+- que l’objet relu correspond physiquement à l’enregistrement créé dans le stockage ;
 - que le parent et le libellé relus sont cohérents ;
 - que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès.
 
@@ -1506,7 +1506,7 @@ Pour `delete(...)`, le test d’intégration cible doit, à terme, prouver :
   est positionné en cas de succès.
 
 Pour `count()`, le test d’intégration cible doit, à terme, prouver :
-- que le résultat UC est identique au `COUNT(*)` physique de la base ;
+- que le résultat UC est identique au `COUNT(*)` physique du stockage ;
 - que le message exact est `MESSAGE_RECHERCHE_VIDE` si le comptage vaut `0` ;
 - que le message exact est `MESSAGE_RECHERCHE_OK` si le comptage est strictement positif ;
 - que deux créations font augmenter le comptage de `2` ;

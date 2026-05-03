@@ -865,6 +865,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>contient le message technique d'origine ;</li>
      * <li>propage une cause non null ;</li>
      * <li>n'appelle pas save(...).</li>
      * </ul>
@@ -883,7 +884,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
         final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_1, null, parent);
 
-        final RuntimeException ex = new RuntimeException(LIBELLE_PARENT_1);
+        final RuntimeException ex = new RuntimeException(MSG_BOOM);
         
         /* Condition du Mock :
          * L'appel typeProduitDaoJPA.findById(ID_1) sur le DAO mocké 
@@ -904,10 +905,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
          */
         assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
         assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(MSG_BOOM);
         assertThat(throwable.getCause()).isSameAs(ex);
 
         /* 
@@ -1058,6 +1062,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
+     * <li>contient le message technique d'origine ;</li>
      * <li>propage une cause non null.</li>
      * </ul>
      * </div>
@@ -1105,10 +1110,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
          */
         assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
         assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
+        assertThat(throwable).hasMessageContaining(MSG_BOOM);
         assertThat(throwable.getCause()).isSameAs(ex);
 
         /* 
@@ -1122,7 +1130,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         verify(this.sousTypeProduitDaoJPA).save(any(SousTypeProduitJPA.class));
 
     } // __________________________________________________________________
-
+    
 
 
     /**

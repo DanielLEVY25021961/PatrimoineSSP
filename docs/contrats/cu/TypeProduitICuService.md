@@ -185,7 +185,7 @@ sur les 5 points suivants :
    réutiliser ou poser les constantes dans la zone des constantes,
    jamais de littéraux métier dispersés ;
 
-5. preuve BD en intégration :
+5. preuve dans le stockage en intégration :
    conserver le niveau de preuve SQL directe via `JdbcTemplate`
    lorsque ce niveau de preuve est déjà validé dans le projet.
 
@@ -438,7 +438,7 @@ Les tests d’Intégration doivent couvrir, selon le contrat de la méthode :
 - message final exact ;
 - exceptions exactes lorsque c’est intégrablement testable ;
 - cohérence du DTO ou de la liste retournée ;
-- **preuve BD physique** lorsque la méthode écrit ou détruit en stockage ;
+- **preuve physique dans le stockage** lorsque la méthode écrit ou détruit en stockage ;
 - absence d’effet de bord lorsqu’aucune écriture ne doit se produire.
 
 Pour une méthode de lecture ou d’agrégation pure,
