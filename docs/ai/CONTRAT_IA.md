@@ -1020,6 +1020,52 @@ Sacralisation :
 - elle doit être relue avant tout audit, diagnostic, refactoring ou validation finale portant sur des tests de SERVICE GATEWAY ;
 - elle s’applique en priorité à toute méthode de PORT GATEWAY et à l’ensemble des classes de tests Mock / Intégration / autres tests associés à cette méthode.
 
+#### 15.2.6.1) Barrière anti-récidive — invariance des critères de contrôle Gateway Mockito
+
+Principe prioritaire :
+
+➡️ **L’IA ne doit jamais modifier, élargir, durcir ou réinventer les critères de contrôle d’un bloc de tests Gateway Mockito entre deux passes de contrôle.**
+
+Cette règle complète la règle `15.2.6` sans ajouter de nouveaux critères de conformité.
+
+Avant tout verdict sur un bloc de tests Gateway Mockito, l’IA doit établir en interne une whitelist stricte des critères autorisés.
+
+Cette whitelist est limitée aux sources suivantes :
+1. `CONTRAT_IA.md`, notamment la règle `15.2.6` ;
+2. le contrat local `CoucheServicesGateway.md`, notamment les sections `5.2`, `5.22`, `5.23`, `5.24` et `5.25` ;
+3. le contrat du PORT Gateway de la méthode contrôlée ;
+4. le comportement réel de l’ADAPTER Gateway correspondant ;
+5. les formalismes locaux déjà validés dans le fichier cible ou dans les fichiers Gateway de référence relus ;
+6. les corrections utilisateur déjà relues, validées et consolidées.
+
+Interdiction absolue :
+- ne jamais introduire comme défaut bloquant un critère absent de cette whitelist ;
+- ne jamais transformer une amélioration optionnelle en exigence obligatoire ;
+- ne jamais déclarer manquant un test, une assertion, un `ArgumentCaptor`, une interaction Mockito ou une variante de scénario si cette exigence n’est pas imposée par le PORT, par l’ADAPTER réel ou par les règles stables relues ;
+- ne jamais changer de stratégie de conformité après une validation utilisateur, sauf modification explicite des contrats IA ou Gateway.
+
+Si l’IA détecte une amélioration utile mais non imposée par les règles stables, elle doit la qualifier explicitement comme :
+
+`amélioration optionnelle`
+
+Si l’IA estime qu’un nouveau critère doit devenir obligatoire, elle doit d’abord le signaler à l’Utilisateur et demander une modification explicite des contrats concernés. Tant que cette modification n’est pas validée et consolidée, ce critère ne peut pas être utilisé comme défaut bloquant.
+
+Règle fail-closed :
+
+Si l’IA n’a pas relu les règles stables, le PORT, l’ADAPTER réel et le bloc de test cible, elle ne doit donner aucun verdict. Elle doit répondre uniquement :
+
+`contrôle impossible — lecture/preflight incomplet`
+
+Format de réponse attendu après contrôle :
+- si le bloc est parfait au regard de la whitelist : `bloc OK` ;
+- sinon : liste courte des seules corrections obligatoires issues de la whitelist.
+
+Sacralisation :
+- cette règle est prioritaire sur toute habitude antérieure de l’IA ;
+- elle s’applique à tous les contrôles Gateway Mockito ;
+- elle interdit les audits à géométrie variable ;
+- elle impose une même grille de contrôle pour toutes les passes d’un même bloc tant que les contrats n’ont pas changé.
+
 #### 15.2.7) Formalisme local validé dans les tests d’intégration SERVICE GATEWAY
 
 Interdiction absolue :

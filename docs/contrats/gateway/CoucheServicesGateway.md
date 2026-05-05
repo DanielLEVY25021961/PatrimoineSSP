@@ -729,6 +729,70 @@ L'IA ne doit jamais :
 
 Pour tout test Mockito de Gateway, l'IA travaille méthode du PORT par méthode du PORT. Elle lit d'abord le contrat du PORT, puis l'ADAPTER réel, puis les dépendances et les tests validés. Elle déduit les tests contractuels, ajoute seulement les tests didactiques nécessaires, nomme simplement les méthodes, ordonne les cas en Exception / KO, alternatifs puis nominaux OK, conserve les commentaires utilisateur justes, tolère les commentaires historiques validés, précise les commentaires vagues par les paramètres observables, l'appel Java exact ou le comportement Mockito réellement préparé, structure ARRANGE / ACT / ASSERT, respecte la javadoc HTML validée, code tous les helpers nécessaires, teste les méthodes privées par réflexion seulement si utile, vérifie la cohérence interne et transversale, et applique toujours la même grille de conformité sans inventer de nouveaux critères.
 
+### 5.26) Workflow rapide et verrouillé de contrôle Gateway Mockito
+
+Le contrôle d’un bloc de tests Mockito Gateway doit être rapide, stable et reproductible lorsque la fenêtre active est installée.
+
+Lorsque le SHA courant est consolidé et que la fenêtre active contient le périmètre Gateway complet, l’IA travaille directement depuis la fenêtre active. Elle ne relit pas GitHub à chaque contrôle de bloc, sauf nouveau SHA ou demande explicite de l’Utilisateur.
+
+Préflight obligatoire avant tout verdict :
+
+1. relire le présent contrat local Gateway ;
+2. relire les règles stables de contrôle applicables ;
+3. relire le contrat du PORT de la méthode contrôlée ;
+4. relire la méthode correspondante dans l’ADAPTER réel ;
+5. relire les dépendances utiles strictement nécessaires ;
+6. relire le bloc de test cible ;
+7. établir en interne la matrice `cas du contrat -> test correspondant -> verdict` ;
+8. établir en interne la whitelist des critères autorisés.
+
+La whitelist des critères autorisés est strictement limitée :
+- aux critères inscrits dans `CONTRAT_IA.md` ;
+- aux critères inscrits dans le présent contrat local Gateway ;
+- aux cas du PORT ;
+- au comportement réel de l’ADAPTER ;
+- aux formalismes locaux déjà validés ;
+- aux corrections utilisateur relues et consolidées.
+
+Tout critère absent de cette whitelist est interdit comme défaut bloquant.
+
+L’IA ne doit pas imposer comme obligatoire, sauf preuve explicite dans la whitelist :
+- un nouveau cas de test ;
+- un nouvel `ArgumentCaptor` ;
+- une nouvelle variante DAO ;
+- une nouvelle vérification d’`EntityManager` ;
+- une nouvelle vérification Mockito plus forte ;
+- une nouvelle assertion ;
+- une nouvelle formulation de commentaire ;
+- un nouveau formalisme de nommage.
+
+Ces éléments peuvent seulement être signalés comme améliorations optionnelles, ou faire l’objet d’une proposition de modification du contrat.
+
+Workflow utilisateur obligatoire :
+
+1. l’Utilisateur demande : `contrôle le bloc xxx` ou `vérifier bloc xxx` ;
+2. l’IA effectue le préflight et le contrôle en interne ;
+3. si le bloc est parfait, l’IA répond uniquement : `bloc OK` ;
+4. sinon, l’IA liste uniquement les corrections obligatoires à faire ;
+5. l’IA ne code rien tant que l’Utilisateur n’a pas écrit explicitement `coder` ;
+6. après `coder`, l’IA livre le bloc ou la méthode complète directement dans le chat ;
+7. l’Utilisateur intègre dans STS et exécute les tests ;
+8. si les tests passent verts, l’Utilisateur transmet le fichier Java corrigé ;
+9. l’IA relit le dernier fichier joint réel ;
+10. l’IA vérifie que les corrections sont intégrées ;
+11. l’IA recontrôle automatiquement le même bloc avec la même whitelist ;
+12. si tout est conforme, l’IA répond uniquement : `bloc OK`.
+
+Interdiction absolue :
+- ne jamais réauditer un bloc avec une grille différente de celle utilisée à la passe précédente, sauf changement explicite des contrats ;
+- ne jamais ajouter de nouveaux défauts bloquants après coup si ces défauts ne sont pas issus des critères stables déjà relus ;
+- ne jamais confondre amélioration optionnelle et correction obligatoire ;
+- ne jamais donner un verdict si le préflight est incomplet.
+
+Réponse obligatoire en cas de préflight incomplet :
+
+`contrôle impossible — lecture/preflight incomplet`
+
 ## 6) Définition de la sacralisation
 
 La sous-couche `couche_services.gateway` est considérée sacralisée lorsque :
