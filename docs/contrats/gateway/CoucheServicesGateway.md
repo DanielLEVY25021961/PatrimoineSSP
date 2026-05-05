@@ -793,7 +793,279 @@ Réponse obligatoire en cas de préflight incomplet :
 
 `contrôle impossible — lecture/preflight incomplet`
 
-## 6) Définition de la sacralisation
+
+## 6) RT-CODAGE-TEST-INTEGRATION-GATEWAY-01 — Codage et contrôle des tests d'intégration Gateway
+
+### 6.1) Objet
+
+Cette règle définit la méthode obligatoire de l'IA pour analyser, auditer, corriger ou coder les tests d'intégration des SERVICE GATEWAY du projet PatrimoineSSP.
+
+Elle s'applique à tous les tests d'intégration Gateway, notamment :
+- `TypeProduitGatewayJPAServiceIntegrationTest.java` ;
+- `SousTypeProduitGatewayJPAServiceIntegrationTest.java` ;
+- `ProduitGatewayJPAServiceIntegrationTest.java` ;
+- tout futur test d'intégration Gateway équivalent.
+
+Les tests Mockito Gateway validés restent la référence pour la complétude technique fine.
+Les tests d'intégration Gateway ne les remplacent pas : ils prouvent le comportement réel Spring/JPA/H2 et l'état observable du stockage.
+
+### 6.2) Source de vérité
+
+Avant toute analyse, audit, validation, correction ou génération de code sur un test d'intégration Gateway, l'IA doit travailler strictement sur pièces.
+
+Ordre obligatoire :
+1. lire le présent contrat local Gateway ;
+2. lire le contrat du PORT Gateway concerné ;
+3. lire la méthode correspondante dans l'ADAPTER Gateway réel ;
+4. lire les dépendances utiles à la compréhension réelle ;
+5. lire le test d'intégration cible ;
+6. lire les tests d'intégration de référence déjà validés si le formalisme local doit être confirmé ;
+7. tenir compte des tests Mockito Gateway validés pour ne pas exiger à nouveau en intégration des branches techniques déjà prouvées.
+
+Règle centrale :
+- le PORT définit les cas contractuels ;
+- l'ADAPTER Gateway définit le comportement réel attendu ;
+- le test Mockito Gateway validé verrouille les branches techniques internes ;
+- le test d'intégration Gateway prouve le comportement observable réel, l'écriture, la lecture, la non-écriture, la suppression et la cohérence du stockage ;
+- l'IA ne doit jamais raisonner de mémoire, ni par analogie non relue.
+
+### 6.3) Différence de rôle entre Mockito et intégration
+
+Un test Mockito Gateway vérifie finement :
+- les collaborateurs exacts ;
+- les interactions exactes ;
+- les retours DAO `null` ;
+- les exceptions DAO avec message non null et message null ;
+- les conversions et branches techniques internes ;
+- les non-interactions Mockito.
+
+Un test d'intégration Gateway vérifie prioritairement :
+- le contrat public du PORT ;
+- le comportement réel Spring/JPA/H2 ;
+- l'état physique observable du stockage ;
+- la cohérence entre le service et la lecture SQL directe ;
+- les écritures réelles ;
+- les absences d'écriture ;
+- les suppressions réelles ;
+- l'isolation des tests ;
+- la conservation des données seedées.
+
+L'IA ne doit donc pas exiger, dans un test d'intégration, toutes les variantes techniques déjà verrouillées en Mockito, sauf si le PORT, l'ADAPTER ou un comportement observable réel du stockage l'impose.
+
+### 6.4) Structure complète d'une classe d'intégration Gateway
+
+Un test d'intégration Gateway complet doit :
+- utiliser une configuration Spring/JPA réelle adaptée au périmètre testé ;
+- utiliser le SERVICE GATEWAY réel ;
+- utiliser les DAO réels via le contexte JPA ;
+- utiliser `JdbcTemplate` ou une lecture SQL directe équivalente lorsque la preuve physique du stockage est nécessaire ;
+- utiliser les scripts SQL de préparation nécessaires ;
+- éviter les mocks Mockito pour les collaborateurs du Gateway testé ;
+- contrôler uniquement les effets réellement observables en intégration ;
+- ne pas dépendre d'un ordre implicite non prouvé par le test.
+
+### 6.5) Blocs à contrôler
+
+Les blocs de tests d'intégration suivent les méthodes du PORT Gateway.
+
+Ordre de référence pour `TypeProduitGatewayIService` :
+- `creer(...)` ;
+- `rechercherTous()` ;
+- `rechercherTousParPage(...)` ;
+- `findByObjetMetier(...)` ;
+- `findByLibelle(...)` ;
+- `findByLibelleRapide(...)` ;
+- `findById(...)` ;
+- `update(...)` ;
+- `delete(...)` ;
+- `count()`.
+
+Ordre de référence pour les Gateways avec parent métier :
+- `creer(...)` ;
+- `rechercherTous()` ;
+- `rechercherTousParPage(...)` ;
+- `findByObjetMetier(...)` ;
+- `findByLibelle(...)` ;
+- `findByLibelleRapide(...)` ;
+- `findAllByParent(...)` ;
+- `findById(...)` ;
+- `update(...)` ;
+- `delete(...)` ;
+- `count()`.
+
+Le PORT décide des blocs. L'IA ne doit pas inventer un bloc absent du PORT.
+
+### 6.6) Critères contractuels d'intégration
+
+Pour chaque bloc, l'IA doit contrôler au minimum les catégories applicables suivantes :
+- cas applicatifs principaux du PORT (`null`, libellé `null`, libellé blank, identifiant `null`, parent `null`, parent à libellé blank, parent sans identifiant) ;
+- cas parent absent du stockage lorsque le Gateway possède un parent métier ;
+- cas non trouvé ;
+- cas nominal ;
+- cas stockage vide lorsque le comportement public doit rester non null et exploitable ;
+- cas pagination par défaut, pagination explicite, tri, page vide, page hors bornes et taille normalisée lorsque la méthode est paginée ;
+- cas écriture réelle pour `creer(...)` ;
+- cas absence d'altération pour les échecs applicatifs ;
+- cas modification réelle et absence de modification pour `update(...)` ;
+- cas suppression réelle, identifiant absent et double suppression lorsque le PORT l'autorise ;
+- cohérence de `count()` avec la lecture SQL directe et avec les méthodes publiques de lecture.
+
+Cette liste est une grille stable. Elle doit être adaptée aux différences réelles entre `TypeProduit`, `SousTypeProduit` et `Produit`, sans copier mécaniquement un cas qui n'a pas de sens pour le PORT contrôlé.
+
+### 6.7) Preuve physique du stockage
+
+Lorsqu'un test d'intégration prétend prouver une écriture, une non-écriture, une modification, une suppression ou une absence de résultat, il doit s'appuyer sur une preuve observable.
+
+Preuves attendues selon le cas :
+- lecture SQL directe du nombre de lignes avant/après ;
+- lecture SQL directe de l'identifiant créé ou ciblé ;
+- lecture SQL directe du libellé ou des colonnes métier utiles ;
+- comparaison avec la méthode publique du service ;
+- contrôle que les données seedées restent présentes ;
+- contrôle que la ligne créée est nettoyée ;
+- contrôle que la ligne supprimée n'est plus retrouvable.
+
+Les helpers historiques dont le nom contient `EnBase` sont tolérés lorsqu'ils existent déjà et qu'ils ont été validés, mais les nouveaux commentaires, Javadocs et DisplayName doivent employer le vocabulaire `stockage`.
+
+### 6.8) Transactions, scripts SQL et nettoyage
+
+Un test d'intégration Gateway qui crée, modifie ou supprime physiquement une donnée dédiée au test doit garantir l'isolation.
+
+Règles :
+- utiliser les scripts SQL de préparation déclarés par la classe ;
+- utiliser `@Transactional(propagation = Propagation.NOT_SUPPORTED)` lorsque le test doit prouver une écriture ou une suppression réellement observable hors transaction de test ;
+- nettoyer explicitement en `finally` toute ligne créée lorsque l'isolation ne dépend pas uniquement du script SQL de préparation ;
+- restaurer explicitement en `finally` toute donnée seedée modifiée ;
+- prévoir un nettoyage défensif lorsque le test peut échouer après une écriture réelle ;
+- ne pas interroger JPA après un échec transactionnel si le contexte peut être marqué en erreur ; privilégier alors une lecture SQL directe.
+
+### 6.9) Javadocs, commentaires et vocabulaire
+
+Chaque méthode de test d'intégration Gateway doit posséder une javadoc HTML immédiatement placée avant les annotations.
+
+Règles :
+- commencer par `garantit que ... :` ou par une formulation conditionnelle équivalente lorsque le scénario est plus clair ainsi ;
+- lister uniquement les garanties observables ;
+- décrire le comportement réel du service et du stockage ;
+- expliquer les lectures SQL directes lorsqu'elles servent de preuve indépendante du contexte Hibernate ;
+- conserver les commentaires utilisateur justes ;
+- réutiliser le formalisme local déjà validé ;
+- ne pas remplacer un commentaire précis par une formulation plus vague.
+
+Vocabulaire obligatoire :
+- utiliser `stockage` dans les Javadocs, commentaires et nouveaux DisplayName ;
+- éviter les formulations qui masquent le geste réel : préciser l'appel Java, la lecture SQL, l'écriture, la suppression, la restauration ou le nettoyage.
+
+Formalisme validé :
+- le nom de méthode peut utiliser `Nominal` lorsque ce nom est le formalisme local validé ;
+- le `@DisplayName` peut conserver une constante contenant `OK`, par exemple `@DisplayName(DN_CREER_OK)` ;
+- `testCreerNominal()` avec `@DisplayName(DN_CREER_OK)` est conforme.
+
+### 6.10) Ordre des méthodes dans un bloc d'intégration
+
+Dans chaque bloc d'intégration, l'ordre cible est :
+1. cas d'exception applicative ;
+2. cas d'absence physique ou non trouvé ;
+3. cas alternatifs observables ;
+4. cas de stockage vide ou pagination particulière lorsque pertinent ;
+5. cas nominaux ;
+6. cas d'écriture multiple ou scénario enrichi lorsque ce cas complète le nominal.
+
+Le cas nominal principal reste placé après les KO du bloc.
+Les scénarios enrichis comme créations multiples, double suppression ou création puis suppression peuvent suivre le nominal s'ils documentent une preuve d'intégration complémentaire.
+
+### 6.11) Critères fixes de conformité d'une méthode d'intégration Gateway
+
+Une méthode de test d'intégration Gateway est conforme seulement si tous les critères applicables sont respectés :
+1. elle appartient au bon bloc PORT ;
+2. elle est justifiée par le contrat, par le comportement réel de l'ADAPTER ou par une preuve d'intégration utile ;
+3. elle porte un nom simple et stable ;
+4. elle est placée dans le bon ordre du bloc ;
+5. elle possède une javadoc HTML conforme ;
+6. elle possède `@Tag(...)` ;
+7. elle possède `@DisplayName(...)` ;
+8. elle possède `@Test` ;
+9. elle rend visibles les phases ARRANGE / ACT / ASSERT lorsque c'est possible ;
+10. elle vérifie le résultat métier ou l'exception publique attendue ;
+11. elle vérifie l'état observable du stockage lorsque le scénario l'exige ;
+12. elle vérifie l'absence d'altération du stockage lorsque le scénario l'exige ;
+13. elle nettoie ou restaure les données créées ou modifiées lorsque nécessaire ;
+14. elle reste homogène avec les méthodes similaires du même fichier ;
+15. elle reste homogène avec les méthodes similaires des tests d'intégration Gateway liés ;
+16. elle ne réexige pas les branches techniques internes déjà prouvées en Mockito, sauf nécessité observable.
+
+Cette grille est stable. L'IA ne doit pas inventer de nouveaux critères de qualité à chaque passe.
+
+### 6.12) Homogénéité entre les trois tests d'intégration Gateway
+
+La comparaison transversale doit porter sur :
+- l'ordre des blocs ;
+- la présence des méthodes contractuelles équivalentes ;
+- les écarts justifiés par la structure métier ;
+- la cohérence des noms de méthodes ;
+- la cohérence des Javadocs ;
+- la cohérence des `@DisplayName` ;
+- l'usage homogène de `JdbcTemplate` ;
+- l'usage homogène de `@Sql` ;
+- l'usage homogène de `@Transactional(propagation = Propagation.NOT_SUPPORTED)` pour les écritures physiques ;
+- le nettoyage physique défensif en `finally` ;
+- le vocabulaire `stockage`.
+
+Écarts structurels justifiés :
+- `TypeProduit` est racine et ne possède pas de parent métier ;
+- `SousTypeProduit` possède un parent `TypeProduit` ;
+- `Produit` possède un parent `SousTypeProduit` ;
+- un test lié au parent ne doit pas être copié dans `TypeProduit` ;
+- une preuve liée à un collaborateur absent ne doit pas être inventée.
+
+### 6.13) Workflow rapide et verrouillé de contrôle Gateway intégration
+
+Lorsque le SHA courant est consolidé et que la fenêtre active contient le périmètre Gateway complet, l'IA travaille directement depuis la fenêtre active. Elle ne relit pas GitHub à chaque contrôle de bloc, sauf nouveau SHA ou demande explicite de l'Utilisateur.
+
+Préflight obligatoire avant tout verdict :
+1. relire le présent contrat local Gateway ;
+2. relire les règles stables de contrôle applicables ;
+3. relire le contrat du PORT de la méthode contrôlée ;
+4. relire la méthode correspondante dans l'ADAPTER réel ;
+5. relire les dépendances utiles strictement nécessaires ;
+6. relire le bloc de test d'intégration cible ;
+7. établir en interne la matrice `cas du contrat -> test correspondant -> verdict` ;
+8. établir en interne la whitelist des critères autorisés.
+
+La whitelist des critères autorisés est strictement limitée :
+- aux critères inscrits dans `CONTRAT_IA.md` ;
+- aux critères inscrits dans le présent contrat local Gateway ;
+- aux cas du PORT ;
+- au comportement réel de l'ADAPTER ;
+- au comportement observable du stockage ;
+- aux formalismes locaux déjà validés ;
+- aux corrections utilisateur relues et consolidées.
+
+Tout critère absent de cette whitelist est interdit comme défaut bloquant.
+
+### 6.14) Workflow après tests verts STS
+
+Après tests verts STS et fichier d'intégration corrigé joint par l'Utilisateur, l'IA doit automatiquement :
+1. prendre le fichier joint comme dernier état réel STS ;
+2. le relire directement ;
+3. comparer avec la baseline consolidée précédente ;
+4. détecter les corrections utilisateur ;
+5. apprendre le formalisme corrigé ;
+6. consolider la baseline et la fenêtre active ;
+7. relancer automatiquement le contrôle complet du bloc ou de la méthode concernée avec la même whitelist ;
+8. répondre uniquement avec le verdict du recontrôle et les informations de consolidation utiles.
+
+Interdiction absolue :
+- ne jamais s'arrêter à la consolidation sans recontrôler le bloc impacté ;
+- ne jamais réauditer le bloc avec une grille différente ;
+- ne jamais introduire de nouveau défaut bloquant après coup si ce défaut ne provient pas de la whitelist stable ;
+- ne jamais confondre amélioration optionnelle et correction obligatoire.
+
+Réponse obligatoire en cas de préflight incomplet :
+
+`contrôle impossible — lecture/preflight incomplet`
+
+## 7) Définition de la sacralisation
 
 La sous-couche `couche_services.gateway` est considérée sacralisée lorsque :
 - le présent contrat local est présent ;
@@ -803,9 +1075,10 @@ La sous-couche `couche_services.gateway` est considérée sacralisée lorsque :
 - les tests Gateway et pagination sont dans le périmètre validé ;
 - la séparation avec `couche_services.uc` est explicite ;
 - la séparation avec `couche_dto` est explicite ;
-- la règle `RT-CODAGE-TEST-MOCKITO-GATEWAY-01` est appliquée avant toute analyse, audit, correction ou génération de test Mockito Gateway.
+- la règle `RT-CODAGE-TEST-MOCKITO-GATEWAY-01` est appliquée avant toute analyse, audit, correction ou génération de test Mockito Gateway ;
+- la règle `RT-CODAGE-TEST-INTEGRATION-GATEWAY-01` est appliquée avant toute analyse, audit, correction ou génération de test d'intégration Gateway.
 
-## 7) Exclusions explicites
+## 8) Exclusions explicites
 
 Ne font pas partie de `couche_services.gateway` :
 - les services UC ;

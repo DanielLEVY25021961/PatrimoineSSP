@@ -1104,6 +1104,93 @@ Forme générale attendue :
 assertThat(countAvant).isNotNull().isNotZero();
 ```
 
+
+#### 15.2.7.1) Barrière anti-récidive — critères stables des tests d'intégration SERVICE GATEWAY
+
+Principe prioritaire :
+
+➡️ **L'IA ne doit jamais appliquer aux tests d'intégration Gateway la même grille que les tests Mockito, ni réinventer une nouvelle grille à chaque passe.**
+
+Cette règle complète les règles `15.2.6`, `15.2.6.1` et `15.2.7`.
+
+Les tests Mockito Gateway validés prouvent finement les branches techniques internes :
+- collaborateurs exacts ;
+- interactions Mockito ;
+- retours DAO `null` ;
+- exceptions DAO avec message non null et message null ;
+- conversions et branches techniques non observables directement en intégration.
+
+Les tests d'intégration Gateway prouvent prioritairement :
+- le contrat public du PORT ;
+- le comportement réel Spring/JPA/H2 ;
+- l'état observable du stockage ;
+- les écritures réelles ;
+- les absences d'écriture ;
+- les modifications réelles ;
+- les suppressions réelles ;
+- la cohérence avec une lecture SQL directe ;
+- l'isolation des tests ;
+- la conservation des données seedées.
+
+Avant tout verdict sur un bloc de tests d'intégration Gateway, l'IA doit établir en interne une whitelist stricte des critères autorisés.
+
+Cette whitelist est limitée aux sources suivantes :
+1. `CONTRAT_IA.md`, notamment les règles `15.2.6`, `15.2.7` et la présente règle ;
+2. le contrat local `CoucheServicesGateway.md`, notamment `RT-CODAGE-TEST-INTEGRATION-GATEWAY-01` ;
+3. le contrat du PORT Gateway de la méthode contrôlée ;
+4. le comportement réel de l'ADAPTER Gateway correspondant ;
+5. le comportement observable du stockage ;
+6. les formalismes locaux déjà validés dans le fichier cible ou dans les fichiers Gateway de référence relus ;
+7. les corrections utilisateur déjà relues, validées et consolidées ;
+8. les tests Mockito Gateway validés, uniquement pour éviter de réexiger en intégration les branches techniques déjà verrouillées.
+
+Interdiction absolue :
+- ne jamais introduire comme défaut bloquant un critère absent de cette whitelist ;
+- ne jamais transformer une amélioration optionnelle en exigence obligatoire ;
+- ne jamais exiger en intégration toutes les variantes DAO déjà prouvées en Mockito, sauf comportement observable imposé par le PORT ou l'ADAPTER ;
+- ne jamais demander une interaction Mockito dans un test d'intégration ;
+- ne jamais copier un cas parent dans `TypeProduit` ;
+- ne jamais inventer un collaborateur absent de l'ADAPTER réel ;
+- ne jamais changer de stratégie de conformité après une validation utilisateur, sauf modification explicite des contrats IA ou Gateway.
+
+Critères stables à appliquer aux tests d'intégration Gateway :
+- cas applicatifs principaux du PORT ;
+- cas non trouvé ;
+- cas nominal ;
+- cas stockage vide lorsque pertinent ;
+- preuve SQL directe lorsque le test affirme une écriture, une non-écriture, une modification, une suppression ou une absence physique ;
+- contrôle du compteur avant/après lorsque le scénario modifie ou doit préserver le stockage ;
+- nettoyage physique en `finally` pour les écritures hors transaction de test ;
+- restauration physique en `finally` pour toute donnée seedée modifiée ;
+- cohérence avec les tests d'intégration Gateway de référence ;
+- vocabulaire `stockage` dans les nouveaux commentaires, Javadocs et DisplayName.
+
+Formalisme validé :
+- le nom de méthode peut utiliser `Nominal` lorsque ce nom est le formalisme local validé ;
+- le `@DisplayName` peut conserver une constante contenant `OK`, par exemple `@DisplayName(DN_CREER_OK)` ;
+- `testCreerNominal()` avec `@DisplayName(DN_CREER_OK)` est conforme.
+
+Workflow après tests verts STS et fichier joint :
+1. prendre le fichier joint comme dernier état réel STS ;
+2. relire directement le fichier joint ;
+3. comparer avec la baseline consolidée précédente ;
+4. détecter les corrections utilisateur ;
+5. apprendre le formalisme corrigé ;
+6. consolider la baseline et la fenêtre active ;
+7. relancer automatiquement le contrôle complet du bloc ou de la méthode concernée avec la même whitelist.
+
+Si l'IA détecte une amélioration utile mais non imposée par les règles stables, elle doit la qualifier explicitement comme :
+
+`amélioration optionnelle`
+
+Si l'IA estime qu'un nouveau critère doit devenir obligatoire, elle doit d'abord le signaler à l'Utilisateur et demander une modification explicite des contrats concernés. Tant que cette modification n'est pas validée et consolidée, ce critère ne peut pas être utilisé comme défaut bloquant.
+
+Règle fail-closed :
+
+Si l'IA n'a pas relu les règles stables, le PORT, l'ADAPTER réel et le bloc de test cible, elle ne doit donner aucun verdict. Elle doit répondre uniquement :
+
+`contrôle impossible — lecture/preflight incomplet`
+
 ---
 
 ## 16) Règles d’architecture

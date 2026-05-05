@@ -947,7 +947,7 @@ public class ProduitGatewayJPAServiceMockTest {
     @Tag(TAG_CREER)
     @DisplayName("creer(DAO.save(...) retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
-    public void testCreerSaveRetourneNull() {
+    public void testCreerDAOSaveRetourneNull() {
 
         /* ARRANGE :
          * prépare un objet métier avec un libellé valide,

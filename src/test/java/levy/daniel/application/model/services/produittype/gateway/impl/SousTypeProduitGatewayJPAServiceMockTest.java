@@ -2824,14 +2824,18 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>garantit que si le DAO retourne une Page Spring non null
-     * contenant une liste vide :</p>
+     * <p>garantit que {@code rechercherTousParPage(new RequetePage())}
+     * retourne un {@link ResultatPage} vide valide
+     * lorsque le DAO retourne une Page Spring non nulle
+     * contenant une liste vide.</p>
      * <ul>
-     * <li>retourne un {@link ResultatPage} non null ;</li>
-     * <li>retourne un contenu non null ;</li>
-     * <li>retourne un contenu vide ;</li>
-     * <li>retourne des métadonnées cohérentes avec la page vide
-     * renvoyée par le stockage (valeurs par défaut) ;</li>
+     * <li>prépare une Page Spring non null avec un contenu vide ;</li>
+     * <li>appelle {@code rechercherTousParPage(new RequetePage())}
+     * avec une requête présente mais neutre ;</li>
+     * <li>vérifie que le service retourne un ResultatPage métier non null ;</li>
+     * <li>vérifie que le contenu métier retourné est non null et vide ;</li>
+     * <li>vérifie que les métadonnées de pagination restent cohérentes
+     * avec la page vide renvoyée par le stockage (valeurs par défaut) ;</li>
      * <li>appelle une seule fois la méthode findAll(Pageable)
      * du DAO mocké avec Mockito ;</li>
      * <li>n'appelle ni le DAO parent, ni l'EntityManager.</li>
@@ -2914,7 +2918,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         assertThat(resultat.getTotalElements()).isZero();
 
         /* Garantit que 
-         * service.rechercherTousParPage(...) avec un DAO qui retourne un ResultatPage vide 
+         * service.rechercherTousParPage(...) avec un DAO qui retourne une Page Spring vide 
          * ne sollicite ni le DAO parent ni l'EntityManager.
          */
         verifyNoInteractions(this.typeProduitDaoJPA);
@@ -6163,7 +6167,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     
     
-    /**
+	/**
 	 * <div>
 	 * <p>Test didactique non contractuel.</p>
 	 * <p>garantit que findAllByParent(avec doublons fonctionnels) :</p>
@@ -6188,7 +6192,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	    /* ARRANGE :
 	     * prépare un parent persistant
 	     * et une liste renvoyée par le DAO enfant
-	     * contenant deux sous-types portant le même libellé,
+	     * contenant deux objets métier portant le même libellé,
 	     * afin de vérifier le dédoublonnage fonctionnel.
 	     */
 	    final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
