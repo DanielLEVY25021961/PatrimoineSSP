@@ -367,6 +367,219 @@ Après chaque lecture GitHub :
 ➡️ Consolidation obligatoire  
 ➡️ Suppression des versions précédentes
 
+
+### 8.1 RT-CONSOLIDATION-BASELINE-FENETRE-STRICT-01 — Consolidation physique obligatoire de la baseline et de la fenêtre active
+
+#### Finalité
+
+Cette règle interdit à l’IA de considérer une baseline consolidée ou une fenêtre active comme valide si leur existence matérielle, leur contenu exact et leur unicité par fichier n’ont pas été vérifiés physiquement.
+
+La baseline consolidée et la fenêtre active ne sont jamais de simples états mémorisés, supposés ou déclaratifs. Ce sont des répertoires physiques contrôlés, contenant une seule version à jour de chaque fichier du périmètre, accompagnés d’un manifeste vérifiable.
+
+#### Règle absolue
+
+L’IA n’a jamais le droit d’affirmer qu’une baseline ou une fenêtre active est consolidée, à jour, valide ou utilisable si elle n’a pas vérifié physiquement, dans le conteneur courant :
+
+1. l’existence du répertoire de baseline ;
+2. l’existence du répertoire de fenêtre active ;
+3. l’existence du manifeste associé ;
+4. la présence d’une seule version de chaque fichier du périmètre ;
+5. les métriques de chaque fichier consolidé ;
+6. l’égalité stricte entre la source validée, la baseline et la fenêtre active.
+
+Une consolidation non vérifiée physiquement est inexistante.
+
+#### Interdictions absolues
+
+Il est strictement interdit de :
+
+- déclarer une consolidation effectuée depuis la mémoire conversationnelle ;
+- déclarer une consolidation effectuée depuis la mémoire long term ;
+- déclarer une consolidation effectuée depuis un ancien message ;
+- déclarer une consolidation effectuée depuis un ancien `/mnt/data` ;
+- déclarer une consolidation effectuée depuis un ancien `file_id` ;
+- déclarer une consolidation effectuée depuis un résultat `file_search` seul ;
+- déclarer une consolidation effectuée si le répertoire de baseline est absent ;
+- déclarer une consolidation effectuée si le répertoire de fenêtre active est absent ;
+- déclarer une consolidation effectuée si le manifeste est absent ;
+- copier un fichier local instable ou revenu à un ancien état ;
+- mélanger dans la baseline ou la fenêtre active deux versions différentes d’un même fichier ;
+- conserver dans la baseline ou la fenêtre active un fichier obsolète lorsqu’une version plus récente a été validée ;
+- utiliser une baseline ou une fenêtre active dont l’unicité par fichier n’est pas prouvée.
+
+Toute réponse qui affirme une consolidation sans ces contrôles est invalide.
+
+#### Définition d’une source saine
+
+Une source saine de consolidation est l’un des éléments suivants, dans l’ordre de préférence contractuel :
+
+1. dernier fichier joint réel validé, identifié par son dernier `file_id`, relu selon la règle stricte de lecture des fichiers joints ;
+2. contenu complet fourni directement dans le chat, si l’Utilisateur l’a explicitement collé et si l’IA peut le traiter comme source complète contrôlée ;
+3. GitHub Raw au SHA courant, lu selon `RT-LECTURE-GITHUB-02` ;
+4. bundle OFFLINE validé, uniquement après incident GitHub explicite.
+
+Une source ancienne, indirecte, instable, tronquée ou non contrôlée n’est jamais une source saine.
+
+#### Consolidation transactionnelle obligatoire
+
+Toute consolidation doit être effectuée comme une transaction atomique.
+
+L’IA doit obligatoirement :
+
+1. relire `CONTRAT_IA.md` ;
+2. identifier la source saine utilisée ;
+3. déclarer explicitement cette source ;
+4. relire la source ;
+5. calculer les métriques de la source :
+   - taille en octets ;
+   - lignes logiques ;
+   - nombre de caractères `\n` ;
+   - EOF final présent ou absent ;
+   - SHA-256 ;
+6. écrire la source dans une zone temporaire de consolidation ;
+7. comparer la zone temporaire avec la source validée ;
+8. remplacer la version précédente dans la baseline uniquement si la comparaison est stricte OK ;
+9. remplacer la version précédente dans la fenêtre active uniquement si la baseline est stricte OK ;
+10. recalculer les métriques dans la baseline ;
+11. recalculer les métriques dans la fenêtre active ;
+12. prouver :
+    - source == baseline ;
+    - source == fenêtre active ;
+    - baseline == fenêtre active ;
+13. écrire ou mettre à jour le manifeste ;
+14. vérifier que le manifeste référence les mêmes SHA-256 que les fichiers réellement présents ;
+15. déclarer seulement ensuite la consolidation réussie.
+
+Si une étape échoue, la consolidation est refusée.
+
+#### Manifeste obligatoire
+
+Toute baseline consolidée et toute fenêtre active doivent posséder un manifeste.
+
+Le manifeste doit contenir au minimum :
+
+- nom de la baseline ou de la fenêtre ;
+- SHA Git courant ;
+- date de consolidation ;
+- périmètre déclaré ;
+- liste des fichiers consolidés ;
+- pour chaque fichier :
+  - chemin relatif ;
+  - source utilisée ;
+  - `file_id` si fichier joint ;
+  - taille ;
+  - lignes logiques ;
+  - nombre de `\n` ;
+  - EOF final ;
+  - SHA-256 ;
+- preuve que le fichier est unique dans le périmètre ;
+- statut de comparaison source / baseline / fenêtre.
+
+Un répertoire sans manifeste est invalide comme baseline ou fenêtre active.
+
+#### Unicité obligatoire des fichiers
+
+Pour chaque fichier du périmètre, la baseline et la fenêtre active doivent contenir une seule version.
+
+L’IA doit vérifier qu’il n’existe pas :
+
+- deux chemins concurrents pour le même fichier ;
+- une copie ancienne à la racine de `/mnt/data` utilisée par erreur ;
+- une version issue d’un ancien upload ;
+- une version issue d’un ancien bundle OFFLINE ;
+- une version issue d’un ancien SHA ;
+- une version partiellement corrigée.
+
+Si plusieurs versions existent, l’IA doit déclarer un incident d’unicité et refuser la fenêtre active.
+
+#### Invalidation automatique
+
+La baseline et la fenêtre active sont automatiquement invalidées si :
+
+- le répertoire de baseline est absent ;
+- le répertoire de fenêtre active est absent ;
+- le manifeste est absent ;
+- le manifeste ne correspond pas aux fichiers présents ;
+- un fichier de la fenêtre diffère de la baseline sans justification ;
+- un fichier de la baseline diffère de la source validée ;
+- le chemin local `/mnt/data/<nom>` ne correspond pas au dernier `file_id` validé ;
+- un fichier local revient à un ancien SHA ;
+- l’IA détecte plusieurs états possibles pour un même fichier ;
+- l’IA ne peut pas prouver l’unicité d’un fichier ;
+- l’Utilisateur signale une incohérence de lecture ou de consolidation.
+
+En cas d’invalidation, l’IA doit dire explicitement :
+
+> Baseline/fenêtre active invalidée matériellement. Travail depuis cette fenêtre interdit jusqu’à reconstruction contrôlée.
+
+#### Reconstruction obligatoire après incident
+
+Après invalidation, l’IA doit reconstruire la baseline et la fenêtre active depuis une source saine complète.
+
+Elle ne doit jamais reconstruire depuis :
+
+- un fichier local instable ;
+- un ancien `/mnt/data` ;
+- une mémoire ;
+- un ancien `file_id` ;
+- une ancienne conclusion ;
+- un extrait tronqué ;
+- un résultat partiel de recherche ;
+- une baseline déjà déclarée invalide.
+
+La reconstruction doit suivre la procédure transactionnelle complète.
+
+#### Rapport obligatoire en cas d’incident
+
+En cas d’incident, l’IA doit produire un rapport contenant :
+
+- source attendue ;
+- source réellement lue ;
+- fichiers présents ;
+- fichiers absents ;
+- métriques constatées ;
+- SHA-256 constatés ;
+- chaînes discriminantes vérifiées ;
+- divergence précise ;
+- conséquence sur baseline ;
+- conséquence sur fenêtre active ;
+- décision : consolidation autorisée ou refusée.
+
+L’IA doit être explicite : elle ne doit jamais masquer un incident derrière une formule vague du type “lecture réussie”.
+
+#### Formule de verdict obligatoire
+
+Toute opération de consolidation doit se terminer par l’un des verdicts suivants :
+
+```text
+CONSOLIDATION RÉUSSIE
+source == baseline : OK
+source == fenêtre active : OK
+baseline == fenêtre active : OK
+manifeste : OK
+unicité par fichier : OK
+```
+
+ou :
+
+```text
+CONSOLIDATION REFUSÉE
+cause : ...
+baseline : invalide / absente / non mise à jour
+fenêtre active : invalide / absente / non mise à jour
+risque évité : contamination par état ancien ou indirect
+```
+
+Aucun autre verdict ambigu n’est autorisé.
+
+#### Gravité
+
+Cette règle est bloquante.
+
+Une violation de cette règle remet en cause la fiabilité de toute analyse, audit, correction, validation ou génération de code effectuée ensuite.
+
+En cas de doute, l’IA doit invalider la fenêtre active, refuser la consolidation et reconstruire proprement.
+
 ---
 
 ## 9) Modes d’interaction
@@ -1282,6 +1495,8 @@ La baseline est l’unique source de vérité.
 Toute lecture GitHub au SHA DOIT conduire à une consolidation de la baseline en écrasant toute version précédente (une seule version par path, la plus récente).
 
 Aucun fichier baseline ne doit être oublié / égaré / perdu.
+
+Une consolidation n’existe que si elle est physiquement prouvée : mémoire, ancien `/mnt/data`, ancien `file_id`, ancien résultat `file_search`, ancien bundle, ancienne conclusion ou déclaration précédente ne prouvent jamais une consolidation. Une baseline ou fenêtre sans répertoire, sans manifeste, sans métriques et sans comparaison stricte `source == baseline == fenêtre active` est invalide.
 
 Modification uniquement sur ordre explicite de l’Utilisateur.
 

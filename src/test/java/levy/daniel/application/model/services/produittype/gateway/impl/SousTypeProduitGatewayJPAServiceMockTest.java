@@ -4113,11 +4113,11 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que findByObjetMetier(OK) :</p>
      * <ul>
      * <li>ne jette aucune exception ;</li>
-     * <li>retourne un {@link SousTypeProduit} non null lorsque la liste non null
-     * retournée par le DAO objet métier contient le libellé recherché ;</li>
+     * <li>recherche l'objet métier dans la liste non null
+     * retournée par le DAO objet métier sans tenir compte de la casse ;</li>
      * <li>ignore les éléments {@code null} présents dans la liste retournée ;</li>
      * <li>retourne un objet métier converti portant le bon identifiant ;</li>
-     * <li>retourne un objet métier converti portant le bon libellé ;</li>
+     * <li>retourne un objet métier converti portant le libellé issu du stockage ;</li>
      * <li>retourne un parent non null portant le bon identifiant ;</li>
      * <li>retourne un parent portant le bon libellé ;</li>
      * <li>appelle le DAO parent une fois avec le bon identifiant parent ;</li>
@@ -4129,17 +4129,19 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * @throws Exception
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName("findByObjetMetier(OK) : délègue aux DAO et retourne l'objet métier converti")
+    @DisplayName("findByObjetMetier(OK casse différente) : délègue aux DAO et retourne l'objet métier converti")
     @Test
     public void testFindByObjetMetierNominal() throws Exception {
 
         /* ARRANGE :
          * prépare un objet métier valide
-         * afin d'atteindre réellement la recherche
-         * de l'objet métier dans le stockage.
+         * dont le libellé recherché utilise volontairement
+         * une casse différente de celle présente dans le stockage,
+         * afin de prouver la recherche sans tenir compte de la casse.
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
-        final SousTypeProduit stp = fabriquerSousTypeProduit(LIBELLE_ENFANT_2, null, parent);
+        final SousTypeProduit stp = fabriquerSousTypeProduit(
+                LIBELLE_ENFANT_2.toUpperCase(Locale.ROOT), null, parent);
 
         final TypeProduitJPA parentJPA = fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
 
@@ -4159,19 +4161,26 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * retourne une liste non null
          * contenant un élément null,
          * un élément non correspondant,
-         * puis l'élément recherché.
+         * puis l'élément recherché avec une casse différente
+         * de celle portée par l'objet métier d'entrée.
          */
         when(this.sousTypeProduitDaoJPA.findAllByTypeProduit(parentJPA)).thenReturn(entities);
 
         /* ACT :
          * appelle service.findByObjetMetier(stp)
-         * dans le scénario nominal où l'élément recherché est présent.
+         * dans le scénario nominal où l'élément recherché est présent
+         * avec une casse différente.
          */
         final SousTypeProduit retour = this.service.findByObjetMetier(stp);
 
         /* ASSERT :
          * vérifie que la méthode retourne un objet métier converti
          * portant l'identifiant et le libellé issus du stockage.
+         *
+         * L'objet d'entrée porte LIBELLE_ENFANT_2 en majuscules,
+         * alors que l'Entity trouvée porte LIBELLE_ENFANT_2.
+         * Cette assertion prouve donc que la recherche a bien été faite
+         * sans tenir compte de la casse.
          */
         assertThat(retour).isNotNull();
         assertThat(retour.getIdSousTypeProduit()).isEqualTo(ID_3);
@@ -4211,8 +4220,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK} ;</li>
-     * <li>n'appelle pas la méthode findBySousTypeProduitIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>n'interagit avec aucun composant de stockage mocké.</li>
      * </ul>
      * </div>
      */
@@ -4222,22 +4230,23 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByLibelleNull() {
 
         /* ARRANGE - ACT - ASSERT :
-         * vérifie que l'appel service.findByLibelle(...)
-         * avec un libellé null
+         * vérifie que l'appel this.service.findByLibelle(null)
          * jette une ExceptionAppliLibelleBlank
          * avec le message MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK
-         * (contrat du port).
+         * (message contractuel du port).
          */
         assertThatThrownBy(() -> this.service.findByLibelle(null))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK);
 
-        /* 
-         * Vérifie ensuite que DAO.findBySousTypeProduitIgnoreCase(...)
-         * n'a jamais été appelé.
+        /* Vérifie qu'aucun accès au stockage n'a été tenté.
+         * Le contrôle applicatif sur le libellé null doit interrompre
+         * le traitement avant tout appel au DAO parent,
+         * au DAO objet métier ou à l'EntityManager.
          */
-        verify(this.sousTypeProduitDaoJPA, never())
-            .findBySousTypeProduitIgnoreCase(any());
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
 
@@ -4250,8 +4259,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_FINDBYLIBELLE_KO_LIBELLE_BLANK} ;</li>
-     * <li>n'appelle pas la méthode findBySousTypeProduitIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>n'interagit avec aucun composant de stockage mocké.</li>
      * </ul>
      * </div>
      */
@@ -4261,22 +4269,23 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByLibelleBlank() {
 
         /* ARRANGE - ACT - ASSERT :
-         * vérifie que l'appel service.findByLibelle(...)
-         * avec un libellé blank
+         * vérifie que l'appel this.service.findByLibelle(BLANK)
          * jette une ExceptionAppliLibelleBlank
          * avec le message MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK
-         * (contrat du port).
+         * (message contractuel du port).
          */
         assertThatThrownBy(() -> this.service.findByLibelle(BLANK))
             .isInstanceOf(ExceptionAppliLibelleBlank.class)
             .hasMessage(MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK);
 
-        /* 
-         * Vérifie ensuite que DAO.findBySousTypeProduitIgnoreCase(...)
-         * n'a jamais été appelé.
+        /* Vérifie qu'aucun accès au stockage n'a été tenté.
+         * Le contrôle applicatif sur le libellé blank doit interrompre
+         * le traitement avant tout appel au DAO parent,
+         * au DAO objet métier ou à l'EntityManager.
          */
-        verify(this.sousTypeProduitDaoJPA, never())
-            .findBySousTypeProduitIgnoreCase(any());
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.sousTypeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
 
@@ -4284,45 +4293,76 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que findByLibelle(findBySousTypeProduitIgnoreCase retourne null) :</p>
+     * <p>garantit que findByLibelle(DAO retourne null) :</p>
      * <ul>
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_KO_STOCKAGE} ;</li>
-     * <li>appelle une seule fois la méthode findBySousTypeProduitIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>appelle le DAO objet métier une fois
+     * avec le bon libellé exact ;</li>
+     * <li>n'appelle jamais {@code findAll()} ;</li>
+     * <li>n'appelle jamais la recherche rapide DAO ;</li>
+     * <li>ne sollicite ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
+     * <p>Ce test distingue un retour {@code null} du DAO objet métier
+     * d'une liste vide valide : ici, le retour {@code null}
+     * est traité comme une anomalie technique de stockage.</p>
      * </div>
      */
     @Tag(TAG_FINDBYLIBELLE)
-    @DisplayName("findByLibelle(findBySousTypeProduitIgnoreCase retourne null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByLibelle(DAO retourne null) : jette ExceptionTechniqueGateway KO_STOCKAGE")
     @Test
     public void testFindByLibelleDAORetourneNull() {
 
         /* ARRANGE :
-         * configure le DAO enfant mocké avec Mockito
-         * pour que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * retourne null.
+         * configure ici le comportement du DAO objet métier mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito avec le libellé LIBELLE_ENFANT_1 via
+         * findBySousTypeProduitIgnoreCase(...),
+         * alors le DAO objet métier mocké avec Mockito devra répondre null".
+         *
+         * On simule donc volontairement un défaut technique du stockage :
+         * pour une recherche par libellé exact non blank,
+         * le DAO objet métier ne retourne pas une liste vide valide,
+         * mais une valeur null interdite par le contrat.
          */
         when(this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1))
             .thenReturn(null);
 
         /* ACT - ASSERT :
-         * vérifie que :
-         * this.service.findByLibelle(LIBELLE_ENFANT_1)
-         * avec DAO.findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1) retourne null
-         * jette une ExceptionTechniqueGateway
-         * avec un message MSG_ERREUR_TECH_KO_STOCKAGE.
+         * vérifie que le retour null du DAO objet métier
+         * n'est pas interprété comme une absence de résultat,
+         * mais comme une anomalie technique de stockage.
          */
         assertThatThrownBy(() -> this.service.findByLibelle(LIBELLE_ENFANT_1))
             .isInstanceOf(ExceptionTechniqueGateway.class)
             .hasMessage(MSG_ERREUR_TECH_KO_STOCKAGE);
 
-        /* Vérifie que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * du DAO enfant mocké avec Mockito a bien été appelée une fois.
+        /* Garantit que le DAO objet métier mocké a bien été appelé une fois
+         * avec le bon libellé exact.
          */
-        verify(this.sousTypeProduitDaoJPA)
+        verify(this.sousTypeProduitDaoJPA, times(1))
             .findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1);
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.sousTypeProduitDaoJPA, never()).findAll();
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via la recherche rapide dédiée
+         * findBySousTypeProduitContainingIgnoreCase(...).
+         */
+        verify(this.sousTypeProduitDaoJPA, never())
+            .findBySousTypeProduitContainingIgnoreCase(any(String.class));
+
+        /* Garantit que ce scénario ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
 
@@ -4335,9 +4375,13 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle une seule fois la méthode findBySousTypeProduitIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>conserve le message technique d'origine ;</li>
+     * <li>propage l'exception technique cause ;</li>
+     * <li>appelle le DAO objet métier une fois
+     * avec le bon libellé exact ;</li>
+     * <li>n'appelle jamais {@code findAll()} ;</li>
+     * <li>n'appelle jamais la recherche rapide DAO ;</li>
+     * <li>ne sollicite ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
@@ -4347,38 +4391,65 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testFindByLibelleDAOExceptionMessageNonNull() {
 
         /* ARRANGE :
-         * configure le DAO enfant mocké avec Mockito
-         * pour que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * jette une RuntimeException avec message non null.
+         * configure ici le comportement du DAO objet métier mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito avec le libellé LIBELLE_ENFANT_1 via
+         * findBySousTypeProduitIgnoreCase(...),
+         * alors le DAO objet métier mocké avec Mockito devra jeter
+         * une RuntimeException avec message non null".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * lors de la recherche exacte DAO.
          */
-        final RuntimeException ex = new RuntimeException(LIBELLE_ENFANT_1);
+        final RuntimeException causeDao = new RuntimeException(MSG_BOOM);
+
         when(this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1))
-            .thenThrow(ex);
+            .thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.findByLibelle(...)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.findByLibelle(...), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois this.service.findByLibelle(LIBELLE_ENFANT_1)
+         * et capture l'exception réellement levée.
          */
         final Throwable throwable =
-                Assertions.catchThrowable(() -> this.service.findByLibelle(LIBELLE_ENFANT_1));
+                Assertions.catchThrowable(
+                        () -> this.service.findByLibelle(LIBELLE_ENFANT_1));
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son préfixe contractuel,
+         * le message technique d'origine
+         * et la cause propagée.
          */
         assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
         assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable).hasMessageContaining(MSG_BOOM);
+        assertThat(throwable.getCause()).isSameAs(causeDao);
 
-        /* Vérifie que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * du DAO enfant mocké avec Mockito a bien été appelée une fois.
+        /* Garantit que le DAO objet métier mocké a bien été appelé une fois
+         * avec le bon libellé exact.
          */
-        verify(this.sousTypeProduitDaoJPA)
+        verify(this.sousTypeProduitDaoJPA, times(1))
             .findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1);
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.sousTypeProduitDaoJPA, never()).findAll();
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via la recherche rapide dédiée
+         * findBySousTypeProduitContainingIgnoreCase(...).
+         */
+        verify(this.sousTypeProduitDaoJPA, never())
+            .findBySousTypeProduitContainingIgnoreCase(any(String.class));
+
+        /* Garantit que ce scénario ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
 
@@ -4391,50 +4462,81 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionTechniqueGateway} ;</li>
      * <li>émet un message commençant par
      * {@link SousTypeProduitGatewayIService#ERREUR_TECHNIQUE_STOCKAGE} ;</li>
-     * <li>propage une cause non null ;</li>
-     * <li>appelle une seule fois la méthode findBySousTypeProduitIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>émet un message sûr non null dérivé de l'exception technique ;</li>
+     * <li>propage l'exception technique cause ;</li>
+     * <li>appelle le DAO objet métier une fois
+     * avec le bon libellé exact ;</li>
+     * <li>n'appelle jamais {@code findAll()} ;</li>
+     * <li>n'appelle jamais la recherche rapide DAO ;</li>
+     * <li>ne sollicite ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
      * </div>
      */
     @Tag(TAG_FINDBYLIBELLE)
-    @DisplayName("findByLibelle(KO DAO message null) - jette ExceptionTechniqueGateway")
+    @DisplayName("findByLibelle(KO DAO message null) : jette ExceptionTechniqueGateway avec message sûr non null")
     @Test
     public void testFindByLibelleDAOExceptionMessageNull() {
 
         /* ARRANGE :
-         * configure le DAO enfant mocké avec Mockito
-         * pour que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * jette une RuntimeException sans message.
+         * configure ici le comportement du DAO objet métier mocké avec Mockito.
+         *
+         * La formule when(...).thenThrow(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito avec le libellé LIBELLE_ENFANT_1 via
+         * findBySousTypeProduitIgnoreCase(...),
+         * alors le DAO objet métier mocké avec Mockito devra jeter
+         * une RuntimeException sans message".
+         *
+         * On simule donc volontairement une panne technique du stockage
+         * dont le message d'origine vaut null.
          */
-        final RuntimeException ex = new RuntimeException((String) null);
+        final RuntimeException causeDao = new RuntimeException((String) null);
+
         when(this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1))
-            .thenThrow(ex);
+            .thenThrow(causeDao);
 
         /* ACT :
-         * sollicite la méthode service.findByLibelle(...)
-         * dans les conditions imposées par le mock (clause when).
-         * - exécute this.service.findByLibelle(...), 
-         * - intercepte toute exception éventuellement levée, 
-         * - puis stocke cette exception dans la variable throwable 
-         * de type Throwable.
+         * exécute une seule fois this.service.findByLibelle(LIBELLE_ENFANT_1)
+         * et capture l'exception réellement levée.
          */
         final Throwable throwable =
-                Assertions.catchThrowable(() -> this.service.findByLibelle(LIBELLE_ENFANT_1));
+                Assertions.catchThrowable(
+                        () -> this.service.findByLibelle(LIBELLE_ENFANT_1));
 
         /* ASSERT :
          * vérifie l'exception technique observable,
-         * son préfixe contractuel et la cause propagée.
+         * son préfixe contractuel,
+         * le message sûr non null
+         * et la cause propagée.
          */
         assertThat(throwable).isInstanceOf(ExceptionTechniqueGateway.class);
         assertThat(throwable).hasMessageStartingWith(MSG_PREFIX_ERREUR_TECH);
-        assertThat(throwable.getCause()).isSameAs(ex);
+        assertThat(throwable).hasMessageContaining(RuntimeException.class.getName());
+        assertThat(throwable.getCause()).isSameAs(causeDao);
 
-        /* Vérifie que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * du DAO enfant mocké avec Mockito a bien été appelée une fois.
+        /* Garantit que le DAO objet métier mocké a bien été appelé une fois
+         * avec le bon libellé exact.
          */
-        verify(this.sousTypeProduitDaoJPA)
+        verify(this.sousTypeProduitDaoJPA, times(1))
             .findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1);
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.sousTypeProduitDaoJPA, never()).findAll();
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via la recherche rapide dédiée
+         * findBySousTypeProduitContainingIgnoreCase(...).
+         */
+        verify(this.sousTypeProduitDaoJPA, never())
+            .findBySousTypeProduitContainingIgnoreCase(any(String.class));
+
+        /* Garantit que ce scénario ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
 
@@ -4442,48 +4544,80 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>garantit que findByLibelle(vide) :</p>
+     * <p>garantit que findByLibelle(non trouvé) :</p>
      * <ul>
-     * <li>retourne une liste non null ;</li>
-     * <li>retourne une liste vide ;</li>
-     * <li>appelle une seule fois la méthode findBySousTypeProduitIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>ne jette aucune exception ;</li>
+     * <li>retourne une {@link List} non null ;</li>
+     * <li>retourne une liste vide lorsque le DAO objet métier
+     * retourne une liste vide ;</li>
+     * <li>appelle le DAO objet métier une fois
+     * avec le bon libellé exact ;</li>
+     * <li>n'appelle jamais {@code findAll()} ;</li>
+     * <li>n'appelle jamais la recherche rapide DAO ;</li>
+     * <li>ne sollicite ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_FINDBYLIBELLE)
-    @DisplayName("findByLibelle(vide) - retourne une liste vide")
+    @DisplayName("findByLibelle(non trouvé) : retourne une liste vide non null")
     @Test
-    public void testFindByLibelleVide() throws Exception {
+    public void testFindByLibelleNonTrouve() throws Exception {
 
         /* ARRANGE :
-         * configure le DAO enfant mocké avec Mockito
-         * pour que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * retourne une liste vide.
+         * configure ici le comportement du DAO objet métier mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito avec le libellé LIBELLE_ENFANT_1 via
+         * findBySousTypeProduitIgnoreCase(...),
+         * alors le DAO objet métier mocké avec Mockito devra répondre
+         * une liste vide".
+         *
+         * On simule donc volontairement un stockage
+         * dans lequel aucun objet métier ne correspond au libellé exact recherché.
          */
         when(this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1))
             .thenReturn(new ArrayList<SousTypeProduitJPA>());
 
-        /* ACT :
-         * appelle this.service.findByLibelle(LIBELLE_ENFANT_1)
-         * dans le scénario où le DAO retourne une liste vide.
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock.
          */
-        final List<SousTypeProduit> retour =
+        final List<SousTypeProduit> resultat =
                 this.service.findByLibelle(LIBELLE_ENFANT_1);
 
-        /* ASSERT :
-         * vérifie que la méthode retourne bien
-         * une liste non nulle, mais vide.
+        /* ASSERT */
+        /* Garantit que this.service.findByLibelle(LIBELLE_ENFANT_1)
+         * retourne une liste non null et vide
+         * lorsque le DAO objet métier ne trouve aucun résultat.
          */
-        assertThat(retour).isNotNull().isEmpty();
+        assertThat(resultat).isNotNull().isEmpty();
 
-        /* Vérifie que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * du DAO enfant mocké avec Mockito a bien été appelée une fois.
+        /* Garantit que le DAO objet métier mocké a bien été appelé une fois
+         * avec le bon libellé exact.
          */
-        verify(this.sousTypeProduitDaoJPA)
+        verify(this.sousTypeProduitDaoJPA, times(1))
             .findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1);
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.sousTypeProduitDaoJPA, never()).findAll();
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via la recherche rapide dédiée
+         * findBySousTypeProduitContainingIgnoreCase(...).
+         */
+        verify(this.sousTypeProduitDaoJPA, never())
+            .findBySousTypeProduitContainingIgnoreCase(any(String.class));
+
+        /* Garantit que ce scénario ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
 
@@ -4493,64 +4627,154 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <div>
      * <p>garantit que findByLibelle(nominal) :</p>
      * <ul>
-     * <li>retourne une liste non null ;</li>
-     * <li>retourne le libellé enfant attendu ;</li>
-     * <li>retourne un parent non null ;</li>
-     * <li>retourne le libellé parent attendu ;</li>
-     * <li>appelle une seule fois la méthode findBySousTypeProduitIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>délègue au DAO objet métier la recherche exacte via
+     * {@code findBySousTypeProduitIgnoreCase(...)} ;</li>
+     * <li>retourne une {@link List} non null ;</li>
+     * <li>filtre les éléments null issus du stockage ;</li>
+     * <li>dédoublonne les résultats au sens métier
+     * sur l'objet métier [parent / libellé objet métier] ;</li>
+     * <li>conserve deux objets métier portant le même libellé enfant
+     * lorsqu'ils appartiennent à deux parents différents ;</li>
+     * <li>retourne les objets métier triés par parent
+     * puis par libellé enfant ;</li>
+     * <li>conserve le parent des objets métier retournés ;</li>
+     * <li>appelle le DAO objet métier une fois
+     * avec le bon libellé exact ;</li>
+     * <li>n'appelle jamais {@code findAll()} ;</li>
+     * <li>n'appelle jamais la recherche rapide DAO ;</li>
+     * <li>ne sollicite ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
+     * <p>Ce test prouve directement au niveau de la méthode publique
+     * le filtrage des null, l'insensibilité à la casse,
+     * le dédoublonnage métier sur le couple parent / objet métier
+     * et le tri final par parent puis par libellé enfant.</p>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_FINDBYLIBELLE)
-    @DisplayName("findByLibelle(nominal) - retourne une liste métier cohérente")
+    @DisplayName("findByLibelle(nominal) : filtre les null, trie et dédoublonne par couple métier")
     @Test
     public void testFindByLibelleNominal() throws Exception {
 
         /* ARRANGE :
-         * configure le DAO enfant mocké avec Mockito
-         * pour que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * retourne une liste contenant un élément nominal.
+         * configure ici le comportement du DAO objet métier mocké avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito avec le libellé LIBELLE_ENFANT_1 via
+         * findBySousTypeProduitIgnoreCase(...),
+         * alors le DAO objet métier mocké avec Mockito devra répondre
+         * une collection persistante non triée,
+         * contenant un null
+         * et un doublon métier sur le couple parent / objet métier".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne :
+         * - un élément null ;
+         * - deux objets métier fonctionnellement identiques
+         *   ne différant que par la casse du libellé de l'objet métier ;
+         * - deux parents distincts ;
+         * - plusieurs valeurs non triées.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "scénario nominal complet".
          */
-        final TypeProduitJPA parentJPA =
+        final TypeProduitJPA parentJPA1 =
                 fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
+        final TypeProduitJPA parentJPA2 =
+                fabriquerTypeProduitJPA(LIBELLE_PARENT_2, ID_2);
 
-        final List<SousTypeProduitJPA> entities =
-                new ArrayList<SousTypeProduitJPA>();
-        entities.add(fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_1, ID_1, parentJPA));
+        final SousTypeProduitJPA enfantParent2 =
+                fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_1, ID_3, parentJPA2);
 
-        /* 
-         * Condition du Mock sousTypeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(...) 
-         * sur le DAO mocké 
-         * retourne une liste entities.
-         */
+        final SousTypeProduitJPA enfantParent1 =
+                fabriquerSousTypeProduitJPA(LIBELLE_ENFANT_1, ID_1, parentJPA1);
+
+        final SousTypeProduitJPA doublonParent1 =
+                fabriquerSousTypeProduitJPA(
+                        LIBELLE_ENFANT_1.toUpperCase(Locale.ROOT),
+                        ID_2,
+                        parentJPA1);
+
+        final List<SousTypeProduitJPA> entities = new ArrayList<SousTypeProduitJPA>();
+        entities.add(enfantParent2);
+        entities.add(null);
+        entities.add(doublonParent1);
+        entities.add(enfantParent1);
+
         when(this.sousTypeProduitDaoJPA.findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1))
             .thenReturn(entities);
 
-        /* ACT :
-         * appelle this.service.findByLibelle(LIBELLE_ENFANT_1)
-         * dans le scénario nominal.
+        /* ACT */
+        /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
+         * dans les conditions voulues par le Mock.
          */
-        final List<SousTypeProduit> retour =
+        final List<SousTypeProduit> resultat =
                 this.service.findByLibelle(LIBELLE_ENFANT_1);
 
-        /* ASSERT :
-         * vérifie que la méthode retourne bien
-         * une liste métier cohérente avec les données mockées.
+        /* ASSERT */
+        /* Garantit que this.service.findByLibelle(LIBELLE_ENFANT_1)
+         * - retourne une liste non null ;
+         * - ne contient plus aucun élément null ;
+         * - dédoublonne les résultats au sens métier
+         *   sur l'objet métier [couple parent / libellé objet métier] ;
+         * - conserve deux objets métier portant le même libellé enfant
+         *   lorsqu'ils appartiennent à deux parents différents ;
+         * - restitue le résultat final trié
+         *   par parent puis par libellé objet métier.
          */
-        assertThat(retour).isNotNull().hasSize(1);
-        assertThat(retour.get(0).getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_1);
-        assertThat(retour.get(0).getTypeProduit()).isNotNull();
-        assertThat(retour.get(0).getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_1);
+        assertThat(resultat).isNotNull().doesNotContainNull().hasSize(2);
 
-        /* Vérifie que la méthode findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1)
-         * du DAO enfant mocké avec Mockito a bien été appelée une fois.
+        assertThat(resultat)
+            .allSatisfy(sousTypeProduit ->
+                assertThat(sousTypeProduit.getTypeProduit()).isNotNull());
+
+        assertThat(resultat)
+            .extracting(sousTypeProduit ->
+                sousTypeProduit.getTypeProduit().getTypeProduit())
+            .containsExactly(
+                LIBELLE_PARENT_1,
+                LIBELLE_PARENT_2);
+
+        /* L'extraction normalisée en trim + lowerCase(Locale.ROOT)
+         * est volontaire :
+         * elle permet de prouver directement le dédoublonnage métier
+         * sans tenir compte de la casse.
          */
-        verify(this.sousTypeProduitDaoJPA)
+        assertThat(resultat)
+            .extracting(sousTypeProduit -> sousTypeProduit.getSousTypeProduit()
+                .trim()
+                .toLowerCase(Locale.ROOT))
+            .containsExactly(
+                LIBELLE_ENFANT_1.toLowerCase(Locale.ROOT),
+                LIBELLE_ENFANT_1.toLowerCase(Locale.ROOT));
+
+        /* Garantit que le DAO objet métier mocké a bien été appelé une fois
+         * avec le bon libellé exact.
+         */
+        verify(this.sousTypeProduitDaoJPA, times(1))
             .findBySousTypeProduitIgnoreCase(LIBELLE_ENFANT_1);
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.sousTypeProduitDaoJPA, never()).findAll();
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via la recherche rapide dédiée
+         * findBySousTypeProduitContainingIgnoreCase(...).
+         */
+        verify(this.sousTypeProduitDaoJPA, never())
+            .findBySousTypeProduitContainingIgnoreCase(any(String.class));
+
+        /* Garantit que ce scénario ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
     
@@ -4969,74 +5193,112 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     
     /**
      * <div>
-     * <p>Test "didactique" non contractuel.</p>
-     * <p>garantit que findByLibelleRapide(contenu partiel avec caractères spéciaux) :</p>
+     * <p>Test didactique non contractuel : il documente que le service
+     * transmet tel quel le contenu partiel au DAO objet métier,
+     * y compris lorsque ce contenu contient un caractère spécial.</p>
+     * <p>garantit que findByLibelleRapide(
+     * contenu partiel avec caractères spéciaux) :</p>
      * <ul>
-     * <li>retourne une liste non null ;</li>
-     * <li>retourne le libellé enfant attendu ;</li>
-     * <li>retourne un parent non null ;</li>
-     * <li>retourne le libellé parent attendu ;</li>
-     * <li>appelle une seule fois la méthode
-     * findBySousTypeProduitContainingIgnoreCase(...)
-     * du DAO enfant mocké avec Mockito.</li>
+     * <li>délègue au DAO objet métier la recherche rapide via
+     * {@code findBySousTypeProduitContainingIgnoreCase(...)} ;</li>
+     * <li>ne jette aucune exception ;</li>
+     * <li>retourne une {@link List} non null ;</li>
+     * <li>retourne l'objet métier issu du stockage ;</li>
+     * <li>conserve le parent de l'objet métier retourné ;</li>
+     * <li>n'appelle jamais DAO.{@code findAll()} ;</li>
+     * <li>ne sollicite ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_FINDBYLIBELLERAPIDE)
-    @DisplayName("findByLibelleRapide(contenu partiel avec caractères spéciaux) - retourne une liste métier cohérente")
+    @DisplayName("findByLibelleRapide(contenu partiel avec caractères spéciaux) : retourne une liste métier cohérente")
     @Test
     public void testFindByLibelleRapideContenuSpeciauxNominal() throws Exception {
 
         /* ARRANGE :
-         * configure le DAO enfant mocké avec Mockito
-         * pour que la méthode
-         * sousTypeProduitDaoJPA.findBySousTypeProduitContainingIgnoreCase(\"prod/uit\")
-         * retourne une liste contenant un élément nominal.
+         * Crée un parent et une liste d'objets métier pour le test.
          */
+        final String contenu = "prod/uit";
+
+        /* Crée un parent. */
         final TypeProduitJPA parentJPA =
                 fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
 
+        /* Crée une liste d'objets métier enfant du parent. */
         final List<SousTypeProduitJPA> entities =
                 new ArrayList<SousTypeProduitJPA>();
-        entities.add(fabriquerSousTypeProduitJPA("prod/uit_1", ID_1, parentJPA));
+        entities.add(fabriquerSousTypeProduitJPA(contenu, ID_1, parentJPA));
 
         /*
-         * Condition du Mock sousTypeProduitDaoJPA :
-         * L'appel sousTypeProduitDaoJPA.findBySousTypeProduitContainingIgnoreCase("prod/uit")
-         * sur le DAO mocké
-         * retourne une liste entities.
+         * Configuration du Mock :
+         * configure ici le comportement du DAO objet métier 
+         * mocké avec Mockito lors d'un appel 
+         * DAO.findBySousTypeProduitContainingIgnoreCase(
+         * contenu avec caractères spéciaux) 
+         * qui retourne une liste d'objets métier.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito via
+         * findBySousTypeProduitContainingIgnoreCase(prod/uit),
+         * alors le DAO objet métier mocké avec Mockito retournera
+         * une collection persistante contenant un objet métier".
+         *
+         * On simule donc volontairement un stockage
+         * contenant un objet métier dont le libellé "prod/uit"
+         * contient un caractère spécial.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de vérifier que le service transmet correctement le contenu
+         * et convertit proprement le résultat retourné.
          */
         when(this.sousTypeProduitDaoJPA
-                .findBySousTypeProduitContainingIgnoreCase("prod/uit"))
+                .findBySousTypeProduitContainingIgnoreCase(contenu))
             .thenReturn(entities);
 
-        /* ACT :
-         * appelle this.service.findByLibelleRapide("prod/uit")
-         * dans le scénario nominal avec caractères spéciaux.
+        /* ACT */
+        /* Sollicite service.findByLibelleRapide(...)
+         * dans les conditions voulues par le Mock (condition when).
          */
-        final List<SousTypeProduit> retour =
-                this.service.findByLibelleRapide("prod/uit");
+        final List<SousTypeProduit> resultat =
+                this.service.findByLibelleRapide(contenu);
 
-        /* ASSERT :
-         * vérifie que la méthode retourne bien
-         * une liste métier cohérente avec les données mockées.
+        /* ASSERT */
+        /* Garantit que this.service.findByLibelleRapide(contenu)
+         * retourne une liste métier exploitable,
+         * contenant l'objet métier issu du stockage.
          */
-        assertThat(retour).isNotNull().hasSize(1);
-        assertThat(retour.get(0).getSousTypeProduit()).isEqualTo("prod/uit_1");
-        assertThat(retour.get(0).getTypeProduit()).isNotNull();
-        assertThat(retour.get(0).getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_1);
+        assertThat(resultat).isNotNull().hasSize(1);
+        assertThat(resultat.get(0).getSousTypeProduit()).isEqualTo(contenu);
 
-        /* Vérifie que la méthode
-         * sousTypeProduitDaoJPA.findBySousTypeProduitContainingIgnoreCase("prod/uit")
-         * du DAO mocké avec Mockito a bien été appelée une fois.
+        /* Garantit que l'objet métier retourné
+         * conserve un parent non null et cohérent.
          */
-        verify(this.sousTypeProduitDaoJPA)
-            .findBySousTypeProduitContainingIgnoreCase("prod/uit");
+        assertThat(resultat.get(0).getTypeProduit()).isNotNull();
+        assertThat(resultat.get(0).getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_1);
+
+        /* Garantit que le DAO objet métier mocké a bien été appelé une fois
+         * avec le contenu partiel attendu.
+         */
+        verify(this.sousTypeProduitDaoJPA, times(1))
+            .findBySousTypeProduitContainingIgnoreCase(contenu);
+
+        /* Garantit que le DAO objet métier mocké n'a jamais été appelé
+         * via findAll().
+         */
+        verify(this.sousTypeProduitDaoJPA, never()).findAll();
+
+        /* Garantit que ce scénario ne sollicite
+         * ni le DAO parent ni l'EntityManager.
+         */
+        verifyNoInteractions(this.typeProduitDaoJPA);
+        verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
-
+    
     
     
     /**
@@ -5114,63 +5376,10 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         verifyNoInteractions(this.entityManager);
 
     } // __________________________________________________________________
-    
-    
-    
-	/**
-	 * <div>
-	 * <p>garantit que findByLibelleRapide(contenu introuvable) :</p>
-	 * <ul>
-	 * <li>retourne une liste non null ;</li>
-	 * <li>retourne une liste vide ;</li>
-	 * <li>appelle une seule fois la méthode
-	 * sousTypeProduitDaoJPA.findBySousTypeProduitContainingIgnoreCase(...)
-	 * du DAO mocké avec Mockito.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_FINDBYLIBELLERAPIDE)
-	@DisplayName("findByLibelleRapide(contenu introuvable) - retourne une liste vide")
-	@Test
-	public void testFindByLibelleRapideContenuIntrouvable() throws Exception {
-	
-	    /* ARRANGE :
-	     * configure le DAO mocké avec Mockito
-	     * pour que la méthode
-	     * sousTypeProduitDaoJPA.findBySousTypeProduitContainingIgnoreCase(\"INCONNU\")
-	     * retourne une liste vide.
-	     */
-	    when(this.sousTypeProduitDaoJPA.findBySousTypeProduitContainingIgnoreCase("INCONNU"))
-	        .thenReturn(new ArrayList<SousTypeProduitJPA>());
-	
-	    /* ACT :
-	     * appelle this.service.findByLibelleRapide("INCONNU")
-	     * dans le scénario où aucun sous-type
-	     * ne correspond au contenu recherché.
-	     */
-	    final List<SousTypeProduit> retour =
-	            this.service.findByLibelleRapide("INCONNU");
-	
-	    /* ASSERT :
-	     * vérifie que la méthode retourne bien
-	     * une liste non nulle, mais vide.
-	     */
-	    assertThat(retour).isNotNull().isEmpty();
-	
-	    /* Vérifie que la méthode
-	     * sousTypeProduitDaoJPA.findBySousTypeProduitContainingIgnoreCase("INCONNU")
-	     * du DAO mocké avec Mockito a bien été appelée une fois.
-	     */
-	    verify(this.sousTypeProduitDaoJPA)
-	        .findBySousTypeProduitContainingIgnoreCase("INCONNU");
-	
-	} // __________________________________________________________________
 
 
 
-	/**
+    /**
      * <div>
      * <p>garantit que findByLibelleRapide(nominal) :</p>
      * <ul>
@@ -5179,7 +5388,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>retourne une {@link List} non null ;</li>
      * <li>filtre les éléments null issus du stockage ;</li>
      * <li>dédoublonne les résultats au sens métier
-     * sur le couple objet métier / parent ;</li>
+     * sur le couple parent / objet métier ;</li>
      * <li>retourne les objets métier triés par parent
      * puis par libellé objet métier ;</li>
      * <li>conserve le parent des objets métier retournés ;</li>
@@ -5188,47 +5397,27 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * </ul>
      * <p>Ce test prouve directement au niveau de la méthode publique
      * le filtrage des null,
-     * le dédoublonnage métier sur le couple objet métier / parent
+     * le dédoublonnage métier sur le couple parent / objet métier
      * et le tri final par parent puis par libellé objet métier.</p>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_FINDBYLIBELLERAPIDE)
-    @DisplayName("findByLibelleRapide(nominal) : filtre les null, trie et dédoublonne par couple métier")
+    @DisplayName("findByLibelleRapide(nominal) : filtre les null, trie et dédoublonne par couple parent / objet métier")
     @Test
     public void testFindByLibelleRapideNominal() throws Exception {
 
         /* ARRANGE :
-         * configure ici le comportement du DAO objet métier mocké avec Mockito.
-         *
-         * La formule when(...).thenReturn(...) signifie :
-         * "si, pendant le test, le service appelle le DAO objet métier
-         * mocké avec Mockito avec le contenu CONTENU_PARTIEL via
-         * findBySousTypeProduitContainingIgnoreCase(...),
-         * alors le DAO objet métier mocké avec Mockito devra répondre
-         * une collection persistante non triée,
-         * contenant un null
-         * et un doublon métier sur le couple objet métier / parent".
-         *
-         * On simule donc volontairement un stockage
-         * qui retourne :
-         * - un élément null,
-         * - deux objets métier fonctionnellement identiques
-         *   ne différant que par la casse du libellé,
-         * - deux parents distincts,
-         * - plusieurs valeurs non triées.
-         *
-         * Le but n'est pas de tester le DAO réel,
-         * mais de maîtriser sa réponse
-         * afin de prouver comment le service réagit
-         * au cas contractuel "scénario nominal complet".
+         * Crée deux parent et une liste d'objets métier pour le test.
          */
+    	/* Crée des parents. */
         final TypeProduitJPA parentJPA1 =
                 fabriquerTypeProduitJPA(LIBELLE_PARENT_1, ID_1);
         final TypeProduitJPA parentJPA2 =
                 fabriquerTypeProduitJPA(LIBELLE_PARENT_2, ID_2);
 
+        /* Crée des ojets métier et d'une liste d'objets métier. */
         final String libelleEnfantDoublon =
                 LIBELLE_ENFANT_2.toUpperCase(Locale.ROOT);
 
@@ -5244,23 +5433,51 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         entities.add(fabriquerSousTypeProduitJPA(
                 LIBELLE_ENFANT_1, ID_1, parentJPA1));
 
+        /*
+         * Configuration du Mock :
+         * configure ici le comportement du DAO objet métier mocké 
+         * avec Mockito.
+         *
+         * La formule when(...).thenReturn(...) signifie :
+         * "si, pendant le test, le service appelle le DAO objet métier
+         * mocké avec Mockito via
+         * findBySousTypeProduitContainingIgnoreCase(CONTENU_PARTIEL),
+         * alors le DAO objet métier mocké avec Mockito devra répondre
+         * une collection persistante non triée,
+         * contenant un null
+         * et un doublon d'objets métier 
+         * (même couple [parent / libellé objet métier])".
+         *
+         * On simule donc volontairement un stockage
+         * qui retourne :
+         * - un élément null ;
+         * - deux objets métier fonctionnellement identiques
+         *   ne différant que par la casse du libellé objet métier ;
+         * - deux parents distincts ;
+         * - plusieurs valeurs non triées.
+         *
+         * Le but n'est pas de tester le DAO réel,
+         * mais de maîtriser sa réponse
+         * afin de prouver comment le service réagit
+         * au cas contractuel "scénario nominal complet".
+         */
         when(this.sousTypeProduitDaoJPA
                 .findBySousTypeProduitContainingIgnoreCase(CONTENU_PARTIEL))
             .thenReturn(entities);
 
         /* ACT */
         /* Sollicite la méthode voulue du SERVICE GATEWAY à tester
-         * dans les conditions voulues par le Mock (when du ARRANGE).
+         * dans les conditions voulues par le Mock.
          */
         final List<SousTypeProduit> resultat =
                 this.service.findByLibelleRapide(CONTENU_PARTIEL);
 
         /* ASSERT */
         /* Garantit que this.service.findByLibelleRapide(CONTENU_PARTIEL)
-         * - retourne une liste non null
-         * - ne contient plus aucun élément null
+         * - retourne une liste non null ;
+         * - ne contient plus aucun élément null ;
          * - dédoublonne les résultats au sens métier
-         *   sur le couple objet métier / parent
+         *   sur le couple parent / objet métier ;
          * - restitue le résultat final trié
          *   par parent puis par libellé objet métier.
          *
