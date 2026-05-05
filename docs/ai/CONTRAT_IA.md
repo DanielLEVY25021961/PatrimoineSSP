@@ -361,8 +361,7 @@ Préconditions bloquantes avant toute réponse de fond :
 2. nom du fichier cible identifié ;
 3. chemin local lu explicitement indiqué ;
 4. rattachement du chemin local au dernier upload réel contrôlé ;
-5. métriques recalculées depuis les octets réellement lus : taille, lignes logiques, nombre de `
-`, EOF, SHA-256 ;
+5. métriques recalculées depuis les octets réellement lus : taille, lignes logiques, nombre de `\n`, EOF, SHA-256 ;
 6. bloc demandé identifié strictement ;
 7. absence de mélange avec un autre bloc ;
 8. absence d'exploitation d'un état ancien ou indirect explicitement déclarée ;
@@ -1234,6 +1233,59 @@ Si l’Utilisateur demande `coder` pour un fichier complet fragile, ou s’il pr
 
 Cette règle est prioritaire sur les habitudes de livraison antérieures.
 
+### 22.5) RT-LIVRAISON-AUTO-CONTROLE-LIGNE-A-LIGNE-01 — Qualité des livraisons IA
+
+Principe prioritaire :
+
+➡️ **Aucune livraison IA ne doit être remise à l’Utilisateur sans relecture et contrôle ligne par ligne du contenu final réellement livré.**
+
+Cette règle s’applique à toute livraison générée par l’IA, notamment :
+- méthode Java ;
+- bloc de méthodes Java ;
+- classe Java complète ;
+- test JUnit/Mockito ;
+- fichier `.md`, `.yaml`, `.yml`, `.py` ou assimilé ;
+- contrat IA ;
+- contrat local de couche ;
+- artefact livré par lien de téléchargement.
+
+Obligation absolue avant livraison :
+1. générer la version finale dans le support réellement livré ;
+2. relire cette version finale depuis sa matérialisation réelle, et non depuis une intention, un brouillon, un patch mental ou un état ancien ;
+3. contrôler le contenu ligne par ligne ;
+4. vérifier les sauts de ligne, l’indentation, les clôtures de blocs, les guillemets, les backticks, les accolades, les parenthèses, les crochets et les chaînes littérales sensibles ;
+5. vérifier qu’aucun placeholder involontaire, aucune omission, aucun `...` de substitution, aucun extrait incomplet et aucune coupure accidentelle ne subsiste ;
+6. pour un fichier complet, contrôler au minimum : taille, SHA-256, nombre de caractères LF, statut du saut de ligne final et lisibilité UTF-8 ;
+7. pour un lien de téléchargement, contrôler que le fichier cible existe réellement dans `/mnt/data`, qu’il est non vide, relisible localement, et que le lien fourni pointe exactement vers ce fichier ;
+8. seulement ensuite livrer à l’Utilisateur.
+
+Règle spéciale pour les fichiers fragiles :
+- l’IA doit contrôler les lignes autour de chaque modification ;
+- l’IA doit contrôler les premières et dernières lignes utiles ;
+- l’IA doit contrôler les blocs Markdown ou code fenced afin d’éviter toute ouverture ou fermeture manquante ;
+- l’IA doit contrôler les séquences littérales sensibles, notamment les backticks, les antislashs et les chaînes de type `\n`, afin qu’elles ne soient pas transformées en sauts de ligne physiques.
+
+Interdictions absolues :
+- livrer un contenu généré sans l’avoir relu depuis la version finale ;
+- livrer depuis la mémoire, depuis une intention ou depuis un diff non matérialisé ;
+- affirmer qu’un fichier est propre sans preuve de relecture ;
+- fournir un lien de téléchargement sans vérifier l’existence et la relisibilité du fichier cible ;
+- demander à l’Utilisateur de détecter les erreurs de génération à la place de l’IA.
+
+En cas de défaut détecté lors de l’auto-contrôle :
+- l’IA doit corriger le défaut ;
+- régénérer si nécessaire la livraison complète ;
+- relancer l’auto-contrôle depuis le contenu final ;
+- ne livrer qu’après contrôle redevenu OK.
+
+Si l’IA ne peut pas effectuer cette relecture matérielle et ligne par ligne, elle doit déclarer :
+
+```text
+LIVRAISON NON FIABLE — auto-contrôle ligne par ligne impossible.
+```
+
+et suspendre la livraison au lieu de remettre un artefact incertain.
+
 ## 23) Règle de couplage CODE/BUNDLE (Variante A — 2 SHAs)
 
 Définitions :
@@ -1738,8 +1790,7 @@ Procédure obligatoire après faux positif MIME :
 2. déclarer explicitement le faux positif MIME local probable ;
 3. tenter une autre technique container autorisée permettant un téléchargement binaire sans filtrage MIME excessif ;
 4. relire localement les octets bruts réellement sauvegardés ;
-5. calculer et rapporter au minimum : taille, SHA-256, nombre de `
-`, statut EOF, premières lignes et dernières lignes utiles ;
+5. calculer et rapporter au minimum : taille, SHA-256, nombre de `\n`, statut EOF, premières lignes et dernières lignes utiles ;
 6. comparer avec le manifeste, la baseline saine ou le bundle OFFLINE validé ;
 7. vérifier les génériques et les signatures utiles ;
 8. seulement ensuite conclure.
@@ -1906,8 +1957,7 @@ Règle prioritaire invariante :
 Barrières bloquantes minimales :
 1. dernier `file_id` réel identifié ;
 2. chemin local lu rattaché à ce dernier upload ;
-3. métriques recalculées depuis les octets lus : taille, lignes, `
-`, EOF, SHA-256 ;
+3. métriques recalculées depuis les octets lus : taille, lignes, `\n`, EOF, SHA-256 ;
 4. bloc demandé identifié sans mélange avec un autre bloc ;
 5. état ancien ou indirect explicitement non exploité ;
 6. conclusion limitée au fichier et au bloc réellement relus.
