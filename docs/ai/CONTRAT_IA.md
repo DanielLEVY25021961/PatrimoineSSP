@@ -119,6 +119,12 @@ Interdiction spécifique :
 
 Toute autre forme de lecture (rendu texte, HTML, extraction non binaire, lecture indirecte d’une page GitHub) est interdite et doit être considérée comme non contractuelle.
 
+Cas particulier — faux positif MIME sur fichiers sources :
+- Pour un fichier source Raw@SHA (notamment `.java`) contenant une Javadoc HTML dense, un classement local `derived_content_type=text/html` par une primitive de téléchargement ou par une heuristique MIME ne prouve pas, à lui seul, que le contenu GitHub lu est une page HTML.
+- Si l’URL Raw@SHA est correcte, si GitHub répond `HTTP 200`, si le `Content-Type` HTTP réel est cohérent avec un fichier source (par exemple `text/plain`), si le chemin et l’extension sont cohérents, et si la taille annoncée est cohérente avec le manifeste ou le bundle OFFLINE, l’IA doit qualifier l’événement comme un **faux positif MIME local probable**, et non comme un incident GitHub.
+- Ce cas ne dispense jamais de la lecture contractuelle : l’IA doit tenter un fallback binaire sans filtrage MIME excessif, relire les octets localement, calculer les métriques, puis comparer avec la source saine disponible.
+- Si le fallback binaire échoue pour une raison technique indépendante (DNS, accès réseau container, primitive indisponible), l’IA doit déclarer précisément l’échec de la primitive locale, puis basculer en MODE OFFLINE validé par `CHECKSUMS`, sans prétendre que la jambe locale GitHub complète a réussi.
+
 Règles :
 - Relancer automatiquement en cas d’échec (max 3 tentatives)
 - Toute lecture doit être traçable
@@ -1694,6 +1700,63 @@ Interdiction absolue :
 
 ---
 
+
+
+### 28.14.1 RT-LECTURE-GITHUB-FAUX-POSITIF-MIME-01 (VALIDÉ) — Faux positif MIME `text/html` sur fichier source Java Raw@SHA
+
+Objectif : empêcher qu’un fichier source Java légitime soit déclaré à tort comme une page HTML ou comme un incident GitHub lorsque l’échec provient uniquement d’une heuristique MIME locale trompée par une Javadoc HTML dense.
+
+Constat technique autorisé :
+- un fichier `.java` peut contenir légalement une Javadoc avec de nombreuses balises HTML (`<div>`, `<p>`, `<ul>`, `<li>`, `<style>`, etc.) ;
+- une primitive locale ou un outil de détection MIME peut alors classer à tort le fichier comme `text/html` ;
+- ce classement local ne prouve pas que GitHub a renvoyé une page HTML.
+
+Règle de qualification obligatoire :
+- Si l’URL est une URL `raw.githubusercontent.com` reconstruite au SHA figé ;
+- si GitHub répond `HTTP 200` ;
+- si le `Content-Type` HTTP réel est `text/plain` ou autrement cohérent avec un fichier source brut ;
+- si le chemin attendu se termine par une extension source cohérente, notamment `.java` ;
+- si la taille HTTP annoncée est cohérente avec le manifeste, le bundle OFFLINE ou la baseline saine ;
+- alors un `derived_content_type=text/html` local DOIT être qualifié comme **faux positif MIME local probable**, et NON comme preuve d’un contenu HTML GitHub.
+
+Formulation obligatoire :
+```text
+GitHub Raw@SHA : OK.
+Réponse HTTP : OK.
+Content-Type HTTP réel : cohérent avec un fichier source brut.
+Échec local : refus ou alerte de la primitive de téléchargement par faux positif MIME `text/html`.
+Cause probable : Javadoc HTML dense dans un fichier source Java.
+```
+
+Interdictions :
+- Interdiction de conclure à un incident GitHub sur le seul fondement de `derived_content_type=text/html`.
+- Interdiction de modifier le fichier Java, de supprimer sa Javadoc HTML ou de dégrader le formalisme documentaire du projet pour satisfaire une heuristique MIME.
+- Interdiction d’utiliser une lecture HTML, un rendu GitHub ou une page web comme substitut à la lecture Raw@SHA binaire.
+
+Procédure obligatoire après faux positif MIME :
+1. conserver l’URL Raw@SHA stricte ;
+2. déclarer explicitement le faux positif MIME local probable ;
+3. tenter une autre technique container autorisée permettant un téléchargement binaire sans filtrage MIME excessif ;
+4. relire localement les octets bruts réellement sauvegardés ;
+5. calculer et rapporter au minimum : taille, SHA-256, nombre de `
+`, statut EOF, premières lignes et dernières lignes utiles ;
+6. comparer avec le manifeste, la baseline saine ou le bundle OFFLINE validé ;
+7. vérifier les génériques et les signatures utiles ;
+8. seulement ensuite conclure.
+
+Si le fallback binaire échoue pour une cause indépendante du contenu (DNS, réseau container, primitive indisponible, refus technique local), l’IA doit déclarer :
+```text
+Lecture GitHub Raw@SHA : OK.
+Téléchargement local par primitive dédiée : KO par faux positif MIME local.
+Fallback binaire container : KO technique indépendant.
+Bascule OFFLINE validée par CHECKSUMS : requise.
+```
+
+Conséquence de consolidation :
+- La consolidation peut reposer sur le bundle OFFLINE uniquement si `PROVENANCE`, `CHECKSUMS` et les fichiers extraits sont cohérents et contrôlés.
+- Dans ce cas, l’IA doit dire que la consolidation repose sur OFFLINE contrôlé, et non prétendre que la jambe locale GitHub complète a réussi.
+
+---
 
 ### 28.15 RT-LECTURE-LITTERALE-01 (VALIDÉ) — Lecture littérale ancrée sur la méthode exacte de référence
 
