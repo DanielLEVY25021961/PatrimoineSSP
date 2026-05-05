@@ -609,7 +609,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message 
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_BLANK} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier.</li>
      * </ul>
      * </div>
      */
@@ -619,7 +619,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testCreerLibelleBlank() {
 
         /* ARRANGE :
-         * prépare un sous-type dont le libellé est blank,
+         * prépare un objet métier dont le libellé est blank,
          * afin de vérifier le contrôle applicatif
          * effectué avant toute tentative d'accès au stockage.
          */
@@ -658,7 +658,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliParentNull} ;</li>
      * <li>émet le message 
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_PARENT_NULL} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier.</li>
      * </ul>
      * </div>
      */
@@ -668,7 +668,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     public void testCreerParentNull() {
 
         /* ARRANGE :
-         * prépare un sous-type sans parent,
+         * prépare un objet métier sans parent,
          * afin de vérifier le contrôle applicatif
          * imposé par le contrat du port.
          */
@@ -706,7 +706,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <li>jette une {@link ExceptionAppliLibelleBlank} ;</li>
      * <li>émet le message
      * {@link SousTypeProduitGatewayIService#MESSAGE_CREER_KO_LIBELLE_PARENT_BLANK} ;</li>
-     * <li>n'appelle ni le DAO parent ni le DAO enfant.</li>
+     * <li>n'appelle ni le DAO parent ni le DAO objet métier.</li>
      * </ul>
      * </div>
      */
@@ -1012,7 +1012,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* ARRANGE :
          * prépare un scénario où le parent existe,
-         * mais où le DAO enfant mocké avec Mockito
+         * mais où le DAO objet métier mocké avec Mockito
          * retourne null lors du save(...).
          */
         final TypeProduit parent = fabriquerTypeProduit(LIBELLE_PARENT_1, ID_1);
@@ -1074,7 +1074,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* ARRANGE :
          * prépare un parent existant,
-         * puis configure le DAO enfant mocké avec Mockito
+         * puis configure le DAO objet métier mocké avec Mockito
          * pour jeter une RuntimeException avec message non null
          * lors du save(...).
          */
@@ -1150,7 +1150,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* ARRANGE :
          * prépare un parent existant,
-         * puis configure le DAO enfant mocké avec Mockito
+         * puis configure le DAO objet métier mocké avec Mockito
          * pour jeter une RuntimeException sans message
          * lors du save(...).
          */
@@ -1250,7 +1250,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         /* Prépare l'exception technique d'intégrité levée par le stockage :
          * elle représente ici un refus de création
          * pour cause de doublon fonctionnel sur le couple
-         * sous-type produit / type produit.
+         * [parent / libellé objet métier].
          */
         final String messageTechnique = "contrainte d'unicité violée";
         final DataIntegrityViolationException causeDao =
@@ -1304,7 +1304,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que creer(parent avec caractères spéciaux) :</p>
      * <ul>
      * <li>retourne un objet métier non null ;</li>
-     * <li>retourne le libellé enfant attendu ;</li>
+     * <li>retourne l'identifiant objet métier issu du stockage ;</li>
+     * <li>retourne le libellé objet métier attendu ;</li>
      * <li>retourne le libellé parent attendu ;</li>
      * <li>appelle findById(...) sur le parent puis save(...).</li>
      * </ul>
@@ -1353,6 +1354,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * est cohérent avec les données sauvegardées.
          */
         assertThat(retour).isNotNull();
+        assertThat(retour.getIdSousTypeProduit()).isEqualTo(ID_2);
         assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_1);
         assertThat(retour.getTypeProduit()).isNotNull();
         assertThat(retour.getTypeProduit().getTypeProduit()).isEqualTo("Type/Produit_1");
@@ -1376,7 +1378,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <p>garantit que creer(OK) :</p>
      * <ul>
      * <li>retourne un objet métier non null ;</li>
-     * <li>retourne le libellé enfant attendu ;</li>
+     * <li>retourne l'identifiant objet métier issu du stockage ;</li>
+     * <li>retourne le libellé objet métier attendu ;</li>
      * <li>retourne un parent non null ;</li>
      * <li>retourne le libellé parent attendu ;</li>
      * <li>appelle findById(...) sur le parent puis save(...).</li>
@@ -1424,6 +1427,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * est cohérent avec les données sauvegardées.
          */
         assertThat(retour).isNotNull();
+        assertThat(retour.getIdSousTypeProduit()).isEqualTo(ID_2);
         assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_1);
         assertThat(retour.getTypeProduit()).isNotNull();
         assertThat(retour.getTypeProduit().getTypeProduit()).isEqualTo(LIBELLE_PARENT_1);
@@ -1440,8 +1444,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
     } // __________________________________________________________________
 
-    
-       
+
+
     // ======================== RechercherTous ============================
 
 
@@ -1685,20 +1689,20 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
      * <div>
      * <p>garantit que si DAO.findAll() retourne une liste
      * contenant des nulls, des doublons fonctionnels
-     * et deux couples métier distincts partageant le même libellé enfant :</p>
+     * et deux objets métier distincts partageant le même libellé objet métier :</p>
      * <ul>
      * <li>retourne une {@link List} non null ;</li>
      * <li>filtre les éléments null ;</li>
      * <li>dédoublonne les résultats au sens métier
-     * sur le couple sous-type produit / type produit ;</li>
-     * <li>conserve deux sous-types portant le même libellé enfant
+     * sur le couple [parent / libellé objet métier] ;</li>
+     * <li>conserve deux objets métier portant le même libellé objet métier
      * lorsqu'ils appartiennent à deux parents différents ;</li>
-     * <li>trie les résultats par parent puis par libellé enfant ;</li>
+     * <li>trie les résultats par parent puis par libellé objet métier ;</li>
      * <li>appelle le DAO objet métier une fois ;</li>
      * <li>n'appelle ni le DAO parent, ni l'EntityManager.</li>
      * </ul>
      * <p>Ce test prouve explicitement la règle contractuelle
-     * d'unicité métier sur le couple sous-type produit / type produit.</p>
+     * d'unicité métier sur le couple [parent / libellé objet métier].</p>
      * </div>
      *
      * @throws Exception
@@ -1712,9 +1716,9 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * prépare une liste renvoyée par le DAO objet métier mocké
          * contenant :
          * - une valeur null à filtrer ;
-         * - un doublon fonctionnel sur le couple
-         *   sous-type produit / type produit ;
-         * - deux sous-types ayant le même libellé enfant,
+         * - un doublon fonctionnel sur l'objet métier (couple
+         *   [parent / libellé objet métier]) ;
+         * - deux objets métier ayant le même libellé objet métier,
          *   mais des parents différents, donc non doublons ;
          * - un ordre initial volontairement non trié.
          */
@@ -1823,7 +1827,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
          * prépare une liste renvoyée par le DAO objet métier mocké
          * contenant :
          * - une valeur null à filtrer ;
-         * - deux doublons fonctionnels sur le même libellé enfant
+         * - deux doublons fonctionnels sur le même libellé objet métier
          *   et le même parent ;
          * - un ordre initial non trié.
          *
@@ -1869,7 +1873,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 
         /* Vérifie ensuite que :
          * - les doublons fonctionnels ont bien été supprimés ;
-         * - l'ordre final est trié par libellé enfant.
+         * - l'ordre final est trié par libellé objet métier.
          */
         assertThat(retour)
             .extracting(SousTypeProduit::getSousTypeProduit)
@@ -3088,7 +3092,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	 * <li>retourne des métadonnées cohérentes avec la page
 	 * renvoyée par le stockage ;</li>
 	 * <li>retourne le contenu métier converti attendu ;</li>
-	 * <li>conserve le parent métier des sous-types retournés ;</li>
+	 * <li>conserve le parent des objets métier retournés ;</li>
 	 * <li>appelle une seule fois la méthode findAll(Pageable)
 	 * du DAO mocké avec Mockito ;</li>
 	 * <li>n'appelle ni le DAO parent, ni l'EntityManager.</li>
@@ -4186,7 +4190,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
         assertThat(retour.getIdSousTypeProduit()).isEqualTo(ID_3);
         assertThat(retour.getSousTypeProduit()).isEqualTo(LIBELLE_ENFANT_2);
 
-        /* Vérifie que le parent métier retourné
+        /* Vérifie que le parent de l'objet métier retourné
          * est non null et cohérent avec le parent JPA trouvé.
          */
         assertThat(retour.getTypeProduit()).isNotNull();

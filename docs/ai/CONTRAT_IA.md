@@ -333,6 +333,84 @@ Cette règle complète et renforce `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`.
 
 ---
 
+### 6.1.4 RT-LECTURE-CHAT-BARRIERE-FIABILITE-01 — Barrière bloquante « preuve avant analyse »
+
+Objectif : transformer les règles de lecture des fichiers joints en barrière d'exécution, afin d'empêcher l'IA de produire une analyse, un verdict, une correction ou une consolidation depuis un fichier non prouvé.
+
+Principe prioritaire :
+
+➡️ **PREUVE AVANT ANALYSE.**
+
+L'IA ne doit pas chercher à répondre vite. Elle doit d'abord prouver matériellement qu'elle lit la bonne version. Si cette preuve n'est pas complète, l'IA doit s'arrêter.
+
+Règle absolue :
+- aucune analyse ne peut commencer sans preuve que le contenu lu correspond au dernier `file_id` réel uploadé par l'Utilisateur ;
+- aucun verdict ne peut être émis depuis un chemin local supposé, une baseline, une fenêtre active, une mémoire, une capture écran ou un extrait partiel ;
+- aucune correction ne peut être proposée depuis un fichier dont l'identité n'est pas rattachée au dernier upload réel ;
+- aucune consolidation ne peut être effectuée si l'égalité entre le dernier upload réel, la baseline et la fenêtre active n'est pas prouvable ;
+- en cas de doute, d'ambiguïté, de troncature, de conflit entre états locaux, de métriques instables ou d'absence de preuve de rattachement au dernier `file_id`, l'IA doit appliquer le mode **fail closed** : arrêt, absence de verdict, absence de consolidation.
+
+Préconditions bloquantes avant toute réponse de fond :
+1. dernier `file_id` réel identifié ;
+2. nom du fichier cible identifié ;
+3. chemin local lu explicitement indiqué ;
+4. rattachement du chemin local au dernier upload réel contrôlé ;
+5. métriques recalculées depuis les octets réellement lus : taille, lignes logiques, nombre de `
+`, EOF, SHA-256 ;
+6. bloc demandé identifié strictement ;
+7. absence de mélange avec un autre bloc ;
+8. absence d'exploitation d'un état ancien ou indirect explicitement déclarée ;
+9. si comparaison avec baseline/fenêtre active : comparaison effectuée seulement après la lecture du dernier upload réel.
+
+Réponse obligatoire si une précondition manque :
+
+```text
+LECTURE NON FIABLE.
+Je ne peux produire ni analyse, ni verdict, ni correction, ni consolidation.
+Cause : <cause précise>
+Action requise : relire le dernier upload réel ou demander un nouvel upload complet.
+```
+
+Format synthétique obligatoire pour les contrôles de corrections utilisateur :
+
+```text
+PREUVE DE LECTURE
+- dernier file_id :
+- fichier cible :
+- chemin local lu :
+- SHA-256 :
+- taille :
+- LF/EOF :
+- bloc contrôlé :
+- état ancien/indirect exploité : non
+
+Relecture : OK / KO
+Lecture du fichier joint : OK / KO
+Corrections détectées : OK / KO
+Preuve des modifications détectées :
+- ...
+Vérification du bloc après correction : OK / KO
+Raisons éventuelles du KO :
+- ...
+Consolidation baseline/fenêtre active : effectuée / non effectuée
+Preuve d'égalité byte-à-byte si consolidation :
+- upload == baseline == fenêtre active : OK / KO
+```
+
+Interdictions supplémentaires :
+- répondre depuis un ancien `/mnt/data/<nomDuFichier>` ;
+- répondre depuis un ancien résultat `file_search` non rattaché au dernier upload ;
+- répondre depuis une image ou une capture écran comme source principale ;
+- mélanger le bloc demandé avec un autre bloc ;
+- produire un verdict probable ;
+- continuer l'analyse pour « gagner du temps » lorsque la preuve de lecture est incomplète.
+
+Une capture écran peut seulement servir d'indice de contradiction. Elle ne remplace jamais la lecture complète du dernier fichier joint réel.
+
+Cette règle complète `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`, `RT-LECTURE-CHAT_02` et `RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01`.
+
+---
+
 ## 7) Hiérarchie des ressources du dépôt
 
 Ordre de priorité :
@@ -1750,6 +1828,39 @@ Procédure obligatoire :
 
 Conséquence :
 - sans preuve de départ depuis le dernier upload réel, aucune analyse, aucun verdict, aucune mémorisation et aucune consolidation ne sont valides.
+
+---
+
+### 28.19 RT-LECTURE-CHAT-BARRIERE-FIABILITE-01 (VALIDÉ) — Barrière bloquante « preuve avant analyse »
+
+Objectif : rendre les règles de lecture effectivement opposables en interdisant à l'IA de continuer lorsqu'elle ne peut pas prouver qu'elle lit la bonne version.
+
+Règle prioritaire invariante :
+- L'IA DOIT appliquer le principe **PREUVE AVANT ANALYSE**.
+- L'IA NE DOIT produire aucune analyse, aucun verdict, aucune correction, aucune mémorisation et aucune consolidation tant que la preuve matérielle du dernier upload réel n'est pas complète.
+- En cas de doute, ambiguïté, troncature, divergence entre états locaux, métriques instables, capture écran contradictoire ou rattachement non prouvé au dernier `file_id`, l'IA DOIT appliquer le mode **fail closed** : s'arrêter, déclarer `LECTURE NON FIABLE`, expliquer la cause, et ne rien consolider.
+
+Barrières bloquantes minimales :
+1. dernier `file_id` réel identifié ;
+2. chemin local lu rattaché à ce dernier upload ;
+3. métriques recalculées depuis les octets lus : taille, lignes, `
+`, EOF, SHA-256 ;
+4. bloc demandé identifié sans mélange avec un autre bloc ;
+5. état ancien ou indirect explicitement non exploité ;
+6. conclusion limitée au fichier et au bloc réellement relus.
+
+Réponse obligatoire en cas d'échec d'une barrière :
+
+```text
+LECTURE NON FIABLE.
+Je ne peux produire ni analyse, ni verdict, ni correction, ni consolidation.
+Cause : <cause précise>
+```
+
+Conséquences :
+- Il est moins grave de suspendre temporairement une analyse que de conclure depuis un mauvais fichier.
+- Une réponse de fond produite sans preuve de lecture complète est invalide.
+- Une consolidation produite sans preuve `dernier upload == baseline == fenêtre active` est invalide.
 
 ---
 
