@@ -74,6 +74,25 @@ lecture:
   verify_generics: true
   max_retries: 3
   on_failure: "incident de lecture"
+  github_raw_web_reading:
+    rule_id: RT-LECTURE-GITHUB-02
+    required: true
+    preferred_tool: web_tool
+    raw_sha_url_required: true
+    status_independent_from_local_download_filter: true
+    preserve_github_raw_ok_when_http_200_text_plain_size_coherent: true
+    container_download_mime_refusal_is_local_incident_not_github_incident: true
+    known_local_false_positive_derived_content_types:
+      - text/html
+      - text/x-java
+    known_local_refusal_messages:
+      - "derived_content_type=text/html"
+      - "derived_content_type=text/x-java is not allowed"
+    require_status_split:
+      - github_raw_web_reading
+      - local_github_binary_download
+      - offline_binary_proof
+    offline_checksums_allowed_for_binary_proof_if_local_download_blocked: true
   literal_reference_reading:
     rule_id: RT-LECTURE-LITTERALE-01
     required: true
@@ -107,6 +126,13 @@ lecture:
       - local_raw_byte_reading
       - strict_generics_verification
     stop_if_container_download_not_attempted: true
+    mime_false_positive_handling:
+      rule_id: RT-LECTURE-GITHUB-FAUX-POSITIF-MIME-01
+      required: true
+      classify_text_html_as_local_false_positive_when_raw_sha_ok: true
+      classify_text_x_java_refusal_as_local_false_positive_when_raw_sha_ok: true
+      forbid_degrading_github_raw_reading_on_local_mime_refusal: true
+      require_fallback_container_or_offline_checksums: true
   chat_attachment_reading:
     rule_id: RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01
     anti_stale_indirect_state_rule_id: RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01
@@ -129,6 +155,41 @@ lecture:
     forbid_stale_indirect_state_as_truth: true
     forbid_declaring_sync_incident_without_rereading_last_file_id: true
     forbid_consolidation_without_last_file_id_match: true
+  zip_attachment_reading:
+    rule_id: RT-LECTURE-ZIP-CHAT-OFFLINE-01
+    required_for_zip_uploads: true
+    identity_source: last_uploaded_file_id
+    local_path_is_support_only: true
+    forbid_asking_user_to_rename_zip: true
+    require_zip_sha256_size_entries_report: true
+    require_fresh_extraction_directory: true
+    forbid_direct_extraction_to_baseline_or_window: true
+    require_zip_slip_control: true
+    reject_absolute_paths: true
+    reject_parent_directory_escape: true
+    reject_duplicate_active_paths: true
+    apply_offline_bundle_reading_when_ai_offline_present: true
+  offline_bundle_reading:
+    rule_id: RT-LECTURE-BUNDLE-OFFLINE-STRICT-01
+    required_when_offline_mode: true
+    required_when_offline_used_as_binary_proof: true
+    mandatory_files:
+      - AI_OFFLINE/INDEX.txt
+      - AI_OFFLINE/PROVENANCE.yaml
+      - AI_OFFLINE/CHECKSUMS.sha256
+      - AI_OFFLINE/FILES/**
+    require_provenance_sha_equals_current_sha: true
+    require_all_checksums_ok: true
+    forbid_missing_files: true
+    forbid_bad_checksums: true
+    forbid_duplicate_active_paths: true
+    forbid_stale_extracted_directory: true
+    forbid_old_bundle_same_name_without_last_file_id_match: true
+    require_counts_report:
+      - files_ok
+      - files_missing
+      - files_bad
+      - duplicate_paths
 
 garantie:
   reproducible: true

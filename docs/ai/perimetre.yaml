@@ -30,6 +30,13 @@ policy:
     source_de_verite_perimetre: "docs/ai/perimetre.yaml"
     rebuild_urls_sha_on_new_sha: true
     lecture_github_obligatoire: "RT-LECTURE-GITHUB-02"
+    lecture_github_web_tool_prioritaire: true
+    lecture_github_raw_sha_ok_ne_depend_pas_filtre_mime_local: true
+    lecture_github_container_download_filtre_mime_local_ne_degrade_pas_github: true
+    lecture_github_faux_positif_mime_text_html_explicit: true
+    lecture_github_faux_positif_mime_text_x_java_explicit: true
+    lecture_github_status_split_obligatoire: true
+    lecture_github_preuve_binaire_offline_autorisee_si_raw_ok_et_download_local_ko: true
     interdit_demander_urls_raw: true
     offline_required_when_github_unavailable: true
     perimetre_hybride: true
@@ -79,6 +86,18 @@ policy:
     lecture_chat_interdit_incident_sync_sans_relecture_dernier_file_id: true
     lecture_chat_preuve_file_id_taille_lignes_newlines_eof_sha256_obligatoire: true
     lecture_chat_consolidation_uniquement_apres_correspondance_dernier_upload: true
+    lecture_zip_chat_dernier_file_id_normatif: true
+    lecture_zip_chat_interdit_ancien_zip_meme_nom_comme_verite: true
+    lecture_zip_chat_extraction_fraiche_obligatoire: true
+    lecture_zip_chat_interdit_extraction_directe_baseline_fenetre: true
+    lecture_zip_chat_controle_zip_slip_obligatoire: true
+    lecture_zip_chat_sha256_taille_entrees_obligatoires: true
+    lecture_zip_chat_interdit_renommage_utilisateur: true
+    lecture_bundle_offline_structure_provenance_checksums_files_obligatoire: true
+    lecture_bundle_offline_sha_provenance_egal_sha_courant_obligatoire: true
+    lecture_bundle_offline_checksums_ok_obligatoires: true
+    lecture_bundle_offline_interdit_ancien_bundle_sans_file_id: true
+    lecture_bundle_offline_counts_ok_missing_bad_duplicate_obligatoires: true
 
 raw:
   template_ref_heads: "https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branche}/${path}"

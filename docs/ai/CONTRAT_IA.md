@@ -119,11 +119,32 @@ Interdiction spécifique :
 
 Toute autre forme de lecture (rendu texte, HTML, extraction non binaire, lecture indirecte d’une page GitHub) est interdite et doit être considérée comme non contractuelle.
 
-Cas particulier — faux positif MIME sur fichiers sources :
+Statuts distincts à ne jamais confondre :
+- **Lecture GitHub Raw@SHA par web tool** : lecture du contenu brut GitHub au SHA figé, par URL `raw.githubusercontent.com`, contrôlée par l’URL, le SHA, le statut HTTP, le `Content-Type` réel, la cohérence du chemin, la cohérence de taille et la lisibilité du contenu source.
+- **Téléchargement binaire local GitHub** : sauvegarde locale des octets Raw@SHA par `container.download` ou fallback container autorisé.
+- **Preuve binaire OFFLINE** : contrôle local par bundle OFFLINE validé, uniquement si le bundle correspond au même SHA et si `PROVENANCE`, `CHECKSUMS` et `FILES` sont cohérents.
+
+Règle anti-confusion :
+- un échec de la primitive locale `container.download` ne doit jamais être présenté comme un échec GitHub si la lecture GitHub Raw@SHA par web tool est matériellement correcte ;
+- la lecture GitHub Raw@SHA reste **OK** lorsque l’URL Raw@SHA est correcte, GitHub répond `HTTP 200`, le `Content-Type` réel est cohérent avec un fichier source brut, le contenu lu est le source attendu et la taille est cohérente ;
+- dans ce cas, l’incident éventuel porte uniquement sur la **jambe locale de téléchargement binaire**, pas sur GitHub.
+
+Cas particulier — faux positif MIME local sur fichiers sources :
 - Pour un fichier source Raw@SHA (notamment `.java`) contenant une Javadoc HTML dense, un classement local `derived_content_type=text/html` par une primitive de téléchargement ou par une heuristique MIME ne prouve pas, à lui seul, que le contenu GitHub lu est une page HTML.
-- Si l’URL Raw@SHA est correcte, si GitHub répond `HTTP 200`, si le `Content-Type` HTTP réel est cohérent avec un fichier source (par exemple `text/plain`), si le chemin et l’extension sont cohérents, et si la taille annoncée est cohérente avec le manifeste ou le bundle OFFLINE, l’IA doit qualifier l’événement comme un **faux positif MIME local probable**, et non comme un incident GitHub.
-- Ce cas ne dispense jamais de la lecture contractuelle : l’IA doit tenter un fallback binaire sans filtrage MIME excessif, relire les octets localement, calculer les métriques, puis comparer avec la source saine disponible.
-- Si le fallback binaire échoue pour une raison technique indépendante (DNS, accès réseau container, primitive indisponible), l’IA doit déclarer précisément l’échec de la primitive locale, puis basculer en MODE OFFLINE validé par `CHECKSUMS`, sans prétendre que la jambe locale GitHub complète a réussi.
+- Pour un fichier source Raw@SHA `.java`, un refus local du type `derived_content_type=text/x-java is not allowed` ne prouve pas davantage une erreur GitHub : il doit être qualifié comme **filtre MIME local / refus local de primitive**, non comme incident GitHub.
+- Si l’URL Raw@SHA est correcte, si GitHub répond `HTTP 200`, si le `Content-Type` HTTP réel est cohérent avec un fichier source (par exemple `text/plain`), si le chemin et l’extension sont cohérents, et si la taille annoncée est cohérente avec le manifeste, la baseline saine ou le bundle OFFLINE, l’IA doit qualifier l’événement comme un **faux positif MIME local probable**, et non comme un incident GitHub.
+- Ce cas ne dispense jamais de la lecture contractuelle : l’IA doit tenter un fallback binaire sans filtrage MIME excessif, relire les octets localement si la sauvegarde locale réussit, calculer les métriques, puis comparer avec la source saine disponible.
+- Si le fallback binaire échoue pour une raison technique indépendante (DNS, accès réseau container, primitive indisponible, refus local de type MIME), l’IA doit déclarer précisément l’échec de la primitive locale, puis basculer en MODE OFFLINE validé par `CHECKSUMS` pour la preuve binaire locale, sans prétendre que la jambe locale GitHub complète a réussi et sans dégrader la lecture GitHub Raw@SHA déjà validée.
+
+Formulation obligatoire dans ce cas :
+```text
+Lecture GitHub Raw@SHA : OK.
+Réponse HTTP GitHub : OK.
+Content-Type HTTP réel : cohérent avec un fichier source brut.
+Téléchargement local par primitive dédiée : KO par filtre MIME local / refus local.
+Incident GitHub : non.
+Preuve binaire locale : à établir par fallback container ou, si celui-ci échoue, par bundle OFFLINE validé par CHECKSUMS.
+```
 
 Règles :
 - Relancer automatiquement en cas d’échec (max 3 tentatives)
@@ -616,6 +637,70 @@ Cette règle complète `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`, `RT-LECTURE-CH
 
 ---
 
+
+### 6.2 RT-LECTURE-ZIP-CHAT-OFFLINE-01 — Lecture stricte d’un zip joint au chat
+
+Objectif : permettre la lecture fiable d’un bundle OFFLINE ou de tout zip joint au chat sans réintroduire un ancien zip local, un ancien extrait ou un état indirect.
+
+Principe normatif :
+- l’identité d’un zip joint au chat est le **dernier `file_id` uploadé par l’Utilisateur** ;
+- le chemin `/mnt/data/<nomDuZip>` est seulement un support de lecture ;
+- un zip portant le même nom qu’un zip antérieur doit être traité comme un nouveau candidat uniquement si son rattachement au dernier `file_id` est établi ;
+- l’IA ne doit jamais demander à l’Utilisateur de renommer un zip pour contourner un problème de cache ou de lecture.
+
+Procédure obligatoire avant toute exploitation d’un zip joint :
+1. identifier le dernier `file_id` utilisateur ;
+2. déclarer ce `file_id` comme point de départ réel ;
+3. relire le chemin `/mnt/data/<nomDuZip>` après ce dernier upload ;
+4. calculer le SHA-256 du zip, sa taille en octets, le nombre d’entrées et la liste racine ;
+5. vérifier l’intégrité zip par ouverture réelle de l’archive ;
+6. refuser tout chemin d’entrée absolu, tout `..`, tout chemin vide, tout chemin qui sortirait du dossier d’extraction contrôlé ;
+7. extraire dans un dossier frais et immuable propre à ce `file_id` ou à ce SHA de zip ;
+8. ne jamais extraire directement dans la baseline, la fenêtre active ou un ancien dossier d’extraction ;
+9. si le zip contient `AI_OFFLINE/`, contrôler obligatoirement `AI_OFFLINE/PROVENANCE.yaml`, `AI_OFFLINE/CHECKSUMS.sha256`, `AI_OFFLINE/INDEX.txt` et `AI_OFFLINE/FILES/**` ;
+10. vérifier que le SHA de `PROVENANCE.yaml` correspond au SHA courant attendu ;
+11. recalculer tous les SHA-256 listés dans `CHECKSUMS.sha256` ;
+12. compter explicitement les fichiers OK, manquants, en erreur et les chemins dupliqués ;
+13. comparer ensuite seulement avec GitHub@SHA, la baseline ou la fenêtre active selon la hiérarchie de vérité.
+
+Interdictions absolues :
+- ne jamais exploiter un ancien zip local portant le même nom ;
+- ne jamais exploiter un ancien dossier extrait ;
+- ne jamais conclure depuis un ancien `file_search`, une ancienne métrique, une ancienne baseline ou une mémoire ;
+- ne jamais déclarer une incohérence de synchronisation sans relecture du dernier `file_id` ;
+- ne jamais consolider depuis un zip dont le SHA-256, le `file_id` ou le `PROVENANCE.yaml` n’ont pas été contrôlés ;
+- ne jamais accepter un zip sans `CHECKSUMS` lorsqu’il est utilisé comme bundle OFFLINE ;
+- ne jamais ignorer une erreur checksum, un fichier manquant ou un chemin dupliqué.
+
+Preuve de lecture obligatoire pour un zip joint :
+```text
+PREUVE DE LECTURE ZIP
+Dernier file_id utilisateur :
+Point de départ réel : dernier upload utilisateur
+État ancien/indirect exploité : non
+Chemin local zip lu :
+Taille zip :
+SHA-256 zip :
+Nombre d’entrées zip :
+Extraction fraîche : oui/non
+Dossier d’extraction :
+Zip-slip contrôlé : oui/non
+PROVENANCE.yaml présent : oui/non
+SHA PROVENANCE :
+CHECKSUMS.sha256 présent : oui/non
+Fichiers checksum OK :
+Fichiers manquants :
+Fichiers en erreur :
+Chemins dupliqués :
+Décision : exploiter / rejeter / incident
+```
+
+Décision :
+- Si tous les contrôles sont OK, le zip peut devenir une source saine OFFLINE ou un candidat de consolidation selon la hiérarchie des sources.
+- Si un seul contrôle bloquant échoue, le zip est rejeté et aucune consolidation n’est autorisée.
+
+---
+
 ## 7) Hiérarchie des ressources du dépôt
 
 Ordre de priorité :
@@ -973,27 +1058,44 @@ Sortie :
 
 ---
 
-## 10) MODE OFFLINE — Continuité sans GitHub
+## 10) MODE OFFLINE — Continuité contrôlée par bundle
 
-Activé si GitHub est inaccessible ou illisible.
+Le MODE OFFLINE est un mode de continuité **sur pièces**.
 
-Source de vérité : bundle versionné contenant :
+Il est autorisé dans deux situations distinctes :
+1. GitHub est inaccessible, illisible ou en incident de lecture réel.
+2. GitHub Raw@SHA a été lu correctement par web tool, mais la jambe locale de téléchargement binaire GitHub échoue pour une cause locale indépendante du contenu (`container.download` indisponible, refus MIME local, DNS container, primitive locale bloquante). Dans ce cas, le MODE OFFLINE établit la preuve binaire locale sans transformer la lecture GitHub Raw@SHA en incident GitHub.
+
+Source saine OFFLINE : bundle versionné contenant obligatoirement :
 - `AI_OFFLINE/INDEX.txt`
 - `AI_OFFLINE/PROVENANCE.yaml`
 - `AI_OFFLINE/CHECKSUMS.sha256`
 - `AI_OFFLINE/FILES/**`
 
-Conditions :
-- Tous les fichiers de preuve doivent être présents
-- Les checksums doivent correspondre
-- Le SHA doit être indiqué dans `PROVENANCE.yaml`
+Conditions bloquantes :
+- le SHA indiqué dans `PROVENANCE.yaml` doit être le SHA courant attendu ;
+- tous les fichiers listés dans `CHECKSUMS.sha256` doivent exister sous `AI_OFFLINE/FILES/**` ;
+- tous les SHA-256 doivent correspondre byte-for-byte ;
+- aucun chemin dupliqué ne doit être accepté comme version active ;
+- aucun chemin d’extraction ne doit sortir du dossier d’extraction contrôlé ;
+- le bundle doit être extrait dans un dossier frais, jamais directement dans la baseline ni dans la fenêtre active ;
+- la baseline et la fenêtre active ne peuvent être écrasées qu’après validation complète du bundle et création d’un snapshot contrôlé.
 
 Traçabilité obligatoire :
 
 ➡️ Lister les fichiers utilisés  
-➡️ Mentionner leur checksum
+➡️ Mentionner leur checksum  
+➡️ Mentionner le SHA du bundle  
+➡️ Mentionner le SHA-256 du zip joint si le bundle provient du chat  
+➡️ Mentionner le nombre de fichiers contrôlés, OK, manquants, en erreur et dupliqués
 
-Interdiction d’analyser ou coder sans bundle valide.
+Interdictions :
+- interdiction d’analyser ou coder sans bundle valide lorsque le MODE OFFLINE est la seule source disponible ;
+- interdiction d’utiliser un ancien bundle OFFLINE portant le même nom sans rattachement au dernier `file_id` si le bundle est joint dans le chat ;
+- interdiction d’utiliser un zip extrait dans un ancien dossier de travail ;
+- interdiction d’écraser directement la baseline depuis le zip sans extraction fraîche, contrôle `PROVENANCE`, contrôle `CHECKSUMS` et comparaison byte-for-byte.
+
+Si le bundle OFFLINE est transmis en pièce jointe dans le chat, la règle `RT-LECTURE-ZIP-CHAT-OFFLINE-01` s’applique avant toute extraction ou consolidation.
 
 ---
 
@@ -2055,11 +2157,19 @@ En cas de succès (par **web tool**, par **`container.download`** ou par une aut
   - l’IA DOIT demander confirmation avant toute conclusion.
 
 Fallback :
-- Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) n’est autorisé qu’après un **incident de lecture** établi selon la présente règle :
+- Le MODE OFFLINE (bundle : PROVENANCE + CHECKSUMS + FILES) est autorisé après un **incident de lecture GitHub réel** établi selon la présente règle :
   - web tool tenté,
   - `container.download` tenté,
   - autre technique container tentée si nécessaire,
   - ≤ 3 tentatives.
+- Le MODE OFFLINE est également autorisé comme **preuve binaire locale de secours** lorsque la lecture GitHub Raw@SHA par web tool est OK mais que le téléchargement binaire local échoue pour une cause locale indépendante du contenu (`derived_content_type=text/html`, `derived_content_type=text/x-java is not allowed`, DNS container, primitive indisponible).
+- Dans ce second cas, l’IA doit formuler :
+```text
+Lecture GitHub Raw@SHA : OK.
+Incident GitHub : non.
+Téléchargement binaire local GitHub : KO technique local.
+Preuve binaire locale : bundle OFFLINE validé par CHECKSUMS.
+```
 
 ---
 ### 28.14 RT-DOWNLOAD-BINAIRE-LOCAL-01 (VALIDÉ) — Primitive locale préférée pour le téléchargement Raw@SHA
@@ -2087,14 +2197,15 @@ Interdiction absolue :
 
 
 
-### 28.14.1 RT-LECTURE-GITHUB-FAUX-POSITIF-MIME-01 (VALIDÉ) — Faux positif MIME `text/html` sur fichier source Java Raw@SHA
+### 28.14.1 RT-LECTURE-GITHUB-FAUX-POSITIF-MIME-01 (VALIDÉ) — Faux positif MIME `text/html` / `text/x-java` sur fichier source Java Raw@SHA
 
-Objectif : empêcher qu’un fichier source Java légitime soit déclaré à tort comme une page HTML ou comme un incident GitHub lorsque l’échec provient uniquement d’une heuristique MIME locale trompée par une Javadoc HTML dense.
+Objectif : empêcher qu’un fichier source Java légitime soit déclaré à tort comme une page HTML, comme un fichier interdit, ou comme un incident GitHub lorsque l’échec provient uniquement d’une heuristique MIME locale ou d’un filtre local de primitive.
 
 Constat technique autorisé :
 - un fichier `.java` peut contenir légalement une Javadoc avec de nombreuses balises HTML (`<div>`, `<p>`, `<ul>`, `<li>`, `<style>`, etc.) ;
 - une primitive locale ou un outil de détection MIME peut alors classer à tort le fichier comme `text/html` ;
-- ce classement local ne prouve pas que GitHub a renvoyé une page HTML.
+- une primitive locale peut également refuser de sauvegarder un fichier source `.java` avec un message du type `derived_content_type=text/x-java is not allowed` ;
+- ces classements ou refus locaux ne prouvent pas que GitHub a renvoyé une page HTML, un mauvais contenu ou un fichier illisible.
 
 Règle de qualification obligatoire :
 - Si l’URL est une URL `raw.githubusercontent.com` reconstruite au SHA figé ;
@@ -2102,43 +2213,119 @@ Règle de qualification obligatoire :
 - si le `Content-Type` HTTP réel est `text/plain` ou autrement cohérent avec un fichier source brut ;
 - si le chemin attendu se termine par une extension source cohérente, notamment `.java` ;
 - si la taille HTTP annoncée est cohérente avec le manifeste, le bundle OFFLINE ou la baseline saine ;
-- alors un `derived_content_type=text/html` local DOIT être qualifié comme **faux positif MIME local probable**, et NON comme preuve d’un contenu HTML GitHub.
+- alors un `derived_content_type=text/html` local ou un `derived_content_type=text/x-java is not allowed` local DOIT être qualifié comme **faux positif / refus MIME local probable**, et NON comme preuve d’un incident GitHub.
 
 Formulation obligatoire :
 ```text
 GitHub Raw@SHA : OK.
 Réponse HTTP : OK.
 Content-Type HTTP réel : cohérent avec un fichier source brut.
-Échec local : refus ou alerte de la primitive de téléchargement par faux positif MIME `text/html`.
-Cause probable : Javadoc HTML dense dans un fichier source Java.
+Échec local : refus ou alerte de la primitive de téléchargement par faux positif / filtre MIME local.
+Incident GitHub : non.
 ```
 
 Interdictions :
 - Interdiction de conclure à un incident GitHub sur le seul fondement de `derived_content_type=text/html`.
+- Interdiction de conclure à un incident GitHub sur le seul fondement de `derived_content_type=text/x-java is not allowed`.
+- Interdiction de présenter la lecture GitHub Raw@SHA comme incomplète lorsque le Raw@SHA a été lu correctement par web tool et que seul le téléchargement local est bloqué.
 - Interdiction de modifier le fichier Java, de supprimer sa Javadoc HTML ou de dégrader le formalisme documentaire du projet pour satisfaire une heuristique MIME.
-- Interdiction d’utiliser une lecture HTML, un rendu GitHub ou une page web comme substitut à la lecture Raw@SHA binaire.
+- Interdiction d’utiliser une lecture HTML, un rendu GitHub ou une page web comme substitut à la lecture Raw@SHA.
 
-Procédure obligatoire après faux positif MIME :
+Procédure obligatoire après faux positif / refus MIME local :
 1. conserver l’URL Raw@SHA stricte ;
-2. déclarer explicitement le faux positif MIME local probable ;
-3. tenter une autre technique container autorisée permettant un téléchargement binaire sans filtrage MIME excessif ;
-4. relire localement les octets bruts réellement sauvegardés ;
-5. calculer et rapporter au minimum : taille, SHA-256, nombre de `\n`, statut EOF, premières lignes et dernières lignes utiles ;
-6. comparer avec le manifeste, la baseline saine ou le bundle OFFLINE validé ;
-7. vérifier les génériques et les signatures utiles ;
-8. seulement ensuite conclure.
+2. déclarer explicitement le faux positif ou refus MIME local probable ;
+3. distinguer le statut **Lecture GitHub Raw@SHA** du statut **Téléchargement binaire local GitHub** ;
+4. tenter une autre technique container autorisée permettant un téléchargement binaire sans filtrage MIME excessif ;
+5. relire localement les octets bruts réellement sauvegardés si une sauvegarde locale réussit ;
+6. calculer et rapporter au minimum : taille, SHA-256, nombre de `\n`, statut EOF, premières lignes et dernières lignes utiles ;
+7. comparer avec le manifeste, la baseline saine ou le bundle OFFLINE validé ;
+8. vérifier les génériques et les signatures utiles ;
+9. seulement ensuite conclure.
 
 Si le fallback binaire échoue pour une cause indépendante du contenu (DNS, réseau container, primitive indisponible, refus technique local), l’IA doit déclarer :
 ```text
 Lecture GitHub Raw@SHA : OK.
-Téléchargement local par primitive dédiée : KO par faux positif MIME local.
+Incident GitHub : non.
+Téléchargement local par primitive dédiée : KO par faux positif / refus MIME local.
 Fallback binaire container : KO technique indépendant.
-Bascule OFFLINE validée par CHECKSUMS : requise.
+Bascule OFFLINE validée par CHECKSUMS : requise pour la preuve binaire locale.
 ```
 
 Conséquence de consolidation :
 - La consolidation peut reposer sur le bundle OFFLINE uniquement si `PROVENANCE`, `CHECKSUMS` et les fichiers extraits sont cohérents et contrôlés.
-- Dans ce cas, l’IA doit dire que la consolidation repose sur OFFLINE contrôlé, et non prétendre que la jambe locale GitHub complète a réussi.
+- Dans ce cas, l’IA doit dire que la consolidation repose sur OFFLINE contrôlé pour la preuve binaire locale, et non prétendre que la jambe locale GitHub complète a réussi.
+- L’IA ne doit pas dégrader la lecture GitHub Raw@SHA déjà validée.
+
+---
+
+### 28.14.2 RT-LECTURE-BUNDLE-OFFLINE-STRICT-01 (VALIDÉ) — Contrôle strict d’un bundle OFFLINE
+
+Objectif : rendre opérationnelle et bloquante la lecture d’un bundle OFFLINE, notamment lorsqu’il est utilisé comme preuve binaire locale après lecture GitHub Raw@SHA OK mais téléchargement local GitHub KO.
+
+Structure obligatoire :
+```text
+AI_OFFLINE/INDEX.txt
+AI_OFFLINE/PROVENANCE.yaml
+AI_OFFLINE/CHECKSUMS.sha256
+AI_OFFLINE/FILES/**
+```
+
+Contrôles obligatoires :
+1. lire `PROVENANCE.yaml` ;
+2. vérifier `repo_owner`, `repo_name` et `sha` ;
+3. vérifier que `sha` correspond au SHA courant attendu ;
+4. lire `CHECKSUMS.sha256` ;
+5. recalculer le SHA-256 de chaque fichier sous `AI_OFFLINE/FILES/**` listé ;
+6. refuser tout fichier manquant ;
+7. refuser tout checksum incohérent ;
+8. refuser tout chemin dupliqué comme version active ;
+9. comparer le nombre de fichiers listés, extraits et contrôlés ;
+10. produire une preuve de lecture OFFLINE avant toute consolidation.
+
+Formulation obligatoire :
+```text
+Bundle OFFLINE lu : oui.
+SHA PROVENANCE :
+SHA attendu :
+CHECKSUMS contrôlés : oui.
+Fichiers OK :
+Fichiers manquants :
+Fichiers en erreur :
+Chemins dupliqués :
+Décision : exploiter / rejeter / incident.
+```
+
+Interdictions :
+- ne jamais exploiter un bundle OFFLINE d’un ancien SHA comme s’il correspondait au SHA courant ;
+- ne jamais exploiter un ancien dossier `AI_OFFLINE/` déjà extrait ;
+- ne jamais consolider si un checksum manque ou diverge ;
+- ne jamais utiliser `AI_OFFLINE/FILES/**` sans rattacher le bundle au SHA courant et, si le zip vient du chat, au dernier `file_id`.
+
+---
+
+### 28.14.3 RT-LECTURE-ZIP-CHAT-OFFLINE-01 (VALIDÉ) — Zip joint au chat contenant un bundle OFFLINE
+
+Objectif : empêcher les erreurs de lecture des zip joints au chat, notamment lorsque plusieurs bundles portent le même nom logique ou que `/mnt/data/` réexpose un ancien fichier.
+
+Règle absolue :
+- le dernier `file_id` utilisateur est l’identité normative du zip joint ;
+- `/mnt/data/<nomDuZip>` est un support de lecture, pas une identité ;
+- l’extraction doit être fraîche, contrôlée et isolée ;
+- aucun ancien zip local ni ancien dossier extrait ne peut servir de source active.
+
+Procédure obligatoire :
+1. appliquer `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01` au zip lui-même ;
+2. calculer taille, SHA-256, nombre d’entrées et racines du zip ;
+3. contrôler les chemins d’archive contre toute sortie de dossier d’extraction ;
+4. extraire dans un dossier neuf ;
+5. si le zip contient `AI_OFFLINE/`, appliquer `RT-LECTURE-BUNDLE-OFFLINE-STRICT-01` ;
+6. comparer ensuite seulement avec GitHub@SHA, baseline ou fenêtre active.
+
+Interdictions :
+- ne jamais demander à l’Utilisateur de renommer le zip ;
+- ne jamais conclure depuis un zip local non rattaché au dernier `file_id` ;
+- ne jamais utiliser une ancienne extraction ;
+- ne jamais consolider directement depuis l’archive sans contrôle checksum complet.
 
 ---
 
