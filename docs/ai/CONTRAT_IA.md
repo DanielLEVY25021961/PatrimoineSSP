@@ -280,7 +280,207 @@ Si le dernier fichier joint est incomplet, tronqué ou non contrôlable :
 - l’IA doit suspendre l’analyse ;
 - l’IA ne doit pas consolider.
 
-### 6.1.2 RT-LECTURE-CHAT_02 — Détection et consolidation automatique des fichiers joints
+
+### 6.1.2 RT-LECTURE-CHAT-CANONIQUE-DERNIER-FILE-ID-02 — État canonique du dernier fichier joint
+
+#### Objectif
+
+Garantir que l’IA consolide toujours la dernière version validée d’un fichier joint au chat, même lorsque l’Utilisateur renvoie plusieurs dizaines de fois le même fichier logique avec le même nom.
+
+Cette situation est normale dans le workflow d’audit STS :
+
+1. l’IA livre une correction dans le chat ;
+2. l’Utilisateur intègre la correction dans STS ;
+3. l’Utilisateur exécute les tests ;
+4. l’Utilisateur renvoie le fichier corrigé en pièce jointe dans le chat ;
+5. l’IA lit, contrôle, apprend et consolide ;
+6. la boucle recommence.
+
+L’IA ne doit jamais demander à l’Utilisateur de renommer le fichier pour contourner un problème de lecture.
+
+#### Principe normatif
+
+Pour un fichier joint au chat, l’identité normative n’est jamais le seul chemin :
+
+```text
+/mnt/data/<nomDuFichier>
+```
+
+L’identité normative est :
+
+```text
+dernier file_id uploadé par l’Utilisateur
++ chemin logique projet du fichier
++ contenu contrôlé du dernier upload
+```
+
+Le chemin `/mnt/data/<nomDuFichier>` est uniquement un **candidat de lecture byte-for-byte**.  
+Il ne constitue jamais, à lui seul, une preuve que le fichier lu est le dernier upload utilisateur.
+
+#### Règle de l’état canonique
+
+Pour chaque chemin logique projet, l’IA doit maintenir un seul état actif canonique :
+
+```text
+chemin logique projet
+dernier file_id validé
+taille validée
+SHA-256 validé
+nombre de lignes validé
+snapshot validé
+chemin baseline cible
+chemin fenêtre active cible
+statut de consolidation
+```
+
+La baseline consolidée et la fenêtre active ne doivent contenir qu’une seule version active d’un fichier logique :
+
+```text
+la dernière version validée
+```
+
+Les anciennes versions peuvent exister uniquement dans un historique technique, un dossier de snapshots, ou un dossier de rejets.  
+Elles ne doivent jamais redevenir candidates pour écraser la baseline ou la fenêtre active.
+
+#### Interdictions absolues
+
+L’IA ne doit jamais :
+
+- exiger que l’Utilisateur renomme un fichier joint pour permettre le workflow ;
+- considérer qu’un fichier est le dernier upload simplement parce que son nom correspond ;
+- consolider un contenu lu depuis `/mnt/data/<nomDuFichier>` si son SHA correspond à une ancienne version connue ;
+- remplacer la baseline ou la fenêtre active par un SHA antérieur au dernier état canonique validé ;
+- réintroduire dans la baseline ou la fenêtre active un fichier provenant d’un ancien upload ;
+- considérer un ancien snapshot comme source active ;
+- déduire que l’Utilisateur a fourni un ancien fichier sans preuve contre le dernier `file_id` ;
+- confondre le cache d’upload `/mnt/data` avec la mémoire contractuelle de l’IA.
+
+#### Procédure obligatoire après chaque upload
+
+Lorsqu’un fichier est uploadé dans le chat avec un nom déjà utilisé auparavant, l’IA doit :
+
+1. identifier le dernier `file_id` utilisateur ;
+2. identifier le chemin logique projet du fichier ;
+3. relire `CONTRAT_IA.md` avant toute analyse ou consolidation ;
+4. lire le contenu du dernier fichier joint par le canal disponible ;
+5. calculer ou relever les marqueurs attendus du dernier upload :
+   - présence des méthodes ou constantes nouvellement corrigées ;
+   - nombre de tests si applicable ;
+   - éléments textuels distinctifs du dernier bloc corrigé ;
+   - taille/SHA si disponibles ;
+6. lire `/mnt/data/<nomDuFichier>` uniquement comme candidat byte-for-byte ;
+7. comparer le candidat aux marqueurs attendus du dernier upload ;
+8. décider explicitement :
+
+```text
+candidat direct cohérent avec le dernier file_id : oui/non
+```
+
+9. si le candidat direct est cohérent et stable :
+   - créer un snapshot immuable ;
+   - copier depuis ce snapshot vers la baseline ;
+   - copier depuis ce snapshot vers la fenêtre active ;
+   - vérifier source == snapshot == baseline == fenêtre active ;
+   - recontrôler automatiquement le bloc concerné ;
+
+10. si le candidat direct est incohérent, ancien, instable ou non rattachable au dernier `file_id` :
+   - déclarer une lecture directe non fiable ;
+   - rejeter le candidat ;
+   - ne pas consolider physiquement ;
+   - laisser baseline et fenêtre active sur le dernier état canonique validé ;
+   - mémoriser seulement les corrections textuellement détectées, si le dernier upload est lisible par un autre canal ;
+   - créer un marqueur d’incident ;
+   - ne jamais écraser baseline/fenêtre active avec ce candidat.
+
+#### Détection obligatoire d’un ancien contenu
+
+Le candidat `/mnt/data/<nomDuFichier>` doit être rejeté si au moins une condition est vraie :
+
+- son SHA correspond à un ancien SHA déjà connu ;
+- sa taille correspond à une ancienne version connue ;
+- son nombre de tests correspond à une ancienne version connue ;
+- il ne contient pas les méthodes, constantes ou corrections visibles dans le dernier upload ;
+- il contient un bloc déjà remplacé dans un upload ultérieur ;
+- il réintroduit une ancienne formulation explicitement rejetée ;
+- il est inférieur au dernier état canonique validé pour le même chemin logique ;
+- il change de contenu entre deux lectures sans écriture volontaire de l’IA.
+
+Dans ces cas, l’IA doit déclarer :
+
+```text
+Lecture directe /mnt/data non fiable : candidat rejeté car ancien ou incohérent avec le dernier file_id.
+Aucune consolidation physique effectuée.
+Baseline/fenêtre active conservées sur le dernier état canonique validé.
+```
+
+#### Règle de consolidation
+
+Une consolidation physique n’est autorisée que si la preuve suivante est établie :
+
+```text
+dernier file_id utilisateur identifié
++ chemin logique projet identifié
++ candidat byte-for-byte stable
++ candidat cohérent avec le dernier upload
++ candidat différent de tout ancien état rejeté
++ snapshot immuable créé
++ baseline cible écrasée depuis le snapshot
++ fenêtre active cible écrasée depuis le snapshot
++ source == snapshot == baseline == fenêtre active
+```
+
+Sans cette preuve, la consolidation est interdite.
+
+#### Règle anti-régression
+
+Si une ancienne version réapparaît sous `/mnt/data/<nomDuFichier>`, l’IA doit la traiter comme un incident de lecture du cache d’upload, pas comme une source utilisateur.
+
+L’ancienne version doit être :
+
+```text
+rejetée
+non consolidée
+non apprise comme état actif
+non copiée dans la baseline
+non copiée dans la fenêtre active
+```
+
+#### Preuve de lecture obligatoire
+
+Pour tout fichier joint au chat soumis à consolidation, l’IA doit produire :
+
+```text
+PREUVE DE LECTURE
+
+Dernier file_id utilisateur :
+Chemin logique projet :
+Point de départ réel : dernier upload utilisateur
+État ancien/indirect exploité : non
+Chemin candidat /mnt/data lu :
+Candidat cohérent avec dernier file_id : oui/non
+Taille candidat :
+SHA-256 candidat :
+Nombre de lignes :
+Nombre de tests si applicable :
+Marqueurs du dernier upload retrouvés : oui/non
+Ancien SHA réexposé : oui/non
+Décision : consolider / rejeter / incident
+```
+
+#### Conclusion normative
+
+L’Utilisateur peut toujours renvoyer le même fichier avec exactement le même nom.
+
+La responsabilité de l’IA est :
+
+```text
+isoler le dernier file_id
+rejeter les anciens contenus réexposés
+préserver la baseline et la fenêtre active
+ne consolider que la dernière version validée
+```
+
+### 6.1.3 RT-LECTURE-CHAT_02 — Détection et consolidation automatique des fichiers joints
 
 Lorsqu’une fenêtre de travail est active et que l’Utilisateur transmet un fichier en pièce jointe dans le chat, l’IA doit automatiquement lire le dernier fichier joint réel selon `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`.
 
@@ -301,7 +501,7 @@ Cette règle complète `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01` :
 - `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01` définit l’identité et le mode de lecture obligatoire du dernier fichier joint ;
 - `RT-LECTURE-CHAT_02` définit le comportement automatique après lecture validée du fichier joint.
 
-### 6.1.3 RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01 — Interdiction d’exploiter un état ancien ou indirect
+### 6.1.4 RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01 — Interdiction d’exploiter un état ancien ou indirect
 
 Objectif : empêcher toute erreur de lecture causée par l’utilisation d’un ancien état local, d’un résultat indirect ou d’une mémoire au lieu du dernier upload réel.
 
@@ -339,7 +539,7 @@ Cette règle complète et renforce `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`.
 
 ---
 
-### 6.1.4 RT-LECTURE-CHAT-BARRIERE-FIABILITE-01 — Barrière bloquante « preuve avant analyse »
+### 6.1.5 RT-LECTURE-CHAT-BARRIERE-FIABILITE-01 — Barrière bloquante « preuve avant analyse »
 
 Objectif : transformer les règles de lecture des fichiers joints en barrière d'exécution, afin d'empêcher l'IA de produire une analyse, un verdict, une correction ou une consolidation depuis un fichier non prouvé.
 
