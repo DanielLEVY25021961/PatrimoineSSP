@@ -262,7 +262,7 @@ public class ProduitGatewayJPAServiceMockTest {
 
     /** 
      * <div>
-	 * <p>""Anomalie applicative - 
+	 * <p>"Anomalie applicative - 
 	 * le parent de l'objet que vous voulez créer n'existe
 	 * pas déjà dans le stockage : "</p>
 	 * </div> 
@@ -1953,6 +1953,8 @@ public class ProduitGatewayJPAServiceMockTest {
      * il prouve aussi quelle pagination concrète est réellement envoyée au DAO
      * quand la requête d'entrée vaut {@code null}.</p>
      * </div>
+     * 
+     * @throws Exception
      */
 	@Tag(TAG_RECHERCHERTOUSPARPAGE)
 	@DisplayName("rechercherTousParPage(RequetePage null) : garantit l'usage de la pagination par défaut sans Exception")
@@ -8718,19 +8720,39 @@ public class ProduitGatewayJPAServiceMockTest {
 
     /**
      * <div>
-     * <p>Sanity : vérifie qu'aucune String null n'est construite par les helpers.</p>
+     * <p>Sanity : vérifie qu'aucune String null n'est construite
+     * par les helpers.</p>
      * </div>
      */
     @Tag(TAG_SANITY)
     @DisplayName("Sanity - safeMessage")
     @Test
     public void testSanitySafeMessage() {
-    	
-        assertThat(safeMessage(null)).isEqualTo("");
-        assertThat(safeMessage("")).isEqualTo("");
-        
-    } // __________________________________________________________________
 
+        /* ARRANGE :
+         * prépare les deux cas minimaux à sécuriser :
+         * - message source null ;
+         * - message source vide.
+         *
+         * Ce test n'est pas un cas contractuel du PORT.
+         * Il sécurise uniquement le helper local safeMessage(...),
+         * utilisé par les tests Mockito pour éviter de produire
+         * un message d'erreur contenant la chaîne "null".
+         */
+
+        /* ACT - ASSERT :
+         * vérifie qu'un message null est transformé
+         * en chaîne vide exploitable.
+         */
+        assertThat(safeMessage(null)).isEqualTo("");
+
+        /* ACT - ASSERT :
+         * vérifie qu'une chaîne déjà vide reste une chaîne vide.
+         */
+        assertThat(safeMessage("")).isEqualTo("");
+
+    } // __________________________________________________________________
+    
 
 
     // ============================ OUTILS TESTS ===========================

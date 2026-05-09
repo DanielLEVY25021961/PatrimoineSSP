@@ -193,6 +193,10 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     /** "creer(null) - jette ExceptionAppliParamNull (contrat du port)" */
     public static final String DN_CREER_NULL 
     	= "creer(null) - jette ExceptionAppliParamNull (contrat du port)";
+    
+    /** "creer(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)" */
+    public static final String DN_CREER_PARENT_NON_PERSISTENT
+        = "creer(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
     /** "creer(libellé null) - jette ExceptionAppliLibelleBlank (contrat du port)" */
     public static final String DN_CREER_LIBELLE_NULL 
@@ -218,9 +222,9 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public static final String DN_CREER_PARENT_NON_PERSISTANT 
     	= "creer(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** "creer(OK) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés" */
-    public static final String DN_CREER_NOMINAL 
-    	= "creer(OK) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
+    /** "creer(OK) - ajoute un élément, le rend retrouvable et conserve (ne wipe pas) les données seedées" */
+    public static final String DN_CREER_NOMINAL
+        = "creer(OK) - ajoute un élément, le rend retrouvable et conserve (ne wipe pas) les données seedées";
     
     /** "rechercherTous(stockage seedé) - retourne exactement l'état physique trié et sans doublon" */
     public static final String DN_RECHERCHER_TOUS 
@@ -238,7 +242,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 	public static final String DN_RECHERCHER_TOUS_PAR_PAGE_VIDE 
 		= "rechercherTousParPage(page vide) - retourne une page vide";
 
-	/** "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)" */
+    /** "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)" */
     public static final String DN_FINDBYOBJETMETIER_NULL 
     	= "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)";
 
@@ -261,24 +265,22 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     /** "findByObjetMetier(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)" */
     public static final String DN_FINDBYOBJETMETIER_PARENT_LIBELLE_BLANK 
     	= "findByObjetMetier(parent libellé blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
-
+    
     /** "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)" */
-    public static final String DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT 
-    	= "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
+    public static final String DN_FINDBYOBJETMETIER_PARENT_NON_PERSISTANT
+        = "findByObjetMetier(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** "findByObjetMetier(non trouvé) - retourne null sans altérer le stockage" */
+	/** "findByObjetMetier(id ignoré et casse ignorée) - retrouve l'objet métier correspondant" */
+	public static final String DN_FINDBYOBJETMETIER_ID_IGNORE_CASSE_IGNOREE
+	    = "findByObjetMetier(id ignoré et casse ignorée) - retrouve l'objet métier correspondant";
+
+	/** "findByObjetMetier(non trouvé) - retourne null sans altérer le stockage" */
     public static final String DN_FINDBYOBJETMETIER_NON_TROUVE 
     	= "findByObjetMetier(non trouvé) - retourne null sans altérer le stockage";
 
     /** "findByObjetMetier(OK) - retourne l'objet métier correspondant" */
     public static final String DN_FINDBYOBJETMETIER_TROUVE 
     	= "findByObjetMetier(OK) - retourne l'objet métier correspondant";
-    
-    /** 
-     * "findByObjetMetier(béton) - insensible à l'ID fourni et insensible à la casse (case-insensitive)" 
-     */
-    public static final String DN_FINDBYOBJETMETIER_BETON 
-    	= "findByObjetMetier(béton) - insensible à l'ID fourni et insensible à la casse (case-insensitive)";
     
     /**
      * "findByLibelle(null) - jette ExceptionAppliLibelleBlank (contrat du port)"
@@ -338,7 +340,7 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     public static final String DN_FINDALLBYPARENT_NON_PERSISTANT 
     	= "findAllByParent(parent non persistant) - jette ExceptionTechniqueGatewayNonPersistent (contrat du port)";
 
-    /** "findAllByParent(parent sans enfant) - retourne une liste vide" */
+	/** "findAllByParent(parent sans enfant) - retourne une liste vide" */
     public static final String DN_FINDALLBYPARENT_PARENT_SANS_ENFANT 
     	= "findAllByParent(parent sans enfant) - retourne une liste vide";
 
@@ -558,7 +560,8 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
 
     /**
      * <div>
-     * <p>DAO enfant (contrôles béton : compter / retrouver IDs).</p>
+     * <p>DAO objet métier (enfant) utilisé pour les contrôles directs
+     * de comptage et de cohérence avec le stockage.</p>
      * </div>
      */
     @Autowired
@@ -3523,152 +3526,188 @@ public class SousTypeProduitGatewayJPAServiceIntegrationTest {
     
       
     /**
-    * <div>
-    * <p>garantit que findByObjetMetier(béton) :</p>
-    * <ul>
-    * <li>ignore l'identifiant porté par l'objet métier passé en paramètre ;</li>
-    * <li>effectue la recherche sur le libellé métier enfant
-    * et le parent persistant de l'objet métier passé en paramètre ;</li>
-    * <li>reste insensible à la casse du libellé 
-    * de l'objet métier passé en paramètre;</li>
-    * <li>retourne dans les deux variantes (id faux, 
-    * et libellé de l'objet métier passé en paramètre 
-    * avec une casse différente de l'enregistrement dans le stockage)
-    * le même objet persistant attendu ;</li>
-    * <li>n'altère pas le stockage.</li>
-    * </ul>
-    * </div>
-    *
-    * @throws Exception
-    */
-   @Tag(TAG_FINDBYOBJETMETIER)
-   @DisplayName(DN_FINDBYOBJETMETIER_BETON)
-   @Test
-   public void testFindByObjetMetierBeton() throws Exception {
-	   
-	   /* ARRANGE :
-        * Compte directement (en SQL) le nombre d'enregistrements 
-        * dans le stockage via JdbcTemplate afin de disposer 
-        * d'une preuve indépendante du contexte Hibernate.
-        */
-       final Long countAvant = this.jdbcTemplate.queryForObject(
-               SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
-               Long.class);
-       
-       /* vérifie que le stockage n'est pas vide. */
-       assertThat(countAvant).isNotNull().isNotZero();
+     * <div>
+     * <p>Test didactique non contractuel.</p>
+     * <p>garantit que findByObjetMetier(id ignoré et casse ignorée) :</p>
+     * <ul>
+     * <li>ignore l'identifiant porté par l'objet métier passé en paramètre ;</li>
+     * <li>effectue la recherche sur le parent TypeProduit
+     * et le libellé de l'objet métier ;</li>
+     * <li>reste insensible à la casse du libellé
+     * de l'objet métier passé en paramètre ;</li>
+     * <li>retourne dans les deux variantes le même objet métier persistant ;</li>
+     * <li>retourne un objet métier complet avec son parent TypeProduit ;</li>
+     * <li>n'altère pas le stockage.</li>
+     * </ul>
+     * </div>
+     *
+     * @throws Exception
+     */
+    @Tag(TAG_FINDBYOBJETMETIER)
+    @DisplayName(DN_FINDBYOBJETMETIER_ID_IGNORE_CASSE_IGNOREE)
+    @Test
+    public void testFindByObjetMetierIdIgnoreCasseIgnoree() throws Exception {
 
-       /* 
-        * trouve (en SQL) un enregistrement dans le stockage pour le test.
-        * - parent persistant : LIBELLE_PARENT_VETEMENT
-        * - identifiant de l'objet métier 
-        * (parent, LIBELLE_ENFANT_VETEMENT_HOMME).
-        *
-        * Le test vérifie ensuite deux variantes :
-        * - un objet métier en paramètre avec un faux ID ;
-        * - un objet métier en paramètre avec le bon libellé enfant 
-        * mais avec une casse différente de celle dans le stockage.
-        */
-       final Long idParent 
-       	= retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
+        /* ARRANGE :
+         * compte directement (en SQL) le nombre d'enregistrements
+         * dans le stockage via JdbcTemplate afin de disposer
+         * d'une preuve indépendante du contexte Hibernate.
+         */
+        final Long countAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
 
-       final Long countCoupleAvant = this.jdbcTemplate.queryForObject(
-               SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT,
-               Long.class,
-               LIBELLE_ENFANT_VETEMENT_HOMME,
-               idParent);
+        /* vérifie que le stockage n'est pas vide. */
+        assertThat(countAvant).isNotNull().isNotZero();
 
-       final Long idTrouveEnBase = this.jdbcTemplate.queryForObject(
-               SELECT_PARAM_ID_FROM_STP_WHERE_LIBELLE_AND_PARENT,
-               Long.class,
-               LIBELLE_ENFANT_VETEMENT_HOMME,
-               idParent);
-       
-       /* Vérifie que l'objet métier de test existe dans le stockage. */
-       assertThat(countCoupleAvant).isEqualTo(1L);
-       assertThat(idTrouveEnBase).isNotNull();
+        /*
+         * Retrouve l'identifiant persistant du parent TypeProduit
+         * utilisé par l'objet métier seedé de référence.
+         *
+         * Pour SousTypeProduit, la clé métier recherchée par
+         * findByObjetMetier(...) est :
+         * - parent TypeProduit ;
+         * - libellé de l'objet métier.
+         */
+        final Long idParent =
+                retrouverIdParentPersistantParLibelle(LIBELLE_PARENT_VETEMENT);
 
-       final TypeProduit parent =
-               new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
+        /*
+         * Vérifie directement dans le stockage que le couple métier
+         * parent TypeProduit + libellé objet métier existe exactement
+         * une fois avant l'appel du service.
+         */
+        final Long countCoupleAvant = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_PARAM_STP_FROM_STP_WHERE_LIBELLE_AND_PARENT,
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParent);
 
-       /* Crée un objet métier similaire à l'enregistrement de test 
-        * mais avec un mauvais ID.*/
-       final SousTypeProduit avecIdFaux = new SousTypeProduit(
-               ID_INEXISTANT,
-               LIBELLE_ENFANT_VETEMENT_HOMME,
-               parent);
+        /*
+         * Relit l'identifiant réellement stocké pour l'objet métier
+         * attendu. Cet identifiant servira ensuite à prouver que
+         * l'identifiant fourni par la sonde est ignoré.
+         */
+        final Long idTrouveStockage = this.jdbcTemplate.queryForObject(
+                SELECT_PARAM_ID_FROM_STP_WHERE_LIBELLE_AND_PARENT,
+                Long.class,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                idParent);
 
-       /* Crée un objet métier similaire à l'enregistrement de test 
-        * mais avec un libellé avec une casse différente. */
-       final SousTypeProduit casse = new SousTypeProduit(
-               null,
-               LIBELLE_ENFANT_VETEMENT_HOMME.toUpperCase(Locale.getDefault()),
-               parent);
+        /*
+         * Vérifie que l'objet métier de test existe exactement une fois
+         * dans le stockage avant l'appel de lecture.
+         */
+        assertThat(countCoupleAvant).isNotNull().isEqualTo(1L);
+        assertThat(idTrouveStockage).isNotNull();
 
-       /* 
-        * Neutralise explicitement le contexte Hibernate
-        * avant la lecture via service.findByObjetMetier(...)
-        * afin d'éviter des effets indésirables du cache Hibernate.
-        */
-       this.entityManager.clear();
+        /*
+         * Prépare le parent TypeProduit persistant de la sonde.
+         */
+        final TypeProduit parent =
+                new TypeProduit(idParent, LIBELLE_PARENT_VETEMENT);
 
-       /* ACT :
-        * appelle service.findByObjetMetier(...)
-        * dans les deux variantes métier à contrôler.
-        */
-       final SousTypeProduit retourAvecIdFaux =
-               this.service.findByObjetMetier(avecIdFaux);
+        /*
+         * Prépare une première sonde équivalente à l'objet métier attendu,
+         * mais avec un identifiant volontairement faux.
+         *
+         * Le test prouve ainsi que findByObjetMetier(...)
+         * ignore l'identifiant porté par la sonde et recherche bien
+         * par clé métier.
+         */
+        final SousTypeProduit avecIdFaux = new SousTypeProduit(
+                ID_INEXISTANT,
+                LIBELLE_ENFANT_VETEMENT_HOMME,
+                parent);
 
-       final SousTypeProduit retourCasse =
-               this.service.findByObjetMetier(casse);
+        /*
+         * Prépare une seconde sonde équivalente à l'objet métier attendu,
+         * mais avec une casse différente sur le libellé.
+         *
+         * Le test prouve ainsi que findByObjetMetier(...)
+         * recherche le libellé de l'objet métier sans tenir compte
+         * de la casse.
+         */
+        final SousTypeProduit casse = new SousTypeProduit(
+                null,
+                LIBELLE_ENFANT_VETEMENT_HOMME.toUpperCase(LOCALE_DEFAUT),
+                parent);
 
-       /* ASSERT :
-        * vérifie d'abord que les deux recherches aboutissent.
-        */
-       assertThat(retourAvecIdFaux).isNotNull();
-       assertThat(retourCasse).isNotNull();
+        /*
+         * Neutralise explicitement le contexte Hibernate
+         * avant la lecture via service.findByObjetMetier(...)
+         * afin d'éviter tout raisonnement biaisé par le cache.
+         */
+        this.entityManager.clear();
 
-       /* Vérifie ensuite que l'identifiant fourni par l'appelant
-        * n'influence pas la recherche.
-        */
-       assertThat(retourAvecIdFaux.getIdSousTypeProduit())
-           .isEqualTo(idTrouveEnBase);
-       assertThat(retourAvecIdFaux.getSousTypeProduit())
-           .isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
-       assertThat(retourAvecIdFaux.getTypeProduit()).isNotNull();
-       assertThat(retourAvecIdFaux.getTypeProduit().getIdTypeProduit())
-           .isEqualTo(idParent);
-       assertThat(retourAvecIdFaux.getTypeProduit().getTypeProduit())
-           .isEqualTo(LIBELLE_PARENT_VETEMENT);
+        /* ACT :
+         * appelle service.findByObjetMetier(...)
+         * dans les deux variantes métier à contrôler :
+         * - ID fourni ignoré ;
+         * - casse du libellé ignorée.
+         */
+        final SousTypeProduit retourAvecIdFaux =
+                this.service.findByObjetMetier(avecIdFaux);
 
-       /* Vérifie enfin que la recherche est insensible à la casse
-        * et retrouve le même objet persistant attendu.
-        */
-       assertThat(retourCasse.getIdSousTypeProduit())
-           .isEqualTo(idTrouveEnBase);
-       assertThat(retourCasse.getSousTypeProduit())
-           .isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
-       assertThat(retourCasse.getTypeProduit()).isNotNull();
-       assertThat(retourCasse.getTypeProduit().getIdTypeProduit())
-           .isEqualTo(idParent);
-       assertThat(retourCasse.getTypeProduit().getTypeProduit())
-           .isEqualTo(LIBELLE_PARENT_VETEMENT);
+        final SousTypeProduit retourCasse =
+                this.service.findByObjetMetier(casse);
 
-       /* ASSERT :
-        * compte ensuite (en SQL)
-        * le nombre d'enregistrements dans le stockage
-        * après l'appel de lecture
-        * afin de prouver que service.findByObjetMetier(...)
-        * n'a pas touché au stockage.
-        */
-       final Long countApres = this.jdbcTemplate.queryForObject(
-               SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
-               Long.class);
+        /* ASSERT :
+         * vérifie d'abord que les deux recherches aboutissent.
+         */
+        assertThat(retourAvecIdFaux).isNotNull();
+        assertThat(retourCasse).isNotNull();
 
-       assertThat(countApres).isNotNull().isNotZero();
-       assertThat(countApres).isEqualTo(countAvant);
+        /*
+         * Vérifie que l'identifiant fourni par l'appelant
+         * n'influence pas la recherche : le service retourne
+         * l'identifiant réellement présent dans le stockage.
+         */
+        assertThat(retourAvecIdFaux.getIdSousTypeProduit())
+            .isEqualTo(idTrouveStockage);
+        assertThat(retourAvecIdFaux.getSousTypeProduit())
+            .isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+        assertThat(retourAvecIdFaux.getTypeProduit()).isNotNull();
+        assertThat(retourAvecIdFaux.getTypeProduit().getIdTypeProduit())
+            .isEqualTo(idParent);
+        assertThat(retourAvecIdFaux.getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_VETEMENT);
 
-   } // __________________________________________________________________
+        /*
+         * Vérifie que la recherche insensible à la casse retrouve
+         * exactement le même objet métier persistant.
+         */
+        assertThat(retourCasse.getIdSousTypeProduit())
+            .isEqualTo(idTrouveStockage);
+        assertThat(retourCasse.getSousTypeProduit())
+            .isEqualTo(LIBELLE_ENFANT_VETEMENT_HOMME);
+        assertThat(retourCasse.getTypeProduit()).isNotNull();
+        assertThat(retourCasse.getTypeProduit().getIdTypeProduit())
+            .isEqualTo(idParent);
+        assertThat(retourCasse.getTypeProduit().getTypeProduit())
+            .isEqualTo(LIBELLE_PARENT_VETEMENT);
+
+        /*
+         * Vérifie que les deux variantes retournent bien
+         * le même objet métier persistant.
+         */
+        assertThat(retourCasse.getIdSousTypeProduit())
+            .isEqualTo(retourAvecIdFaux.getIdSousTypeProduit());
+
+        /* ASSERT :
+         * compte ensuite (en SQL)
+         * le nombre d'enregistrements dans le stockage
+         * après l'appel de lecture afin de prouver que
+         * service.findByObjetMetier(...) n'a pas touché au stockage.
+         */
+        final Long countApres = this.jdbcTemplate.queryForObject(
+                SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+                Long.class);
+
+        assertThat(countApres).isNotNull().isNotZero();
+        assertThat(countApres).isEqualTo(countAvant);
+
+    } // __________________________________________________________________
    
 
     

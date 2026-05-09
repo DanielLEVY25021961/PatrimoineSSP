@@ -239,7 +239,7 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     /** 
      * <div>
 	 * <p>"Anomalie applicative
-	 * - le parent de l'objet que vous voulez créer n'existe
+	 * - le parent de l'objet que vous voulez rechercher n'existe
 	 * pas déjà dans le stockage : "</p>
 	 * </div>
      */
@@ -249,8 +249,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
     /** 
      * <div>
 	 * <p>"Anomalie applicative
-	 * - le parent de l'objet que vous voulez créer n'existe
-	 * pas déjà dans le stockage : "</p>
+	 * - le libellé passé en paramètre est un
+	 * libellé blank (null ou que des espaces)."</p>
 	 * </div>
      */
     public static final String MSG_FINDBYLIBELLE_KO_LIBELLE_BLANK =
@@ -1924,6 +1924,8 @@ public class SousTypeProduitGatewayJPAServiceMockTest {
 	 * il prouve aussi quelle pagination concrète est réellement envoyée au DAO
 	 * quand la requête d'entrée vaut {@code null}.</p>
 	 * </div>
+	 * 
+	 * @throws Exception
 	 */
 	@Tag(TAG_RECHERCHERTOUSPARPAGE)
 	@DisplayName("rechercherTousParPage(RequetePage null) : garantit l'usage de la pagination par défaut sans Exception")

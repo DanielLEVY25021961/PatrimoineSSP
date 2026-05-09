@@ -127,11 +127,11 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     public static final String DN_RECHERCHER_TOUS 
     	= "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
 
-    /** 
-     * "creer(OK) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés"
+    /**
+     * "creer(OK) - ajoute un élément, le rend retrouvable et conserve (ne wipe pas) les données seedées"
      */
-    public static final String DN_CREER_OK 
-    	= "creer(OK) - ajoute un élément, le rend retrouvable et ne wipe pas les seedés";
+    public static final String DN_CREER_OK
+        = "creer(OK) - ajoute un élément, le rend retrouvable et conserve (ne wipe pas) les données seedées";
 
     /** 
      * "creer(null) - jette ExceptionAppliParamNull (contrat du port)"
@@ -170,10 +170,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     	= "findByObjetMetier(trouvé) - retourne l'objet métier";
 
     /** 
-     * "findByObjetMetier(béton) - insensible à l'ID fourni et insensible à la casse (case-insensitive)" 
-     */
-    public static final String DN_FINDBYOBJETMETIER_BETON 
-    	= "findByObjetMetier(béton) - insensible à l'ID fourni et insensible à la casse (case-insensitive)";
+	 * "findByObjetMetier(id ignoré et casse ignorée) - retrouve l'objet métier correspondant"
+	 */
+	public static final String DN_FINDBYOBJETMETIER_ID_IGNORE_CASSE_IGNOREE 
+		= "findByObjetMetier(id ignoré et casse ignorée) - retrouve l'objet métier correspondant";
 
     /** 
      * "findByLibelle(blank) - jette ExceptionAppliLibelleBlank (contrat du port)"
@@ -236,9 +236,10 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     	= "rechercherTousParPage(null) - applique la pagination par défaut";
 
     /** 
-     * "rechercherTousParPage(avec tri) - respecte la pagination et le tri (béton)"
-     */
-    public static final String DN_PAGE_TRI = "rechercherTousParPage(avec tri) - respecte la pagination et le tri (béton)";
+	 * "rechercherTousParPage(avec tri) - respecte la pagination et le tri demandé"
+	 */
+	public static final String DN_PAGE_TRI
+	    = "rechercherTousParPage(avec tri) - respecte la pagination et le tri demandé";
 
     /** 
      * "update(null) - jette ExceptionAppliParamNull (contrat du port)"
@@ -1829,22 +1830,24 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     
     /**
      * <div>
-     * <p>garantit que findByObjetMetier(béton) :</p>
+     * <p>Test didactique non contractuel.</p>
+     * <p>garantit que findByObjetMetier(id ignoré et casse ignorée) :</p>
      * <ul>
      * <li>ignore l'identifiant porté par l'objet d'entrée ;</li>
      * <li>effectue la recherche sur le seul libellé métier ;</li>
      * <li>reste insensible à la casse ;</li>
      * <li>retourne dans les deux variantes
-     * le même objet persistant attendu.</li>
+     * le même objet persistant attendu ;</li>
+     * <li>n'altère pas le stockage.</li>
      * </ul>
      * </div>
      *
      * @throws Exception
      */
     @Tag(TAG_FINDBYOBJETMETIER)
-    @DisplayName(DN_FINDBYOBJETMETIER_BETON)
+    @DisplayName(DN_FINDBYOBJETMETIER_ID_IGNORE_CASSE_IGNOREE)
     @Test
-    public void testFindByObjetMetierBeton() throws Exception {
+    public void testFindByObjetMetierIdIgnoreCasseIgnoree() throws Exception {
     	
         /* ARRANGE :
          * lit d'abord la ligne physique de référence
@@ -1861,18 +1864,44 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
 
         assertThat(idEnBase).isNotNull();
 
+        /*
+         * Lit le libellé réellement présent dans le stockage
+         * pour l'identifiant retrouvé.
+         */
         final String libelleEnBase = lireLibelleTypeProduitEnBase(idEnBase);
         assertThat(libelleEnBase).isEqualTo(VETEMENT);
 
+        /*
+         * Prépare une première sonde équivalente à l'objet métier attendu,
+         * mais avec un identifiant volontairement faux.
+         *
+         * Le test prouve ainsi que findByObjetMetier(...)
+         * ignore l'identifiant porté par la sonde et recherche bien
+         * par libellé métier.
+         */
         final TypeProduit avecIdFaux = new TypeProduit(ID_INEXISTANTE, VETEMENT);
-        final TypeProduit casse = new TypeProduit(VETEMENT.toUpperCase(Locale.getDefault()));
+
+        /*
+         * Prépare une seconde sonde équivalente à l'objet métier attendu,
+         * mais avec une casse différente sur le libellé.
+         *
+         * Le test prouve ainsi que findByObjetMetier(...)
+         * recherche le libellé métier sans tenir compte de la casse.
+         */
+        final TypeProduit casse =
+                new TypeProduit(VETEMENT.toUpperCase(Locale.getDefault()));
 
         /* ACT :
          * sollicite deux fois la méthode,
-         * dans les deux variantes métier à contrôler.
+         * dans les deux variantes métier à contrôler :
+         * - ID fourni ignoré ;
+         * - casse du libellé ignorée.
          */
-        final TypeProduit retourAvecIdFaux = this.service.findByObjetMetier(avecIdFaux);
-        final TypeProduit retourCasse = this.service.findByObjetMetier(casse);
+        final TypeProduit retourAvecIdFaux =
+                this.service.findByObjetMetier(avecIdFaux);
+
+        final TypeProduit retourCasse =
+                this.service.findByObjetMetier(casse);
 
         /* ASSERT :
          * vérifie d'abord que les deux recherches aboutissent.
@@ -1880,18 +1909,28 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
         assertThat(retourAvecIdFaux).isNotNull();
         assertThat(retourCasse).isNotNull();
 
-        /* Vérifie ensuite que l'identifiant fourni par l'appelant
-         * n'influence pas la recherche réelle.
+        /*
+         * Vérifie que l'identifiant fourni par l'appelant
+         * n'influence pas la recherche : le service retourne
+         * l'identifiant réellement présent dans le stockage.
          */
         assertThat(retourAvecIdFaux.getIdTypeProduit()).isEqualTo(idEnBase);
         assertThat(retourAvecIdFaux.getTypeProduit()).isEqualTo(libelleEnBase);
 
-        /* Vérifie enfin que la recherche est insensible à la casse
-         * et retrouve la même ligne persistante.
+        /*
+         * Vérifie que la recherche insensible à la casse retrouve
+         * exactement le même objet métier persistant.
          */
         assertThat(retourCasse.getIdTypeProduit()).isEqualTo(idEnBase);
         assertThat(retourCasse.getTypeProduit()).isEqualTo(libelleEnBase);
 
+        /*
+         * Vérifie que les deux variantes retournent bien
+         * le même objet métier persistant.
+         */
+        assertThat(retourCasse.getIdTypeProduit())
+            .isEqualTo(retourAvecIdFaux.getIdTypeProduit());
+        
     } // __________________________________________________________________
     
     
