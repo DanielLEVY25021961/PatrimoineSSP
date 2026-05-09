@@ -187,10 +187,13 @@ Le chemin local `/mnt/data/<nomDuFichier>` est seulement un support de lecture. 
 Règles absolues :
 - le dernier `file_id` affiché dans le chat prime sur tout ancien fichier local portant le même nom ;
 - l’IA doit toujours repartir du dernier upload réel ;
+- dès qu’un nouvel upload est affiché, toutes les métriques antérieures du même chemin `/mnt/data/<nomDuFichier>` deviennent invalides ;
+- l’IA doit relire immédiatement le chemin local annoncé par l’upload après cet upload, puis recalculer les métriques depuis les octets relus ;
 - l’IA ne doit jamais exploiter un état ancien ou indirect comme source de vérité ;
 - l’IA ne doit jamais conclure depuis un ancien `/mnt/data/<nomDuFichier>` ;
 - l’IA ne doit jamais conclure depuis un ancien résultat `file_search`, une ancienne métrique, une ancienne baseline ou une mémoire ;
 - l’IA ne doit jamais déclarer une contradiction de synchronisation sans avoir relu le dernier upload réel ;
+- l’IA doit vérifier des marqueurs distinctifs du dernier état attendu avant toute consolidation ;
 - l’IA ne doit jamais consolider un fichier dont l’identité n’a pas été reliée au dernier `file_id` uploadé.
 
 #### Procédure obligatoire
@@ -200,24 +203,33 @@ Avant toute analyse, audit, correction, validation, génération de code ou cons
 1. identifier le dernier `file_id` uploadé par l’Utilisateur ;
 2. déclarer explicitement que ce dernier `file_id` est le point de départ réel de la lecture ;
 3. écarter tout état ancien ou indirect portant le même nom de fichier ;
-4. identifier le nom du fichier joint ;
-5. relire le fichier local correspondant après ce dernier upload, sous :
+4. invalider explicitement toute ancienne métrique associée au même chemin `/mnt/data/<nomDuFichier>` ;
+5. identifier le nom du fichier joint et le chemin local annoncé par l’upload ;
+6. relire immédiatement le fichier local correspondant après ce dernier upload, sous :
 
 ```text
 /mnt/data/<nomDuFichier>
 ```
 
-6. calculer et rapporter :
+7. calculer et rapporter depuis les octets réellement relus :
    - `file_id` ;
    - chemin local lu ;
    - taille en octets ;
    - nombre de lignes logiques ;
-   - nombre de caractères `\n` ;
+   - nombre de caractères `
+` ;
    - présence ou absence d’un saut de ligne final ;
    - SHA-256 ;
    - lignes exactes contrôlées ;
-7. comparer avec la baseline active uniquement après cette lecture du dernier upload ;
-8. décider explicitement si le fichier joint est :
+8. relever les marqueurs distinctifs du dernier état attendu :
+   - méthodes ou constantes nouvellement ajoutées ;
+   - méthodes, constantes ou formulations supprimées ;
+   - nombre de tests si applicable ;
+   - nombre de tags si applicable ;
+   - absence des anciens défauts explicitement corrigés ;
+   - éléments textuels caractéristiques du dernier bloc corrigé ;
+9. comparer avec la baseline active uniquement après cette lecture du dernier upload ;
+10. décider explicitement si le fichier joint est :
    - identique à une source saine ;
    - une correction utilisateur cohérente ;
    - une régression ;
@@ -256,13 +268,17 @@ Toute conclusion sur un fichier joint au chat doit commencer par un bloc `PREUVE
 Dernier fichier joint CHAT lu :
 file_id :
 Point de départ réel : dernier upload utilisateur
+Anciennes métriques du même chemin invalidées : oui
 État ancien/indirect exploité : non
-Chemin local lu :
+Chemin local lu après upload :
 Taille :
 Nombre de lignes logiques :
-Nombre de caractères \n :
+Nombre de caractères 
+ :
 Saut de ligne final :
 SHA-256 :
+Marqueurs distinctifs attendus :
+Marqueurs distinctifs retrouvés : oui/non
 Lignes contrôlées :
 ```
 
@@ -580,13 +596,16 @@ Règle absolue :
 Préconditions bloquantes avant toute réponse de fond :
 1. dernier `file_id` réel identifié ;
 2. nom du fichier cible identifié ;
-3. chemin local lu explicitement indiqué ;
-4. rattachement du chemin local au dernier upload réel contrôlé ;
-5. métriques recalculées depuis les octets réellement lus : taille, lignes logiques, nombre de `\n`, EOF, SHA-256 ;
-6. bloc demandé identifié strictement ;
-7. absence de mélange avec un autre bloc ;
-8. absence d'exploitation d'un état ancien ou indirect explicitement déclarée ;
-9. si comparaison avec baseline/fenêtre active : comparaison effectuée seulement après la lecture du dernier upload réel.
+3. anciennes métriques du même chemin invalidées explicitement ;
+4. chemin local relu après l’upload explicitement indiqué ;
+5. rattachement du chemin local au dernier upload réel contrôlé ;
+6. métriques recalculées depuis les octets réellement lus : taille, lignes logiques, nombre de `
+`, EOF, SHA-256 ;
+7. marqueurs distinctifs du dernier état attendu relevés et contrôlés ;
+8. bloc demandé identifié strictement ;
+9. absence de mélange avec un autre bloc ;
+10. absence d'exploitation d'un état ancien ou indirect explicitement déclarée ;
+11. si comparaison avec baseline/fenêtre active : comparaison effectuée seulement après la lecture du dernier upload réel.
 
 Réponse obligatoire si une précondition manque :
 
@@ -637,6 +656,136 @@ Cette règle complète `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`, `RT-LECTURE-CH
 
 ---
 
+
+
+### 6.1.6 RT-LECTURE-CHAT-RELECTURE-IMMEDIATE-03 — Relecture immédiate après upload et invalidation des anciennes métriques
+
+#### Objectif
+
+Empêcher définitivement qu’une ancienne métrique locale, un ancien résultat `file_search`, une mémoire ou une lecture d’un tour précédent soit confondu avec le dernier fichier joint au chat.
+
+Cette règle est prioritaire dès qu’un événement d’upload affiche un nouveau `file_id`, même si le nom du fichier et le chemin `/mnt/data/<nomDuFichier>` sont identiques aux uploads précédents.
+
+#### Règle absolue
+
+Après chaque upload utilisateur, l’IA doit considérer que tout état déjà connu pour le même nom de fichier est périmé tant qu’il n’a pas été recalculé depuis les octets du chemin local relu après cet upload.
+
+```text
+nouvel upload utilisateur
+= nouveau file_id
+= invalidation de toutes les anciennes métriques du même chemin
+= relecture immédiate de /mnt/data/<nomDuFichier>
+= recalcul taille/LF/CRLF/EOF/SHA depuis les octets relus
+= contrôle des marqueurs distinctifs du dernier état
+= analyse ou consolidation seulement ensuite
+```
+
+#### Interdictions supplémentaires
+
+L’IA ne doit jamais :
+
+- réutiliser une taille, un SHA-256, un nombre de lignes, un nombre de tests ou un résultat de recherche calculé avant le dernier upload ;
+- affirmer que `/mnt/data/<nomDuFichier>` contient une ancienne version sans l’avoir relu immédiatement après l’upload courant ;
+- conclure à une incohérence de synchronisation à partir d’une métrique locale antérieure ;
+- utiliser `file_search` comme source byte-for-byte de consolidation ;
+- utiliser un extrait tronqué affiché dans le chat comme preuve complète ;
+- comparer le dernier `file_id` à une ancienne métrique locale ;
+- consolider depuis un chemin local avant d’avoir prouvé que les marqueurs distinctifs du dernier état y sont présents.
+
+#### Technique obligatoire de lecture du dernier upload
+
+Lorsqu’un fichier joint apparaît dans le chat, l’IA doit exécuter cette séquence sans raccourci :
+
+1. relever le dernier `file_id` affiché pour ce fichier ;
+2. relever le chemin local annoncé par l’événement d’upload ;
+3. déclarer invalides toutes les métriques précédemment associées à ce même chemin ;
+4. ouvrir le fichier local annoncé après l’upload ;
+5. lire ses octets complets ;
+6. recalculer taille, SHA-256, LF, CRLF, EOF et nombre de lignes depuis ces octets ;
+7. relever les marqueurs distinctifs attendus du dernier état ;
+8. vérifier que ces marqueurs sont présents ou absents selon ce qui est attendu ;
+9. créer un snapshot immuable des octets relus si une consolidation est envisagée ;
+10. copier exclusivement depuis ce snapshot vers la baseline et la fenêtre active ;
+11. vérifier `upload relu == snapshot == baseline == fenêtre active`.
+
+#### Marqueurs distinctifs obligatoires
+
+Les marqueurs distinctifs ne remplacent pas le SHA-256, mais ils empêchent de consolider une version ancienne qui aurait été relue par erreur.
+
+Pour un fichier de test Java, l’IA doit contrôler, selon le cas :
+
+- présence des constantes ou tags nouvellement ajoutés ;
+- présence des méthodes de test nouvellement ajoutées ;
+- absence des méthodes, stubs, commentaires ou formulations supprimés par l’Utilisateur ;
+- nombre total de `@Test` ;
+- nombre de `@Tag(...)` du bloc concerné ;
+- nombre d’occurrences d’un commentaire structurant si l’Utilisateur l’a imposé ;
+- présence des noms de tests validés STS ;
+- absence des anciens défauts explicitement corrigés.
+
+Exemple de preuve attendue :
+
+```text
+Marqueurs distinctifs attendus :
+- @Tag(TAG_UPDATE) : 14
+- testUpdateConversionOutputDTOKOAvecMessage : présent
+- testUpdateConversionOutputDTOKOSansMessage : présent
+- when(modifie.getTypeProduit()) : absent
+- "Configuration du Mock" : présent
+
+Marqueurs distinctifs retrouvés : oui
+```
+
+#### Rôle limité de `file_search`
+
+`file_search` peut aider à repérer un passage textuel, mais il ne peut jamais être la source normative d’une consolidation.
+
+Pour consolider, la seule source admissible est le fichier complet relu byte-for-byte depuis le chemin local annoncé après le dernier upload, puis figé dans un snapshot immuable.
+
+#### Mode fail closed
+
+Si l’IA n’arrive pas à établir la chaîne suivante :
+
+```text
+dernier file_id
++ chemin local relu après upload
++ métriques recalculées depuis les octets relus
++ marqueurs distinctifs du dernier état retrouvés
++ snapshot immuable
++ baseline/fenêtre active écrasées depuis ce snapshot
++ égalité byte-for-byte finale
+```
+
+alors l’IA doit refuser la consolidation.
+
+Elle doit conserver la baseline et la fenêtre active sur le dernier état canonique validé.
+
+#### Preuve de lecture renforcée
+
+Toute réponse après upload doit contenir explicitement :
+
+```text
+PREUVE DE LECTURE
+Dernier file_id :
+Chemin upload annoncé :
+Anciennes métriques invalidées : oui
+Chemin local relu après upload :
+Taille recalculée :
+SHA-256 recalculé :
+LF :
+CRLF :
+Final LF :
+Marqueurs distinctifs attendus :
+Marqueurs distinctifs retrouvés : oui/non
+Source byte-for-byte de consolidation : snapshot du dernier upload / aucune
+État ancien ou indirect exploité : non
+```
+
+Sans ces lignes, toute conclusion sur un fichier joint au chat est invalide.
+
+Cette règle complète et renforce `RT-LECTURE-CHAT-FICHIER-JOINT-STRICT-01`, `RT-LECTURE-CHAT-CANONIQUE-DERNIER-FILE-ID-02`, `RT-LECTURE-CHAT-ANTI-ETAT-ANCIEN-INDIRECT-01` et `RT-LECTURE-CHAT-BARRIERE-FIABILITE-01`.
+
+---
 
 ### 6.2 RT-LECTURE-ZIP-CHAT-OFFLINE-01 — Lecture stricte d’un zip joint au chat
 
