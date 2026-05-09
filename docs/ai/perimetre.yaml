@@ -380,6 +380,91 @@ packs:
         exclude_globs: []
         allow_missing: true
 
+
+  audit_uc_produit_complet:
+    description: "Fenêtre utile d'audit UC produittype : contrats UC, PORTS/ADAPTERS UC, DTO, métier, exceptionsservices, Gateways utiles, tests UC et tests Gateway validés comme référence de formalisme."
+    paths:
+      - "docs/contrats/cu/CoucheServicesUC.md"
+      - "docs/contrats/cu/ProduitICuService.md"
+      - "docs/contrats/cu/SousTypeProduitICuService.md"
+      - "docs/contrats/cu/TypeProduitICuService.md"
+      - "docs/contrats/gateway/CoucheServicesGateway.md"
+      - "docs/contrats/gateway/ProduitGatewayIService.md"
+      - "docs/contrats/gateway/SousTypeProduitGatewayIService.md"
+      - "docs/contrats/gateway/TypeProduitGatewayIService.md"
+      - "docs/contrats/dto/ProduitDTO.md"
+      - "docs/contrats/dto/SousTypeProduitDTO.md"
+      - "docs/contrats/dto/TypeProduitDTO.md"
+      - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/metier/SousTypeProduit.md"
+      - "docs/contrats/metier/TypeProduit.md"
+      - "src/test/resources/truncate-test.sql"
+      - "src/test/resources/data-test.sql"
+      - "src/test/resources/application-test.properties"
+      - "src/test/resources/Log4j2-test.xml"
+    roots:
+      - path: "src/main/java/levy/daniel/application/model/services"
+        recursive: true
+        include_globs:
+          - "package-info.java"
+          - "produittype/package-info.java"
+          - "produittype/exceptionsservices/**/*.java"
+          - "produittype/cu/**/*.java"
+          - "produittype/gateway/**/*.java"
+          - "produittype/pagination/**/*.java"
+        exclude_globs:
+          - "produittype/exceptionsgateway/**/*.java"
+        allow_missing: false
+      - path: "src/main/java/levy/daniel/application/model/dto"
+        recursive: true
+        include_globs:
+          - "produittype/**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/main/java/levy/daniel/application/model/metier"
+        recursive: true
+        include_globs:
+          - "produittype/**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/main/java/levy/daniel/application/model/utilitaires/metier"
+        recursive: true
+        include_globs:
+          - "produittype/**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/main/java/levy/daniel/application/persistence/metier/produittype"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/services"
+        recursive: true
+        include_globs:
+          - "produittype/cu/**/*.java"
+          - "produittype/gateway/impl/**/*.java"
+        exclude_globs: []
+        allow_missing: false
+      - path: "src/test/java/levy/daniel/application/model/dto"
+        recursive: true
+        include_globs:
+          - "produittype/**/*.java"
+        exclude_globs: []
+        allow_missing: true
+      - path: "src/test/java/levy/daniel/application/model/metier"
+        recursive: true
+        include_globs:
+          - "produittype/**/*.java"
+        exclude_globs: []
+        allow_missing: true
+      - path: "src/test/java/levy/daniel/application/persistence/metier/produittype"
+        recursive: true
+        include_globs:
+          - "**/*.java"
+        exclude_globs: []
+        allow_missing: true
+
   controllers:
     description: "Couche controllers réelle du projet."
     roots:
@@ -531,6 +616,7 @@ couches:
       packs:
         - "gateway"
         - "uc"
+        - "audit_uc_produit_complet"
       sous_couches:
         - "couche_services.gateway"
         - "couche_services.uc"
@@ -574,6 +660,7 @@ references_validees:
       - reference_generation_tests_gateway
       - reference_controle_tests_gateway
       - reference_homogeneite_gateway
+      - reference_formalisme_tests_uc
     files:
       - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceIntegrationTest.java
       - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceMockTest.java
@@ -592,3 +679,29 @@ references_validees:
       - PERSISTANT/PERSISTENT both allowed
       - wipe allowed when explicitly explained
       - beton allowed when explicitly explained
+
+fenetres:
+  Fenetre_audit_uc_produit_complet:
+    statut: active_candidate
+    source: baseline_consolidee
+    sha: "648c1f89d96a8d7c0a41d2556f6b6b4b2c218ea5"
+    pack_principal: audit_uc_produit_complet
+    contrat_pivot: "docs/contrats/cu/CoucheServicesUC.md"
+    reference_formalisme: couche_services_gateway_tests_impl
+    objectif: "Auditer et corriger les tests SERVICES METIER UC produittype depuis une fenêtre locale validée, sans relecture GitHub à chaque passe tant que le SHA et le périmètre ne changent pas."
+    lecture_github_requise_a_l_activation: false
+    lecture_github_requise_si:
+      - nouveau_sha
+      - changement_perimetre
+      - demande_explicite_utilisateur
+    regles_lecture:
+      - RT-LECTURE-TESTS-UC-01
+      - RT-CONTROLE-BLOC-TEST-UC-01
+      - RT-FORMALISME-TESTS-UC-01
+      - RT-CODAGE-TEST-MOCKITO-UC-01
+      - RT-CODAGE-TEST-INTEGRATION-UC-01
+    reference_gateway:
+      package: "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl"
+      total_tests: 539
+      usage: "reference_formalisme_tests_uc"
+

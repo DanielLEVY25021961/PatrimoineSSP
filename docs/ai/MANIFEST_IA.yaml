@@ -357,6 +357,7 @@ couches:
       packs:
         - gateway
         - uc
+        - audit_uc_produit_complet
       sous_couches:
         - couche_services.gateway
         - couche_services.uc
@@ -396,6 +397,11 @@ references_validees:
     reference_sha: dc478be7a24b69d41072fbcf210126f922526090
     reference_package: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl
     total_tests: 539
+    usage:
+      - reference_generation_tests_gateway
+      - reference_controle_tests_gateway
+      - reference_homogeneite_gateway
+      - reference_formalisme_tests_uc
     source_of_truth: baseline_consolidee
     equality_required:
       - baseline_consolidee
@@ -445,3 +451,23 @@ references_validees:
     post_upload_replay:
       required: true
       command: contrôle strict de l'ensemble des tests situés dans le package src/test/java/levy/daniel/application/model/services/produittype/gateway/impl
+
+fenetres:
+  Fenetre_audit_uc_produit_complet:
+    statut: active_candidate
+    source: baseline_consolidee
+    sha: "648c1f89d96a8d7c0a41d2556f6b6b4b2c218ea5"
+    pack_principal: audit_uc_produit_complet
+    contrat_pivot: docs/contrats/cu/CoucheServicesUC.md
+    reference_formalisme: couche_services_gateway_tests_impl
+    objectif: "Auditer et corriger les tests SERVICES METIER UC produittype depuis une fenêtre locale validée."
+    lecture_github_requise_a_l_activation: false
+    lecture_github_requise_si:
+      - nouveau_sha
+      - changement_perimetre
+      - demande_explicite_utilisateur
+    regles_sources:
+      - docs/ai/CONTRAT_IA.md
+      - docs/contrats/cu/CoucheServicesUC.md
+      - docs/ai/perimetre.yaml
+

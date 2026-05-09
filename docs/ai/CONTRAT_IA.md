@@ -2946,7 +2946,7 @@ Cette sous-couche comprend au minimum :
 
 Règles :
 - `couche_services.uc` manipule les DTO applicatifs lorsque le contrat de service l’exige ;
-- `couche_services.uc` orchestre le métier et délègue les opérations techniques de stockage à `couche_services.gateway` ;
+- `couche_services.uc` est le point d’entrée dans la logique métier dialoguant directement avec le controller appelant et délègue les opérations techniques de stockage à `couche_services.gateway` ;
 - `couche_services.uc` est responsable du message observable côté appelant via `getMessage()` ;
 - les exceptions `exceptionsservices` appartiennent à `couche_services.uc` ;
 - les exceptions `exceptionsgateway` n’appartiennent pas à `couche_services.uc` et relèvent du périmètre Gateway ;
@@ -3050,3 +3050,117 @@ Pour réécrire entièrement une classe de test Gateway, l’IA doit appliquer l
 11. livrer selon les règles de livraison applicables.
 
 Cette règle est bloquante : si une dépendance utile n’est pas relue, l’IA doit déclarer la lecture incomplète et la compléter avant tout code ou verdict.
+
+## 31) RT-TESTS-UC-PRODUIT-01 — Professionnalisation des tests SERVICES METIER UC
+
+### 31.1 Objet
+
+Les tests des SERVICES METIER UC `produittype` doivent être professionnalisés en s'inspirant du package Gateway validé, sans copier mécaniquement le comportement Gateway.
+
+Le SERVICE METIER UC est le point d'entrée dans la logique métier dialoguant directement avec le controller appelant.
+Cette formulation est la formulation contractuelle à utiliser.
+La formule `orchestration applicative observable` est interdite car elle est vague et inutile.
+
+### 31.2 Référence de formalisme
+
+Le package Gateway validé :
+
+`src/test/java/levy/daniel/application/model/services/produittype/gateway/impl`
+
+sert de référence de formalisme pour les tests UC :
+
+- Javadoc de tête ;
+- constantes ;
+- tags et display names ;
+- blocs par méthode du PORT ;
+- Javadoc HTML par méthode de test ;
+- commentaires didactiques internes ;
+- ordre des cas ;
+- distinction entre tests contractuels et tests didactiques non contractuels ;
+- vocabulaire stable ;
+- espacement inter-tests de 3 lignes.
+
+Cette référence ne remplace jamais le contrat du PORT UC.
+Le comportement attendu d'un test UC se déduit toujours du contrat UC et de l'ADAPTER UC réel.
+
+### 31.3 Ordre obligatoire de lecture pour un test UC
+
+Avant toute analyse, correction, validation ou génération de code portant sur un test UC, l'IA doit relire strictement :
+
+1. `docs/contrats/cu/CoucheServicesUC.md` ;
+2. le contrat local du PORT UC ciblé ;
+3. le PORT Java UC ciblé ;
+4. l'ADAPTER UC réel ;
+5. les DTO et convertisseurs DTO utiles ;
+6. les exceptions `exceptionsservices` utiles ;
+7. le PORT Gateway appelé ;
+8. l'ADAPTER Gateway si l'intégration UC le nécessite ;
+9. les objets métier utiles ;
+10. les tests Gateway validés, uniquement comme référence de formalisme ;
+11. le test UC ciblé.
+
+Si une dépendance utile n'a pas été relue, l'IA doit déclarer la lecture incomplète et la relire avant toute conclusion.
+
+### 31.4 Contrôle méthode par méthode
+
+Les tests UC doivent être analysés méthode du PORT UC par méthode du PORT UC.
+
+Pour chaque méthode, l'IA doit établir la matrice :
+
+`cas contractuel UC -> test attendu -> preuve attendue -> verdict`
+
+Le test est la spécification.
+L'IA ne doit pas inventer de nouveaux critères à chaque passe.
+Les critères stables sont ceux du contrat UC, de l'ADAPTER UC réel, du présent contrat IA et de `CoucheServicesUC.md`.
+
+### 31.5 Tests Mock UC
+
+Un test Mock UC prouve le comportement du SERVICE METIER UC côté controller appelant.
+
+Il doit vérifier selon le cas :
+
+- les DTO d'entrée et de sortie ;
+- les validations d'entrée ;
+- l'exception `exceptionsservices` exacte ;
+- le message final observable via `getMessage()` ;
+- la délégation exacte au Gateway ;
+- l'absence d'interaction Gateway quand le contrat l'impose ;
+- les conversions DTO / objet métier / DTO ;
+- les scénarios Gateway `null`, vide, exception et nominal.
+
+Un test Mock UC ne prouve pas directement le stockage et ne manipule pas le DAO.
+
+### 31.6 Tests d'intégration UC
+
+Un test d'intégration UC prouve le comportement réel du SERVICE METIER UC avec ses collaborateurs réels utiles au scénario.
+
+Il doit vérifier selon le cas :
+
+- le message final observable via `getMessage()` ;
+- les DTO retournés ;
+- les exceptions `exceptionsservices` ;
+- l'effet réel dans le stockage lorsque la méthode écrit ou supprime ;
+- l'absence d'effet de bord pour les lectures ;
+- la cohérence avec les règles parent/enfant et les contrats Gateway déjà validés.
+
+En intégration UC, l'IA ne doit pas refaire inutilement toutes les clauses techniques déjà prouvées dans les tests Gateway Mock.
+
+### 31.7 Fenêtre d'audit UC
+
+La fenêtre `Fenêtre audit_uc_produit_complet` doit permettre de travailler sur les tests UC sans relire GitHub à chaque passe, tant que le SHA courant et le périmètre ne changent pas.
+
+Elle est installée depuis la baseline consolidée et inclut au minimum :
+
+- les contrats UC ;
+- les PORTS UC ;
+- les ADAPTERS UC ;
+- les exceptions `exceptionsservices` ;
+- les DTO et convertisseurs DTO ;
+- les objets métier utiles ;
+- les PORTS Gateway et, si nécessaire, les ADAPTERS Gateway ;
+- les tests UC ;
+- les tests Gateway validés comme référence de formalisme ;
+- les ressources de test utiles.
+
+Une fois activée, cette fenêtre devient la source de travail locale pour l'audit UC jusqu'à nouveau SHA, nouveau périmètre ou demande explicite de relecture GitHub.
+
