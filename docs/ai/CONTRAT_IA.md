@@ -2960,3 +2960,93 @@ La sous-couche `couche_services.uc` doit permettre à l’IA de retrouver comme 
 - les tests Mock UC ;
 - les tests d’intégration UC ;
 - les contrats locaux UC applicables.
+
+
+## 30) RT-REFERENCE-GATEWAY-IMPL-VALIDEE-01 — Package Gateway impl validé comme référence autonome
+
+### 30.1 Objet
+
+Le package suivant est validé comme référence officielle pour les tests Gateway `produittype` :
+
+`src/test/java/levy/daniel/application/model/services/produittype/gateway/impl`
+
+Cette validation est acquise au SHA :
+
+`dc478be7a24b69d41072fbcf210126f922526090`
+
+Le package validé peut servir de référence pour écrire, réécrire, contrôler ou harmoniser les autres tests du projet.
+
+### 30.2 Répartition validée
+
+La référence validée contient exactement 539 tests :
+
+| Fichier | Rôle | Nombre de tests |
+|---|---:|---:|
+| `ProduitGatewayJPAServiceIntegrationTest.java` | Produit intégration | 74 |
+| `ProduitGatewayJPAServiceMockTest.java` | Produit Mockito | 114 |
+| `SousTypeProduitGatewayJPAServiceIntegrationTest.java` | SousTypeProduit intégration | 75 |
+| `SousTypeProduitGatewayJPAServiceMockTest.java` | SousTypeProduit Mockito | 123 |
+| `TypeProduitGatewayJPAServiceIntegrationTest.java` | TypeProduit intégration | 51 |
+| `TypeProduitGatewayJPAServiceMockTest.java` | TypeProduit Mockito | 102 |
+
+La baseline consolidée, la fenêtre active et le bundle OFFLINE validé doivent rester cohérents avec cette référence tant qu’un nouveau SHA ou une nouvelle consolidation utilisateur ne l’invalide pas.
+
+### 30.3 Rôle de référence
+
+Lorsqu’un test Gateway doit être généré ou contrôlé, l’IA doit utiliser ce package validé comme référence de formalisme pour :
+
+- l’ordre des blocs correspondant aux méthodes du PORT ;
+- l’ordre des cas à l’intérieur de chaque bloc ;
+- la distinction entre tests contractuels et tests didactiques non contractuels ;
+- la Javadoc HTML des méthodes de test ;
+- les commentaires didactiques internes `ARRANGE / ACT / ASSERT` ou équivalents ;
+- les preuves Mockito d’interaction avec les collaborateurs ;
+- les preuves d’intégration par comportement observable du stockage ;
+- la structure des constantes, tags et display names ;
+- les helpers de test réellement utiles ;
+- la cohérence transversale entre `TypeProduit`, `SousTypeProduit` et `Produit`.
+
+### 30.4 Acceptations lexicales stabilisées
+
+Les points suivants sont explicitement acceptés et ne doivent plus être signalés comme défauts lorsqu’ils respectent leur condition d’explication :
+
+- `PERSISTANT` et `PERSISTENT` sont tous deux tolérés : `persistant` est français, `persistent` est anglais ;
+- `wipe` est toléré si l’expression explique clairement la conservation des données seedées, par exemple `conserve (ne wipe pas) les données seedées` ;
+- `béton` est toléré si l’intitulé ou le commentaire explique ce que fait le test, par exemple `TESTS BETON (sanity / invariants)`.
+
+L’IA ne doit pas perdre de temps sur ces détails lexicaux lorsqu’ils sont expliqués. Ils ne constituent pas des résidus actionnables, sauf si l’Utilisateur inverse explicitement cette décision ou si le terme est employé seul sans explication utile.
+
+### 30.5 Workflow obligatoire après fichiers joints de tests Gateway
+
+Lorsqu’un ou plusieurs fichiers de tests Gateway sont transmis dans le chat, l’IA doit automatiquement :
+
+1. repartir du dernier `file_id` réel pour chaque fichier joint ;
+2. relire `/mnt/data/<nom>` après l’upload comme support de lecture, sans le considérer comme identité normative ;
+3. vérifier taille, SHA-256, nombre de LF, absence de CRLF si attendu, LF final et nombre de `@Test` ;
+4. détecter les modifications par rapport à la baseline consolidée ;
+5. apprendre les corrections utilisateur si les tests sont déclarés verts ;
+6. consolider baseline et fenêtre active en écrasant les versions obsolètes ;
+7. produire un rapport de consolidation ;
+8. rejouer automatiquement la dernière commande ayant engendré des corrections.
+
+Commande de rejeu actuellement obligatoire pour ce périmètre :
+
+`contrôle strict de l'ensemble des tests situés dans le package src/test/java/levy/daniel/application/model/services/produittype/gateway/impl`
+
+### 30.6 Génération autonome complète de tests Gateway
+
+Pour réécrire entièrement une classe de test Gateway, l’IA doit appliquer la séquence stricte suivante :
+
+1. relire le présent contrat IA ;
+2. relire le contrat local `docs/contrats/gateway/CoucheServicesGateway.md` ;
+3. relire le PORT concerné ;
+4. relire l’ADAPTER Gateway réel ;
+5. relire les dépendances utiles : objets métier, interfaces, entities JPA, DAO, pagination, exceptions, constantes, helpers et scripts SQL ;
+6. relire les classes de test de référence du package validé ;
+7. établir la matrice `méthode du PORT -> cas contractuels -> tests attendus -> preuve attendue` ;
+8. choisir le type de preuve adapté : Mockito pour les branches techniques/interactions, intégration pour le comportement observable et le stockage ;
+9. générer la classe complète sans snippet, sans ellipse, sans trou de méthode ;
+10. vérifier le total de tests, l’ordre des blocs, les Javadocs, les commentaires internes, les imports, les constantes, les helpers et le LF final ;
+11. livrer selon les règles de livraison applicables.
+
+Cette règle est bloquante : si une dépendance utile n’est pas relue, l’IA doit déclarer la lecture incomplète et la compléter avant tout code ou verdict.

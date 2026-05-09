@@ -561,3 +561,34 @@ couches:
       mandatory_pre_read: false
       packs:
         - "views"
+
+
+# Références validées transverses.
+references_validees:
+  couche_services_gateway_tests_impl:
+    statut: validated_locked
+    reference_sha: dc478be7a24b69d41072fbcf210126f922526090
+    reference_package: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl
+    total_tests: 539
+    usage:
+      - reference_generation_tests_gateway
+      - reference_controle_tests_gateway
+      - reference_homogeneite_gateway
+    files:
+      - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceIntegrationTest.java
+      - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceMockTest.java
+      - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceIntegrationTest.java
+      - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceMockTest.java
+      - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java
+      - src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceMockTest.java
+    counts:
+      produit_integration: 74
+      produit_mockito: 114
+      soustype_integration: 75
+      soustype_mockito: 123
+      type_integration: 51
+      type_mockito: 102
+    accepted_formalisms:
+      - PERSISTANT/PERSISTENT both allowed
+      - wipe allowed when explicitly explained
+      - beton allowed when explicitly explained

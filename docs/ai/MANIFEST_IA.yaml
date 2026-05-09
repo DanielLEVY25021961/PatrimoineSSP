@@ -387,3 +387,61 @@ couches:
       mandatory_pre_read: false
       packs:
         - views
+
+
+# Référence validée utilisée par l'IA pour générer et contrôler les tests Gateway.
+references_validees:
+  couche_services_gateway_tests_impl:
+    statut: validated_locked
+    reference_sha: dc478be7a24b69d41072fbcf210126f922526090
+    reference_package: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl
+    total_tests: 539
+    source_of_truth: baseline_consolidee
+    equality_required:
+      - baseline_consolidee
+      - fenetre_active
+      - bundle_offline_valide
+    files:
+      - path: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceIntegrationTest.java
+        role: produit_integration
+        tests: 74
+        size: 336998
+        sha256: 3453a6274162789b23536d7069c62fbbffcf0c852e72ac6ada3cf77442b4cc6a
+        lf: 9314
+      - path: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/ProduitGatewayJPAServiceMockTest.java
+        role: produit_mockito
+        tests: 114
+        size: 341525
+        sha256: 0f3b9907a677058054fa26c1cc45186f33fbcce510debef5730b7d988ad07a44
+        lf: 8893
+      - path: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceIntegrationTest.java
+        role: soustype_integration
+        tests: 75
+        size: 319576
+        sha256: a7c84bfd98c51e90a4124fda9f6159fab9c571aae4c20e5afdbe29b7d469d041
+        lf: 8537
+      - path: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/SousTypeProduitGatewayJPAServiceMockTest.java
+        role: soustype_mockito
+        tests: 123
+        size: 373805
+        sha256: ac59581fffd921b7d283049074f963b89b174f184b29fbf84ec4f9c1e5a73633
+        lf: 9418
+      - path: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceIntegrationTest.java
+        role: type_integration
+        tests: 51
+        size: 147703
+        sha256: 3a82d581e4e15d666d2d121eb431027fa37963ed21d58c7a84a981f9bbf03a02
+        lf: 4227
+      - path: src/test/java/levy/daniel/application/model/services/produittype/gateway/impl/TypeProduitGatewayJPAServiceMockTest.java
+        role: type_mockito
+        tests: 102
+        size: 262556
+        sha256: 4ea611289c3c6d35416d18d0b3cef5f68fce0ae37086660adf1d8dd8abf405b6
+        lf: 7057
+    acceptations_lexicales:
+      persistant_persistent: both_allowed
+      wipe: allowed_when_explained
+      beton: allowed_when_explained
+    post_upload_replay:
+      required: true
+      command: contrôle strict de l'ensemble des tests situés dans le package src/test/java/levy/daniel/application/model/services/produittype/gateway/impl

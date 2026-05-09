@@ -1065,6 +1065,100 @@ Réponse obligatoire en cas de préflight incomplet :
 
 `contrôle impossible — lecture/preflight incomplet`
 
+
+### 6.15) RT-REFERENCE-PACKAGE-GATEWAY-IMPL-VALIDEE-01 — Package validé comme référence
+
+Le package suivant est validé comme référence officielle pour les tests Gateway `produittype` :
+
+`src/test/java/levy/daniel/application/model/services/produittype/gateway/impl`
+
+Référence validée au SHA : `dc478be7a24b69d41072fbcf210126f922526090`.
+
+Répartition validée :
+
+| Fichier | Rôle | Tests |
+|---|---:|---:|
+| `ProduitGatewayJPAServiceIntegrationTest.java` | Produit intégration | 74 |
+| `ProduitGatewayJPAServiceMockTest.java` | Produit Mockito | 114 |
+| `SousTypeProduitGatewayJPAServiceIntegrationTest.java` | SousTypeProduit intégration | 75 |
+| `SousTypeProduitGatewayJPAServiceMockTest.java` | SousTypeProduit Mockito | 123 |
+| `TypeProduitGatewayJPAServiceIntegrationTest.java` | TypeProduit intégration | 51 |
+| `TypeProduitGatewayJPAServiceMockTest.java` | TypeProduit Mockito | 102 |
+
+Total validé : 539 tests.
+
+Cette référence devient la source de formalisme pour les autres tests Gateway, sans remplacer l'obligation première de lire le PORT, l'ADAPTER et les dépendances utiles.
+
+### 6.16) Références spécialisées par structure métier
+
+Pour générer ou contrôler une classe de test Gateway, l'IA doit choisir la référence spécialisée pertinente :
+
+- `TypeProduit` : objet métier racine sans parent métier ;
+- `SousTypeProduit` : objet métier avec parent `TypeProduit` ;
+- `Produit` : objet métier avec parent `SousTypeProduit` et graphe complet `Produit -> SousTypeProduit -> TypeProduit` ;
+- test Mockito : preuve fine des branches techniques, exceptions DAO, retours `null`, interactions, `verify(...)`, `verifyNoInteractions(...)` ;
+- test d'intégration : preuve observable Spring/JPA/H2, scripts SQL, `JdbcTemplate`, transactions, nettoyage et cohérence du stockage.
+
+L'IA doit adapter le modèle de référence à la structure métier réelle. Elle ne doit pas copier un cas parent dans `TypeProduit`, ni inventer un collaborateur absent.
+
+### 6.17) Matrice autonome de génération complète
+
+Pour réécrire une classe complète de tests Gateway en autonomie, l'IA doit produire et contrôler la matrice suivante avant de coder :
+
+| Élément | Question obligatoire |
+|---|---|
+| PORT | Quelles méthodes contractuelles existent ? |
+| Cas contractuels | Quels paramètres `null`, blank, non persistants, absents, nominaux, pagination, suppression, count sont spécifiés ? |
+| ADAPTER | Quels collaborateurs réels sont appelés et dans quel ordre observable ? |
+| Métier | Quelle est la clé métier réelle ? |
+| Parent | L'objet a-t-il un parent métier ? Le parent doit-il être complet ou seulement persistant ? |
+| Mockito | Quels retours DAO, exceptions techniques, interactions et absences d'interactions doivent être prouvés ? |
+| Intégration | Quelles preuves SQL directes et quels nettoyages sont nécessaires ? |
+| Commentaires | La méthode explique-t-elle concrètement ce qu'elle arrange, agit et vérifie ? |
+| Homogénéité | La méthode reste-t-elle alignée avec le package validé ? |
+
+L'IA doit ensuite coder dans l'ordre : constantes utiles, attributs, configuration, blocs de tests dans l'ordre du PORT, helpers utiles, tests de sanity/invariants si nécessaires.
+
+### 6.18) Commentaires didactiques obligatoires dans tous les tests Gateway
+
+Chaque méthode `@Test` Gateway doit contenir :
+
+- une Javadoc HTML immédiatement avant les annotations ;
+- des commentaires de corps expliquant les phases `ARRANGE`, `ACT`, `ASSERT` ou leur équivalent ;
+- une explication concrète des mocks configurés ;
+- une explication concrète des lectures SQL directes ;
+- une explication du nettoyage/restauration lorsqu'un test modifie réellement le stockage ;
+- une explication de la clé métier lorsque le test la manipule ;
+- une explication du graphe complet lorsque le test vérifie un parent ou un grand-parent.
+
+Une méthode qui possède une Javadoc mais aucun commentaire didactique dans le corps n'est pas conforme pour un test Gateway complet.
+
+### 6.19) Acceptations lexicales stabilisées
+
+Les acceptations suivantes sont stabilisées :
+
+- `PERSISTANT` et `PERSISTENT` sont tous deux autorisés ;
+- `wipe` est autorisé si la formulation explique que les données seedées sont conservées ;
+- `béton` est autorisé si l'intitulé ou le commentaire explique le rôle du test, par exemple `TESTS BETON (sanity / invariants)`.
+
+Ces points ne doivent pas être signalés comme résidus actionnables lorsqu'ils sont expliqués. L'IA doit se concentrer sur les défauts de contrat, de comportement, de couverture, de compilation, de preuve ou de commentaires réellement insuffisants.
+
+### 6.20) Rejeu automatique après consolidation de fichiers joints
+
+Après tests verts STS et fichiers Gateway joints par l'Utilisateur, l'IA doit automatiquement :
+
+1. relire chaque dernier `file_id` joint ;
+2. contrôler les métriques et le contenu réel ;
+3. détecter les corrections utilisateur ;
+4. mémoriser le formalisme corrigé ;
+5. consolider baseline et fenêtre active ;
+6. produire un rapport de consolidation ;
+7. rejouer le contrôle strict du package validé lorsque c'est la dernière commande ayant produit des corrections.
+
+Commande de rejeu de référence :
+
+`contrôle strict de l'ensemble des tests situés dans le package src/test/java/levy/daniel/application/model/services/produittype/gateway/impl`
+
 ## 7) Définition de la sacralisation
 
 La sous-couche `couche_services.gateway` est considérée sacralisée lorsque :
