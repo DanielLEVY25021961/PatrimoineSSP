@@ -54,33 +54,33 @@ public class TypeProduitCuServiceMockTest {
 
 	// *************************** CONSTANTES ******************************/
 
-	/** Tag JUnit : tests Mockito de la couche CU. */
-	public static final String TAG = "cu-mock";
-
-	/** "bazar". */
+	/** "bazar" */
 	public static final String BAZAR = "bazar";
 
-	/** "tourisme". */
+	/** "tourisme" */
 	public static final String TOURISME = "tourisme";
 
-	/** "outillage". */
+	/** "outillage" */
 	public static final String OUTILLAGE = "outillage";
 
-	/** "vêtement". */
+	/** "vêtement" */
 	public static final String VETEMENT = "vêtement";
 
-	/** Chaine blank : "   ". */
+	/** "   " */
 	public static final String ESPACES = "   ";
 	
 	/**
 	 * "lecture technique KO"
 	 */
 	public static final String LECTURE_TECHNIQUE_KO = "lecture technique KO";
+	
+	/** "cu-mock" */
+	public static final String TAG = "cu-mock";
 
-	/** Message mock gateway : "message gateway". */
+	/** "message gateway" */
 	public static final String MESSAGE_GATEWAY = "message gateway";
 
-	/** Message mock gateway (bis) : "message gateway (bis)". */
+	/** "message gateway (bis)" */
 	public static final String MESSAGE_GATEWAY_BIS = "message gateway (bis)";
 
 	// ************************* CONSTRUCTEURS *****************************/
@@ -94,8 +94,12 @@ public class TypeProduitCuServiceMockTest {
 		super();
 	}
 
+	
+	
 	// *************************** METHODES *******************************/
 
+	
+	
 	// ---------------------- Creer(...) -------------------------------//
 	
 	/**
