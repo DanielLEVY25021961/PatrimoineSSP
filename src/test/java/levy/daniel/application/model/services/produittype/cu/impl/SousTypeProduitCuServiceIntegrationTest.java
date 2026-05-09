@@ -239,8 +239,25 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	@Autowired
 	private TypeProduitICuService typeProduitService;
 
-	// ************************* CONFIGURATION *****************************/
 
+	
+	// ************************* CONSTRUCTEURS *****************************/
+	
+	/**
+	 * <div>
+	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
+	 * </div>
+	 */
+	public SousTypeProduitCuServiceIntegrationTest() {
+		super();
+	}
+
+    
+    
+    // ===================== CONFIGURATION SPRING =======================//
+
+    
+    
 	/**
 	 * <div>
 	 * <p>CONFIGURATION DE TEST (SPRING).</p>
@@ -279,30 +296,15 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		/* configuration de test. */
 	}
 
-	
-	
-	// ************************* CONSTRUCTEURS *****************************/
+    
+    
+    // =========================== TESTS ==================================
+    
+    
 
-	
-	
-	/**
-	 * <div>
-	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
-	 * </div>
-	 */
-	public SousTypeProduitCuServiceIntegrationTest() {
-		super();
-	}
-
-	
-	
-	// *************************** METHODES *******************************/
-
-	
-	
-	// ============================ TESTS creer(...) =======================
-
-	
+    // ============================ creer =================================
+    
+    
 	
 	/**
 	 * <div>
@@ -577,11 +579,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________
+    
+    
+    
+    // ======================== RechercherTous ============================
 	
-	
-	
-	// ========================= TESTS rechercherTous() ====================
-
 	
 	
 	/**
@@ -739,11 +741,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 		
 	} // __________________________________________________________________	
-	
 
 	
-	// ===================== TESTS rechercherTousString() ==================
-
+	
+	// ===================== rechercherTousString =========================
+	
 	
 	
 	/**
@@ -875,13 +877,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
 	} // __________________________________________________________________
-	
-	
 
-	// ================== TESTS rechercherTousParPage(...) =================
 
-	
-	
+    
+    // ================== rechercherTousParPage ===========================
+    
+    
+
 	/**
 	 * <div>
 	 * <p>rechercherTousParPage(null) : violation de contrat.</p>
@@ -1041,10 +1043,10 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	} // __________________________________________________________________	
 	
-
 	
-	// ======================= TESTS findByLibelle(...) ====================
-
+	
+	// ========================= findByLibelle ============================
+	
 	
 	
 	/**
@@ -1171,11 +1173,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________
+
 	
 	
-
-	// ===================== TESTS findByLibelleRapide(...) =================
-
+	// ====================== findByLibelleRapide =========================
+	
 	
 	
 	/**
@@ -1351,7 +1353,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	
 	
 
-	// ===================== TESTS findAllByParent(...) ====================
+	// ======================= findAllByParent(...) =======================
 
 	
 	
@@ -1545,10 +1547,10 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		
 	} // __________________________________________________________________	
 
-
 	
-	// ========================== TESTS findByDTO(...) =====================
-
+	
+	// ========================== findByDTO ===============================
+	
 	
 	
 	/**
@@ -1808,11 +1810,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________	
-	
 
 	
-	// ======================== TESTS findById(...) ========================
-
+	
+	// =========================== findById ===============================
+	
 	
 	
 	/**
@@ -1938,13 +1940,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________
-	
-	
 
-	// ========================= TESTS update(...) =========================
 	
 	
-
+	// ============================ update ================================
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>update(null) : violation de contrat.</p>
@@ -2274,11 +2276,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(reluParentB.getTypeProduit()).isEqualTo(IT_TP_PARENT_B);
 
 	} // __________________________________________________________________
+
 	
 	
-
-	// ========================= TESTS delete(...) =========================
-
+	// ============================ delete ================================
+	
 	
 	
 	/**
@@ -2573,9 +2575,9 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	} // __________________________________________________________________	
 
 	
-
-	// ============================ TESTS count() ==========================
-
+	
+	// ============================ count =================================
+	
 	
 	
 	/**
@@ -2700,8 +2702,8 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	
 	
-	// ========================= TESTS getMessage() ========================
-
+	// ========================== getMessage ==============================
+	
 	
 	
 	/**

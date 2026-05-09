@@ -226,10 +226,26 @@ public class TypeProduitCuServiceIntegrationTest {
 	 */
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
-	
 
-	// ************************* CONFIGURATION *****************************/
+    
+    
+    // ************************ CONSTRUCTEUR *****************************/
+    
+	/**
+	 * <div>
+	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
+	 * </div>
+	 */
+	public TypeProduitCuServiceIntegrationTest() {
+		super();
+	}
 
+    
+    
+    // ===================== CONFIGURATION SPRING =======================//
+
+    
+    
 	/**
 	 * <div>
 	 * <p>CONFIGURATION DE TEST (SPRING).</p>
@@ -268,22 +284,15 @@ public class TypeProduitCuServiceIntegrationTest {
 		/* configuration de test. */
 	}
 
-	// *************************** CONSTRUCTEURS ***************************/
+    
+    
+    // =========================== TESTS ==================================
+    
+    
 
-	/**
-	 * <div>
-	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
-	 * </div>
-	 */
-	public TypeProduitCuServiceIntegrationTest() {
-		super();
-	}
-
-	// *************************** METHODES *******************************/
-
-	// ---------------------- Creer(...) -------------------------------//
-	
-	
+    // ============================ creer =================================
+    
+    
 	
 	/**
 	 * <div>
@@ -511,13 +520,13 @@ public class TypeProduitCuServiceIntegrationTest {
 				.contains(TypeProduitICuService.MESSAGE_DOUBLON);
 		
 	} // __________________________________________________________________
+    
+    
+    
+    // ======================== RechercherTous ============================
 	
 	
-
-	// -------------------- Rechercher(...) -----------------------------//
-
-
-
+	
 	/**
 	 * <div>
 	 * <p>rechercherTous() : doit retourner une liste non nulle contenant les créations du test.</p>
@@ -657,9 +666,13 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 		
 	}// __________________________________________________________________
-	
-	
 
+	
+	
+	// ===================== rechercherTousString =========================
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>rechercherTousString() : doit retourner une liste non nulle contenant les libellés créés.</p>
@@ -777,9 +790,13 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
 	} // __________________________________________________________________
-	
-	
-	
+
+
+    
+    // ================== rechercherTousParPage ===========================
+    
+    
+
 	/**
 	 * <div>
 	 * <p>rechercherTousParPage(null) : violation de contrat.</p>
@@ -946,7 +963,11 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	} // __________________________________________________________________	
 	
-
+	
+	
+	// ========================= findByLibelle ============================
+	
+	
 	
 	/**
 	 * <div>
@@ -1047,9 +1068,13 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________
-	
-	
 
+	
+	
+	// ====================== findByLibelleRapide =========================
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>findByLibelleRapide(null) :
@@ -1208,8 +1233,12 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________	
-	
 
+	
+	
+	// ========================== findByDTO ===============================
+	
+	
 	
 	/**
 	 * <div>
@@ -1350,8 +1379,12 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________	
-	
 
+	
+	
+	// =========================== findById ===============================
+	
+	
 	
 	/**
 	 * <div>
@@ -1454,11 +1487,11 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________	
-	
 
 	
-	// ---------------------- update(...) -------------------------------//
-
+	
+	// ============================ update ================================
+	
 	
 	
 	/**
@@ -1634,11 +1667,11 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(relu.getTypeProduit()).isEqualTo(libelle);
 
 	} // __________________________________________________________________	
-	
 
 	
-	// ---------------------- delete(...) -------------------------------//
-
+	
+	// ============================ delete ================================
+	
 	
 	
 	/**
@@ -1801,10 +1834,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	} // __________________________________________________________________	
 
-
 	
-	// ------------------------- count() ---------------------------------//
-
+	
+	// ============================ count =================================
+	
 	
 	
 	/**
@@ -1907,10 +1940,10 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	} // __________________________________________________________________	
 
-
 	
-	// ----------------------- getMessage() ------------------------------//
-
+	
+	// ========================== getMessage ==============================
+	
 	
 	
 	/**

@@ -118,8 +118,12 @@ public class SousTypeProduitCuServiceMockTest {
 
 	
 	
-	// ============================ TESTS creer(...) =======================
+	// ***************************** TESTS *******************************/
 
+	
+	
+	// ============================ creer =================================
+	
 	
 	
 	/**
@@ -892,11 +896,11 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(envoye.getTypeProduit().getIdTypeProduit()).isEqualTo(1L);
 
 	} // __________________________________________________________________
-	
-	
-	
-	// ========================= TESTS rechercherTous() ====================
 
+	
+	
+	// ======================== rechercherTous ============================
+	
 	
 	
 	/**
@@ -1128,8 +1132,8 @@ public class SousTypeProduitCuServiceMockTest {
 
 	
 	
-	// ===================== TESTS rechercherTousString() ==================
-
+	// ===================== rechercherTousString =========================
+	
 	
 	
 	/**
@@ -1365,11 +1369,11 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________	
+
 	
 	
-
-	// ================== TESTS rechercherTousParPage(...) =================
-
+	// ===================== rechercherTousParPage ========================
+	
 	
 	
 	/**
@@ -1629,10 +1633,10 @@ public class SousTypeProduitCuServiceMockTest {
 
 	} // __________________________________________________________________	
 	
-
 	
-	// ======================= TESTS findByLibelle(...) ====================
-
+	
+	// ========================= findByLibelle ============================
+	
 	
 	
 	/**
@@ -1909,8 +1913,8 @@ public class SousTypeProduitCuServiceMockTest {
 
 	
 	
-	// ===================== TESTS findByLibelleRapide(...) =================
-
+	// ====================== findByLibelleRapide =========================
+	
 	
 	
 	/**
@@ -2262,7 +2266,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	
 	
-	// ===================== TESTS findAllByParent(...) ====================
+	// ======================= findAllByParent(...) =======================
 
 	
 	
@@ -2746,10 +2750,10 @@ public class SousTypeProduitCuServiceMockTest {
 		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
 
 	} // __________________________________________________________________	
-	
 
 	
-	// ========================== TESTS findByDTO(...) =====================
+	
+	// ========================== findByDTO ===============================
 	
 	
 	
@@ -3194,10 +3198,10 @@ public class SousTypeProduitCuServiceMockTest {
 		
 	} // __________________________________________________________________
 
-		
 	
-	// ======================== TESTS findById(...) ========================
-
+	
+	// =========================== findById ===============================
+	
 	
 	
 	/**
@@ -3424,8 +3428,8 @@ public class SousTypeProduitCuServiceMockTest {
 
 	
 	
-	// ========================= TESTS update(...) =========================
-
+	// ============================ update ================================
+	
 	
 	
 	/**
@@ -4362,11 +4366,11 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(captor.getValue().getTypeProduit().getIdTypeProduit()).isEqualTo(10L);
 
 	} // __________________________________________________________________	
-	
 
 	
-	// ========================= TESTS delete(...) =========================
-
+	
+	// ============================ delete ================================
+	
 	
 	
 	/**
@@ -5107,11 +5111,11 @@ public class SousTypeProduitCuServiceMockTest {
 		verify(gateway, times(1)).delete(cible);
 
 	} // __________________________________________________________________	
-	
 
 	
-	// ============================ TESTS count() ==========================
-
+	
+	// ============================ count =================================
+	
 	
 	
 	/**
@@ -5329,11 +5333,11 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
+
 	
 	
-
-	// ========================= TESTS getMessage() ========================
-
+	// ========================== getMessage ==============================
+	
 	
 	
 	/**

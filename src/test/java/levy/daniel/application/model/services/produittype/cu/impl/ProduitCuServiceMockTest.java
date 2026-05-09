@@ -113,8 +113,12 @@ public class ProduitCuServiceMockTest {
 
 	
 	
-	// ============================ TESTS creer(...) =======================
+	// ***************************** TESTS *******************************/
 
+	
+	
+	// ============================ creer =================================
+	
 	
 	
 	/**
@@ -449,10 +453,10 @@ public class ProduitCuServiceMockTest {
 		assertThat(produitPasseAuGateway.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(10L);
 		
 	} // __________________________________________________________________
+
 	
 	
-	
-	// ========================= TESTS rechercherTous() ====================
+	// ======================== rechercherTous ============================
 	
 	
 	
@@ -705,7 +709,10 @@ public class ProduitCuServiceMockTest {
 
 	
 	
-	// ===================== TESTS rechercherTousString() ==================
+	// ===================== rechercherTousString =========================
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>rechercherTousString() : résultats vides.</p>
@@ -802,10 +809,10 @@ public class ProduitCuServiceMockTest {
 		verify(service, times(1)).rechercherTous();
 
 	} // __________________________________________________________________
-	
-	
 
-	// ================== TESTS rechercherTousParPage(...) =================
+	
+	
+	// ===================== rechercherTousParPage ========================
 	
 	
 	
@@ -1069,9 +1076,9 @@ public class ProduitCuServiceMockTest {
 
 	} // __________________________________________________________________	
 	
-
 	
-	// ======================= TESTS findByLibelle(...) ====================
+	
+	// ========================= findByLibelle ============================
 	
 	
 	
@@ -1238,7 +1245,7 @@ public class ProduitCuServiceMockTest {
 
 	
 	
-	// ===================== TESTS findByLibelleRapide(...) =================
+	// ====================== findByLibelleRapide =========================
 	
 	
 	
@@ -1439,7 +1446,7 @@ public class ProduitCuServiceMockTest {
 	
 	
 	
-	// ===================== TESTS findAllByParent(...) ====================
+	// =========================== findAllByParent ========================
 	
 	
 	
@@ -1710,7 +1717,7 @@ public class ProduitCuServiceMockTest {
 
 	
 	
-	// ========================== TESTS findByDTO(...) =====================
+	// ========================== findByDTO ===============================
 	
 	
 	
@@ -1925,10 +1932,10 @@ public class ProduitCuServiceMockTest {
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 
 	} // __________________________________________________________________
-		
 
 	
-	// ======================== TESTS findById(...) ========================
+	
+	// =========================== findById ===============================
 	
 	
 	
@@ -2050,10 +2057,10 @@ public class ProduitCuServiceMockTest {
 		verifyNoInteractions(sousTypeGateway);
 
 	} // __________________________________________________________________
+
 	
 	
-	
-	// ========================= TESTS update(...) =========================
+	// ============================ update ================================
 	
 	
 	
@@ -2388,11 +2395,11 @@ public class ProduitCuServiceMockTest {
 		assertThat(passeAuGateway.getSousTypeProduit()).isSameAs(parentPersistant);
 
 	} // __________________________________________________________________
-	
 
 	
-	// ========================= TESTS delete(...) =========================
-
+	
+	// ============================ delete ================================
+	
 	
 	
 	/**
@@ -2924,10 +2931,10 @@ public class ProduitCuServiceMockTest {
 
 	} // __________________________________________________________________	
 
-
 	
-	// ============================ TESTS count() ==========================
-
+	
+	// ============================ count =================================
+	
 	
 	
 	/**
@@ -3146,10 +3153,10 @@ public class ProduitCuServiceMockTest {
 		verifyNoInteractions(sousTypeGateway);
 
 	} // __________________________________________________________________	
-	
 
 	
-	// ========================= TESTS getMessage() =======================
+	
+	// ========================== getMessage ==============================
 	
 	
 	
