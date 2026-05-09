@@ -1,3 +1,6 @@
+/* ********************************************************************* */
+/* ********************* TEST MOCKITO METIER UC ************************ */
+/* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.cu.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,3 +1,6 @@
+/* ********************************************************************* */
+/* ******************* TEST INTEGRATION GATEWAY JPA ******************** */
+/* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.gateway.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;

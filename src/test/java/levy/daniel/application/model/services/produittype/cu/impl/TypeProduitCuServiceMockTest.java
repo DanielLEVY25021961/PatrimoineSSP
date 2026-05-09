@@ -1,3 +1,6 @@
+/* ********************************************************************* */
+/* ********************* TEST MOCKITO METIER UC ************************ */
+/* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.cu.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,11 +43,57 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
 /**
  * <div>
  * <p style="font-weight:bold;">CLASSE TypeProduitCuServiceMockTest.java :</p>
- * <p>Tests JUnit Mockito complets (avec tests "béton") pour
- * {@link TypeProduitCuService}.</p>
- * <p>Vérifie l'implémentation des contrats du PORT
- * {@link TypeProduitICuService} et la délégation vers
- * {@link TypeProduitGatewayIService}.</p>
+ *
+ * <p>
+ * Tests unitaires JUnit 5 / Mockito du SERVICE METIER UC
+ * {@link TypeProduitCuService} pour l'objet métier {@link TypeProduit}.
+ * </p>
+ * </div>
+ *
+ * <div>
+ * <p>
+ * Cette classe vérifie que {@link TypeProduitCuService}, point d'entrée
+ * dans la logique métier dialoguant directement avec le controller appelant,
+ * respecte le contrat du PORT {@link TypeProduitICuService}.
+ * </p>
+ *
+ * <p>Elle contrôle notamment :</p>
+ * <ul>
+ * <li>les validations locales des paramètres et des DTO ;</li>
+ * <li>les messages utilisateur exposés par {@code getMessage()} ;</li>
+ * <li>les conversions entre {@link TypeProduitDTO.InputDTO},
+ * {@link TypeProduit} et {@link TypeProduitDTO.OutputDTO} ;</li>
+ * <li>les délégations attendues vers {@link TypeProduitGatewayIService} ;</li>
+ * <li>l'absence de délégation Gateway lorsque le SERVICE METIER UC
+ * bloque localement l'opération ;</li>
+ * <li>la propagation des exceptions techniques et la rationalisation
+ * des messages observables ;</li>
+ * <li>les cas d'erreur, les cas alternatifs et les cas nominaux
+ * de chaque méthode du PORT UC.</li>
+ * </ul>
+ * </div>
+ *
+ * <div>
+ * <p>
+ * Le {@link TypeProduitGatewayIService} est mocké : ces tests ne valident
+ * pas l'adaptateur de stockage, mais le comportement métier observable
+ * du SERVICE METIER UC et le contrat de délégation entre le SERVICE METIER UC
+ * et le PORT Gateway.
+ * </p>
+ * </div>
+ *
+ * <div>
+ * <p>Le formalisme attendu dans cette classe est le suivant :</p>
+ * <ul>
+ * <li>organisation par bloc de méthode du PORT UC ;</li>
+ * <li>ordre lisible : erreurs, cas alternatifs, puis nominal ;</li>
+ * <li>commentaires {@code ARRANGE}, {@code Configuration du Mock},
+ * {@code ACT} et {@code ASSERT} alignés avec le code immédiatement suivant ;</li>
+ * <li>reprise stricte des blocs déjà validés dans la classe,
+ * sans réinvention inutile ;</li>
+ * <li>vérifications Mockito explicites sur les interactions attendues
+ * ou interdites avec le Gateway.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
@@ -123,6 +172,21 @@ public class TypeProduitCuServiceMockTest {
 	 * "update"
 	 */
 	public static final String TAG_UPDATE = "update";
+	
+	/**
+	 * "delete"
+	 */
+	public static final String TAG_DELETE = "delete";
+	
+	/**
+	 * "count"
+	 */
+	public static final String TAG_COUNT = "count";
+	
+	/**
+	 * "getMessage"
+	 */
+	public static final String TAG_GET_MESSAGE = "getMessage";
 
 	/** "message gateway" */
 	public static final String MESSAGE_GATEWAY = "message gateway";
@@ -677,7 +741,7 @@ public class TypeProduitCuServiceMockTest {
 	 */
 	public static final String DISPLAY_NAME_UPDATE_LIBELLE_NULL
 			= "update(libellé null) : "
-					+ "ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
+					+ "ExceptionParametreBlank + MESSAGE_PARAM_BLANK"; // NOPMD by danyl on 09/05/2026 22:43
 	
 	/**
 	 * "update(blank) :
@@ -774,6 +838,166 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_UPDATE_NOMINAL
 			= "update(nominal) : "
 					+ "OutputDTO + MESSAGE_MODIF_OK";
+
+	/**
+	 * "delete(null) :
+	 * ExceptionParametreNull + MESSAGE_PARAM_NULL"
+	 */
+	public static final String DISPLAY_NAME_DELETE_NULL
+			= "delete(null) : "
+					+ "ExceptionParametreNull + MESSAGE_PARAM_NULL";
+	
+	/**
+	 * "delete(libellé null) :
+	 * ExceptionParametreBlank + MESSAGE_PARAM_BLANK"
+	 */
+	public static final String DISPLAY_NAME_DELETE_LIBELLE_NULL
+			= "delete(libellé null) : "
+					+ "ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
+	
+	/**
+	 * "delete(blank) :
+	 * ExceptionParametreBlank + MESSAGE_PARAM_BLANK"
+	 */
+	public static final String DISPLAY_NAME_DELETE_BLANK
+			= "delete(blank) : "
+					+ "ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
+	
+	/**
+	 * "delete(recherche KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_DELETE_RECHERCHE_KO_AVEC_MESSAGE
+			= "delete(recherche KO avec message) : "
+					+ "exception propagée + message rationalisé";
+	
+	/**
+	 * "delete(recherche KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_DELETE_RECHERCHE_KO_SANS_MESSAGE
+			= "delete(recherche KO sans message) : "
+					+ "fallback MSG_ERREUR_NON_SPECIFIEE";
+	
+	/**
+	 * "delete(introuvable) :
+	 * MESSAGE_OBJ_INTROUVABLE + aucune destruction"
+	 */
+	public static final String DISPLAY_NAME_DELETE_INTROUVABLE
+			= "delete(introuvable) : "
+					+ "MESSAGE_OBJ_INTROUVABLE + aucune destruction";
+	
+	/**
+	 * "delete(non persistant) :
+	 * ExceptionNonPersistant + MESSAGE_OBJ_NON_PERSISTE"
+	 */
+	public static final String DISPLAY_NAME_DELETE_NON_PERSISTANT
+			= "delete(non persistant) : "
+					+ "ExceptionNonPersistant + MESSAGE_OBJ_NON_PERSISTE";
+	
+	/**
+	 * "delete(destruction KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_DELETE_DESTRUCTION_KO_AVEC_MESSAGE
+			= "delete(destruction KO avec message) : "
+					+ "exception propagée + message rationalisé";
+	
+	/**
+	 * "delete(destruction KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_DELETE_DESTRUCTION_KO_SANS_MESSAGE
+			= "delete(destruction KO sans message) : "
+					+ "fallback MSG_ERREUR_NON_SPECIFIEE";
+	
+	/**
+	 * "delete(nominal) :
+	 * MESSAGE_DELETE_OK + destruction déléguée"
+	 */
+	public static final String DISPLAY_NAME_DELETE_NOMINAL
+			= "delete(nominal) : "
+					+ "MESSAGE_DELETE_OK + destruction déléguée";
+	
+	/**
+	 * "count(gateway KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_COUNT_GATEWAY_KO_AVEC_MESSAGE
+			= "count(gateway KO avec message) : "
+					+ "exception propagée + message rationalisé";
+	
+	/**
+	 * "count(gateway KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_COUNT_GATEWAY_KO_SANS_MESSAGE
+			= "count(gateway KO sans message) : "
+					+ "fallback MSG_ERREUR_NON_SPECIFIEE";
+	
+	/**
+	 * "count(retour négatif) :
+	 * IllegalStateException + message technique explicite"
+	 */
+	public static final String DISPLAY_NAME_COUNT_RETOUR_NEGATIF
+			= "count(retour négatif) : "
+					+ "IllegalStateException + message technique explicite";
+	
+	/**
+	 * "count(0) :
+	 * 0 + MESSAGE_RECHERCHE_VIDE"
+	 */
+	public static final String DISPLAY_NAME_COUNT_ZERO
+			= "count(0) : "
+					+ "0 + MESSAGE_RECHERCHE_VIDE";
+	
+	/**
+	 * "count(nominal) :
+	 * comptage exact + MESSAGE_RECHERCHE_OK"
+	 */
+	public static final String DISPLAY_NAME_COUNT_NOMINAL
+			= "count(nominal) : "
+					+ "comptage exact + MESSAGE_RECHERCHE_OK";
+
+	/**
+	 * "getMessage(initial) :
+	 * null + aucune interaction Gateway"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_INITIAL_NULL
+			= "getMessage(initial) : "
+					+ "null + aucune interaction Gateway";
+	
+	/**
+	 * "getMessage(après erreur locale) :
+	 * MESSAGE_CREER_NULL"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE
+			= "getMessage(après erreur locale) : "
+					+ "MESSAGE_CREER_NULL";
+	
+	/**
+	 * "getMessage(après count 0) :
+	 * MESSAGE_RECHERCHE_VIDE"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_ZERO
+			= "getMessage(après count 0) : "
+					+ "MESSAGE_RECHERCHE_VIDE";
+	
+	/**
+	 * "getMessage(après count nominal) :
+	 * MESSAGE_RECHERCHE_OK"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_NOMINAL
+			= "getMessage(après count nominal) : "
+					+ "MESSAGE_RECHERCHE_OK";
+	
+	/**
+	 * "getMessage(dernier message gagne) :
+	 * le message le plus récent écrase le précédent"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_DERNIER_MESSAGE_GAGNE
+			= "getMessage(dernier message gagne) : "
+					+ "le message le plus récent écrase le précédent";
 	
 
 	// ************************* CONSTRUCTEURS *****************************/
@@ -5451,9 +5675,15 @@ public class TypeProduitCuServiceMockTest {
 				.isInstanceOf(ExceptionParametreNull.class)
 				.hasMessage(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
+		/* Garantit que le message observable côté controller appelant
+		 * est exactement le message contractuel MESSAGE_PARAM_NULL.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
+		/* Garantit que le refus du DTO null est traité localement
+		 * par le SERVICE METIER UC avant toute délégation.
+		 */
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
@@ -5482,6 +5712,9 @@ public class TypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare un DTO non null dont le libellé métier est null.
+		 *
+		 * Ce cas doit être bloqué par le SERVICE METIER UC
+		 * avant toute délégation au Gateway.
 		 */
 		final InputDTO dto = new TypeProduitDTO.InputDTO(null);
 		
@@ -5504,9 +5737,15 @@ public class TypeProduitCuServiceMockTest {
 				.isInstanceOf(ExceptionParametreBlank.class)
 				.hasMessage(TypeProduitICuService.MESSAGE_PARAM_BLANK);
 
+		/* Garantit que le message observable côté controller appelant
+		 * est exactement le message contractuel MESSAGE_PARAM_BLANK.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
 
+		/* Garantit que le refus du libellé null est traité localement
+		 * par le SERVICE METIER UC avant toute délégation.
+		 */
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
@@ -5535,6 +5774,9 @@ public class TypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare un DTO dont le libellé métier est blank.
+		 *
+		 * Ce cas doit être bloqué par le SERVICE METIER UC
+		 * avant toute délégation au Gateway.
 		 */
 		final InputDTO dto = new TypeProduitDTO.InputDTO(ESPACES);
 		
@@ -5557,9 +5799,15 @@ public class TypeProduitCuServiceMockTest {
 				.isInstanceOf(ExceptionParametreBlank.class)
 				.hasMessage(TypeProduitICuService.MESSAGE_PARAM_BLANK);
 
+		/* Garantit que le message observable côté controller appelant
+		 * est exactement le message contractuel MESSAGE_PARAM_BLANK.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
 
+		/* Garantit que le refus du libellé blank est traité localement
+		 * par le SERVICE METIER UC avant toute délégation.
+		 */
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
@@ -5588,6 +5836,9 @@ public class TypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare un DTO valide pour atteindre la recherche exacte.
+		 *
+		 * Cette recherche préalable est nécessaire car l'InputDTO
+		 * ne porte pas l'identifiant persistant de l'objet à modifier.
 		 */
 		final String libelle = TOURISME;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
@@ -5617,12 +5868,19 @@ public class TypeProduitCuServiceMockTest {
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + LECTURE_TECHNIQUE_KO.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
+		/* Garantit que la panne intervient bien sur la recherche exacte
+		 * et bloque toute délégation de modification.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).update(any(TypeProduit.class));
 
@@ -5652,6 +5910,9 @@ public class TypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare un DTO valide pour atteindre la recherche exacte.
+		 *
+		 * Cette recherche préalable est nécessaire car l'InputDTO
+		 * ne porte pas l'identifiant persistant de l'objet à modifier.
 		 */
 		final String libelle = OUTILLAGE;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
@@ -5680,12 +5941,19 @@ public class TypeProduitCuServiceMockTest {
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
+		/* Garantit que la panne intervient bien sur la recherche exacte
+		 * et bloque toute délégation de modification.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).update(any(TypeProduit.class));
 
@@ -5745,10 +6013,16 @@ public class TypeProduitCuServiceMockTest {
 		final String message = service.getMessage();
 
 		/* ASSERT */
+		/* Garantit que l'objet absent du stockage :
+		 * - retourne null côté controller appelant ;
+		 * - positionne MESSAGE_OBJ_INTROUVABLE + libellé ;
+		 * - ne déclenche aucune modification Gateway.
+		 */
 		assertThat(retour).isNull();
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelle);
 
+		/* Garantit que seule la recherche exacte préalable a été déléguée. */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).update(any(TypeProduit.class));
 
@@ -5778,7 +6052,8 @@ public class TypeProduitCuServiceMockTest {
 	public void testUpdateNonPersistant() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un objet métier retrouvé mais non persistant.
+		 * prépare un DTO valide et un objet métier retrouvé
+		 * mais non persistant.
 		 */
 		final String libelle = TOURISME;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
@@ -5803,13 +6078,24 @@ public class TypeProduitCuServiceMockTest {
 		when(gateway.findByLibelle(libelle)).thenReturn(existant);
 
 		/* ACT - ASSERT */
+		/* Garantit que service.update(dto) :
+		 * - jette ExceptionNonPersistant ;
+		 * - émet MESSAGE_OBJ_NON_PERSISTE + libellé ;
+		 * - ne sollicite jamais gateway.update(...).
+		 */
 		assertThatThrownBy(() -> service.update(dto))
 				.isInstanceOf(ExceptionNonPersistant.class)
 				.hasMessage(TypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE + libelle);
 
+		/* Garantit que le message observable côté controller appelant
+		 * explique précisément l'objet non persistant refusé.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE + libelle);
 
+		/* Garantit que la modification n'est jamais déléguée
+		 * après détection de l'objet existant non persistant.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).update(any(TypeProduit.class));
 
@@ -5839,7 +6125,8 @@ public class TypeProduitCuServiceMockTest {
 	public void testUpdateModificationKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un objet métier persistant retrouvé avant modification.
+		 * prépare un DTO valide et un objet métier persistant retrouvé
+		 * avant modification.
 		 */
 		final String libelle = BAZAR;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
@@ -5879,9 +6166,14 @@ public class TypeProduitCuServiceMockTest {
 				= ArgumentCaptor.forClass(TypeProduit.class);
 
 		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * MESSAGE_MODIF_KO + libellé + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.MESSAGE_MODIF_KO
@@ -5889,9 +6181,17 @@ public class TypeProduitCuServiceMockTest {
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis tentative de modification.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, times(1)).update(captor.capture());
 
+		/* Garantit que l'objet métier envoyé à gateway.update(...) :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant récupéré par la recherche ;
+		 * - porte le libellé métier issu de l'InputDTO.
+		 */
 		assertThat(captor.getValue()).isNotNull();
 		assertThat(captor.getValue().getIdTypeProduit()).isEqualTo(41L);
 		assertThat(captor.getValue().getTypeProduit()).isEqualTo(libelle);
@@ -5923,7 +6223,8 @@ public class TypeProduitCuServiceMockTest {
 	public void testUpdateModificationKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un objet métier persistant retrouvé avant modification.
+		 * prépare un DTO valide et un objet métier persistant retrouvé
+		 * avant modification.
 		 */
 		final String libelle = OUTILLAGE;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
@@ -5962,9 +6263,14 @@ public class TypeProduitCuServiceMockTest {
 				= ArgumentCaptor.forClass(TypeProduit.class);
 
 		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.MESSAGE_MODIF_KO
@@ -5972,9 +6278,17 @@ public class TypeProduitCuServiceMockTest {
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis tentative de modification.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, times(1)).update(captor.capture());
 
+		/* Garantit que l'objet métier envoyé à gateway.update(...) :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant récupéré par la recherche ;
+		 * - porte le libellé métier issu de l'InputDTO.
+		 */
 		assertThat(captor.getValue()).isNotNull();
 		assertThat(captor.getValue().getIdTypeProduit()).isEqualTo(42L);
 		assertThat(captor.getValue().getTypeProduit()).isEqualTo(libelle);
@@ -6005,7 +6319,8 @@ public class TypeProduitCuServiceMockTest {
 	public void testUpdateModificationRetourNull() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un objet métier persistant retrouvé avant modification.
+		 * prépare un DTO valide et un objet métier persistant retrouvé
+		 * avant modification.
 		 */
 		final String libelle = OUTILLAGE;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
@@ -6048,13 +6363,26 @@ public class TypeProduitCuServiceMockTest {
 		final String message = service.getMessage();
 
 		/* ASSERT */
+		/* Garantit qu'une réponse technique null du Gateway :
+		 * - retourne null côté controller appelant ;
+		 * - positionne MESSAGE_MODIF_KO + libellé ;
+		 * - ne tente aucune conversion finale en OutputDTO.
+		 */
 		assertThat(retour).isNull();
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_MODIF_KO + libelle);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis tentative de modification.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, times(1)).update(captor.capture());
 
+		/* Garantit que l'objet métier envoyé à gateway.update(...) :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant récupéré par la recherche ;
+		 * - porte le libellé métier issu de l'InputDTO.
+		 */
 		assertThat(captor.getValue()).isNotNull();
 		assertThat(captor.getValue().getIdTypeProduit()).isEqualTo(10L);
 		assertThat(captor.getValue().getTypeProduit()).isEqualTo(libelle);
@@ -6086,8 +6414,8 @@ public class TypeProduitCuServiceMockTest {
 	public void testUpdateModificationRetourNonPersistant() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un objet métier persistant retrouvé avant modification
-		 * et un objet modifié redevenu non persistant.
+		 * prépare un DTO valide, un objet métier persistant retrouvé
+		 * avant modification, et un objet modifié redevenu non persistant.
 		 */
 		final String libelle = TOURISME;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
@@ -6127,16 +6455,32 @@ public class TypeProduitCuServiceMockTest {
 				= ArgumentCaptor.forClass(TypeProduit.class);
 
 		/* ACT - ASSERT */
+		/* Garantit que service.update(dto) :
+		 * - jette IllegalStateException ;
+		 * - émet MESSAGE_OBJ_NON_PERSISTE + libellé ;
+		 * - refuse une réponse Gateway redevenue non persistante.
+		 */
 		assertThatThrownBy(() -> service.update(dto))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage(TypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE + libelle);
 
+		/* Garantit que le message observable côté controller appelant
+		 * explique précisément le retour modifié non persistant.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE + libelle);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis tentative de modification.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, times(1)).update(captor.capture());
 
+		/* Garantit que l'objet métier envoyé à gateway.update(...) :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant récupéré par la recherche ;
+		 * - porte le libellé métier issu de l'InputDTO.
+		 */
 		assertThat(captor.getValue()).isNotNull();
 		assertThat(captor.getValue().getIdTypeProduit()).isEqualTo(77L);
 		assertThat(captor.getValue().getTypeProduit()).isEqualTo(libelle);
@@ -6168,7 +6512,8 @@ public class TypeProduitCuServiceMockTest {
 	public void testUpdateConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un objet modifié mocké dont l'accès aux enfants
+		 * prépare un DTO valide, un objet métier persistant retrouvé,
+		 * et un objet modifié mocké dont l'accès aux enfants
 		 * provoque une panne pendant la conversion en OutputDTO.
 		 */
 		final String libelle = BAZAR;
@@ -6225,9 +6570,14 @@ public class TypeProduitCuServiceMockTest {
 				= ArgumentCaptor.forClass(TypeProduit.class);
 
 		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé pour l'échec de conversion :
+		 * MESSAGE_MODIF_KO + libellé + TIRET_ESPACE + MESSAGE_GATEWAY_BIS.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.MESSAGE_MODIF_KO
@@ -6235,9 +6585,18 @@ public class TypeProduitCuServiceMockTest {
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis modification Gateway,
+		 * avant l'échec de conversion côté UC.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, times(1)).update(captor.capture());
 
+		/* Garantit que l'objet métier envoyé à gateway.update(...) :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant récupéré par la recherche ;
+		 * - porte le libellé métier issu de l'InputDTO.
+		 */
 		assertThat(captor.getValue()).isNotNull();
 		assertThat(captor.getValue().getIdTypeProduit()).isEqualTo(51L);
 		assertThat(captor.getValue().getTypeProduit()).isEqualTo(libelle);
@@ -6270,7 +6629,8 @@ public class TypeProduitCuServiceMockTest {
 	public void testUpdateConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un objet modifié mocké dont l'accès aux enfants
+		 * prépare un DTO valide, un objet métier persistant retrouvé,
+		 * et un objet modifié mocké dont l'accès aux enfants
 		 * provoque une panne sans message pendant la conversion en OutputDTO.
 		 */
 		final String libelle = TOURISME;
@@ -6327,9 +6687,14 @@ public class TypeProduitCuServiceMockTest {
 				= ArgumentCaptor.forClass(TypeProduit.class);
 
 		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null en cas d'échec de conversion
+		 * sans message technique.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.MESSAGE_MODIF_KO
@@ -6337,9 +6702,18 @@ public class TypeProduitCuServiceMockTest {
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis modification Gateway,
+		 * avant l'échec de conversion côté UC.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, times(1)).update(captor.capture());
 
+		/* Garantit que l'objet métier envoyé à gateway.update(...) :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant récupéré par la recherche ;
+		 * - porte le libellé métier issu de l'InputDTO.
+		 */
 		assertThat(captor.getValue()).isNotNull();
 		assertThat(captor.getValue().getIdTypeProduit()).isEqualTo(52L);
 		assertThat(captor.getValue().getTypeProduit()).isEqualTo(libelle);
@@ -6420,15 +6794,29 @@ public class TypeProduitCuServiceMockTest {
 		final String message = service.getMessage();
 
 		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant de l'objet modifié ;
+		 * - porte le libellé métier ;
+		 * - expose le message utilisateur de succès.
+		 */
 		assertThat(retour).isNotNull();
 		assertThat(retour.getIdTypeProduit()).isEqualTo(5L);
 		assertThat(retour.getTypeProduit()).isEqualTo(libelle);
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_MODIF_OK + libelle);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis modification Gateway.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, times(1)).update(captor.capture());
 
+		/* Garantit que l'objet métier envoyé à gateway.update(...) :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant récupéré par la recherche ;
+		 * - porte le libellé métier issu de l'InputDTO.
+		 */
 		assertThat(captor.getValue()).isNotNull();
 		assertThat(captor.getValue().getIdTypeProduit()).isEqualTo(5L);
 		assertThat(captor.getValue().getTypeProduit()).isEqualTo(libelle);
@@ -6436,398 +6824,713 @@ public class TypeProduitCuServiceMockTest {
 	} // __________________________________________________________________
 
 	
-			
+						
 	// ============================ delete ================================
 	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(null) : violation de contrat.</p>
+	 * <p>garantit que delete(null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionParametreNull}</li>
+	 * <li>refuse un DTO de destruction {@code null} ;</li>
+	 * <li>lève une {@link ExceptionParametreNull} ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'interagit jamais avec le Gateway</li>
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_NULL} ;</li>
+	 * <li>n'interagit jamais avec le Gateway.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(null) : ExceptionParametreNull + message MESSAGE_PARAM_NULL + aucune interaction gateway")
-	public void testDeleteNull() {
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NULL)
+	public void testDeleteNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * Mocke un service Gateway et le passe
+		 * à un service UC instancié dans le test.
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que service.delete(null) :
+		 * - jette ExceptionParametreNull ;
+		 * - émet MESSAGE_PARAM_NULL ;
+		 * - ne sollicite jamais le Gateway.
+		 */
 		assertThatThrownBy(() -> service.delete(null))
-				.isInstanceOf(ExceptionParametreNull.class);
+				.isInstanceOf(ExceptionParametreNull.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
+		/* Garantit que le message observable côté controller appelant
+		 * est exactement le message contractuel MESSAGE_PARAM_NULL.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_NULL);
 
+		/* Garantit que le refus du DTO null est traité localement
+		 * par le SERVICE METIER UC avant toute délégation.
+		 */
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(blank) : violation de contrat.</p>
+	 * <p>garantit que delete(libellé null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionParametreBlank}</li>
+	 * <li>lit le libellé porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce libellé {@code null} ;</li>
+	 * <li>lève une {@link ExceptionParametreBlank} ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
-	 * <li>n'interagit jamais avec le Gateway</li>
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit jamais avec le Gateway.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(blank) : ExceptionParametreBlank + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
-	public void testDeleteBlank() {
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_LIBELLE_NULL)
+	public void testDeleteLibelleNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-		final InputDTO dto = new TypeProduitDTO.InputDTO(ESPACES);
+		/* ARRANGE :
+		 * prépare un DTO non null dont le libellé métier est null.
+		 *
+		 * Ce cas doit être bloqué par le SERVICE METIER UC
+		 * avant toute délégation au Gateway.
+		 */
+		final InputDTO dto = new TypeProduitDTO.InputDTO(null);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que service.delete(dto) :
+		 * - jette ExceptionParametreBlank ;
+		 * - émet MESSAGE_PARAM_BLANK ;
+		 * - ne sollicite jamais le Gateway.
+		 */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionParametreBlank.class);
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_PARAM_BLANK);
 
+		/* Garantit que le message observable côté controller appelant
+		 * est exactement le message contractuel MESSAGE_PARAM_BLANK.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
 
+		/* Garantit que le refus du libellé null est traité localement
+		 * par le SERVICE METIER UC avant toute délégation.
+		 */
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(recherche KO technique avec message) :
-	 * panne technique pendant la ré-identification
-	 * par libellé exact.</p>
+	 * <p>garantit que delete(blank) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>rationalise le message utilisateur
-	 * avec {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * <li>lit le libellé porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce libellé blank ;</li>
+	 * <li>lève une {@link ExceptionParametreBlank} ;</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit jamais avec le Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(recherche KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE")
-	public void testDeleteRechercheTechniqueKoAvecMessage() throws Exception {
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_BLANK)
+	public void testDeleteBlank() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un DTO dont le libellé métier est blank.
+		 *
+		 * Ce cas doit être bloqué par le SERVICE METIER UC
+		 * avant toute délégation au Gateway.
+		 */
+		final InputDTO dto = new TypeProduitDTO.InputDTO(ESPACES);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
+
+		/* ACT - ASSERT */
+		/* Garantit que service.delete(dto) :
+		 * - jette ExceptionParametreBlank ;
+		 * - émet MESSAGE_PARAM_BLANK ;
+		 * - ne sollicite jamais le Gateway.
+		 */
+		assertThatThrownBy(() -> service.delete(dto))
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+		/* Garantit que le message observable côté controller appelant
+		 * est exactement le message contractuel MESSAGE_PARAM_BLANK.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+		/* Garantit que le refus du libellé blank est traité localement
+		 * par le SERVICE METIER UC avant toute délégation.
+		 */
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que delete(recherche KO avec message) :</p>
+	 * <ul>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception technique levée pendant la recherche ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>ne tente jamais {@code gateway.delete(...)}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_KO_AVEC_MESSAGE)
+	public void testDeleteRechercheKOAvecMessage() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre la recherche exacte.
+		 *
+		 * Cette recherche préalable est nécessaire car l'InputDTO
+		 * ne porte pas l'identifiant persistant de l'objet à détruire.
+		 */
 		final String libelle = TOURISME;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(LECTURE_TECHNIQUE_KO);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(LECTURE_TECHNIQUE_KO);
+
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique au moment où le service
+		 * recherche l'objet existant à détruire par libellé exact.
+		 * La destruction ne doit donc jamais être tentée.
+		 */
 		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + LECTURE_TECHNIQUE_KO.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ TypeProduitICuService.TIRET_ESPACE
-								+ LECTURE_TECHNIQUE_KO);
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ LECTURE_TECHNIQUE_KO);
 
+		/* Garantit que la panne intervient bien sur la recherche exacte
+		 * et bloque toute délégation de destruction.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).delete(any(TypeProduit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(recherche KO technique sans message) :
-	 * panne technique sans message pendant
-	 * la ré-identification par libellé exact.</p>
+	 * <p>garantit que delete(recherche KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception technique sans message levée pendant la recherche ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>ne tente jamais {@code gateway.delete(...)}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(recherche KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testDeleteRechercheTechniqueKoSansMessage() throws Exception {
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_KO_SANS_MESSAGE)
+	public void testDeleteRechercheKOSansMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre la recherche exacte.
+		 *
+		 * Cette recherche préalable est nécessaire car l'InputDTO
+		 * ne porte pas l'identifiant persistant de l'objet à détruire.
+		 */
 		final String libelle = OUTILLAGE;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
+
 		final IllegalStateException panneTechnique = new IllegalStateException();
 
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message au moment où le service
+		 * recherche l'objet existant à détruire par libellé exact.
+		 * Le test vérifie le fallback MSG_ERREUR_NON_SPECIFIEE.
+		 */
 		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ TypeProduitICuService.TIRET_ESPACE
-								+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
+		/* Garantit que la panne intervient bien sur la recherche exacte
+		 * et bloque toute délégation de destruction.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).delete(any(TypeProduit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(introuvable) : aucun objet persistant
-	 * ne correspond au libellé exact.</p>
+	 * <p>garantit que delete(introuvable) :</p>
 	 * <ul>
-	 * <li>ne jette aucune exception</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>détecte qu'aucun objet métier persistant ne correspond
+	 * au libellé exact ;</li>
+	 * <li>ne jette aucune exception ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}
+	 * + libellé ;</li>
+	 * <li>ne tente jamais {@code gateway.delete(...)}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(introuvable) : aucune exception + message MESSAGE_OBJ_INTROUVABLE + libellé + gateway.delete jamais appelé")
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_INTROUVABLE)
 	public void testDeleteIntrouvable() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un DTO valide absent du stockage selon le Gateway mocké.
+		 */
 		final String libelle = VETEMENT;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
+		/*
+		 * Configuration du Mock :
+		 * la recherche préalable retourne null.
+		 * Le service doit donc considérer l'objet comme introuvable
+		 * et ne jamais appeler gateway.delete(...).
+		 */
 		when(gateway.findByLibelle(libelle)).thenReturn(null);
 
-		// ===================== ACT =====================
+		/* ACT :
+		 * exécute la destruction via le SERVICE METIER UC.
+		 */
 		service.delete(dto);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		/* ASSERT */
+		/* Garantit que l'objet absent du stockage :
+		 * - ne déclenche aucune exception ;
+		 * - positionne MESSAGE_OBJ_INTROUVABLE + libellé ;
+		 * - ne déclenche aucune destruction Gateway.
+		 */
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelle);
 
+		/* Garantit que seule la recherche exacte préalable a été déléguée. */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).delete(any(TypeProduit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(non persistant) : l'objet ré-identifié existe
-	 * mais ne porte pas d'identifiant persistant.</p>
+	 * <p>garantit que delete(non persistant) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionNonPersistant}</li>
+	 * <li>retrouve un objet métier par libellé exact ;</li>
+	 * <li>détecte que cet objet ne porte pas d'identifiant persistant ;</li>
+	 * <li>lève une {@link ExceptionNonPersistant} ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_OBJ_NON_PERSISTE} + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * {@link TypeProduitICuService#MESSAGE_OBJ_NON_PERSISTE}
+	 * + libellé ;</li>
+	 * <li>ne tente jamais {@code gateway.delete(...)}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(non persisté) : ExceptionNonPersistant + message MESSAGE_OBJ_NON_PERSISTE + libellé")
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NON_PERSISTANT)
 	public void testDeleteNonPersistant() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un DTO valide et un objet métier retrouvé
+		 * mais non persistant.
+		 */
 		final String libelle = TOURISME;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
 		final TypeProduit existant = new TypeProduit(libelle);
-
 		existant.setIdTypeProduit(null);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
+		/*
+		 * Configuration du Mock :
+		 * la recherche préalable retourne un objet métier sans ID.
+		 * Le service doit refuser la destruction, car le contrat impose
+		 * de détruire uniquement un objet déjà persistant.
+		 */
 		when(gateway.findByLibelle(libelle)).thenReturn(existant);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que service.delete(dto) :
+		 * - jette ExceptionNonPersistant ;
+		 * - émet MESSAGE_OBJ_NON_PERSISTE + libellé ;
+		 * - ne sollicite jamais gateway.delete(...).
+		 */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionNonPersistant.class);
+				.isInstanceOf(ExceptionNonPersistant.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE + libelle);
 
+		/* Garantit que le message observable côté controller appelant
+		 * explique précisément l'objet non persistant refusé.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE + libelle);
 
+		/* Garantit que la destruction n'est jamais déléguée
+		 * après détection de l'objet existant non persistant.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		verify(gateway, never()).delete(any(TypeProduit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(KO technique de suppression avec message) :
-	 * le Gateway échoue pendant la destruction.</p>
+	 * <p>garantit que delete(destruction KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_DELETE_KO} + libellé
-	 * + tiret + message technique</li>
-	 * <li>délègue bien la destruction sur l'objet persistant retrouvé</li>
+	 * <li>ré-identifie l'objet persistant par libellé exact ;</li>
+	 * <li>vérifie que cet objet porte un identifiant persistant ;</li>
+	 * <li>atteint l'appel {@code gateway.delete(...)} ;</li>
+	 * <li>propage l'exception technique levée pendant la destruction ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link TypeProduitICuService#MESSAGE_DELETE_KO}
+	 * + libellé + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(KO technique avec message) : exception relancée + message MESSAGE_DELETE_KO + détail technique")
-	public void testDeleteTechniqueKoAvecMessage() throws Exception {
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KO_AVEC_MESSAGE)
+	public void testDeleteDestructionKOAvecMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-		final String libelle = OUTILLAGE;
-		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
-		final TypeProduit tp = new TypeProduit(libelle);
-
-		tp.setIdTypeProduit(20L);
-
-		when(gateway.findByLibelle(libelle)).thenReturn(tp);
-
-		final Exception ex = new Exception(MESSAGE_GATEWAY);
-		doThrow(ex).when(gateway).delete(tp);
-
-		// ===================== ACT & ASSERT =====================
-		assertThatThrownBy(() -> service.delete(dto))
-				.isSameAs(ex);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						TypeProduitICuService.MESSAGE_DELETE_KO
-								+ libelle
-								+ TypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
-
-		verify(gateway, times(1)).findByLibelle(libelle);
-		verify(gateway, times(1)).delete(tp);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>delete(KO technique de suppression sans message) :
-	 * le Gateway échoue sans message pendant la destruction.</p>
-	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>délègue bien la destruction sur l'objet persistant retrouvé</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("delete(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testDeleteTechniqueKoSansMessage() throws Exception {
-
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un DTO valide et un objet métier persistant retrouvé
+		 * avant destruction.
+		 */
 		final String libelle = BAZAR;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
-		final TypeProduit tp = new TypeProduit(libelle);
+		
+		final TypeProduit existant = new TypeProduit(libelle);
+		existant.setIdTypeProduit(41L);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		tp.setIdTypeProduit(21L);
+		final Exception panneTechnique = new Exception(MESSAGE_GATEWAY);
 
-		when(gateway.findByLibelle(libelle)).thenReturn(tp);
+		/*
+		 * Configuration du Mock :
+		 * la recherche préalable retourne l'objet persistant existant.
+		 * Cet objet doit être transmis tel quel à gateway.delete(...),
+		 * car la destruction porte sur l'objet réellement retrouvé.
+		 */
+		when(gateway.findByLibelle(libelle)).thenReturn(existant);
+		
+		/*
+		 * Configuration du Mock :
+		 * gateway.delete(existant) jette une exception avec message.
+		 * Le test vérifie que le service propage cette exception
+		 * et construit MESSAGE_DELETE_KO + libellé + message technique.
+		 */
+		doThrow(panneTechnique).when(gateway).delete(existant);
 
-		final Exception ex = new Exception();
-		doThrow(ex).when(gateway).delete(tp);
-
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isSameAs(ex);
+				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * MESSAGE_DELETE_KO + libellé + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.MESSAGE_DELETE_KO
-								+ libelle
-								+ TypeProduitICuService.TIRET_ESPACE
-								+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ libelle
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis tentative de destruction.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
-		verify(gateway, times(1)).delete(tp);
+		verify(gateway, times(1)).delete(existant);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>delete(ok) : succès nominal complet.</p>
+	 * <p>garantit que delete(destruction KO sans message) :</p>
 	 * <ul>
-	 * <li>délègue la destruction sur l'objet persistant retrouvé</li>
-	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
+	 * <li>ré-identifie l'objet persistant par libellé exact ;</li>
+	 * <li>vérifie que cet objet porte un identifiant persistant ;</li>
+	 * <li>atteint l'appel {@code gateway.delete(...)} ;</li>
+	 * <li>propage l'exception technique sans message levée pendant la destruction ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link TypeProduitICuService#MESSAGE_DELETE_KO}
+	 * + libellé + tiret
+	 * + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(ok) : gateway.delete appelé + message MESSAGE_DELETE_OK + libellé")
-	public void testDeleteOk() throws Exception {
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KO_SANS_MESSAGE)
+	public void testDeleteDestructionKOSansMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un DTO valide et un objet métier persistant retrouvé
+		 * avant destruction.
+		 */
+		final String libelle = OUTILLAGE;
+		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
+		
+		final TypeProduit existant = new TypeProduit(libelle);
+		existant.setIdTypeProduit(42L);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
+
+		final Exception panneTechnique = new Exception();
+
+		/*
+		 * Configuration du Mock :
+		 * la recherche préalable retourne l'objet persistant existant.
+		 * Cet objet doit être transmis tel quel à gateway.delete(...),
+		 * car la destruction porte sur l'objet réellement retrouvé.
+		 */
+		when(gateway.findByLibelle(libelle)).thenReturn(existant);
+		
+		/*
+		 * Configuration du Mock :
+		 * gateway.delete(existant) jette une exception sans message.
+		 * Le test vérifie le fallback MSG_ERREUR_NON_SPECIFIEE
+		 * dans le message utilisateur de destruction KO.
+		 */
+		doThrow(panneTechnique).when(gateway).delete(existant);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.delete(dto))
+				.isSameAs(panneTechnique);
+
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.MESSAGE_DELETE_KO
+						+ libelle
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis tentative de destruction.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
+		verify(gateway, times(1)).delete(existant);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que delete(OK) :</p>
+	 * <ul>
+	 * <li>ré-identifie l'objet persistant par libellé exact ;</li>
+	 * <li>vérifie que cet objet porte un identifiant persistant ;</li>
+	 * <li>délègue la destruction à {@code gateway.delete(...)} ;</li>
+	 * <li>ne retourne aucune valeur ;</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_DELETE_OK}
+	 * + libellé seulement après destruction effective.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NOMINAL)
+	public void testDeleteNominal() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide et un objet métier persistant retrouvé
+		 * avant délégation nominale de la destruction au Gateway.
+		 */
 		final String libelle = TOURISME;
 		final InputDTO dto = new TypeProduitDTO.InputDTO(libelle);
-		final TypeProduit tp = new TypeProduit(libelle);
 
-		tp.setIdTypeProduit(15L);
+		final TypeProduit existant = new TypeProduit(libelle);
+		existant.setIdTypeProduit(15L);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		when(gateway.findByLibelle(libelle)).thenReturn(tp);
+		/*
+		 * Configuration du Mock :
+		 * la recherche préalable retourne l'objet persistant existant.
+		 * Le service doit ensuite déléguer sa destruction à gateway.delete(...)
+		 * puis positionner MESSAGE_DELETE_OK + libellé.
+		 */
+		when(gateway.findByLibelle(libelle)).thenReturn(existant);
 
-		// ===================== ACT =====================
+		/* ACT :
+		 * exécute la destruction via le SERVICE METIER UC.
+		 */
 		service.delete(dto);
 		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		/* ASSERT */
+		/* Garantit que le message observable côté controller appelant :
+		 * - confirme la destruction nominale ;
+		 * - n'est positionné qu'après retour sans exception
+		 *   de gateway.delete(...).
+		 */
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_DELETE_OK + libelle);
 
+		/* Garantit l'ordre fonctionnel du scénario :
+		 * recherche exacte préalable puis destruction Gateway.
+		 */
 		verify(gateway, times(1)).findByLibelle(libelle);
-		verify(gateway, times(1)).delete(tp);
+		verify(gateway, times(1)).delete(existant);
 
 	} // __________________________________________________________________
 
@@ -6839,198 +7542,341 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>count(KO technique avec message) :
-	 * le Gateway échoue pendant le comptage
-	 * avec un message exploitable.</p>
+	 * <p>garantit que count(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>propage l'exception technique levée pendant le comptage ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
+	 * + tiret + message technique ;</li>
+	 * <li>n'expose aucun comptage au controller appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE + détail")
-	public void testCountTechniqueKoAvecMessage() throws Exception {
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KO_AVEC_MESSAGE)
+	public void testCountGatewayKOAvecMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(LECTURE_TECHNIQUE_KO);
+		/* ARRANGE :
+		 * prépare une panne technique avec message pendant
+		 * le comptage délégué au Gateway.
+		 */
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(LECTURE_TECHNIQUE_KO);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() jette une exception avec message.
+		 * Le SERVICE METIER UC doit propager l'exception d'origine
+		 * et produire KO_TECHNIQUE_RECHERCHE + détail technique.
+		 */
 		when(gateway.count()).thenThrow(panneTechnique);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.count())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le message observable côté controller appelant
+		 * est rationalisé et contient le détail technique disponible.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ TypeProduitICuService.TIRET_ESPACE
-								+ LECTURE_TECHNIQUE_KO);
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ LECTURE_TECHNIQUE_KO);
 
+		/* Garantit que la panne intervient bien sur le comptage Gateway. */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>count(KO technique sans message) :
-	 * le Gateway échoue pendant le comptage
-	 * sans message exploitable.</p>
+	 * <p>garantit que count(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>propage l'exception technique sans message levée
+	 * pendant le comptage ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'expose aucun comptage au controller appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testCountTechniqueKoSansMessage() throws Exception {
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KO_SANS_MESSAGE)
+	public void testCountGatewayKOSansMessage() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-		final IllegalStateException panneTechnique = new IllegalStateException();
+		/* ARRANGE :
+		 * prépare une panne technique sans message pendant
+		 * le comptage délégué au Gateway.
+		 */
+		final IllegalStateException panneTechnique 
+			= new IllegalStateException();
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() jette une exception sans message.
+		 * Le SERVICE METIER UC doit propager l'exception d'origine
+		 * et remplacer le message technique absent par MSG_ERREUR_NON_SPECIFIEE.
+		 */
 		when(gateway.count()).thenThrow(panneTechnique);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.count())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ TypeProduitICuService.TIRET_ESPACE
-								+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
+		/* Garantit que la panne intervient bien sur le comptage Gateway. */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>count(retour négatif) :
-	 * le Gateway retourne une valeur incohérente
-	 * pour un comptage observable.</p>
+	 * <p>garantit que count(retour négatif) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne un message technique explicite</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>détecte qu'un comptage strictement négatif est incohérent ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne un message technique explicite avec
+	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + valeur incohérente ;</li>
+	 * <li>n'expose jamais cette valeur incohérente
+	 * au controller appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(retour négatif) : IllegalStateException + message technique explicite")
-	public void testCountRetourNegatifIncoherent() throws Exception {
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_RETOUR_NEGATIF)
+	public void testCountRetourNegatif() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway incohérent.
+		 *
+		 * Un comptage observable côté UC peut valoir 0,
+		 * mais ne doit jamais être strictement négatif.
+		 */
+		final long comptageIncoherent = -1L;
+		final String messageTechnique
+				= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ TypeProduitICuService.TIRET_ESPACE
+				+ "comptage négatif incohérent : "
+				+ comptageIncoherent;
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		when(gateway.count()).thenReturn(-1L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne une valeur strictement négative.
+		 * Le SERVICE METIER UC doit refuser ce résultat incohérent
+		 * avant tout retour au controller appelant.
+		 */
+		when(gateway.count()).thenReturn(comptageIncoherent);
 
-		// ===================== ACT & ASSERT =====================
+		/* ACT - ASSERT */
+		/* Garantit que service.count() :
+		 * - jette IllegalStateException ;
+		 * - porte le message technique explicite ;
+		 * - n'expose pas le comptage incohérent.
+		 */
 		assertThatThrownBy(() -> service.count())
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(messageTechnique);
 
+		/* Garantit que le message observable côté controller appelant
+		 * explique précisément le comptage incohérent refusé.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ TypeProduitICuService.TIRET_ESPACE
-								+ "comptage négatif incohérent : -1");
+				.isEqualTo(messageTechnique);
 
+		/* Garantit que le comptage Gateway a bien été délégué une fois. */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>count(0) : aucun résultat en stockage.</p>
+	 * <p>garantit que count(0) :</p>
 	 * <ul>
-	 * <li>retourne {@code 0}</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>accepte le comptage {@code 0} comme résultat cohérent ;</li>
+	 * <li>retourne exactement {@code 0} ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>ne positionne ce message qu'après récupération effective
+	 * du comptage Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(0) : retourne 0 + message MESSAGE_RECHERCHE_VIDE")
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_ZERO)
 	public void testCountZero() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * qu'aucun objet métier n'est présent dans le stockage.
+		 */
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne 0.
+		 * Le SERVICE METIER UC doit retourner 0 et positionner
+		 * MESSAGE_RECHERCHE_VIDE seulement après ce retour Gateway.
+		 */
 		when(gateway.count()).thenReturn(0L);
 
-		// ===================== ACT =====================
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - vaut exactement 0 ;
+		 * - confirme l'absence d'objet métier accessible ;
+		 * - expose le message utilisateur de recherche vide.
+		 */
 		assertThat(retour).isZero();
-		assertThat(service.getMessage())
+		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
+		/* Garantit que le message de résultat vide a été produit
+		 * après récupération effective du comptage Gateway.
+		 */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>count(positif) : succès nominal du comptage.</p>
+	 * <p>garantit que count(OK) :</p>
 	 * <ul>
-	 * <li>retourne le comptage exact</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>accepte un comptage strictement positif comme résultat cohérent ;</li>
+	 * <li>retourne exactement le comptage fourni par le Gateway ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>ne positionne ce message qu'après récupération effective
+	 * du comptage Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(positif) : retourne le comptage exact + message MESSAGE_RECHERCHE_OK")
-	public void testCountPositif() throws Exception {
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_NOMINAL)
+	public void testCountNominal() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * que plusieurs objets métier sont présents dans le stockage.
+		 */
+		final long comptageAttendu = 42L;
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		when(gateway.count()).thenReturn(42L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne un comptage strictement positif.
+		 * Le SERVICE METIER UC doit retourner ce comptage exact
+		 * et positionner MESSAGE_RECHERCHE_OK seulement après ce retour Gateway.
+		 */
+		when(gateway.count()).thenReturn(comptageAttendu);
 
-		// ===================== ACT =====================
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+		final String message = service.getMessage();
 
-		// ===================== ASSERT =====================
-		assertThat(retour).isEqualTo(42L);
-		assertThat(service.getMessage())
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - reprend exactement le comptage Gateway ;
+		 * - confirme une recherche positive ;
+		 * - expose le message utilisateur de succès.
+		 */
+		assertThat(retour).isEqualTo(comptageAttendu);
+		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		/* Garantit que le message de succès a été produit
+		 * après récupération effective du comptage Gateway.
+		 */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________	
@@ -7043,195 +7889,316 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>getMessage(initial) : état initial du service Mock.</p>
+	 * <p>garantit que getMessage(initial) :</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>n'interagit jamais avec le Gateway</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(initial) : retourne null + aucune interaction gateway")
-	public void testGetMessageInitialNull() {
-
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
-
-		// ======================= ACT =======================
-		final String message = service.getMessage();
-
-		// ===================== ASSERT ======================
-		assertThat(message).isNull();
-
-		verifyNoInteractions(gateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>getMessage(après erreur locale) :
-	 * retourne le message courant
-	 * positionné par une erreur utilisateur bénigne.</p>
-	 * <ul>
-	 * <li>après {@code creer(null)},
-	 * retourne exactement
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
-	 * <li>n'interagit jamais avec le Gateway</li>
+	 * <li>reste appelable avant toute opération métier ;</li>
+	 * <li>retourne {@code null} tant qu'aucun message n'a été positionné ;</li>
+	 * <li>lit uniquement l'état local du SERVICE METIER UC ;</li>
+	 * <li>n'interagit jamais avec le Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL")
-	public void testGetMessageApresErreurLocale() throws Exception {
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_INITIAL_NULL)
+	public void testGetMessageInitialNull() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		// ======================= ACT =======================
-		service.creer(null);
+		/* ACT :
+		 * lit le message courant sans opération UC préalable.
+		 */
 		final String message = service.getMessage();
 
-		// ===================== ASSERT ======================
+		/* ASSERT */
+		/* Garantit que l'état initial observable côté controller appelant
+		 * est bien null avant toute opération ayant positionné un message.
+		 */
+		assertThat(message).isNull();
+
+		/* Garantit que getMessage() lit seulement l'état local
+		 * du SERVICE METIER UC et ne sollicite jamais le Gateway.
+		 */
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que getMessage(après erreur locale) :</p>
+	 * <ul>
+	 * <li>lit le message positionné par une opération UC précédente ;</li>
+	 * <li>retourne exactement
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}
+	 * après {@code creer(null)} ;</li>
+	 * <li>ne recalcule pas le message ;</li>
+	 * <li>n'interagit jamais avec le Gateway.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE)
+	public void testGetMessageApresErreurLocale() throws Exception {
+
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
+
+		/* ACT :
+		 * provoque une erreur utilisateur bénigne via le SERVICE METIER UC.
+		 */
+		service.creer(null);
+
+		/* Lit le message courant après cette opération locale. */
+		final String message = service.getMessage();
+
+		/* ASSERT */
+		/* Garantit que getMessage() retourne le message déjà positionné
+		 * par creer(null), sans recalcul ni transformation.
+		 */
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
 
+		/* Garantit que creer(null) puis getMessage() restent locaux
+		 * et ne sollicitent jamais le Gateway.
+		 */
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>getMessage(après succès vide) :
-	 * retourne le message courant
-	 * positionné par un comptage à zéro.</p>
+	 * <p>garantit que getMessage(après count 0) :</p>
 	 * <ul>
-	 * <li>après {@code count() == 0},
-	 * retourne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>lit le message positionné par un comptage précédent ;</li>
+	 * <li>retourne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}
+	 * après un {@code count()} égal à {@code 0} ;</li>
+	 * <li>ne recalcule pas le message ;</li>
+	 * <li>ne déclenche aucune interaction Gateway supplémentaire.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après succès vide) : retourne MESSAGE_RECHERCHE_VIDE")
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_ZERO)
 	public void testGetMessageApresCountZero() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * qu'aucun objet métier n'est présent dans le stockage.
+		 */
+		final long comptageRetourne = 0L;
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		when(gateway.count()).thenReturn(0L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne 0.
+		 * Le SERVICE METIER UC doit positionner MESSAGE_RECHERCHE_VIDE
+		 * seulement après ce retour Gateway.
+		 */
+		when(gateway.count()).thenReturn(comptageRetourne);
 
-		// ======================= ACT =======================
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+
+		/* Lit le message courant après ce comptage. */
 		final String message = service.getMessage();
 
-		// ===================== ASSERT ======================
+		/* ASSERT */
+		/* Garantit que le comptage a bien positionné le message
+		 * de recherche vide avant consultation par getMessage().
+		 */
 		assertThat(retour).isZero();
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
+		/* Garantit que getMessage() n'a pas provoqué
+		 * d'interaction Gateway supplémentaire.
+		 */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>getMessage(après succès positif) :
-	 * retourne le message courant
-	 * positionné par un comptage positif.</p>
+	 * <p>garantit que getMessage(après count nominal) :</p>
 	 * <ul>
-	 * <li>après {@code count() > 0},
-	 * retourne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>lit le message positionné par un comptage précédent ;</li>
+	 * <li>retourne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}
+	 * après un {@code count()} strictement positif ;</li>
+	 * <li>ne recalcule pas le message ;</li>
+	 * <li>ne déclenche aucune interaction Gateway supplémentaire.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après succès positif) : retourne MESSAGE_RECHERCHE_OK")
-	public void testGetMessageApresCountPositif() throws Exception {
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_NOMINAL)
+	public void testGetMessageApresCountNominal() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * que plusieurs objets métier sont présents dans le stockage.
+		 */
+		final long comptageAttendu = 42L;
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		when(gateway.count()).thenReturn(42L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne un comptage strictement positif.
+		 * Le SERVICE METIER UC doit positionner MESSAGE_RECHERCHE_OK
+		 * seulement après ce retour Gateway.
+		 */
+		when(gateway.count()).thenReturn(comptageAttendu);
 
-		// ======================= ACT =======================
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+
+		/* Lit le message courant après ce comptage. */
 		final String message = service.getMessage();
 
-		// ===================== ASSERT ======================
-		assertThat(retour).isEqualTo(42L);
+		/* ASSERT */
+		/* Garantit que le comptage nominal a bien positionné
+		 * le message de recherche OK avant consultation par getMessage().
+		 */
+		assertThat(retour).isEqualTo(comptageAttendu);
 		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		/* Garantit que getMessage() n'a pas provoqué
+		 * d'interaction Gateway supplémentaire.
+		 */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>getMessage(dernier message gagne) :
-	 * une opération plus récente
-	 * écrase bien le message précédent.</p>
+	 * <p>garantit que getMessage(dernier message gagne) :</p>
 	 * <ul>
-	 * <li>après une erreur locale,
-	 * le message vaut d'abord
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
-	 * <li>après un {@code count()} positif,
-	 * le message courant devient
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
+	 * <li>retourne d'abord le message produit par une erreur locale ;</li>
+	 * <li>retourne ensuite le message produit par une opération plus récente ;</li>
+	 * <li>prouve que l'opération UC la plus récente écrase
+	 * le message observable précédent ;</li>
+	 * <li>ne déclenche aucune interaction Gateway supplémentaire
+	 * lors des consultations successives de {@code getMessage()}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(dernier message gagne) : le message le plus récent écrase le précédent")
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_DERNIER_MESSAGE_GAGNE)
 	public void testGetMessageDernierMessageGagne() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final TypeProduitGatewayIService gateway = mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service = new TypeProduitCuService(gateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * qu'un objet métier est présent dans le stockage.
+		 */
+		final long comptageAttendu = 1L;
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
 
-		when(gateway.count()).thenReturn(1L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne un comptage strictement positif.
+		 * Cette seconde opération doit écraser le message précédemment
+		 * positionné par creer(null).
+		 */
+		when(gateway.count()).thenReturn(comptageAttendu);
 
-		// ======================= ACT =======================
+		/* ACT :
+		 * provoque d'abord une erreur utilisateur bénigne.
+		 */
 		service.creer(null);
+
+		/* Lit le message courant après cette première opération. */
 		final String messageErreur = service.getMessage();
 
+		/* ACT :
+		 * exécute ensuite un comptage nominal plus récent.
+		 */
 		final long retour = service.count();
+
+		/* Lit le message courant après cette seconde opération. */
 		final String messageFinal = service.getMessage();
 
-		// ===================== ASSERT ======================
+		/* ASSERT */
+		/* Garantit que la première consultation retourne bien
+		 * le message local produit par creer(null).
+		 */
 		assertThat(messageErreur)
 				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
 
-		assertThat(retour).isEqualTo(1L);
+		/* Garantit que la seconde opération retourne son comptage
+		 * et remplace le message observable par MESSAGE_RECHERCHE_OK.
+		 */
+		assertThat(retour).isEqualTo(comptageAttendu);
 		assertThat(messageFinal)
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		/* Garantit que seule l'opération count() a sollicité le Gateway ;
+		 * les consultations getMessage() lisent uniquement l'état local.
+		 */
 		verify(gateway, times(1)).count();
 
 	} // __________________________________________________________________
