@@ -3313,3 +3313,160 @@ Elle est installée depuis la baseline consolidée et inclut au minimum :
 
 Une fois activée, cette fenêtre devient la source de travail locale pour l'audit UC jusqu'à nouveau SHA, nouveau périmètre ou demande explicite de relecture GitHub.
 
+## 32) RT-FORMALISME-TYPEPRODUIT-CU-MOCK-REFERENCE-02 — Référence autonome TypeProduitCuServiceMockTest
+
+### 32.1 Objet
+
+`TypeProduitCuServiceMockTest.java` corrigé au SHA courant `d8a5ebca1bafd159b7cdb371cc7f4b6cd79f6ebb` est une référence complète de formalisme Mockito UC pour le SERVICE METIER UC `TypeProduitCuService`.
+
+Cette règle complète les règles générales UC : elle ne remplace jamais le contrat du PORT UC, mais elle fixe le formalisme exact que l'IA doit savoir reproduire sans réinvention lorsqu'elle travaille sur cette classe ou sur une classe UC Mockito comparable.
+
+### 32.2 Matrice de recodage obligatoire
+
+Pour recoder seule `TypeProduitCuServiceMockTest.java`, l'IA doit reproduire la matrice complète suivante, dans l'ordre exact des blocs du PORT UC :
+
+| Bloc | Nombre de tests |
+|---|---:|
+| `creer` | 11 |
+| `rechercherTous` | 7 |
+| `rechercherTousString` | 8 |
+| `rechercherTousParPage` | 8 |
+| `findByLibelle` | 8 |
+| `findByLibelleRapide` | 9 |
+| `findByDTO` | 9 |
+| `findById` | 7 |
+| `update` | 14 |
+| `delete` | 10 |
+| `count` | 5 |
+| `getMessage` | 5 |
+
+Total attendu : `101` tests.
+
+L'IA ne doit ni retirer un cas, ni ajouter un nouveau cas, ni renommer un test déjà validé sans demande explicite de l'utilisateur.
+
+### 32.3 Javadoc et bannière de tête
+
+La classe doit conserver la bannière :
+
+```java
+/* ********************************************************************* */
+/* ********************* TEST MOCKITO METIER UC ************************ */
+/* ********************************************************************* */
+```
+
+La Javadoc de tête doit conserver explicitement les points suivants :
+
+- tests unitaires JUnit 5 / Mockito du SERVICE METIER UC `TypeProduitCuService` ;
+- objet métier `TypeProduit` ;
+- SERVICE METIER UC comme point d'entrée dans la logique métier dialoguant directement avec le controller appelant ;
+- respect du PORT `TypeProduitICuService` ;
+- Gateway mocké ;
+- validations locales des paramètres et des DTO ;
+- messages utilisateur exposés par `getMessage()` ;
+- conversions `InputDTO` -> objet métier -> `OutputDTO` ;
+- délégations attendues vers `TypeProduitGatewayIService` ;
+- absence de délégation Gateway lorsque le SERVICE METIER UC bloque localement l'opération ;
+- propagation des exceptions techniques et rationalisation des messages observables ;
+- cas d'erreur, cas alternatifs et cas nominaux ;
+- reprise stricte des blocs déjà validés, sans réinvention inutile.
+
+### 32.4 Tags, display names et annotations
+
+La classe doit utiliser exclusivement les tags dédiés par bloc :
+
+- `TAG_CREER` ;
+- `TAG_RECHERCHER_TOUS` ;
+- `TAG_RECHERCHER_TOUS_STRING` ;
+- `TAG_RECHERCHER_TOUS_PAR_PAGE` ;
+- `TAG_FIND_BY_LIBELLE` ;
+- `TAG_FIND_BY_LIBELLE_RAPIDE` ;
+- `TAG_FIND_BY_DTO` ;
+- `TAG_FIND_BY_ID` ;
+- `TAG_UPDATE` ;
+- `TAG_DELETE` ;
+- `TAG_COUNT` ;
+- `TAG_GET_MESSAGE`.
+
+La constante générique `TAG = "cu-mock"` ne doit pas être réintroduite.
+
+Tous les `@DisplayName` doivent pointer vers une constante `DISPLAY_NAME_*`. Les `@DisplayName("...")` inline sont interdits dans cette classe.
+
+L'ordre d'annotations corrigé et validé est :
+
+```java
+@Tag(...)
+@DisplayName(...)
+@Test
+```
+
+L'IA ne doit pas revenir à un ordre hétérogène d'annotations et ne doit pas déplacer ces annotations sans demande explicite.
+
+### 32.5 Commentaires internes obligatoires
+
+Les commentaires internes doivent reprendre les libellés validés :
+
+- `ARRANGE` ;
+- `Configuration du Mock` ;
+- `ACT` ;
+- `ACT - ASSERT` ;
+- `ASSERT`.
+
+Un commentaire doit documenter immédiatement la ou les lignes qui suivent. Si le commentaire annonce une donnée de scénario, la ligne suivante doit préparer cette donnée. Si le commentaire annonce le mock Gateway et le service UC, les lignes suivantes doivent créer le mock Gateway et le service UC.
+
+Exemple correct :
+
+```java
+/* ARRANGE :
+ * prépare un comptage Gateway cohérent indiquant
+ * que plusieurs objets métier sont présents dans le stockage.
+ */
+final long comptageAttendu = 42L;
+```
+
+Exemple à reproduire tel quel lorsque le scénario nécessite un Gateway mocké :
+
+```java
+/* 
+ * Mocke un service Gateway et le passe 
+ * à un service UC instancié dans le test. 
+ */
+final TypeProduitGatewayIService gateway 
+	= mock(TypeProduitGatewayIService.class);
+final TypeProduitCuService service 
+	= new TypeProduitCuService(gateway);
+```
+
+L'IA ne doit pas réinventer ce bloc, le reformuler décorativement, ni l'éloigner des lignes qu'il documente.
+
+### 32.6 Ordre interne d'un test
+
+L'ordre interne validé n'est pas « mock Gateway d'abord ».
+
+L'ordre correct est l'ordre humainement cohérent avec les commentaires :
+
+1. préparer les données propres au scénario quand le commentaire les annonce ;
+2. créer le Gateway mocké et le service UC avec le bloc standard validé ;
+3. configurer le Mock ;
+4. exécuter l'action ;
+5. vérifier les assertions et les interactions.
+
+Exemples validés :
+
+- préparer `panneTechnique` avant le mock Gateway lorsque le commentaire annonce une panne technique ;
+- préparer `comptageIncoherent` et `messageTechnique` avant le mock Gateway lorsque le commentaire annonce un comptage incohérent ;
+- préparer `comptageAttendu` immédiatement après le commentaire qui annonce un comptage Gateway cohérent ;
+- préparer DTO, libellés, objets métier, `RequetePage` ou `ResultatPage` immédiatement après le commentaire qui les annonce.
+
+### 32.7 Non-réinvention
+
+Avant toute génération ou correction dans `TypeProduitCuServiceMockTest.java`, l'IA doit relire :
+
+1. le présent contrat IA ;
+2. `docs/contrats/cu/CoucheServicesUC.md` ;
+3. le PORT UC ciblé ;
+4. l'ADAPTER UC réel ;
+5. les méthodes déjà validées de `TypeProduitCuServiceMockTest.java`.
+
+L'IA doit reprendre le formalisme validé dans la classe au lieu de créer un nouveau style local.
+
+L'IA ne doit pas normaliser, déplacer, renommer, supprimer ou simplifier un élément déjà validé sans demande explicite de l'utilisateur.

@@ -125,9 +125,6 @@ public class TypeProduitCuServiceMockTest {
 	 */
 	public static final String LECTURE_TECHNIQUE_KO = "lecture technique KO";
 	
-	/** "cu-mock" */
-	public static final String TAG = "cu-mock";
-	
 	/**
 	 * "creer"
 	 */
@@ -1828,9 +1825,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_RETOUR_NULL)
+	@Test
 	public void testRechercherTousGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -1882,9 +1879,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testRechercherTousGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -1942,9 +1939,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testRechercherTousGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2003,9 +2000,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTO_AVEC_MESSAGE)
+	@Test
 	public void testRechercherTousConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2081,9 +2078,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTO_SANS_MESSAGE)
+	@Test
 	public void testRechercherTousConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2155,9 +2152,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_VIDE_APRES_FILTRAGE)
+	@Test
 	public void testRechercherTousVideApresFiltrage() throws Exception {
 
 		/* ARRANGE :
@@ -2217,9 +2214,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_NOMINAL)
+	@Test
 	public void testRechercherTousNominal() throws Exception {
 
 		/* ARRANGE :
@@ -2298,9 +2295,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_RETOUR_NULL)
+	@Test
 	public void testRechercherTousStringGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -2352,9 +2349,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testRechercherTousStringGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2412,9 +2409,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testRechercherTousStringGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2473,9 +2470,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KO_AVEC_MESSAGE)
+	@Test
 	public void testRechercherTousStringConversionStringKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2551,9 +2548,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KO_SANS_MESSAGE)
+	@Test
 	public void testRechercherTousStringConversionStringKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2625,9 +2622,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_VIDE_APRES_FILTRAGE)
+	@Test
 	public void testRechercherTousStringVideApresFiltrage() throws Exception {
 
 		/* ARRANGE :
@@ -2687,9 +2684,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_VIDE_APRES_LIBELLES_BLANK)
+	@Test
 	public void testRechercherTousStringVideApresLibellesBlank() throws Exception {
 
 		/* ARRANGE :
@@ -2750,9 +2747,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_NOMINAL)
+	@Test
 	public void testRechercherTousStringNominal() throws Exception {
 
 		/* ARRANGE :
@@ -2827,9 +2824,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL)
+	@Test
 	public void testRechercherTousParPageNull() throws Exception {
 
 		/* ARRANGE :
@@ -2876,9 +2873,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testRechercherTousParPageGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -2944,9 +2941,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testRechercherTousParPageGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -3010,9 +3007,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_RETOUR_NULL)
+	@Test
 	public void testRechercherTousParPageGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -3075,9 +3072,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
+	@Test
 	public void testRechercherTousParPageConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -3159,9 +3156,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
 	public void testRechercherTousParPageConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -3241,9 +3238,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_VIDE_APRES_FILTRAGE)
+	@Test
 	public void testRechercherTousParPageVideApresFiltrage() throws Exception {
 
 		/* ARRANGE :
@@ -3327,9 +3324,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
 	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL)
+	@Test
 	public void testRechercherTousParPageNominal() throws Exception {
 
 		/* ARRANGE :
@@ -3427,9 +3424,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_NULL)
+	@Test
 	public void testFindByLibelleNull() throws Exception {
 
 		/* ARRANGE :
@@ -3477,9 +3474,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_BLANK)
+	@Test
 	public void testFindByLibelleBlank() throws Exception {
 
 		/* ARRANGE :
@@ -3536,9 +3533,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_RETOUR_NULL)
+	@Test
 	public void testFindByLibelleGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -3600,9 +3597,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByLibelleGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -3666,9 +3663,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByLibelleGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -3733,9 +3730,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByLibelleConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -3806,9 +3803,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByLibelleConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -3877,9 +3874,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_NOMINAL)
+	@Test
 	public void testFindByLibelleNominal() throws Exception {
 
 		/* ARRANGE :
@@ -3945,9 +3942,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL)
+	@Test
 	public void testFindByLibelleRapideNull() throws Exception {
 
 		/* ARRANGE :
@@ -3996,9 +3993,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK)
+	@Test
 	public void testFindByLibelleRapideBlank() throws Exception {
 
 		/* ARRANGE :
@@ -4086,9 +4083,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByLibelleRapideGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -4154,9 +4151,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByLibelleRapideGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -4221,9 +4218,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_RETOUR_NULL)
+	@Test
 	public void testFindByLibelleRapideGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -4287,9 +4284,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByLibelleRapideConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -4369,9 +4366,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByLibelleRapideConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -4447,9 +4444,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_VIDE_APRES_FILTRAGE)
+	@Test
 	public void testFindByLibelleRapideVideApresFiltrage() throws Exception {
 
 		/* ARRANGE :
@@ -4516,9 +4513,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
 	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL)
+	@Test
 	public void testFindByLibelleRapideNominal() throws Exception {
 
 		/* ARRANGE :
@@ -4603,9 +4600,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_NULL)
+	@Test
 	public void testFindByDTONull() throws Exception {
 
 		/* ARRANGE :
@@ -4656,9 +4653,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_LIBELLE_NULL)
+	@Test
 	public void testFindByDTOLibelleNull() throws Exception {
 
 		/* ARRANGE :
@@ -4713,9 +4710,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_BLANK)
+	@Test
 	public void testFindByDTOBlank() throws Exception {
 
 		/* ARRANGE :
@@ -4771,9 +4768,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_GATEWAY_RETOUR_NULL)
+	@Test
 	public void testFindByDTOGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -4837,9 +4834,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByDTOGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -4905,9 +4902,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByDTOGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -4974,9 +4971,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByDTOConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5049,9 +5046,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByDTOConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5122,9 +5119,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_DTO)
 	@DisplayName(DISPLAY_NAME_FIND_BY_DTO_NOMINAL)
+	@Test
 	public void testFindByDTONominal() throws Exception {
 
 		/* ARRANGE :
@@ -5190,9 +5187,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_ID)
 	@DisplayName(DISPLAY_NAME_FIND_BY_ID_NULL)
+	@Test
 	public void testFindByIdNull() throws Exception {
 
 		/* ARRANGE :
@@ -5242,9 +5239,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_ID)
 	@DisplayName(DISPLAY_NAME_FIND_BY_ID_GATEWAY_RETOUR_NULL)
+	@Test
 	public void testFindByIdGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -5306,9 +5303,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_ID)
 	@DisplayName(DISPLAY_NAME_FIND_BY_ID_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByIdGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5372,9 +5369,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_ID)
 	@DisplayName(DISPLAY_NAME_FIND_BY_ID_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByIdGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5439,9 +5436,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_ID)
 	@DisplayName(DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
+	@Test
 	public void testFindByIdConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5512,9 +5509,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_ID)
 	@DisplayName(DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
 	public void testFindByIdConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5583,9 +5580,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_FIND_BY_ID)
 	@DisplayName(DISPLAY_NAME_FIND_BY_ID_NOMINAL)
+	@Test
 	public void testFindByIdNominal() throws Exception {
 
 		/* ARRANGE :
@@ -5651,9 +5648,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_NULL)
+	@Test
 	public void testUpdateNull() throws Exception {
 
 		/* ARRANGE :
@@ -5705,9 +5702,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_LIBELLE_NULL)
+	@Test
 	public void testUpdateLibelleNull() throws Exception {
 
 		/* ARRANGE :
@@ -5767,9 +5764,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_BLANK)
+	@Test
 	public void testUpdateBlank() throws Exception {
 
 		/* ARRANGE :
@@ -5829,9 +5826,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_RECHERCHE_KO_AVEC_MESSAGE)
+	@Test
 	public void testUpdateRechercheKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5903,9 +5900,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_RECHERCHE_KO_SANS_MESSAGE)
+	@Test
 	public void testUpdateRechercheKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -5978,9 +5975,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_INTROUVABLE)
+	@Test
 	public void testUpdateIntrouvable() throws Exception {
 
 		/* ARRANGE :
@@ -6046,9 +6043,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_NON_PERSISTANT)
+	@Test
 	public void testUpdateNonPersistant() throws Exception {
 
 		/* ARRANGE :
@@ -6119,9 +6116,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_KO_AVEC_MESSAGE)
+	@Test
 	public void testUpdateModificationKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -6217,9 +6214,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_KO_SANS_MESSAGE)
+	@Test
 	public void testUpdateModificationKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -6313,9 +6310,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NULL)
+	@Test
 	public void testUpdateModificationRetourNull() throws Exception {
 
 		/* ARRANGE :
@@ -6408,9 +6405,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NON_PERSISTANT)
+	@Test
 	public void testUpdateModificationRetourNonPersistant() throws Exception {
 
 		/* ARRANGE :
@@ -6506,9 +6503,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
+	@Test
 	public void testUpdateConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -6623,9 +6620,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
 	public void testUpdateConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -6740,9 +6737,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_UPDATE)
 	@DisplayName(DISPLAY_NAME_UPDATE_NOMINAL)
+	@Test
 	public void testUpdateNominal() throws Exception {
 
 		/* ARRANGE :
@@ -6843,9 +6840,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_NULL)
+	@Test
 	public void testDeleteNull() throws Exception {
 
 		/* ARRANGE :
@@ -6897,9 +6894,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_LIBELLE_NULL)
+	@Test
 	public void testDeleteLibelleNull() throws Exception {
 
 		/* ARRANGE :
@@ -6959,9 +6956,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_BLANK)
+	@Test
 	public void testDeleteBlank() throws Exception {
 
 		/* ARRANGE :
@@ -7021,9 +7018,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_KO_AVEC_MESSAGE)
+	@Test
 	public void testDeleteRechercheKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -7095,9 +7092,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_KO_SANS_MESSAGE)
+	@Test
 	public void testDeleteRechercheKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -7170,9 +7167,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_INTROUVABLE)
+	@Test
 	public void testDeleteIntrouvable() throws Exception {
 
 		/* ARRANGE :
@@ -7237,9 +7234,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_NON_PERSISTANT)
+	@Test
 	public void testDeleteNonPersistant() throws Exception {
 
 		/* ARRANGE :
@@ -7310,9 +7307,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KO_AVEC_MESSAGE)
+	@Test
 	public void testDeleteDestructionKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -7395,9 +7392,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KO_SANS_MESSAGE)
+	@Test
 	public void testDeleteDestructionKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -7479,9 +7476,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_DELETE)
 	@DisplayName(DISPLAY_NAME_DELETE_NOMINAL)
+	@Test
 	public void testDeleteNominal() throws Exception {
 
 		/* ARRANGE :
@@ -7555,9 +7552,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_COUNT)
 	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
 	public void testCountGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
@@ -7621,9 +7618,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_COUNT)
 	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KO_SANS_MESSAGE)
+	@Test
 	public void testCountGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
@@ -7689,9 +7686,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_COUNT)
 	@DisplayName(DISPLAY_NAME_COUNT_RETOUR_NEGATIF)
+	@Test
 	public void testCountRetourNegatif() throws Exception {
 
 		/* ARRANGE :
@@ -7763,9 +7760,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_COUNT)
 	@DisplayName(DISPLAY_NAME_COUNT_ZERO)
+	@Test
 	public void testCountZero() throws Exception {
 
 		/* ARRANGE :
@@ -7830,9 +7827,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_COUNT)
 	@DisplayName(DISPLAY_NAME_COUNT_NOMINAL)
+	@Test
 	public void testCountNominal() throws Exception {
 
 		/* ARRANGE :
@@ -7900,9 +7897,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_GET_MESSAGE)
 	@DisplayName(DISPLAY_NAME_GET_MESSAGE_INITIAL_NULL)
+	@Test
 	public void testGetMessageInitialNull() throws Exception {
 
 		/* 
@@ -7949,9 +7946,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_GET_MESSAGE)
 	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE)
+	@Test
 	public void testGetMessageApresErreurLocale() throws Exception {
 
 		/* 
@@ -8002,9 +7999,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_GET_MESSAGE)
 	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_ZERO)
+	@Test
 	public void testGetMessageApresCountZero() throws Exception {
 
 		/* ARRANGE :
@@ -8070,9 +8067,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_GET_MESSAGE)
 	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_NOMINAL)
+	@Test
 	public void testGetMessageApresCountNominal() throws Exception {
 
 		/* ARRANGE :
@@ -8138,9 +8135,9 @@ public class TypeProduitCuServiceMockTest {
 	 *
 	 * @throws Exception
 	 */
-	@Test
 	@Tag(TAG_GET_MESSAGE)
 	@DisplayName(DISPLAY_NAME_GET_MESSAGE_DERNIER_MESSAGE_GAGNE)
+	@Test
 	public void testGetMessageDernierMessageGagne() throws Exception {
 
 		/* ARRANGE :

@@ -274,3 +274,96 @@ Elle doit inclure au minimum :
 - les scripts et ressources de test utiles à l'intégration.
 
 Une fois installée et activée depuis la baseline consolidée, cette fenêtre devient la source de travail locale pour les audits UC jusqu'à nouveau SHA, nouveau périmètre ou demande explicite de relecture GitHub.
+## 16) RT-FORMALISME-TYPEPRODUIT-CU-MOCK-REFERENCE-02 — Référence autonome TypeProduitCuServiceMockTest
+
+`TypeProduitCuServiceMockTest.java` corrigé au SHA courant `d8a5ebca1bafd159b7cdb371cc7f4b6cd79f6ebb` est la référence complète de formalisme Mockito UC pour le SERVICE METIER UC `TypeProduitCuService`.
+
+Cette règle locale complète `RT-FORMALISME-TESTS-UC-01` et `RT-CODAGE-TEST-MOCKITO-UC-01`.
+
+### 16.1 Matrice obligatoire
+
+L'IA doit savoir recoder la classe complète avec `101` tests répartis en `12` blocs, dans l'ordre suivant :
+
+| Bloc | Nombre de tests |
+|---|---:|
+| `creer` | 11 |
+| `rechercherTous` | 7 |
+| `rechercherTousString` | 8 |
+| `rechercherTousParPage` | 8 |
+| `findByLibelle` | 8 |
+| `findByLibelleRapide` | 9 |
+| `findByDTO` | 9 |
+| `findById` | 7 |
+| `update` | 14 |
+| `delete` | 10 |
+| `count` | 5 |
+| `getMessage` | 5 |
+
+Cette matrice est une spécification de formalisme pour cette classe. Toute modification de cette matrice nécessite une demande explicite de l'utilisateur.
+
+### 16.2 Javadoc de tête et vocabulaire
+
+La Javadoc de tête doit rappeler que la classe teste le SERVICE METIER UC `TypeProduitCuService`, point d'entrée dans la logique métier dialoguant directement avec le controller appelant, pour l'objet métier `TypeProduit` et le PORT `TypeProduitICuService`.
+
+Elle doit aussi mentionner : validations locales, messages `getMessage()`, conversions DTO / objet métier / DTO, délégations Gateway, absence de délégation lorsque le SERVICE METIER UC bloque localement, propagation des exceptions techniques et rationalisation des messages observables.
+
+Le vocabulaire obligatoire reste : `SERVICE METIER UC`, `objet métier`, `stockage`, `controller appelant`, `PORT UC`, `Gateway mocké`.
+
+### 16.3 Tags, display names et annotations
+
+La classe doit utiliser uniquement des tags dédiés par bloc : `TAG_CREER`, `TAG_RECHERCHER_TOUS`, `TAG_RECHERCHER_TOUS_STRING`, `TAG_RECHERCHER_TOUS_PAR_PAGE`, `TAG_FIND_BY_LIBELLE`, `TAG_FIND_BY_LIBELLE_RAPIDE`, `TAG_FIND_BY_DTO`, `TAG_FIND_BY_ID`, `TAG_UPDATE`, `TAG_DELETE`, `TAG_COUNT`, `TAG_GET_MESSAGE`.
+
+La constante générique `TAG = "cu-mock"` ne doit pas être réintroduite.
+
+Tous les display names doivent passer par des constantes `DISPLAY_NAME_*`. Les `@DisplayName("...")` inline sont interdits.
+
+L'ordre d'annotations validé est :
+
+```java
+@Tag(...)
+@DisplayName(...)
+@Test
+```
+
+### 16.4 Commentaires alignés avec le code
+
+Les commentaires internes doivent utiliser les libellés validés `ARRANGE`, `Configuration du Mock`, `ACT`, `ACT - ASSERT`, `ASSERT`.
+
+Le commentaire doit annoncer exactement le code qui suit immédiatement.
+
+Exemple correct :
+
+```java
+/* ARRANGE :
+ * prépare un comptage Gateway cohérent indiquant
+ * que plusieurs objets métier sont présents dans le stockage.
+ */
+final long comptageAttendu = 42L;
+```
+
+Le bloc standard de création du Gateway mocké et du service UC doit être repris tel quel lorsqu'il s'applique :
+
+```java
+/* 
+ * Mocke un service Gateway et le passe 
+ * à un service UC instancié dans le test. 
+ */
+final TypeProduitGatewayIService gateway 
+	= mock(TypeProduitGatewayIService.class);
+final TypeProduitCuService service 
+	= new TypeProduitCuService(gateway);
+```
+
+L'IA ne doit ni le reformuler, ni le déplacer loin des lignes qu'il documente.
+
+### 16.5 Ordre interne validé
+
+L'ordre interne d'un test doit suivre la logique du scénario et des commentaires déjà validés : données du scénario, mock Gateway + service UC, configuration du Mock, action, assertions.
+
+Il est interdit de réorganiser mécaniquement les tests en plaçant toujours le mock Gateway en premier lorsque les commentaires et les méthodes validées préparent d'abord les données du scénario.
+
+### 16.6 Non-réinvention
+
+Avant de coder ou corriger un bloc de `TypeProduitCuServiceMockTest.java`, l'IA doit relire les méthodes déjà validées de la classe et reprendre leur structure.
+
+L'IA ne doit pas créer un nouveau commentaire ou une nouvelle organisation lorsqu'un modèle équivalent est déjà validé dans la classe.
