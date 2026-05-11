@@ -65,3 +65,50 @@ Les opérations composées de création doivent être synchronisées sur le cach
 - ne jamais partager implicitement un contexte entre deux clonages indépendants ;
 - ne jamais supprimer la synchronisation des opérations de création ;
 - ne jamais créer un nouveau `CloneContext` dans une méthode `deepClone(CloneContext)` déjà appelée avec un contexte non `null`.
+
+## 8) AUTONOMIE-CLONECONTEXT-01 — Fiche de recodage autonome
+
+### 8.1 Structure exacte
+
+`CloneContext` est une classe `final` du package `levy.daniel.application.model.metier.produittype`.
+
+Structure à conserver :
+
+- attribut `private final Map<Object, Object> cache = new IdentityHashMap<>();` ;
+- logger `private static final Logger LOG = LogManager.getLogger(CloneContext.class);` ;
+- constructeur public d'arité nulle ;
+- méthodes publiques `get`, `put`, `contains`, `size`, `clear`, `computeIfAbsent`, `getOrCreate` ;
+- interface interne de computation si elle existe dans le code validé.
+
+### 8.2 Sémantique d'identité
+
+Le cache doit impérativement rester fondé sur `IdentityHashMap`. Il est interdit de remplacer cette structure par une `HashMap`, car les objets métier peuvent définir `equals(...)` sur des critères métier. Le clonage profond doit mémoriser les sources par identité de référence, pas par égalité métier.
+
+### 8.3 Méthodes exactes
+
+| Méthode | Règle autonome |
+| --- | --- |
+| `get(Object)` | délègue directement à `cache.get(key)` ; en contexte neuf, `get(null)` retourne donc `null`. |
+| `put(Object, Object)` | délègue directement à `cache.put(key, value)` ; ne pas ajouter de garde non prévue. |
+| `contains(Object)` | délègue directement à `cache.containsKey(key)` ; en contexte neuf, `contains(null)` retourne `false`. |
+| `size()` | retourne la taille courante du cache. |
+| `clear()` | vide le cache. |
+| `computeIfAbsent(Object, CloneComputation<T>)` | opération composée synchronisée sur le cache ; si un clone non `null` existe, le retourne ; sinon exécute `computation.compute()` et retourne son résultat. La computation publie elle-même le clone dès que possible lorsque le clonage profond l'exige. |
+| `getOrCreate(Object, Supplier<T>)` | opération composée synchronisée; retourne le clone existant ou crée, stocke et retourne un clone nouveau. |
+
+### 8.4 Test = spécification
+
+Les 10 tests de `CloneContextTest.java` doivent rester la référence :
+
+1. `testCreationCloneContext()` ;
+2. `testGetNull()` ;
+3. `testPutThenGetReturnsSameInstance()` ;
+4. `testTwoKeysTwoClones()` ;
+5. `testIsolationBetweenContexts()` ;
+6. `testContainsReturnsTrueAfterPut()` ;
+7. `testSizeReturnsNumberOfClonedObjects()` ;
+8. `testClearEmptiesCache()` ;
+9. `testContainsNullReturnsFalse()` ;
+10. `testComputeIfAbsentInterThreadsUnicite()`.
+
+`testComputeIfAbsentInterThreadsUnicite()` verrouille l'unicité de computation inter-threads : l'IA ne doit pas recoder une version non synchronisée.

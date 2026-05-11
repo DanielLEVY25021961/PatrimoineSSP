@@ -249,3 +249,142 @@ La couche métier est décrite par les contrats locaux suivants :
 - ne jamais supprimer un verrou ou un snapshot concurrent validé ;
 - ne jamais homogénéiser le formalisme métier avec une autre couche sans demande explicite ;
 - ne jamais employer la terminologie interdite pour désigner le stockage relationnel ; employer uniquement `stockage`.
+
+## 15) AUTONOMIE-COUCHE-METIER-01 — Recodage autonome de la couche métier
+
+### 15.1 Principe
+
+La couche métier validée doit pouvoir être recodée par l'IA avec une autonomie réelle. Cette autonomie ne signifie pas une réécriture libre : elle signifie que les contrats IA décrivent assez précisément les fichiers validés pour empêcher l'IA d'improviser.
+
+L'objectif attendu est un recodage quasiment à l'identique sur :
+
+- la structure générale ;
+- les Javadocs utiles ;
+- les commentaires de bloc ;
+- les constantes ;
+- les signatures ;
+- l'ordre des méthodes ;
+- les choix de synchronisation ;
+- les règles de clonage ;
+- les relations bidirectionnelles ;
+- les sorties CSV/JTable ;
+- les tests de référence.
+
+### 15.2 Ce qui peut varier sans rompre l'autonomie
+
+L'utilisateur accepte qu'une IA autonome puisse produire quelques différences mineures non fonctionnelles, par exemple un nom local ou une constante interne lorsque ce nom n'est pas verrouillé par le contrat, le code validé ou les tests.
+
+En revanche, l'IA ne doit pas changer :
+
+- un nom public ;
+- une constante publique ;
+- une valeur littérale observable ;
+- un commentaire critique ;
+- une Javadoc expliquant un comportement métier ou concurrent ;
+- une méthode interne nécessaire à la sûreté ;
+- une stratégie d'identité, de verrouillage, de snapshot ou de relation bidirectionnelle.
+
+### 15.3 Inventaire autonome des fichiers métier validés
+
+| Fichier | Contrat local d'autonomie | Tests de verrouillage |
+| --- | --- | --- |
+| `TypeProduit.java` | `TypeProduit.md` | `TypeProduitTest.java`, `TypeProduitSousTypeProduitIntegrationTest.java`, `MetierGlobalConformiteTest.java` |
+| `SousTypeProduit.java` | `SousTypeProduit.md` | `SousTypeProduitTest.java`, `TypeProduitSousTypeProduitIntegrationTest.java`, `MetierGlobalConformiteTest.java` |
+| `Produit.java` | `Produit.md` | `ProduitTest.java`, `MetierGlobalConformiteTest.java` |
+| `CloneContext.java` | `CloneContext.md` | `CloneContextTest.java` |
+| `NormalizerUtils.java` | `NormalizerUtils.md` | `NormalizerUtilsTest.java` |
+| Convertisseurs métier vers OutputDTO | `ConvertisseursMetierOutputDTO.md` | les trois tests `ConvertisseurMetierToOutputDTO...Test.java` |
+
+### 15.4 Règles transverses de reproduction du formalisme métier
+
+Les objets métier validés utilisent un formalisme historique qui doit être conservé :
+
+- bannière historique de classe ;
+- sections `CONSTANTES`, `ATTRIBUTS`, `METHODES` ;
+- Javadocs HTML en `<div>`, `<p>`, `<ul>`, `<li>` ;
+- commentaires de fin de méthode lorsqu'ils existent ;
+- commentaires internes décrivant les snapshots, les verrous et les relations bidirectionnelles ;
+- usage explicite du vocabulaire `objet métier`, `parent`, `enfant`, `clone profond`, `snapshot`, `verrouillage déterministe`.
+
+Interdiction : remplacer ce formalisme par un style compact ou moderne sous prétexte de simplification.
+
+### 15.5 Règles transverses de synchronisation
+
+Pour les trois objets métier hiérarchiques :
+
+- les lectures de champs mutables doivent se faire par snapshot court sous verrou lorsque le code validé le fait ;
+- les comparaisons entre deux objets métier doivent verrouiller dans un ordre déterministe basé sur `System.identityHashCode(...)` ;
+- le cas de collision d'`identityHashCode` doit rester protégé par un verrou de départ unique lorsque le code validé le prévoit ;
+- les appels susceptibles de déclencher un verrou d'un autre objet doivent être faits hors du verrou courant lorsque le code validé le prévoit ;
+- les opérations internes par identité ne doivent jamais être remplacées par `contains(...)`, `remove(Object)` ou une logique fondée sur `equals(...)`.
+
+### 15.6 Règles transverses de relation bidirectionnelle
+
+Les relations validées sont intelligentes et bidirectionnelles :
+
+- `TypeProduit <-> SousTypeProduit` ;
+- `SousTypeProduit <-> Produit`.
+
+Le setter du côté enfant est le point canonique de rattachement/détachement quand le code validé l'utilise. Les méthodes internes `internalAdd...` et `internalRemove...` ne remplacent pas le setter canonique : elles servent à mettre à jour la collection interne sans boucle infinie et sans réentrance parasite.
+
+### 15.7 Règles transverses de clonage profond
+
+Le clonage profond métier repose sur `CloneContext` :
+
+- `clone()` appelle une méthode privée de clonage profond qui crée un nouveau contexte ;
+- `deepClone(CloneContext)` refuse un contexte `null` lorsque le code validé le fait ;
+- le clone partiel est créé et enregistré dans le contexte avant de cloner les relations ;
+- les relations bidirectionnelles sont reconstruites via les setters canoniques ;
+- les variantes `cloneWithoutChildren`, `cloneWithoutParentAndChildren`, `cloneWithoutParent` doivent rester partielles et recalculer la validité lorsqu'elle existe.
+
+### 15.8 Règles transverses des mauvaises instances
+
+Les interfaces métier peuvent recevoir des implémentations non validées. Les classes validées traitent explicitement ces mauvaises instances.
+
+L'IA doit conserver :
+
+- les méthodes privées `traiterMauvaiseInstance...` ;
+- le retour sans effet sur paramètre `null` ;
+- le `LOG.fatal(...)` conditionné par `LOG.isFatalEnabled()` ;
+- l'`IllegalStateException` avec message construit depuis la constante historique ;
+- la distinction entre mauvaise instance parent, enfant, petit-enfant et élément de liste.
+
+### 15.9 Règles transverses CSV/JTable
+
+Les chaînes CSV et JTable sont des sorties historiques observables. L'IA doit recopier les valeurs exactes depuis les contrats locaux enrichis ou depuis le code validé :
+
+- `TypeProduit` : `idTypeProduit;type de produit;` ;
+- `SousTypeProduit` : `idSousTypeProduit;type de produit;sous-type de produit;` ;
+- `Produit` : `idproduit;type de produit;sous-type de produit;produit;`.
+
+La chaîne `invalide` est le retour historique des indices de colonnes non supportés.
+
+### 15.10 Tests globaux et d'intégration validés
+
+Les tests transverses suivants verrouillent les invariants globaux de la couche métier et doivent être relus dès qu'une relation bidirectionnelle, un clonage profond ou un algorithme thread-safe transverse est touché.
+
+`MetierGlobalConformiteTest.java` :
+
+1. `testInvariantMetierGlobalCoherenceLiens()` ;
+2. `testCloneProfondCompletProduit()` ;
+3. `testAntiDeadlockSousTypeProduitProduit()`.
+
+`TypeProduitSousTypeProduitIntegrationTest.java` :
+
+1. `testIntegrationBidirectionnelleNominale()` ;
+2. `testIntegrationReParentingNominal()` ;
+3. `testSetSousTypeProduitsThreadSafe()`.
+
+Ces noms de tests sont contractuels pour l'autonomie de recodage : ils indiquent les scénarios transverses que l'IA doit préserver en plus des tests locaux listés dans `TypeProduit.md`, `SousTypeProduit.md` et `Produit.md`.
+
+### 15.11 Contrôle avant livraison
+
+Avant de livrer une correction de la couche IA destinée à rendre la couche métier autonome, l'IA doit reconfronter les contrats corrigés aux fichiers validés suivants :
+
+- classes métier ;
+- interfaces métier ;
+- utilitaires ;
+- convertisseurs relais métier/DTO ;
+- tests métier et tests convertisseurs.
+
+La livraison doit indiquer explicitement les fichiers relus, les fichiers modifiés, les contrôles effectués et les limites éventuelles restantes.

@@ -1813,6 +1813,50 @@ Interdictions absolues :
 - remplacer une partie du fichier par `...` ;
 - intercaler des explications à l’intérieur du fichier livré.
 
+### 22.2.1) RT-LIVRAISON-FICHIERS-FRAGILES-INDIVIDUELLE-STS-01 — Verrou workflow intangible
+
+Objectif : empêcher définitivement qu'une livraison de fichiers fragiles soit remplacée par une archive globale, un dossier intermédiaire ou un support qui oblige l'Utilisateur à trier, extraire ou recomposer les fichiers dans STS.
+
+Cette règle est intangible et prioritaire pour tout fichier fragile défini par `RT-LIVRAISON-FICHIER-COMPLET-FRAGILE-01`.
+
+Règle nominale obligatoire :
+
+1. un fichier fragile corrigé = un fichier complet livré individuellement ;
+2. plusieurs fichiers fragiles corrigés = un lien de téléchargement individuel par fichier complet ;
+3. chaque fichier livré doit être accompagné de son chemin STS exact ;
+4. chaque fichier livré doit pouvoir remplacer directement et intégralement l'ancien fichier dans STS ;
+5. chaque fichier livré doit être relu et contrôlé comme fichier final réel, et non comme membre implicite d'une archive ;
+6. les métadonnées doivent être données par fichier : taille en octets, nombre de lignes, nombre de caractères `\n`, présence du saut de ligne final, SHA-256 ;
+7. la réponse finale doit présenter les fichiers fragiles un par un, dans une liste exploitable directement par l'Utilisateur.
+
+Interdictions absolues supplémentaires :
+
+- ne jamais livrer un `.zip`, une archive, un dossier compressé ou un bundle comme mode nominal pour des fichiers fragiles ;
+- ne jamais considérer qu'un `.zip` global satisfait la règle de livraison d'un contrat IA, d'un contrat local ou d'un fichier `.md` / `.yaml` / `.yml` / `.py` ;
+- ne jamais obliger l'Utilisateur à extraire une archive, choisir les bons fichiers ou reconstituer l'arborescence pour intégrer une correction fragile ;
+- ne jamais masquer plusieurs fichiers fragiles derrière un seul lien global ;
+- ne jamais annoncer qu'une livraison est complète si les fichiers fragiles ne sont pas livrés individuellement ;
+- ne jamais répondre seulement par une justification ou une reconnaissance d'erreur lorsque l'Utilisateur demande de coder la correction du workflow.
+
+Usage éventuel d'une archive :
+
+- une archive peut seulement être ajoutée en complément secondaire après la livraison individuelle conforme ;
+- l'archive complémentaire ne remplace jamais les liens individuels ;
+- si la livraison individuelle et l'archive divergent, les fichiers individuels livrés avec chemins STS sont seuls normatifs ;
+- l'IA doit éviter l'archive complémentaire lorsqu'elle risque de réintroduire de la confusion.
+
+Contrôle anti-récidive obligatoire avant la réponse finale :
+
+Avant toute réponse finale contenant une livraison de fichiers fragiles, l'IA doit vérifier explicitement :
+
+- ai-je livré chaque fichier fragile individuellement ?
+- ai-je donné le chemin STS exact pour chaque fichier ?
+- ai-je donné les métadonnées de chaque fichier ?
+- ai-je évité de faire du `.zip` le support nominal ?
+- l'Utilisateur peut-il remplacer chaque ancien fichier directement dans STS sans extraction, tri ou recomposition ?
+
+Si une seule réponse est négative, la livraison est non conforme et doit être corrigée avant d'être remise à l'Utilisateur.
+
 ### 22.3) Règle de décision obligatoire
 
 Avant toute livraison de code, l’IA doit déterminer l’unité réelle demandée :
@@ -1842,6 +1886,8 @@ Si l’Utilisateur demande `coder` pour une méthode ou un bloc de méthodes, la
 Si l’Utilisateur demande `coder` pour un fichier complet fragile, ou s’il précise qu’il va remplacer entièrement l’ancien fichier dans STS, la réponse attendue est le fichier complet, éventuellement par lien de téléchargement lorsque la taille ou la fragilité du fichier le justifie.
 
 Cette règle est prioritaire sur les habitudes de livraison antérieures.
+
+Pour les fichiers fragiles, la règle `RT-LIVRAISON-FICHIERS-FRAGILES-INDIVIDUELLE-STS-01` ajoute un verrou non négociable : un fichier complet individuel par fichier corrigé, jamais un ZIP global comme livraison nominale.
 
 ### 22.5) RT-LIVRAISON-AUTO-CONTROLE-LIGNE-A-LIGNE-01 — Qualité des livraisons IA
 
@@ -3572,3 +3618,69 @@ Avant toute génération ou correction dans `TypeProduitCuServiceMockTest.java`,
 L'IA doit reprendre le formalisme validé dans la classe au lieu de créer un nouveau style local.
 
 L'IA ne doit pas normaliser, déplacer, renommer, supprimer ou simplifier un élément déjà validé sans demande explicite de l'utilisateur.
+
+## 33) RT-AUTONOMIE-METIER-RECODAGE-01 — Autonomie réelle sur la couche métier validée
+
+### 33.1 Objectif
+
+Lorsqu'une couche est déclarée validée et que l'utilisateur demande que l'IA puisse la recoder en autonomie, les contrats IA de cette couche ne doivent pas seulement décrire l'intention générale. Ils doivent fournir une fiche d'autonomie suffisante pour recoder quasiment à l'identique le formalisme général, les Javadocs, les commentaires de bloc, les constantes, les méthodes, les algorithmes réellement appliqués et les tests de verrouillage.
+
+Pour la couche métier, cette règle est obligatoire et prioritaire.
+
+### 33.2 Règle de non-improvisation renforcée
+
+Pour une classe métier validée, l'IA n'a pas le droit de remplacer un détail validé par une solution seulement équivalente si ce détail est observable dans le code ou les tests.
+
+Détails à considérer comme contractuels :
+
+- nom des constantes publiques et privées ;
+- valeur littérale des constantes ;
+- ordre des attributs ;
+- ordre exact des méthodes ;
+- visibilité des méthodes ;
+- variantes de clonage ;
+- méthodes internes d'identité ;
+- méthodes de traitement des mauvaises instances ;
+- stratégie de verrouillage ;
+- snapshots sous verrou ;
+- recalcul de validité ;
+- chaînes CSV et JTable ;
+- retours `null`, chaîne vide, `invalide` ou texte `null` ;
+- commentaires techniques nécessaires à la compréhension des verrous, snapshots, relations bidirectionnelles et clonages profonds.
+
+### 33.3 Fiche d'autonomie obligatoire
+
+Chaque contrat local d'une classe métier validée doit contenir ou compléter les informations suivantes :
+
+1. inventaire structurel complet : constantes, attributs, méthodes publiques, méthodes protégées, méthodes privées ;
+2. ordre d'apparition des méthodes à conserver ;
+3. constantes littérales exactes, y compris les chaînes historiques ;
+4. règles algorithmiques méthode par méthode pour les méthodes sensibles ;
+5. règles de formalisme Javadoc/commentaires à conserver ;
+6. inventaire des tests validés qui verrouillent la classe ;
+7. interdictions concrètes empêchant l'IA de simplifier le code validé.
+
+Si une fiche locale est incomplète, l'IA doit relire le code validé correspondant et compléter le contrat IA avant de prétendre pouvoir recoder la classe en autonomie.
+
+### 33.4 Hiérarchie lors du recodage autonome
+
+Même après enrichissement des contrats, la hiérarchie reste :
+
+1. baseline consolidée ;
+2. GitHub Raw au SHA courant ;
+3. bundle OFFLINE validé ;
+4. contrats IA enrichis.
+
+Les contrats IA rendent l'IA autonome sur la compréhension et la reproduction du formalisme. Ils ne l'autorisent jamais à ignorer le SHA courant ni à coder depuis un souvenir.
+
+### 33.5 Critère de réussite
+
+La couche IA est considérée comme autonome pour une classe métier uniquement si une IA peut produire un code qui :
+
+- conserve le comportement validé par les tests ;
+- conserve le style général de la classe ;
+- conserve l'ordre fonctionnel et les méthodes internes ;
+- conserve les Javadocs/commentaires critiques ;
+- ne remplace pas les algorithmes thread-safe validés par des raccourcis ;
+- ne casse aucune relation bidirectionnelle ;
+- ne modifie pas les chaînes CSV/JTable historiques.
