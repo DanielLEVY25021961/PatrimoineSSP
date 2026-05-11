@@ -116,9 +116,24 @@ L'ADAPTER JPA est le point technique qui dialogue avec les DAO et convertisseurs
 ```
 
 #### Constructeur(s)
-- néant
 
-Règle stricte : ne pas remplacer l'injection par constructeur, ne pas créer de dépendance DTO, UC ou Controller, ne pas supprimer `LOG` même s'il est peu utilisé.
+Constructeur unique d'injection Spring à conserver strictement :
+
+```java
+	public TypeProduitGatewayJPAService(
+			@Qualifier("TypeProduitDaoJPA")
+				final TypeProduitDaoJPA pTypeProduitDaoJPA) {
+		super();
+		this.typeProduitDaoJPA = pTypeProduitDaoJPA;
+	}
+```
+
+Javadoc constructeur à conserver dans son intention et son formalisme :
+- `CONSTRUCTEUR appelé automatiquement par SPRING` ;
+- injection d'un `TypeProduitDaoJPA` ;
+- avertissement explicite : ne surtout pas créer de constructeur d'arité nulle, faute de quoi Spring ne pourra plus injecter.
+
+Règle stricte : conserver l'injection par constructeur validée avec `@Qualifier("TypeProduitDaoJPA")`, ne jamais la remplacer par une injection de champ, un constructeur vide, un constructeur d'arité nulle ou une autre forme d'injection, ne pas créer de dépendance DTO, UC ou Controller, ne pas supprimer `LOG` même s'il est peu utilisé.
 
 ### 99.3) Ordre exact des méthodes de l'ADAPTER
 
