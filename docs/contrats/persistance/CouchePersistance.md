@@ -1,136 +1,225 @@
-# Contrat local de couche - Couche persistance
+<!--
+Contrat local généré par l'IA depuis la baseline consolidée au SHA ae857f1e26fd092f8ed9371c0e8b1a66c47c6518.
+Ce fichier est un fichier fragile : il doit être livré complet et remplacé intégralement dans STS.
+-->
+# Contrat local de couche — Couche persistance
 
-## 1) Intention de la couche
+## 1) Objectif d'autonomie
 
-La couche `couche_persistance` porte les composants de persistance du domaine `produittype`.
+La couche `couche_persistance` doit être décrite de façon assez prescriptive pour que l'IA puisse recoder quasiment à l'identique les fichiers validés, après application obligatoire du workflow `CONTRAT_IA.md` : relecture du contrat central, de la baseline consolidée, du présent contrat de couche, du contrat local, du fichier cible, des dépendances utiles et des tests concernés.
 
-Elle expose :
-- les interfaces transverses propres à la persistance ;
-- les convertisseurs JPA ↔ métier ;
-- les entités JPA ;
-- les DAO JPA ;
-- les tests de persistance ;
-- les contrats locaux de couche.
+La couche IA ne doit pas être une simple carte générale. Elle doit empêcher l'IA d'improviser sur :
 
-Cette couche est distincte de `couche_metier`, de `couche_dto` et de `couche_services`.
+- les annotations JPA ;
+- les interfaces transverses ;
+- les constantes ;
+- l'ordre des méthodes ;
+- les helpers privés ;
+- les relations bidirectionnelles ;
+- les convertisseurs cycle-safe ;
+- les DAO Spring Data ;
+- les Javadocs et commentaires de bloc caractéristiques ;
+- les tests de persistance déjà validés.
 
 ## 2) Frontière architecturale
 
-La couche `couche_persistance` :
-- manipule les entités JPA et les DAO ;
-- assure la conversion entre objets métier et objets JPA ;
-- ne porte pas la logique UC ;
-- ne porte pas la logique Gateway ;
-- ne porte pas la logique Controller ;
-- ne porte pas la logique View ;
-- ne manipule pas les DTO comme contrat applicatif.
+La couche persistance manipule les entities JPA, les DAO JPA, les convertisseurs JPA ↔ métier et les interfaces transverses propres à la persistance.
 
-La duplication de certaines interfaces transverses entre `couche_metier` et `couche_persistance` est volontaire lorsqu’elle sert l’autonomie stricte des couches.
+Elle ne porte pas :
 
-## 3) Fichiers inclus dans le périmètre sacralisé
+- logique UC ;
+- logique Gateway ;
+- logique Controller ;
+- logique View ;
+- DTO comme contrat applicatif ;
+- message utilisateur applicatif.
 
-### 3.1) Interfaces transverses
+La duplication de `IExportateurCsv` et `IExportateurJTable` côté persistance est volontaire. Elle sert l'autonomie stricte de la couche persistance et ne doit pas être supprimée au motif qu'un équivalent existe côté métier.
 
-- `src/main/java/levy/daniel/application/persistence/metier/IExportateurCsv.java`
-- `src/main/java/levy/daniel/application/persistence/metier/IExportateurJTable.java`
+## 3) Périmètre validé à relire
 
-### 3.2) Entités JPA / convertisseurs
+### 3.1 Interfaces transverses persistance
 
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetier.java`
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPA.java`
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPA.java`
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPA.java`
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPA.java`
+```text
+src/main/java/levy/daniel/application/persistence/metier/IExportateurCsv.java
+src/main/java/levy/daniel/application/persistence/metier/IExportateurJTable.java
+```
 
-### 3.3) DAO JPA
+### 3.2 Entities JPA et convertisseurs
 
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/ProduitDaoJPA.java`
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/SousTypeProduitDaoJPA.java`
-- `src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/TypeProduitDaoJPA.java`
+```text
+src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPA.java
+src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPA.java
+src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPA.java
+src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPA.java
+src/main/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetier.java
+```
 
-### 3.4) Tests persistance
+### 3.3 DAO JPA
 
-- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetierTest.java`
-- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPATest.java`
-- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPATest.java`
-- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPATest.java`
-- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPARattachementDetachementTest.java`
-- `src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java`
+```text
+src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/TypeProduitDaoJPA.java
+src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/SousTypeProduitDaoJPA.java
+src/main/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/ProduitDaoJPA.java
+```
 
-### 3.5) Contrats locaux de la couche
+### 3.4 Tests directs de persistance
 
-- `docs/contrats/persistance/CouchePersistance.md`
-- `docs/contrats/persistance/ConvertisseurJPAToMetier.md`
-- `docs/contrats/persistance/ConvertisseurMetierToJPA.md`
-- `docs/contrats/persistance/ProduitJPA.md`
-- `docs/contrats/persistance/SousTypeProduitJPA.md`
-- `docs/contrats/persistance/TypeProduitJPA.md`
-- `docs/contrats/persistance/ProduitDaoJPA.md`
-- `docs/contrats/persistance/SousTypeProduitDaoJPA.md`
-- `docs/contrats/persistance/TypeProduitDaoJPA.md`
+```text
+src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPATest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/TypeProduitJPARattachementDetachementTest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/SousTypeProduitJPATest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ProduitJPATest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurMetierToJPATest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/entities/entitiesJPA/ConvertisseurJPAToMetierTest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/DaoJPATestConfig.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/TypeProduitDaoJPATest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/SousTypeProduitDaoJPATest.java
+src/test/java/levy/daniel/application/persistence/metier/produittype/dao/daosJPA/ProduitDaoJPATest.java
+```
 
-## 4) Règles de cohérence obligatoires
+## 4) Règles transverses de formalisme
 
-### 4.1) Règle d'autonomie de couche
+Les fichiers validés de persistance ont un formalisme historique à conserver :
 
-Les interfaces transverses de persistance appartiennent à `couche_persistance` même lorsqu’un équivalent existe côté métier.
-Cette duplication volontaire sert l’autonomie stricte des couches.
+- séparateurs de tête `/* ********************************************************************* */` pour les DAO ;
+- grands blocs `// ************************ATTRIBUTS************************************/` et `// *************************METHODES**********************************/` pour les entities et convertisseurs ;
+- Javadocs HTML avec `<style>`, `<div>`, `<p>`, `<ul>`, `<li>` ;
+- commentaires de fin de constructeur, méthode, classe ou interface ;
+- commentaires de bloc expliquant les caches, les relations bidirectionnelles, les snapshots et les conversions ;
+- ordre logique validé : attributs, logger, constructeurs, méthodes fondamentales, clonage, relations, CSV/JTable, getters/setters, helpers.
 
-### 4.2) Règle convertisseurs
+L'IA ne doit pas remplacer ce formalisme par un style moderne plus court.
 
-Les convertisseurs de la couche assurent le passage :
-- JPA → métier ;
-- métier → JPA.
+## 5) Interfaces transverses à recoder quasiment à l'identique
 
-Ils n’ont pas à dériver vers les DTO ni vers la logique UC.
+### 5.1 `IExportateurCsv`
 
-### 4.3) Règle DAO
+- Package : `levy.daniel.application.persistence.metier`.
+- Interface publique, sans modificateur explicite sur les méthodes.
+- Deux méthodes dans cet ordre strict :
 
-Les DAO JPA appartiennent exclusivement à la persistance.
-Ils ne doivent pas porter de message utilisateur ni de logique applicative de cas d’usage.
+```java
+String getEnTeteCsv();
+String toStringCsv();
+```
 
-### 4.4) Règle de preuve
+Règles :
 
-Les tests de persistance verrouillent :
-- la cohérence des convertisseurs ;
-- les règles JPA des entités ;
-- les rattachements / détachements ;
-- les invariants techniques propres à la persistance.
+- la Javadoc explique l'export CSV ;
+- `getEnTeteCsv()` fournit l'en-tête et doit rester transient côté implémentations JPA ;
+- `toStringCsv()` fournit une ligne CSV et assume la représentation Java de `null` ;
+- conserver le commentaire final d'interface.
 
-### 4.5) Règle de preuve DAO
+### 5.2 `IExportateurJTable`
 
-La couche `couche_persistance` ne porte pas de batterie de tests DAO dédiée.
+- Package : `levy.daniel.application.persistence.metier`.
+- Interface publique.
+- Deux méthodes dans cet ordre strict :
 
-La preuve des appels DAO spécifiques et du comportement observable associé est réalisée par :
-- les tests Mock de la couche Gateway ;
-- les tests d’intégration de la couche Gateway.
+```java
+String getEnTeteColonne(int pI);
+Object getValeurColonne(int pI);
+```
 
-En conséquence, la couche `couche_persistance` ne doit pas dupliquer massivement cette preuve au niveau DAO, sauf besoin nouveau explicite.
+Règles :
 
-### 4.6) Règle de frontière
+- les colonnes sont `0-based` ;
+- l'ordre suit le CSV ;
+- les méthodes doivent rester transient côté implémentations JPA ;
+- hors index connu, les implémentations retournent `"invalide"` ;
+- conserver le commentaire final d'interface.
 
-La couche `couche_persistance` ne doit pas absorber :
-- les DTO ;
-- les services UC ;
-- les Gateways ;
-- les controllers ;
-- les vues.
+## 6) Règles entities JPA
 
-## 5) Définition de la sacralisation
+Les trois entities JPA suivent les règles communes suivantes :
 
-La couche `couche_persistance` est considérée sacralisée lorsque :
-- le présent contrat local est présent ;
-- les contrats locaux détaillés des convertisseurs, entities JPA et DAO JPA sont présents ;
-- le périmètre IA référence exactement les fichiers de cette couche ;
-- les interfaces transverses de persistance sont explicitement incluses ;
-- les convertisseurs, entités JPA, DAO et tests sont dans le périmètre validé ;
-- la séparation avec `couche_metier`, `couche_dto` et `couche_services` est explicite.
+- `@Entity(name = "...JPA")` ;
+- `@Access(AccessType.FIELD)` ;
+- `@Table(...)` explicite avec nom de table, schéma, contrainte ou index selon la classe ;
+- ID avec `@Id`, `@GeneratedValue(strategy=GenerationType.IDENTITY)` et `@Column(name="...")` ;
+- libellé non nullable, insérable et modifiable ;
+- parent `@ManyToOne(fetch = FetchType.LAZY, optional = false, targetEntity = ...JPA.class)` ;
+- enfant `@OneToMany(targetEntity = ...JPA.class, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "...")` ;
+- relations exposées via interfaces métier (`TypeProduitI`, `SousTypeProduitI`, `ProduitI`) malgré l'annotation `targetEntity` ;
+- `getEnTeteCsv()`, `getEnTeteColonne(...)` et `getValeurColonne(...)` annotées `@Transient` ;
+- `valide` est également `@Transient` quand il existe ;
+- `equals(...)` doit privilégier l'ID quand les deux IDs sont présents, puis retomber sur l'égalité métier ;
+- `hashCode()` doit être cohérent avec l'ID persistant et les tests de stabilité ;
+- `compareTo(...)` doit être cohérent avec le parent puis le libellé normalisé ;
+- `normalize(...)` applique `StringUtils.trimToEmpty(...).toLowerCase(Locale.ROOT)` ;
+- les setters de libellé normalisent ;
+- les setters de parent/enfants doivent maintenir les relations bidirectionnelles sans doublons.
 
-## 6) Exclusions explicites
+## 7) Règles convertisseurs JPA ↔ métier
 
-Ne font pas partie de `couche_persistance` :
-- les DTO ;
-- les services UC ;
-- les Gateways ;
-- les controllers ;
-- les vues.
+Les convertisseurs sont des classes utilitaires `final` :
+
+- constructeur privé d'arité nulle ;
+- aucune dépendance DTO ;
+- conversion `null` ou libellé blank vers `null` ;
+- `ConversionContext` interne fondé sur `IdentityHashMap` ;
+- `SHARED_CACHE` statique thread-safe via `Collections.synchronizedMap(new IdentityHashMap<>())` ;
+- `get(...)` consulte d'abord `SHARED_CACHE`, puis le cache local ;
+- `put(...)` alimente les deux caches ;
+- conversion parent/enfants par setters canoniques, jamais par écrasement brutal des collections ;
+- sécurité LAZY : si une collection source est `null` ou non chargée, ne pas vider la collection cible ;
+- `requireMetier(...)` et `requireJPA(...)` jettent `IllegalStateException` avec contexte si l'objet n'a pas l'implémentation attendue ;
+- les helpers d'affichage privés sont conservés parce qu'ils verrouillent le diagnostic didactique historique.
+
+## 8) Règles DAO JPA
+
+Les DAO JPA sont des interfaces Spring Data :
+
+- package `levy.daniel.application.persistence.metier.produittype.dao.daosJPA` ;
+- bannière de tête `REPOSITORY DAO JPA` ;
+- `@Repository("...DaoJPA")` ;
+- extension `JpaRepository<...JPA, Long>` ;
+- méthodes Spring Data exactement nommées, sans implémentation ;
+- `findAll()` et `findAll(Pageable)` explicitement redéclarées avec `@Override` ;
+- Javadocs explicatives conservées pour les méthodes utilisées par les Gateways ;
+- aucun message applicatif, aucune logique UC, aucune conversion.
+
+## 9) Tests DAO directs : correction du verrou de preuve
+
+Contrairement à l'ancien état du contrat, la couche persistance porte bien des tests DAO directs validés. Ces tests sont sacralisés :
+
+```text
+TypeProduitDaoJPA: 4 tests
+SousTypeProduitDaoJPA: 6 tests
+ProduitDaoJPA: 6 tests
+```
+
+`DaoJPATestConfig.java` est également sacralisé. Il évite les scans concurrents en exécution groupée STS et ne doit pas être supprimé.
+
+## 10) Inventaire global des tests persistance
+
+```text
+TypeProduitJPA: 25 tests
+TypeProduitJPARattachementDetachement: 3 tests
+SousTypeProduitJPA: 26 tests
+ProduitJPA: 23 tests
+ConvertisseurMetierToJPA: 16 tests
+ConvertisseurJPAToMetier: 18 tests
+TypeProduitDaoJPA: 4 tests
+SousTypeProduitDaoJPA: 6 tests
+ProduitDaoJPA: 6 tests
+```
+
+L'IA doit relire les tests concernés avant de modifier ou recoder le composant correspondant. Un test validé est une spécification.
+
+## 11) Anti-improvisation persistance
+
+Si un détail exact n'est pas recopié dans le contrat local, l'IA doit le reprendre depuis le code validé relu dans la baseline consolidée. Elle ne doit jamais remplacer :
+
+- une annotation JPA par une annotation équivalente supposée ;
+- une méthode privée par une simplification ;
+- un setter canonique par une écriture directe d'attribut ;
+- une relation bidirectionnelle par une collection non synchronisée ;
+- un cache `IdentityHashMap` par `HashMap` ;
+- un helper d'affichage par une sortie plus courte ;
+- une Javadoc historique par une phrase générique.
+
+## 12) Objectif de validation
+
+La couche IA persistance est considérée suffisamment autonome si, après relecture obligatoire de la baseline consolidée, tous les éléments suivants sont couverts : interfaces, annotations, constantes, attributs, méthodes dans l'ordre, helpers privés, tests, relations, convertisseurs, DAO et configuration de test.
