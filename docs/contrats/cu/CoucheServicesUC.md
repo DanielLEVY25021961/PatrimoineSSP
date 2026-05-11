@@ -215,6 +215,35 @@ Il doit vérifier selon le cas :
 Un test Mock UC ne doit pas utiliser le DAO ni prouver directement le stockage.
 Le Gateway est un collaborateur mocké : les interactions avec lui sont la preuve principale.
 
+### 12.1) RT-MOCKITO-STUBBING-STRICTEMENT-CONSOMME-01 — Application locale UC
+
+Cette règle est l'application locale UC de la règle Mockito transverse définie dans `CONTRAT_IA.md`.
+Elle ne limite pas la règle aux UC : le même principe s'applique à tout test Mockito du projet.
+
+Dans un test Mock UC, chaque stubbing Mockito doit être strictement justifié par le chemin réellement exécuté par le scénario.
+
+Sont concernés :
+- `when(...)` ;
+- `doThrow(...)` ;
+- `doReturn(...)` ;
+- tout comportement configuré sur un mock.
+
+Règle obligatoire :
+- relire la méthode UC testée et l'ordre réel des appels avant de configurer les mocks ;
+- identifier le point exact où le scénario s'arrête : exception attendue, retour anticipé, branche nominale ou interaction vérifiée ;
+- ne stubber que les appels consommés avant ce point ;
+- supprimer tout stubbing non consommé avant livraison.
+
+Interdictions :
+- ne jamais stubber un mock mécaniquement pour le rendre « complet » ;
+- ne jamais ajouter un getter mocké si le scénario échoue avant sa lecture ;
+- ne jamais conserver un stubbing préventif, décoratif ou supposé utile ;
+- ne jamais ignorer un risque de `UnnecessaryStubbingException`.
+
+Exemple validé dans `SousTypeProduitCuServiceMockTest.java` : dans les tests de conversion `OutputDTO` de `findAllByParent(...)`, si l'exception est déclenchée par `sousTypeProduit.getTypeProduit()`, il ne faut pas stubber `sousTypeProduit.getSousTypeProduit()` si ce getter n'est pas consommé avant l'exception.
+
+Cette règle complète les règles de commentaires alignés : un commentaire ne doit jamais annoncer une préparation ou une configuration qui ne correspond pas à un appel réellement utilisé par le test.
+
 ## 13) RT-CODAGE-TEST-INTEGRATION-UC-01 — Tests d'intégration UC
 
 Un test d'intégration UC prouve le comportement réel du SERVICE METIER UC avec ses collaborateurs réels utiles au scénario.
@@ -276,7 +305,7 @@ Elle doit inclure au minimum :
 Une fois installée et activée depuis la baseline consolidée, cette fenêtre devient la source de travail locale pour les audits UC jusqu'à nouveau SHA, nouveau périmètre ou demande explicite de relecture GitHub.
 ## 16) RT-FORMALISME-TYPEPRODUIT-CU-MOCK-REFERENCE-02 — Référence autonome TypeProduitCuServiceMockTest
 
-`TypeProduitCuServiceMockTest.java` corrigé au SHA courant `d8a5ebca1bafd159b7cdb371cc7f4b6cd79f6ebb` est la référence complète de formalisme Mockito UC pour le SERVICE METIER UC `TypeProduitCuService`.
+`TypeProduitCuServiceMockTest.java` corrigé au dernier SHA courant fourni par l'utilisateur est la référence complète de formalisme Mockito UC pour le SERVICE METIER UC `TypeProduitCuService`.
 
 Cette règle locale complète `RT-FORMALISME-TESTS-UC-01` et `RT-CODAGE-TEST-MOCKITO-UC-01`.
 

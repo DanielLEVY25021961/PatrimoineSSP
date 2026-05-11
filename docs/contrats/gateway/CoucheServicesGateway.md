@@ -510,12 +510,37 @@ Règles d'assertions :
 - vérifier les invariants métier ou techniques utiles.
 
 Règles Mockito :
-- chaque `when(...)` doit correspondre à un appel réellement exécuté ;
+- appliquer `RT-MOCKITO-STUBBING-STRICTEMENT-CONSOMME-01` ;
+- chaque `when(...)`, `doThrow(...)`, `doReturn(...)` ou stubbing équivalent doit correspondre à un appel réellement exécuté par le scénario ;
 - aucun stub inutile n'est toléré ;
 - vérifier les appels attendus avec `verify(...)` ;
 - vérifier les appels interdits avec `never()` ;
 - utiliser `verifyNoInteractions(...)` lorsqu'aucun collaborateur ne doit être appelé ;
 - ne pas utiliser `verifyNoMoreInteractions(...)`, sauf décision explicite future validée par l'utilisateur.
+
+### 5.15.1) RT-MOCKITO-STUBBING-STRICTEMENT-CONSOMME-01 — Application Gateway
+
+Cette règle est l'application locale Gateway de la règle Mockito transverse définie dans `CONTRAT_IA.md`.
+Elle s'applique à tous les tests Mockito Gateway, notamment aux tests qui mockent DAO, `EntityManager`, repositories, services ou collaborateurs techniques.
+
+Méthode obligatoire avant livraison :
+1. relire le PORT Gateway ;
+2. relire l'ADAPTER Gateway testé ;
+3. déterminer l'ordre réel des appels dans la méthode testée ;
+4. identifier le point exact où le scénario s'arrête ;
+5. ne stubber que les appels réellement consommés avant ce point ;
+6. supprimer tout stubbing non consommé.
+
+Interdictions :
+- ne jamais stubber un DAO, un `EntityManager` ou un collaborateur pour le rendre « complet » ;
+- ne jamais ajouter un comportement Mockito préventif si le scénario échoue avant son appel ;
+- ne jamais conserver un `when(...)`, `doThrow(...)` ou `doReturn(...)` qui n'est pas justifié par le chemin testé ;
+- ne jamais masquer un risque de `UnnecessaryStubbingException` par une configuration inutile du test.
+
+Conséquence :
+- les commentaires `Configuration du Mock` doivent décrire uniquement les stubbings réellement consommés ;
+- un test Gateway Mock ne doit pas préparer un stockage simulé plus large que le scénario testé ;
+- si le scénario déclenche l'exception avant une lecture DAO ou un getter, ce comportement ne doit pas être stubbé.
 
 ### 5.16) Collaborateurs réels
 

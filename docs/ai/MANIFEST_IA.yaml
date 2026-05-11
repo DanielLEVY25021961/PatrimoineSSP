@@ -378,10 +378,12 @@ couches:
         couche_services.uc: validated_locked
 
     couche_controllers:
-      statut: reserved
-      mandatory_pre_read: false
+      statut: documented_transverse_rules
+      mandatory_pre_read: true
       packs:
         - controllers
+      contracts:
+        - docs/contrats/controllers/CoucheControllers.md
 
     couche_vues:
       statut: reserved

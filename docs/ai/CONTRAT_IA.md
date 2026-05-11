@@ -1397,17 +1397,43 @@ Règle obligatoire :
 Conséquence :
 - avant toute livraison, l’IA doit comparer ses commentaires générés à ceux des méthodes déjà validées de l’ADAPTER concerné.
 
-#### 15.2.3) Mockito strict
+#### 15.2.3) RT-MOCKITO-STUBBING-STRICTEMENT-CONSOMME-01 — Mockito strict transverse
+
+Nature de la règle :
+- règle technique transverse de la couche IA ;
+- source canonique pour tous les tests Mockito du projet PatrimoineSSP ;
+- applicable aux tests Mock Gateway, Mock UC, Controllers Desktop/Web Mock, MockMvc utilisant des stubs Mockito, et à tout futur test utilisant Mockito.
+
+Sont concernés :
+- `when(...)` ;
+- `doThrow(...)` ;
+- `doReturn(...)` ;
+- tout comportement configuré sur un mock, un spy ou un collaborateur Mockito.
 
 Interdiction absolue :
-- ne jamais laisser un `when(...)` qui ne correspond à aucun appel réellement exécuté.
+- ne jamais laisser un `when(...)`, `doThrow(...)`, `doReturn(...)` ou tout autre stubbing qui ne correspond pas à un appel réellement exécuté dans le scénario testé ;
+- ne jamais stubber mécaniquement un mock pour le rendre « complet » ;
+- ne jamais préparer un getter ou une méthode mockée si le scénario déclenche l'exception attendue avant que cet appel soit consommé ;
+- ne jamais conserver un stubbing décoratif, préventif ou supposé utile « au cas où » ;
+- ne jamais réorganiser un test en ajoutant des stubbings génériques avant d'avoir relu l'ordre réel des appels de la méthode testée.
 
 Règle obligatoire :
-- chaque stub Mockito doit être justifié par le scénario testé ;
-- aucun stub "au cas où" n’est toléré.
+- chaque stub Mockito doit être justifié par un appel effectivement consommé par le chemin réel du test ;
+- l'IA doit relire la méthode testée et déterminer l'ordre exact des appels avant de configurer les mocks ;
+- l'IA doit identifier le point précis où le scénario s'arrête : exception attendue, retour anticipé, branche nominale ou interaction vérifiée ;
+- seuls les appels exécutés avant ce point peuvent être stubbés ;
+- tout stubbing non consommé doit être supprimé avant livraison ;
+- le commentaire de bloc ne doit annoncer que les comportements mockés réellement utilisés par le scénario.
 
 Conséquence :
-- avant toute livraison de test Mock, l’IA doit relire le scénario ligne à ligne et supprimer tout stub inutilisé.
+- avant toute livraison de test Mockito, l’IA doit relire le scénario ligne à ligne et supprimer tout stub inutilisé ;
+- un test vert ne suffit pas si le code contient un stubbing inutile ou non justifié ;
+- l'objectif est d'éviter `UnnecessaryStubbingException`, de garder le test humainement lisible et de conserver l'alignement entre les commentaires et le code réellement exécuté ;
+- les contrats locaux Gateway, UC et Controllers doivent relayer cette règle lorsqu'ils décrivent des tests Mockito.
+
+Exemple validé :
+- dans un test de conversion `OutputDTO`, si l'échec attendu est déclenché par `sousTypeProduit.getTypeProduit()` avant toute lecture du libellé, il faut stubber uniquement `getTypeProduit()` ;
+- il est interdit d'ajouter `when(sousTypeProduit.getSousTypeProduit()).thenReturn(...)` si `getSousTypeProduit()` n'est pas réellement consommé avant l'exception.
 
 #### 15.2.4) Constantes de tests
 
@@ -3111,6 +3137,24 @@ La sous-couche `couche_services.uc` doit permettre à l’IA de retrouver comme 
 - les contrats locaux UC applicables.
 
 
+### 29.13 Sacralisation de `couche_controllers`
+
+La couche canonique `couche_controllers` regroupe les controllers Desktop/Web, les tests Controllers Mock, les tests MockMvc et les tests d'intégration Controllers.
+
+#### Controllers et tests associés
+
+Pour toute analyse, correction ou génération de test Controller utilisant Mockito, l'IA doit appliquer les règles transverses de `CONTRAT_IA.md`, notamment :
+- `RT-MOCKITO-STUBBING-STRICTEMENT-CONSOMME-01` ;
+- les règles de commentaires alignés avec le code immédiatement suivant ;
+- les règles de non-réinvention à partir des tests déjà validés.
+
+#### Contrat local Controllers pivot
+
+Les règles locales Controllers doivent être stabilisées dans :
+- `docs/contrats/controllers/CoucheControllers.md`.
+
+Tant qu'une fenêtre active Controllers n'est pas installée, ce contrat local sert de relais minimal obligatoire pour les règles transverses déjà sacralisées et ne dispense jamais de relire les classes Controllers et les tests concernés avant toute conclusion.
+
 ## 30) RT-REFERENCE-GATEWAY-IMPL-VALIDEE-01 — Package Gateway impl validé comme référence autonome
 
 ### 30.1 Objet
@@ -3279,6 +3323,8 @@ Il doit vérifier selon le cas :
 
 Un test Mock UC ne prouve pas directement le stockage et ne manipule pas le DAO.
 
+Règle Mockito stricte : un test Mock UC ne doit configurer que les comportements réellement consommés par le scénario. Chaque `when(...)`, `doThrow(...)`, `doReturn(...)` ou stubbing équivalent doit correspondre à un appel exécuté avant le point d'arrêt du scénario. Si l'exception attendue est déclenchée avant la lecture d'un getter ou d'une méthode mockée, ce getter ou cette méthode ne doit pas être stubbé.
+
 ### 31.6 Tests d'intégration UC
 
 Un test d'intégration UC prouve le comportement réel du SERVICE METIER UC avec ses collaborateurs réels utiles au scénario.
@@ -3317,7 +3363,7 @@ Une fois activée, cette fenêtre devient la source de travail locale pour l'aud
 
 ### 32.1 Objet
 
-`TypeProduitCuServiceMockTest.java` corrigé au SHA courant `d8a5ebca1bafd159b7cdb371cc7f4b6cd79f6ebb` est une référence complète de formalisme Mockito UC pour le SERVICE METIER UC `TypeProduitCuService`.
+`TypeProduitCuServiceMockTest.java` corrigé au dernier SHA courant fourni par l'utilisateur est une référence complète de formalisme Mockito UC pour le SERVICE METIER UC `TypeProduitCuService`.
 
 Cette règle complète les règles générales UC : elle ne remplace jamais le contrat du PORT UC, mais elle fixe le formalisme exact que l'IA doit savoir reproduire sans réinvention lorsqu'elle travaille sur cette classe ou sur une classe UC Mockito comparable.
 
@@ -3456,6 +3502,51 @@ Exemples validés :
 - préparer `comptageIncoherent` et `messageTechnique` avant le mock Gateway lorsque le commentaire annonce un comptage incohérent ;
 - préparer `comptageAttendu` immédiatement après le commentaire qui annonce un comptage Gateway cohérent ;
 - préparer DTO, libellés, objets métier, `RequetePage` ou `ResultatPage` immédiatement après le commentaire qui les annonce.
+
+### 32.6.1 RT-MOCKITO-STUBBING-STRICTEMENT-CONSOMME-01 — Application locale UC d'une règle transverse
+
+Cette section applique aux tests Mock UC la règle Mockito transverse définie en `15.2.3`.
+Elle ne limite pas la règle aux UC : la même exigence s'applique aussi aux tests Mock Gateway, Controllers Mock, MockMvc utilisant Mockito, et à tout futur test Mockito du projet.
+
+Dans les tests Mockito UC, chaque stubbing doit être consommé par le scénario réellement exécuté.
+
+Sont concernés :
+
+- `when(...)` ;
+- `doThrow(...)` ;
+- `doReturn(...)` ;
+- tout comportement configuré sur un mock.
+
+Règle obligatoire :
+
+1. relire la méthode testée ;
+2. déterminer l'ordre réel des appels ;
+3. identifier le point exact où le scénario s'arrête ;
+4. ne stubber que les appels exécutés avant ce point ;
+5. supprimer tout stubbing non consommé.
+
+Interdictions :
+
+- ne jamais stubber un mock « pour le rendre complet » ;
+- ne jamais ajouter un getter mocké par réflexe ;
+- ne jamais conserver un stubbing préventif, décoratif ou non vérifié par le scénario ;
+- ne jamais ignorer un risque de `UnnecessaryStubbingException`.
+
+Exemple validé dans `SousTypeProduitCuServiceMockTest.java` :
+
+```java
+when(sousTypeProduit.getTypeProduit()).thenThrow(panneTechnique);
+```
+
+est suffisant lorsque l'échec de conversion `OutputDTO` est déclenché par l'accès au parent.
+
+Dans ce scénario, il est interdit d'ajouter :
+
+```java
+when(sousTypeProduit.getSousTypeProduit()).thenReturn(OUTILLAGE);
+```
+
+si `getSousTypeProduit()` n'est pas consommé avant l'exception.
 
 ### 32.7 Non-réinvention
 
