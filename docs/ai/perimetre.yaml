@@ -122,6 +122,10 @@ packs:
       - "docs/contrats/metier/TypeProduit.md"
       - "docs/contrats/metier/SousTypeProduit.md"
       - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/metier/CoucheMetier.md"
+      - "docs/contrats/metier/CloneContext.md"
+      - "docs/contrats/metier/NormalizerUtils.md"
+      - "docs/contrats/metier/ConvertisseursMetierOutputDTO.md"
       - "docs/contrats/dto/TypeProduitDTO.md"
       - "docs/contrats/dto/SousTypeProduitDTO.md"
       - "docs/contrats/dto/ProduitDTO.md"
@@ -180,6 +184,10 @@ packs:
       - "docs/contrats/metier/TypeProduit.md"
       - "docs/contrats/metier/SousTypeProduit.md"
       - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/metier/CoucheMetier.md"
+      - "docs/contrats/metier/CloneContext.md"
+      - "docs/contrats/metier/NormalizerUtils.md"
+      - "docs/contrats/metier/ConvertisseursMetierOutputDTO.md"
       - "docs/contrats/dto/TypeProduitDTO.md"
       - "docs/contrats/dto/SousTypeProduitDTO.md"
       - "docs/contrats/dto/ProduitDTO.md"
@@ -256,6 +264,14 @@ packs:
 
   metier:
     description: "Couche métier : objets métier, interfaces métier, utilitaires métier et tests associés."
+    paths:
+      - "docs/contrats/metier/CoucheMetier.md"
+      - "docs/contrats/metier/CloneContext.md"
+      - "docs/contrats/metier/NormalizerUtils.md"
+      - "docs/contrats/metier/ConvertisseursMetierOutputDTO.md"
+      - "docs/contrats/metier/TypeProduit.md"
+      - "docs/contrats/metier/SousTypeProduit.md"
+      - "docs/contrats/metier/Produit.md"
     roots:
       - path: "src/main/java/levy/daniel/application/model/metier"
         recursive: true
@@ -396,6 +412,10 @@ packs:
       - "docs/contrats/dto/SousTypeProduitDTO.md"
       - "docs/contrats/dto/TypeProduitDTO.md"
       - "docs/contrats/metier/Produit.md"
+      - "docs/contrats/metier/CoucheMetier.md"
+      - "docs/contrats/metier/CloneContext.md"
+      - "docs/contrats/metier/NormalizerUtils.md"
+      - "docs/contrats/metier/ConvertisseursMetierOutputDTO.md"
       - "docs/contrats/metier/SousTypeProduit.md"
       - "docs/contrats/metier/TypeProduit.md"
       - "src/test/resources/truncate-test.sql"
@@ -531,6 +551,10 @@ couches:
         - "docs/contrats/metier/TypeProduit.md"
         - "docs/contrats/metier/SousTypeProduit.md"
         - "docs/contrats/metier/Produit.md"
+        - "docs/contrats/metier/CoucheMetier.md"
+        - "docs/contrats/metier/CloneContext.md"
+        - "docs/contrats/metier/NormalizerUtils.md"
+        - "docs/contrats/metier/ConvertisseursMetierOutputDTO.md"
         - "docs/contrats/dto/TypeProduitDTO.md"
         - "docs/contrats/dto/SousTypeProduitDTO.md"
         - "docs/contrats/dto/ProduitDTO.md"
@@ -577,6 +601,10 @@ couches:
         - "docs/contrats/metier/TypeProduit.md"
         - "docs/contrats/metier/SousTypeProduit.md"
         - "docs/contrats/metier/Produit.md"
+        - "docs/contrats/metier/CoucheMetier.md"
+        - "docs/contrats/metier/CloneContext.md"
+        - "docs/contrats/metier/NormalizerUtils.md"
+        - "docs/contrats/metier/ConvertisseursMetierOutputDTO.md"
 
     couche_dto:
       statut: "declared"
@@ -706,4 +734,3 @@ fenetres:
       package: "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl"
       total_tests: 539
       usage: "reference_formalisme_tests_uc"
-

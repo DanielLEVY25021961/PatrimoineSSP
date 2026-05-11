@@ -272,6 +272,10 @@ couches:
         - docs/contrats/metier/TypeProduit.md
         - docs/contrats/metier/SousTypeProduit.md
         - docs/contrats/metier/Produit.md
+        - docs/contrats/metier/CoucheMetier.md
+        - docs/contrats/metier/CloneContext.md
+        - docs/contrats/metier/NormalizerUtils.md
+        - docs/contrats/metier/ConvertisseursMetierOutputDTO.md
         - docs/contrats/dto/TypeProduitDTO.md
         - docs/contrats/dto/SousTypeProduitDTO.md
         - docs/contrats/dto/ProduitDTO.md
@@ -318,6 +322,10 @@ couches:
         - docs/contrats/metier/TypeProduit.md
         - docs/contrats/metier/SousTypeProduit.md
         - docs/contrats/metier/Produit.md
+        - docs/contrats/metier/CoucheMetier.md
+        - docs/contrats/metier/CloneContext.md
+        - docs/contrats/metier/NormalizerUtils.md
+        - docs/contrats/metier/ConvertisseursMetierOutputDTO.md
 
     couche_dto:
       statut: declared
@@ -472,4 +480,3 @@ fenetres:
       - docs/ai/CONTRAT_IA.md
       - docs/contrats/cu/CoucheServicesUC.md
       - docs/ai/perimetre.yaml
-

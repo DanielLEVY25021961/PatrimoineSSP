@@ -2878,9 +2878,13 @@ Cette couche comprend au minimum :
 - `src/test/java/levy/daniel/application/model/utilitaires/metier/produittype/NormalizerUtilsTest.java`
 
 #### Contrats locaux métier pivots
+- `docs/contrats/metier/CoucheMetier.md`
 - `docs/contrats/metier/TypeProduit.md`
 - `docs/contrats/metier/SousTypeProduit.md`
 - `docs/contrats/metier/Produit.md`
+- `docs/contrats/metier/CloneContext.md`
+- `docs/contrats/metier/NormalizerUtils.md`
+- `docs/contrats/metier/ConvertisseursMetierOutputDTO.md`
 
 Règles :
 - `couche_metier` doit être auditée comme un tout cohérent, et non fichier par fichier isolé ;
@@ -2893,7 +2897,13 @@ Règles :
   - ses relations avec les autres objets métier,
   - les comportements observables,
   - les règles d’égalité, de comparaison, de mutabilité et de clonage lorsque pertinent,
-  - les tests qui verrouillent ces comportements.
+  - les règles de thread-safety, snapshots et verrouillages multi-objets,
+  - les règles exactes CSV/JTable,
+  - les tests qui verrouillent ces comportements ;
+- le contrat `CoucheMetier.md` est obligatoire pour toute action globale sur la couche métier ;
+- `CloneContext.md` est obligatoire pour toute action touchant au clonage profond ;
+- `NormalizerUtils.md` est obligatoire pour toute action touchant à la normalisation ;
+- `ConvertisseursMetierOutputDTO.md` est obligatoire lorsque la préparation de réponse DTO dépend d'objets métier.
 
 La couche `couche_metier` doit permettre à l’IA de retrouver comme un tout cohérent :
 - les objets métier principaux ;
@@ -2901,7 +2911,8 @@ La couche `couche_metier` doit permettre à l’IA de retrouver comme un tout co
 - les utilitaires métier liés ;
 - les tests unitaires métier ;
 - les tests d’intégration métier ;
-- les contrats locaux métier applicables.
+- les contrats locaux métier applicables ;
+- les contrats auxiliaires nécessaires au clonage, à la normalisation et aux convertisseurs liés au métier.
 
 ### 29.9 Sacralisation de `couche_dto`
 

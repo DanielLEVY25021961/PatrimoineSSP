@@ -5,158 +5,150 @@
 ## 1) Classe concernée
 
 - `levy.daniel.application.model.metier.produittype.SousTypeProduit`
-- interface liée : `levy.daniel.application.model.metier.produittype.SousTypeProduitI`
+- interface liée : `SousTypeProduitI`
+- contrat de couche : `docs/contrats/metier/CoucheMetier.md`
 
-## 2) Objet du contrat
+## 2) Rôle métier
 
-Décrire le comportement métier réel attendu et observable de l’objet `SousTypeProduit`.
+`SousTypeProduit` est l'objet métier intermédiaire entre `TypeProduit` et `Produit`.
 
-Ce contrat décrit :
-- le rôle métier de l’objet ;
-- les invariants de structure ;
-- ses relations avec `TypeProduit` et `Produit` ;
-- les règles d’égalité, de comparaison, de validité et de clonage ;
-- les garanties sur les collections et la concurrence ;
-- les tests JUnit qui verrouillent ces comportements.
+Il porte :
 
-## 3) Rôle métier
+- `idSousTypeProduit` ;
+- `sousTypeProduit` ;
+- un parent `TypeProduitI` ;
+- une collection de `ProduitI` enfants ;
+- un booléen `valide` recalculé.
 
-`SousTypeProduit` modélise un sous-type métier rattaché à un `TypeProduit` et qualifiant une collection de `Produit`.
+## 3) Ordre de lecture obligatoire
 
-Exemples :
-- `vêtement pour homme` pour le type `vêtement` ;
-- `application web` pour le type `logiciel`.
+1. `CONTRAT_IA.md` ;
+2. `CoucheMetier.md` ;
+3. `SousTypeProduit.md` ;
+4. `SousTypeProduitI.java` ;
+5. `SousTypeProduit.java` ;
+6. `TypeProduit.java` si le parent est concerné ;
+7. `Produit.java` si les enfants sont concernés ;
+8. `CloneContext.java` si le clonage est concerné ;
+9. `SousTypeProduitTest.java` ;
+10. `TypeProduitSousTypeProduitIntegrationTest.java` si la relation parent est concernée ;
+11. `MetierGlobalConformiteTest.java` si la cohérence globale est concernée.
 
-Un `SousTypeProduit` porte :
-- un identifiant persistant éventuel `idSousTypeProduit` ;
-- un libellé métier `sousTypeProduit` ;
-- un parent `TypeProduit` ;
-- une collection de `Produit` enfants ;
-- un indicateur métier `valide` recalculé selon l’état courant.
+## 4) Ordre des méthodes à conserver
 
-## 4) Source de vérité
+Ordre observé :
 
-Ordre d’interprétation :
-1. `docs/ai/CONTRAT_IA.md`
-2. le présent contrat `docs/contrats/metier/SousTypeProduit.md`
-3. `SousTypeProduit.java`
-4. `SousTypeProduitTest.java`
-5. `TypeProduitSousTypeProduitIntegrationTest.java`
-6. `MetierGlobalConformiteTest.java`
+1. constructeurs ;
+2. `hashCode()` ;
+3. `equals(Object)` ;
+4. `toString()` ;
+5. `afficherSousTypeProduit()` ;
+6. `compareTo(SousTypeProduitI)` ;
+7. `compareFields(SousTypeProduitI)` ;
+8. `clone()` ;
+9. `cloneDeep()` ;
+10. `deepClone(CloneContext)` ;
+11. `cloneWithoutParentAndChildren()` ;
+12. `recalculerValide()` ;
+13. `normalize(String)` ;
+14. CSV / JTable ;
+15. `ajouterSTPauProduit(...)` ;
+16. `retirerSTPauProduit(...)` ;
+17. méthodes internes d'ajout/retrait par identité ;
+18. `isValide()` ;
+19. getters / setters ;
+20. remplacement de collections.
 
-## 5) Invariants métier attendus
+## 5) Égalité et hashCode
 
-- un `SousTypeProduit` peut exister sans identifiant persistant ;
-- son parent `TypeProduit` peut être absent ou non encore finalisé selon le scénario ;
-- la cohérence bidirectionnelle doit être maintenue avec le parent `TypeProduit` ;
-- la cohérence bidirectionnelle doit être maintenue avec les enfants `Produit` ;
-- l’état `valide` doit refléter l’état métier courant après recalcul.
+`SousTypeProduit.equals(...)` compare :
 
-## 6) Constructeurs et état initial
+1. le parent `TypeProduit` ;
+2. le libellé `sousTypeProduit`.
 
-Les constructeurs doivent permettre :
-- la création tolérante ;
-- les variantes avec ou sans parent ;
-- les variantes avec ou sans liste de produits ;
-- un état interne cohérent dès l’instanciation.
+Règles :
 
-Le détail du comportement nominal et des cas mixtes est verrouillé par `SousTypeProduitTest`.
+- comparaison insensible à la casse sur les libellés ;
+- l'identifiant persistant ne participe pas à l'égalité ;
+- la collection de produits ne participe pas à l'égalité ;
+- le parent est comparé comme objet métier, pas seulement comme chaîne isolée ;
+- verrouillage déterministe par `System.identityHashCode(...)` avec verrou de classe en cas de collision.
 
-## 7) Égalité, hashCode et comparaison
+## 6) Comparaison
 
-Le contrat attendu est :
-- respect du contrat Java ;
-- insensibilité à la casse sur le libellé métier ;
-- robustesse multi-thread ;
-- cohérence entre `equals(...)`, `hashCode()` et `compareTo(...)`.
+`compareTo(SousTypeProduitI)` compare d'abord le parent `TypeProduit`, puis le libellé `sousTypeProduit`.
 
-## 8) Gestion du parent et des produits enfants
+Les valeurs `null` sont ordonnées de manière déterministe selon le code validé. La comparaison des libellés est insensible à la casse.
 
-### 8.1 Parent `TypeProduit`
+## 7) Parent TypeProduit
 
-Le parent doit rester cohérent avec le `SousTypeProduit` courant.
+Règles :
 
-Toute modification du parent doit préserver :
-- la relation bidirectionnelle ;
-- la cohérence des produits enfants ;
-- l’absence de rattachements contradictoires.
+- `setTypeProduit(...)` est le setter intelligent de rattachement au parent ;
+- changer de parent doit retirer l'objet de l'ancien parent et l'ajouter au nouveau ;
+- le re-parenting doit éviter les deadlocks ;
+- les opérations doivent recalculer `valide` ;
+- un parent `null` est autorisé dans certains états, mais rend l'objet non valide.
 
-### 8.2 Produits enfants
+## 8) Enfants Produit
 
-Le contrat attendu est :
-- ajout/retrait cohérent des `Produit` ;
-- prise en charge des cas limites ;
-- absence de doublon par identité lorsque le code le prévoit ;
-- collection cohérente et exploitable ;
-- thread-safety des opérations de gestion.
+Règles :
 
-## 9) Validité métier
+- `ajouterSTPauProduit(...)` rattache un `Produit` au présent objet métier ;
+- `retirerSTPauProduit(...)` détache un `Produit` ;
+- les méthodes internes utilisent la comparaison par identité lorsque nécessaire ;
+- ne pas utiliser `contains()` ou `remove(Object)` si cela déclenche `equals(...)` sous verrou ;
+- les doublons par identité ne doivent pas être ajoutés ;
+- `setProduits(...)` doit reconstruire la cohérence avec les produits fournis.
 
-`SousTypeProduit` expose un état `valide`.
+## 9) Validité
 
-Le contrat attendu est :
-- recalcul correct via `recalculerValide()` ;
-- cohérence avec le parent et la collection de produits ;
-- lecture thread-safe de `isValide()`.
+`valide` est vrai uniquement lorsque l'objet dispose des éléments métier requis par le code validé, notamment parent et libellé.
+
+Règles :
+
+- `recalculerValide()` est la source du recalcul ;
+- les setters et clones partiels doivent recalculer ;
+- `cloneWithoutParentAndChildren()` doit produire un clone sans parent ni enfants, avec validité recalculée ;
+- ne jamais forcer `valide` sans recalcul.
 
 ## 10) Clonage
 
-Le contrat attendu est :
-- support du clonage Java ;
-- support du clonage profond avec `CloneContext` ;
-- support du clonage sans parent ni enfants ;
-- préservation de la cohérence métier ;
-- sûreté concurrente.
+- `clone()` produit un clone profond via `CloneContext` ;
+- `cloneWithoutParentAndChildren()` copie les champs propres sans parent ni enfants ;
+- `deepClone(CloneContext)` réutilise le contexte, clone le parent si nécessaire, clone les produits enfants et reconstruit les relations ;
+- le clonage ne doit pas dupliquer une source déjà présente dans le contexte.
 
-## 11) Export / affichage
+## 11) CSV / JTable
 
-Le contrat attendu couvre :
-- `toString()` ;
-- `afficherSousTypeProduit()` ;
-- `getEnTeteCsv()` ;
-- `toStringCsv()` ;
-- `getEnTeteColonne(...)` ;
-- `getValeurColonne(...)`.
+- `getEnTeteCsv()` retourne l'en-tête validé `idSousTypeProduit;type de produit;sous-type de produit;` ;
+- `toStringCsv()` respecte l'ordre `idSousTypeProduit`, `type de produit`, `sous-type de produit` ;
+- les valeurs absentes sont rendues par le texte `null` en CSV ;
+- `getEnTeteColonne(0)` : `idSousTypeProduit` ;
+- `getEnTeteColonne(1)` : `type de produit` ;
+- `getEnTeteColonne(2)` : `sous-type de produit` ;
+- autre indice : `invalide` ;
+- `getValeurColonne(1)` délègue au parent via `getValeurColonne(1)`.
 
-Ces sorties doivent rester stables, déterministes et testées.
+## 12) Tests de référence
 
-## 12) Thread-safety
+`SousTypeProduitTest.java` contient 36 tests validés couvrant :
 
-`SousTypeProduit` est verrouillé par des tests dédiés sur :
-- `equals(...)` / `hashCode()` ;
-- `toString()` ;
-- `compareTo(...)` ;
-- clonage profond ;
-- gestion des produits enfants ;
-- exposition et remplacement des collections ;
-- validité métier.
+- constructeurs ;
+- égalité et comparaison ;
+- insensibilité à la casse ;
+- thread-safety ;
+- clonage ;
+- CSV / JTable ;
+- gestion des produits ;
+- validité ;
+- clone sans parent ni enfants.
 
-Aucune régression concurrente n’est acceptable.
+## 13) Interdictions
 
-## 13) Tests de référence
-
-Tests principaux à relire avant correction :
-- `SousTypeProduitTest.java`
-- `TypeProduitSousTypeProduitIntegrationTest.java`
-- `MetierGlobalConformiteTest.java`
-- `CloneContextTest.java` si le scénario touche au clonage profond
-
-## 14) Règle de lecture obligatoire avant toute action
-
-Avant toute analyse, correction ou génération concernant `SousTypeProduit`, l’IA doit relire :
-1. `docs/ai/CONTRAT_IA.md`
-2. le présent contrat `docs/contrats/metier/SousTypeProduit.md`
-3. `SousTypeProduit.java`
-4. `TypeProduit.java` si le parent est concerné
-5. `Produit.java` si la gestion des enfants est concernée
-6. `SousTypeProduitTest.java`
-7. `TypeProduitSousTypeProduitIntegrationTest.java`
-8. `MetierGlobalConformiteTest.java` si le scénario touche à la cohérence globale
-
-## 15) Interdictions absolues
-
-- ne jamais casser la cohérence bidirectionnelle avec `TypeProduit` ;
-- ne jamais casser la cohérence bidirectionnelle avec `Produit` ;
-- ne jamais exposer les collections internes comme listes mutables partagées ;
-- ne jamais dégrader le recalcul de `valide` ;
-- ne jamais modifier les règles d’égalité, de comparaison ou de clonage sans ajuster les tests de référence.
+- ne jamais parler de `SousTypeProduit` comme d'un simple couple ; c'est l'objet métier testé ;
+- ne jamais casser `TypeProduit <-> SousTypeProduit` ;
+- ne jamais casser `SousTypeProduit <-> Produit` ;
+- ne jamais faire participer l'identifiant ou la collection de produits à l'égalité ;
+- ne jamais exposer une collection interne mutable partagée ;
+- ne jamais supprimer le recalcul de validité.
