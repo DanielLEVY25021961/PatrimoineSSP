@@ -1008,3 +1008,159 @@ Le scénario nominal de `getMessage()` est :
   - le retour du message après erreur locale,
   - le retour du message après succès observable,
   - la règle : le dernier message gagne.
+
+## Annexe IA — autonomie progressive `Produit`
+
+Cette annexe complète le contrat local pendant la phase de correction de la couche UC. Elle ne remplace jamais la relecture obligatoire du PORT Java, de l'ADAPTER UC et des tests concernés.
+
+### A.1) Constantes du PORT UC à conserver
+
+| Constante | Valeur littérale Java validée |
+|---|---|
+| `TIRET_ESPACE` | `" - "` |
+| `PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER` | `"Impossible de vérifier l'unicité " + "du Produit dans le stockage : "` |
+| `PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER` | `"Impossible de vérifier le Sous-Type de Produit parent " + "dans le stockage : "` |
+| `PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER` | `"Impossible de créer le Produit dans le stockage : "` |
+| `MESSAGE_CREATION_TECHNIQUE_KO_CREER` | `"Impossible de créer le Produit - " + "le stockage n'a retourné aucun objet créé."` |
+| `PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Produit : "` |
+| `MESSAGE_CONVERSION_TECHNIQUE_KO_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Produit."` |
+| `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
+| `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
+| `MESSAGE_CREER_KO` | `"Erreur lors de la création de l'objet"` |
+| `MESSAGE_RECHERCHE_VIDE` | `"Aucun enregistrement ne correspond à la recherche"` |
+| `MESSAGE_RECHERCHE_OK` | `"La recherche a retourné des enregistrements"` |
+| `MESSAGE_RECHERCHE_OBJ_NULL` | `"Le Produit est null"` |
+| `MESSAGE_SUCCES_RECHERCHE` | `"La recherche a abouti"` |
+| `MESSAGE_OBJ_INTROUVABLE` | `"Objet Introuvable : "` |
+| `MESSAGE_OBJ_NON_PERSISTE` | `"Objet non persisté en base : "` |
+| `MESSAGE_RECHERCHE_PAGINEE_OK` | `"La recherche paginée a abouti"` |
+| `MESSAGE_RECHERCHE_PAGINEE_KO` | `"la recherche paginée a échoué"` |
+| `MESSAGE_MODIF_OK` | `"La modification a été effectuée"` |
+| `MESSAGE_MODIF_KO` | `"La modification a échouée"` |
+| `MESSAGE_DELETE_OK` | `"La suppression a été effectuée"` |
+| `MESSAGE_DELETE_KO` | `"La suppression a échouée"` |
+| `RECHERCHE_SOUSTYPEPRODUIT_NULL` | `"Le SousTypeProduit parent ne doit pas être null"` |
+| `MESSAGE_SOUSTYPEPRODUIT_NULL` | `"Le SousTypeProduit ne doit pas être null"` |
+| `MESSAGE_PAS_PARENT` | `"Le Produit doit posséder un parent (SousTypeProduit)"` |
+| `KO_TECHNIQUE_RECHERCHE` | `"Une recherche technique a échouée"` |
+| `METHODE_CREER` | `"méthode Creer(...)"` |
+| `METHODE_RECHERCHER_TOUS` | `"méthode rechercherTous()"` |
+| `METHODE_FIND_BY_LIBELLE` | `"méthode findByLibelle(...)"` |
+| `METHODE_FIND_BY_LIBELLE_RAPIDE` | `"méthode findByLibelleRapide()"` |
+| `METHODE_FIND_ALL_BY_PARENT` | `"méthode FindAllByParent(...)"` |
+| `METHODE_FIND_BY_DTO` | `"méthode findByDTO(...)"` |
+| `METHODE_FIND_BY_ID` | `"méthode findById(...)"` |
+| `METHODE_UPDATE` | `"méthode update(...)"` |
+| `METHODE_DELETE` | `"méthode delete(...)"` |
+| `METHODE_COUNT` | `"méthode count()"` |
+
+Ces constantes sont observables via les tests UC et les messages `getMessage()`. L'IA ne doit pas renommer, reformuler ou remplacer ces messages par une formulation équivalente.
+
+### A.2) Signatures du PORT UC à conserver
+
+- `ProduitDTO.OutputDTO creer( ProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `List<ProduitDTO.OutputDTO> rechercherTous() throws Exception;`
+- `List<String> rechercherTousString() throws Exception;`
+- `ResultatPage<ProduitDTO.OutputDTO> rechercherTousParPage( RequetePage pRequetePage) throws Exception;`
+- `List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;`
+- `List<ProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
+- `List<ProduitDTO.OutputDTO> findAllByParent( SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception;`
+- `ProduitDTO.OutputDTO findByDTO(ProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `ProduitDTO.OutputDTO findById(Long pId) throws Exception;`
+- `ProduitDTO.OutputDTO update(ProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `void delete(ProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `long count() throws Exception;`
+
+### A.3) ADAPTER UC associé
+
+### `ProduitCuService` — rappel local
+
+#### Constructeur validé
+
+- `public ProduitCuService( final ProduitGatewayIService pGateway, final SousTypeProduitGatewayIService pSousTypeProduitGateway)`
+
+Règle : conserver cette injection telle que validée. Ne pas remplacer par une injection de champ, un constructeur vide ou une dépendance inventée.
+
+#### Attributs structurants
+
+- `private final ProduitGatewayIService gateway;`
+- `private final SousTypeProduitGatewayIService sousTypeProduitGateway;`
+
+#### Ordre exact des méthodes publiques validées
+
+1. `public OutputDTO creer( final InputDTO pInputDTO) throws Exception`
+2. `public List<OutputDTO> rechercherTous() throws Exception`
+3. `public List<String> rechercherTousString() throws Exception`
+4. `public ResultatPage<OutputDTO> rechercherTousParPage( final RequetePage pRequetePage) throws Exception`
+5. `public List<ProduitDTO.OutputDTO> findByLibelle( final String pLibelle) throws Exception`
+6. `public List<OutputDTO> findByLibelleRapide( final String pContenu) throws Exception`
+7. `public List<OutputDTO> findAllByParent( final SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception`
+8. `public OutputDTO findByDTO( final InputDTO pInputDTO) throws Exception`
+9. `public OutputDTO findById( final Long pId) throws Exception`
+10. `public OutputDTO update( final InputDTO pInputDTO) throws Exception`
+11. `public void delete( final InputDTO pInputDTO) throws Exception`
+12. `public long count() throws Exception`
+13. `public String getMessage()`
+14. `public int compare(final Produit o1, final Produit o2)`
+
+#### Helpers privés / internes à ne pas oublier
+
+- `private boolean isDoublon( final ProduitDTO.InputDTO pInputDTO) throws Exception`
+- `private SousTypeProduit rechercherParentPersistant( final ProduitDTO.InputDTO pInputDTO) throws Exception`
+- `private Produit convertirInputDTOEnMetier( final ProduitDTO.InputDTO pInputDTO)`
+- `private List<Produit> filtrerEtTrier( final List<Produit> pListe)`
+- `private long safeTotalElements( final ResultatPage<?> rp)`
+- `private String safeParentLibelle( final Produit pProduit)`
+- `private <T> T traiterErreur( final String pMessage, final String pMethode, final Exception pE) throws Exception`
+- `private boolean isErreurMetierAttendue( final String pMessage, final Exception pException)`
+
+Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être supprimés, fusionnés ou remplacés par une version approximative sans relire le code validé et les tests concernés.
+
+### A.4) Matrice Mock UC actuelle
+
+| Bloc | Nombre de tests | Méthodes de test |
+|---|---:|---|
+| `creer` | 10 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerControleTechniqueKoAvecMessage`<br>`testCreerDoublon`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentAbsent`<br>`testCreerCreationTechniqueKoAvecMessage`<br>`testCreerRetourGatewayNull`<br>`testCreerOk` |
+| `rechercherTous` | 5 | `testRechercherTousStockageNull`<br>`testRechercherTousKoTechniqueAvecMessage`<br>`testRechercherTousKoTechniqueSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousOk` |
+| `rechercherTousString` | 2 | `testRechercherTousStringVide`<br>`testRechercherTousStringOk` |
+| `rechercherTousParPage` | 5 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageKoTechniqueAvecMessage`<br>`testRechercherTousParPageKoTechniqueSansMessage`<br>`testRechercherTousParPageRetourNull`<br>`testRechercherTousParPageOk` |
+| `findByLibelle` | 4 | `testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
+| `findByLibelleRapide` | 5 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOk` |
+| `findAllByParent` | 6 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentGatewayRetourNull`<br>`testFindAllByParentIntrouvable`<br>`testFindAllByParentOk` |
+| `findByDTO` | 5 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOk` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOk` |
+| `update` | 7 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateOk` |
+| `delete` | 10 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteRechercheParentTechniqueKoAvecMessage`<br>`testDeleteParentAbsent`<br>`testDeleteStockageNull`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteTechniqueKoAvecMessage`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
+| `count` | 5 | `testCountTechniqueKoAvecMessage`<br>`testCountTechniqueKoSansMessage`<br>`testCountRetourNegatifIncoherent`<br>`testCountZero`<br>`testCountPositif` |
+| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageDernierMessageGagne` |
+
+### A.5) Matrice Intégration UC actuelle
+
+| Bloc | Nombre de tests | Méthodes de test |
+|---|---:|---|
+| `creer` | 5 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerDoublon`<br>`testCreerOk` |
+| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecCohherenceCount`<br>`testRechercherTousVide` |
+| `rechercherTousString` | 2 | `testRechercherTousStringOk`<br>`testRechercherTousStringVide` |
+| `rechercherTousParPage` | 2 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk` |
+| `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
+| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOk` |
+| `findAllByParent` | 4 | `testFindAllByParentNull`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentIntrouvable`<br>`testFindAllByParentOk` |
+| `findByDTO` | 4 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOk` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOk` |
+| `update` | 6 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveBdEtJdbcTemplate` |
+| `delete` | 6 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteParentAbsent`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
+| `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |
+| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCount`<br>`testGetMessageDernierMessageGagne` |
+
+### A.6) Règle de correction locale
+
+Pour corriger ou coder un bloc `Produit`, l'IA doit :
+
+1. relire le présent contrat ;
+2. relire le PORT UC Java ;
+3. relire l'ADAPTER UC associé ;
+4. relire le Gateway utilisé par le bloc ;
+5. relire les DTO/convertisseurs et exceptionsservices utiles ;
+6. relire les tests déjà validés du même bloc ;
+7. reprendre le nommage, l'ordre, la Javadoc et les commentaires du bloc de référence le plus proche ;
+8. livrer uniquement un bloc complet dans le chat pour les méthodes Java ou un fichier complet individuel pour les contrats fragiles.

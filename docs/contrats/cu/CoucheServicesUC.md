@@ -396,3 +396,357 @@ Il est interdit de réorganiser mécaniquement les tests en plaçant toujours le
 Avant de coder ou corriger un bloc de `TypeProduitCuServiceMockTest.java`, l'IA doit relire les méthodes déjà validées de la classe et reprendre leur structure.
 
 L'IA ne doit pas créer un nouveau commentaire ou une nouvelle organisation lorsqu'un modèle équivalent est déjà validé dans la classe.
+
+## 17) RT-AUTONOMIE-UC-PROGRESSIVE-01 — Sacralisation progressive des SERVICES METIER UC
+
+La couche `couche_services.uc` est en cours de correction et de validation. L'IA ne doit donc pas déclarer la couche UC définitivement autonome avant validation finale par l'utilisateur.
+
+En revanche, l'IA doit déjà appliquer une sacralisation progressive stricte pour éviter toute improvisation pendant les corrections UC.
+
+Règles obligatoires :
+
+1. partir du présent contrat local, du contrat local du PORT UC, du PORT Java, de l'ADAPTER UC, des Gateways appelés, des DTO, convertisseurs, exceptionsservices, objets métier et tests concernés ;
+2. utiliser les tests Gateway validés comme référence de formalisme, sans les copier mécaniquement ;
+3. utiliser `TypeProduitCuServiceMockTest.java` comme référence Mockito UC validée ;
+4. classer toute correction par bloc correspondant à une méthode du PORT UC ;
+5. respecter l'ordre des méthodes du PORT, l'ordre réel de l'ADAPTER et l'ordre des tests validés ;
+6. ne jamais figer comme définitif un test UC non encore validé par l'utilisateur ;
+7. après validation finale de la couche UC, reconfronter à nouveau les contrats IA UC à tous les fichiers validés.
+
+Objectif actuel : permettre à l'IA d'anticiper et de corriger avec fiabilité, pas proclamer prématurément l'autonomie complète de la couche UC.
+
+## 18) RT-ORDRE-BLOCS-UC-01 — Blocs PORT UC obligatoires
+
+### `TypeProduitICuService`
+
+Ordre des blocs :
+
+1. `creer(...)`
+2. `rechercherTous()`
+3. `rechercherTousString()`
+4. `rechercherTousParPage(...)`
+5. `findByLibelle(...)`
+6. `findByLibelleRapide(...)`
+7. `findByDTO(...)`
+8. `findById(...)`
+9. `update(...)`
+10. `delete(...)`
+11. `count()`
+12. `getMessage()`
+
+### `SousTypeProduitICuService`
+
+Ordre des blocs :
+
+1. `creer(...)`
+2. `rechercherTous()`
+3. `rechercherTousString()`
+4. `rechercherTousParPage(...)`
+5. `findByLibelle(...)`
+6. `findByLibelleRapide(...)`
+7. `findAllByParent(...)`
+8. `findByDTO(...)`
+9. `findById(...)`
+10. `update(...)`
+11. `delete(...)`
+12. `count()`
+13. `getMessage()`
+
+### `ProduitICuService`
+
+Ordre des blocs :
+
+1. `creer(...)`
+2. `rechercherTous()`
+3. `rechercherTousString()`
+4. `rechercherTousParPage(...)`
+5. `findByLibelle(...)`
+6. `findByLibelleRapide(...)`
+7. `findAllByParent(...)`
+8. `findByDTO(...)`
+9. `findById(...)`
+10. `update(...)`
+11. `delete(...)`
+12. `count()`
+13. `getMessage()`
+
+L'ordre des tests Mock et intégration doit suivre ces blocs, sauf correction utilisateur explicitement validée.
+
+## 19) RT-EXCEPTIONSSERVICES-UC-01 — Exceptions services à conserver
+
+Les exceptions suivantes appartiennent à `couche_services.uc` et ne doivent pas être déplacées vers Gateway, persistance ou Controller.
+
+| Exception | Héritage | Constructeurs validés |
+|---|---|---|
+| `ExceptionDoublon` | `Exception` | `public ExceptionDoublon()`<br>`public ExceptionDoublon(final String pMessage)` |
+| `ExceptionNonPersistant` | `Exception` | `public ExceptionNonPersistant()`<br>`public ExceptionNonPersistant(final String pMessage)` |
+| `ExceptionParametreBlank` | `Exception` | `public ExceptionParametreBlank()`<br>`public ExceptionParametreBlank(final String pMessage)` |
+| `ExceptionParametreNull` | `Exception` | `public ExceptionParametreNull()`<br>`public ExceptionParametreNull(final String pMessage)` |
+| `ExceptionStockageVide` | `Exception` | `public ExceptionStockageVide()`<br>`public ExceptionStockageVide(final String pMessage)` |
+
+Toutes ces exceptions portent `private static final long serialVersionUID = 1L;`.
+
+Règle de recodage : conserver les deux constructeurs, l'héritage, le `serialVersionUID`, la Javadoc historique et le rattachement au package `exceptionsservices`.
+
+## 20) RT-ADAPTERS-UC-ORDRE-ET-HELPERS-01 — ADAPTERS UC à relire avant tout code
+
+### `TypeProduitCuService`
+
+#### Constructeur validé
+
+- `public TypeProduitCuService( @Qualifier("TypeProduitGatewayJPAService") final TypeProduitGatewayIService pGateway)`
+
+Règle : conserver cette injection telle que validée. Ne pas remplacer par une injection de champ, un constructeur vide ou une dépendance inventée.
+
+#### Attributs structurants
+
+- `private final TypeProduitGatewayIService gateway;`
+
+#### Ordre exact des méthodes publiques validées
+
+1. `public TypeProduitDTO.OutputDTO creer( final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+2. `public List<TypeProduitDTO.OutputDTO> rechercherTous() throws Exception`
+3. `public List<String> rechercherTousString() throws Exception`
+4. `public ResultatPage<OutputDTO> rechercherTousParPage( final RequetePage pRequetePage) throws Exception`
+5. `public OutputDTO findByLibelle(final String pLibelle) throws Exception`
+6. `public List<OutputDTO> findByLibelleRapide( final String pContenu) throws Exception`
+7. `public OutputDTO findByDTO(final InputDTO pInputDTO) throws Exception`
+8. `public OutputDTO findById(final Long pId) throws Exception`
+9. `public TypeProduitDTO.OutputDTO update( final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+10. `public void delete(final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+11. `public long count() throws Exception`
+12. `public String getMessage()`
+
+#### Helpers privés / internes à ne pas oublier
+
+- `private boolean isDoublon( final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+- `private TypeProduit convertirInputDTOEnMetier( final TypeProduitDTO.InputDTO pInputDTO)`
+- `private List<TypeProduit> filtrerEtTrier( final List<TypeProduit> pSource)`
+- `private List<TypeProduitDTO.OutputDTO> convertirEtDedoublonner( final List<TypeProduit> pMetiers)`
+- `private void alimenterMessageDepuisGateway()`
+- `private long safeTotalElements( final ResultatPage<TypeProduit> pResultatPage)`
+- `private <T> T traiterErreur( final String pMessage, final String pMethode, final Exception pE) throws Exception`
+- `private boolean isErreurMetierAttendue( final String pMessage, final Exception pException)`
+
+Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être supprimés, fusionnés ou remplacés par une version approximative sans relire le code validé et les tests concernés.
+
+### `SousTypeProduitCuService`
+
+#### Constructeur validé
+
+- `public SousTypeProduitCuService( final SousTypeProduitGatewayIService pGateway, final TypeProduitGatewayIService pTypeProduitGateway)`
+
+Règle : conserver cette injection telle que validée. Ne pas remplacer par une injection de champ, un constructeur vide ou une dépendance inventée.
+
+#### Attributs structurants
+
+- `private final TypeProduitGatewayIService typeProduitGateway;`
+- `private final SousTypeProduitGatewayIService gateway;`
+
+#### Ordre exact des méthodes publiques validées
+
+1. `public SousTypeProduitDTO.OutputDTO creer( final SousTypeProduitDTO.InputDTO pInputDTO) throws Exception`
+2. `public List<SousTypeProduitDTO.OutputDTO> rechercherTous() throws Exception`
+3. `public List<String> rechercherTousString() throws Exception`
+4. `public ResultatPage<OutputDTO> rechercherTousParPage( final RequetePage pRequetePage) throws Exception`
+5. `public List<OutputDTO> findByLibelle( final String pLibelle) throws Exception`
+6. `public List<OutputDTO> findByLibelleRapide( final String pContenu) throws Exception`
+7. `public List<SousTypeProduitDTO.OutputDTO> findAllByParent( final TypeProduitDTO.InputDTO pTypeProduit) throws Exception`
+8. `public OutputDTO findByDTO(final InputDTO pInputDTO) throws Exception`
+9. `public OutputDTO findById(final Long pId) throws Exception`
+10. `public SousTypeProduitDTO.OutputDTO update( final SousTypeProduitDTO.InputDTO pInputDTO) throws Exception`
+11. `public void delete(final SousTypeProduitDTO.InputDTO pInputDTO) throws Exception`
+12. `public long count() throws Exception`
+13. `public String getMessage()`
+
+#### Helpers privés / internes à ne pas oublier
+
+- `private boolean isDoublon( final SousTypeProduitDTO.InputDTO pInputDTO) throws Exception`
+- `private SousTypeProduit convertirInputDTOEnMetier( final SousTypeProduitDTO.InputDTO pInputDTO)`
+- `private TypeProduit convertirInputDTOEnMetier( final TypeProduitDTO.InputDTO pInputDTO)`
+- `private List<SousTypeProduit> filtrerEtTrier( final List<SousTypeProduit> pSource)`
+- `private List<SousTypeProduitDTO.OutputDTO> convertirEtDedoublonner( final List<SousTypeProduit> pMetiers)`
+- `private void alimenterMessageDepuisGateway()`
+- `private long safeTotalElements( final ResultatPage<SousTypeProduit> pResultatPage)`
+- `private <T> T traiterErreur( final String pMessage, final String pMethode, final Exception pE) throws Exception`
+- `private boolean isErreurMetierAttendue( final String pMessage, final Exception pException)`
+
+Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être supprimés, fusionnés ou remplacés par une version approximative sans relire le code validé et les tests concernés.
+
+### `ProduitCuService`
+
+#### Constructeur validé
+
+- `public ProduitCuService( final ProduitGatewayIService pGateway, final SousTypeProduitGatewayIService pSousTypeProduitGateway)`
+
+Règle : conserver cette injection telle que validée. Ne pas remplacer par une injection de champ, un constructeur vide ou une dépendance inventée.
+
+#### Attributs structurants
+
+- `private final ProduitGatewayIService gateway;`
+- `private final SousTypeProduitGatewayIService sousTypeProduitGateway;`
+
+#### Ordre exact des méthodes publiques validées
+
+1. `public OutputDTO creer( final InputDTO pInputDTO) throws Exception`
+2. `public List<OutputDTO> rechercherTous() throws Exception`
+3. `public List<String> rechercherTousString() throws Exception`
+4. `public ResultatPage<OutputDTO> rechercherTousParPage( final RequetePage pRequetePage) throws Exception`
+5. `public List<ProduitDTO.OutputDTO> findByLibelle( final String pLibelle) throws Exception`
+6. `public List<OutputDTO> findByLibelleRapide( final String pContenu) throws Exception`
+7. `public List<OutputDTO> findAllByParent( final SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception`
+8. `public OutputDTO findByDTO( final InputDTO pInputDTO) throws Exception`
+9. `public OutputDTO findById( final Long pId) throws Exception`
+10. `public OutputDTO update( final InputDTO pInputDTO) throws Exception`
+11. `public void delete( final InputDTO pInputDTO) throws Exception`
+12. `public long count() throws Exception`
+13. `public String getMessage()`
+14. `public int compare(final Produit o1, final Produit o2)`
+
+#### Helpers privés / internes à ne pas oublier
+
+- `private boolean isDoublon( final ProduitDTO.InputDTO pInputDTO) throws Exception`
+- `private SousTypeProduit rechercherParentPersistant( final ProduitDTO.InputDTO pInputDTO) throws Exception`
+- `private Produit convertirInputDTOEnMetier( final ProduitDTO.InputDTO pInputDTO)`
+- `private List<Produit> filtrerEtTrier( final List<Produit> pListe)`
+- `private long safeTotalElements( final ResultatPage<?> rp)`
+- `private String safeParentLibelle( final Produit pProduit)`
+- `private <T> T traiterErreur( final String pMessage, final String pMethode, final Exception pE) throws Exception`
+- `private boolean isErreurMetierAttendue( final String pMessage, final Exception pException)`
+
+Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être supprimés, fusionnés ou remplacés par une version approximative sans relire le code validé et les tests concernés.
+
+## 21) RT-FORMALISME-MOCK-UC-REFERENCE-GATEWAY-01 — Transposition contrôlée du formalisme Gateway
+
+Les tests Gateway validés fournissent le formalisme : Javadoc de tête, blocs par méthode, commentaires didactiques, ordre des cas, preuve par interactions Mockito ou preuve dans le stockage selon le type de test.
+
+Transposition UC obligatoire :
+
+- un test Mock UC prouve le SERVICE METIER UC côté controller appelant, pas le stockage ;
+- la preuve principale est le message observable via `getMessage()`, le DTO retourné ou l'exception attendue, et les interactions avec le Gateway mocké ;
+- un test d'intégration UC prouve le comportement réel du SERVICE METIER UC, sans recontrôler exhaustivement les clauses techniques déjà prouvées dans Gateway ;
+- la preuve dans le stockage est utilisée seulement lorsqu'elle sert le contrat UC ;
+- le vocabulaire reste `SERVICE METIER UC`, `PORT UC`, `ADAPTER UC`, `Gateway`, `DTO`, `objet métier`, `parent`, `stockage`.
+
+## 22) RT-TESTS-UC-MATRICE-PROGRESSIVE-01 — Matrice des tests UC actuellement observée
+
+Cette matrice est un état de travail issu de la baseline consolidée au SHA courant. Elle ne transforme pas les tests UC non encore validés en vérité définitive, sauf `TypeProduitCuServiceMockTest.java` déjà déclaré référence stable.
+
+#### `TypeProduitCuServiceMockTest.java` — 101 tests détectés
+
+| Bloc PORT UC | Nombre | Méthodes de test validées ou en cours de validation |
+|---|---:|---|
+| `creer` | 11 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerNominal` |
+| `rechercherTous` | 7 | `testRechercherTousGatewayRetourNull`<br>`testRechercherTousGatewayKOAvecMessage`<br>`testRechercherTousGatewayKOSansMessage`<br>`testRechercherTousConversionOutputDTOKOAvecMessage`<br>`testRechercherTousConversionOutputDTOKOSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousNominal` |
+| `rechercherTousString` | 8 | `testRechercherTousStringGatewayRetourNull`<br>`testRechercherTousStringGatewayKOAvecMessage`<br>`testRechercherTousStringGatewayKOSansMessage`<br>`testRechercherTousStringConversionStringKOAvecMessage`<br>`testRechercherTousStringConversionStringKOSansMessage`<br>`testRechercherTousStringVideApresFiltrage`<br>`testRechercherTousStringVideApresLibellesBlank`<br>`testRechercherTousStringNominal` |
+| `rechercherTousParPage` | 8 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageGatewayKOAvecMessage`<br>`testRechercherTousParPageGatewayKOSansMessage`<br>`testRechercherTousParPageGatewayRetourNull`<br>`testRechercherTousParPageConversionOutputDTOKOAvecMessage`<br>`testRechercherTousParPageConversionOutputDTOKOSansMessage`<br>`testRechercherTousParPageVideApresFiltrage`<br>`testRechercherTousParPageNominal` |
+| `findByLibelle` | 8 | `testFindByLibelleNull`<br>`testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleGatewayKOAvecMessage`<br>`testFindByLibelleGatewayKOSansMessage`<br>`testFindByLibelleConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleConversionOutputDTOKOSansMessage`<br>`testFindByLibelleNominal` |
+| `findByLibelleRapide` | 9 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayKOAvecMessage`<br>`testFindByLibelleRapideGatewayKOSansMessage`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleRapideConversionOutputDTOKOSansMessage`<br>`testFindByLibelleRapideVideApresFiltrage`<br>`testFindByLibelleRapideNominal` |
+| `findByDTO` | 9 | `testFindByDTONull`<br>`testFindByDTOLibelleNull`<br>`testFindByDTOBlank`<br>`testFindByDTOGatewayRetourNull`<br>`testFindByDTOGatewayKOAvecMessage`<br>`testFindByDTOGatewayKOSansMessage`<br>`testFindByDTOConversionOutputDTOKOAvecMessage`<br>`testFindByDTOConversionOutputDTOKOSansMessage`<br>`testFindByDTONominal` |
+| `findById` | 7 | `testFindByIdNull`<br>`testFindByIdGatewayRetourNull`<br>`testFindByIdGatewayKOAvecMessage`<br>`testFindByIdGatewayKOSansMessage`<br>`testFindByIdConversionOutputDTOKOAvecMessage`<br>`testFindByIdConversionOutputDTOKOSansMessage`<br>`testFindByIdNominal` |
+| `update` | 14 | `testUpdateNull`<br>`testUpdateLibelleNull`<br>`testUpdateBlank`<br>`testUpdateRechercheKOAvecMessage`<br>`testUpdateRechercheKOSansMessage`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateModificationKOAvecMessage`<br>`testUpdateModificationKOSansMessage`<br>`testUpdateModificationRetourNull`<br>`testUpdateModificationRetourNonPersistant`<br>`testUpdateConversionOutputDTOKOAvecMessage`<br>`testUpdateConversionOutputDTOKOSansMessage`<br>`testUpdateNominal` |
+| `delete` | 10 | `testDeleteNull`<br>`testDeleteLibelleNull`<br>`testDeleteBlank`<br>`testDeleteRechercheKOAvecMessage`<br>`testDeleteRechercheKOSansMessage`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteDestructionKOAvecMessage`<br>`testDeleteDestructionKOSansMessage`<br>`testDeleteNominal` |
+| `count` | 5 | `testCountGatewayKOAvecMessage`<br>`testCountGatewayKOSansMessage`<br>`testCountRetourNegatif`<br>`testCountZero`<br>`testCountNominal` |
+| `getMessage` | 5 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageApresCountNominal`<br>`testGetMessageDernierMessageGagne` |
+
+#### `SousTypeProduitCuServiceMockTest.java` — 127 tests détectés
+
+| Bloc PORT UC | Nombre | Méthodes de test validées ou en cours de validation |
+|---|---:|---|
+| `creer` | 16 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerControleTechniqueKoAvecMessage`<br>`testCreerControleTechniqueKoSansMessage`<br>`testCreerDoublon`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentTechniqueKoSansMessage`<br>`testCreerParentAbsent`<br>`testCreerParentNonPersistant`<br>`testCreerCreationTechniqueKoAvecMessage`<br>`testCreerCreationTechniqueKoSansMessage`<br>`testCreerGatewayRetourneNull`<br>`testCreerConversionTechniqueKoAvecMessage`<br>`testCreerConversionTechniqueKoSansMessage`<br>`testCreerNominal` |
+| `rechercherTous` | 7 | `testRechercherTousGatewayRetourNull`<br>`testRechercherTousGatewayKOAvecMessage`<br>`testRechercherTousGatewayKOSansMessage`<br>`testRechercherTousConversionOutputDTOKOAvecMessage`<br>`testRechercherTousConversionOutputDTOKOSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousNominal` |
+| `rechercherTousString` | 8 | `testRechercherTousStringGatewayRetourNull`<br>`testRechercherTousStringGatewayKOAvecMessage`<br>`testRechercherTousStringGatewayKOSansMessage`<br>`testRechercherTousStringConversionStringKOAvecMessage`<br>`testRechercherTousStringConversionStringKOSansMessage`<br>`testRechercherTousStringVideApresFiltrage`<br>`testRechercherTousStringVideApresLibellesBlank`<br>`testRechercherTousStringNominal` |
+| `rechercherTousParPage` | 8 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageGatewayKOAvecMessage`<br>`testRechercherTousParPageGatewayKOSansMessage`<br>`testRechercherTousParPageGatewayRetourNull`<br>`testRechercherTousParPageConversionOutputDTOKOAvecMessage`<br>`testRechercherTousParPageConversionOutputDTOKOSansMessage`<br>`testRechercherTousParPageVideApresFiltrage`<br>`testRechercherTousParPageNominal` |
+| `findByLibelle` | 9 | `testFindByLibelleNull`<br>`testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleGatewayKOAvecMessage`<br>`testFindByLibelleGatewayKOSansMessage`<br>`testFindByLibelleConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleConversionOutputDTOKOSansMessage`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleNominal` |
+| `findByLibelleRapide` | 9 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayKOAvecMessage`<br>`testFindByLibelleRapideGatewayKOSansMessage`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleRapideConversionOutputDTOKOSansMessage`<br>`testFindByLibelleRapideVideApresFiltrage`<br>`testFindByLibelleRapideNominal` |
+| `findAllByParent` | 13 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentParentGatewayKOAvecMessage`<br>`testFindAllByParentParentGatewayKOSansMessage`<br>`testFindAllByParentParentAbsent`<br>`testFindAllByParentParentNonPersistant`<br>`testFindAllByParentEnfantsGatewayKOAvecMessage`<br>`testFindAllByParentEnfantsGatewayKOSansMessage`<br>`testFindAllByParentGatewayRetourNull`<br>`testFindAllByParentConversionOutputDTOKOAvecMessage`<br>`testFindAllByParentConversionOutputDTOKOSansMessage`<br>`testFindAllByParentVideApresFiltrage`<br>`testFindAllByParentNominal` |
+| `findByDTO` | 10 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOErreurTechniqueRechercheParentAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheParentSansMessage`<br>`testFindByDTOParentNonPersistant`<br>`testFindByDTOErreurTechniqueRechercheEnfantsAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheEnfantsSansMessage`<br>`testFindByDTOVide`<br>`testFindByDTOIntrouvableDansListe`<br>`testFindByDTOOk` |
+| `findById` | 5 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdErreurTechniqueAvecMessage`<br>`testFindByIdErreurTechniqueSansMessage`<br>`testFindByIdOk` |
+| `update` | 17 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateRechercheParentTechniqueKoAvecMessage`<br>`testUpdateRechercheParentTechniqueKoSansMessage`<br>`testUpdateParentAbsent`<br>`testUpdateParentNonPersistant`<br>`testUpdateRechercheEnfantsTechniqueKoAvecMessage`<br>`testUpdateRechercheEnfantsTechniqueKoSansMessage`<br>`testUpdateStockageNullPendantReidentification`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateModificationTechniqueKoAvecMessage`<br>`testUpdateModificationTechniqueKoSansMessage`<br>`testUpdateGatewayNull`<br>`testUpdateRetourNonPersistant`<br>`testUpdateOk` |
+| `delete` | 15 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteRechercheParentTechniqueKoAvecMessage`<br>`testDeleteRechercheParentTechniqueKoSansMessage`<br>`testDeleteParentAbsent`<br>`testDeleteParentNonPersistant`<br>`testDeleteRechercheEnfantsTechniqueKoAvecMessage`<br>`testDeleteRechercheEnfantsTechniqueKoSansMessage`<br>`testDeleteStockageNullPendantReidentification`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteTechniqueKoAvecMessage`<br>`testDeleteTechniqueKoSansMessage`<br>`testDeleteOk` |
+| `count` | 5 | `testCountTechniqueKoAvecMessage`<br>`testCountTechniqueKoSansMessage`<br>`testCountRetourNegatifIncoherent`<br>`testCountZero`<br>`testCountPositif` |
+| `getMessage` | 5 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageApresCountPositif`<br>`testGetMessageDernierMessageGagne` |
+
+#### `ProduitCuServiceMockTest.java` — 71 tests détectés
+
+| Bloc PORT UC | Nombre | Méthodes de test validées ou en cours de validation |
+|---|---:|---|
+| `creer` | 10 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerControleTechniqueKoAvecMessage`<br>`testCreerDoublon`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentAbsent`<br>`testCreerCreationTechniqueKoAvecMessage`<br>`testCreerRetourGatewayNull`<br>`testCreerOk` |
+| `rechercherTous` | 5 | `testRechercherTousStockageNull`<br>`testRechercherTousKoTechniqueAvecMessage`<br>`testRechercherTousKoTechniqueSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousOk` |
+| `rechercherTousString` | 2 | `testRechercherTousStringVide`<br>`testRechercherTousStringOk` |
+| `rechercherTousParPage` | 5 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageKoTechniqueAvecMessage`<br>`testRechercherTousParPageKoTechniqueSansMessage`<br>`testRechercherTousParPageRetourNull`<br>`testRechercherTousParPageOk` |
+| `findByLibelle` | 4 | `testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
+| `findByLibelleRapide` | 5 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOk` |
+| `findAllByParent` | 6 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentGatewayRetourNull`<br>`testFindAllByParentIntrouvable`<br>`testFindAllByParentOk` |
+| `findByDTO` | 5 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOk` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOk` |
+| `update` | 7 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateOk` |
+| `delete` | 10 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteRechercheParentTechniqueKoAvecMessage`<br>`testDeleteParentAbsent`<br>`testDeleteStockageNull`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteTechniqueKoAvecMessage`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
+| `count` | 5 | `testCountTechniqueKoAvecMessage`<br>`testCountTechniqueKoSansMessage`<br>`testCountRetourNegatifIncoherent`<br>`testCountZero`<br>`testCountPositif` |
+| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageDernierMessageGagne` |
+
+#### `TypeProduitCuServiceIntegrationTest.java` — 43 tests détectés
+
+| Bloc PORT UC | Nombre | Méthodes de test validées ou en cours de validation |
+|---|---:|---|
+| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerOkAvecPreuveBdEtRoundTrip`<br>`testCreerDoublonAvecPreuveBd`<br>`testCreerOkFindByLibelleOkFindByIdOk`<br>`testCreerDoublon` |
+| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveBd`<br>`testRechercherTousVide` |
+| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveBd`<br>`testRechercherTousStringVide` |
+| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
+| `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOkAvecPreuveBd` |
+| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |
+| `findByDTO` | 4 | `testFindByDTONull`<br>`testFindByDTOBlank`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOkAvecPreuveBd` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOkAvecPreuveBd` |
+| `update` | 4 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveBdEtIdConserve` |
+| `delete` | 4 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveBd` |
+| `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |
+| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresSuccesReel`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageDernierMessageGagne` |
+
+#### `SousTypeProduitCuServiceIntegrationTest.java` — 53 tests détectés
+
+| Bloc PORT UC | Nombre | Méthodes de test validées ou en cours de validation |
+|---|---:|---|
+| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerPasParent`<br>`testCreerOkAvecPreuveBdEtRoundTrip`<br>`testCreerDoublonAvecPreuveBd` |
+| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveBd`<br>`testRechercherTousVide` |
+| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveBd`<br>`testRechercherTousStringVide` |
+| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
+| `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
+| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |
+| `findAllByParent` | 5 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentVide`<br>`testFindAllByParentOkAvecPreuveBd` |
+| `findByDTO` | 5 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOCoupleIntrouvableAvecPreuveBd`<br>`testFindByDTOOkAvecPreuveCoupleParentLibelle` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOkAvecPreuveBd` |
+| `update` | 6 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveCoupleParentLibelleEtIdConserve` |
+| `delete` | 6 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteParentAbsent`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
+| `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |
+| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresSuccesReel`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageDernierMessageGagne` |
+
+#### `ProduitCuServiceIntegrationTest.java` — 48 tests détectés
+
+| Bloc PORT UC | Nombre | Méthodes de test validées ou en cours de validation |
+|---|---:|---|
+| `creer` | 5 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerDoublon`<br>`testCreerOk` |
+| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecCohherenceCount`<br>`testRechercherTousVide` |
+| `rechercherTousString` | 2 | `testRechercherTousStringOk`<br>`testRechercherTousStringVide` |
+| `rechercherTousParPage` | 2 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk` |
+| `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
+| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOk` |
+| `findAllByParent` | 4 | `testFindAllByParentNull`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentIntrouvable`<br>`testFindAllByParentOk` |
+| `findByDTO` | 4 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOk` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOk` |
+| `update` | 6 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveBdEtJdbcTemplate` |
+| `delete` | 6 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteParentAbsent`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
+| `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |
+| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCount`<br>`testGetMessageDernierMessageGagne` |
+
+
+## 23) RT-NON-FIGEAGE-UC-01 — Interdiction de figer prématurément
+
+Tant que l'utilisateur n'a pas déclaré la couche UC terminée et validée :
+
+- ne pas annoncer que la couche IA UC permet de recoder définitivement toute la couche UC ;
+- ne pas transformer les tests UC encore en correction en référence finale ;
+- ne pas inventer des règles nouvelles à chaque passe ;
+- s'appuyer sur les règles déjà validées, les tests Gateway sacralisés et `TypeProduitCuServiceMockTest.java` ;
+- après chaque validation utilisateur, relire les corrections et consolider progressivement.
+
+Quand la couche UC sera terminée, l'IA devra refaire la confrontation complète : contrats IA UC, PORTS, ADAPTERS, exceptionsservices, DTO/convertisseurs, Gateway utiles, objets métier et tests Mock/intégration définitifs.

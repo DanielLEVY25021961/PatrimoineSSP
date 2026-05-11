@@ -520,3 +520,137 @@ mais de rendre impossible :
 Ce document est donc le **référentiel opérationnel**
 à relire avant toute correction
 sur `TypeProduitICuService`.
+
+## Annexe IA — autonomie progressive `TypeProduit`
+
+Cette annexe complète le contrat local pendant la phase de correction de la couche UC. Elle ne remplace jamais la relecture obligatoire du PORT Java, de l'ADAPTER UC et des tests concernés.
+
+### A.1) Constantes du PORT UC à conserver
+
+| Constante | Valeur littérale Java validée |
+|---|---|
+| `TIRET_ESPACE` | `" - "` |
+| `PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER` | `"Impossible de vérifier l'unicité " + "du Type de Produit dans le stockage : "` |
+| `PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER` | `"Impossible de créer le Type de Produit dans le stockage : "` |
+| `MESSAGE_CREATION_TECHNIQUE_KO_CREER` | `"Impossible de créer le Type de Produit - " + "le stockage n'a retourné aucun objet créé."` |
+| `PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Type de Produit : "` |
+| `MESSAGE_CONVERSION_TECHNIQUE_KO_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Type de Produit."` |
+| `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
+| `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
+| `MESSAGE_MODIF_KO` | `"KO - la modification a retourné null : "` |
+| `MESSAGE_MODIF_OK` | `"OK - modification réussie de : "` |
+| `MESSAGE_DELETE_OK` | `"OK - destruction réussie de : "` |
+| `MESSAGE_DELETE_KO` | `"KO - échec de la destruction de : "` |
+| `METHODE_CREER` | `"méthode Creer(...)"` |
+| `METHODE_RECHERCHER_TOUS` | `"méthode rechercherTous()"` |
+| `METHODE_FIND_BY_LIBELLE` | `"méthode findByLibelle(...)"` |
+| `METHODE_FIND_BY_LIBELLE_RAPIDE` | `"méthode findByLibelleRapide()"` |
+| `METHODE_FIND_BY_ID` | `"méthode findById(...)"` |
+| `METHODE_UPDATE` | `"méthode update(...)"` |
+| `METHODE_DELETE` | `"méthode delete(...)"` |
+| `METHODE_COUNT` | `"méthode count()"` |
+
+Ces constantes sont observables via les tests UC et les messages `getMessage()`. L'IA ne doit pas renommer, reformuler ou remplacer ces messages par une formulation équivalente.
+
+### A.2) Signatures du PORT UC à conserver
+
+- `TypeProduitDTO.OutputDTO creer(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `List<TypeProduitDTO.OutputDTO> rechercherTous() throws Exception;`
+- `List<String> rechercherTousString() throws Exception;`
+- `ResultatPage<TypeProduitDTO.OutputDTO> rechercherTousParPage( RequetePage pRequetePage) throws Exception;`
+- `TypeProduitDTO.OutputDTO findByLibelle(String pLibelle) throws Exception;`
+- `List<TypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
+- `TypeProduitDTO.OutputDTO findByDTO( TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `TypeProduitDTO.OutputDTO findById(Long pId) throws Exception;`
+- `TypeProduitDTO.OutputDTO update( TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `void delete(TypeProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `long count() throws Exception;`
+
+### A.3) ADAPTER UC associé
+
+### `TypeProduitCuService` — rappel local
+
+#### Constructeur validé
+
+- `public TypeProduitCuService( @Qualifier("TypeProduitGatewayJPAService") final TypeProduitGatewayIService pGateway)`
+
+Règle : conserver cette injection telle que validée. Ne pas remplacer par une injection de champ, un constructeur vide ou une dépendance inventée.
+
+#### Attributs structurants
+
+- `private final TypeProduitGatewayIService gateway;`
+
+#### Ordre exact des méthodes publiques validées
+
+1. `public TypeProduitDTO.OutputDTO creer( final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+2. `public List<TypeProduitDTO.OutputDTO> rechercherTous() throws Exception`
+3. `public List<String> rechercherTousString() throws Exception`
+4. `public ResultatPage<OutputDTO> rechercherTousParPage( final RequetePage pRequetePage) throws Exception`
+5. `public OutputDTO findByLibelle(final String pLibelle) throws Exception`
+6. `public List<OutputDTO> findByLibelleRapide( final String pContenu) throws Exception`
+7. `public OutputDTO findByDTO(final InputDTO pInputDTO) throws Exception`
+8. `public OutputDTO findById(final Long pId) throws Exception`
+9. `public TypeProduitDTO.OutputDTO update( final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+10. `public void delete(final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+11. `public long count() throws Exception`
+12. `public String getMessage()`
+
+#### Helpers privés / internes à ne pas oublier
+
+- `private boolean isDoublon( final TypeProduitDTO.InputDTO pInputDTO) throws Exception`
+- `private TypeProduit convertirInputDTOEnMetier( final TypeProduitDTO.InputDTO pInputDTO)`
+- `private List<TypeProduit> filtrerEtTrier( final List<TypeProduit> pSource)`
+- `private List<TypeProduitDTO.OutputDTO> convertirEtDedoublonner( final List<TypeProduit> pMetiers)`
+- `private void alimenterMessageDepuisGateway()`
+- `private long safeTotalElements( final ResultatPage<TypeProduit> pResultatPage)`
+- `private <T> T traiterErreur( final String pMessage, final String pMethode, final Exception pE) throws Exception`
+- `private boolean isErreurMetierAttendue( final String pMessage, final Exception pException)`
+
+Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être supprimés, fusionnés ou remplacés par une version approximative sans relire le code validé et les tests concernés.
+
+### A.4) Matrice Mock UC actuelle
+
+| Bloc | Nombre de tests | Méthodes de test |
+|---|---:|---|
+| `creer` | 11 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerNominal` |
+| `rechercherTous` | 7 | `testRechercherTousGatewayRetourNull`<br>`testRechercherTousGatewayKOAvecMessage`<br>`testRechercherTousGatewayKOSansMessage`<br>`testRechercherTousConversionOutputDTOKOAvecMessage`<br>`testRechercherTousConversionOutputDTOKOSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousNominal` |
+| `rechercherTousString` | 8 | `testRechercherTousStringGatewayRetourNull`<br>`testRechercherTousStringGatewayKOAvecMessage`<br>`testRechercherTousStringGatewayKOSansMessage`<br>`testRechercherTousStringConversionStringKOAvecMessage`<br>`testRechercherTousStringConversionStringKOSansMessage`<br>`testRechercherTousStringVideApresFiltrage`<br>`testRechercherTousStringVideApresLibellesBlank`<br>`testRechercherTousStringNominal` |
+| `rechercherTousParPage` | 8 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageGatewayKOAvecMessage`<br>`testRechercherTousParPageGatewayKOSansMessage`<br>`testRechercherTousParPageGatewayRetourNull`<br>`testRechercherTousParPageConversionOutputDTOKOAvecMessage`<br>`testRechercherTousParPageConversionOutputDTOKOSansMessage`<br>`testRechercherTousParPageVideApresFiltrage`<br>`testRechercherTousParPageNominal` |
+| `findByLibelle` | 8 | `testFindByLibelleNull`<br>`testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleGatewayKOAvecMessage`<br>`testFindByLibelleGatewayKOSansMessage`<br>`testFindByLibelleConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleConversionOutputDTOKOSansMessage`<br>`testFindByLibelleNominal` |
+| `findByLibelleRapide` | 9 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayKOAvecMessage`<br>`testFindByLibelleRapideGatewayKOSansMessage`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleRapideConversionOutputDTOKOSansMessage`<br>`testFindByLibelleRapideVideApresFiltrage`<br>`testFindByLibelleRapideNominal` |
+| `findByDTO` | 9 | `testFindByDTONull`<br>`testFindByDTOLibelleNull`<br>`testFindByDTOBlank`<br>`testFindByDTOGatewayRetourNull`<br>`testFindByDTOGatewayKOAvecMessage`<br>`testFindByDTOGatewayKOSansMessage`<br>`testFindByDTOConversionOutputDTOKOAvecMessage`<br>`testFindByDTOConversionOutputDTOKOSansMessage`<br>`testFindByDTONominal` |
+| `findById` | 7 | `testFindByIdNull`<br>`testFindByIdGatewayRetourNull`<br>`testFindByIdGatewayKOAvecMessage`<br>`testFindByIdGatewayKOSansMessage`<br>`testFindByIdConversionOutputDTOKOAvecMessage`<br>`testFindByIdConversionOutputDTOKOSansMessage`<br>`testFindByIdNominal` |
+| `update` | 14 | `testUpdateNull`<br>`testUpdateLibelleNull`<br>`testUpdateBlank`<br>`testUpdateRechercheKOAvecMessage`<br>`testUpdateRechercheKOSansMessage`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateModificationKOAvecMessage`<br>`testUpdateModificationKOSansMessage`<br>`testUpdateModificationRetourNull`<br>`testUpdateModificationRetourNonPersistant`<br>`testUpdateConversionOutputDTOKOAvecMessage`<br>`testUpdateConversionOutputDTOKOSansMessage`<br>`testUpdateNominal` |
+| `delete` | 10 | `testDeleteNull`<br>`testDeleteLibelleNull`<br>`testDeleteBlank`<br>`testDeleteRechercheKOAvecMessage`<br>`testDeleteRechercheKOSansMessage`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteDestructionKOAvecMessage`<br>`testDeleteDestructionKOSansMessage`<br>`testDeleteNominal` |
+| `count` | 5 | `testCountGatewayKOAvecMessage`<br>`testCountGatewayKOSansMessage`<br>`testCountRetourNegatif`<br>`testCountZero`<br>`testCountNominal` |
+| `getMessage` | 5 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageApresCountNominal`<br>`testGetMessageDernierMessageGagne` |
+
+### A.5) Matrice Intégration UC actuelle
+
+| Bloc | Nombre de tests | Méthodes de test |
+|---|---:|---|
+| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerOkAvecPreuveBdEtRoundTrip`<br>`testCreerDoublonAvecPreuveBd`<br>`testCreerOkFindByLibelleOkFindByIdOk`<br>`testCreerDoublon` |
+| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveBd`<br>`testRechercherTousVide` |
+| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveBd`<br>`testRechercherTousStringVide` |
+| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
+| `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOkAvecPreuveBd` |
+| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |
+| `findByDTO` | 4 | `testFindByDTONull`<br>`testFindByDTOBlank`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOkAvecPreuveBd` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOkAvecPreuveBd` |
+| `update` | 4 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveBdEtIdConserve` |
+| `delete` | 4 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveBd` |
+| `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |
+| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresSuccesReel`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageDernierMessageGagne` |
+
+### A.6) Règle de correction locale
+
+Pour corriger ou coder un bloc `TypeProduit`, l'IA doit :
+
+1. relire le présent contrat ;
+2. relire le PORT UC Java ;
+3. relire l'ADAPTER UC associé ;
+4. relire le Gateway utilisé par le bloc ;
+5. relire les DTO/convertisseurs et exceptionsservices utiles ;
+6. relire les tests déjà validés du même bloc ;
+7. reprendre le nommage, l'ordre, la Javadoc et les commentaires du bloc de référence le plus proche ;
+8. livrer uniquement un bloc complet dans le chat pour les méthodes Java ou un fichier complet individuel pour les contrats fragiles.
