@@ -750,3 +750,152 @@ Tant que l'utilisateur n'a pas déclaré la couche UC terminée et validée :
 - après chaque validation utilisateur, relire les corrections et consolider progressivement.
 
 Quand la couche UC sera terminée, l'IA devra refaire la confrontation complète : contrats IA UC, PORTS, ADAPTERS, exceptionsservices, DTO/convertisseurs, Gateway utiles, objets métier et tests Mock/intégration définitifs.
+---
+
+## 24) RT-WORKFLOW-AUDIT-TEST-01 — Workflow d'audit des blocs de tests UC/JUnit
+
+Cette règle complète la sacralisation progressive UC. Elle s'applique à tout audit ou codage d'un bloc de tests JUnit UC.
+
+### 24.1 Préambule obligatoire
+
+Avant toute opération, l'IA relit obligatoirement `CONTRAT_IA.md`.
+
+Quand l'Utilisateur demande l'audit d'un test JUnit UC, l'IA détermine si nécessaire le périmètre utile, contrôle que les fichiers du périmètre sont corrects et à jour dans la baseline, puis installe ou active une fenêtre de travail si tout est OK.
+
+Une fois la fenêtre active, l'IA travaille depuis cette fenêtre sans relire GitHub au SHA à chaque bloc, sauf nouveau SHA, changement de périmètre, demande explicite, incident de lecture ou fenêtre suspecte.
+
+### 24.2 Périmètre utile UC
+
+Pour un bloc de tests UC, le périmètre utile comprend au minimum :
+
+- `CONTRAT_IA.md` ;
+- le présent contrat `CoucheServicesUC.md` ;
+- le PORT UC concerné ;
+- le SERVICE METIER UC testé ;
+- les Gateways collaborateurs utiles ;
+- les DTO, convertisseurs et exceptions utiles ;
+- la classe de test cible ;
+- les méthodes déjà validées dans la classe de test ;
+- `TypeProduitCuServiceMockTest.java` comme référence stable Mockito UC quand elle est pertinente ;
+- les tests Gateway sacralisés lorsque leur formalisme sert de référence transposable.
+
+### 24.3 Rapport d'audit sans code
+
+Si l'Utilisateur n'a pas écrit `coder`, l'IA rend un rapport d'audit sans code.
+
+Le rapport doit préciser :
+
+- la preuve de lecture ;
+- le bloc contrôlé ;
+- les tests présents ;
+- l'ordre actuel ;
+- les comportements couverts ;
+- les manques ;
+- les tests à ajouter, renommer ou déplacer ;
+- les problèmes de Javadoc ou commentaires ;
+- l'ordre recommandé ;
+- le verdict du bloc.
+
+L'IA ne doit pas livrer de code pendant cette étape.
+
+### 24.4 Correction de l'analyse par l'Utilisateur
+
+Si l'Utilisateur corrige l'analyse, le vocabulaire ou le formalisme proposé par l'IA, cette correction prévaut immédiatement.
+
+L'IA doit :
+
+- reconnaître la correction comme règle utile si elle est durable ;
+- la mémoriser comme règle candidate à intégrer dans la couche IA au prochain `coder` ;
+- l'appliquer aux blocs suivants ;
+- neutraliser la formulation ou habitude fautive.
+
+### 24.5 Livraison après `coder`
+
+Si l'Utilisateur écrit `coder`, la livraison d'un bloc de tests UC doit respecter le format autonome suivant :
+
+1. bloc autonome des constantes TAG à ajouter ;
+2. bloc autonome des constantes DISPLAY_NAME à ajouter ;
+3. bloc autonome des constantes DN uniquement si elles sont réellement nécessaires ;
+4. bloc autonome complet des tests.
+
+Les blocs doivent être séparés, clairement titrés dans la réponse et directement copiables dans STS.
+
+Interdictions :
+
+- livrer uniquement des méthodes isolées ;
+- noyer les constantes TAG dans les DISPLAY_NAME ;
+- noyer les constantes DN dans les DISPLAY_NAME ;
+- créer des constantes DN artificielles quand une constante existante suffit ;
+- changer le formalisme déjà validé dans la classe cible.
+
+### 24.6 Règle sur les constantes DN
+
+Les constantes DN ne doivent être créées que si elles améliorent réellement la lisibilité, évitent une duplication lourde ou correspondent déjà au formalisme établi de la classe.
+
+Si une constante existante suffit à exprimer le scénario, elle doit être réutilisée.
+
+Exemples :
+
+- pour tester un parent avec libellé blank, il suffit d'utiliser une valeur blank déjà existante ;
+- pour tester un parent existant, réutiliser une constante métier existante comme `VETEMENT`, `BAZAR`, `OUTILLAGE` ou toute constante déjà validée si elle exprime clairement le cas ;
+- ne pas créer de constante de type `DN_FIND_BY_DTO_PARENT` par réflexe.
+
+### 24.7 Javadocs et commentaires de tests UC
+
+Les Javadocs et commentaires doivent dire concrètement ce que le test vérifie.
+
+Interdictions :
+
+- « vise la branche locale » ;
+- « non exploitable » ;
+- « objet exploitable » ;
+- « réponse exploitable » ;
+- toute formulation abstraite qui ne décrit pas le fait testé.
+
+Formulations attendues :
+
+- teste le cas où le DTO transmis est null ;
+- teste le cas où le parent a un libellé blank ;
+- teste le cas où le parent est absent du stockage ;
+- teste le cas où le parent n'a pas d'identifiant persistant ;
+- teste le cas où le Gateway retourne null ;
+- teste le cas où la liste retournée est vide ;
+- teste le cas où la conversion OutputDTO échoue avec message ;
+- teste le cas où la conversion OutputDTO échoue sans message.
+
+### 24.8 Conversion finale protégée par `try/catch`
+
+Pour un bloc Mock UC, dès que la méthode du service contient une conversion finale protégée par `try/catch`, le bloc de tests doit envisager explicitement les deux cas suivants :
+
+- conversion OutputDTO KO avec message ;
+- conversion OutputDTO KO sans message.
+
+La règle ne s'écarte que si une justification contractuelle explicite démontre que le cas est impossible ou non pertinent.
+
+Le stubbing Mockito doit rester strictement consommé : ne jamais stubber un getter qui n'est pas appelé avant l'exception.
+
+### 24.9 Retour utilisateur après intégration STS
+
+Après livraison, l'Utilisateur intègre dans STS et teste.
+
+S'il renvoie le fichier corrigé, l'IA doit relire le dernier fichier joint réel selon `CONTRAT_IA.md`, détecter les corrections utilisateur, apprendre le formalisme corrigé, puis consolider baseline et fenêtre active si les tests sont verts.
+
+### 24.10 Recontrôle automatique
+
+Après consolidation d'un bloc testé vert, l'IA doit automatiquement recontrôler la totalité du bloc jusqu'à pouvoir le déclarer conforme aux critères de qualité des tests.
+
+Ce recontrôle porte sur :
+
+- complétude ;
+- ordre des tests ;
+- constantes TAG / DISPLAY_NAME / DN ;
+- Javadocs ;
+- commentaires ;
+- comportement réel du service ;
+- messages ;
+- interactions Mockito ;
+- formalisme déjà validé dans la classe.
+
+### 24.11 Cycle bloc par bloc
+
+Si tout est OK, l'Utilisateur passe au bloc suivant et le cycle reprend : audit du bloc, rapport sans code, correction éventuelle de l'analyse, `coder` si demandé, intégration STS, retour utilisateur, relecture du fichier joint, consolidation, recontrôle automatique.

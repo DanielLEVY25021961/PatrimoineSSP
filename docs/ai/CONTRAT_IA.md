@@ -3684,3 +3684,246 @@ La couche IA est considérée comme autonome pour une classe métier uniquement 
 - ne remplace pas les algorithmes thread-safe validés par des raccourcis ;
 - ne casse aucune relation bidirectionnelle ;
 - ne modifie pas les chaînes CSV/JTable historiques.
+---
+
+## 34) RT-COUCHE-IA-01 et RT-WORKFLOW-AUDIT-TEST-01 — Gouvernance des règles détectées et workflow d'audit JUnit
+
+### 34.1 RT-COUCHE-IA-01 (VALIDÉ) — Signalement, validation et intégration des règles détectées
+
+Lorsqu'une règle nouvelle ou une précision de workflow doit s'imposer dans le projet, l'IA NE DOIT PAS la sacraliser silencieusement.
+
+Workflow obligatoire :
+
+1. l'IA signale explicitement à l'Utilisateur le besoin de sacraliser la règle détectée ;
+2. l'IA explique pourquoi cette règle est nécessaire ;
+3. l'IA propose le ou les fichiers de couche IA à modifier ;
+4. l'Utilisateur valide ou corrige la règle ;
+5. si l'Utilisateur demande explicitement `coder`, l'IA livre les fichiers fragiles de couche IA complets et individuellement, avec chemin STS exact et lien de téléchargement opérationnel ;
+6. l'Utilisateur intègre dans STS et soumet à l'IA les fichiers corrigés ou un nouveau SHA ;
+7. l'IA relit les fichiers corrigés avec la technique de lecture sacralisée ;
+8. si tout est OK, l'IA mémorise la règle, consolide la mémoire long terme, le contexte actif/top-mind, la baseline et la fenêtre active si elle existe ;
+9. toute règle antérieure ou concurrente portant sur le même sujet est immédiatement neutralisée.
+
+Interdictions :
+
+- ne jamais détecter une règle importante sans la signaler à l'Utilisateur ;
+- ne jamais intégrer une règle dans la couche IA sans validation utilisateur ;
+- ne jamais livrer un fichier fragile de couche IA sous forme de ZIP global nominal ;
+- ne jamais remplacer la livraison individuelle complète par un extrait ou un patch à reconstituer.
+
+### 34.2 RT-REGLE-CANDIDATE-CODER-01 (VALIDÉ) — Conservation des règles validées en attente du prochain `coder`
+
+Quand l'Utilisateur demande de mémoriser une règle validée, une correction de workflow ou une règle détectée à intégrer plus tard dans la couche IA, l'IA doit la conserver comme règle candidate à intégrer lors de la prochaine demande explicite `coder`.
+
+Tant que `coder` n'est pas demandé :
+
+- l'IA ne modifie pas les fichiers fragiles ;
+- l'IA ne livre pas de fichier corrigé ;
+- l'IA garde la règle en mémoire utile ;
+- l'IA l'applique immédiatement dans le dialogue si elle concerne le comportement courant ;
+- l'IA la proposera pour intégration dans la couche IA au prochain codage.
+
+Au prochain `coder`, l'IA doit relire les règles candidates mémorisées et intégrer toutes celles qui sont compatibles avec la demande, sans en oublier.
+
+### 34.3 RT-WORKFLOW-AUDIT-TEST-01 (VALIDÉ) — Workflow complet d'échanges lors de l'audit d'un bloc de test JUnit
+
+L'audit d'un bloc de test JUnit est un workflow itératif, pas une génération isolée de méthodes.
+
+#### 34.3.1 Préambule obligatoire
+
+Avant toute opération, l'IA relit obligatoirement `CONTRAT_IA.md`.
+
+Cette étape est contractuelle et non négociable.
+
+#### 34.3.2 Demande initiale d'audit d'un test JUnit
+
+Lorsque l'Utilisateur demande l'audit d'un test JUnit ou d'une classe de test JUnit, l'IA ne code pas sauf si le message contient explicitement `coder`.
+
+#### 34.3.3 Détermination du périmètre utile
+
+Si ce n'est pas déjà fait, l'IA détermine le périmètre utile de l'audit :
+
+- contrat de couche ;
+- contrat local / PORT ;
+- classe de service, adapter ou composant testé ;
+- classe de test cible ;
+- dépendances utiles ;
+- DTO, convertisseurs, exceptions ou helpers utiles ;
+- références validées ;
+- méthodes déjà validées dans la même classe de test.
+
+#### 34.3.4 Contrôle de la baseline
+
+L'IA contrôle que tous les fichiers du périmètre sont présents, lisibles, corrects et à jour dans la baseline consolidée.
+
+Si tout est OK, l'IA installe ou active une fenêtre de travail.
+
+Une fois la fenêtre active, l'IA peut travailler directement depuis cette fenêtre sans relire GitHub au SHA à chaque bloc, sauf :
+
+- nouveau SHA ;
+- changement de périmètre ;
+- demande explicite de l'Utilisateur ;
+- incident de lecture ;
+- fenêtre suspecte, périmée ou incomplète.
+
+#### 34.3.5 Demande d'audit d'un bloc précis
+
+Quand l'Utilisateur demande l'audit complet d'un bloc, l'IA relit :
+
+- `CONTRAT_IA.md` ;
+- la fenêtre active ou la baseline consolidée ;
+- le périmètre utile du bloc ;
+- le PORT ou contrat concerné ;
+- la méthode réelle testée ;
+- la classe de test cible ;
+- les méthodes déjà validées dans cette classe ;
+- les références validées dans le périmètre.
+
+L'IA doit regarder ce qui a déjà été fait dans la classe pour les blocs corrigés ou validés. Elle ne doit pas inventer un nouveau formalisme.
+
+#### 34.3.6 Rapport d'audit sans code
+
+Si l'Utilisateur n'a pas écrit `coder`, l'IA rend un rapport d'audit sans code.
+
+Le rapport doit contenir :
+
+- preuve de lecture ;
+- bloc contrôlé ;
+- liste des tests présents ;
+- ordre actuel des tests ;
+- comportements couverts ;
+- manques détectés ;
+- tests à ajouter, déplacer ou renommer ;
+- problèmes de Javadoc ou commentaires ;
+- proposition d'ordre corrigé ;
+- verdict : conforme, incomplet ou non validable.
+
+#### 34.3.7 Correction de l'analyse par l'Utilisateur
+
+Si l'Utilisateur corrige l'analyse de l'IA, l'IA doit prendre cette correction comme prioritaire, reconstruire son analyse, mémoriser la règle de formalisme durable et la conserver comme règle candidate à intégrer dans la couche IA au prochain `coder`.
+
+#### 34.3.8 Livraison seulement après `coder`
+
+Si l'Utilisateur écrit `coder`, l'IA livre selon le format attendu par la classe cible.
+
+Pour un bloc de test JUnit, la livraison doit être structurée en blocs autonomes séparés :
+
+1. bloc autonome des constantes TAG à ajouter ;
+2. bloc autonome des constantes DISPLAY_NAME à ajouter ;
+3. bloc autonome des constantes DN uniquement si elles sont réellement nécessaires ;
+4. bloc autonome complet des tests.
+
+Règles obligatoires :
+
+- ne jamais livrer seulement des méthodes isolées si le workflow établi exige un bloc autonome ;
+- ne jamais noyer les constantes TAG dans les DISPLAY_NAME ;
+- ne jamais noyer les constantes DN dans les DISPLAY_NAME ;
+- réutiliser les constantes existantes dès qu'elles suffisent ;
+- ne jamais créer de constantes DN inutiles ou décoratives ;
+- respecter le formalisme déjà validé dans la classe.
+
+Le bloc complet des tests doit contenir :
+
+- le commentaire de bloc ;
+- les Javadocs utiles ;
+- les commentaires ARRANGE / ACT / ASSERT conformes à la classe ;
+- les méthodes de test ordonnées ;
+- les noms de tests cohérents ;
+- les `@Tag` conformes ;
+- les `@DisplayName` conformes.
+
+#### 34.3.9 Intégration STS et retour utilisateur
+
+L'Utilisateur intègre la livraison dans STS et exécute les tests.
+
+L'Utilisateur peut ensuite répondre avec tests verts, tests KO ou corrections, le plus souvent sous forme de fichier joint au chat afin d'éviter un commit/push et un changement de SHA à chaque tour.
+
+#### 34.3.10 Relecture du dernier fichier joint réel
+
+Lorsque l'Utilisateur soumet le fichier corrigé, l'IA doit relire le dernier fichier joint réel avec la technique sacralisée :
+
+- repartir du dernier `file_id` réel ;
+- relire le fichier local correspondant dans `/mnt/data` ;
+- calculer taille, lignes, SHA-256, EOF LF et CRLF ;
+- invalider tout ancien état local ;
+- ne jamais conclure depuis une ancienne copie.
+
+#### 34.3.11 Consolidation et recontrôle automatique
+
+Si les corrections ont bien été apportées et si les tests sont verts, l'IA consolide immédiatement :
+
+- baseline consolidée ;
+- fenêtre active si elle existe ;
+- mémoire utile du formalisme.
+
+Cette consolidation peut être en avance par rapport au dépôt GitHub.
+
+Après consolidation, l'IA doit automatiquement recontrôler la totalité du bloc jusqu'à pouvoir le déclarer conforme aux critères de qualité des tests.
+
+Le recontrôle porte notamment sur :
+
+- complétude du bloc ;
+- ordre des tests ;
+- conformité au PORT / contrat ;
+- conformité à la méthode réelle testée ;
+- messages attendus ;
+- interactions Mockito ;
+- preuves d'intégration si test d'intégration ;
+- Javadocs ;
+- commentaires ;
+- constantes TAG / DISPLAY_NAME / DN ;
+- formalisme validé de la classe.
+
+#### 34.3.12 Passage au bloc suivant
+
+Si tout est OK, l'Utilisateur passe au bloc suivant et le cycle reprend à la demande d'audit du bloc précis.
+
+### 34.4 RT-WORKFLOW-BLOC-TEST-AUTONOME-01 (VALIDÉ) — Format de livraison des blocs de tests Java
+
+Pour toute livraison d'un bloc de tests Java demandé en audit/correction, un bloc autonome doit inclure, lorsque c'est le formalisme établi de la classe ou de la livraison attendue :
+
+1. les constantes TAG nécessaires au bloc ;
+2. les constantes DISPLAY_NAME nécessaires au bloc ;
+3. les constantes DN / données nominales uniquement si elles sont réellement nécessaires ;
+4. la Javadoc et les commentaires de bloc couvrant l'ensemble du bloc demandé ;
+5. le bloc complet directement copiable dans STS.
+
+L'IA ne doit jamais livrer seulement les méthodes isolées si le workflow établi exige un bloc autonome avec constantes et commentaires de bloc.
+
+Les constantes doivent être livrées par familles séparées : TAG, DISPLAY_NAME, puis DN si nécessaire. Une constante DN ne doit jamais être créée par réflexe si une constante existante exprime déjà clairement le scénario.
+
+### 34.5 RT-JAVADOC-TEST-SIMPLE-CONCRETE-01 (VALIDÉ) — Style des Javadocs de tests
+
+Dans les Javadocs et commentaires de tests, l'IA doit dire simplement ce que le test vérifie.
+
+Interdictions, sauf si une classe validée les contient explicitement comme formalisme local :
+
+- « vise la branche locale » ;
+- « non exploitable » ;
+- « objet exploitable » ;
+- « réponse exploitable » ;
+- « scénario sécurisé » ;
+- toute formulation vague, abstraite ou prétentieuse qui ne décrit pas directement le fait testé.
+
+Formulations attendues :
+
+- DTO transmis null ;
+- parent avec libellé blank ;
+- parent absent du stockage ;
+- parent sans identifiant persistant ;
+- Gateway retourne null ;
+- liste vide ;
+- liste contenant uniquement des éléments null ;
+- conversion OutputDTO KO avec message ;
+- conversion OutputDTO KO sans message.
+
+### 34.6 RT-UC-CONVERSION-FINALE-TRY-CATCH-01 (VALIDÉ) — Tests Mock UC des conversions finales protégées
+
+Pour un bloc de test Mock UC, dès que la méthode de service contient une phase de conversion finale protégée par `try/catch` et produisant un message utilisateur rationalisé, les tests du bloc doivent envisager explicitement :
+
+- échec de conversion avec message ;
+- échec de conversion sans message.
+
+La règle s'applique sauf justification contractuelle explicite d'impossibilité ou de non-pertinence.
+
+Le formalisme doit s'inspirer des cas validés de `TypeProduitCuServiceMockTest.java`, sans ajouter de stubbing décoratif ou non consommé.
