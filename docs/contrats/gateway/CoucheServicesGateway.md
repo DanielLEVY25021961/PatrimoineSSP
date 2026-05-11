@@ -1206,3 +1206,713 @@ Ne font pas partie de `couche_services.gateway` :
 - les exceptions de `exceptionsservices` ;
 - les controllers ;
 - les vues.
+## 99) RT-AUTONOMIE-GATEWAY-RECODAGE-01 — Verrou d'autonomie complet de `couche_services.gateway`
+
+### 99.1) Objectif du verrou
+
+Cette section rend la couche IA suffisamment prescriptive pour permettre à l'IA de recoder quasiment à l'identique les fichiers validés de `couche_services.gateway`, dans le cadre contractuel obligatoire : relecture de `CONTRAT_IA.md`, baseline consolidée au dernier SHA, contrat de couche, contrat local, PORT, ADAPTER, dépendances utiles et tests concernés.
+
+La couche Gateway ne doit jamais être recodée depuis une intuition. Les tests Gateway sont une spécification. Les messages d'exception restent dans les PORTS. Les ADAPTERS traduisent techniquement DAO/JPA/convertisseurs vers objets métier et exceptions Gateway.
+
+### 99.2) Périmètre complet à relire pour recoder Gateway
+
+- PORTS : `TypeProduitGatewayIService`, `SousTypeProduitGatewayIService`, `ProduitGatewayIService`.
+- ADAPTERS : `TypeProduitGatewayJPAService`, `SousTypeProduitGatewayJPAService`, `ProduitGatewayJPAService`.
+- Exceptions Gateway : les six classes `ExceptionAppli*` et `ExceptionTechnique*` du package `exceptionsgateway`.
+- Pagination Gateway : `DirectionTri`, `RequetePage`, `ResultatPage`, `TriSpec`.
+- Tests Mock Gateway : les trois classes `*GatewayJPAServiceMockTest`.
+- Tests intégration Gateway : les trois classes `*GatewayJPAServiceIntegrationTest`.
+- Tests pagination : `DirectionTriTest`, `RequetePageTest`, `ResultatPageTest`, `TriSpecTest`.
+
+### 99.3) Exceptions Gateway — inventaire prescriptif
+
+| Fichier | Classe | Héritage | serialVersionUID | LOG | Constructeurs exacts |
+|---|---|---|---|---|---|
+| `ExceptionAppliLibelleBlank.java` | `ExceptionAppliLibelleBlank` | `Exception` | oui | oui | `ExceptionAppliLibelleBlank()`, `ExceptionAppliLibelleBlank(final String pMessage)` |
+| `ExceptionAppliParamNonPersistent.java` | `ExceptionAppliParamNonPersistent` | `Exception` | oui | oui | `ExceptionAppliParamNonPersistent()`, `ExceptionAppliParamNonPersistent(final String pMessage)` |
+| `ExceptionAppliParamNull.java` | `ExceptionAppliParamNull` | `Exception` | oui | oui | `ExceptionAppliParamNull()`, `ExceptionAppliParamNull(final String pMessage)` |
+| `ExceptionAppliParentNull.java` | `ExceptionAppliParentNull` | `Exception` | oui | oui | `ExceptionAppliParentNull()`, `ExceptionAppliParentNull(final String pMessage)` |
+| `ExceptionTechniqueGateway.java` | `ExceptionTechniqueGateway` | `Exception` | oui | oui | `ExceptionTechniqueGateway()`, `ExceptionTechniqueGateway(final String pMessage)`, `ExceptionTechniqueGateway(final String pMessage, final Throwable pE)` |
+| `ExceptionTechniqueGatewayNonPersistent.java` | `ExceptionTechniqueGatewayNonPersistent` | `Exception` | oui | oui | `ExceptionTechniqueGatewayNonPersistent()`, `ExceptionTechniqueGatewayNonPersistent(final String pMessage)`, `ExceptionTechniqueGatewayNonPersistent(final String pMessage, final Throwable pE)` |
+
+Règles de recodage :
+- les quatre exceptions applicatives héritent de `Exception` et exposent exactement un constructeur vide puis un constructeur `String pMessage` ;
+- les deux exceptions techniques exposent en plus le constructeur `String pMessage, Throwable pCause` ;
+- `serialVersionUID = 1L` et `private static final Logger LOG = LogManager.getLogger(...class)` sont conservés ;
+- les Javadocs historiques et commentaires de fin de constructeur doivent être conservés dans le formalisme de la classe validée ;
+- ne pas remplacer ces exceptions par des exceptions de service UC.
+
+### 99.4) Pagination transverse Gateway — inventaire prescriptif
+
+#### `DirectionTri`
+
+- fichier : `src/main/java/levy/daniel/application/model/services/produittype/pagination/DirectionTri.java`
+- constantes enum : `ASC, DESC`
+
+Constantes/champs :
+- néant
+
+Méthodes/constructeurs dans l'ordre :
+
+#### `RequetePage`
+
+- fichier : `src/main/java/levy/daniel/application/model/services/produittype/pagination/RequetePage.java`
+- constantes enum : ``
+
+Constantes/champs :
+- `private static final long serialVersionUID = 1L;`
+- `public static final int PAGE_DEFAUT = 0;`
+- `public static final int TAILLE_DEFAUT = 20;`
+- `public static final int TAILLE_MIN = 1;`
+- `private int pageNumber;`
+- `private int pageSize;`
+- `private List<TriSpec> tris;`
+
+Méthodes/constructeurs dans l'ordre :
+- ligne 61 : `RequetePage()`
+- ligne 73 : `RequetePage(final int pPageNumber, final int pPageSize)`
+- ligne 86 : `RequetePage(final int pPageNumber, final int pPageSize, final List<TriSpec> pTris)`
+- ligne 111 : `getPageNumber()`
+- ligne 118 : `setPageNumber(final int pPageNumber)`
+- ligne 125 : `getPageSize()`
+- ligne 132 : `setPageSize(final int pPageSize)`
+- ligne 139 : `getTris()`
+- ligne 149 : `setTris(final List<TriSpec> pTris)`
+#### `ResultatPage`
+
+- fichier : `src/main/java/levy/daniel/application/model/services/produittype/pagination/ResultatPage.java`
+- constantes enum : ``
+
+Constantes/champs :
+- `private static final long serialVersionUID = 1L;`
+- `private final List<T> content;`
+- `private final int pageNumber;`
+- `private final int pageSize;`
+- `private final long totalElements;`
+- `private final int totalPages;`
+
+Méthodes/constructeurs dans l'ordre :
+- ligne 85 : `ResultatPage(final List<T> pContent, final int pPageNumber, final int pPageSize, final long pTotalElements)`
+- ligne 114 : `getContent()`
+- ligne 124 : `getPageNumber()`
+- ligne 131 : `getPageSize()`
+- ligne 138 : `getTotalElements()`
+- ligne 145 : `getTotalPages()`
+- ligne 152 : `isHasNext()`
+- ligne 159 : `isHasPrevious()`
+- ligne 176 : `fromSpringPage(final Page<T> pSpringPage)`
+- ligne 196 : `isEmpty()`
+#### `TriSpec`
+
+- fichier : `src/main/java/levy/daniel/application/model/services/produittype/pagination/TriSpec.java`
+- constantes enum : ``
+
+Constantes/champs :
+- `private static final long serialVersionUID = 1L;`
+- `public static final DirectionTri DIRECTION_DEFAUT = DirectionTri.ASC;`
+- `private String propriete;`
+- `private DirectionTri direction;`
+
+Méthodes/constructeurs dans l'ordre :
+- ligne 67 : `TriSpec(final String pPropriete, final DirectionTri pDirection)`
+- ligne 83 : `inverserDirection()`
+- ligne 93 : `getPropriete()`
+- ligne 100 : `setPropriete(final String pPropriete)`
+- ligne 107 : `getDirection()`
+- ligne 114 : `setDirection(final DirectionTri pDirection)`
+
+Règles de recodage pagination :
+- `DirectionTri` conserve les constantes `ASC` puis `DESC`, dans cet ordre ;
+- `RequetePage` normalise `pageNumber` à `0` si négatif, `pageSize` à `TAILLE_DEFAUT` si inférieur à `TAILLE_MIN`, et protège la liste `tris` par copie défensive ;
+- `ResultatPage` protège `content` par copie défensive, normalise les valeurs invalides, calcule `totalPages`, borne à `Integer.MAX_VALUE`, expose `isHasNext`, `isHasPrevious`, `fromSpringPage` et `isEmpty` ;
+- `TriSpec` conserve `DIRECTION_DEFAUT = DirectionTri.ASC`, accepte `propriete` telle quelle, remplace une direction `null` par la direction par défaut et inverse ASC/DESC dans `inverserDirection()`.
+
+### 99.5) Inventaire complet des tests Gateway et pagination
+
+#### `TypeProduitGatewayJPAServiceMockTest.java` — 102 tests
+- ligne 328 : `testCreerNull`
+- ligne 361 : `testCreerLibelleBlank`
+- ligne 398 : `testCreerDAOSaveRetourneNull`
+- ligne 456 : `testCreerDAOSaveExceptionMessageNonNull`
+- ligne 528 : `testCreerDAOSaveExceptionMessageNull`
+- ligne 604 : `testCreerDoublon`
+- ligne 689 : `testCreerNominal`
+- ligne 761 : `testRechercherTousDAORetourneNull`
+- ligne 806 : `testRechercherTousDAORetourneVide`
+- ligne 856 : `testRechercherTousDAOExceptionMessageNonNull`
+- ligne 924 : `testRechercherTousDAOExceptionMessageNull`
+- ligne 1003 : `testRechercherTousTriDedoublonnage`
+- ligne 1078 : `testRechercherTousNominal`
+- ligne 1164 : `testRechercherTousParPageNull`
+- ligne 1276 : `testRechercherTousParPageDAORetourneNull`
+- ligne 1339 : `testRechercherTousParPageContenuNull`
+- ligne 1409 : `testRechercherTousParPageDAOExceptionMessageNonNull`
+- ligne 1498 : `testRechercherTousParPageDAOExceptionMessageNull`
+- ligne 1579 : `testRechercherTousParPagePageSizeZero`
+- ligne 1714 : `testRechercherTousParPageAvecTri`
+- ligne 1865 : `testRechercherTousParPageContenuAvecNulls`
+- ligne 1967 : `testRechercherTousParPagePageVide`
+- ligne 2053 : `testRechercherTousParPageNominalRequeteNeutre`
+- ligne 2157 : `testRechercherTousParPageNominal`
+- ligne 2278 : `testFindByObjetMetierNull`
+- ligne 2311 : `testFindByObjetMetierLibelleBlank`
+- ligne 2353 : `testFindByObjetMetierDAOExceptionMessageNonNull`
+- ligne 2425 : `testFindByObjetMetierDAOExceptionMessageNull`
+- ligne 2504 : `testFindByObjetMetierNonTrouve`
+- ligne 2565 : `testFindByObjetMetierNominal`
+- ligne 2628 : `testFindByLibelleNull`
+- ligne 2661 : `testFindByLibelleBlank`
+- ligne 2696 : `testFindByLibelleDAOExceptionMessageNonNull`
+- ligne 2768 : `testFindByLibelleDAOExceptionMessageNull`
+- ligne 2847 : `testFindByLibelleNonTrouve`
+- ligne 2902 : `testFindByLibelleNominal`
+- ligne 2959 : `testFindByLibelleRapideNull`
+- ligne 2994 : `testFindByLibelleRapideBlank`
+- ligne 3063 : `testFindByLibelleRapideDAORetourneNull`
+- ligne 3117 : `testFindByLibelleRapideDAOExceptionMessageNonNull`
+- ligne 3190 : `testFindByLibelleRapideDAOExceptionMessageNull`
+- ligne 3269 : `testFindByLibelleRapideNonTrouve`
+- ligne 3335 : `testFindByLibelleRapideNominal`
+- ligne 3429 : `testFindByIdNull`
+- ligne 3468 : `testFindByIdDAORetourneNull`
+- ligne 3517 : `testFindByIdDAOExceptionMessageNonNull`
+- ligne 3581 : `testFindByIdDAOExceptionMessageNull`
+- ligne 3646 : `testFindByIdNonTrouve`
+- ligne 3703 : `testFindByIdNominal`
+- ligne 3765 : `testUpdateNull`
+- ligne 3797 : `testUpdateLibelleNull`
+- ligne 3832 : `testUpdateLibelleBlank`
+- ligne 3868 : `testUpdateIdNull`
+- ligne 3906 : `testUpdateDAOFindByIdRetourneNull`
+- ligne 3973 : `testUpdateAbsent`
+- ligne 4043 : `testUpdateLibelleExistant`
+- ligne 4133 : `testUpdateDAOFindByIdExceptionMessageNonNull`
+- ligne 4225 : `testUpdateDAOFindByIdExceptionMessageNull`
+- ligne 4319 : `testUpdateDAOFindByTypeProduitIgnoreCaseExceptionMessageNonNull`
+- ligne 4406 : `testUpdateDAOFindByTypeProduitIgnoreCaseExceptionMessageNull`
+- ligne 4493 : `testUpdateDAOSaveRetourneNull`
+- ligne 4580 : `testUpdateDAOSaveExceptionMessageNonNull`
+- ligne 4681 : `testUpdateDAOSaveExceptionMessageNull`
+- ligne 4783 : `testUpdateSansModification`
+- ligne 4859 : `testUpdateModificationCasse`
+- ligne 4959 : `testUpdateNominal`
+- ligne 5061 : `testDeleteNull`
+- ligne 5093 : `testDeleteIdNull`
+- ligne 5129 : `testDeleteDAOFindByIdRetourneNull`
+- ligne 5188 : `testDeleteAbsent`
+- ligne 5248 : `testDeleteDAOFindByIdExceptionMessageNonNull`
+- ligne 5326 : `testDeleteDAOFindByIdExceptionMessageNull`
+- ligne 5411 : `testDeleteDAODeleteExceptionMessageNonNull`
+- ligne 5494 : `testDeleteDAODeleteExceptionMessageNull`
+- ligne 5582 : `testDeleteNominal`
+- ligne 5640 : `testCountStockageVide`
+- ligne 5692 : `testCountDAOExceptionMessageNonNull`
+- ligne 5760 : `testCountDAOExceptionMessageNull`
+- ligne 5834 : `testCountNominal`
+- ligne 5891 : `testConvertirRequetePageEnPageableNull`
+- ligne 5936 : `testConvertirRequetePageEnPageableTrisNull`
+- ligne 5985 : `testConvertirRequetePageEnPageableTrisVides`
+- ligne 6034 : `testConvertirRequetePageEnPageableTrisValides`
+- ligne 6097 : `testConvertirRequetePageEnPageableTrisInvalides`
+- ligne 6166 : `testFiltrerTrierDedoublonnerNull`
+- ligne 6207 : `testFiltrerTrierDedoublonnerVide`
+- ligne 6248 : `testFiltrerTrierDedoublonnerAvecNulls`
+- ligne 6307 : `testFiltrerTrierDedoublonnerCaseInsensitive`
+- ligne 6371 : `testFiltrerTrierDedoublonnerTri`
+- ligne 6430 : `testAppliquerModificationsAvecNull`
+- ligne 6483 : `testAppliquerModificationsSansModification`
+- ligne 6529 : `testAppliquerModificationsAvecModification`
+- ligne 6575 : `testSafeEqualsAvecNull`
+- ligne 6631 : `testSafeEqualsAvecObjetsEgaux`
+- ligne 6668 : `testSafeEqualsAvecObjetsDifferents`
+- ligne 6705 : `testIsBlankAvecNull`
+- ligne 6742 : `testIsBlankAvecChaineVide`
+- ligne 6779 : `testIsBlankAvecChaineBlanche`
+- ligne 6816 : `testIsBlankAvecChaineValide`
+- ligne 6853 : `testSafeMessageAvecNull`
+- ligne 6890 : `testSafeMessageAvecObjetValide`
+- ligne 6927 : `testSafeMessageAvecToStringNull`
+#### `TypeProduitGatewayJPAServiceIntegrationTest.java` — 51 tests
+- ligne 544 : `testCreerNull`
+- ligne 601 : `testCreerBlank`
+- ligne 671 : `testCreerLibelleExistant`
+- ligne 771 : `testCreerNominal`
+- ligne 882 : `testCreerPlusieurs`
+- ligne 1010 : `testRechercherTousBaseVide`
+- ligne 1058 : `testRechercherTousNominal`
+- ligne 1146 : `testRechercherTousParPageNull`
+- ligne 1224 : `testRechercherTousParPageAvecTri`
+- ligne 1301 : `testRechercherTousParPageVide`
+- ligne 1352 : `testRechercherTousParPageTailleSuperieure`
+- ligne 1412 : `testRechercherTousParPageHorsBornes`
+- ligne 1465 : `testRechercherTousParPageTailleZero`
+- ligne 1538 : `testRechercherTousParPageNominal`
+- ligne 1627 : `testFindByObjetMetierNull`
+- ligne 1656 : `testFindByObjetMetierLibelleNull`
+- ligne 1692 : `testFindByObjetMetierBlank`
+- ligne 1730 : `testFindByObjetMetierNonTrouve`
+- ligne 1795 : `testFindByObjetMetierNominal`
+- ligne 1853 : `testFindByObjetMetierIdIgnoreCasseIgnoree`
+- ligne 1958 : `testFindByLibelleNull`
+- ligne 1987 : `testFindByLibelleBlank`
+- ligne 2018 : `testFindByLibelleNonTrouve`
+- ligne 2072 : `testFindByLibelleCaseInsensitive`
+- ligne 2128 : `testFindByLibelleNominal`
+- ligne 2182 : `testFindByLibelleRapideNull`
+- ligne 2213 : `testFindByLibelleRapideBlank`
+- ligne 2269 : `testFindByLibelleRapideNonTrouve`
+- ligne 2315 : `testFindByLibelleRapideCaseInsensitive`
+- ligne 2387 : `testFindByLibelleRapideDedoublonnage`
+- ligne 2429 : `testFindByLibelleRapideNominal`
+- ligne 2502 : `testFindByIdNull`
+- ligne 2533 : `testFindByIdNonTrouve`
+- ligne 2582 : `testFindByIdNominal`
+- ligne 2639 : `testFindByIdIdCree`
+- ligne 2719 : `testUpdateNull`
+- ligne 2776 : `testUpdateLibelleNull`
+- ligne 2841 : `testUpdateLibelleBlank`
+- ligne 2907 : `testUpdateIdNull`
+- ligne 2975 : `testUpdateEntityInexistante`
+- ligne 3050 : `testUpdateLibelleExistant`
+- ligne 3172 : `testUpdateSansModification`
+- ligne 3278 : `testUpdateNominal`
+- ligne 3407 : `testDeleteNull`
+- ligne 3462 : `testDeleteIdNull`
+- ligne 3522 : `testDeleteIdInexistant`
+- ligne 3592 : `testDeleteNominal`
+- ligne 3708 : `testDeleteDoubleSuppression`
+- ligne 3849 : `testCountBaseVide`
+- ligne 3911 : `testCountNominal`
+- ligne 3976 : `testCountApresCreationPuisSuppression`
+#### `SousTypeProduitGatewayJPAServiceMockTest.java` — 123 tests
+- ligne 572 : `testCreerNull`
+- ligne 619 : `testCreerLibelleBlank`
+- ligne 668 : `testCreerParentNull`
+- ligne 716 : `testCreerParentLibelleBlank`
+- ligne 766 : `testCreerParentIdNull`
+- ligne 819 : `testCreerParentAbsent`
+- ligne 877 : `testCreerParentDAOExceptionMessageNonNull`
+- ligne 946 : `testCreerParentDAOExceptionMessageNull`
+- ligne 1011 : `testCreerDAOSaveRetourneNull`
+- ligne 1073 : `testCreerDAOSaveExceptionMessageNonNull`
+- ligne 1149 : `testCreerDAOSaveExceptionMessageNull`
+- ligne 1229 : `testCreerDoublon`
+- ligne 1318 : `testCreerParentCaracteresSpeciaux`
+- ligne 1393 : `testCreerNominal`
+- ligne 1468 : `testRechercherTousDAORetourneNull`
+- ligne 1520 : `testRechercherTousDAORetourneVide`
+- ligne 1574 : `testRechercherTousDAOExceptionMessageNonNull`
+- ligne 1640 : `testRechercherTousDAOExceptionMessageNull`
+- ligne 1713 : `testRechercherTousTriDedoublonnage`
+- ligne 1824 : `testRechercherTousNominal`
+- ligne 1933 : `testRechercherTousParPageNull`
+- ligne 2072 : `testRechercherTousParPageDAORetourneNull`
+- ligne 2142 : `testRechercherTousParPageContenuNull`
+- ligne 2221 : `testRechercherTousParPageDAOExceptionMessageNonNull`
+- ligne 2319 : `testRechercherTousParPageDAOExceptionMessageNull`
+- ligne 2421 : `testRechercherTousParPagePageSizeZero`
+- ligne 2563 : `testRechercherTousParPageAvecTri`
+- ligne 2722 : `testRechercherTousParPageContenuAvecNulls`
+- ligne 2860 : `testRechercherTousParPagePageVide`
+- ligne 2965 : `testRechercherTousParPageNominalRequeteNeutre`
+- ligne 3123 : `testRechercherTousParPageNominal`
+- ligne 3275 : `testFindByObjetMetierNull`
+- ligne 3320 : `testFindByObjetMetierLibelleBlank`
+- ligne 3373 : `testFindByObjetMetierParentNull`
+- ligne 3425 : `testFindByObjetMetierParentLibelleBlank`
+- ligne 3479 : `testFindByObjetMetierParentIdNull`
+- ligne 3537 : `testFindByObjetMetierParentAbsent`
+- ligne 3600 : `testFindByObjetMetierParentDAOExceptionMessageNonNull`
+- ligne 3675 : `testFindByObjetMetierParentDAOExceptionMessageNull`
+- ligne 3752 : `testFindByObjetMetierDAORetourneNull`
+- ligne 3821 : `testFindByObjetMetierDAOExceptionMessageNonNull`
+- ligne 3906 : `testFindByObjetMetierDAOExceptionMessageNull`
+- ligne 3990 : `testFindByObjetMetierParentSansObjetMetier`
+- ligne 4063 : `testFindByObjetMetierNonTrouve`
+- ligne 4144 : `testFindByObjetMetierNominal`
+- ligne 4240 : `testFindByLibelleNull`
+- ligne 4279 : `testFindByLibelleBlank`
+- ligne 4325 : `testFindByLibelleDAORetourneNull`
+- ligne 4401 : `testFindByLibelleDAOExceptionMessageNonNull`
+- ligne 4488 : `testFindByLibelleDAOExceptionMessageNull`
+- ligne 4576 : `testFindByLibelleNonTrouve`
+- ligne 4668 : `testFindByLibelleNominal`
+- ligne 4811 : `testFindByLibelleRapideNull`
+- ligne 4853 : `testFindByLibelleRapideBlank`
+- ligne 4958 : `testFindByLibelleRapideDAORetourneNull`
+- ligne 5029 : `testFindByLibelleRapideDAOExceptionMessageNonNull`
+- ligne 5122 : `testFindByLibelleRapideDAOExceptionMessageNull`
+- ligne 5228 : `testFindByLibelleRapideContenuSpeciauxNominal`
+- ligne 5332 : `testFindByLibelleRapideNonTrouve`
+- ligne 5419 : `testFindByLibelleRapideNominal`
+- ligne 5562 : `testFindAllByParentNull`
+- ligne 5601 : `testFindAllByParentParentLibelleBlank`
+- ligne 5649 : `testFindAllByParentParentIdNull`
+- ligne 5702 : `testFindAllByParentParentAbsent`
+- ligne 5767 : `testFindAllByParentParentDAOExceptionMessageNonNull`
+- ligne 5837 : `testFindAllByParentParentDAOExceptionMessageNull`
+- ligne 5908 : `testFindAllByParentDAORetourneNull`
+- ligne 5971 : `testFindAllByParentDAOExceptionMessageNonNull`
+- ligne 6046 : `testFindAllByParentDAOExceptionMessageNull`
+- ligne 6122 : `testFindAllByParentNonTrouve`
+- ligne 6192 : `testFindAllByParentAvecDoublons`
+- ligne 6277 : `testFindAllByParentNominal`
+- ligne 6405 : `testFindByIdNull`
+- ligne 6449 : `testFindByIdDAORetourneNull`
+- ligne 6506 : `testFindByIdDAOExceptionMessageNonNull`
+- ligne 6578 : `testFindByIdDAOExceptionMessageNull`
+- ligne 6651 : `testFindByIdNonTrouve`
+- ligne 6719 : `testFindByIdNominal`
+- ligne 6799 : `testUpdateNull`
+- ligne 6831 : `testUpdateLibelleNull`
+- ligne 6867 : `testUpdateLibelleBlank`
+- ligne 6904 : `testUpdateIdNull`
+- ligne 6941 : `testUpdateParentNull`
+- ligne 6977 : `testUpdateParentLibelleBlank`
+- ligne 7014 : `testUpdateParentIdNull`
+- ligne 7054 : `testUpdateParentAbsent`
+- ligne 7103 : `testUpdateParentDAOExceptionMessageNonNull`
+- ligne 7159 : `testUpdateParentDAOExceptionMessageNull`
+- ligne 7214 : `testUpdateDAOFindByIdRetourneNull`
+- ligne 7265 : `testUpdateAbsent`
+- ligne 7319 : `testUpdateDAOFindByIdExceptionMessageNonNull`
+- ligne 7377 : `testUpdateDAOFindByIdExceptionMessageNull`
+- ligne 7433 : `testUpdateDAOSaveRetourneNull`
+- ligne 7486 : `testUpdateDAOSaveExceptionMessageNonNull`
+- ligne 7546 : `testUpdateDAOSaveExceptionMessageNull`
+- ligne 7605 : `testUpdateSansModification`
+- ligne 7663 : `testUpdateParentLibelleCaseSensitive`
+- ligne 7722 : `testUpdateModificationCasse`
+- ligne 7787 : `testUpdateParentModifie`
+- ligne 7858 : `testUpdateNominal`
+- ligne 7927 : `testDeleteNull`
+- ligne 7961 : `testDeleteIdNull`
+- ligne 8001 : `testDeleteDAOFindByIdRetourneNull`
+- ligne 8063 : `testDeleteAbsent`
+- ligne 8125 : `testDeleteDAOFindByIdExceptionMessageNonNull`
+- ligne 8202 : `testDeleteDAOFindByIdExceptionMessageNull`
+- ligne 8281 : `testDeleteEntityManagerRemoveExceptionMessageNonNull`
+- ligne 8359 : `testDeleteEntityManagerRemoveExceptionMessageNull`
+- ligne 8431 : `testDeleteEntityManagerFlushExceptionMessageNonNull`
+- ligne 8499 : `testDeleteEntityManagerFlushExceptionMessageNull`
+- ligne 8565 : `testDeleteVerificationPostSuppressionEchoue`
+- ligne 8630 : `testDeleteVerificationPostSuppressionDAOExceptionMessageNonNull`
+- ligne 8701 : `testDeleteVerificationPostSuppressionDAOExceptionMessageNull`
+- ligne 8770 : `testDeleteNominal`
+- ligne 8839 : `testCountStockageVide`
+- ligne 8898 : `testCountDAOExceptionMessageNonNull`
+- ligne 8972 : `testCountDAOExceptionMessageNull`
+- ligne 9052 : `testCountNominal`
+- ligne 9114 : `testSanityLocaleToUpperCase`
+- ligne 9149 : `testSanitySafeMessage`
+- ligne 9182 : `testSanityIsBlankButNotNull`
+- ligne 9212 : `testSanityConstruireMessageNonPersistent`
+- ligne 9256 : `testSanityMockitoDefaultNullOnOptionalIsHandled`
+#### `SousTypeProduitGatewayJPAServiceIntegrationTest.java` — 75 tests
+- ligne 652 : `testCreerNull`
+- ligne 709 : `testCreerLibelleNull`
+- ligne 775 : `testCreerLibelleBlank`
+- ligne 843 : `testCreerParentNull`
+- ligne 909 : `testCreerParentLibelleNull`
+- ligne 977 : `testCreerParentLibelleBlank`
+- ligne 1045 : `testCreerParentIdNull`
+- ligne 1117 : `testCreerParentAbsent`
+- ligne 1206 : `testCreerDoublon`
+- ligne 1338 : `testCreerNominal`
+- ligne 1519 : `testCreerPlusieurs`
+- ligne 1761 : `testRechercherTousStockageVide`
+- ligne 1834 : `testRechercherTousNominal`
+- ligne 1981 : `testRechercherTousParPageNull`
+- ligne 2076 : `testRechercherTousParPageAvecTri`
+- ligne 2227 : `testRechercherTousParPageStockageVide`
+- ligne 2318 : `testRechercherTousParPageTailleSuperieureAuTotal`
+- ligne 2442 : `testRechercherTousParPagePageHorsBorne`
+- ligne 2536 : `testRechercherTousParPageTailleZero`
+- ligne 2683 : `testRechercherTousParPageNominal`
+- ligne 2830 : `testFindByObjetMetierNull`
+- ligne 2886 : `testFindByObjetMetierLibelleNull`
+- ligne 2950 : `testFindByObjetMetierLibelleBlank`
+- ligne 3014 : `testFindByObjetMetierParentNull`
+- ligne 3076 : `testFindByObjetMetierParentLibelleNull`
+- ligne 3139 : `testFindByObjetMetierParentLibelleBlank`
+- ligne 3202 : `testFindByObjetMetierParentIdNull`
+- ligne 3269 : `testFindByObjetMetierParentAbsent`
+- ligne 3350 : `testFindByObjetMetierNonTrouve`
+- ligne 3439 : `testFindByObjetMetierNominal`
+- ligne 3549 : `testFindByObjetMetierIdIgnoreCasseIgnoree`
+- ligne 3732 : `testFindByLibelleNull`
+- ligne 3787 : `testFindByLibelleBlank`
+- ligne 3844 : `testFindByLibelleNonTrouve`
+- ligne 3930 : `testFindByLibelleCaseInsensitive`
+- ligne 4071 : `testFindByLibelleNominal`
+- ligne 4202 : `testFindByLibelleRapideNull`
+- ligne 4259 : `testFindByLibelleRapideBlank`
+- ligne 4352 : `testFindByLibelleRapideNonTrouve`
+- ligne 4437 : `testFindByLibelleRapideCaseInsensitive`
+- ligne 4595 : `testFindByLibelleRapideDedoublonnage`
+- ligne 4726 : `testFindByLibelleRapideNominal`
+- ligne 4880 : `testFindAllByParentNull`
+- ligne 4935 : `testFindAllByParentParentLibelleNull`
+- ligne 4995 : `testFindAllByParentParentLibelleBlank`
+- ligne 5056 : `testFindAllByParentParentIdNull`
+- ligne 5122 : `testFindAllByParentParentAbsent`
+- ligne 5199 : `testFindAllByParentParentSansEnfant`
+- ligne 5301 : `testFindAllByParentNominal`
+- ligne 5501 : `testFindByIdNull`
+- ligne 5558 : `testFindByIdNonTrouve`
+- ligne 5636 : `testFindByIdNominal`
+- ligne 5774 : `testFindByIdIdCree`
+- ligne 5958 : `testUpdateNull`
+- ligne 6015 : `testUpdateLibelleNull`
+- ligne 6083 : `testUpdateLibelleBlank`
+- ligne 6152 : `testUpdateIdNull`
+- ligne 6225 : `testUpdateParentNull`
+- ligne 6288 : `testUpdateParentLibelleNull`
+- ligne 6354 : `testUpdateParentLibelleBlank`
+- ligne 6421 : `testUpdateParentIdNull`
+- ligne 6492 : `testUpdateParentAbsent`
+- ligne 6574 : `testUpdateAbsent`
+- ligne 6664 : `testUpdateSansModification`
+- ligne 6839 : `testUpdateNominal`
+- ligne 7023 : `testUpdateParentModifie`
+- ligne 7240 : `testUpdateDoublonMetier`
+- ligne 7443 : `testDeleteNull`
+- ligne 7500 : `testDeleteIdNull`
+- ligne 7567 : `testDeleteAbsent`
+- ligne 7661 : `testDeleteNominal`
+- ligne 7856 : `testDeleteDoubleSuppression`
+- ligne 8089 : `testCountStockageVide`
+- ligne 8164 : `testCountNominal`
+- ligne 8246 : `testCountApresCreationPuisSuppression`
+#### `ProduitGatewayJPAServiceMockTest.java` — 114 tests
+- ligne 477 : `testCreerNull`
+- ligne 522 : `testCreerLibelleBlank`
+- ligne 574 : `testCreerParentNull`
+- ligne 625 : `testCreerParentLibelleBlank`
+- ligne 680 : `testCreerParentIdNull`
+- ligne 738 : `testCreerParentAbsent`
+- ligne 801 : `testCreerParentDAOExceptionMessageNonNull`
+- ligne 877 : `testCreerParentDAOExceptionMessageNull`
+- ligne 950 : `testCreerDAOSaveRetourneNull`
+- ligne 1020 : `testCreerDAOSaveExceptionMessageNonNull`
+- ligne 1104 : `testCreerDAOSaveExceptionMessageNull`
+- ligne 1187 : `testCreerDoublon`
+- ligne 1283 : `testCreerParentCaracteresSpeciaux`
+- ligne 1370 : `testCreerNominal`
+- ligne 1453 : `testRechercherTousDAORetourneNull`
+- ligne 1503 : `testRechercherTousDAORetourneVide`
+- ligne 1554 : `testRechercherTousDAOExceptionMessageNonNull`
+- ligne 1618 : `testRechercherTousDAOExceptionMessageNull`
+- ligne 1689 : `testRechercherTousTriDedoublonnage`
+- ligne 1809 : `testRechercherTousNominal`
+- ligne 1962 : `testRechercherTousParPageNull`
+- ligne 2093 : `testRechercherTousParPageDAORetourneNull`
+- ligne 2161 : `testRechercherTousParPageContenuNull`
+- ligne 2237 : `testRechercherTousParPageDAOExceptionMessageNonNull`
+- ligne 2309 : `testRechercherTousParPageDAOExceptionMessageNull`
+- ligne 2383 : `testRechercherTousParPagePageSizeZero`
+- ligne 2499 : `testRechercherTousParPageAvecTri`
+- ligne 2651 : `testRechercherTousParPageContenuAvecNulls`
+- ligne 2771 : `testRechercherTousParPagePageVide`
+- ligne 2860 : `testRechercherTousParPageNominalRequeteNeutre`
+- ligne 2975 : `testRechercherTousParPageNominal`
+- ligne 3094 : `testFindByObjetMetierNull`
+- ligne 3135 : `testFindByObjetMetierLibelleBlank`
+- ligne 3188 : `testFindByObjetMetierParentNull`
+- ligne 3239 : `testFindByObjetMetierParentLibelleBlank`
+- ligne 3293 : `testFindByObjetMetierParentIdNull`
+- ligne 3353 : `testFindByObjetMetierParentAbsent`
+- ligne 3416 : `testFindByObjetMetierParentDAOExceptionMessageNonNull`
+- ligne 3491 : `testFindByObjetMetierParentDAOExceptionMessageNull`
+- ligne 3567 : `testFindByObjetMetierDAORetourneNull`
+- ligne 3634 : `testFindByObjetMetierDAOExceptionMessageNonNull`
+- ligne 3717 : `testFindByObjetMetierDAOExceptionMessageNull`
+- ligne 3802 : `testFindByObjetMetierNonTrouve`
+- ligne 3889 : `testFindByObjetMetierNominal`
+- ligne 3987 : `testFindByLibelleNull`
+- ligne 4025 : `testFindByLibelleBlank`
+- ligne 4070 : `testFindByLibelleDAORetourneNull`
+- ligne 4144 : `testFindByLibelleDAOExceptionMessageNonNull`
+- ligne 4229 : `testFindByLibelleDAOExceptionMessageNull`
+- ligne 4315 : `testFindByLibelleNonTrouve`
+- ligne 4403 : `testFindByLibelleNominal`
+- ligne 4540 : `testFindByLibelleRapideNull`
+- ligne 4583 : `testFindByLibelleRapideBlank`
+- ligne 4687 : `testFindByLibelleRapideDAORetourneNull`
+- ligne 4759 : `testFindByLibelleRapideDAOExceptionMessageNonNull`
+- ligne 4846 : `testFindByLibelleRapideDAOExceptionMessageNull`
+- ligne 4934 : `testFindByLibelleRapideNonTrouve`
+- ligne 5017 : `testFindByLibelleRapideNominal`
+- ligne 5154 : `testFindAllByParentNull`
+- ligne 5192 : `testFindAllByParentParentLibelleBlank`
+- ligne 5241 : `testFindAllByParentParentIdNull`
+- ligne 5294 : `testFindAllByParentParentAbsent`
+- ligne 5353 : `testFindAllByParentParentDAOExceptionMessageNonNull`
+- ligne 5417 : `testFindAllByParentParentDAOExceptionMessageNull`
+- ligne 5482 : `testFindAllByParentDAORetourneNull`
+- ligne 5545 : `testFindAllByParentDAOExceptionMessageNonNull`
+- ligne 5620 : `testFindAllByParentDAOExceptionMessageNull`
+- ligne 5696 : `testFindAllByParentNonTrouve`
+- ligne 5769 : `testFindAllByParentAvecDoublons`
+- ligne 5888 : `testFindAllByParentNominal`
+- ligne 6025 : `testFindByIdNull`
+- ligne 6068 : `testFindByIdDAORetourneNull`
+- ligne 6123 : `testFindByIdDAOExceptionMessageNonNull`
+- ligne 6193 : `testFindByIdDAOExceptionMessageNull`
+- ligne 6264 : `testFindByIdNonTrouve`
+- ligne 6331 : `testFindByIdNominal`
+- ligne 6416 : `testUpdateNull`
+- ligne 6448 : `testUpdateLibelleNull`
+- ligne 6486 : `testUpdateLibelleBlank`
+- ligne 6525 : `testUpdateIdNull`
+- ligne 6565 : `testUpdateParentNull`
+- ligne 6601 : `testUpdateParentLibelleBlank`
+- ligne 6641 : `testUpdateParentIdNull`
+- ligne 6685 : `testUpdateParentAbsent`
+- ligne 6737 : `testUpdateParentDAOExceptionMessageNonNull`
+- ligne 6795 : `testUpdateParentDAOExceptionMessageNull`
+- ligne 6852 : `testUpdateDAOFindByIdRetourneNull`
+- ligne 6907 : `testUpdateAbsent`
+- ligne 6965 : `testUpdateDAOFindByIdExceptionMessageNonNull`
+- ligne 7027 : `testUpdateDAOFindByIdExceptionMessageNull`
+- ligne 7087 : `testUpdateDAOSaveRetourneNull`
+- ligne 7147 : `testUpdateDAOSaveExceptionMessageNonNull`
+- ligne 7215 : `testUpdateDAOSaveExceptionMessageNull`
+- ligne 7282 : `testUpdateSansModification`
+- ligne 7347 : `testUpdateParentLibelleCaseSensitive`
+- ligne 7409 : `testUpdateModificationCasse`
+- ligne 7486 : `testUpdateParentModifie`
+- ligne 7568 : `testUpdateNominal`
+- ligne 7646 : `testDeleteNull`
+- ligne 7679 : `testDeleteIdNull`
+- ligne 7721 : `testDeleteDAOFindByIdRetourneNull`
+- ligne 7790 : `testDeleteAbsent`
+- ligne 7858 : `testDeleteDAOFindByIdExceptionMessageNonNull`
+- ligne 7944 : `testDeleteDAOFindByIdExceptionMessageNull`
+- ligne 8038 : `testDeleteDAODeleteExceptionMessageNonNull`
+- ligne 8130 : `testDeleteDAODeleteExceptionMessageNull`
+- ligne 8224 : `testDeleteDAOFlushExceptionMessageNonNull`
+- ligne 8312 : `testDeleteDAOFlushExceptionMessageNull`
+- ligne 8399 : `testDeleteNominal`
+- ligne 8466 : `testCountStockageVide`
+- ligne 8524 : `testCountDAOExceptionMessageNonNull`
+- ligne 8597 : `testCountDAOExceptionMessageNull`
+- ligne 8676 : `testCountNominal`
+- ligne 8730 : `testSanitySafeMessage`
+#### `ProduitGatewayJPAServiceIntegrationTest.java` — 74 tests
+- ligne 1239 : `testCreerNull`
+- ligne 1298 : `testCreerLibelleNull`
+- ligne 1377 : `testCreerLibelleBlank`
+- ligne 1456 : `testCreerParentNull`
+- ligne 1524 : `testCreerParentLibelleNull`
+- ligne 1607 : `testCreerParentLibelleBlank`
+- ligne 1690 : `testCreerParentIdNull`
+- ligne 1775 : `testCreerParentAbsent`
+- ligne 1880 : `testCreerDoublon`
+- ligne 2017 : `testCreerNominal`
+- ligne 2220 : `testCreerPlusieurs`
+- ligne 2448 : `testRechercherTousStockageVide`
+- ligne 2523 : `testRechercherTousNominal`
+- ligne 2705 : `testRechercherTousParPageNull`
+- ligne 2808 : `testRechercherTousParPageAvecTri`
+- ligne 2937 : `testRechercherTousParPageStockageVide`
+- ligne 2998 : `testRechercherTousParPageTailleSuperieureAuTotal`
+- ligne 3090 : `testRechercherTousParPagePageHorsBorne`
+- ligne 3165 : `testRechercherTousParPageTailleZero`
+- ligne 3273 : `testRechercherTousParPageNominal`
+- ligne 3392 : `testFindByObjetMetierNull`
+- ligne 3447 : `testFindByObjetMetierLibelleNull`
+- ligne 3558 : `testFindByObjetMetierLibelleBlank`
+- ligne 3669 : `testFindByObjetMetierParentNull`
+- ligne 3735 : `testFindByObjetMetierParentLibelleNull`
+- ligne 3833 : `testFindByObjetMetierParentLibelleBlank`
+- ligne 3932 : `testFindByObjetMetierParentIdNull`
+- ligne 4028 : `testFindByObjetMetierParentAbsent`
+- ligne 4136 : `testFindByObjetMetierNonTrouve`
+- ligne 4268 : `testFindByObjetMetierNominal`
+- ligne 4414 : `testFindByObjetMetierIdIgnoreCasseIgnoree`
+- ligne 4625 : `testFindByLibelleNull`
+- ligne 4682 : `testFindByLibelleBlank`
+- ligne 4738 : `testFindByLibelleNonTrouve`
+- ligne 4823 : `testFindByLibelleCaseInsensitive`
+- ligne 4959 : `testFindByLibelleNominal`
+- ligne 5085 : `testFindByLibelleRapideNull`
+- ligne 5144 : `testFindByLibelleRapideBlank`
+- ligne 5245 : `testFindByLibelleRapideNonTrouve`
+- ligne 5330 : `testFindByLibelleRapideCaseInsensitive`
+- ligne 5464 : `testFindByLibelleRapideDedoublonnage`
+- ligne 5576 : `testFindByLibelleRapideNominal`
+- ligne 5703 : `testFindAllByParentNull`
+- ligne 5760 : `testFindAllByParentParentLibelleNull`
+- ligne 5825 : `testFindAllByParentParentLibelleBlank`
+- ligne 5891 : `testFindAllByParentParentIdNull`
+- ligne 5971 : `testFindAllByParentParentAbsent`
+- ligne 6064 : `testFindAllByParentParentSansEnfant`
+- ligne 6206 : `testFindAllByParentNominal`
+- ligne 6366 : `testFindByIdNull`
+- ligne 6422 : `testFindByIdNonTrouve`
+- ligne 6501 : `testFindByIdNominal`
+- ligne 6611 : `testFindByIdIdCree`
+- ligne 6759 : `testUpdateNull`
+- ligne 6815 : `testUpdateLibelleNull`
+- ligne 6888 : `testUpdateLibelleBlank`
+- ligne 6962 : `testUpdateIdNull`
+- ligne 7039 : `testUpdateParentNull`
+- ligne 7112 : `testUpdateParentLibelleNull`
+- ligne 7197 : `testUpdateParentLibelleBlank`
+- ligne 7283 : `testUpdateParentIdNull`
+- ligne 7369 : `testUpdateParentAbsent`
+- ligne 7465 : `testUpdateAbsent`
+- ligne 7558 : `testUpdateSansModification`
+- ligne 7666 : `testUpdateNominal`
+- ligne 7820 : `testUpdateParentModifie`
+- ligne 7981 : `testDeleteNull`
+- ligne 8037 : `testDeleteIdNull`
+- ligne 8112 : `testDeleteAbsent`
+- ligne 8211 : `testDeleteNominal`
+- ligne 8374 : `testDeleteDoubleSuppression`
+- ligne 8567 : `testCountStockageVide`
+- ligne 8643 : `testCountNominal`
+- ligne 8726 : `testCountApresCreationPuisSuppression`
+#### `DirectionTriTest.java` — 3 tests
+- ligne 110 : `testValuesExposeAscPuisDesc`
+- ligne 132 : `testValueOfAscRetourneAsc`
+- ligne 154 : `testValueOfDescRetourneDesc`
+#### `RequetePageTest.java` — 7 tests
+- ligne 160 : `testConstructeurParDefaut`
+- ligne 191 : `testConstructeurAriteDeuxConserveValeursValides`
+- ligne 218 : `testConstructeurAriteTroisNormaliseValeursInvalidesEtNull`
+- ligne 248 : `testConstructeurCopieDefensivementLaListeDesTris`
+- ligne 276 : `testGetTrisRetourneUneCopieDefensive`
+- ligne 308 : `testSettersPageNormalisentLesValeursInvalides`
+- ligne 335 : `testSetTrisCopieDefensivementEtTolereNull`
+#### `ResultatPageTest.java` — 6 tests
+- ligne 233 : `testConstructeurNormaliseValeursInvalidesEtNull`
+- ligne 280 : `testConstructeurConserveValeursValidesEtCalculeMetadonnees`
+- ligne 327 : `testConstructeurCopieDefensivementLeContenu`
+- ligne 356 : `testGetContentRetourneUneCopieDefensive`
+- ligne 386 : `testFromSpringPageConvertitCorrectement`
+- ligne 437 : `testTotalPagesEstBorneAIntegerMaxValue`
+#### `TriSpecTest.java` — 7 tests
+- ligne 162 : `testConstructeurConserveValeursValides`
+- ligne 187 : `testConstructeurAppliqueDirectionParDefautSiNull`
+- ligne 213 : `testInverserDirectionInverseAscEnDesc`
+- ligne 243 : `testInverserDirectionInverseDescEnAsc`
+- ligne 273 : `testSetDirectionConserveValeurValide`
+- ligne 296 : `testSetDirectionNullAppliqueDirectionParDefaut`
+- ligne 319 : `testSetProprieteConserveValeurPuisAccepteNull`
+
+Règle de contrôle : après toute modification de contrat Gateway, l'IA doit reconfronter au minimum le nombre de tests, les noms de tests et le bloc fonctionnel correspondant. Un test absent du contrat est un manque d'autonomie.
+
+### 99.6) Formalisme général à préserver
+
+- Javadoc HTML avec `<div>`, `<p>`, listes `<ul>/<li>` lorsque le fichier validé les utilise.
+- Commentaires de bloc didactiques au-dessus des Arrange/Act/Assert dans les tests.
+- Commentaires de fin de méthode au format historique `// __________________________________________________________________` lorsque présents.
+- Vocabulaire obligatoire : `stockage`, jamais `base` ni `base de données`.
+- Dans les tests Gateway : bloc PORT par bloc PORT, exceptions/alternatives avant nominal, nominal en fin de bloc.
+- En intégration : preuve observable dans le stockage, sans recontrôler toutes les clauses techniques déjà prouvées en Mock.
+
+### 99.7) Anti-improvisation Gateway
+
+Si l'IA ne retrouve pas dans le contrat local une constante, un helper, une méthode privée, un commentaire critique, un cas de test ou une règle d'exception observée dans le code validé, elle doit enrichir le contrat ou déclarer la lecture incomplète. Elle ne doit jamais simplifier une méthode Gateway au motif qu'une version plus courte semblerait équivalente.
