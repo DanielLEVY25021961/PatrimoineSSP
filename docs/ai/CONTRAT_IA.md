@@ -848,6 +848,75 @@ Décision :
 - Si tous les contrôles sont OK, le zip peut devenir une source saine OFFLINE ou un candidat de consolidation selon la hiérarchie des sources.
 - Si un seul contrôle bloquant échoue, le zip est rejeté et aucune consolidation n’est autorisée.
 
+
+### 6.3 RT-MONTEE-MEMOIRE-REGLES-COURANTES-01 — Activation opérationnelle des règles après lecture du CONTRAT_IA.md
+
+#### Finalité
+
+La lecture de `CONTRAT_IA.md` ne doit jamais rester une simple preuve documentaire.
+
+Après chaque relecture de `CONTRAT_IA.md`, l’IA doit rendre immédiatement opérationnelles les règles applicables à l’action demandée. Elle doit donc monter en mémoire de travail la dernière version relue des règles, puis appliquer uniquement cette version courante.
+
+Cette règle interdit le comportement défaillant consistant à citer, lister ou résumer une règle sans l’avoir activée pour l’opération en cours.
+
+#### Règle absolue
+
+Avant toute analyse, audit, validation, synthèse, correction, génération de code, consolidation de baseline, installation de fenêtre ou livraison de fichier, l’IA doit obligatoirement :
+
+1. relire physiquement `CONTRAT_IA.md` ;
+2. identifier les règles applicables à l’opération demandée ;
+3. monter ces règles en mémoire de travail opérationnelle ;
+4. vérifier si une règle plus récente écrase une règle ancienne ;
+5. consolider les mémoires utiles en ignorant toute version obsolète ;
+6. déclarer dans le bloc `PREUVE DE LECTURE` les règles opérationnelles réellement appliquées ;
+7. refuser de conclure si les règles applicables n’ont pas été activées opérationnellement.
+
+#### Hiérarchie mémoire obligatoire
+
+En cas de contradiction, l’IA applique l’ordre suivant :
+
+1. dernière lecture physique contrôlée de `CONTRAT_IA.md` ;
+2. dernière lecture physique contrôlée du contrat de couche concerné ;
+3. baseline consolidée saine au SHA courant ;
+4. fenêtre active validée matériellement ;
+5. mémoire projet consolidée ;
+6. conversation courante ;
+7. souvenirs, raisonnements antérieurs ou inférences.
+
+Toute information plus ancienne, non relue ou contradictoire doit être considérée comme obsolète.
+
+#### Consolidation active des mémoires
+
+Après chaque correction utilisateur, relecture de contrat, changement de SHA, validation de fichier, réinstallation de fenêtre ou consolidation de baseline, l’IA doit neutraliser activement les états concurrents.
+
+Elle doit notamment écraser ou ignorer :
+
+- toute règle ancienne contredisant la dernière version relue ;
+- toute fenêtre déclarée valide sans invariant matériel ;
+- toute baseline déclarée saine sans comparaison physique ;
+- tout formalisme antérieur remplacé par une correction utilisateur ;
+- toute conclusion issue d’une lecture partielle ;
+- toute livraison antérieure non recontrôlée contre les règles courantes.
+
+La mémoire n’est pas une source de vérité autonome. Elle sert uniquement à rappeler les règles déjà validées, tant qu’elles restent compatibles avec la dernière lecture physique contrôlée.
+
+#### Interdictions absolues
+
+Il est strictement interdit de :
+
+- relire `CONTRAT_IA.md` sans activer les règles applicables ;
+- citer une règle sans l’appliquer ;
+- utiliser une mémoire ancienne contredisant une règle relue ;
+- déclarer une livraison conforme sans contrôle contre les règles courantes ;
+- conserver une ancienne fenêtre, baseline, Javadoc, structure, conclusion ou règle si une version plus récente l’a remplacée ;
+- s’appuyer sur une intention de conformité au lieu d’un contrôle réel de conformité.
+
+#### Conséquence obligatoire
+
+Si l’IA constate qu’elle a appliqué une règle obsolète, une mémoire ancienne ou une conclusion non conforme à la dernière lecture, elle doit interrompre l’opération, déclarer l’incident, consolider les mémoires, puis reprendre depuis la dernière version contrôlée.
+
+Une réponse qui prouve la lecture du contrat sans prouver l’activation des règles applicables est invalide.
+
 ---
 
 ## 7) Hiérarchie des ressources du dépôt
@@ -1096,6 +1165,64 @@ Cette règle est bloquante.
 Une violation de cette règle remet en cause la fiabilité de toute analyse, audit, correction, validation ou génération de code effectuée ensuite.
 
 En cas de doute, l’IA doit invalider la fenêtre active, refuser la consolidation et reconstruire proprement.
+
+
+### 8.2 RT-INVARIANT-MATERIEL-FENETRE-PERIMETRE-01 — Activation de fenêtre uniquement après résolution mécanique du périmètre
+
+#### Finalité
+
+Cette règle interdit à l’IA d’activer, valider ou déclarer utilisable une fenêtre d’analyse construite par sélection manuelle, intuition de dépendances, mémoire conversationnelle ou contrôle partiel de quelques fichiers clés.
+
+Une fenêtre d’analyse n’est valide que si son périmètre attendu a été résolu mécaniquement depuis `perimetre.yaml`, puis matérialisé et contrôlé physiquement dans le conteneur courant.
+
+#### Règle absolue
+
+Avant toute installation, réinstallation, activation ou validation d’une fenêtre, l’IA doit obligatoirement :
+
+1. relire `CONTRAT_IA.md` ;
+2. relire `perimetre.yaml` ;
+3. identifier le pack demandé ;
+4. résoudre mécaniquement le périmètre attendu du pack en appliquant :
+   - les `paths` explicites ;
+   - les `roots` ;
+   - les `include_globs` ;
+   - les `exclude_globs` ;
+   - les règles `allow_missing` ;
+5. produire la liste complète des fichiers attendus ;
+6. copier les fichiers uniquement depuis la baseline consolidée saine ;
+7. comparer :
+   - fichiers attendus vs fichiers présents en fenêtre ;
+   - baseline consolidée vs fenêtre ;
+   - SHA-256 du manifeste vs SHA-256 des fichiers réellement présents ;
+8. refuser l’activation si un fichier attendu est manquant, si un fichier extra n’est pas justifié, ou si un mismatch existe ;
+9. écrire ou mettre à jour `ACTIVE_WINDOW.txt` seulement après contrôle strict OK.
+
+#### Interdictions absolues
+
+Il est strictement interdit de :
+
+- construire une fenêtre par sélection manuelle de fichiers supposés utiles ;
+- considérer qu’un contrôle de fichiers clés suffit à valider la fenêtre ;
+- déclarer une fenêtre valide sans comparaison attendus vs présents ;
+- écrire `ACTIVE_WINDOW.txt` avant la fin des contrôles ;
+- utiliser une fenêtre dont le périmètre n’a pas été résolu depuis `perimetre.yaml` ;
+- réutiliser une ancienne fenêtre si son manifeste, ses fichiers réels et son périmètre attendu n’ont pas été recontrôlés.
+
+#### Conséquence obligatoire
+
+Si une étape échoue, la fenêtre est invalide.
+
+Dans ce cas, l’IA doit déclarer explicitement :
+
+> Fenêtre non activée. Le périmètre demandé n’a pas été matérialisé et contrôlé conformément à `perimetre.yaml`.
+
+Aucune analyse, validation, synthèse ou livraison ne doit ensuite s’appuyer sur cette fenêtre tant qu’elle n’a pas été reconstruite correctement.
+
+#### Neutralisation des états obsolètes
+
+Toute fenêtre précédemment déclarée valide mais construite par sélection manuelle ou contrôle partiel doit être considérée invalide.
+
+Un nom de fenêtre, une mémoire de fenêtre, un ancien manifeste ou quelques fichiers clés contrôlés ne prouvent jamais l’activation correcte du périmètre.
 
 ---
 
@@ -4207,6 +4334,34 @@ Cette règle s’applique à toutes les couches du projet : métier, DTO, persis
 
 Elle complète les règles locales de référence déjà présentes dans le contrat. Ces règles locales restent utiles lorsqu’elles décrivent une classe validée précise, une matrice de tests exacte ou un formalisme stabilisé. Mais elles ne dispensent jamais l’IA de détecter d’autres références homologues validées dans le reste du projet.
 
+
+### 34.9 Application obligatoire à `ProduitCuServiceMockTest.java` — Javadoc de tête homogène avec les références UC
+
+La correction utilisateur relative à `ProduitCuServiceMockTest.java` est prioritaire et durable.
+
+Avant toute nouvelle livraison, correction ou recodage de `ProduitCuServiceMockTest.java`, l’IA doit comparer explicitement la Javadoc de tête finale avec les Javadocs de tête relues de :
+
+1. `TypeProduitCuServiceMockTest.java` ;
+2. `SousTypeProduitCuServiceMockTest.java`.
+
+La Javadoc de tête de `ProduitCuServiceMockTest.java` ne doit pas être une synthèse condensée ni une Javadoc générique. Elle doit transposer intelligemment la structure validée de `SousTypeProduitCuServiceMockTest.java`, avec adaptation stricte au rôle métier de `Produit`.
+
+Elle doit notamment conserver :
+
+- plusieurs `<div>` distincts lorsque la référence validée les utilise ;
+- un paragraphe d’identification de la classe et de l’objet métier ;
+- un paragraphe sur le respect du PORT UC ;
+- une liste `<ul><li>` des contrôles ;
+- un paragraphe indiquant que les Gateways sont mockés et que les tests ne valident pas les adaptateurs de stockage ;
+- un paragraphe spécifique au parent métier `SousTypeProduit`, lui-même rattaché à `TypeProduit` ;
+- un paragraphe de formalisme attendu ;
+- le vocabulaire concret `objet métier`, `parent`, `SERVICE METIER UC`, `Gateway mocké` et `stockage` ;
+- le niveau de détail validé dans les références homologues.
+
+La phrase déclarative selon laquelle une classe « reprend le formalisme stabilisé » ne suffit jamais. L’homogénéité doit être prouvée par le contenu réel de la Javadoc livrée.
+
+L’IA ne doit pas livrer `ProduitCuServiceMockTest.java` comme conforme si la Javadoc de tête finale n’a pas été comparée point par point avec la Javadoc homologue relue.
+
 ---
 
 ## 35) RT-AUTONOMIE-METIER-RECODAGE-01 — Autonomie réelle sur la couche métier validée
@@ -4517,3 +4672,370 @@ Pour un bloc de test Mock UC, dès que la méthode de service contient une phase
 La règle s'applique sauf justification contractuelle explicite d'impossibilité ou de non-pertinence.
 
 Le formalisme doit s'inspirer des cas validés de `TypeProduitCuServiceMockTest.java`, sans ajouter de stubbing décoratif ou non consommé.
+
+## 37) RT-PRODUIT-CU-MOCK-METHODE-PAR-METHODE-01 — Règles issues de l'audit méthode par méthode de `ProduitCuServiceMockTest`
+
+### 37.1 Objet
+
+Cette section sacralise les règles détectées pendant la reprise méthode par méthode de `ProduitCuServiceMockTest.java`.
+
+Elle complète les règles générales UC, les références `TypeProduitCuServiceMockTest.java` et `SousTypeProduitCuServiceMockTest.java`, ainsi que la règle de non-réinvention des références validées.
+
+Elle est prioritaire pour toute correction, génération, validation ou consolidation portant sur une méthode de `ProduitCuServiceMockTest.java` ou sur une classe homologue de tests Mock UC.
+
+Objectif : empêcher l'IA de produire une classe fonctionnellement plausible mais formellement non conforme, de générer des Javadocs gabarits, de renommer des formulations validées, de modifier des constantes hors périmètre ou de corriger davantage que ce qui a été demandé.
+
+### 37.2 Travail strictement méthode par méthode
+
+Pour `ProduitCuServiceMockTest.java`, l'IA doit travailler méthode par méthode lorsque l'Utilisateur le demande.
+
+Règles obligatoires :
+
+1. attendre l'instruction explicite de l'Utilisateur sur la méthode ou le bloc cible ;
+2. relire `CONTRAT_IA.md` et monter les règles applicables en mémoire de travail ;
+3. relire la méthode cible dans `ProduitCuServiceMockTest.java` ;
+4. relire la méthode homologue validée dans `SousTypeProduitCuServiceMockTest.java` ;
+5. relire `TypeProduitCuServiceMockTest.java` si la méthode ou le formalisme nécessite une seconde référence ;
+6. relire le PORT UC et l'ADAPTER UC réel si le comportement testé ou l'ordre des appels n'est pas directement déductible de la méthode homologue ;
+7. livrer uniquement la méthode demandée ou le bloc explicitement demandé ;
+8. ne jamais régénérer la classe complète sans demande explicite de fichier complet.
+
+Si une dépendance utile ou une méthode homologue n'a pas été relue, l'IA doit déclarer la lecture incomplète et s'arrêter avant toute livraison.
+
+### 37.3 Faire strictement ce qui est demandé, pas plus
+
+Lorsque l'Utilisateur demande de coder ou corriger une méthode précise, l'IA doit respecter strictement le périmètre demandé.
+
+Interdictions absolues :
+
+- ne jamais modifier une constante ;
+- ne jamais modifier un identifiant Java ;
+- ne jamais modifier un `DISPLAY_NAME` ;
+- ne jamais modifier un tag ;
+- ne jamais modifier une signature ;
+- ne jamais modifier un helper ;
+- ne jamais modifier une section hors méthode ;
+- ne jamais modifier une formulation validée extérieure à la méthode cible ;
+- ne jamais corriger un autre test non demandé ;
+- ne jamais transformer une correction de méthode en refonte de fichier.
+
+Exceptions admises uniquement :
+
+1. demande explicite de l'Utilisateur ;
+2. nécessité technique bloquante démontrée avant livraison et acceptée dans le périmètre de correction.
+
+Règle courte : l'IA doit faire exactement ce qui est demandé, correctement, complètement et contrôlé, mais pas plus.
+
+### 37.4 Ne jamais confondre adaptation et renommage
+
+Lorsqu'une Javadoc, un commentaire, un libellé de scénario ou une formulation métier provient d'une référence validée, l'IA doit la reprendre strictement.
+
+L'adaptation autorisée se limite aux éléments qui changent objectivement :
+
+- classe cible ;
+- PORT UC ;
+- constantes contractuelles ;
+- objet métier ;
+- parent ;
+- Gateway concerné ;
+- types Java ;
+- appels réels ;
+- messages contractuels réellement différents.
+
+Tout le reste doit être conservé.
+
+Exemple normatif : si la référence validée écrit `contrôle de doublon KO avec message`, l'IA ne doit pas remplacer cette formulation par `contrôle technique KO avec message`, sauf demande explicite de l'Utilisateur.
+
+Une formulation plus vague, même si elle semble cohérente avec un `DISPLAY_NAME` existant, ne doit pas remplacer une formulation validée plus claire.
+
+### 37.5 Vocabulaire générique obligatoire dans les Javadocs transposables
+
+Dans les Javadocs de tests UC Mockito transposables entre `TypeProduit`, `SousTypeProduit` et `Produit`, l'IA doit privilégier les rôles métier génériques clairs lorsque le contexte de la classe rend les classes concrètes évidentes.
+
+Pour `ProduitCuServiceMockTest.java` :
+
+- écrire `objet métier` pour `Produit` ;
+- écrire `parent` pour `SousTypeProduit` ;
+- écrire `Gateway objet métier` pour `ProduitGatewayIService` ;
+- écrire `Gateway parent` pour `SousTypeProduitGatewayIService`.
+
+L'IA ne doit pas alourdir inutilement chaque Javadoc en répétant `Produit` et `SousTypeProduit` lorsque le contexte de la classe suffit.
+
+Cette règle ne supprime pas les liens Javadoc utiles dans la Javadoc de tête ou dans les zones où une ambiguïté réelle existe. Elle impose seulement de privilégier les rôles métier dans les Javadocs de méthodes lorsque la classe cible est évidente.
+
+### 37.6 Javadocs de méthodes : garanties exactes, jamais gabarits
+
+Une Javadoc de méthode de test doit énumérer les garanties exactes et observables du test.
+
+Forme attendue :
+
+```java
+/**
+ * <div>
+ * <p>garantit que methode(scénario) :</p>
+ * <ul>
+ * <li>garantie observable 1 ;</li>
+ * <li>garantie observable 2 ;</li>
+ * <li>garantie observable 3.</li>
+ * </ul>
+ * </div>
+ *
+ * @throws Exception
+ */
+```
+
+La Javadoc doit citer, selon le scénario :
+
+- le retour attendu ;
+- l'exception exacte jetée ;
+- le message utilisateur exact du PORT UC ;
+- l'appel Gateway attendu ;
+- l'absence d'appel Gateway ;
+- la propagation exacte d'une exception ;
+- la rationalisation exacte du message observable ;
+- l'absence de création, modification, suppression ou recherche lorsque le scénario l'impose.
+
+Interdictions absolues dans les Javadocs de méthodes :
+
+- `exécute le scénario` ;
+- `contrôle le retour, l'exception ou l'état observable attendu` ;
+- `lorsque le scénario en produit un` ;
+- `vérifie les interactions attendues ou interdites` sans dire lesquelles ;
+- toute phrase gabarit valable pour n'importe quel test ;
+- toute formule qui mélange exception et message dans un slogan au lieu d'énumérer les garanties.
+
+La présence de `<div>`, `<ul>` et `<li>` ne suffit pas. Le contenu des puces doit être spécifique au scénario testé.
+
+### 37.7 Commentaires internes : spécifiques au scénario et alignés avec le code
+
+Les commentaires internes doivent décrire exactement le bloc de code immédiatement situé dessous.
+
+Pour un scénario de validation locale, l'`ARRANGE` doit expliciter :
+
+- la donnée invalide préparée ;
+- le point de blocage attendu dans le SERVICE METIER UC ;
+- l'absence de délégation aux Gateways lorsque c'est le comportement testé.
+
+Exemple de forme attendue :
+
+```java
+/* ARRANGE :
+ * prépare un DTO dont le libellé de l'objet métier est blank.
+ *
+ * Ce cas doit être bloqué par le SERVICE METIER UC
+ * avant toute délégation aux Gateways.
+ */
+```
+
+Le bloc standard de création des Gateways et du service doit rester explicite dans les méthodes corrigées méthode par méthode lorsque la référence homologue instancie explicitement les collaborateurs :
+
+```java
+/* ARRANGE :
+ * Mocke les services Gateway et les passe
+ * à un service UC instancié dans le test.
+ */
+```
+
+Les commentaires `ACT`, `ACT - ASSERT` et `ASSERT` doivent citer l'appel exact testé et les garanties exactes du bloc.
+
+Interdictions :
+
+- commentaires décoratifs ;
+- commentaires génériques non liés au code immédiatement dessous ;
+- commentaire annonçant un scénario que le code ne prépare pas ;
+- commentaire annonçant un Gateway ou une interaction qui n'est pas réellement utilisée ;
+- remplacement d'un commentaire validé par une formulation abstraite.
+
+### 37.8 Instanciation explicite dans les tests corrigés méthode par méthode
+
+Lorsqu'une méthode homologue validée instancie explicitement ses Gateways mockés et le SERVICE METIER UC, la méthode corrigée dans `ProduitCuServiceMockTest.java` doit faire de même.
+
+L'IA ne doit pas masquer la structure du test derrière un helper local lorsque le formalisme validé montre explicitement :
+
+- le Gateway objet métier mocké ;
+- le Gateway parent mocké ;
+- le SERVICE METIER UC instancié dans le test.
+
+Interdictions :
+
+- créer ou conserver un helper `Scenario` si la référence validée ne l'utilise pas ;
+- cacher l'instanciation des collaborateurs derrière un mini-framework local ;
+- remplacer la preuve visible par une abstraction qui rend le test moins lisible.
+
+Une exception n'est possible que si l'Utilisateur demande explicitement un refactoring de helpers ou si la classe validée de référence utilise déjà ce helper comme formalisme stabilisé.
+
+### 37.9 Cas de validation locale avant Gateway : preuve obligatoire
+
+Pour tout scénario où le SERVICE METIER UC bloque localement avant délégation Gateway, le test doit prouver explicitement :
+
+1. la donnée invalide préparée ;
+2. le retour ou l'exception exacte ;
+3. le message utilisateur exact du PORT UC ;
+4. le message observable via `service.getMessage()` lorsque le service le positionne ;
+5. l'absence d'interaction avec le Gateway objet métier ;
+6. l'absence d'interaction avec le Gateway parent.
+
+Exemples concernés :
+
+- `creer(null)` ;
+- `creer(libellé blank)` ;
+- `creer(libellé parent blank)` ;
+- paramètres `null` ;
+- paramètres `blank` ;
+- DTO invalides ;
+- parent localement invalide.
+
+La preuve Mockito doit utiliser `verifyNoInteractions(...)` sur les Gateways concernés lorsque le scénario impose l'absence totale de délégation.
+
+### 37.10 Méthode homologue de référence : reprise stricte et comparaison obligatoire
+
+Avant de livrer une méthode corrigée de `ProduitCuServiceMockTest.java`, l'IA doit comparer la méthode cible avec la méthode homologue validée.
+
+La comparaison doit porter au minimum sur :
+
+- le titre de la Javadoc ;
+- les puces de garanties ;
+- les termes métier ;
+- les commentaires `ARRANGE` ;
+- les commentaires `Configuration du Mock` ;
+- les commentaires `ACT`, `ACT - ASSERT` et `ASSERT` ;
+- l'ordre des données préparées ;
+- l'ordre des stubbings ;
+- les assertions ;
+- les interactions Mockito ;
+- le trait final `} // __________________________________________________________________` ;
+- les lignes vides entre tests lorsque le bloc livré inclut plusieurs tests.
+
+L'IA doit identifier uniquement ce qui change objectivement entre la référence et `ProduitCuServiceMockTest.java`, puis conserver tout le reste.
+
+Si la comparaison n'a pas été faite, la livraison est invalide.
+
+### 37.11 Effet normatif des corrections utilisateur et des tests verts
+
+Lorsqu'une correction utilisateur est relue et que l'Utilisateur indique `test vert ok`, la méthode corrigée devient une référence locale pour les scénarios analogues.
+
+L'IA doit mémoriser :
+
+- la Javadoc validée ;
+- les commentaires internes validés ;
+- l'ordre du test ;
+- les assertions ;
+- les interactions Mockito ;
+- le vocabulaire choisi par l'Utilisateur ;
+- les différences avec les anciennes livraisons rejetées.
+
+Les anciennes versions de la même méthode doivent être considérées obsolètes, notamment si elles contenaient :
+
+- un helper `Scenario` non validé ;
+- une Javadoc gabarit ;
+- des commentaires génériques ;
+- une formulation renommée sans demande ;
+- une modification hors périmètre.
+
+### 37.12 Règles locales validées par les premières méthodes corrigées
+
+Les corrections validées de `testCreerNull()`, `testCreerBlank()` et `testCreerParentBlank()` fixent les règles locales suivantes pour les scénarios analogues :
+
+- `testCreerNull()` : Javadoc avec garanties exactes, retour `null`, message `MESSAGE_CREER_NULL`, aucune interaction Gateway ;
+- `testCreerBlank()` : exception `ExceptionParametreBlank`, message `MESSAGE_CREER_NOM_BLANK`, blocage local avant délégation ;
+- `testCreerParentBlank()` : contrôle local du libellé parent, exception `IllegalStateException`, message `MESSAGE_PAS_PARENT`, aucune interaction Gateway.
+
+Ces méthodes servent de référence immédiate pour :
+
+- validations locales ;
+- paramètres invalides ;
+- libellés blank ;
+- parents localement invalides ;
+- absence de délégation Gateway ;
+- distinction entre message d'exception et message observable `getMessage()`.
+
+### 37.13 Application à `testCreerControleTechniqueKoAvecMessage()`
+
+Pour `testCreerControleTechniqueKoAvecMessage()`, la méthode homologue validée impose de conserver la formulation de Javadoc :
+
+```text
+contrôle de doublon KO avec message
+```
+
+Cette formulation décrit mieux le scénario qu'une formulation vague du type `contrôle technique KO avec message`.
+
+La correction de la méthode doit donc porter sur la Javadoc et les commentaires internes de la méthode, en conservant la formulation validée lorsque le scénario est identique.
+
+En revanche, si l'Utilisateur n'a pas demandé de modifier la constante `DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_AVEC_MESSAGE`, l'IA n'a pas le droit de la modifier.
+
+La Javadoc d'une méthode et la constante `DISPLAY_NAME_*` sont deux zones différentes. Une correction demandée sur la méthode ne donne pas automatiquement le droit de modifier la constante déclarée en haut de classe.
+
+### 37.14 Respect strict du périmètre de livraison
+
+Avant toute livraison, l'IA doit déterminer le périmètre exact demandé :
+
+- méthode unique ;
+- bloc de méthodes ;
+- constantes ;
+- helpers ;
+- fichier complet.
+
+L'IA doit ensuite livrer uniquement ce périmètre.
+
+Exemples :
+
+- si l'Utilisateur demande `coder testCreerParentBlank()`, livrer uniquement la méthode complète `testCreerParentBlank()` ;
+- si l'Utilisateur demande `coder testCreerControleTechniqueKoAvecMessage()`, ne pas modifier la constante `DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_AVEC_MESSAGE` ;
+- si l'Utilisateur demande une règle à intégrer dans `CONTRAT_IA.md`, livrer le fichier complet fragile `CONTRAT_IA.md`, pas un patch ;
+- si l'Utilisateur demande une méthode Java, livrer la méthode dans le chat, pas un lien de téléchargement.
+
+### 37.15 Auto-contrôle obligatoire avant livraison méthode par méthode
+
+Avant de livrer une méthode Java corrigée, l'IA doit contrôler explicitement :
+
+1. la méthode cible est complète ;
+2. la signature et les annotations sont inchangées sauf demande explicite ;
+3. aucune constante hors méthode n'a été modifiée ;
+4. aucun `DISPLAY_NAME` n'a été modifié ;
+5. aucun tag n'a été modifié ;
+6. aucun helper n'a été modifié ;
+7. aucune formulation validée n'a été renommée ;
+8. la Javadoc énumère les garanties exactes ;
+9. aucun gabarit interdit n'est présent ;
+10. les commentaires décrivent le code immédiatement dessous ;
+11. les stubbings Mockito sont consommés par le scénario ;
+12. les interactions attendues et interdites sont prouvées ;
+13. l'espacement inter-tests de 3 lignes est respecté si plusieurs tests sont livrés ;
+14. le bloc final est directement copiable dans STS.
+
+Si un seul point n'est pas contrôlé, l'IA doit suspendre la livraison.
+
+### 37.16 Réponse obligatoire en cas de tentation de surcorrection
+
+Si l'IA estime qu'une amélioration hors périmètre serait utile, elle ne doit pas l'appliquer.
+
+Elle doit seulement signaler, séparément du code livré :
+
+```text
+Amélioration hors périmètre détectée : <description>.
+Non appliquée car non demandée.
+```
+
+L'IA ne doit jamais transformer cette amélioration en correction livrée.
+
+### 37.17 Synthèse courte opposable
+
+Pour `ProduitCuServiceMockTest.java`, les règles opérationnelles sont :
+
+```text
+Référence validée d'abord.
+Méthode homologue relue ligne à ligne.
+Pas de gabarit.
+Pas de renommage.
+Pas de modification hors périmètre.
+Pas de constante modifiée sans demande.
+Rôles génériques objet métier / parent.
+Garanties exactes en Javadoc.
+Commentaires spécifiques au scénario.
+Stubbings strictement consommés.
+Preuve Mockito explicite.
+Auto-contrôle avant livraison.
+```
+
+Une livraison qui viole l'un de ces points doit être rejetée avant d'être remise à l'Utilisateur.
+

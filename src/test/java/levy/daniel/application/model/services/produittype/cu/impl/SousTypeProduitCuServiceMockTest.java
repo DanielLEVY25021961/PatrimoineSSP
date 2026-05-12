@@ -1456,8 +1456,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>jette une {@link ExceptionParametreBlank} ;</li>
 	 * <li>émet le message
 	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NOM_BLANK} ;</li>
-	 * <li>n'interagit ni avec le Gateway SousTypeProduit
-	 * ni avec le Gateway TypeProduit.</li>
+	 * <li>n'interagit ni avec le Gateway objet métier
+	 * ni avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 */
