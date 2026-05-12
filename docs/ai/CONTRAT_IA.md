@@ -1739,7 +1739,80 @@ Deux gestes d’intégration sont autorisés :
 1. copier-coller directement une méthode Java ou un bloc de méthodes Java dans la classe cible ;
 2. remplacer intégralement un fichier complet lorsque le fichier est gros, fragile ou difficile à corriger partiellement.
 
-L’IA doit donc choisir le support de livraison selon la nature réelle de la correction, et non par confort de génération.
+L’IA ne choisit jamais librement sa stratégie de livraison. Elle doit appliquer strictement les règles ci-dessous selon l’unité réellement demandée par l’Utilisateur et selon le geste d’intégration attendu dans STS.
+
+### 22.0) RT-LIVRAISON-STRATEGIE-CONTRACTUELLE-01 — Stratégie de livraison imposée par le contrat
+
+Cette règle est intangible et anti-improvisation.
+
+L’IA n’a pas à improviser, à arbitrer par confort, ni à changer de stratégie de livraison en cours de workflow. Elle doit appliquer strictement le support prévu par le présent contrat.
+
+La stratégie dépend uniquement de l’unité réellement demandée et du geste d’intégration attendu par l’Utilisateur dans STS.
+
+#### Cas 1 — Quelques méthodes, quelques blocs ou un bloc de test à corriger
+
+Lorsque l’Utilisateur demande de corriger, coder ou remplacer :
+- une méthode Java ;
+- quelques méthodes Java ;
+- un bloc de méthodes ;
+- un bloc de tests JUnit/Mockito ;
+- des helpers destinés à être copiés dans une classe existante ;
+- une portion autonome destinée à être insérée dans une classe Java existante ;
+
+l’IA doit livrer le code **directement dans le chat**, sous forme de blocs de code séparés, complets, autonomes et copiables dans STS.
+
+Dans ce cas :
+- l’Utilisateur copie-colle les blocs dans STS ;
+- chaque bloc livré doit être complet ;
+- chaque méthode livrée doit être entière ;
+- la livraison ne doit contenir aucun extrait à reconstituer ;
+- aucun lien de téléchargement ne peut remplacer la livraison principale.
+
+#### Cas 2 — Volume trop important pour un seul tour de chat
+
+Lorsque le nombre de méthodes ou de blocs à livrer est trop important pour un seul tour :
+- l’IA continue la livraison en plusieurs tours ;
+- chaque tour contient des blocs de code autonomes directement copiables dans STS ;
+- l’IA conserve l’ordre logique des blocs ;
+- l’IA ne transforme jamais cette situation en livraison par lien de fragments isolés.
+
+La contrainte de volume autorise seulement une livraison progressive dans le chat. Elle n’autorise pas un fichier externe contenant quelques méthodes impossibles à replacer proprement dans STS.
+
+#### Cas 3 — Quasi-totalité d’un gros fichier à corriger
+
+Lorsque la quasi-totalité d’un gros fichier doit être corrigée, ou lorsque l’Utilisateur demande explicitement un fichier complet destiné à remplacer l’ancien fichier, l’IA peut livrer le **fichier complet**.
+
+Dans ce cas :
+- le geste d’intégration change ;
+- l’Utilisateur remplace totalement l’ancien fichier dans l’explorateur Windows ou dans STS ;
+- un lien de téléchargement est autorisé si le fichier complet est trop gros ou trop fragile pour être livré proprement dans le chat ;
+- le lien doit pointer vers un fichier complet, jamais vers quelques méthodes ou fragments.
+
+#### Interdictions absolues
+
+L’IA ne doit jamais :
+- livrer quelques méthodes par lien de téléchargement ;
+- livrer quelques blocs de test par lien de téléchargement ;
+- livrer un fichier externe contenant des fragments que l’Utilisateur devrait replacer manuellement ;
+- transformer une demande de méthodes complètes en fichier téléchargeable ;
+- remplacer une livraison attendue dans le chat par un lien ;
+- changer de stratégie de livraison sans fondement explicite dans le présent contrat ;
+- prétendre qu’un lien de téléchargement est intégrable dans STS lorsque le fichier livré ne représente pas un fichier complet à remplacer intégralement.
+
+#### Contrôle obligatoire avant toute livraison
+
+Avant de livrer, l’IA doit répondre implicitement aux questions suivantes :
+
+1. L’Utilisateur doit-il copier-coller quelques méthodes ou blocs dans STS ?
+   - Si oui : livraison dans le chat obligatoire.
+2. L’Utilisateur doit-il remplacer intégralement un fichier complet ?
+   - Si oui : fichier complet, lien autorisé si le fichier est gros ou fragile.
+3. Le contenu livré par lien est-il un fichier complet remplaçant totalement l’ancien fichier ?
+   - Si non : lien interdit.
+4. Le contenu livré dans le chat est-il complet, autonome et copiable ?
+   - Si non : livraison non conforme.
+
+Si l’IA constate que la stratégie choisie ne correspond pas exactement au geste d’intégration attendu, elle doit corriger sa livraison avant de répondre.
 
 ### 22.1) RT-LIVRAISON-CODE-METHODE-BLOC-CHAT-01 — Méthodes et blocs de méthodes Java
 
@@ -1751,7 +1824,7 @@ Lorsqu’une correction porte sur :
 - un bloc de helpers Java ;
 - une portion autonome destinée à être copiée dans une classe Java existante ;
 
-l’IA doit livrer le code **directement dans le chat**, dans un bloc de code copiable et intégrable dans STS.
+l’IA doit livrer le code **directement dans le chat**, dans un bloc de code copiable et intégrable dans STS. Cette règle s’applique même si plusieurs méthodes sont concernées : l’IA doit livrer des méthodes entières, des blocs complets et, si nécessaire, poursuivre en plusieurs tours.
 
 Forme obligatoire :
 - annoncer le chemin STS exact de la classe cible ;
@@ -1870,6 +1943,7 @@ Avant toute livraison de code, l’IA doit déterminer l’unité réelle demand
 | une classe Java complète demandée comme fichier complet | fichier complet, chat ou lien selon volumétrie |
 | un fichier `.md`, `.yaml`, `.yml` ou `.py` complet et fragile | fichier complet, lien autorisé si gros ou fragile |
 | un contrat IA ou contrat local complet | fichier complet, lien autorisé si gros ou fragile |
+| quelques méthodes ou blocs regroupés dans un fichier externe | interdit comme support principal |
 
 Règle courte :
 
@@ -1879,7 +1953,7 @@ Règle courte :
 
 ### 22.4) Règle anti-récidive
 
-L’IA ne doit plus jamais utiliser un lien de téléchargement pour remplacer la livraison principale d’une méthode ou d’un bloc de méthodes.
+L’IA ne doit plus jamais utiliser un lien de téléchargement pour remplacer la livraison principale d’une méthode ou d’un bloc de méthodes. Cette interdiction couvre explicitement les fichiers `.txt`, `.java` ou assimilés contenant seulement quelques méthodes à replacer manuellement dans une classe existante.
 
 Si l’Utilisateur demande `coder` pour une méthode ou un bloc de méthodes, la réponse attendue est un bloc de code dans le chat.
 
@@ -1888,6 +1962,12 @@ Si l’Utilisateur demande `coder` pour un fichier complet fragile, ou s’il pr
 Cette règle est prioritaire sur les habitudes de livraison antérieures.
 
 Pour les fichiers fragiles, la règle `RT-LIVRAISON-FICHIERS-FRAGILES-INDIVIDUELLE-STS-01` ajoute un verrou non négociable : un fichier complet individuel par fichier corrigé, jamais un ZIP global comme livraison nominale.
+
+Résumé anti-récidive :
+- quelques méthodes à insérer dans STS = chat obligatoire ;
+- trop de méthodes pour un tour = plusieurs tours dans le chat ;
+- fichier complet à remplacer intégralement = lien autorisé si nécessaire ;
+- lien vers fragments ou méthodes isolées = interdit.
 
 ### 22.5) RT-LIVRAISON-AUTO-CONTROLE-LIGNE-A-LIGNE-01 — Qualité des livraisons IA
 

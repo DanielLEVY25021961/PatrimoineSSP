@@ -198,42 +198,13 @@ public class SousTypeProduitCuServiceMockTest {
 	 */
 	public static final String NULL_MESSAGE_RECHERCHE_VIDE
 			= "null + MESSAGE_RECHERCHE_VIDE";
-
+	
 	/**
-	 * "IT_FIND_BY_DTO_PARENT"
+	 * "ExceptionParametreBlank + MESSAGE_PARAM_BLANK"
 	 */
-	public static final String DN_FIND_BY_DTO_PARENT
-			= "IT_FIND_BY_DTO_PARENT";
+	public static final String EXCEPTION_PARAM_BLANK_MESSAGE 
+		= "ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
 
-	/**
-	 * "IT_FIND_BY_DTO_ENFANT"
-	 */
-	public static final String DN_FIND_BY_DTO_ENFANT
-			= "IT_FIND_BY_DTO_ENFANT";
-
-	/**
-	 * "IT_FIND_BY_DTO_AUTRE"
-	 */
-	public static final String DN_FIND_BY_DTO_AUTRE
-			= "IT_FIND_BY_DTO_AUTRE";
-
-	/**
-	 * 1L
-	 */
-	public static final Long DN_FIND_BY_DTO_ID_PARENT = 1L;
-
-	/**
-	 * 2L
-	 */
-	public static final Long DN_FIND_BY_DTO_ID_AUTRE = 2L;
-
-	/**
-	 * 3L
-	 */
-	public static final Long DN_FIND_BY_DTO_ID_CIBLE = 3L;
-
-	/** Tag JUnit : tests Mockito de la couche CU. */
-	public static final String TAG = "cu-mock";
 
 	/**
 	 * "creer"
@@ -277,6 +248,31 @@ public class SousTypeProduitCuServiceMockTest {
 	 * "findByDTO"
 	 */
 	public static final String TAG_FIND_BY_DTO = "findByDTO";
+	
+	/**
+	 * "findById"
+	 */
+	public static final String TAG_FIND_BY_ID = "findById";
+	
+	/**
+	 * "update"
+	 */
+	public static final String TAG_UPDATE = "update";
+	
+	/**
+	 * "delete"
+	 */
+	public static final String TAG_DELETE = "delete";
+	
+	/**
+	 * "count"
+	 */
+	public static final String TAG_COUNT = "count";
+	
+	/**
+	 * "getMessage"
+	 */
+	public static final String TAG_GET_MESSAGE = "getMessage";
 
 	/**
 	 * "creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway"
@@ -293,11 +289,12 @@ public class SousTypeProduitCuServiceMockTest {
 					+ "+ MESSAGE_CREER_NOM_BLANK";
 	
 	/**
-	 * "creer(parent blank) : IllegalStateException + MESSAGE_PAS_PARENT"
+	 * "creer(libellé parent blank) :
+	 * IllegalStateException + MESSAGE_PAS_PARENT"
 	 */
 	public static final String DISPLAY_NAME_CREER_PARENT_BLANK
-			= "creer(parent blank) : IllegalStateException "
-					+ "+ MESSAGE_PAS_PARENT";
+			= "creer(libellé parent blank) : "
+					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
 	
 	/**
 	 * "creer(contrôle doublon KO avec message) :
@@ -738,11 +735,11 @@ public class SousTypeProduitCuServiceMockTest {
 					+ "IllegalStateException + RECHERCHE_TYPEPRODUIT_NULL";
 	
 	/**
-	 * "findAllByParent(parent blank) :
+	 * "findAllByParent(libellé parent blank) :
 	 * IllegalStateException + MESSAGE_PAS_PARENT"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK
-			= "findAllByParent(parent blank) : "
+			= "findAllByParent(libellé parent blank) : "
 					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
 	
 	/**
@@ -842,11 +839,11 @@ public class SousTypeProduitCuServiceMockTest {
 					+ "null + MESSAGE_RECHERCHE_OBJ_NULL";
 	
 	/**
-	 * "findByDTO(parent blank) :
+	 * "findByDTO(libellé parent blank) :
 	 * IllegalStateException + MESSAGE_PAS_PARENT"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_DTO_PARENT_BLANK
-			= "findByDTO(parent blank) : "
+			= "findByDTO(libellé parent blank) : "
 					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
 	
 	/**
@@ -953,6 +950,430 @@ public class SousTypeProduitCuServiceMockTest {
 			= "findByDTO(nominal) : "
 					+ "OutputDTO + MESSAGE_SUCCES_RECHERCHE";
 	
+	/**
+	 * "findById(null) :
+	 * null + MESSAGE_PARAM_NULL"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_ID_NULL
+			= "findById(null) : "
+					+ "null + MESSAGE_PARAM_NULL";
+	
+	/**
+	 * "findById(introuvable) :
+	 * null + MESSAGE_OBJ_INTROUVABLE + id"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_ID_INTROUVABLE
+			= "findById(introuvable) : "
+					+ "null + MESSAGE_OBJ_INTROUVABLE + id";
+	
+	/**
+	 * "findById(gateway KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_ID_GATEWAY_KO_AVEC_MESSAGE
+			= "findById(gateway KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "findById(gateway KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_ID_GATEWAY_KO_SANS_MESSAGE
+			= "findById(gateway KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "findById(conversion OutputDTO KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
+			= "findById(conversion OutputDTO KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "findById(conversion OutputDTO KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
+			= "findById(conversion OutputDTO KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "findById(nominal) :
+	 * OutputDTO + MESSAGE_SUCCES_RECHERCHE"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_ID_NOMINAL
+			= "findById(nominal) : "
+					+ "OutputDTO + MESSAGE_SUCCES_RECHERCHE";
+	
+	/**
+	 * "update(null) :
+	 * ExceptionParametreNull + MESSAGE_PARAM_NULL"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_NULL
+			= "update(null) : "
+					+ "ExceptionParametreNull + MESSAGE_PARAM_NULL";
+	
+	/**
+	 * "update(libellé null) :
+	 * ExceptionParametreBlank + MESSAGE_PARAM_BLANK"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_LIBELLE_NULL
+			= "update(libellé null) : "
+					+ EXCEPTION_PARAM_BLANK_MESSAGE;
+	
+	/**
+	 * "update(blank) :
+	 * ExceptionParametreBlank + MESSAGE_PARAM_BLANK"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_BLANK
+			= "update(blank) : "
+					+ EXCEPTION_PARAM_BLANK_MESSAGE;
+	
+	/**
+	 * "update(libellé parent blank) :
+	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_BLANK
+			= "update(libellé parent blank) : "
+					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+	
+	/**
+	 * "update(parent gateway KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_GATEWAY_KO_AVEC_MESSAGE
+			= "update(parent gateway KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "update(parent gateway KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_GATEWAY_KO_SANS_MESSAGE
+			= "update(parent gateway KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "update(parent absent) :
+	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_ABSENT
+			= "update(parent absent) : "
+					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+	
+	/**
+	 * "update(parent non persistant) :
+	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_NON_PERSISTANT
+			= "update(parent non persistant) : "
+					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+	
+	/**
+	 * "update(enfants gateway KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_ENFANTS_GATEWAY_KO_AVEC_MESSAGE
+			= "update(enfants gateway KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "update(enfants gateway KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_ENFANTS_GATEWAY_KO_SANS_MESSAGE
+			= "update(enfants gateway KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "update(gateway enfants retourne null) :
+	 * ExceptionStockageVide + MESSAGE_STOCKAGE_NULL"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION
+			= "update(gateway enfants retourne null) : "
+					+ EXCEPTION_STOCKAGE_VIDE_MESSAGE;
+	
+	/**
+	 * "update(introuvable) :
+	 * null + MESSAGE_OBJ_INTROUVABLE"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_INTROUVABLE
+			= "update(introuvable) : "
+					+ "null + MESSAGE_OBJ_INTROUVABLE";
+	
+	/**
+	 * "update(non persistant) :
+	 * ExceptionNonPersistant + MESSAGE_OBJ_NON_PERSISTE"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_NON_PERSISTANT
+			= "update(non persistant) : "
+					+ "ExceptionNonPersistant + MESSAGE_OBJ_NON_PERSISTE";
+	
+	/**
+	 * "update(modification KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_KO_AVEC_MESSAGE
+			= "update(modification KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "update(modification KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_KO_SANS_MESSAGE
+			= "update(modification KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "update(gateway.update retourne null) :
+	 * null + MESSAGE_MODIF_KO"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NULL
+			= "update(gateway.update retourne null) : "
+					+ "null + MESSAGE_MODIF_KO";
+	
+	/**
+	 * "update(gateway.update retourne non persistant) :
+	 * IllegalStateException + MESSAGE_OBJ_NON_PERSISTE"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NON_PERSISTANT
+			= "update(gateway.update retourne non persistant) : "
+					+ "IllegalStateException + MESSAGE_OBJ_NON_PERSISTE";
+	
+	/**
+	 * "update(conversion OutputDTO KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
+			= "update(conversion OutputDTO KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "update(conversion OutputDTO KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
+			= "update(conversion OutputDTO KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "update(nominal) :
+	 * OutputDTO + MESSAGE_MODIF_OK"
+	 */
+	public static final String DISPLAY_NAME_UPDATE_NOMINAL
+			= "update(nominal) : "
+					+ "OutputDTO + MESSAGE_MODIF_OK";
+	
+	/**
+	 * "delete(null) :
+	 * ExceptionParametreNull + MESSAGE_PARAM_NULL"
+	 */
+	public static final String DISPLAY_NAME_DELETE_NULL
+			= "delete(null) : "
+					+ "ExceptionParametreNull + MESSAGE_PARAM_NULL";
+	
+	/**
+	 * "delete(libellé null) :
+	 * ExceptionParametreBlank + MESSAGE_PARAM_BLANK"
+	 */
+	public static final String DISPLAY_NAME_DELETE_LIBELLE_NULL
+			= "delete(libellé null) : "
+					+ EXCEPTION_PARAM_BLANK_MESSAGE;
+	
+	/**
+	 * "delete(blank) :
+	 * ExceptionParametreBlank + MESSAGE_PARAM_BLANK"
+	 */
+	public static final String DISPLAY_NAME_DELETE_BLANK
+			= "delete(blank) : "
+					+ EXCEPTION_PARAM_BLANK_MESSAGE;
+	
+	/**
+	 * "delete(libellé parent blank) :
+	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 */
+	public static final String DISPLAY_NAME_DELETE_PARENT_BLANK
+			= "delete(libellé parent blank) : "
+					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+	
+	/**
+	 * "delete(parent gateway KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_DELETE_PARENT_GATEWAY_KO_AVEC_MESSAGE
+			= "delete(parent gateway KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "delete(parent gateway KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_DELETE_PARENT_GATEWAY_KO_SANS_MESSAGE
+			= "delete(parent gateway KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "delete(parent absent) :
+	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 */
+	public static final String DISPLAY_NAME_DELETE_PARENT_ABSENT
+			= "delete(parent absent) : "
+					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+	
+	/**
+	 * "delete(parent non persistant) :
+	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 */
+	public static final String DISPLAY_NAME_DELETE_PARENT_NON_PERSISTANT
+			= "delete(parent non persistant) : "
+					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+	
+	/**
+	 * "delete(enfants gateway KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_DELETE_ENFANTS_GATEWAY_KO_AVEC_MESSAGE
+			= "delete(enfants gateway KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "delete(enfants gateway KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_DELETE_ENFANTS_GATEWAY_KO_SANS_MESSAGE
+			= "delete(enfants gateway KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "delete(gateway enfants retourne null) :
+	 * ExceptionStockageVide + MESSAGE_STOCKAGE_NULL"
+	 */
+	public static final String DISPLAY_NAME_DELETE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION
+			= "delete(gateway enfants retourne null) : "
+					+ EXCEPTION_STOCKAGE_VIDE_MESSAGE;
+	
+	/**
+	 * "delete(introuvable) :
+	 * MESSAGE_OBJ_INTROUVABLE + libellé"
+	 */
+	public static final String DISPLAY_NAME_DELETE_INTROUVABLE
+			= "delete(introuvable) : "
+					+ "MESSAGE_OBJ_INTROUVABLE + libellé";
+	
+	/**
+	 * "delete(non persistant) :
+	 * ExceptionNonPersistant + MESSAGE_OBJ_NON_PERSISTE"
+	 */
+	public static final String DISPLAY_NAME_DELETE_NON_PERSISTANT
+			= "delete(non persistant) : "
+					+ "ExceptionNonPersistant + MESSAGE_OBJ_NON_PERSISTE";
+	
+	/**
+	 * "delete(destruction KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_DELETE_DESTRUCTION_KO_AVEC_MESSAGE
+			= "delete(destruction KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "delete(destruction KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_DELETE_DESTRUCTION_KO_SANS_MESSAGE
+			= "delete(destruction KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "delete(nominal) :
+	 * MESSAGE_DELETE_OK"
+	 */
+	public static final String DISPLAY_NAME_DELETE_NOMINAL
+			= "delete(nominal) : "
+					+ "MESSAGE_DELETE_OK";
+	
+	/**
+	 * "count(gateway KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_COUNT_GATEWAY_KO_AVEC_MESSAGE
+			= "count(gateway KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+	
+	/**
+	 * "count(gateway KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_COUNT_GATEWAY_KO_SANS_MESSAGE
+			= "count(gateway KO sans message) : "
+					+ FALLBACK;
+	
+	/**
+	 * "count(retour négatif) :
+	 * IllegalStateException + message technique explicite"
+	 */
+	public static final String DISPLAY_NAME_COUNT_RETOUR_NEGATIF
+			= "count(retour négatif) : "
+					+ "IllegalStateException + message technique explicite";
+	
+	/**
+	 * "count(0) :
+	 * 0 + MESSAGE_RECHERCHE_VIDE"
+	 */
+	public static final String DISPLAY_NAME_COUNT_ZERO
+			= "count(0) : "
+					+ "0 + MESSAGE_RECHERCHE_VIDE";
+	
+	/**
+	 * "count(nominal) :
+	 * comptage exact + MESSAGE_RECHERCHE_OK"
+	 */
+	public static final String DISPLAY_NAME_COUNT_NOMINAL
+			= "count(nominal) : "
+					+ "comptage exact + MESSAGE_RECHERCHE_OK";
+	
+	/**
+	 * "getMessage(initial) :
+	 * null + aucune interaction Gateway"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_INITIAL_NULL
+			= "getMessage(initial) : "
+					+ "null + aucune interaction Gateway";
+	
+	/**
+	 * "getMessage(après erreur locale) :
+	 * MESSAGE_CREER_NULL"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE
+			= "getMessage(après erreur locale) : "
+					+ "MESSAGE_CREER_NULL";
+	
+	/**
+	 * "getMessage(après count 0) :
+	 * MESSAGE_RECHERCHE_VIDE"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_ZERO
+			= "getMessage(après count 0) : "
+					+ "MESSAGE_RECHERCHE_VIDE";
+	
+	/**
+	 * "getMessage(après count nominal) :
+	 * MESSAGE_RECHERCHE_OK"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_NOMINAL
+			= "getMessage(après count nominal) : "
+					+ "MESSAGE_RECHERCHE_OK";
+	
+	/**
+	 * "getMessage(dernier message gagne) :
+	 * le message le plus récent écrase le précédent"
+	 */
+	public static final String DISPLAY_NAME_GET_MESSAGE_DERNIER_MESSAGE_GAGNE
+			= "getMessage(dernier message gagne) : "
+					+ "le message le plus récent écrase le précédent";
+	
 
 	// ************************* CONSTRUCTEURS *****************************/
 
@@ -1038,11 +1459,6 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
-	 * <p>
-	 * Ce test vise la branche locale :
-	 * {@code StringUtils.isBlank(libelle)} dans
-	 * {@code SousTypeProduitCuService.creer(...)}.
-	 * </p>
 	 * </div>
 	 */
 	@Tag(TAG_CREER)
@@ -1092,7 +1508,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>garantit que creer(parent blank) :</p>
+	 * <p>garantit que creer(libellé parent blank) :</p>
 	 * <ul>
 	 * <li>contrôle localement le libellé du parent ;</li>
 	 * <li>jette une {@link IllegalStateException} ;</li>
@@ -2253,7 +2669,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * simule un Gateway SousTypeProduit qui retourne null
-		 * au lieu d'une liste exploitable par le SERVICE METIER UC.
+		 * au lieu d'une liste non null attendue par le SERVICE METIER UC.
 		 */
 		when(gateway.rechercherTous()).thenReturn(null);
 
@@ -2463,7 +2879,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne une liste non null contenant
-		 * un objet métier exploitable par filtrerEtTrier(...).
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -2544,7 +2960,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne une liste non null contenant
-		 * un objet métier exploitable par filtrerEtTrier(...).
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -2602,7 +3018,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway non null mais ne contenant
-		 * aucun objet métier exploitable après filtrage.
+		 * aucun objet métier non null après filtrage.
 		 */
 		final List<SousTypeProduit> records = new ArrayList<>();
 		records.add(null);
@@ -2621,7 +3037,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne une liste non null
-		 * ne contenant aucun objet métier exploitable.
+		 * ne contenant aucun objet métier non null.
 		 */
 		when(gateway.rechercherTous()).thenReturn(records);
 
@@ -2676,7 +3092,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier exploitables ;
+		 * - deux objets métier non null ;
 		 * - un élément null à filtrer ;
 		 * - un doublon à dédoublonner côté DTO.
 		 */
@@ -2724,7 +3140,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ASSERT */
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les objets métier exploitables ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
 		 * - est triée par parent puis libellé métier ;
 		 * - est dédoublonnée ;
 		 * - expose le message utilisateur de succès.
@@ -2795,7 +3211,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * simule un Gateway SousTypeProduit qui retourne null
-		 * au lieu d'une liste exploitable par le SERVICE METIER UC.
+		 * au lieu d'une liste non null attendue par le SERVICE METIER UC.
 		 */
 		when(gateway.rechercherTous()).thenReturn(null);
 
@@ -3005,7 +3421,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne une liste non null contenant
-		 * un objet métier exploitable par filtrerEtTrier(...).
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -3086,7 +3502,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne une liste non null contenant
-		 * un objet métier exploitable par filtrerEtTrier(...).
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -3144,7 +3560,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway non null mais ne contenant
-		 * aucun objet métier exploitable après filtrage.
+		 * aucun objet métier non null après filtrage.
 		 */
 		final List<SousTypeProduit> records = new ArrayList<>();
 		records.add(null);
@@ -3163,7 +3579,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne une liste non null
-		 * ne contenant aucun objet métier exploitable.
+		 * ne contenant aucun objet métier non null.
 		 */
 		when(gateway.rechercherTous()).thenReturn(records);
 
@@ -3242,7 +3658,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne une liste non null
-		 * dont les libellés restants ne sont pas exploitables.
+		 * dont les seuls libellés non null sont blank.
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(null, sousTypeProduitBlank));
@@ -3300,7 +3716,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier exploitables ;
+		 * - deux objets métier non null ;
 		 * - un élément null à filtrer ;
 		 * - un libellé blank à ignorer ;
 		 * - un doublon à dédoublonner côté String.
@@ -3354,7 +3770,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ASSERT */
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les libellés exploitables ;
+		 * - contient uniquement les libellés non blank ;
 		 * - est triée selon l'ordre métier des objets ;
 		 * - est dédoublonnée ;
 		 * - expose le message utilisateur de succès.
@@ -3623,7 +4039,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * simule un Gateway qui retourne null au lieu d'un ResultatPage
-		 * exploitable par le SERVICE METIER UC.
+		 * non null attendu par le SERVICE METIER UC.
 		 */
 		when(gateway.rechercherTousParPage(requete)).thenReturn(null);
 
@@ -3855,7 +4271,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse paginée Gateway non null mais ne contenant
-		 * aucun objet métier exploitable après filtrage.
+		 * aucun objet métier non null après filtrage.
 		 */
 		final RequetePage requete = new RequetePage(0, 4);
 		
@@ -3883,7 +4299,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTousParPage(...) retourne une page non null
-		 * ne contenant aucun objet métier exploitable.
+		 * ne contenant aucun objet métier non null.
 		 */
 		when(gateway.rechercherTousParPage(requete)).thenReturn(resultatGateway);
 
@@ -3953,7 +4369,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse paginée Gateway contenant :
-		 * - deux objets métier exploitables ;
+		 * - deux objets métier non null ;
 		 * - un élément null à filtrer ;
 		 * - un doublon à dédoublonner côté DTO.
 		 */
@@ -4016,7 +4432,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * - reprend le numéro de page ;
 		 * - reprend la taille de page ;
 		 * - reprend le total d'éléments ;
-		 * - contient uniquement les objets métier exploitables ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
 		 * - est triée par parent puis libellé métier ;
 		 * - est dédoublonnée ;
 		 * - expose le message utilisateur de succès paginé.
@@ -4181,7 +4597,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>détecte que le Gateway retourne {@code null}
-	 * au lieu d'une liste exploitable ;</li>
+	 * au lieu d'une liste non null attendue ;</li>
 	 * <li>lève {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
@@ -4216,7 +4632,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * simule un Gateway SousTypeProduit qui retourne null
-		 * au lieu d'une liste exploitable par le SERVICE METIER UC.
+		 * au lieu d'une liste non null attendue par le SERVICE METIER UC.
 		 */
 		when(gateway.findByLibelle(libelle)).thenReturn(null);
 
@@ -4392,7 +4808,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>le Gateway retourne une liste non {@code null}
-	 * contenant un objet métier exploitable ;</li>
+	 * contenant un objet métier non null ;</li>
 	 * <li>atteint la conversion finale en {@link OutputDTO}
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
@@ -4434,7 +4850,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.findByLibelle(...) retourne une liste non null contenant
-		 * un objet métier exploitable par filtrerEtTrier(...).
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.findByLibelle(libelle))
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -4476,7 +4892,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>le Gateway retourne une liste non {@code null}
-	 * contenant un objet métier exploitable ;</li>
+	 * contenant un objet métier non null ;</li>
 	 * <li>atteint la conversion finale en {@link OutputDTO}
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
@@ -4517,7 +4933,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.findByLibelle(...) retourne une liste non null contenant
-		 * un objet métier exploitable par filtrerEtTrier(...).
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.findByLibelle(libelle))
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -4559,7 +4975,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>le Gateway retourne une liste non {@code null}
-	 * ne contenant aucun objet métier exploitable ;</li>
+	 * ne contenant aucun objet métier non null ;</li>
 	 * <li>retourne une liste non {@code null} et vide ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}
@@ -4655,7 +5071,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier exploitables portant le libellé recherché ;
+		 * - deux objets métier non null portant le libellé recherché ;
 		 * - un élément null à filtrer ;
 		 * - un doublon à dédoublonner côté DTO.
 		 */
@@ -4708,7 +5124,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ASSERT */
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les objets métier exploitables ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
 		 * - est triée par parent puis libellé métier ;
 		 * - est dédoublonnée ;
 		 * - expose le message utilisateur de succès.
@@ -5057,7 +5473,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>détecte que le Gateway retourne {@code null}
-	 * au lieu d'une liste exploitable ;</li>
+	 * au lieu d'une liste non null attendue ;</li>
 	 * <li>lève {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
@@ -5092,7 +5508,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * simule un Gateway SousTypeProduit qui retourne null
-		 * au lieu d'une liste exploitable par le SERVICE METIER UC.
+		 * au lieu d'une liste non null attendue par le SERVICE METIER UC.
 		 */
 		when(gateway.findByLibelleRapide(contenu)).thenReturn(null);
 
@@ -5170,7 +5586,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.findByLibelleRapide(...) retourne une liste non null
-		 * contenant un objet métier exploitable par filtrerEtTrier(...).
+		 * contenant un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.findByLibelleRapide(contenu))
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -5257,7 +5673,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.findByLibelleRapide(...) retourne une liste non null
-		 * contenant un objet métier exploitable par filtrerEtTrier(...).
+		 * contenant un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.findByLibelleRapide(contenu))
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -5319,7 +5735,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway non null mais ne contenant
-		 * aucun objet métier exploitable après filtrage.
+		 * aucun objet métier non null après filtrage.
 		 */
 		final String contenu = TOU;
 		
@@ -5340,7 +5756,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.findByLibelleRapide(...) retourne une liste non null
-		 * ne contenant aucun objet métier exploitable.
+		 * ne contenant aucun objet métier non null.
 		 */
 		when(gateway.findByLibelleRapide(contenu)).thenReturn(records);
 
@@ -5398,7 +5814,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier exploitables ;
+		 * - deux objets métier non null ;
 		 * - un élément null à filtrer ;
 		 * - un doublon à dédoublonner côté DTO.
 		 */
@@ -5450,7 +5866,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ASSERT */
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les objets métier exploitables ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
 		 * - est triée par parent puis libellé métier ;
 		 * - est dédoublonnée ;
 		 * - expose le message utilisateur de succès.
@@ -5541,7 +5957,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>garantit que findAllByParent(parent blank) :</p>
+	 * <p>garantit que findAllByParent(libellé parent blank) :</p>
 	 * <ul>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
@@ -6053,7 +6469,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel
 	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
 	 * <li>détecte que le Gateway SousTypeProduit retourne {@code null}
-	 * au lieu d'une liste exploitable ;</li>
+	 * au lieu d'une liste non null attendue ;</li>
 	 * <li>lève {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}.</li>
@@ -6091,7 +6507,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * - le parent persistant est retrouvé ;
-		 * - le Gateway enfant retourne null au lieu d'une liste exploitable.
+		 * - le Gateway enfant retourne null au lieu d'une liste non null attendue.
 		 */
 		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
@@ -6179,7 +6595,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/*
 		 * Configuration du Mock :
-		 * - l'objet métier possède un libellé exploitable ;
+		 * - l'objet métier possède un libellé non blank ;
 		 * - la conversion en OutputDTO lit le parent de l'objet métier ;
 		 * - cet accès déclenche ici une panne technique avec message.
 		 */
@@ -6268,7 +6684,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/*
 		 * Configuration du Mock :
-		 * - l'objet métier possède un libellé exploitable ;
+		 * - l'objet métier possède un libellé non blank ;
 		 * - la conversion en OutputDTO lit le parent de l'objet métier ;
 		 * - cet accès déclenche ici une panne technique sans message.
 		 */
@@ -6323,7 +6739,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ARRANGE :
 		 * prépare un DTO parent valide, le parent persistant,
 		 * et une réponse Gateway enfant ne contenant aucun objet métier
-		 * exploitable après filtrage.
+		 * non null après filtrage.
 		 */
 		final TypeProduitDTO.InputDTO parentDto 
 			= new TypeProduitDTO.InputDTO(BAZAR);
@@ -6349,7 +6765,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * Configuration du Mock :
 		 * - le parent persistant est retrouvé ;
 		 * - le Gateway enfant retourne une liste non null
-		 *   ne contenant aucun objet métier exploitable.
+		 *   ne contenant aucun objet métier non null.
 		 */
 		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
@@ -6407,7 +6823,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ARRANGE :
 		 * prépare un DTO parent valide, le parent persistant,
 		 * une réponse Gateway contenant :
-		 * - deux objets métier exploitables ;
+		 * - deux objets métier non null du parent ;
 		 * - un élément null à filtrer ;
 		 * - un doublon à dédoublonner côté DTO ;
 		 * et un captor pour contrôler précisément le parent transmis
@@ -6481,7 +6897,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les objets métier exploitables ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
 		 * - est triée par parent puis libellé métier ;
 		 * - est dédoublonnée ;
 		 * - expose le message utilisateur de succès.
@@ -6516,6 +6932,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByDTO(null) :</p>
 	 * <ul>
+	 * <li>teste le cas où le DTO transmis est null ;</li>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL} ;</li>
@@ -6549,7 +6966,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final String message = service.getMessage();
 
 		/* ASSERT */
-		/* Garantit que l'erreur utilisateur bénigne :
+		/* Garantit que findByDTO(null) :
 		 * - retourne null ;
 		 * - positionne MESSAGE_RECHERCHE_OBJ_NULL ;
 		 * - ne sollicite aucun Gateway.
@@ -6567,9 +6984,9 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>garantit que findByDTO(parent blank) :</p>
+	 * <p>garantit que findByDTO(libellé parent blank) :</p>
 	 * <ul>
-	 * <li>détecte que le parent porté par le DTO a un libellé blank ;</li>
+	 * <li>teste un DTO dont le parent a un libellé blank ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
@@ -6586,10 +7003,10 @@ public class SousTypeProduitCuServiceMockTest {
 	public void testFindByDTOParentBlank() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO non null dont le parent à un libellé blank.
+		 * prépare un DTO non null dont le parent a un libellé blank.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				ESPACES, DN_FIND_BY_DTO_ENFANT);
+				ESPACES, OUTILLAGE);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -6603,7 +7020,7 @@ public class SousTypeProduitCuServiceMockTest {
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
 		/* ACT - ASSERT */
-		/* Garantit que le parent blank est refusé avant
+		/* Garantit que le parent au libellé blank est refusé avant
 		 * toute recherche Gateway.
 		 */
 		assertThatThrownBy(() -> service.findByDTO(dto))
@@ -6624,7 +7041,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByDTO(parent gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>atteint la recherche du parent persistant via
+	 * <li>cherche le parent persistant via
 	 * {@code typeProduitGateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway TypeProduit ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
@@ -6643,11 +7060,11 @@ public class SousTypeProduitCuServiceMockTest {
 			throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide pour atteindre réellement
-		 * la recherche du parent persistant.
+		 * prépare un DTO valide pour déclencher la recherche
+		 * du parent persistant.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
 		final IllegalStateException panneTechnique
 				= new IllegalStateException(MESSAGE_GATEWAY);
@@ -6668,7 +7085,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * simule une panne technique avec message pendant la recherche
 		 * du parent persistant.
 		 */
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenThrow(panneTechnique);
 
 		/* ACT - ASSERT */
@@ -6688,8 +7105,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit que l'échec de recherche parent bloque
 		 * toute recherche des objets métier enfants.
 		 */
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 		
 	} // __________________________________________________________________
@@ -6700,7 +7116,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByDTO(parent gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>atteint la recherche du parent persistant via
+	 * <li>cherche le parent persistant via
 	 * {@code typeProduitGateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par
 	 * le Gateway TypeProduit ;</li>
@@ -6720,11 +7136,11 @@ public class SousTypeProduitCuServiceMockTest {
 			throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide pour atteindre réellement
-		 * la recherche du parent persistant.
+		 * prépare un DTO valide pour déclencher la recherche
+		 * du parent persistant.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
 		final IllegalStateException panneTechnique = new IllegalStateException();
 		
@@ -6744,7 +7160,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * simule une panne technique sans message pendant la recherche
 		 * du parent persistant.
 		 */
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenThrow(panneTechnique);
 
 		/* ACT - ASSERT */
@@ -6764,8 +7180,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit que l'échec de recherche parent bloque
 		 * toute recherche des objets métier enfants.
 		 */
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 		
 	} // __________________________________________________________________
@@ -6777,7 +7192,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(parent absent) :</p>
 	 * <ul>
 	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>détecte que le parent est absent du stockage ;</li>
+	 * <li>teste le cas où le parent est absent du stockage ;</li>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
@@ -6797,7 +7212,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * selon le Gateway parent mocké.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -6814,8 +7229,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * Configuration du Mock :
 		 * le Gateway parent ne retrouve aucun parent persistant.
 		 */
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
-				.thenReturn(null);
+		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(null);
 
 		/* ACT :
 		 * exécute la recherche par DTO via le SERVICE METIER UC.
@@ -6833,8 +7247,7 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 		
 	} // __________________________________________________________________
@@ -6846,7 +7259,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(parent non persistant) :</p>
 	 * <ul>
 	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>détecte que le parent retrouvé ne porte pas
+	 * <li>teste le cas où le parent retrouvé ne porte pas
 	 * d'identifiant persistant ;</li>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
@@ -6864,13 +7277,12 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare un DTO parent valide et un parent retrouvé
-		 * mais dépourvu d'identifiant persistant.
+		 * dépourvu d'identifiant persistant.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentNonPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
+		final TypeProduit parentNonPersistant = new TypeProduit(BAZAR);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -6887,7 +7299,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * Configuration du Mock :
 		 * le Gateway parent retourne un objet sans identifiant.
 		 */
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentNonPersistant);
 
 		/* ACT :
@@ -6906,8 +7318,7 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 		
 	} // __________________________________________________________________
@@ -6919,8 +7330,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(enfants gateway KO avec message) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>atteint l'appel
-	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
@@ -6941,11 +7351,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 * et une panne technique du Gateway enfant.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		final IllegalStateException panneTechnique
 				= new IllegalStateException(MESSAGE_GATEWAY);
@@ -6961,7 +7370,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 
 		/*
@@ -6986,8 +7395,7 @@ public class SousTypeProduitCuServiceMockTest {
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -6999,8 +7407,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(enfants gateway KO sans message) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>atteint l'appel
-	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
 	 * <li>propage l'exception technique sans message levée par
 	 * le Gateway SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur sûr avec
@@ -7022,11 +7429,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 * et une panne technique sans message du Gateway enfant.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		final IllegalStateException panneTechnique = new IllegalStateException();
 		
@@ -7041,7 +7447,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 
 		/*
@@ -7066,8 +7472,7 @@ public class SousTypeProduitCuServiceMockTest {
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -7079,9 +7484,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(gateway retourne null) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>atteint l'appel
-	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
-	 * <li>détecte que le Gateway SousTypeProduit retourne {@code null} ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>teste le cas où le Gateway SousTypeProduit retourne {@code null} ;</li>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
@@ -7099,11 +7503,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 * prépare un DTO valide et un parent persistant.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -7116,7 +7519,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 		when(gateway.findAllByParent(parentPersistant)).thenReturn(null);
 
@@ -7135,8 +7538,7 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -7148,9 +7550,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(vide) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>atteint l'appel
-	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
-	 * <li>détecte que le Gateway SousTypeProduit retourne une liste vide ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>teste le cas où le Gateway SousTypeProduit retourne une liste vide ;</li>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
@@ -7169,11 +7570,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 * et une réponse Gateway enfant vide.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -7186,7 +7586,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(new ArrayList<>());
@@ -7206,8 +7606,7 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -7219,10 +7618,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(vide après filtrage) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>atteint l'appel
-	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
-	 * <li>filtre les éléments {@code null} ;</li>
-	 * <li>ne trouve aucun objet métier exploitable ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>teste une liste contenant uniquement des éléments {@code null} ;</li>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
@@ -7238,15 +7635,13 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare un DTO valide, le parent persistant,
-		 * et une réponse Gateway enfant ne contenant aucun objet métier
-		 * exploitable après filtrage.
+		 * et une réponse Gateway enfant contenant uniquement un null.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		final List<SousTypeProduit> records = new ArrayList<>();
 		records.add(null);
@@ -7262,7 +7657,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 		when(gateway.findAllByParent(parentPersistant)).thenReturn(records);
 
@@ -7281,8 +7676,7 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -7294,10 +7688,9 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <p>garantit que findByDTO(introuvable dans la liste) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
-	 * <li>atteint l'appel
-	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
-	 * <li>parcourt les enfants exploitables du parent ;</li>
-	 * <li>ne trouve aucun enfant correspondant au libellé demandé ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>parcourt les enfants non null du parent ;</li>
+	 * <li>ne trouve aucun enfant portant le libellé demandé ;</li>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
@@ -7316,15 +7709,14 @@ public class SousTypeProduitCuServiceMockTest {
 		 * et une réponse Gateway enfant ne contenant pas le libellé demandé.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		final SousTypeProduit autre 
-			= new SousTypeProduit(DN_FIND_BY_DTO_AUTRE, parentPersistant);
-		autre.setIdSousTypeProduit(DN_FIND_BY_DTO_ID_AUTRE);
+			= new SousTypeProduit(VETEMENT, parentPersistant);
+		autre.setIdSousTypeProduit(2L);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -7337,7 +7729,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(autre));
@@ -7357,8 +7749,7 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -7371,7 +7762,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
 	 * <li>retrouve l'enfant correspondant au couple [parent, libellé] ;</li>
-	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * <li>appelle la conversion finale en {@link OutputDTO}
 	 * via {@code ConvertisseurMetierToOutputDTOSousTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
@@ -7394,11 +7785,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 * une panne pendant la conversion en OutputDTO.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		final SousTypeProduit sousTypeProduit = mock(SousTypeProduit.class);
 		
@@ -7416,7 +7806,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -7427,8 +7817,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * - la conversion en OutputDTO lit le parent de l'objet métier ;
 		 * - cet accès déclenche ici une panne technique avec message.
 		 */
-		when(sousTypeProduit.getSousTypeProduit())
-				.thenReturn(DN_FIND_BY_DTO_ENFANT);
+		when(sousTypeProduit.getSousTypeProduit()).thenReturn(OUTILLAGE);
 		when(sousTypeProduit.getTypeProduit()).thenThrow(panneTechnique);
 
 		/* ACT - ASSERT */
@@ -7445,8 +7834,7 @@ public class SousTypeProduitCuServiceMockTest {
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -7459,7 +7847,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
 	 * <li>retrouve l'enfant correspondant au couple [parent, libellé] ;</li>
-	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * <li>appelle la conversion finale en {@link OutputDTO}
 	 * via {@code ConvertisseurMetierToOutputDTOSousTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
@@ -7482,11 +7870,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 * une panne pendant la conversion en OutputDTO.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		final SousTypeProduit sousTypeProduit = mock(SousTypeProduit.class);
 		
@@ -7503,7 +7890,7 @@ public class SousTypeProduitCuServiceMockTest {
 		final SousTypeProduitCuService service 
 			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(sousTypeProduit));
@@ -7514,8 +7901,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * - la conversion en OutputDTO lit le parent de l'objet métier ;
 		 * - cet accès déclenche ici une panne technique sans message.
 		 */
-		when(sousTypeProduit.getSousTypeProduit())
-				.thenReturn(DN_FIND_BY_DTO_ENFANT);
+		when(sousTypeProduit.getSousTypeProduit()).thenReturn(OUTILLAGE);
 		when(sousTypeProduit.getTypeProduit()).thenThrow(panneTechnique);
 
 		/* ACT - ASSERT */
@@ -7532,8 +7918,7 @@ public class SousTypeProduitCuServiceMockTest {
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
@@ -7542,7 +7927,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>garantit que findByDTO(OK) :</p>
+	 * <p>garantit que findByDTO(nominal) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
 	 * <li>transmet ce parent persistant au Gateway SousTypeProduit ;</li>
@@ -7569,19 +7954,18 @@ public class SousTypeProduitCuServiceMockTest {
 		 * un null et l'objet métier recherché.
 		 */
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
-				DN_FIND_BY_DTO_PARENT, DN_FIND_BY_DTO_ENFANT);
+				BAZAR, OUTILLAGE);
 		
-		final TypeProduit parentPersistant 
-			= new TypeProduit(DN_FIND_BY_DTO_PARENT);
-		parentPersistant.setIdTypeProduit(DN_FIND_BY_DTO_ID_PARENT);
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
 		
 		final SousTypeProduit autre 
-			= new SousTypeProduit(DN_FIND_BY_DTO_AUTRE, parentPersistant);
-		autre.setIdSousTypeProduit(DN_FIND_BY_DTO_ID_AUTRE);
+			= new SousTypeProduit(VETEMENT, parentPersistant);
+		autre.setIdSousTypeProduit(2L);
 		
 		final SousTypeProduit cible 
-			= new SousTypeProduit(DN_FIND_BY_DTO_ENFANT, parentPersistant);
-		cible.setIdSousTypeProduit(DN_FIND_BY_DTO_ID_CIBLE);
+			= new SousTypeProduit(OUTILLAGE, parentPersistant);
+		cible.setIdSousTypeProduit(3L);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -7597,10 +7981,10 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * - le parent persistant est retrouvé ;
-		 * - gateway.findAllByParent(...) retourne des objets métier
-		 *   dans un ordre non trié, avec un null et la cible attendue.
+		 * - gateway.findAllByParent(...) retourne un autre objet métier,
+		 *   un null et la cible attendue.
 		 */
-		when(typeProduitGateway.findByLibelle(DN_FIND_BY_DTO_PARENT))
+		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentPersistant);
 		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(autre, null, cible));
@@ -7620,55 +8004,66 @@ public class SousTypeProduitCuServiceMockTest {
 		 * - expose le message utilisateur de succès.
 		 */
 		assertThat(retour).isNotNull();
-		assertThat(retour.getIdSousTypeProduit())
-				.isEqualTo(DN_FIND_BY_DTO_ID_CIBLE);
-		assertThat(retour.getTypeProduit())
-				.isEqualTo(DN_FIND_BY_DTO_PARENT);
-		assertThat(retour.getSousTypeProduit())
-				.isEqualTo(DN_FIND_BY_DTO_ENFANT);
+		assertThat(retour.getIdSousTypeProduit()).isEqualTo(3L);
+		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
+		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
 
-		verify(typeProduitGateway, times(1))
-				.findByLibelle(DN_FIND_BY_DTO_PARENT);
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		
 	} // __________________________________________________________________
 
 	
-		
+			
 	// =========================== findById ===============================
 	
 	
 	
 	/**
 	 * <div>
-	 * <p>findById(null) : erreur utilisateur bénigne.</p>
+	 * <p>garantit que findById(null) :</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
+	 * <li>teste le cas où l'identifiant transmis est null ;</li>
+	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'appelle pas le Gateway</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findById(null) : null + message MESSAGE_PARAM_NULL")
 	public void testFindByIdNull() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/* ACT :
+		 * exécute la recherche par identifiant avec un ID null.
+		 */
 		final OutputDTO retour = service.findById(null);
 		final String message = service.getMessage();
 
+		/* ASSERT */
+		/* Garantit que findById(null) :
+		 * - retourne null ;
+		 * - positionne MESSAGE_PARAM_NULL ;
+		 * - ne sollicite aucun Gateway.
+		 */
 		assertThat(retour).isNull();
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
@@ -7677,226 +8072,501 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
-
+	
+	
 	
 	/**
 	 * <div>
-	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>garantit que findById(introuvable) :</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
+	 * <li>cherche l'objet métier par identifiant via le Gateway
+	 * SousTypeProduit ;</li>
+	 * <li>teste le cas où le Gateway retourne {@code null} ;</li>
+	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
-	 * <li>délègue une fois au Gateway</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}
+	 * + identifiant recherché ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_INTROUVABLE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findById(introuvable) : null + message MESSAGE_OBJ_INTROUVABLE + id")
 	public void testFindByIdIntrouvable() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un identifiant valide absent du stockage
+		 * selon le Gateway mocké.
+		 */
 		final Long id = 12L;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * simule un Gateway qui ne trouve aucun objet métier
+		 * pour l'identifiant recherché.
+		 */
 		when(gateway.findById(id)).thenReturn(null);
 
+		/* ACT :
+		 * exécute la recherche par identifiant via le SERVICE METIER UC.
+		 */
 		final OutputDTO retour = service.findById(id);
 		final String message = service.getMessage();
 
+		/* ASSERT */
+		/* Garantit que la réponse utilisateur :
+		 * - retourne null ;
+		 * - porte le message utilisateur d'introuvabilité.
+		 */
 		assertThat(retour).isNull();
 		assertThat(message)
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
 
+		/* Garantit que la recherche par identifiant a bien été déléguée. */
 		verify(gateway, times(1)).findById(id);
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
-
+	
+	
 	
 	/**
 	 * <div>
-	 * <p>findById(KO technique avec message) : panne technique remontée
-	 * par le Gateway.</p>
+	 * <p>garantit que findById(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>rationalise le message utilisateur</li>
-	 * <li>délègue une fois au Gateway</li>
+	 * <li>cherche l'objet métier par identifiant via le Gateway
+	 * SousTypeProduit ;</li>
+	 * <li>propage l'exception technique levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_GATEWAY_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findById(KO technique avec message) : RuntimeException + message rationalisé")
 	public void testFindByIdErreurTechniqueAvecMessage() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un identifiant valide pour atteindre réellement
+		 * la délégation gateway.findById(...).
+		 */
 		final Long id = 13L;
+		
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.findById(id))
-				.thenThrow(new RuntimeException(MESSAGE_GATEWAY));
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message au moment
+		 * de l'appel gateway.findById(...).
+		 */
+		when(gateway.findById(id)).thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.findById(id))
-				.isInstanceOf(RuntimeException.class)
-				.hasMessage(MESSAGE_GATEWAY);
+				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
+		/* Garantit que la panne intervient bien sur la recherche Gateway. */
 		verify(gateway, times(1)).findById(id);
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
-
+	
+	
 	
 	/**
 	 * <div>
-	 * <p>findById(KO technique sans message) : panne technique remontée
-	 * par le Gateway.</p>
+	 * <p>garantit que findById(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>rationalise le message utilisateur avec
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>délègue une fois au Gateway</li>
+	 * <li>cherche l'objet métier par identifiant via le Gateway
+	 * SousTypeProduit ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_GATEWAY_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findById(KO technique sans message) : RuntimeException + message rationalisé")
 	public void testFindByIdErreurTechniqueSansMessage() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un identifiant valide pour atteindre réellement
+		 * la délégation gateway.findById(...).
+		 */
 		final Long id = 14L;
+		
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.findById(id)).thenThrow(new RuntimeException());
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message au moment
+		 * de l'appel gateway.findById(...).
+		 */
+		when(gateway.findById(id)).thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.findById(id))
-				.isInstanceOf(RuntimeException.class);
+				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
+		/* Garantit que la panne intervient bien sur la recherche Gateway. */
 		verify(gateway, times(1)).findById(id);
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
-
+	
+	
 	
 	/**
 	 * <div>
-	 * <p>findById(ok) : succès nominal de recherche par identifiant.</p>
+	 * <p>garantit que findById(conversion OutputDTO KO avec message) :</p>
 	 * <ul>
-	 * <li>retourne un OutputDTO cohérent</li>
-	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
-	 * <li>délègue une fois au Gateway</li>
+	 * <li>cherche l'objet métier par identifiant via le Gateway
+	 * SousTypeProduit ;</li>
+	 * <li>le Gateway retourne un objet métier non {@code null} ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOSousTypeProduit.convert(...)} ;</li>
+	 * <li>propage l'exception levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findById(ok) : retourne OutputDTO cohérent + message exact de succès")
-	public void testFindByIdOk() throws Exception {
+	public void testFindByIdConversionOutputDTOKOAvecMessage()
+			throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un objet métier mocké dont l'accès au parent
+		 * provoque une panne pendant la conversion en OutputDTO.
+		 */
+		final Long id = 31L;
+		final SousTypeProduit sousTypeProduit = mock(SousTypeProduit.class);
+		
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(gateway.findById(id)).thenReturn(sousTypeProduit);
+
+		/*
+		 * Configuration du Mock :
+		 * la conversion en OutputDTO lit le parent de l'objet métier ;
+		 * cet accès déclenche ici une panne technique avec message.
+		 */
+		when(sousTypeProduit.getTypeProduit()).thenThrow(panneTechnique);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.findById(id))
+				.isSameAs(panneTechnique);
+
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé pour l'échec de conversion.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de conversion côté UC.
+		 */
+		verify(gateway, times(1)).findById(id);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que findById(conversion OutputDTO KO sans message) :</p>
+	 * <ul>
+	 * <li>cherche l'objet métier par identifiant via le Gateway
+	 * SousTypeProduit ;</li>
+	 * <li>le Gateway retourne un objet métier non {@code null} ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOSousTypeProduit.convert(...)} ;</li>
+	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
+	public void testFindByIdConversionOutputDTOKOSansMessage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * prépare un objet métier mocké dont l'accès au parent
+		 * provoque une panne pendant la conversion en OutputDTO.
+		 */
+		final Long id = 32L;
+		final SousTypeProduit sousTypeProduit = mock(SousTypeProduit.class);
+		
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(gateway.findById(id)).thenReturn(sousTypeProduit);
+
+		/*
+		 * Configuration du Mock :
+		 * la conversion en OutputDTO lit le parent de l'objet métier ;
+		 * cet accès déclenche ici une panne technique sans message.
+		 */
+		when(sousTypeProduit.getTypeProduit()).thenThrow(panneTechnique);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.findById(id))
+				.isSameAs(panneTechnique);
+
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null en cas d'échec de conversion.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de conversion côté UC.
+		 */
+		verify(gateway, times(1)).findById(id);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que findById(OK) :</p>
+	 * <ul>
+	 * <li>cherche l'objet métier par identifiant via le Gateway
+	 * SousTypeProduit ;</li>
+	 * <li>le Gateway retourne un objet métier non {@code null} ;</li>
+	 * <li>convertit l'objet métier trouvé en {@link OutputDTO} ;</li>
+	 * <li>retourne un {@link OutputDTO} portant l'identifiant,
+	 * le parent et le libellé attendus ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_NOMINAL)
+	@Test
+	public void testFindByIdNominal() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un identifiant valide et un objet métier trouvé
+		 * par le Gateway.
+		 */
 		final Long id = 3L;
 
 		final TypeProduit parent = new TypeProduit(BAZAR);
 		parent.setIdTypeProduit(1L);
 
-		final SousTypeProduit stp = new SousTypeProduit(OUTILLAGE, parent);
-		stp.setIdSousTypeProduit(id);
+		final SousTypeProduit sousTypeProduit =
+				new SousTypeProduit(OUTILLAGE, parent);
+		sousTypeProduit.setIdSousTypeProduit(id);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.findById(id)).thenReturn(stp);
+		/*
+		 * Configuration du Mock :
+		 * le Gateway SousTypeProduit retourne l'objet métier attendu.
+		 */
+		when(gateway.findById(id)).thenReturn(sousTypeProduit);
 
+		/* ACT :
+		 * exécute la recherche par identifiant via le SERVICE METIER UC.
+		 */
 		final OutputDTO retour = service.findById(id);
 		final String message = service.getMessage();
 
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - n'est pas null ;
+		 * - porte l'identifiant métier attendu ;
+		 * - porte le parent attendu ;
+		 * - porte le libellé métier attendu ;
+		 * - expose le message utilisateur de succès.
+		 */
 		assertThat(retour).isNotNull();
 		assertThat(retour.getIdSousTypeProduit()).isEqualTo(id);
-		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
+		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
 
+		/* Garantit que la recherche par identifiant a bien été déléguée. */
 		verify(gateway, times(1)).findById(id);
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________	
 
 	
-	
+			
 	// ============================ update ================================
 	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(null) : violation de contrat.</p>
+	 * <p>garantit que update(null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionParametreNull}</li>
+	 * <li>refuse un DTO de modification {@code null} ;</li>
+	 * <li>lève une {@link ExceptionParametreNull} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(null) : ExceptionParametreNull + message MESSAGE_PARAM_NULL + aucune interaction gateway")
-	public void testUpdateNull() {
+	public void testUpdateNull() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que service.update(null) :
+		 * - jette ExceptionParametreNull ;
+		 * - émet MESSAGE_PARAM_NULL ;
+		 * - ne sollicite aucun Gateway.
+		 */
 		assertThatThrownBy(() -> service.update(null))
-				.isInstanceOf(ExceptionParametreNull.class);
+				.isInstanceOf(ExceptionParametreNull.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
@@ -7905,38 +8575,51 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(blank) : violation de contrat.</p>
+	 * <p>garantit que update(libellé null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionParametreBlank}</li>
+	 * <li>lit le libellé de l'objet métier porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce libellé {@code null} ;</li>
+	 * <li>lève une {@link ExceptionParametreBlank} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_LIBELLE_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(blank) : ExceptionParametreBlank + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
-	public void testUpdateBlank() {
+	public void testUpdateLibelleNull() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, ESPACES);
+		/* ARRANGE :
+		 * prépare un DTO non null dont le libellé de l'objet métier est null.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, null);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que le libellé null est refusé avant toute délégation. */
 		assertThatThrownBy(() -> service.update(dto))
-				.isInstanceOf(ExceptionParametreBlank.class);
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
@@ -7945,38 +8628,105 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(parent blank) : violation de contrat structurel.</p>
+	 * <p>garantit que update(libellé blank) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>lit le libellé de l'objet métier porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce libellé blank ;</li>
+	 * <li>lève une {@link ExceptionParametreBlank} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_BLANK)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(parent blank) : IllegalStateException + message MESSAGE_PAS_PARENT + aucune interaction gateway")
-	public void testUpdateParentBlank() {
+	public void testUpdateBlank() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(ESPACES, OUTILLAGE);
+		/* ARRANGE :
+		 * prépare un DTO non null dont le libellé de l'objet métier est blank.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, ESPACES);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que le libellé blank est refusé avant toute délégation. */
 		assertThatThrownBy(() -> service.update(dto))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+		assertThat(service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que update(libellé parent blank) :</p>
+	 * <ul>
+	 * <li>lit le parent porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce parent dont le libellé est blank ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_BLANK)
+	@Test
+	public void testUpdateParentBlank() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO non null dont le parent a un libellé blank.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				ESPACES, OUTILLAGE);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		/* ACT - ASSERT */
+		/* Garantit que le parent au libellé blank est refusé avant toute délégation. */
+		assertThatThrownBy(() -> service.update(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
@@ -7985,141 +8735,190 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(recherche parent technique KO avec message) :
-	 * panne technique pendant la recherche du parent persistant.</p>
+	 * <p>garantit que update(parent gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
+	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>propage l'exception technique levée par ce Gateway ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * + tiret + message technique ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_GATEWAY_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(recherche parent KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE")
-	public void testUpdateRechercheParentTechniqueKoAvecMessage() throws Exception {
+	public void testUpdateRechercheParentTechniqueKoAvecMessage()
+			throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre la recherche du parent.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message pendant la recherche
+		 * du parent persistant.
+		 */
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenThrow(panneTechnique);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(recherche parent technique KO sans message) :
-	 * panne technique sans message pendant
-	 * la recherche du parent persistant.</p>
+	 * <p>garantit que update(parent gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>propage l'exception technique sans message levée par ce Gateway ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_GATEWAY_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(recherche parent KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testUpdateRechercheParentTechniqueKoSansMessage() throws Exception {
+	public void testUpdateRechercheParentTechniqueKoSansMessage()
+			throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre la recherche du parent.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message pendant la recherche
+		 * du parent persistant.
+		 */
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenThrow(panneTechnique);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(parent absent) : le parent requis
-	 * n'existe pas en stockage.</p>
+	 * <p>garantit que update(parent absent) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>teste le cas où le parent est absent du stockage ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_ABSENT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(parent absent) : IllegalStateException + message MESSAGE_PAS_PARENT")
 	public void testUpdateParentAbsent() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+		/* ARRANGE :
+		 * prépare un DTO dont le parent est absent du stockage.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * le Gateway TypeProduit ne retrouve aucun parent persistant.
+		 */
 		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(null);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que l'absence du parent bloque la modification. */
 		assertThatThrownBy(() -> service.update(dto))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
@@ -8128,46 +8927,60 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(parent non persistant) : le parent retrouvé
-	 * existe mais ne porte pas d'identifiant persistant.</p>
+	 * <p>garantit que update(parent non persistant) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>cherche le parent via le Gateway TypeProduit ;</li>
+	 * <li>teste le cas où le parent retrouvé ne porte pas d'identifiant ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_NON_PERSISTANT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(parent non persistant) : IllegalStateException + message MESSAGE_PAS_PARENT")
 	public void testUpdateParentNonPersistant() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide et un parent retrouvé sans identifiant.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentNonPersistant = new TypeProduit(BAZAR);
-		parentNonPersistant.setIdTypeProduit(null);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * le Gateway TypeProduit retourne un parent sans identifiant.
+		 */
 		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentNonPersistant);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit qu'un parent non persistant bloque la modification. */
 		assertThatThrownBy(() -> service.update(dto))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
@@ -8176,666 +8989,1003 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(recherche enfants technique KO avec message) :
-	 * panne technique pendant la recherche des enfants du parent.</p>
+	 * <p>garantit que update(enfants gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway SousTypeProduit ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}</li>
+	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_ENFANTS_GATEWAY_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(recherche enfants KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE")
-	public void testUpdateRechercheEnfantsTechniqueKoAvecMessage() throws Exception {
+	public void testUpdateRechercheEnfantsTechniqueKoAvecMessage()
+			throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * et une panne technique du Gateway SousTypeProduit.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message pendant la recherche
+		 * des enfants du parent.
+		 */
+		when(gateway.findAllByParent(parentPersistant))
 				.thenThrow(panneTechnique);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).update(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(recherche enfants technique KO sans message) :
-	 * panne technique sans message pendant
-	 * la recherche des enfants du parent.</p>
+	 * <p>garantit que update(enfants gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}</li>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>propage l'exception technique sans message levée par
+	 * le Gateway SousTypeProduit ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_ENFANTS_GATEWAY_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(recherche enfants KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testUpdateRechercheEnfantsTechniqueKoSansMessage() throws Exception {
+	public void testUpdateRechercheEnfantsTechniqueKoSansMessage()
+			throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * et une panne technique sans message du Gateway SousTypeProduit.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
-
+		parentPersistant.setIdTypeProduit(1L);
+		
 		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message pendant la recherche
+		 * des enfants du parent.
+		 */
+		when(gateway.findAllByParent(parentPersistant))
 				.thenThrow(panneTechnique);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).update(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(stockage null pendant ré-identification) :
-	 * le Gateway retourne {@code null}
-	 * pour les enfants du parent persistant.</p>
+	 * <p>garantit que update(gateway enfants retourne null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>détecte que le Gateway SousTypeProduit retourne {@code null} ;</li>
+	 * <li>lève une {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(stockage null) : ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
-	public void testUpdateStockageNullPendantReidentification() throws Exception {
+	public void testUpdateStockageNullPendantReidentification()
+			throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide et un parent persistant.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class))).thenReturn(null);
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant)).thenReturn(null);
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit que le retour null de recherche enfant est refusé. */
 		assertThatThrownBy(() -> service.update(dto))
-				.isInstanceOf(ExceptionStockageVide.class);
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).update(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(introuvable) : aucun objet persistant
-	 * ne correspond au couple [parent, libellé].</p>
+	 * <p>garantit que update(introuvable) :</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>parcourt les enfants non null du parent ;</li>
+	 * <li>ne trouve aucun enfant portant le libellé demandé ;</li>
+	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}</li>
+	 * + libellé demandé.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_INTROUVABLE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(introuvable) : null + message MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testUpdateIntrouvable() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * et une liste ne contenant pas le libellé demandé.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit autre =
+				new SousTypeProduit(VETEMENT, parentPersistant);
+		autre.setIdSousTypeProduit(2L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduit autre = new SousTypeProduit(VETEMENT, parentPersistant);
-		autre.setIdSousTypeProduit(22L);
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(autre));
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
-				.thenReturn(Arrays.asList(autre, null));
-
-		/* ======================= ACT ======================= */
+		/* ACT :
+		 * exécute la modification via le SERVICE METIER UC.
+		 */
 		final OutputDTO retour = service.update(dto);
 		final String message = service.getMessage();
 
-		/* ===================== ASSERT ====================== */
+		/* ASSERT */
+		/* Garantit que l'objet à modifier absent :
+		 * - retourne null ;
+		 * - positionne MESSAGE_OBJ_INTROUVABLE + libellé ;
+		 * - ne délègue jamais la modification.
+		 */
 		assertThat(retour).isNull();
 		assertThat(message)
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE
-								+ OUTILLAGE);
+						+ OUTILLAGE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).update(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(non persistant) : l'objet ré-identifié
-	 * existe mais ne porte pas d'identifiant persistant.</p>
+	 * <p>garantit que update(non persistant) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionNonPersistant}</li>
+	 * <li>retrouve un enfant portant le libellé demandé ;</li>
+	 * <li>teste le cas où cet enfant ne porte pas d'identifiant ;</li>
+	 * <li>lève une {@link ExceptionNonPersistant} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_NON_PERSISTE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}</li>
+	 * + libellé demandé ;</li>
+	 * <li>ne délègue jamais la modification au Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_NON_PERSISTANT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(non persisté) : ExceptionNonPersistant + message MESSAGE_OBJ_NON_PERSISTE + libellé")
 	public void testUpdateNonPersistant() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide et un objet retrouvé sans identifiant.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		existant.setIdSousTypeProduit(null);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(existant));
 
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit qu'un objet retrouvé sans identifiant est refusé. */
 		assertThatThrownBy(() -> service.update(dto))
-				.isInstanceOf(ExceptionNonPersistant.class);
+				.isInstanceOf(ExceptionNonPersistant.class)
+				.hasMessage(
+						SousTypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE
+						+ OUTILLAGE);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE
-								+ OUTILLAGE);
+						+ OUTILLAGE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).update(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(modification technique KO avec message) :
-	 * le Gateway échoue pendant la délégation de modification.</p>
+	 * <p>garantit que update(modification KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
+	 * <li>ré-identifie l'objet à modifier ;</li>
+	 * <li>atteint l'appel {@code gateway.update(...)} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_KO}
+	 * + libellé + tiret + message technique.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_KO_AVEC_MESSAGE)
+	@Test
+	public void testUpdateModificationTechniqueKoAvecMessage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * un objet persistant retrouvé et une panne de modification.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		existant.setIdSousTypeProduit(3L);
+		
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(existant));
+		when(gateway.update(any(SousTypeProduit.class)))
+				.thenThrow(panneTechnique);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.update(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_MODIF_KO
+						+ OUTILLAGE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).update(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que update(modification KO sans message) :</p>
+	 * <ul>
+	 * <li>ré-identifie l'objet à modifier ;</li>
+	 * <li>atteint l'appel {@code gateway.update(...)} ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_KO}
+	 * + libellé + tiret
+	 * + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_KO_SANS_MESSAGE)
+	@Test
+	public void testUpdateModificationTechniqueKoSansMessage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * un objet persistant retrouvé et une panne sans message.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		existant.setIdSousTypeProduit(3L);
+		
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(existant));
+		when(gateway.update(any(SousTypeProduit.class)))
+				.thenThrow(panneTechnique);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.update(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_MODIF_KO
+						+ OUTILLAGE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).update(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que update(gateway.update retourne null) :</p>
+	 * <ul>
+	 * <li>ré-identifie l'objet à modifier ;</li>
+	 * <li>atteint l'appel {@code gateway.update(...)} ;</li>
+	 * <li>teste le cas où le Gateway retourne {@code null} ;</li>
+	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_KO}
-	 * + libellé + tiret + détail technique</li>
-	 * <li>prouve la réinjection de l'ID persistant
-	 * et du parent persistant dans l'objet envoyé au Gateway</li>
+	 * + libellé demandé.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(modification KO technique avec message) : exception relancée + message MESSAGE_MODIF_KO + détail")
-	public void testUpdateModificationTechniqueKoAvecMessage() throws Exception {
+	public void testUpdateModificationRetourNull() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant
+		 * et un objet persistant retrouvé.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		existant.setIdSousTypeProduit(3L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		existant.setIdSousTypeProduit(41L);
-
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
-				.thenReturn(Arrays.asList(existant));
-		when(gateway.update(any(SousTypeProduit.class))).thenThrow(panneTechnique);
-
-		final ArgumentCaptor<SousTypeProduit> captor =
-				ArgumentCaptor.forClass(SousTypeProduit.class);
-
-		/* ===================== ACT & ASSERT ===================== */
-		assertThatThrownBy(() -> service.update(dto))
-				.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						SousTypeProduitICuService.MESSAGE_MODIF_KO
-								+ OUTILLAGE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
-
-		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
-		verify(gateway, times(1)).update(captor.capture());
-
-		assertThat(captor.getValue()).isNotNull();
-		assertThat(captor.getValue().getIdSousTypeProduit()).isEqualTo(41L);
-		assertThat(captor.getValue().getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(captor.getValue().getTypeProduit()).isNotNull();
-		assertThat(captor.getValue().getTypeProduit().getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(captor.getValue().getTypeProduit().getIdTypeProduit()).isEqualTo(10L);
-
-	} // __________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>update(modification technique KO sans message) :
-	 * le Gateway échoue sans message
-	 * pendant la délégation de modification.</p>
-	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>prouve la réinjection de l'ID persistant
-	 * dans l'objet envoyé au Gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(modification KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testUpdateModificationTechniqueKoSansMessage() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
-		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
-
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		existant.setIdSousTypeProduit(42L);
-
-		final IllegalStateException panneTechnique = new IllegalStateException();
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
-				.thenReturn(Arrays.asList(existant));
-		when(gateway.update(any(SousTypeProduit.class))).thenThrow(panneTechnique);
-
-		final ArgumentCaptor<SousTypeProduit> captor =
-				ArgumentCaptor.forClass(SousTypeProduit.class);
-
-		/* ===================== ACT & ASSERT ===================== */
-		assertThatThrownBy(() -> service.update(dto))
-				.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						SousTypeProduitICuService.MESSAGE_MODIF_KO
-								+ OUTILLAGE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
-
-		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
-		verify(gateway, times(1)).update(captor.capture());
-
-		assertThat(captor.getValue()).isNotNull();
-		assertThat(captor.getValue().getIdSousTypeProduit()).isEqualTo(42L);
-		assertThat(captor.getValue().getTypeProduit()).isNotNull();
-		assertThat(captor.getValue().getTypeProduit().getIdTypeProduit()).isEqualTo(10L);
-
-	} // __________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>update(gateway null) : le Gateway retourne {@code null}
-	 * après délégation de modification.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_KO} + libellé</li>
-	 * <li>prouve la réinjection de l'ID persistant
-	 * dans l'objet envoyé au Gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(gateway null) : null + message MESSAGE_MODIF_KO + libellé")
-	public void testUpdateGatewayNull() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
-		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
-
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		existant.setIdSousTypeProduit(43L);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(existant));
 		when(gateway.update(any(SousTypeProduit.class))).thenReturn(null);
 
-		final ArgumentCaptor<SousTypeProduit> captor =
-				ArgumentCaptor.forClass(SousTypeProduit.class);
-
-		/* ======================= ACT ======================= */
+		/* ACT :
+		 * exécute la modification via le SERVICE METIER UC.
+		 */
 		final OutputDTO retour = service.update(dto);
 		final String message = service.getMessage();
 
-		/* ===================== ASSERT ====================== */
+		/* ASSERT */
+		/* Garantit qu'un retour null de modification :
+		 * - retourne null ;
+		 * - positionne MESSAGE_MODIF_KO + libellé.
+		 */
 		assertThat(retour).isNull();
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_MODIF_KO + OUTILLAGE);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_MODIF_KO
+						+ OUTILLAGE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
-		verify(gateway, times(1)).update(captor.capture());
-
-		assertThat(captor.getValue()).isNotNull();
-		assertThat(captor.getValue().getIdSousTypeProduit()).isEqualTo(43L);
-		assertThat(captor.getValue().getTypeProduit()).isNotNull();
-		assertThat(captor.getValue().getTypeProduit().getIdTypeProduit()).isEqualTo(10L);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).update(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(retour non persistant) :
-	 * le Gateway retourne un objet modifié
-	 * dont l'identifiant est redevenu {@code null}.</p>
+	 * <p>garantit que update(gateway.update retourne non persistant) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>ré-identifie l'objet à modifier ;</li>
+	 * <li>atteint l'appel {@code gateway.update(...)} ;</li>
+	 * <li>teste le cas où l'objet retourné ne porte pas d'identifiant ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_NON_PERSISTE}
-	 * + libellé</li>
-	 * <li>prouve la réinjection de l'ID persistant
-	 * dans l'objet envoyé au Gateway</li>
+	 * + libellé demandé.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NON_PERSISTANT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(retour non persistant) : IllegalStateException + message MESSAGE_OBJ_NON_PERSISTE + libellé")
-	public void testUpdateRetourNonPersistant() throws Exception {
+	public void testUpdateModificationRetourNonPersistant()
+			throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * un objet persistant retrouvé et un retour modifié sans identifiant.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		existant.setIdSousTypeProduit(3L);
+		
+		final SousTypeProduit modifie =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		existant.setIdSousTypeProduit(44L);
-
-		final SousTypeProduit modifie = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		modifie.setIdSousTypeProduit(null);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(existant));
 		when(gateway.update(any(SousTypeProduit.class))).thenReturn(modifie);
 
-		final ArgumentCaptor<SousTypeProduit> captor =
-				ArgumentCaptor.forClass(SousTypeProduit.class);
-
-		/* ===================== ACT & ASSERT ===================== */
+		/* ACT - ASSERT */
+		/* Garantit qu'un retour modifié non persistant est refusé. */
 		assertThatThrownBy(() -> service.update(dto))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(
+						SousTypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE
+						+ OUTILLAGE);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE
-								+ OUTILLAGE);
+						+ OUTILLAGE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
-		verify(gateway, times(1)).update(captor.capture());
-
-		assertThat(captor.getValue()).isNotNull();
-		assertThat(captor.getValue().getIdSousTypeProduit()).isEqualTo(44L);
-		assertThat(captor.getValue().getTypeProduit()).isNotNull();
-		assertThat(captor.getValue().getTypeProduit().getIdTypeProduit()).isEqualTo(10L);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).update(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>update(ok) : succès nominal complet.</p>
+	 * <p>garantit que update(conversion OutputDTO KO avec message) :</p>
 	 * <ul>
-	 * <li>retourne un {@link OutputDTO} cohérent</li>
-	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_OK} + libellé</li>
-	 * <li>prouve la réinjection de l'ID persistant
-	 * et du parent persistant dans l'objet envoyé au Gateway</li>
+	 * <li>ré-identifie l'objet à modifier ;</li>
+	 * <li>le Gateway retourne un objet modifié persistant ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO} ;</li>
+	 * <li>propage l'exception levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_KO}
+	 * + libellé + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("update(ok) : OutputDTO cohérent + message MESSAGE_MODIF_OK + libellé + ID réinjecté")
-	public void testUpdateOk() throws Exception {
+	public void testUpdateConversionOutputDTOKOAvecMessage()
+			throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un objet modifié mocké dont l'accès au parent
+		 * provoque une panne pendant la conversion en OutputDTO.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		existant.setIdSousTypeProduit(3L);
+		
+		final SousTypeProduit modifie = mock(SousTypeProduit.class);
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		existant.setIdSousTypeProduit(45L);
-
-		final SousTypeProduit modifie = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		modifie.setIdSousTypeProduit(45L);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(existant));
 		when(gateway.update(any(SousTypeProduit.class))).thenReturn(modifie);
 
-		final ArgumentCaptor<SousTypeProduit> captor =
-				ArgumentCaptor.forClass(SousTypeProduit.class);
+		/*
+		 * Configuration du Mock :
+		 * le retour de modification est persistant,
+		 * puis la conversion lit son parent et échoue avec message.
+		 */
+		when(modifie.getIdSousTypeProduit()).thenReturn(3L);
+		when(modifie.getTypeProduit()).thenThrow(panneTechnique);
 
-		/* ======================= ACT ======================= */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.update(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_MODIF_KO
+						+ OUTILLAGE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).update(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que update(conversion OutputDTO KO sans message) :</p>
+	 * <ul>
+	 * <li>ré-identifie l'objet à modifier ;</li>
+	 * <li>le Gateway retourne un objet modifié persistant ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO} ;</li>
+	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_KO}
+	 * + libellé + tiret
+	 * + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
+	@Test
+	public void testUpdateConversionOutputDTOKOSansMessage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * prépare un objet modifié mocké dont l'accès au parent
+		 * provoque une panne sans message pendant la conversion.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		existant.setIdSousTypeProduit(3L);
+		
+		final SousTypeProduit modifie = mock(SousTypeProduit.class);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(existant));
+		when(gateway.update(any(SousTypeProduit.class))).thenReturn(modifie);
+
+		/*
+		 * Configuration du Mock :
+		 * le retour de modification est persistant,
+		 * puis la conversion lit son parent et échoue sans message.
+		 */
+		when(modifie.getIdSousTypeProduit()).thenReturn(3L);
+		when(modifie.getTypeProduit()).thenThrow(panneTechnique);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.update(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_MODIF_KO
+						+ OUTILLAGE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
+		verify(gateway, times(1)).update(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que update(OK) :</p>
+	 * <ul>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>retrouve l'objet à modifier dans les enfants du parent ;</li>
+	 * <li>réinjecte l'identifiant persistant retrouvé dans l'objet envoyé
+	 * à {@code gateway.update(...)} ;</li>
+	 * <li>délègue la modification au Gateway SousTypeProduit ;</li>
+	 * <li>convertit l'objet métier modifié en {@link OutputDTO} ;</li>
+	 * <li>retourne un {@link OutputDTO} portant l'identifiant,
+	 * le parent et le libellé attendus ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_MODIF_OK}
+	 * + libellé demandé.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_NOMINAL)
+	@Test
+	public void testUpdateNominal() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * l'objet persistant retrouvé et l'objet métier modifié.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit autre =
+				new SousTypeProduit(VETEMENT, parentPersistant);
+		autre.setIdSousTypeProduit(2L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		existant.setIdSousTypeProduit(3L);
+		
+		final SousTypeProduit modifie =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		modifie.setIdSousTypeProduit(3L);
+		
+		final ArgumentCaptor<SousTypeProduit> captor
+				= ArgumentCaptor.forClass(SousTypeProduit.class);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(autre, null, existant));
+		when(gateway.update(any(SousTypeProduit.class))).thenReturn(modifie);
+
+		/* ACT :
+		 * exécute la modification via le SERVICE METIER UC.
+		 */
 		final OutputDTO retour = service.update(dto);
 		final String message = service.getMessage();
 
-		/* ===================== ASSERT ====================== */
-		assertThat(retour).isNotNull();
-		assertThat(retour.getIdSousTypeProduit()).isEqualTo(45L);
-		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_MODIF_OK + OUTILLAGE);
-
+		/* ASSERT */
+		/* Garantit que les Gateways ont bien été sollicités
+		 * dans l'ordre fonctionnel attendu :
+		 * recherche du parent, recherche des enfants, puis modification.
+		 */
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, times(1)).update(captor.capture());
 
-		assertThat(captor.getValue()).isNotNull();
-		assertThat(captor.getValue().getIdSousTypeProduit()).isEqualTo(45L);
-		assertThat(captor.getValue().getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(captor.getValue().getTypeProduit()).isNotNull();
-		assertThat(captor.getValue().getTypeProduit().getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(captor.getValue().getTypeProduit().getIdTypeProduit()).isEqualTo(10L);
+		/* Garantit que l'objet métier envoyé au Gateway :
+		 * - n'est pas null ;
+		 * - porte l'identifiant persistant retrouvé ;
+		 * - porte le libellé métier issu de l'InputDTO ;
+		 * - porte le parent persistant retrouvé via le Gateway TypeProduit.
+		 */
+		final SousTypeProduit envoye = captor.getValue();
 
-	} // __________________________________________________________________	
+		assertThat(envoye).isNotNull();
+		assertThat(envoye.getIdSousTypeProduit()).isEqualTo(3L);
+		assertThat(envoye.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(envoye.getTypeProduit()).isNotNull();
+		assertThat(envoye.getTypeProduit().getTypeProduit()).isEqualTo(BAZAR);
+		assertThat(envoye.getTypeProduit().getIdTypeProduit()).isEqualTo(1L);
+
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - n'est pas null ;
+		 * - porte l'identifiant métier attendu ;
+		 * - porte le parent attendu ;
+		 * - porte le libellé métier attendu ;
+		 * - expose le message utilisateur de succès de modification.
+		 */
+		assertThat(retour).isNotNull();
+		assertThat(retour.getIdSousTypeProduit()).isEqualTo(3L);
+		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
+		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_MODIF_OK
+						+ OUTILLAGE);
+
+	} // __________________________________________________________________
 
 	
-	
+		
 	// ============================ delete ================================
 	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(null) : violation de contrat.</p>
+	 * <p>garantit que delete(null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionParametreNull}</li>
+	 * <li>refuse un DTO de suppression {@code null} ;</li>
+	 * <li>lève une {@link ExceptionParametreNull} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_NULL} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(null) : ExceptionParametreNull + message MESSAGE_PARAM_NULL + aucune interaction gateway")
-	public void testDeleteNull() {
+	public void testDeleteNull() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/* ACT - ASSERT */
+		/* Garantit que service.delete(null) :
+		 * - jette ExceptionParametreNull ;
+		 * - émet MESSAGE_PARAM_NULL ;
+		 * - ne sollicite aucun Gateway.
+		 */
 		assertThatThrownBy(() -> service.delete(null))
-				.isInstanceOf(ExceptionParametreNull.class);
+				.isInstanceOf(ExceptionParametreNull.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_NULL);
@@ -8844,36 +9994,51 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(blank) : violation de contrat.</p>
+	 * <p>garantit que delete(libellé null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionParametreBlank}</li>
+	 * <li>lit le libellé de l'objet métier porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce libellé {@code null} ;</li>
+	 * <li>lève une {@link ExceptionParametreBlank} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_LIBELLE_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(blank) : ExceptionParametreBlank + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
-	public void testDeleteBlank() {
+	public void testDeleteLibelleNull() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, ESPACES);
+		/* ARRANGE :
+		 * prépare un DTO non null dont le libellé de l'objet métier est null.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, null);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/* ACT - ASSERT */
+		/* Garantit que le libellé null est refusé avant toute délégation. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionParametreBlank.class);
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
@@ -8882,36 +10047,105 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(parent blank) : violation de contrat structurel.</p>
+	 * <p>garantit que delete(libellé blank) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>lit le libellé de l'objet métier porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce libellé blank ;</li>
+	 * <li>lève une {@link ExceptionParametreBlank} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_BLANK)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(parent blank) : IllegalStateException + message MESSAGE_PAS_PARENT + aucune interaction gateway")
-	public void testDeleteParentBlank() {
+	public void testDeleteBlank() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(ESPACES, OUTILLAGE);
+		/* ARRANGE :
+		 * prépare un DTO non null dont le libellé de l'objet métier est blank.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, ESPACES);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/* ACT - ASSERT */
+		/* Garantit que le libellé blank est refusé avant toute délégation. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+		assertThat(service.getMessage())
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
+
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que delete(libellé parent blank) :</p>
+	 * <ul>
+	 * <li>lit le parent porté par un DTO non {@code null} ;</li>
+	 * <li>refuse ce parent dont le libellé est blank ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_BLANK)
+	@Test
+	public void testDeleteParentBlank() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO non null dont le parent a un libellé blank.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				ESPACES, OUTILLAGE);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		/* ACT - ASSERT */
+		/* Garantit que le parent au libellé blank est refusé avant toute délégation. */
+		assertThatThrownBy(() -> service.delete(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
@@ -8920,137 +10154,190 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(recherche parent technique KO avec message) :
-	 * panne technique pendant la recherche du parent persistant.</p>
+	 * <p>garantit que delete(parent gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
+	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>propage l'exception technique levée par ce Gateway ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * + tiret + message technique ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_GATEWAY_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(recherche parent KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE")
 	public void testDeleteRechercheParentTechniqueKoAvecMessage()
 			throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre la recherche du parent.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message pendant la recherche
+		 * du parent persistant.
+		 */
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(recherche parent technique KO sans message) :
-	 * panne technique sans message pendant la recherche
-	 * du parent persistant.</p>
+	 * <p>garantit que delete(parent gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>propage l'exception technique sans message levée par ce Gateway ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_GATEWAY_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(recherche parent KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
 	public void testDeleteRechercheParentTechniqueKoSansMessage()
 			throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre la recherche du parent.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenThrow(panneTechnique);
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message pendant la recherche
+		 * du parent persistant.
+		 */
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(parent absent) : le parent requis
-	 * n'existe pas en stockage.</p>
+	 * <p>garantit que delete(parent absent) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>cherche le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>teste le cas où le parent est absent du stockage ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_ABSENT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(parent absent) : IllegalStateException + message MESSAGE_PAS_PARENT")
 	public void testDeleteParentAbsent() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
+		/* ARRANGE :
+		 * prépare un DTO dont le parent est absent du stockage.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * le Gateway TypeProduit ne retrouve aucun parent persistant.
+		 */
 		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(null);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'absence du parent bloque la suppression. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
@@ -9059,44 +10346,60 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(parent non persistant) : le parent retrouvé
-	 * existe mais ne porte pas d'identifiant persistant.</p>
+	 * <p>garantit que delete(parent non persistant) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
+	 * <li>cherche le parent via le Gateway TypeProduit ;</li>
+	 * <li>teste le cas où le parent retrouvé ne porte pas d'identifiant ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_NON_PERSISTANT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(parent non persistant) : IllegalStateException + message MESSAGE_PAS_PARENT")
 	public void testDeleteParentNonPersistant() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide et un parent retrouvé sans identifiant.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentNonPersistant = new TypeProduit(BAZAR);
-		parentNonPersistant.setIdTypeProduit(null);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * le Gateway TypeProduit retourne un parent sans identifiant.
+		 */
 		when(typeProduitGateway.findByLibelle(BAZAR))
 				.thenReturn(parentNonPersistant);
 
+		/* ACT - ASSERT */
+		/* Garantit qu'un parent non persistant bloque la suppression. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
@@ -9105,667 +10408,951 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(recherche enfants technique KO avec message) :
-	 * panne technique pendant la recherche des enfants du parent.</p>
+	 * <p>garantit que delete(enfants gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway SousTypeProduit ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_ENFANTS_GATEWAY_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(recherche enfants KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE")
 	public void testDeleteRechercheEnfantsTechniqueKoAvecMessage()
 			throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * et une panne technique du Gateway SousTypeProduit.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message pendant la recherche
+		 * des enfants du parent.
+		 */
+		when(gateway.findAllByParent(parentPersistant))
 				.thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).delete(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(recherche enfants technique KO sans message) :
-	 * panne technique sans message pendant la recherche
-	 * des enfants du parent.</p>
+	 * <p>garantit que delete(enfants gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>propage l'exception technique sans message levée par
+	 * le Gateway SousTypeProduit ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_ENFANTS_GATEWAY_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(recherche enfants KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
 	public void testDeleteRechercheEnfantsTechniqueKoSansMessage()
 			throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * et une panne technique sans message du Gateway SousTypeProduit.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
-
+		parentPersistant.setIdTypeProduit(1L);
+		
 		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message pendant la recherche
+		 * des enfants du parent.
+		 */
+		when(gateway.findAllByParent(parentPersistant))
 				.thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).delete(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(stockage null pendant ré-identification) :
-	 * le Gateway retourne {@code null}
-	 * pour les enfants du parent persistant.</p>
+	 * <p>garantit que delete(gateway enfants retourne null) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionStockageVide}</li>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>appelle {@code gateway.findAllByParent(parentPersistant)} ;</li>
+	 * <li>détecte que le Gateway SousTypeProduit retourne {@code null} ;</li>
+	 * <li>lève une {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(stockage null) : ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
 	public void testDeleteStockageNullPendantReidentification()
 			throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide et un parent persistant.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class))).thenReturn(null);
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant)).thenReturn(null);
 
+		/* ACT - ASSERT */
+		/* Garantit que le retour null de recherche enfant est refusé. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionStockageVide.class);
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		assertThat(service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).delete(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(introuvable) : aucun objet persistant
-	 * ne correspond au couple [parent, libellé].</p>
+	 * <p>garantit que delete(introuvable) :</p>
 	 * <ul>
-	 * <li>ne lève pas d'exception</li>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>parcourt les enfants non null du parent ;</li>
+	 * <li>ne trouve aucun enfant portant le libellé demandé ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_INTROUVABLE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * + libellé demandé ;</li>
+	 * <li>ne délègue jamais la suppression au Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_INTROUVABLE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(introuvable) : aucune exception + message MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testDeleteIntrouvable() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * et une liste ne contenant pas le libellé demandé.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit autre =
+				new SousTypeProduit(VETEMENT, parentPersistant);
+		autre.setIdSousTypeProduit(2L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduit autre = new SousTypeProduit(VETEMENT, parentPersistant);
-		autre.setIdSousTypeProduit(22L);
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
+				.thenReturn(Arrays.asList(autre));
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
-				.thenReturn(Arrays.asList(autre, null));
-
+		/* ACT :
+		 * exécute la suppression via le SERVICE METIER UC.
+		 */
 		service.delete(dto);
+		final String message = service.getMessage();
 
-		assertThat(service.getMessage())
+		/* ASSERT */
+		/* Garantit que l'objet à supprimer absent :
+		 * - positionne MESSAGE_OBJ_INTROUVABLE + libellé ;
+		 * - ne délègue jamais la suppression.
+		 */
+		assertThat(message)
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE
-								+ OUTILLAGE);
+						+ OUTILLAGE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).delete(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(non persistant) : l'objet ré-identifié
-	 * existe mais ne porte pas d'identifiant persistant.</p>
+	 * <p>garantit que delete(non persistant) :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionNonPersistant}</li>
+	 * <li>retrouve un enfant portant le libellé demandé ;</li>
+	 * <li>teste le cas où cet enfant ne porte pas d'identifiant ;</li>
+	 * <li>lève une {@link ExceptionNonPersistant} ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_OBJ_NON_PERSISTE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
+	 * + libellé demandé ;</li>
+	 * <li>ne délègue jamais la suppression au Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NON_PERSISTANT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(non persisté) : ExceptionNonPersistant + message MESSAGE_OBJ_NON_PERSISTE + libellé")
 	public void testDeleteNonPersistant() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide et un objet retrouvé sans identifiant.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
-		existant.setIdSousTypeProduit(null);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(existant));
 
+		/* ACT - ASSERT */
+		/* Garantit qu'un objet retrouvé sans identifiant est refusé. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionNonPersistant.class);
+				.isInstanceOf(ExceptionNonPersistant.class)
+				.hasMessage(
+						SousTypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE
+						+ OUTILLAGE);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_OBJ_NON_PERSISTE
-								+ OUTILLAGE);
+						+ OUTILLAGE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, never()).delete(any(SousTypeProduit.class));
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(KO technique de suppression avec message) :
-	 * le Gateway échoue pendant la destruction.</p>
+	 * <p>garantit que delete(destruction KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
+	 * <li>ré-identifie l'objet à supprimer ;</li>
+	 * <li>atteint l'appel {@code gateway.delete(...)} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link SousTypeProduitICuService#MESSAGE_DELETE_KO}
-	 * + libellé + tiret + message technique</li>
-	 * <li>délègue bien la destruction
-	 * sur l'objet persistant retrouvé</li>
+	 * + libellé + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(KO technique avec message) : exception relancée + message MESSAGE_DELETE_KO + détail technique")
-	public void testDeleteTechniqueKoAvecMessage() throws Exception {
+	public void testDeleteDestructionKOAvecMessage() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * un objet persistant retrouvé et une panne de suppression.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
-
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
 		existant.setIdSousTypeProduit(20L);
+		
+		final Exception panneTechnique = new Exception(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final Exception ex = new Exception(MESSAGE_GATEWAY);
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(existant));
-		doThrow(ex).when(gateway).delete(existant);
+		doThrow(panneTechnique).when(gateway).delete(existant);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isSameAs(ex);
+				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_DELETE_KO
-								+ OUTILLAGE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
+						+ OUTILLAGE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, times(1)).delete(existant);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(KO technique de suppression sans message) :
-	 * le Gateway échoue sans message pendant la destruction.</p>
+	 * <p>garantit que delete(destruction KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>délègue bien la destruction
-	 * sur l'objet persistant retrouvé</li>
+	 * <li>ré-identifie l'objet à supprimer ;</li>
+	 * <li>atteint l'appel {@code gateway.delete(...)} ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#MESSAGE_DELETE_KO}
+	 * + libellé + tiret
+	 * + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testDeleteTechniqueKoSansMessage() throws Exception {
+	public void testDeleteDestructionKOSansMessage() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * un objet persistant retrouvé et une panne sans message.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
-
-		final SousTypeProduit existant = new SousTypeProduit(OUTILLAGE, parentPersistant);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit existant =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
 		existant.setIdSousTypeProduit(21L);
+		
+		final Exception panneTechnique = new Exception();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		final Exception ex = new Exception();
-
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(existant));
-		doThrow(ex).when(gateway).delete(existant);
+		doThrow(panneTechnique).when(gateway).delete(existant);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.delete(dto))
-				.isSameAs(ex);
+				.isSameAs(panneTechnique);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_DELETE_KO
-								+ OUTILLAGE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ OUTILLAGE
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, times(1)).delete(existant);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>delete(ok) : succès nominal complet.</p>
+	 * <p>garantit que delete(OK) :</p>
 	 * <ul>
-	 * <li>délègue la destruction
-	 * sur l'objet persistant retrouvé</li>
+	 * <li>récupère d'abord le parent persistant via le Gateway TypeProduit ;</li>
+	 * <li>retrouve l'objet à supprimer dans les enfants du parent ;</li>
+	 * <li>délègue la suppression au Gateway SousTypeProduit ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_DELETE_OK}
-	 * + libellé</li>
-	 * <li>vérifie bien la ré-identification
-	 * sur le couple [parent, libellé]</li>
+	 * + libellé demandé.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(ok) : suppression déléguée + message MESSAGE_DELETE_OK + couple [parent, libellé]")
-	public void testDeleteOk() throws Exception {
+	public void testDeleteNominal() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
+		/* ARRANGE :
+		 * prépare un DTO valide, le parent persistant,
+		 * un autre objet métier, un null et l'objet métier à supprimer.
+		 */
+		final InputDTO dto = new SousTypeProduitDTO.InputDTO(
+				BAZAR, OUTILLAGE);
+		
 		final TypeProduit parentPersistant = new TypeProduit(BAZAR);
-		parentPersistant.setIdTypeProduit(10L);
-
-		final SousTypeProduit autre = new SousTypeProduit(VETEMENT, parentPersistant);
+		parentPersistant.setIdTypeProduit(1L);
+		
+		final SousTypeProduit autre =
+				new SousTypeProduit(VETEMENT, parentPersistant);
 		autre.setIdSousTypeProduit(30L);
-
-		final SousTypeProduit cible = new SousTypeProduit(OUTILLAGE, parentPersistant);
+		
+		final SousTypeProduit cible =
+				new SousTypeProduit(OUTILLAGE, parentPersistant);
 		cible.setIdSousTypeProduit(31L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(typeProduitGateway.findByLibelle(BAZAR)).thenReturn(parentPersistant);
-		when(gateway.findAllByParent(any(TypeProduit.class)))
+		when(typeProduitGateway.findByLibelle(BAZAR))
+				.thenReturn(parentPersistant);
+		when(gateway.findAllByParent(parentPersistant))
 				.thenReturn(Arrays.asList(autre, null, cible));
 
+		/* ACT :
+		 * exécute la suppression via le SERVICE METIER UC.
+		 */
 		service.delete(dto);
+		final String message = service.getMessage();
 
-		assertThat(service.getMessage())
-				.isEqualTo(
-						SousTypeProduitICuService.MESSAGE_DELETE_OK
-								+ OUTILLAGE);
-
+		/* ASSERT */
+		/* Garantit que les Gateways ont bien été sollicités
+		 * dans l'ordre fonctionnel attendu :
+		 * recherche du parent, recherche des enfants, puis suppression.
+		 */
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
-		verify(gateway, times(1)).findAllByParent(any(TypeProduit.class));
+		verify(gateway, times(1)).findAllByParent(parentPersistant);
 		verify(gateway, times(1)).delete(cible);
 
-	} // __________________________________________________________________	
+		/* Garantit que la réponse observable par le controller appelant
+		 * porte le message utilisateur de succès de suppression.
+		 */
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_DELETE_OK
+						+ OUTILLAGE);
+
+	} // __________________________________________________________________
 
 	
-	
+			
 	// ============================ count =================================
 	
 	
 	
 	/**
 	 * <div>
-	 * <p>count(KO technique avec message) :
-	 * le Gateway échoue pendant le comptage
-	 * avec un message exploitable.</p>
+	 * <p>garantit que count(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>propage l'exception technique levée pendant le comptage ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
-	 * <li>délègue une seule fois au Gateway</li>
+	 * + tiret + message technique ;</li>
+	 * <li>n'expose aucun comptage au controller appelant ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE + détail")
-	public void testCountTechniqueKoAvecMessage() throws Exception {
+	public void testCountGatewayKOAvecMessage() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
+		/* ARRANGE :
+		 * prépare une panne technique avec message pendant
+		 * le comptage délégué au Gateway.
+		 */
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() jette une exception avec message.
+		 * Le SERVICE METIER UC doit propager l'exception d'origine
+		 * et produire KO_TECHNIQUE_RECHERCHE + détail technique.
+		 */
 		when(gateway.count()).thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.count())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le message observable côté controller appelant
+		 * est rationalisé et contient le détail technique disponible.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
 
+		/* Garantit que la panne intervient bien sur le comptage Gateway. */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
 	
 	
-
+	
 	/**
 	 * <div>
-	 * <p>count(KO technique sans message) :
-	 * le Gateway échoue pendant le comptage
-	 * sans message exploitable.</p>
+	 * <p>garantit que count(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>délègue une seule fois au Gateway</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>propage l'exception technique sans message levée
+	 * pendant le comptage ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'expose aucun comptage au controller appelant ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testCountTechniqueKoSansMessage() throws Exception {
+	public void testCountGatewayKOSansMessage() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare une panne technique sans message pendant
+		 * le comptage délégué au Gateway.
+		 */
 		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() jette une exception sans message.
+		 * Le SERVICE METIER UC doit propager l'exception d'origine
+		 * et remplacer le message technique absent par MSG_ERREUR_NON_SPECIFIEE.
+		 */
 		when(gateway.count()).thenThrow(panneTechnique);
 
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.count())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
+		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+						+ SousTypeProduitICuService.TIRET_ESPACE
+						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
+		/* Garantit que la panne intervient bien sur le comptage Gateway. */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
 	
 	
-
+	
 	/**
 	 * <div>
-	 * <p>count(retour négatif) :
-	 * le Gateway retourne une valeur incohérente
-	 * pour un comptage observable.</p>
+	 * <p>garantit que count(retour négatif) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne un message technique explicite</li>
-	 * <li>délègue une seule fois au Gateway</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>détecte qu'un comptage strictement négatif est incohérent ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne un message technique explicite avec
+	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + valeur incohérente ;</li>
+	 * <li>n'expose jamais cette valeur incohérente
+	 * au controller appelant ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_RETOUR_NEGATIF)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(retour négatif) : IllegalStateException + message technique explicite")
-	public void testCountRetourNegatifIncoherent() throws Exception {
+	public void testCountRetourNegatif() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway incohérent.
+		 *
+		 * Un comptage observable côté UC peut valoir 0,
+		 * mais ne doit jamais être strictement négatif.
+		 */
+		final long comptageIncoherent = -1L;
+		final String messageTechnique
+				= SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				+ SousTypeProduitICuService.TIRET_ESPACE
+				+ "comptage négatif incohérent : "
+				+ comptageIncoherent;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.count()).thenReturn(-1L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne une valeur strictement négative.
+		 * Le SERVICE METIER UC doit refuser ce résultat incohérent
+		 * avant tout retour au controller appelant.
+		 */
+		when(gateway.count()).thenReturn(comptageIncoherent);
 
+		/* ACT - ASSERT */
+		/* Garantit que service.count() :
+		 * - jette IllegalStateException ;
+		 * - porte le message technique explicite ;
+		 * - n'expose pas le comptage incohérent.
+		 */
 		assertThatThrownBy(() -> service.count())
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(messageTechnique);
 
+		/* Garantit que le message observable côté controller appelant
+		 * explique précisément le comptage incohérent refusé.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ SousTypeProduitICuService.TIRET_ESPACE
-								+ "comptage négatif incohérent : -1");
+				.isEqualTo(messageTechnique);
 
+		/* Garantit que le comptage Gateway a bien été délégué une fois. */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
 	
 	
-
+	
 	/**
 	 * <div>
-	 * <p>count(0) : aucun résultat en stockage.</p>
+	 * <p>garantit que count(0) :</p>
 	 * <ul>
-	 * <li>retourne {@code 0}</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>accepte le comptage {@code 0} comme résultat cohérent ;</li>
+	 * <li>retourne exactement {@code 0} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>délègue une seule fois au Gateway</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>ne positionne ce message qu'après récupération effective
+	 * du comptage Gateway ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_ZERO)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(0) : retourne 0 + message MESSAGE_RECHERCHE_VIDE")
 	public void testCountZero() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * qu'aucun objet métier n'est présent dans le stockage.
+		 */
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne 0.
+		 * Le SERVICE METIER UC doit retourner 0 et positionner
+		 * MESSAGE_RECHERCHE_VIDE seulement après ce retour Gateway.
+		 */
 		when(gateway.count()).thenReturn(0L);
 
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+		final String message = service.getMessage();
 
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - vaut exactement 0 ;
+		 * - confirme l'absence d'objet métier accessible ;
+		 * - expose le message utilisateur de recherche vide.
+		 */
 		assertThat(retour).isZero();
-		assertThat(service.getMessage())
+		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
+		/* Garantit que le message de résultat vide a été produit
+		 * après récupération effective du comptage Gateway.
+		 */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
 	
 	
-
+	
 	/**
 	 * <div>
-	 * <p>count(positif) : succès nominal du comptage.</p>
+	 * <p>garantit que count(OK) :</p>
 	 * <ul>
-	 * <li>retourne le comptage exact</li>
+	 * <li>atteint l'appel {@code gateway.count()} ;</li>
+	 * <li>accepte un comptage strictement positif comme résultat cohérent ;</li>
+	 * <li>retourne exactement le comptage fourni par le Gateway ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>délègue une seule fois au Gateway</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>ne positionne ce message qu'après récupération effective
+	 * du comptage Gateway ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(positif) : retourne le comptage exact + message MESSAGE_RECHERCHE_OK")
-	public void testCountPositif() throws Exception {
+	public void testCountNominal() throws Exception {
 
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * que plusieurs objets métier sont présents dans le stockage.
+		 */
+		final long comptageAttendu = 42L;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.count()).thenReturn(42L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne un comptage strictement positif.
+		 * Le SERVICE METIER UC doit retourner ce comptage exact
+		 * et positionner MESSAGE_RECHERCHE_OK seulement après ce retour Gateway.
+		 */
+		when(gateway.count()).thenReturn(comptageAttendu);
 
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+		final String message = service.getMessage();
 
-		assertThat(retour).isEqualTo(42L);
-		assertThat(service.getMessage())
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - vaut exactement le comptage fourni par le Gateway ;
+		 * - expose le message utilisateur de succès de recherche.
+		 */
+		assertThat(retour).isEqualTo(comptageAttendu);
+		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		/* Garantit que le message de succès a été produit
+		 * après récupération effective du comptage Gateway.
+		 */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
@@ -9779,229 +11366,340 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
-	 * <p>getMessage(initial) : état initial du service Mock.</p>
+	 * <p>garantit que getMessage(initial) :</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>n'interagit jamais avec le Gateway SousTypeProduit</li>
-	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(initial) : retourne null + aucune interaction gateway")
-	public void testGetMessageInitialNull() {
-
-		// ===================== ARRANGE =====================
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
-
-		// ======================= ACT =======================
-		final String message = service.getMessage();
-
-		// ===================== ASSERT ======================
-		assertThat(message).isNull();
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(typeProduitGateway);
-
-	} // __________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>getMessage(après erreur locale) :
-	 * retourne le message courant
-	 * positionné par une erreur utilisateur bénigne.</p>
-	 * <ul>
-	 * <li>après {@code creer(null)},
-	 * retourne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}</li>
-	 * <li>n'interagit jamais avec le Gateway SousTypeProduit</li>
-	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * <li>reste appelable avant toute opération métier ;</li>
+	 * <li>retourne {@code null} tant qu'aucun message n'a été positionné ;</li>
+	 * <li>lit uniquement l'état local du SERVICE METIER UC ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_INITIAL_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL")
+	public void testGetMessageInitialNull() throws Exception {
+
+		/* ARRANGE :
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
+
+		/* ACT :
+		 * lit le message courant sans opération UC préalable.
+		 */
+		final String message = service.getMessage();
+
+		/* ASSERT */
+		/* Garantit que l'état initial observable côté controller appelant
+		 * est bien null avant toute opération ayant positionné un message.
+		 */
+		assertThat(message).isNull();
+
+		/* Garantit que getMessage() lit seulement l'état local
+		 * du SERVICE METIER UC et ne sollicite jamais les Gateways.
+		 */
+		verifyNoInteractions(gateway);
+		verifyNoInteractions(typeProduitGateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que getMessage(après erreur locale) :</p>
+	 * <ul>
+	 * <li>lit le message positionné par une opération UC précédente ;</li>
+	 * <li>retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}
+	 * après {@code creer(null)} ;</li>
+	 * <li>ne recalcule pas le message ;</li>
+	 * <li>n'interagit ni avec le Gateway SousTypeProduit
+	 * ni avec le Gateway TypeProduit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE)
+	@Test
 	public void testGetMessageApresErreurLocale() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		// ======================= ACT =======================
+		/* ACT :
+		 * provoque une erreur utilisateur bénigne via le SERVICE METIER UC.
+		 */
 		service.creer(null);
+
+		/* Lit le message courant après cette opération locale. */
 		final String message = service.getMessage();
 
-		// ===================== ASSERT ======================
+		/* ASSERT */
+		/* Garantit que getMessage() retourne le message déjà positionné
+		 * par creer(null), sans recalcul ni transformation.
+		 */
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+
+		/* Garantit que creer(null) puis getMessage() restent locaux
+		 * et ne sollicitent jamais les Gateways.
+		 */
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>getMessage(après succès vide) :
-	 * retourne le message courant
-	 * positionné par un comptage à zéro.</p>
+	 * <p>garantit que getMessage(après count 0) :</p>
 	 * <ul>
-	 * <li>après {@code count() == 0},
-	 * retourne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>délègue une seule fois au Gateway SousTypeProduit</li>
-	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * <li>lit le message positionné par un comptage précédent ;</li>
+	 * <li>retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}
+	 * après un {@code count()} égal à {@code 0} ;</li>
+	 * <li>ne recalcule pas le message ;</li>
+	 * <li>ne déclenche aucune interaction Gateway supplémentaire ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_ZERO)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après succès vide) : retourne MESSAGE_RECHERCHE_VIDE")
 	public void testGetMessageApresCountZero() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * qu'aucun objet métier n'est présent dans le stockage.
+		 */
+		final long comptageRetourne = 0L;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.count()).thenReturn(0L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne 0.
+		 * Le SERVICE METIER UC doit positionner MESSAGE_RECHERCHE_VIDE
+		 * seulement après ce retour Gateway.
+		 */
+		when(gateway.count()).thenReturn(comptageRetourne);
 
-		// ======================= ACT =======================
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+
+		/* Lit le message courant après ce comptage. */
 		final String message = service.getMessage();
 
-		// ===================== ASSERT ======================
+		/* ASSERT */
+		/* Garantit que le comptage a bien positionné le message
+		 * de recherche vide avant consultation par getMessage().
+		 */
 		assertThat(retour).isZero();
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
+		/* Garantit que getMessage() n'a pas provoqué
+		 * d'interaction Gateway supplémentaire.
+		 */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>getMessage(après succès positif) :
-	 * retourne le message courant
-	 * positionné par un comptage positif.</p>
+	 * <p>garantit que getMessage(après count nominal) :</p>
 	 * <ul>
-	 * <li>après {@code count() > 0},
-	 * retourne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>délègue une seule fois au Gateway SousTypeProduit</li>
-	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * <li>lit le message positionné par un comptage précédent ;</li>
+	 * <li>retourne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}
+	 * après un {@code count()} strictement positif ;</li>
+	 * <li>ne recalcule pas le message ;</li>
+	 * <li>ne déclenche aucune interaction Gateway supplémentaire ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après succès positif) : retourne MESSAGE_RECHERCHE_OK")
-	public void testGetMessageApresCountPositif() throws Exception {
+	public void testGetMessageApresCountNominal() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * que plusieurs objets métier sont présents dans le stockage.
+		 */
+		final long comptageAttendu = 42L;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.count()).thenReturn(42L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne un comptage strictement positif.
+		 * Le SERVICE METIER UC doit positionner MESSAGE_RECHERCHE_OK
+		 * seulement après ce retour Gateway.
+		 */
+		when(gateway.count()).thenReturn(comptageAttendu);
 
-		// ======================= ACT =======================
+		/* ACT :
+		 * exécute le comptage via le SERVICE METIER UC.
+		 */
 		final long retour = service.count();
+
+		/* Lit le message courant après ce comptage. */
 		final String message = service.getMessage();
 
-		// ===================== ASSERT ======================
-		assertThat(retour).isEqualTo(42L);
+		/* ASSERT */
+		/* Garantit que le comptage nominal a bien positionné
+		 * le message de recherche OK avant consultation par getMessage().
+		 */
+		assertThat(retour).isEqualTo(comptageAttendu);
 		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		/* Garantit que getMessage() n'a pas provoqué
+		 * d'interaction Gateway supplémentaire.
+		 */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	/**
 	 * <div>
-	 * <p>getMessage(dernier message gagne) :
-	 * une opération plus récente
-	 * écrase bien le message précédent.</p>
+	 * <p>garantit que getMessage(dernier message gagne) :</p>
 	 * <ul>
-	 * <li>après une erreur locale,
-	 * le message vaut d'abord
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}</li>
-	 * <li>après un {@code count()} positif,
-	 * le message courant devient
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>délègue une seule fois au Gateway SousTypeProduit</li>
-	 * <li>n'interagit jamais avec le Gateway TypeProduit</li>
+	 * <li>retourne d'abord le message produit par une erreur locale ;</li>
+	 * <li>retourne ensuite le message produit par une opération plus récente ;</li>
+	 * <li>prouve que l'opération UC la plus récente écrase
+	 * le message observable précédent ;</li>
+	 * <li>ne déclenche aucune interaction Gateway supplémentaire
+	 * lors des consultations successives de {@code getMessage()} ;</li>
+	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_DERNIER_MESSAGE_GAGNE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(dernier message gagne) : le message le plus récent écrase le précédent")
 	public void testGetMessageDernierMessageGagne() throws Exception {
 
-		// ===================== ARRANGE =====================
-		final SousTypeProduitGatewayIService gateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final TypeProduitGatewayIService typeProduitGateway =
-				mock(TypeProduitGatewayIService.class);
-		final SousTypeProduitCuService service =
-				new SousTypeProduitCuService(gateway, typeProduitGateway);
+		/* ARRANGE :
+		 * prépare un comptage Gateway cohérent indiquant
+		 * qu'un objet métier est présent dans le stockage.
+		 */
+		final long comptageAttendu = 1L;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final SousTypeProduitGatewayIService gateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final TypeProduitGatewayIService typeProduitGateway 
+			= mock(TypeProduitGatewayIService.class);
+		final SousTypeProduitCuService service 
+			= new SousTypeProduitCuService(gateway, typeProduitGateway);
 
-		when(gateway.count()).thenReturn(1L);
+		/*
+		 * Configuration du Mock :
+		 * gateway.count() retourne un comptage strictement positif.
+		 * Cette seconde opération doit écraser le message précédemment
+		 * positionné par creer(null).
+		 */
+		when(gateway.count()).thenReturn(comptageAttendu);
 
-		// ======================= ACT =======================
+		/* ACT :
+		 * provoque d'abord une erreur utilisateur bénigne.
+		 */
 		service.creer(null);
+
+		/* Lit le message courant après cette première opération. */
 		final String messageErreur = service.getMessage();
 
+		/* ACT :
+		 * exécute ensuite un comptage nominal plus récent.
+		 */
 		final long retour = service.count();
+
+		/* Lit le message courant après cette seconde opération. */
 		final String messageFinal = service.getMessage();
 
-		// ===================== ASSERT ======================
+		/* ASSERT */
+		/* Garantit que la première consultation retourne bien
+		 * le message local produit par creer(null).
+		 */
 		assertThat(messageErreur)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
-		assertThat(retour).isEqualTo(1L);
+
+		/* Garantit que la seconde opération retourne son comptage
+		 * et remplace le message observable par MESSAGE_RECHERCHE_OK.
+		 */
+		assertThat(retour).isEqualTo(comptageAttendu);
 		assertThat(messageFinal)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		/* Garantit que seule l'opération count() a sollicité le Gateway ;
+		 * les consultations getMessage() lisent uniquement l'état local.
+		 */
 		verify(gateway, times(1)).count();
 		verifyNoInteractions(typeProduitGateway);
 
-	} // __________________________________________________________________	
-
+	} // __________________________________________________________________
 	
-
-}
+	
+	
+} // FIN DE LA CLASSE SousTypeProduitCuServiceMockTest.--------------------
