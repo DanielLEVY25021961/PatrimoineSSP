@@ -6,11 +6,9 @@ package levy.daniel.application.model.services.produittype.cu.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -48,56 +46,654 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
 /**
  * <div>
  * <p style="font-weight:bold;">CLASSE ProduitCuServiceMockTest.java :</p>
- * <p>Tests JUnit Mockito ciblés sur creer(...) pour
- * {@link ProduitCuService}.</p>
- * <p>Vérifie l'implémentation du contrat du PORT
- * {@link ProduitICuService} et la délégation vers
- * {@link ProduitGatewayIService}.</p>
+ * <p>Tests unitaires JUnit 5 / Mockito du SERVICE METIER UC
+ * {@link ProduitCuService} pour l'objet métier {@link Produit}.</p>
+ * <p>Le SERVICE METIER UC est le point d'entrée dans la logique métier
+ * dialoguant directement avec le controller appelant.</p>
+ * <p>Ces tests vérifient le respect du PORT {@link ProduitICuService},
+ * les validations locales des DTO, les messages utilisateur exposés par
+ * {@link ProduitCuService#getMessage()}, les conversions
+ * {@link ProduitDTO.InputDTO} -> objet métier -> {@link ProduitDTO.OutputDTO},
+ * les délégations attendues vers {@link ProduitGatewayIService} et
+ * {@link SousTypeProduitGatewayIService}, ainsi que l'absence de délégation
+ * Gateway lorsque le SERVICE METIER UC bloque localement l'opération.</p>
+ * <p>{@link Produit} est un objet métier enfant : son parent est
+ * {@link SousTypeProduit}, lui-même rattaché à un {@link TypeProduit}.</p>
+ * <p>La classe reprend le formalisme stabilisé dans
+ * {@code TypeProduitCuServiceMockTest} et
+ * {@code SousTypeProduitCuServiceMockTest}, sans réinvention inutile.</p>
  * </div>
  *
  * @author Daniel Lévy
  * @version 1.0
- * @since 30 mars 2026
+ * @since 12 mai 2026
  */
 @ExtendWith(MockitoExtension.class)
 public class ProduitCuServiceMockTest {
 
-	/** Tag JUnit : tests Mockito de la couche CU. */
-	public static final String TAG = "cu-mock";
-
-	/** TypeProduit parent : "bazar". */
+	/** "bazar". */
 	public static final String BAZAR = "bazar";
 
-	/** SousTypeProduit parent : "outillage". */
+	/** "outillage". */
 	public static final String OUTILLAGE = "outillage";
 
-	/** Produit : "marteau". */
+	/** "marteau". */
 	public static final String MARTEAU = "marteau";
-	
-	/**
-	 * "quincaillerie"
-	 */
+
+	/** "quincaillerie". */
 	public static final String QUINCAILLERIE = "quincaillerie";
-	
-	/**
-	 * "atelier"
-	 */
+
+	/** "atelier". */
 	public static final String ATELIER = "atelier";
-	
-	/**
-	 * "scie"
-	 */
+
+	/** "scie". */
 	public static final String SCIE = "scie";
 
-	/** Chaine blank : "   ". */
+	/** "mar". */
+	public static final String CONTENU_RAPIDE = "mar";
+
+	/** "zzz". */
+	public static final String CONTENU_ABSENT = "zzz";
+
+	/** "   ". */
 	public static final String ESPACES = "   ";
 
-	/** Message mock gateway : "message gateway". */
+	/** "message gateway". */
 	public static final String MESSAGE_GATEWAY = "message gateway";
 
-	/** Message mock gateway (bis) : "message gateway (bis)". */
+	/** "message gateway (bis)". */
 	public static final String MESSAGE_GATEWAY_BIS = "message gateway (bis)";
-	
+
+	/** "creer". */
+	public static final String TAG_CREER = "creer";
+
+	/** "rechercherTous". */
+	public static final String TAG_RECHERCHER_TOUS = "rechercherTous";
+
+	/** "rechercherTousString". */
+	public static final String TAG_RECHERCHER_TOUS_STRING = "rechercherTousString";
+
+	/** "rechercherTousParPage". */
+	public static final String TAG_RECHERCHER_TOUS_PAR_PAGE = "rechercherTousParPage";
+
+	/** "findByLibelle". */
+	public static final String TAG_FIND_BY_LIBELLE = "findByLibelle";
+
+	/** "findByLibelleRapide". */
+	public static final String TAG_FIND_BY_LIBELLE_RAPIDE = "findByLibelleRapide";
+
+	/** "findAllByParent". */
+	public static final String TAG_FIND_ALL_BY_PARENT = "findAllByParent";
+
+	/** "findByDTO". */
+	public static final String TAG_FIND_BY_DTO = "findByDTO";
+
+	/** "findById". */
+	public static final String TAG_FIND_BY_ID = "findById";
+
+	/** "update". */
+	public static final String TAG_UPDATE = "update";
+
+	/** "delete". */
+	public static final String TAG_DELETE = "delete";
+
+	/** "count". */
+	public static final String TAG_COUNT = "count";
+
+	/** "getMessage". */
+	public static final String TAG_GET_MESSAGE = "getMessage";
+
+	/** "creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway". */
+	public static final String DISPLAY_NAME_CREER_NULL
+			= "creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway";
+
+	/** "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK". */
+	public static final String DISPLAY_NAME_CREER_BLANK
+			= "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK";
+
+	/** "creer(parent blank) : MESSAGE_PAS_PARENT + aucune interaction Gateway". */
+	public static final String DISPLAY_NAME_CREER_PARENT_BLANK
+			= "creer(parent blank) : MESSAGE_PAS_PARENT + aucune interaction Gateway";
+
+	/** "creer(contrôle technique KO avec message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_AVEC_MESSAGE
+			= "creer(contrôle technique KO avec message) : exception propagée + message rationalisé";
+
+	/** "creer(contrôle technique KO sans message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_SANS_MESSAGE
+			= "creer(contrôle technique KO sans message) : exception propagée + message rationalisé";
+
+	/** "creer(doublon) : ExceptionDoublon + aucune création Gateway". */
+	public static final String DISPLAY_NAME_CREER_DOUBLON
+			= "creer(doublon) : ExceptionDoublon + aucune création Gateway";
+
+	/** "creer(parent technique KO avec message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_AVEC_MESSAGE
+			= "creer(parent technique KO avec message) : exception propagée + message rationalisé";
+
+	/** "creer(parent technique KO sans message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_SANS_MESSAGE
+			= "creer(parent technique KO sans message) : exception propagée + message rationalisé";
+
+	/** "creer(parent absent) : MESSAGE_PAS_PARENT + aucune création Gateway". */
+	public static final String DISPLAY_NAME_CREER_PARENT_ABSENT
+			= "creer(parent absent) : MESSAGE_PAS_PARENT + aucune création Gateway";
+
+	/** "creer(parent non persistant) : MESSAGE_PAS_PARENT + aucune création Gateway". */
+	public static final String DISPLAY_NAME_CREER_PARENT_NON_PERSISTANT
+			= "creer(parent non persistant) : MESSAGE_PAS_PARENT + aucune création Gateway";
+
+	/** "creer(création technique KO avec message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_AVEC_MESSAGE
+			= "creer(création technique KO avec message) : exception propagée + message rationalisé";
+
+	/** "creer(création technique KO sans message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_SANS_MESSAGE
+			= "creer(création technique KO sans message) : exception propagée + message rationalisé";
+
+	/** "creer(gateway retourne null) : MESSAGE_CREATION_TECHNIQUE_KO_CREER". */
+	public static final String DISPLAY_NAME_CREER_GATEWAY_RETOURNE_NULL
+			= "creer(gateway retourne null) : MESSAGE_CREATION_TECHNIQUE_KO_CREER";
+
+	/** "creer(conversion OutputDTO KO avec message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_AVEC_MESSAGE
+			= "creer(conversion OutputDTO KO avec message) : exception propagée + message rationalisé";
+
+	/** "creer(conversion OutputDTO KO sans message) : exception propagée + message rationalisé". */
+	public static final String DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_SANS_MESSAGE
+			= "creer(conversion OutputDTO KO sans message) : exception propagée + message rationalisé";
+
+	/** "creer(nominal) : OutputDTO cohérent + MESSAGE_CREER_OK". */
+	public static final String DISPLAY_NAME_CREER_NOMINAL
+			= "creer(nominal) : OutputDTO cohérent + MESSAGE_CREER_OK";
+
+	/** "rechercherTous(gateway retourne null) : MESSAGE_STOCKAGE_NULL". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_RETOUR_NULL
+			= "rechercherTous(gateway retourne null) : MESSAGE_STOCKAGE_NULL";
+
+	/** "rechercherTous(gateway KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KOAVEC_MESSAGE
+			= "rechercherTous(gateway KO avec message) : exception propagée";
+
+	/** "rechercherTous(gateway KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KOSANS_MESSAGE
+			= "rechercherTous(gateway KO sans message) : exception propagée";
+
+	/** "rechercherTous(conversion OutputDTO KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "rechercherTous(conversion OutputDTO KO avec message) : exception propagée";
+
+	/** "rechercherTous(conversion OutputDTO KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "rechercherTous(conversion OutputDTO KO sans message) : exception propagée";
+
+	/** "rechercherTous(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_VIDE_APRES_FILTRAGE
+			= "rechercherTous(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE";
+
+	/** "rechercherTous(nominal) : filtre, trie, dédoublonne + MESSAGE_RECHERCHE_OK". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_NOMINAL
+			= "rechercherTous(nominal) : filtre, trie, dédoublonne + MESSAGE_RECHERCHE_OK";
+
+	/** "rechercherTousString(gateway retourne null) : propage rechercherTous()". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_RETOUR_NULL
+			= "rechercherTousString(gateway retourne null) : propage rechercherTous()";
+
+	/** "rechercherTousString(gateway KO avec message) : propage rechercherTous()". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KOAVEC_MESSAGE
+			= "rechercherTousString(gateway KO avec message) : propage rechercherTous()";
+
+	/** "rechercherTousString(gateway KO sans message) : propage rechercherTous()". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KOSANS_MESSAGE
+			= "rechercherTousString(gateway KO sans message) : propage rechercherTous()";
+
+	/** "rechercherTousString(conversion KO avec message) : propage rechercherTous()". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KOAVEC_MESSAGE
+			= "rechercherTousString(conversion KO avec message) : propage rechercherTous()";
+
+	/** "rechercherTousString(conversion KO sans message) : propage rechercherTous()". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KOSANS_MESSAGE
+			= "rechercherTousString(conversion KO sans message) : propage rechercherTous()";
+
+	/** "rechercherTousString(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_VIDE_APRES_FILTRAGE
+			= "rechercherTousString(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE";
+
+	/** "rechercherTousString(libellés blank) : liste vide + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_VIDE_APRES_LIBELLES_BLANK
+			= "rechercherTousString(libellés blank) : liste vide + MESSAGE_RECHERCHE_VIDE";
+
+	/** "rechercherTousString(nominal) : libellés triés + MESSAGE_RECHERCHE_OK". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_NOMINAL
+			= "rechercherTousString(nominal) : libellés triés + MESSAGE_RECHERCHE_OK";
+
+	/** "rechercherTousParPage(null) : MESSAGE_PAGEABLE_NULL". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL
+			= "rechercherTousParPage(null) : MESSAGE_PAGEABLE_NULL";
+
+	/** "rechercherTousParPage(gateway KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KOAVEC_MESSAGE
+			= "rechercherTousParPage(gateway KO avec message) : exception propagée";
+
+	/** "rechercherTousParPage(gateway KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KOSANS_MESSAGE
+			= "rechercherTousParPage(gateway KO sans message) : exception propagée";
+
+	/** "rechercherTousParPage(gateway retourne null) : MESSAGE_RECHERCHE_PAGINEE_KO". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_RETOUR_NULL
+			= "rechercherTousParPage(gateway retourne null) : MESSAGE_RECHERCHE_PAGINEE_KO";
+
+	/** "rechercherTousParPage(conversion OutputDTO KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "rechercherTousParPage(conversion OutputDTO KO avec message) : exception propagée";
+
+	/** "rechercherTousParPage(conversion OutputDTO KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "rechercherTousParPage(conversion OutputDTO KO sans message) : exception propagée";
+
+	/** "rechercherTousParPage(vide après filtrage) : page vide + MESSAGE_RECHERCHE_PAGINEE_OK". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_VIDE_APRES_FILTRAGE
+			= "rechercherTousParPage(vide après filtrage) : page vide + MESSAGE_RECHERCHE_PAGINEE_OK";
+
+	/** "rechercherTousParPage(nominal) : page cohérente + MESSAGE_RECHERCHE_PAGINEE_OK". */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL
+			= "rechercherTousParPage(nominal) : page cohérente + MESSAGE_RECHERCHE_PAGINEE_OK";
+
+	/** "findByLibelle(null) : null + MESSAGE_PARAM_BLANK". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_NULL
+			= "findByLibelle(null) : null + MESSAGE_PARAM_BLANK";
+
+	/** "findByLibelle(blank) : null + MESSAGE_PARAM_BLANK". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_BLANK
+			= "findByLibelle(blank) : null + MESSAGE_PARAM_BLANK";
+
+	/** "findByLibelle(gateway retourne null) : KO_TECHNIQUE_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_RETOUR_NULL
+			= "findByLibelle(gateway retourne null) : KO_TECHNIQUE_RECHERCHE";
+
+	/** "findByLibelle(gateway KO avec message) : exception propagée par l'ADAPTER réel". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KOAVEC_MESSAGE
+			= "findByLibelle(gateway KO avec message) : exception propagée par l'ADAPTER réel";
+
+	/** "findByLibelle(gateway KO sans message) : exception propagée par l'ADAPTER réel". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KOSANS_MESSAGE
+			= "findByLibelle(gateway KO sans message) : exception propagée par l'ADAPTER réel";
+
+	/** "findByLibelle(conversion OutputDTO KO avec message) : exception propagée par l'ADAPTER réel". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "findByLibelle(conversion OutputDTO KO avec message) : exception propagée par l'ADAPTER réel";
+
+	/** "findByLibelle(conversion OutputDTO KO sans message) : exception propagée par l'ADAPTER réel". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "findByLibelle(conversion OutputDTO KO sans message) : exception propagée par l'ADAPTER réel";
+
+	/** "findByLibelle(introuvable) : liste vide + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_INTROUVABLE
+			= "findByLibelle(introuvable) : liste vide + MESSAGE_RECHERCHE_VIDE";
+
+	/** "findByLibelle(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_NOMINAL
+			= "findByLibelle(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK";
+
+	/** "findByLibelleRapide(null) : MESSAGE_PARAM_NULL". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL
+			= "findByLibelleRapide(null) : MESSAGE_PARAM_NULL";
+
+	/** "findByLibelleRapide(blank) : délègue à rechercherTous()". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK
+			= "findByLibelleRapide(blank) : délègue à rechercherTous()";
+
+	/** "findByLibelleRapide(gateway KO avec message) : exception propagée par l'ADAPTER réel". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOAVEC_MESSAGE
+			= "findByLibelleRapide(gateway KO avec message) : exception propagée par l'ADAPTER réel";
+
+	/** "findByLibelleRapide(gateway KO sans message) : exception propagée par l'ADAPTER réel". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOSANS_MESSAGE
+			= "findByLibelleRapide(gateway KO sans message) : exception propagée par l'ADAPTER réel";
+
+	/** "findByLibelleRapide(gateway retourne null) : KO_TECHNIQUE_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_RETOUR_NULL
+			= "findByLibelleRapide(gateway retourne null) : KO_TECHNIQUE_RECHERCHE";
+
+	/** "findByLibelleRapide(conversion OutputDTO KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "findByLibelleRapide(conversion OutputDTO KO avec message) : exception propagée";
+
+	/** "findByLibelleRapide(conversion OutputDTO KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "findByLibelleRapide(conversion OutputDTO KO sans message) : exception propagée";
+
+	/** "findByLibelleRapide(vide après filtrage) : liste vide". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_VIDE_APRES_FILTRAGE
+			= "findByLibelleRapide(vide après filtrage) : liste vide";
+
+	/** "findByLibelleRapide(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK". */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL
+			= "findByLibelleRapide(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK";
+
+	/** "findAllByParent(null) : RECHERCHE_SOUSTYPEPRODUIT_NULL". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL
+			= "findAllByParent(null) : RECHERCHE_SOUSTYPEPRODUIT_NULL";
+
+	/** "findAllByParent(parent blank) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK
+			= "findAllByParent(parent blank) : MESSAGE_PAS_PARENT";
+
+	/** "findAllByParent(recherche parent KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KOAVEC_MESSAGE
+			= "findAllByParent(recherche parent KO avec message) : exception propagée";
+
+	/** "findAllByParent(recherche parent KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KOSANS_MESSAGE
+			= "findAllByParent(recherche parent KO sans message) : exception propagée";
+
+	/** "findAllByParent(parent absent) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_ABSENT
+			= "findAllByParent(parent absent) : MESSAGE_PAS_PARENT";
+
+	/** "findAllByParent(parent non persistant) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_NON_PERSISTANT
+			= "findAllByParent(parent non persistant) : MESSAGE_PAS_PARENT";
+
+	/** "findAllByParent(recherche enfants KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_ENFANTS_GATEWAY_KOAVEC_MESSAGE
+			= "findAllByParent(recherche enfants KO avec message) : exception propagée";
+
+	/** "findAllByParent(recherche enfants KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_ENFANTS_GATEWAY_KOSANS_MESSAGE
+			= "findAllByParent(recherche enfants KO sans message) : exception propagée";
+
+	/** "findAllByParent(gateway retourne null) : KO_TECHNIQUE_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_GATEWAY_RETOUR_NULL
+			= "findAllByParent(gateway retourne null) : KO_TECHNIQUE_RECHERCHE";
+
+	/** "findAllByParent(conversion OutputDTO KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "findAllByParent(conversion OutputDTO KO avec message) : exception propagée";
+
+	/** "findAllByParent(conversion OutputDTO KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "findAllByParent(conversion OutputDTO KO sans message) : exception propagée";
+
+	/** "findAllByParent(vide après filtrage) : liste vide selon ADAPTER réel". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_VIDE_APRES_FILTRAGE
+			= "findAllByParent(vide après filtrage) : liste vide selon ADAPTER réel";
+
+	/** "findAllByParent(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK". */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NOMINAL
+			= "findAllByParent(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK";
+
+	/** "findByDTO(null) : MESSAGE_RECHERCHE_OBJ_NULL". */
+	public static final String DISPLAY_NAME_FIND_BY_DTONULL
+			= "findByDTO(null) : MESSAGE_RECHERCHE_OBJ_NULL";
+
+	/** "findByDTO(parent blank) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOPARENT_BLANK
+			= "findByDTO(parent blank) : MESSAGE_PAS_PARENT";
+
+	/** "findByDTO(recherche parent KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_PARENT_AVEC_MESSAGE
+			= "findByDTO(recherche parent KO avec message) : exception propagée";
+
+	/** "findByDTO(recherche parent KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_PARENT_SANS_MESSAGE
+			= "findByDTO(recherche parent KO sans message) : exception propagée";
+
+	/** "findByDTO(parent absent) : null + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOPARENT_ABSENT
+			= "findByDTO(parent absent) : null + MESSAGE_RECHERCHE_VIDE";
+
+	/** "findByDTO(parent non persistant) : null + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOPARENT_NON_PERSISTANT
+			= "findByDTO(parent non persistant) : null + MESSAGE_RECHERCHE_VIDE";
+
+	/** "findByDTO(recherche enfants KO avec message) : KO_TECHNIQUE_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_ENFANTS_AVEC_MESSAGE
+			= "findByDTO(recherche enfants KO avec message) : KO_TECHNIQUE_RECHERCHE";
+
+	/** "findByDTO(recherche enfants KO sans message) : KO_TECHNIQUE_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_ENFANTS_SANS_MESSAGE
+			= "findByDTO(recherche enfants KO sans message) : KO_TECHNIQUE_RECHERCHE";
+
+	/** "findByDTO(gateway retourne null) : null + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOGATEWAY_RETOUR_NULL
+			= "findByDTO(gateway retourne null) : null + MESSAGE_RECHERCHE_VIDE";
+
+	/** "findByDTO(vide) : null + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOVIDE
+			= "findByDTO(vide) : null + MESSAGE_RECHERCHE_VIDE";
+
+	/** "findByDTO(vide après filtrage) : null + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOVIDE_APRES_FILTRAGE
+			= "findByDTO(vide après filtrage) : null + MESSAGE_RECHERCHE_VIDE";
+
+	/** "findByDTO(introuvable dans liste) : null + MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOINTROUVABLE_DANS_LISTE
+			= "findByDTO(introuvable dans liste) : null + MESSAGE_RECHERCHE_VIDE";
+
+	/** "findByDTO(conversion OutputDTO KO avec message) : KO_TECHNIQUE_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOCONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "findByDTO(conversion OutputDTO KO avec message) : KO_TECHNIQUE_RECHERCHE";
+
+	/** "findByDTO(conversion OutputDTO KO sans message) : KO_TECHNIQUE_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTOCONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "findByDTO(conversion OutputDTO KO sans message) : KO_TECHNIQUE_RECHERCHE";
+
+	/** "findByDTO(nominal) : OutputDTO exact + MESSAGE_SUCCES_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_DTONOMINAL
+			= "findByDTO(nominal) : OutputDTO exact + MESSAGE_SUCCES_RECHERCHE";
+
+	/** "findById(null) : MESSAGE_PARAM_NULL". */
+	public static final String DISPLAY_NAME_FIND_BY_ID_NULL
+			= "findById(null) : MESSAGE_PARAM_NULL";
+
+	/** "findById(introuvable) : MESSAGE_OBJ_INTROUVABLE + id". */
+	public static final String DISPLAY_NAME_FIND_BY_ID_INTROUVABLE
+			= "findById(introuvable) : MESSAGE_OBJ_INTROUVABLE + id";
+
+	/** "findById(gateway KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_ID_ERREUR_TECHNIQUE_AVEC_MESSAGE
+			= "findById(gateway KO avec message) : exception propagée";
+
+	/** "findById(gateway KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_ID_ERREUR_TECHNIQUE_SANS_MESSAGE
+			= "findById(gateway KO sans message) : exception propagée";
+
+	/** "findById(conversion OutputDTO KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "findById(conversion OutputDTO KO avec message) : exception propagée";
+
+	/** "findById(conversion OutputDTO KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "findById(conversion OutputDTO KO sans message) : exception propagée";
+
+	/** "findById(nominal) : OutputDTO exact + MESSAGE_SUCCES_RECHERCHE". */
+	public static final String DISPLAY_NAME_FIND_BY_ID_NOMINAL
+			= "findById(nominal) : OutputDTO exact + MESSAGE_SUCCES_RECHERCHE";
+
+	/** "update(null) : ExceptionParametreNull + MESSAGE_PARAM_NULL". */
+	public static final String DISPLAY_NAME_UPDATE_NULL
+			= "update(null) : ExceptionParametreNull + MESSAGE_PARAM_NULL";
+
+	/** "update(libellé null) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK". */
+	public static final String DISPLAY_NAME_UPDATE_LIBELLE_NULL
+			= "update(libellé null) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
+
+	/** "update(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK". */
+	public static final String DISPLAY_NAME_UPDATE_BLANK
+			= "update(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
+
+	/** "update(parent blank) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_BLANK
+			= "update(parent blank) : MESSAGE_PAS_PARENT";
+
+	/** "update(recherche parent KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_RECHERCHE_PARENT_TECHNIQUE_KO_AVEC_MESSAGE
+			= "update(recherche parent KO avec message) : exception propagée";
+
+	/** "update(recherche parent KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_RECHERCHE_PARENT_TECHNIQUE_KO_SANS_MESSAGE
+			= "update(recherche parent KO sans message) : exception propagée";
+
+	/** "update(parent absent) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_ABSENT
+			= "update(parent absent) : MESSAGE_PAS_PARENT";
+
+	/** "update(parent non persistant) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_UPDATE_PARENT_NON_PERSISTANT
+			= "update(parent non persistant) : MESSAGE_PAS_PARENT";
+
+	/** "update(recherche enfants KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_RECHERCHE_ENFANTS_TECHNIQUE_KO_AVEC_MESSAGE
+			= "update(recherche enfants KO avec message) : exception propagée";
+
+	/** "update(recherche enfants KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_RECHERCHE_ENFANTS_TECHNIQUE_KO_SANS_MESSAGE
+			= "update(recherche enfants KO sans message) : exception propagée";
+
+	/** "update(stockage null pendant ré-identification) : null + MESSAGE_OBJ_INTROUVABLE". */
+	public static final String DISPLAY_NAME_UPDATE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION
+			= "update(stockage null pendant ré-identification) : null + MESSAGE_OBJ_INTROUVABLE";
+
+	/** "update(introuvable) : null + MESSAGE_OBJ_INTROUVABLE". */
+	public static final String DISPLAY_NAME_UPDATE_INTROUVABLE
+			= "update(introuvable) : null + MESSAGE_OBJ_INTROUVABLE";
+
+	/** "update(non persistant) : ExceptionNonPersistant". */
+	public static final String DISPLAY_NAME_UPDATE_NON_PERSISTANT
+			= "update(non persistant) : ExceptionNonPersistant";
+
+	/** "update(modification technique KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_TECHNIQUE_KO_AVEC_MESSAGE
+			= "update(modification technique KO avec message) : exception propagée";
+
+	/** "update(modification technique KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_TECHNIQUE_KO_SANS_MESSAGE
+			= "update(modification technique KO sans message) : exception propagée";
+
+	/** "update(modification retourne null) : null + MESSAGE_MODIF_KO". */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NULL
+			= "update(modification retourne null) : null + MESSAGE_MODIF_KO";
+
+	/** "update(modification retourne non persistant) : ExceptionNonPersistant". */
+	public static final String DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NON_PERSISTANT
+			= "update(modification retourne non persistant) : ExceptionNonPersistant";
+
+	/** "update(conversion OutputDTO KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
+			= "update(conversion OutputDTO KO avec message) : exception propagée";
+
+	/** "update(conversion OutputDTO KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
+			= "update(conversion OutputDTO KO sans message) : exception propagée";
+
+	/** "update(nominal) : OutputDTO cohérent + ID conservé". */
+	public static final String DISPLAY_NAME_UPDATE_NOMINAL
+			= "update(nominal) : OutputDTO cohérent + ID conservé";
+
+	/** "delete(null) : ExceptionParametreNull + MESSAGE_PARAM_NULL". */
+	public static final String DISPLAY_NAME_DELETE_NULL
+			= "delete(null) : ExceptionParametreNull + MESSAGE_PARAM_NULL";
+
+	/** "delete(libellé null) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK". */
+	public static final String DISPLAY_NAME_DELETE_LIBELLE_NULL
+			= "delete(libellé null) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
+
+	/** "delete(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK". */
+	public static final String DISPLAY_NAME_DELETE_BLANK
+			= "delete(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
+
+	/** "delete(parent blank) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_DELETE_PARENT_BLANK
+			= "delete(parent blank) : MESSAGE_PAS_PARENT";
+
+	/** "delete(recherche parent KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_DELETE_RECHERCHE_PARENT_TECHNIQUE_KO_AVEC_MESSAGE
+			= "delete(recherche parent KO avec message) : exception propagée";
+
+	/** "delete(recherche parent KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_DELETE_RECHERCHE_PARENT_TECHNIQUE_KO_SANS_MESSAGE
+			= "delete(recherche parent KO sans message) : exception propagée";
+
+	/** "delete(parent absent) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_DELETE_PARENT_ABSENT
+			= "delete(parent absent) : MESSAGE_PAS_PARENT";
+
+	/** "delete(parent non persistant) : MESSAGE_PAS_PARENT". */
+	public static final String DISPLAY_NAME_DELETE_PARENT_NON_PERSISTANT
+			= "delete(parent non persistant) : MESSAGE_PAS_PARENT";
+
+	/** "delete(recherche enfants KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_DELETE_RECHERCHE_ENFANTS_TECHNIQUE_KO_AVEC_MESSAGE
+			= "delete(recherche enfants KO avec message) : exception propagée";
+
+	/** "delete(recherche enfants KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_DELETE_RECHERCHE_ENFANTS_TECHNIQUE_KO_SANS_MESSAGE
+			= "delete(recherche enfants KO sans message) : exception propagée";
+
+	/** "delete(stockage null pendant ré-identification) : MESSAGE_STOCKAGE_NULL". */
+	public static final String DISPLAY_NAME_DELETE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION
+			= "delete(stockage null pendant ré-identification) : MESSAGE_STOCKAGE_NULL";
+
+	/** "delete(introuvable) : MESSAGE_OBJ_INTROUVABLE + aucune suppression". */
+	public static final String DISPLAY_NAME_DELETE_INTROUVABLE
+			= "delete(introuvable) : MESSAGE_OBJ_INTROUVABLE + aucune suppression";
+
+	/** "delete(non persistant) : ExceptionNonPersistant". */
+	public static final String DISPLAY_NAME_DELETE_NON_PERSISTANT
+			= "delete(non persistant) : ExceptionNonPersistant";
+
+	/** "delete(destruction KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_DELETE_DESTRUCTION_KOAVEC_MESSAGE
+			= "delete(destruction KO avec message) : exception propagée";
+
+	/** "delete(destruction KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_DELETE_DESTRUCTION_KOSANS_MESSAGE
+			= "delete(destruction KO sans message) : exception propagée";
+
+	/** "delete(nominal) : suppression sur le couple parent/libellé". */
+	public static final String DISPLAY_NAME_DELETE_NOMINAL
+			= "delete(nominal) : suppression sur le couple parent/libellé";
+
+	/** "count(gateway KO avec message) : exception propagée". */
+	public static final String DISPLAY_NAME_COUNT_GATEWAY_KOAVEC_MESSAGE
+			= "count(gateway KO avec message) : exception propagée";
+
+	/** "count(gateway KO sans message) : exception propagée". */
+	public static final String DISPLAY_NAME_COUNT_GATEWAY_KOSANS_MESSAGE
+			= "count(gateway KO sans message) : exception propagée";
+
+	/** "count(retour négatif) : IllegalStateException". */
+	public static final String DISPLAY_NAME_COUNT_RETOUR_NEGATIF
+			= "count(retour négatif) : IllegalStateException";
+
+	/** "count(0) : MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_COUNT_ZERO
+			= "count(0) : MESSAGE_RECHERCHE_VIDE";
+
+	/** "count(nominal) : MESSAGE_RECHERCHE_OK". */
+	public static final String DISPLAY_NAME_COUNT_NOMINAL
+			= "count(nominal) : MESSAGE_RECHERCHE_OK";
+
+	/** "getMessage(initial) : null". */
+	public static final String DISPLAY_NAME_GET_MESSAGE_INITIAL_NULL
+			= "getMessage(initial) : null";
+
+	/** "getMessage(après erreur locale) : MESSAGE_CREER_NULL". */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE
+			= "getMessage(après erreur locale) : MESSAGE_CREER_NULL";
+
+	/** "getMessage(après count zéro) : MESSAGE_RECHERCHE_VIDE". */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_ZERO
+			= "getMessage(après count zéro) : MESSAGE_RECHERCHE_VIDE";
+
+	/** "getMessage(après count nominal) : MESSAGE_RECHERCHE_OK". */
+	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_NOMINAL
+			= "getMessage(après count nominal) : MESSAGE_RECHERCHE_OK";
+
+	/** "getMessage(dernier message gagne) : dernier message observable". */
+	public static final String DISPLAY_NAME_GET_MESSAGE_DERNIER_MESSAGE_GAGNE
+			= "getMessage(dernier message gagne) : dernier message observable";
 
 	// ************************* CONSTRUCTEURS *****************************/
 
@@ -111,3213 +707,3970 @@ public class ProduitCuServiceMockTest {
 		super();
 	}
 
-	
-	
+
 	// ***************************** TESTS *******************************/
 
-	
-	
+
+
 	// ============================ creer =================================
-	
-	
-	
+
+
 	/**
 	 * <div>
-	 * <p>creer(null) : erreur utilisateur bénigne.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_CREER_NULL}</li>
-	 * <li>n'interagit ni avec le gateway Produit
-	 * ni avec le gateway SousTypeProduit</li>
-	 * </ul>
+	 * <p>creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("creer(null) : retourne null, message utilisateur, aucune interaction gateway")
 	public void testCreerNull() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		/* ARRANGE :
+		 * prépare le SERVICE UC avec ses Gateways mockés.
+		 */
+		final Scenario scenario = scenario();
 
-		final OutputDTO retour = service.creer(null);
+		/* ACT */
+		final OutputDTO retour = scenario.service.creer(null);
 
+		/* ASSERT */
 		assertThat(retour).isNull();
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
 
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-		
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
 	} // __________________________________________________________________
-	
-	
 
 	/**
-	 * <div><p>creer(blank) : violation de contrat applicatif.</p></div>
+	 * <div>
+	 * <p>creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_BLANK)
 	@Test
-	@Tag(TAG)
-	@DisplayName("creer(blank) : ExceptionParametreBlank + message exact + aucune interaction gateway")
 	public void testCreerBlank() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, ESPACES);
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, ESPACES);
 
-		assertThatThrownBy(() -> service.creer(dto))
-			.isInstanceOf(ExceptionParametreBlank.class);
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(ProduitICuService.MESSAGE_CREER_NOM_BLANK);
 
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_CREER_NOM_BLANK);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NOM_BLANK);
 
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-		
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
 	} // __________________________________________________________________
-	
-	
 
 	/**
-	 * <div><p>creer(parent blank) : IllegalStateException + message exact.</p></div>
+	 * <div>
+	 * <p>creer(parent blank) : MESSAGE_PAS_PARENT + aucune interaction Gateway.</p>
+	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_BLANK)
 	@Test
-	@Tag(TAG)
-	@DisplayName("creer(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune interaction gateway")
 	public void testCreerParentBlank() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, ESPACES, MARTEAU);
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, ESPACES, MARTEAU);
 
-		assertThatThrownBy(() -> service.creer(dto))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
 
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
 
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-		
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
 	} // __________________________________________________________________
-	
-	
 
 	/**
-	 * <div><p>creer(controle technique KO avec message) : propage l'exception et rationalise le message utilisateur.</p></div>
+	 * <div>
+	 * <p>creer(contrôle technique KO avec message) : exception propagée + message rationalisé.</p>
+	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("creer(controle technique KO avec message) : propage l'exception et rationalise le message")
 	public void testCreerControleTechniqueKoAvecMessage() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
 		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
 
-		when(gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenThrow(panneTechnique);
 
-		assertThatThrownBy(() -> service.creer(dto))
-			.isSameAs(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage()).isEqualTo(
-				ProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER + MESSAGE_GATEWAY);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+								+ MESSAGE_GATEWAY);
 
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verify(gateway, never()).creer(any(Produit.class));
-		verifyNoInteractions(sousTypeGateway);
-		
+		verify(scenario.gateway, times(1)).findByLibelle(MARTEAU);
+		verify(scenario.gateway, never()).creer(any(Produit.class));
+		verifyNoInteractions(scenario.sousTypeGateway);
+
 	} // __________________________________________________________________
-	
-	
 
 	/**
-	 * <div><p>creer(doublon) : refus métier d'unicité.</p></div>
+	 * <div>
+	 * <p>creer(contrôle technique KO sans message) : exception propagée + message rationalisé.</p>
+	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("creer(doublon) : ExceptionDoublon + message exact + aucune création gateway")
+	public void testCreerControleTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+								+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(scenario.gateway, times(1)).findByLibelle(MARTEAU);
+		verify(scenario.gateway, never()).creer(any(Produit.class));
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(doublon) : ExceptionDoublon + aucune création Gateway.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_DOUBLON)
+	@Test
 	public void testCreerDoublon() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
 
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit sousTypeProduit = new SousTypeProduit(OUTILLAGE, typeProduit);
-		sousTypeProduit.setIdSousTypeProduit(10L);
-		final Produit existant = new Produit(MARTEAU, sousTypeProduit);
-		existant.setIdProduit(100L);
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Arrays.asList(existant));
 
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(Arrays.asList(existant));
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isInstanceOf(ExceptionDoublon.class)
+				.hasMessage(ProduitICuService.MESSAGE_DOUBLON + MARTEAU);
 
-		assertThatThrownBy(() -> service.creer(dto))
-			.isInstanceOf(ExceptionDoublon.class);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_DOUBLON + MARTEAU);
 
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_DOUBLON + MARTEAU);
+		verify(scenario.gateway, times(1)).findByLibelle(MARTEAU);
+		verify(scenario.gateway, never()).creer(any(Produit.class));
+		verifyNoInteractions(scenario.sousTypeGateway);
 
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verify(gateway, never()).creer(any(Produit.class));
-		verifyNoInteractions(sousTypeGateway);
-		
 	} // __________________________________________________________________
-	
-	
 
 	/**
-	 * <div><p>creer(parent technique KO avec message) : propage l'exception et rationalise le message utilisateur.</p></div>
+	 * <div>
+	 * <p>creer(parent technique KO avec message) : exception propagée + message rationalisé.</p>
+	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_AVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("creer(parent technique KO avec message) : propage l'exception et rationalise le message")
 	public void testCreerParentTechniqueKoAvecMessage() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY_BIS);
-
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(Collections.emptyList());
-		when(sousTypeGateway.findByLibelle(OUTILLAGE)).thenThrow(panneTechnique);
-
-		assertThatThrownBy(() -> service.creer(dto))
-			.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage()).isEqualTo(
-				ProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER + MESSAGE_GATEWAY_BIS);
-
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).creer(any(Produit.class));
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div><p>creer(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT.</p></div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("creer(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT")
-	public void testCreerParentAbsent() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(Collections.emptyList());
-		when(sousTypeGateway.findByLibelle(OUTILLAGE)).thenReturn(Collections.emptyList());
-
-		assertThatThrownBy(() -> service.creer(dto))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).creer(any(Produit.class));
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div><p>creer(creation technique KO avec message) : propage l'exception du gateway et rationalise le message.</p></div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("creer(creation technique KO avec message) : propage l'exception du gateway et rationalise le message")
-	public void testCreerCreationTechniqueKoAvecMessage() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
 		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
 
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
 
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(Collections.emptyList());
-		when(sousTypeGateway.findByLibelle(OUTILLAGE)).thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.creer(any(Produit.class))).thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
 
-		assertThatThrownBy(() -> service.creer(dto))
-			.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
+								+ MESSAGE_GATEWAY);
 
-		assertThat(service.getMessage()).isEqualTo(
-				ProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER + MESSAGE_GATEWAY);
-		
-	} // __________________________________________________________________
-	
-	
+		verify(scenario.gateway, times(1)).findByLibelle(MARTEAU);
+		verify(scenario.sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(scenario.gateway, never()).creer(any(Produit.class));
 
-	/**
-	 * <div><p>creer(gateway retourne null) : IllegalStateException + message exact MESSAGE_CREATION_TECHNIQUE_KO_CREER.</p></div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("creer(gateway retourne null) : IllegalStateException + message exact MESSAGE_CREATION_TECHNIQUE_KO_CREER")
-	public void testCreerRetourGatewayNull() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(Collections.emptyList());
-		when(sousTypeGateway.findByLibelle(OUTILLAGE)).thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.creer(any(Produit.class))).thenReturn(null);
-
-		assertThatThrownBy(() -> service.creer(dto))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
-
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div><p>creer(ok) : retourne l'OutputDTO créé et positionne MESSAGE_CREER_OK.</p></div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("creer(ok) : retourne OutputDTO + message MESSAGE_CREER_OK + délégation gateway")
-	public void testCreerOk() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-		final Produit cree = new Produit(MARTEAU, parentPersistant);
-		cree.setIdProduit(100L);
-
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(Collections.emptyList());
-		when(sousTypeGateway.findByLibelle(OUTILLAGE)).thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.creer(any(Produit.class))).thenReturn(cree);
-
-		final OutputDTO retour = service.creer(dto);
-
-		assertThat(retour).isNotNull();
-		assertThat(retour.getIdProduit()).isEqualTo(100L);
-		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(retour.getProduit()).isEqualTo(MARTEAU);
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
-
-		final ArgumentCaptor<Produit> captor = ArgumentCaptor.forClass(Produit.class);
-		verify(gateway, times(1)).creer(captor.capture());
-		final Produit produitPasseAuGateway = captor.getValue();
-		assertThat(produitPasseAuGateway).isNotNull();
-		assertThat(produitPasseAuGateway.getProduit()).isEqualTo(MARTEAU);
-		assertThat(produitPasseAuGateway.getSousTypeProduit()).isNotNull();
-		assertThat(produitPasseAuGateway.getSousTypeProduit().getIdSousTypeProduit()).isEqualTo(10L);
-		
 	} // __________________________________________________________________
 
-	
-	
-	// ======================== rechercherTous ============================
-	
-	
-	
 	/**
 	 * <div>
-	 * <p>rechercherTous() : stockage null.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionStockageVide}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
-	 * <li>délègue une seule fois à {@code gateway.rechercherTous()}</li>
-	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
-	 * </ul>
+	 * <p>creer(parent technique KO sans message) : exception propagée + message rationalisé.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_SANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTous() : gateway retourne null -> ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
-	public void testRechercherTousStockageNull() throws Exception {
+	public void testCreerParentTechniqueKoSansMessage() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		when(gateway.rechercherTous()).thenReturn(null);
-
-		/* =================== ACT & ASSERT ================== */
-		assertThatThrownBy(() -> service.rechercherTous())
-			.isInstanceOf(ExceptionStockageVide.class)
-			.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
-
-		verify(gateway, times(1)).rechercherTous();
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTous() : recherche technique KO avec message.</p>
-	 * <ul>
-	 * <li>propage l'exception du gateway</li>
-	 * <li>rationalise le message utilisateur avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
-	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTous() : gateway KO avec message -> propage l'exception + message technique rationalisé")
-	public void testRechercherTousKoTechniqueAvecMessage() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final IllegalStateException panneTechnique
-			= new IllegalStateException(MESSAGE_GATEWAY);
-
-		when(gateway.rechercherTous()).thenThrow(panneTechnique);
-
-		/* =================== ACT & ASSERT ================== */
-		assertThatThrownBy(() -> service.rechercherTous())
-			.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage())
-			.isEqualTo(
-				ProduitICuService.KO_TECHNIQUE_RECHERCHE
-					+ ProduitICuService.TIRET_ESPACE
-					+ MESSAGE_GATEWAY);
-
-		verify(gateway, times(1)).rechercherTous();
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTous() : recherche technique KO sans message.</p>
-	 * <ul>
-	 * <li>propage exactement l'exception du gateway</li>
-	 * <li>retombe sur
-	 * {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTous() : gateway KO sans message -> fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testRechercherTousKoTechniqueSansMessage() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
 		final IllegalStateException panneTechnique = new IllegalStateException();
 
-		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
 
-		/* =================== ACT & ASSERT ================== */
-		assertThatThrownBy(() -> service.rechercherTous())
-			.isSameAs(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage())
-			.isEqualTo(
-				ProduitICuService.KO_TECHNIQUE_RECHERCHE
-					+ ProduitICuService.TIRET_ESPACE
-					+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
+								+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
-		verify(gateway, times(1)).rechercherTous();
-		verifyNoInteractions(sousTypeGateway);
+		verify(scenario.gateway, times(1)).findByLibelle(MARTEAU);
+		verify(scenario.sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(scenario.gateway, never()).creer(any(Produit.class));
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>rechercherTous() : résultats vides après filtrage.</p>
-	 * <ul>
-	 * <li>le gateway retourne uniquement des éléments {@code null}</li>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
-	 * </ul>
+	 * <p>creer(parent absent) : MESSAGE_PAS_PARENT + aucune création Gateway.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_ABSENT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTous() : résultats vides après filtrage -> liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testCreerParentAbsent() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Collections.emptyList());
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(scenario.gateway, times(1)).findByLibelle(MARTEAU);
+		verify(scenario.sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(scenario.gateway, never()).creer(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(parent non persistant) : MESSAGE_PAS_PARENT + aucune création Gateway.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_NON_PERSISTANT)
+	@Test
+	public void testCreerParentNonPersistant() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parentNonPersistant = parentNonPersistant();
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentNonPersistant));
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+
+		verify(scenario.gateway, never()).creer(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(création technique KO avec message) : exception propagée + message rationalisé.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_AVEC_MESSAGE)
+	@Test
+	public void testCreerCreationTechniqueKoAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.creer(any(Produit.class)))
+				.thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+								+ MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(création technique KO sans message) : exception propagée + message rationalisé.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_SANS_MESSAGE)
+	@Test
+	public void testCreerCreationTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.creer(any(Produit.class)))
+				.thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+								+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(gateway retourne null) : MESSAGE_CREATION_TECHNIQUE_KO_CREER.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_GATEWAY_RETOURNE_NULL)
+	@Test
+	public void testCreerGatewayRetourneNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.creer(any(Produit.class)))
+				.thenReturn(null);
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(conversion OutputDTO KO avec message) : exception propagée + message rationalisé.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_AVEC_MESSAGE)
+	@Test
+	public void testCreerConversionTechniqueKoAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit cree = produitConversionKo(panneTechnique);
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.creer(any(Produit.class)))
+				.thenReturn(cree);
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+								+ MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(conversion OutputDTO KO sans message) : exception propagée + message rationalisé.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_SANS_MESSAGE)
+	@Test
+	public void testCreerConversionTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit cree = produitConversionKo(panneTechnique);
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.creer(any(Produit.class)))
+				.thenReturn(cree);
+
+		assertThatThrownBy(() -> scenario.service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+								+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>creer(nominal) : OutputDTO cohérent + MESSAGE_CREER_OK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_NOMINAL)
+	@Test
+	public void testCreerNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit cree = produit(MARTEAU, parent, 100L);
+		final ArgumentCaptor<Produit> captor = ArgumentCaptor.forClass(Produit.class);
+
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.creer(any(Produit.class)))
+				.thenReturn(cree);
+
+		final OutputDTO retour = scenario.service.creer(dto);
+
+		assertProduitDTO(retour, 100L, BAZAR, OUTILLAGE, MARTEAU);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
+
+		verify(scenario.gateway, times(1)).creer(captor.capture());
+		assertThat(captor.getValue().getSousTypeProduit()).isSameAs(parent);
+
+	} // __________________________________________________________________
+
+
+	// ============================ rechercherTous =================================
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(gateway retourne null) : MESSAGE_STOCKAGE_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_RETOUR_NULL)
+	@Test
+	public void testRechercherTousGatewayRetourNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		when(scenario.gateway.rechercherTous()).thenReturn(null);
+
+		assertThatThrownBy(() -> scenario.service.rechercherTous())
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+		verify(scenario.gateway, times(1)).rechercherTous();
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(gateway KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KOAVEC_MESSAGE)
+	@Test
+	public void testRechercherTousGatewayKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+		verify(scenario.gateway, times(1)).rechercherTous();
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(gateway KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KOSANS_MESSAGE)
+	@Test
+	public void testRechercherTousGatewayKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		verify(scenario.gateway, times(1)).rechercherTous();
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(conversion OutputDTO KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testRechercherTousConversionOutputDTOKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(conversion OutputDTO KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testRechercherTousConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.rechercherTous())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTous(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_VIDE_APRES_FILTRAGE)
+	@Test
 	public void testRechercherTousVideApresFiltrage() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(null, null));
 
-		when(gateway.rechercherTous()).thenReturn(Arrays.asList(null, null));
+		final List<OutputDTO> retour = scenario.service.rechercherTous();
 
-		/* ======================= ACT ======================= */
-		final java.util.List<OutputDTO> retour = service.rechercherTous();
-		final String message = service.getMessage();
-
-		/* ===================== ASSERT ====================== */
 		assertThat(retour).isNotNull().isEmpty();
-		assertThat(message).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(gateway, times(1)).rechercherTous();
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>rechercherTous() : scénario nominal complet.</p>
-	 * <ul>
-	 * <li>retire les éléments {@code null}</li>
-	 * <li>trie les objets métier</li>
-	 * <li>dédoublonne les {@link OutputDTO}</li>
-	 * <li>retourne une liste cohérente</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>n'interagit jamais avec le gateway SousTypeProduit</li>
-	 * </ul>
+	 * <p>rechercherTous(nominal) : filtre, trie, dédoublonne + MESSAGE_RECHERCHE_OK.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTous() : filtre nulls + trie + dédoublonne + message MESSAGE_RECHERCHE_OK")
-	public void testRechercherTousOk() throws Exception {
+	public void testRechercherTousNominal() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
 
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(produitScie, null, produitMarteau, produitScie));
 
-		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parent.setIdSousTypeProduit(10L);
+		final List<OutputDTO> retour = scenario.service.rechercherTous();
 
-		final Produit produitScie = new Produit(SCIE, parent);
-		produitScie.setIdProduit(2L);
-
-		final Produit produitMarteau = new Produit(MARTEAU, parent);
-		produitMarteau.setIdProduit(1L);
-
-		when(gateway.rechercherTous())
-			.thenReturn(Arrays.asList(
-				produitScie,
-				null,
-				produitMarteau,
-				produitScie));
-
-		/* ======================= ACT ======================= */
-		final java.util.List<OutputDTO> retour = service.rechercherTous();
-		final String message = service.getMessage();
-
-		/* ===================== ASSERT ====================== */
-		assertThat(retour).isNotNull();
-		assertThat(retour).hasSize(2);
-
-		assertThat(retour)
-			.extracting(ProduitDTO.OutputDTO::getProduit)
-			.containsExactly(MARTEAU, SCIE);
-
-		assertThat(retour)
-			.extracting(ProduitDTO.OutputDTO::getIdProduit)
-			.containsExactly(1L, 2L);
-
-		assertThat(retour)
-			.extracting(ProduitDTO.OutputDTO::getSousTypeProduit)
-			.containsExactly(OUTILLAGE, OUTILLAGE);
-
-		assertThat(retour)
-			.extracting(ProduitDTO.OutputDTO::getTypeProduit)
-			.containsExactly(BAZAR, BAZAR);
-
-		assertThat(message).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		verify(gateway, times(1)).rechercherTous();
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(retour).isNotNull().hasSize(2);
+		assertThat(retour).extracting(OutputDTO::getProduit)
+				.containsExactly(MARTEAU, SCIE);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
 
-	
-	
-	// ===================== rechercherTousString =========================
-	
-	
-	
+
+	// ============================ rechercherTousString =================================
+
+
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : résultats vides.</p>
-	 * <ul>
-	 * <li>délègue à rechercherTous() ;</li>
-	 * <li>retourne une liste vide mais non {@code null} ;</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
-	 * </ul>
+	 * <p>rechercherTousString(gateway retourne null) : propage rechercherTous().</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_RETOUR_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousString() : liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testRechercherTousStringVide() throws Exception {
+	public void testRechercherTousStringGatewayRetourNull() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = spy(new ProduitCuService(gateway, sousTypeGateway));
+		final Scenario scenario = scenario();
+		when(scenario.gateway.rechercherTous()).thenReturn(null);
 
-		doReturn(Collections.emptyList()).when(service).rechercherTous();
+		assertThatThrownBy(() -> scenario.service.rechercherTousString())
+				.isInstanceOf(ExceptionStockageVide.class);
 
-		/* ======================= ACT ======================= */
-		final List<String> retour = service.rechercherTousString();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
 
-		/* ===================== ASSERT ====================== */
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString(gateway KO avec message) : propage rechercherTous().</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KOAVEC_MESSAGE)
+	@Test
+	public void testRechercherTousStringGatewayKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.rechercherTousString())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString(gateway KO sans message) : propage rechercherTous().</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KOSANS_MESSAGE)
+	@Test
+	public void testRechercherTousStringGatewayKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.rechercherTous()).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.rechercherTousString())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString(conversion KO avec message) : propage rechercherTous().</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KOAVEC_MESSAGE)
+	@Test
+	public void testRechercherTousStringConversionStringKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.rechercherTousString())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString(conversion KO sans message) : propage rechercherTous().</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KOSANS_MESSAGE)
+	@Test
+	public void testRechercherTousStringConversionStringKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.rechercherTousString())
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousString(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_VIDE_APRES_FILTRAGE)
+	@Test
+	public void testRechercherTousStringVideApresFiltrage() throws Exception {
+
+		final Scenario scenario = scenario();
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(null, null));
+
+		final List<String> retour = scenario.service.rechercherTousString();
+
 		assertThat(retour).isNotNull().isEmpty();
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(service, times(1)).rechercherTous();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : scénario nominal.</p>
-	 * <ul>
-	 * <li>délègue à rechercherTous() ;</li>
-	 * <li>extrait uniquement les libellés Produit exploitables ;</li>
-	 * <li>retire les éventuels {@code null} et blank ;</li>
-	 * <li>retourne une liste cohérente ;</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
-	 * </ul>
+	 * <p>rechercherTousString(libellés blank) : liste vide + MESSAGE_RECHERCHE_VIDE.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_VIDE_APRES_LIBELLES_BLANK)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousString() : extraction des libellés + filtre null/blank + message MESSAGE_RECHERCHE_OK")
-	public void testRechercherTousStringOk() throws Exception {
+	public void testRechercherTousStringVideApresLibellesBlank() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = spy(new ProduitCuService(gateway, sousTypeGateway));
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitBlank = produit(ESPACES, parent, 1L);
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(produitBlank));
 
-		final OutputDTO dto1 = new ProduitDTO.OutputDTO();
-		dto1.setIdProduit(1L);
-		dto1.setTypeProduit("MATERIEL");
-		dto1.setSousTypeProduit("OUTILLAGE");
-		dto1.setProduit("MARTEAU");
+		final List<String> retour = scenario.service.rechercherTousString();
 
-		final OutputDTO dto2 = new ProduitDTO.OutputDTO();
-		dto2.setIdProduit(2L);
-		dto2.setTypeProduit("MATERIEL");
-		dto2.setSousTypeProduit("OUTILLAGE");
-		dto2.setProduit("SCIE");
-
-		final OutputDTO dto3 = new ProduitDTO.OutputDTO();
-		dto3.setIdProduit(3L);
-		dto3.setTypeProduit("MATERIEL");
-		dto3.setSousTypeProduit("OUTILLAGE");
-		dto3.setProduit("   ");
-
-		doReturn(Arrays.asList(dto1, null, dto2, dto3)).when(service).rechercherTous();
-
-		/* ======================= ACT ======================= */
-		final List<String> retour = service.rechercherTousString();
-
-		/* ===================== ASSERT ====================== */
-		assertThat(retour).isNotNull();
-		assertThat(retour).containsExactly("MARTEAU", "SCIE");
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		verify(service, times(1)).rechercherTous();
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
 	} // __________________________________________________________________
 
-	
-	
-	// ===================== rechercherTousParPage ========================
-	
-	
-	
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage() : requête null.</p>
-	 * <ul>
-	 * <li>refuse immédiatement le traitement ;</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAGEABLE_NULL} ;</li>
-	 * <li>n'appelle aucun GATEWAY.</li>
-	 * </ul>
+	 * <p>rechercherTousString(nominal) : libellés triés + MESSAGE_RECHERCHE_OK.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_STRING_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage(null) : IllegalStateException + MESSAGE_PAGEABLE_NULL")
+	public void testRechercherTousStringNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		when(scenario.gateway.rechercherTous())
+				.thenReturn(Arrays.asList(produitScie, produitMarteau));
+
+		final List<String> retour = scenario.service.rechercherTousString();
+
+		assertThat(retour).containsExactly(MARTEAU, SCIE);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+
+	// ============================ rechercherTousParPage =================================
+
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(null) : MESSAGE_PAGEABLE_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL)
+	@Test
 	public void testRechercherTousParPageNull() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
 
-		/* =================== ACT & ASSERT ================== */
-		assertThatThrownBy(() -> service.rechercherTousParPage(null))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_PAGEABLE_NULL);
+		assertThatThrownBy(() -> scenario.service.rechercherTousParPage(null))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAGEABLE_NULL);
 
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PAGEABLE_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAGEABLE_NULL);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage() : KO technique avec message.</p>
-	 * <ul>
-	 * <li>propage l'exception technique ;</li>
-	 * <li>rationalise le message utilisateur avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE} ;</li>
-	 * <li>n'interagit jamais avec le gateway SousTypeProduit.</li>
-	 * </ul>
+	 * <p>rechercherTousParPage(gateway KO avec message) : exception propagée.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KOAVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage() : gateway KO avec message")
-	public void testRechercherTousParPageKoTechniqueAvecMessage() throws Exception {
+	public void testRechercherTousParPageGatewayKOAvecMessage() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
 		final RequetePage requete = new RequetePage(0, 4);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.rechercherTousParPage(requete))
+				.thenThrow(panneTechnique);
 
-		final IllegalStateException panneTechnique
-			= new IllegalStateException(MESSAGE_GATEWAY);
+		assertThatThrownBy(() -> scenario.service.rechercherTousParPage(requete))
+				.isSameAs(panneTechnique);
 
-		when(gateway.rechercherTousParPage(requete)).thenThrow(panneTechnique);
-
-		/* =================== ACT & ASSERT ================== */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
-			.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage())
-			.isEqualTo(
-				ProduitICuService.KO_TECHNIQUE_RECHERCHE
-					+ ProduitICuService.TIRET_ESPACE
-					+ MESSAGE_GATEWAY);
-
-		verify(gateway, times(1)).rechercherTousParPage(requete);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
-	
-
 
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage() : KO technique sans message.</p>
-	 * <ul>
-	 * <li>propage l'exception technique ;</li>
-	 * <li>retombe sur
-	 * {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
-	 * <li>rationalise le message utilisateur avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE} ;</li>
-	 * <li>n'interagit jamais avec le gateway SousTypeProduit.</li>
-	 * </ul>
+	 * <p>rechercherTousParPage(gateway KO sans message) : exception propagée.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KOSANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage() : gateway KO sans message")
-	public void testRechercherTousParPageKoTechniqueSansMessage() throws Exception {
+	public void testRechercherTousParPageGatewayKOSansMessage() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
 		final RequetePage requete = new RequetePage(0, 4);
-
 		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.rechercherTousParPage(requete))
+				.thenThrow(panneTechnique);
 
-		when(gateway.rechercherTousParPage(requete)).thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.rechercherTousParPage(requete))
+				.isSameAs(panneTechnique);
 
-		/* =================== ACT & ASSERT ================== */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
-			.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage())
-			.isEqualTo(
-				ProduitICuService.KO_TECHNIQUE_RECHERCHE
-					+ ProduitICuService.TIRET_ESPACE
-					+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
-
-		verify(gateway, times(1)).rechercherTousParPage(requete);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
-	
-
 
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage() : résultat technique null.</p>
-	 * <ul>
-	 * <li>refuse une page technique null ;</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_KO}.</li>
-	 * </ul>
+	 * <p>rechercherTousParPage(gateway retourne null) : MESSAGE_RECHERCHE_PAGINEE_KO.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_RETOUR_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage() : gateway retourne null")
-	public void testRechercherTousParPageRetourNull() throws Exception {
+	public void testRechercherTousParPageGatewayRetourNull() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-		final RequetePage requete = mock(RequetePage.class);
-
-		when(gateway.rechercherTousParPage(requete)).thenReturn(null);
-
-		/* =================== ACT & ASSERT ================== */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
-
-		verify(gateway, times(1)).rechercherTousParPage(requete);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTousParPage() : scénario nominal complet.</p>
-	 * <ul>
-	 * <li>reprend le numéro de page</li>
-	 * <li>reprend la taille de page</li>
-	 * <li>reprend le total d'éléments</li>
-	 * <li>filtre les {@code null}</li>
-	 * <li>trie les objets métier</li>
-	 * <li>dédoublonne les DTO</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("rechercherTousParPage() : pagination reprise + filtre nulls + trie + dédoublonne + message MESSAGE_RECHERCHE_PAGINEE_OK")
-	public void testRechercherTousParPageOk() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
+		final Scenario scenario = scenario();
 		final RequetePage requete = new RequetePage(0, 4);
+		when(scenario.gateway.rechercherTousParPage(requete))
+				.thenReturn(null);
 
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
+		assertThatThrownBy(() -> scenario.service.rechercherTousParPage(requete))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
 
-		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parent.setIdSousTypeProduit(10L);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
 
-		final Produit produitScie = new Produit(SCIE, parent);
-		produitScie.setIdProduit(2L);
+	} // __________________________________________________________________
 
-		final Produit produitMarteau = new Produit(MARTEAU, parent);
-		produitMarteau.setIdProduit(1L);
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(conversion OutputDTO KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testRechercherTousParPageConversionOutputDTOKOAvecMessage() throws Exception {
 
-		final ResultatPage<Produit> resultatGateway
-				= new ResultatPage<Produit>(
-						Arrays.asList(produitScie, null, produitMarteau, produitScie),
-						0,
-						4,
-						10L);
+		final Scenario scenario = scenario();
+		final RequetePage requete = new RequetePage(0, 4);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		final ResultatPage<Produit> page = new ResultatPage<Produit>(
+				Arrays.asList(produitKo), 0, 4, 1L);
+		when(scenario.gateway.rechercherTousParPage(requete))
+				.thenReturn(page);
 
-		when(gateway.rechercherTousParPage(requete)).thenReturn(resultatGateway);
+		assertThatThrownBy(() -> scenario.service.rechercherTousParPage(requete))
+				.isSameAs(panneTechnique);
 
-		/* ======================= ACT ======================= */
-		final ResultatPage<OutputDTO> retour
-				= service.rechercherTousParPage(requete);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
 
-		final String message = service.getMessage();
+	} // __________________________________________________________________
 
-		/* ===================== ASSERT ====================== */
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(conversion OutputDTO KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testRechercherTousParPageConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final RequetePage requete = new RequetePage(0, 4);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		final ResultatPage<Produit> page = new ResultatPage<Produit>(
+				Arrays.asList(produitKo), 0, 4, 1L);
+		when(scenario.gateway.rechercherTousParPage(requete))
+				.thenReturn(page);
+
+		assertThatThrownBy(() -> scenario.service.rechercherTousParPage(requete))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(vide après filtrage) : page vide + MESSAGE_RECHERCHE_PAGINEE_OK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_VIDE_APRES_FILTRAGE)
+	@Test
+	public void testRechercherTousParPageVideApresFiltrage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final RequetePage requete = new RequetePage(0, 4);
+		final ResultatPage<Produit> page = new ResultatPage<Produit>(
+				Arrays.asList(null, null), 0, 4, 2L);
+		when(scenario.gateway.rechercherTousParPage(requete))
+				.thenReturn(page);
+
+		final ResultatPage<OutputDTO> retour = scenario.service.rechercherTousParPage(requete);
+
+		assertThat(retour).isNotNull();
+		assertThat(retour.getContent()).isNotNull().isEmpty();
+		assertThat(retour.getTotalElements()).isEqualTo(2L);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>rechercherTousParPage(nominal) : page cohérente + MESSAGE_RECHERCHE_PAGINEE_OK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL)
+	@Test
+	public void testRechercherTousParPageNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final RequetePage requete = new RequetePage(0, 4);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		final ResultatPage<Produit> page = new ResultatPage<Produit>(
+				Arrays.asList(produitScie, null, produitMarteau, produitScie),
+				0, 4, 10L);
+		when(scenario.gateway.rechercherTousParPage(requete))
+				.thenReturn(page);
+
+		final ResultatPage<OutputDTO> retour = scenario.service.rechercherTousParPage(requete);
+
 		assertThat(retour).isNotNull();
 		assertThat(retour.getPageNumber()).isEqualTo(0);
 		assertThat(retour.getPageSize()).isEqualTo(4);
 		assertThat(retour.getTotalElements()).isEqualTo(10L);
-
-		assertThat(retour.getContent()).isNotNull();
 		assertThat(retour.getContent()).hasSize(2);
-
-		assertThat(retour.getContent())
-				.extracting(OutputDTO::getProduit)
+		assertThat(retour.getContent()).extracting(OutputDTO::getProduit)
 				.containsExactly(MARTEAU, SCIE);
-
-		assertThat(retour.getContent())
-				.extracting(OutputDTO::getIdProduit)
-				.containsExactly(1L, 2L);
-
-		assertThat(retour.getContent())
-				.extracting(OutputDTO::getSousTypeProduit)
-				.containsExactly(OUTILLAGE, OUTILLAGE);
-
-		assertThat(retour.getContent())
-				.extracting(OutputDTO::getTypeProduit)
-				.containsExactly(BAZAR, BAZAR);
-
-		assertThat(message)
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
 
-		verify(gateway, times(1)).rechercherTousParPage(requete);
-		verifyNoInteractions(sousTypeGateway);
+	} // __________________________________________________________________
 
-	} // __________________________________________________________________	
-	
-	
-	
-	// ========================= findByLibelle ============================
-	
-	
-	
+
+	// ============================ findByLibelle =================================
+
+
 	/**
 	 * <div>
-	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
+	 * <p>findByLibelle(null) : null + MESSAGE_PARAM_BLANK.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelle(blank) : retourne null + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
+	public void testFindByLibelleNull() throws Exception {
+
+		final Scenario scenario = scenario();
+
+		final List<OutputDTO> retour = scenario.service.findByLibelle(null);
+
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(blank) : null + MESSAGE_PARAM_BLANK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_BLANK)
+	@Test
 	public void testFindByLibelleBlank() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
 
-		final List<OutputDTO> dtos = service.findByLibelle(ESPACES);
+		final List<OutputDTO> retour = scenario.service.findByLibelle(ESPACES);
 
-		assertThat(dtos).isNull();
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>findByLibelle(gateway retourne null) : anomalie technique.</p>
-	 * <ul>
-	 * <li>lève une exception technique</li>
-	 * <li>positionne {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
-	 * </ul>
+	 * <p>findByLibelle(gateway retourne null) : KO_TECHNIQUE_RECHERCHE.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_RETOUR_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelle(gateway retourne null) : RuntimeException + message KO_TECHNIQUE_RECHERCHE")
 	public void testFindByLibelleGatewayRetourNull() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
+		when(scenario.gateway.findByLibelle(MARTEAU)).thenReturn(null);
 
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(null);
+		assertThatThrownBy(() -> scenario.service.findByLibelle(MARTEAU))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessage(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
 
-		assertThatThrownBy(() -> service.findByLibelle(MARTEAU))
-			.isInstanceOf(RuntimeException.class);
-
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
-
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>findByLibelle(introuvable) : recherche vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * </ul>
+	 * <p>findByLibelle(gateway KO avec message) : exception propagée par l'ADAPTER réel.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KOAVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelle(introuvable) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+	public void testFindByLibelleGatewayKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.findByLibelle(MARTEAU))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(gateway KO sans message) : exception propagée par l'ADAPTER réel.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KOSANS_MESSAGE)
+	@Test
+	public void testFindByLibelleGatewayKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.findByLibelle(MARTEAU))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(conversion OutputDTO KO avec message) : exception propagée par l'ADAPTER réel.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testFindByLibelleConversionOutputDTOKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.findByLibelle(MARTEAU))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(conversion OutputDTO KO sans message) : exception propagée par l'ADAPTER réel.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testFindByLibelleConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.findByLibelle(MARTEAU))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelle(introuvable) : liste vide + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_INTROUVABLE)
+	@Test
 	public void testFindByLibelleIntrouvable() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
 
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(Collections.emptyList());
+		final List<OutputDTO> retour = scenario.service.findByLibelle(MARTEAU);
 
-		final List<OutputDTO> dtos = service.findByLibelle(MARTEAU);
-
-		assertThat(dtos).isNotNull().isEmpty();
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : recherche exacte non unique.</p>
-	 * <ul>
-	 * <li>retourne une liste non nulle</li>
-	 * <li>retire les {@code null}</li>
-	 * <li>conserve les deux parents distincts</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * </ul>
+	 * <p>findByLibelle(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelle(ok) : liste non nulle + filtre nulls + message MESSAGE_RECHERCHE_OK")
-	public void testFindByLibelleOk() throws Exception {
+	public void testFindByLibelleNominal() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
+		final SousTypeProduit parentA = parentPersistant();
+		final SousTypeProduit parentB = parentPersistant(QUINCAILLERIE, ATELIER, 2L, 20L);
+		final Produit produitA = produit(MARTEAU, parentA, 100L);
+		final Produit produitB = produit(MARTEAU, parentB, 200L);
+		when(scenario.gateway.findByLibelle(MARTEAU))
+				.thenReturn(Arrays.asList(produitA, null, produitB));
 
-		final TypeProduit typeProduitA = new TypeProduit(BAZAR);
-		typeProduitA.setIdTypeProduit(1L);
-		final SousTypeProduit parentA = new SousTypeProduit(OUTILLAGE, typeProduitA);
-		parentA.setIdSousTypeProduit(10L);
+		final List<OutputDTO> retour = scenario.service.findByLibelle(MARTEAU);
 
-		final TypeProduit typeProduitB = new TypeProduit(QUINCAILLERIE);
-		typeProduitB.setIdTypeProduit(2L);
-		final SousTypeProduit parentB = new SousTypeProduit(ATELIER, typeProduitB);
-		parentB.setIdSousTypeProduit(20L);
-
-		final Produit produitA = new Produit(MARTEAU, parentA);
-		produitA.setIdProduit(100L);
-
-		final Produit produitB = new Produit(MARTEAU, parentB);
-		produitB.setIdProduit(200L);
-
-		when(gateway.findByLibelle(MARTEAU))
-			.thenReturn(Arrays.asList(produitA, null, produitB));
-
-		final List<OutputDTO> dtos = service.findByLibelle(MARTEAU);
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos).hasSize(2);
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		assertThat(dtos)
-			.extracting(OutputDTO::getProduit)
-			.containsExactlyInAnyOrder(MARTEAU, MARTEAU);
-
-		assertThat(dtos)
-			.extracting(OutputDTO::getSousTypeProduit)
-			.containsExactlyInAnyOrder(OUTILLAGE, ATELIER);
-
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(retour).isNotNull().hasSize(2);
+		assertThat(retour).extracting(OutputDTO::getSousTypeProduit)
+				.containsExactlyInAnyOrder(OUTILLAGE, ATELIER);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
 	} // __________________________________________________________________
 
-	
-	
-	// ====================== findByLibelleRapide =========================
-	
-	
-	
+
+	// ============================ findByLibelleRapide =================================
+
+
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(null) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
+	 * <p>findByLibelleRapide(null) : MESSAGE_PARAM_NULL.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelleRapide(null) : IllegalStateException + message MESSAGE_PARAM_NULL + aucune interaction gateway")
 	public void testFindByLibelleRapideNull() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		assertThatThrownBy(() -> service.findByLibelleRapide(null))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_PARAM_NULL);
-
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
+		final Scenario scenario = scenario();
+		assertThatThrownBy(() -> scenario.service.findByLibelleRapide(null))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PARAM_NULL);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
-
-
 
 	/**
 	 * <div>
 	 * <p>findByLibelleRapide(blank) : délègue à rechercherTous().</p>
-	 * <ul>
-	 * <li>retourne la liste préparée par rechercherTous()</li>
-	 * <li>conserve le message positionné par rechercherTous()</li>
-	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous()")
 	public void testFindByLibelleRapideBlank() throws Exception {
 
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = spy(new ProduitCuService(gateway, sousTypeGateway));
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produit = produit(MARTEAU, parent, 1L);
+		when(scenario.gateway.rechercherTous()).thenReturn(Arrays.asList(produit));
 
-		final OutputDTO dto = new ProduitDTO.OutputDTO();
-		dto.setIdProduit(1L);
-		dto.setTypeProduit(BAZAR);
-		dto.setSousTypeProduit(OUTILLAGE);
-		dto.setProduit(MARTEAU);
-
-		doReturn(Arrays.asList(dto)).when(service).rechercherTous();
-
-		final List<OutputDTO> retour = service.findByLibelleRapide(ESPACES);
+		final List<OutputDTO> retour = scenario.service.findByLibelleRapide(ESPACES);
 
 		assertThat(retour).isNotNull().hasSize(1);
 		assertThat(retour.get(0).getProduit()).isEqualTo(MARTEAU);
-
-		verify(service, times(1)).rechercherTous();
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
 	} // __________________________________________________________________
 
-
-
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(gateway retourne null) : anomalie technique.</p>
-	 * <ul>
-	 * <li>lève une exception technique</li>
-	 * <li>positionne {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
-	 * </ul>
+	 * <p>findByLibelleRapide(gateway KO avec message) : exception propagée par l'ADAPTER réel.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOAVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelleRapide(gateway retourne null) : RuntimeException + message KO_TECHNIQUE_RECHERCHE")
-	public void testFindByLibelleRapideGatewayRetourNull() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		when(gateway.findByLibelleRapide("mar")).thenReturn(null);
-
-		assertThatThrownBy(() -> service.findByLibelleRapide("mar"))
-			.isInstanceOf(RuntimeException.class);
-
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
-
-		verify(gateway, times(1)).findByLibelleRapide("mar");
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findByLibelleRapide(introuvable) : recherche vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelleRapide(introuvable) : liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testFindByLibelleRapideIntrouvable() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		when(gateway.findByLibelleRapide("zzz")).thenReturn(Collections.emptyList());
-
-		final List<OutputDTO> dtos = service.findByLibelleRapide("zzz");
-
-		assertThat(dtos).isNotNull().isEmpty();
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(gateway, times(1)).findByLibelleRapide("zzz");
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findByLibelleRapide(ok) : recherche rapide non vide.</p>
-	 * <ul>
-	 * <li>retire les {@code null}</li>
-	 * <li>trie les objets métier</li>
-	 * <li>retourne une liste non nulle</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findByLibelleRapide(ok) : liste non nulle + filtre nulls + message MESSAGE_RECHERCHE_OK")
-	public void testFindByLibelleRapideOk() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parent.setIdSousTypeProduit(10L);
-
-		final Produit produitScie = new Produit(SCIE, parent);
-		produitScie.setIdProduit(2L);
-
-		final Produit produitMarteau = new Produit(MARTEAU, parent);
-		produitMarteau.setIdProduit(1L);
-
-		when(gateway.findByLibelleRapide("a"))
-			.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
-
-		final List<OutputDTO> dtos = service.findByLibelleRapide("a");
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos).hasSize(2);
-		assertThat(service.getMessage()).isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		assertThat(dtos)
-			.extracting(OutputDTO::getProduit)
-			.containsExactly(MARTEAU, SCIE);
-
-		verify(gateway, times(1)).findByLibelleRapide("a");
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-	
-	
-	
-	// =========================== findAllByParent ========================
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>findAllByParent(null) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève une {@link RuntimeException}</li>
-	 * <li>positionne {@link ProduitICuService#RECHERCHE_SOUSTYPEPRODUIT_NULL}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(null) : RuntimeException + message RECHERCHE_SOUSTYPEPRODUIT_NULL + aucune interaction gateway")
-	public void testFindAllByParentNull() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		assertThatThrownBy(() -> service.findAllByParent(null))
-			.isInstanceOf(RuntimeException.class)
-			.hasMessage(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(parent blank) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(parent blank) : IllegalStateException + message MESSAGE_PAS_PARENT + aucune interaction gateway")
-	public void testFindAllByParentParentBlank() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final SousTypeProduitDTO.InputDTO parentDto
-			= new SousTypeProduitDTO.InputDTO(BAZAR, ESPACES);
-
-		assertThatThrownBy(() -> service.findAllByParent(parentDto))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(parent absent/non persistant) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(parent absent) : IllegalStateException + message MESSAGE_PAS_PARENT")
-	public void testFindAllByParentPasParent() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final SousTypeProduitDTO.InputDTO parentDto
-			= new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList((SousTypeProduit) null));
-
-		assertThatThrownBy(() -> service.findAllByParent(parentDto))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verifyNoInteractions(gateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(gateway retourne null) : anomalie technique.</p>
-	 * <ul>
-	 * <li>lève une {@link RuntimeException}</li>
-	 * <li>positionne {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(gateway retourne null) : RuntimeException + message KO_TECHNIQUE_RECHERCHE")
-	public void testFindAllByParentGatewayRetourNull() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final SousTypeProduitDTO.InputDTO parentDto
-			= new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant)).thenReturn(null);
-
-		assertThatThrownBy(() -> service.findAllByParent(parentDto))
-			.isInstanceOf(RuntimeException.class);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(introuvable) : recherche vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(introuvable) : liste vide + message MESSAGE_RECHERCHE_VIDE")
-	public void testFindAllByParentIntrouvable() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final SousTypeProduitDTO.InputDTO parentDto
-			= new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-			.thenReturn(Collections.emptyList());
-
-		final List<OutputDTO> dtos = service.findAllByParent(parentDto);
-
-		assertThat(dtos).isNotNull().isEmpty();
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findAllByParent(ok) : recherche nominale par parent.</p>
-	 * <ul>
-	 * <li>retourne une liste non nulle ;</li>
-	 * <li>retire les {@code null} ;</li>
-	 * <li>trie les objets métier ;</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findAllByParent(ok) : liste non nulle + filtre nulls + message MESSAGE_RECHERCHE_OK")
-	public void testFindAllByParentOk() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit produitScie = new Produit(SCIE, parentPersistant);
-		produitScie.setIdProduit(2L);
-
-		final Produit produitMarteau = new Produit(MARTEAU, parentPersistant);
-		produitMarteau.setIdProduit(1L);
-
-		final SousTypeProduitDTO.InputDTO parentDto
-			= new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-			.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
-
-		final List<OutputDTO> dtos = service.findAllByParent(parentDto);
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos).hasSize(2);
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		assertThat(dtos)
-			.extracting(OutputDTO::getProduit)
-			.containsExactly(MARTEAU, SCIE);
-
-		assertThat(dtos)
-			.extracting(OutputDTO::getSousTypeProduit)
-			.containsExactly(OUTILLAGE, OUTILLAGE);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-
-	} // __________________________________________________________________	
-
-	
-	
-	// ========================== findByDTO ===============================
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>findByDTO(null) : erreur utilisateur bénigne.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OBJ_NULL}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findByDTO(null) : retourne null + message MESSAGE_RECHERCHE_OBJ_NULL + aucune interaction gateway")
-	public void testFindByDTONull() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final OutputDTO dto = service.findByDTO(null);
-
-		assertThat(dto).isNull();
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findByDTO(parent blank) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findByDTO(parent blank) : IllegalStateException + message MESSAGE_PAS_PARENT + aucune interaction gateway")
-	public void testFindByDTOParentBlank() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, ESPACES, MARTEAU);
-
-		assertThatThrownBy(() -> service.findByDTO(dto))
-			.isInstanceOf(IllegalStateException.class)
-			.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findByDTO(parent absent) : aucun résultat possible.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>n'appelle pas la recherche Produit par parent</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findByDTO(parent absent) : retourne null + message MESSAGE_RECHERCHE_VIDE")
-	public void testFindByDTOParentAbsent() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Collections.emptyList());
-
-		final OutputDTO retour = service.findByDTO(dto);
-
-		assertThat(retour).isNull();
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).findAllByParent(any(SousTypeProduit.class));
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findByDTO(introuvable) : aucun Produit exact trouvé.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findByDTO(introuvable) : retourne null + message MESSAGE_RECHERCHE_VIDE")
-	public void testFindByDTOIntrouvable() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit produitScie = new Produit(SCIE, parentPersistant);
-		produitScie.setIdProduit(2L);
-
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-			.thenReturn(Arrays.asList(produitScie));
-
-		final OutputDTO retour = service.findByDTO(dto);
-
-		assertThat(retour).isNull();
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findByDTO(ok) : retourne l'OutputDTO exact correspondant au DTO de recherche.</p>
-	 * <ul>
-	 * <li>retire les {@code null}</li>
-	 * <li>cherche le match exact sur le libellé Produit</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findByDTO(ok) : retourne OutputDTO exact + message MESSAGE_SUCCES_RECHERCHE")
-	public void testFindByDTOOk() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit produitScie = new Produit(SCIE, parentPersistant);
-		produitScie.setIdProduit(2L);
-
-		final Produit produitMarteau = new Produit(MARTEAU, parentPersistant);
-		produitMarteau.setIdProduit(1L);
-
-		final InputDTO dto = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-			.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
-
-		final OutputDTO retour = service.findByDTO(dto);
-
-		assertThat(retour).isNotNull();
-		assertThat(retour.getIdProduit()).isEqualTo(1L);
-		assertThat(retour.getProduit()).isEqualTo(MARTEAU);
-		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-
-	} // __________________________________________________________________
-
-	
-	
-	// =========================== findById ===============================
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>findById(null) : erreur utilisateur bénigne.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findById(null) : retourne null + message MESSAGE_PARAM_NULL + aucune interaction gateway")
-	public void testFindByIdNull() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final OutputDTO dto = service.findById(null);
-
-		assertThat(dto).isNull();
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findById(introuvable) : cas nominal de non-trouvabilité.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + id</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findById(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + id")
-	public void testFindByIdIntrouvable() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final Long id = 999L;
-
-		when(gateway.findById(id)).thenReturn(null);
-
-		final OutputDTO dto = service.findById(id);
-
-		assertThat(dto).isNull();
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + id);
-
-		verify(gateway, times(1)).findById(id);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>findById(ok) : retourne l'OutputDTO exact correspondant à l'identifiant demandé.</p>
-	 * <ul>
-	 * <li>délègue au gateway Produit ;</li>
-	 * <li>convertit l'objet métier en OutputDTO ;</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("findById(ok) : retourne OutputDTO exact + message MESSAGE_SUCCES_RECHERCHE")
-	public void testFindByIdOk() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parent = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parent.setIdSousTypeProduit(10L);
-
-		final Produit produit = new Produit(MARTEAU, parent);
-		produit.setIdProduit(100L);
-
-		when(gateway.findById(100L)).thenReturn(produit);
-
-		final OutputDTO dto = service.findById(100L);
-
-		assertThat(dto).isNotNull();
-		assertThat(dto.getIdProduit()).isEqualTo(100L);
-		assertThat(dto.getProduit()).isEqualTo(MARTEAU);
-		assertThat(dto.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(dto.getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
-
-		verify(gateway, times(1)).findById(100L);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-	
-	
-	// ============================ update ================================
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>update(null) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(null) : ExceptionParametreNull + message exact MESSAGE_PARAM_NULL + aucune interaction gateway")
-	public void testUpdateNull() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		assertThatThrownBy(() -> service.update(null))
-			.isInstanceOf(ExceptionParametreNull.class);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>update(blank) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(blank) : ExceptionParametreBlank + message exact MESSAGE_PARAM_BLANK + aucune interaction gateway")
-	public void testUpdateBlank() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final InputDTO input = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, ESPACES);
-
-		assertThatThrownBy(() -> service.update(input))
-			.isInstanceOf(ExceptionParametreBlank.class);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>update(parent blank) : violation de contrat structurel.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'interagit avec aucun gateway</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune interaction gateway")
-	public void testUpdateParentBlank() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final InputDTO input = new ProduitDTO.InputDTO(BAZAR, ESPACES, MARTEAU);
-
-		assertThatThrownBy(() -> service.update(input))
-			.isInstanceOf(IllegalStateException.class);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>update(parent absent) : le parent requis n'existe pas en stockage.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune modification gateway")
-	public void testUpdateParentAbsent() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final InputDTO input = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Collections.emptyList());
-
-		assertThatThrownBy(() -> service.update(input))
-			.isInstanceOf(IllegalStateException.class);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).findAllByParent(any(SousTypeProduit.class));
-		verify(gateway, never()).update(org.mockito.ArgumentMatchers.any(Produit.class));
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>update(introuvable) : aucun objet persistant
-	 * ne correspond au couple [parent, libellé].</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(introuvable) : null + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
-	public void testUpdateIntrouvable() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit produitScie = new Produit(SCIE, parentPersistant);
-		produitScie.setIdProduit(2L);
-
-		final InputDTO input = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-			.thenReturn(Arrays.asList(produitScie));
-
-		final OutputDTO retour = service.update(input);
-
-		assertThat(retour).isNull();
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + MARTEAU);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-		verify(gateway, never()).update(org.mockito.ArgumentMatchers.any(Produit.class));
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>update(non persistant) : l'objet trouvé n'a pas d'identifiant persistant.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionNonPersistant}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_OBJ_NON_PERSISTE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.update(...)}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(non persistant) : ExceptionNonPersistant + message exact MESSAGE_OBJ_NON_PERSISTE + libellé")
-	public void testUpdateNonPersistant() throws Exception {
-
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit produitSansId = new Produit(MARTEAU, parentPersistant);
-
-		final InputDTO input = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-			.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-			.thenReturn(Arrays.asList(produitSansId));
-
-		assertThatThrownBy(() -> service.update(input))
-			.isInstanceOf(ExceptionNonPersistant.class);
-
-		assertThat(service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-		verify(gateway, never()).update(org.mockito.ArgumentMatchers.any(Produit.class));
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>update(ok) : scénario nominal sans stub inutile.</p>
-	 * <ul>
-	 * <li>retrouve le parent persistant ;</li>
-	 * <li>retrouve l'objet persistant par le couple [parent, libellé] ;</li>
-	 * <li>conserve l'identifiant persistant ;</li>
-	 * <li>délègue exactement une fois au gateway de modification ;</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_MODIF_OK} + parent.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("update(ok) : OutputDTO cohérent + ID conservé + aucun stub inutile")
-	public void testUpdateOk() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway = mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service = new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parentPersistant = new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit existant = new Produit(MARTEAU, parentPersistant);
-		existant.setIdProduit(100L);
-
-		final Produit modifie = new Produit(MARTEAU, parentPersistant);
-		modifie.setIdProduit(100L);
-
-		final InputDTO input = new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parentPersistant));
-
-		when(gateway.findAllByParent(parentPersistant))
-				.thenReturn(Arrays.asList(existant));
-
-		when(gateway.update(any(Produit.class)))
-				.thenReturn(modifie);
-
-		final ArgumentCaptor<Produit> captor = ArgumentCaptor.forClass(Produit.class);
-
-		/* ======================= ACT ======================= */
-		final OutputDTO retour = service.update(input);
-
-		/* ===================== ASSERT ====================== */
-		assertThat(retour).isNotNull();
-		assertThat(retour.getIdProduit()).isEqualTo(100L);
-		assertThat(retour.getProduit()).isEqualTo(MARTEAU);
-		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + MARTEAU);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-		verify(gateway, times(1)).update(captor.capture());
-
-		final Produit passeAuGateway = captor.getValue();
-
-		assertThat(passeAuGateway).isNotNull();
-		assertThat(passeAuGateway.getIdProduit()).isEqualTo(100L);
-		assertThat(passeAuGateway.getProduit()).isEqualTo(MARTEAU);
-		assertThat(passeAuGateway.getSousTypeProduit()).isSameAs(parentPersistant);
-
-	} // __________________________________________________________________
-
-	
-	
-	// ============================ delete ================================
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>delete(null) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionParametreNull}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("delete(null) : ExceptionParametreNull + message MESSAGE_PARAM_NULL + aucune interaction gateway")
-	public void testDeleteNull() {
-
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		assertThatThrownBy(() -> service.delete(null))
-				.isInstanceOf(ExceptionParametreNull.class);
-
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>delete(blank) : violation de contrat.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("delete(blank) : ExceptionParametreBlank + message MESSAGE_PARAM_BLANK + aucune interaction gateway")
-	public void testDeleteBlank() {
-
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, ESPACES);
-
-		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionParametreBlank.class);
-
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>delete(parent blank) : violation de contrat structurel.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'interagit ni avec le Gateway enfant
-	 * ni avec le Gateway parent</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("delete(parent blank) : IllegalStateException + message MESSAGE_PAS_PARENT + aucune interaction gateway")
-	public void testDeleteParentBlank() {
-
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(ESPACES, OUTILLAGE, MARTEAU);
-
-		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(IllegalStateException.class);
-
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
-
-	} // __________________________________________________________________
-
-	
-	
-	/**
-	 * <div>
-	 * <p>delete(recherche parent technique KO avec message) :
-	 * panne technique pendant la recherche du parent persistant.</p>
-	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
-	 * <li>n'appelle jamais le Gateway enfant</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag(TAG)
-	@DisplayName("delete(recherche parent KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE")
-	public void testDeleteRechercheParentTechniqueKoAvecMessage()
-			throws Exception {
-
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+	public void testFindByLibelleRapideGatewayKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.findByLibelleRapide(CONTENU_RAPIDE))
 				.thenThrow(panneTechnique);
 
-		assertThatThrownBy(() -> service.delete(dto))
+		assertThatThrownBy(() -> scenario.service.findByLibelleRapide(CONTENU_RAPIDE))
 				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ ProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verifyNoInteractions(gateway);
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>delete(parent absent) : le parent requis
-	 * n'existe pas en stockage.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
-	 * </ul>
+	 * <p>findByLibelleRapide(gateway KO sans message) : exception propagée par l'ADAPTER réel.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOSANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(parent absent) : IllegalStateException + message MESSAGE_PAS_PARENT")
-	public void testDeleteParentAbsent() throws Exception {
+	public void testFindByLibelleRapideGatewayKOSansMessage() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.findByLibelleRapide(CONTENU_RAPIDE))
+				.thenThrow(panneTechnique);
 
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+		assertThatThrownBy(() -> scenario.service.findByLibelleRapide(CONTENU_RAPIDE))
+				.isSameAs(panneTechnique);
+
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(gateway retourne null) : KO_TECHNIQUE_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_RETOUR_NULL)
+	@Test
+	public void testFindByLibelleRapideGatewayRetourNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		when(scenario.gateway.findByLibelleRapide(CONTENU_RAPIDE)).thenReturn(null);
+
+		assertThatThrownBy(() -> scenario.service.findByLibelleRapide(CONTENU_RAPIDE))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessage(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(conversion OutputDTO KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testFindByLibelleRapideConversionOutputDTOKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.findByLibelleRapide(CONTENU_RAPIDE))
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.findByLibelleRapide(CONTENU_RAPIDE))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(conversion OutputDTO KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testFindByLibelleRapideConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.findByLibelleRapide(CONTENU_RAPIDE))
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.findByLibelleRapide(CONTENU_RAPIDE))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(vide après filtrage) : liste vide.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_VIDE_APRES_FILTRAGE)
+	@Test
+	public void testFindByLibelleRapideVideApresFiltrage() throws Exception {
+
+		final Scenario scenario = scenario();
+		when(scenario.gateway.findByLibelleRapide(CONTENU_RAPIDE))
+				.thenReturn(Arrays.asList(null, null));
+
+		final List<OutputDTO> retour = scenario.service.findByLibelleRapide(CONTENU_RAPIDE);
+
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByLibelleRapide(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL)
+	@Test
+	public void testFindByLibelleRapideNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		when(scenario.gateway.findByLibelleRapide(CONTENU_RAPIDE))
+				.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
+
+		final List<OutputDTO> retour = scenario.service.findByLibelleRapide(CONTENU_RAPIDE);
+
+		assertThat(retour).isNotNull().hasSize(2);
+		assertThat(retour).extracting(OutputDTO::getProduit)
+				.containsExactly(MARTEAU, SCIE);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+
+	// ============================ findAllByParent =================================
+
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(null) : RECHERCHE_SOUSTYPEPRODUIT_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL)
+	@Test
+	public void testFindAllByParentNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		assertThatThrownBy(() -> scenario.service.findAllByParent(null))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessage(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent blank) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK)
+	@Test
+	public void testFindAllByParentParentBlank() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, ESPACES);
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(recherche parent KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KOAVEC_MESSAGE)
+	@Test
+	public void testFindAllByParentParentGatewayKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(recherche parent KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KOSANS_MESSAGE)
+	@Test
+	public void testFindAllByParentParentGatewayKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(parent absent) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_ABSENT)
+	@Test
+	public void testFindAllByParentParentAbsent() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
 				.thenReturn(Collections.emptyList());
 
-		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(IllegalStateException.class);
-
-		assertThat(service.getMessage())
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).findAllByParent(any(SousTypeProduit.class));
-		verify(gateway, never()).delete(any(Produit.class));
+		verifyNoInteractions(scenario.gateway);
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>delete(stockage null pendant ré-identification) :
-	 * le Gateway retourne {@code null}
-	 * pour la liste des enfants du parent persistant.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionStockageVide}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL}</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
-	 * </ul>
+	 * <p>findAllByParent(parent non persistant) : MESSAGE_PAS_PARENT.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_NON_PERSISTANT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(stockage null) : ExceptionStockageVide + message MESSAGE_STOCKAGE_NULL")
-	public void testDeleteStockageNull() throws Exception {
+	public void testFindAllByParentParentNonPersistant() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentNonPersistant()));
 
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verifyNoInteractions(scenario.gateway);
 
-		final SousTypeProduit parentPersistant =
-				new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
+	} // __________________________________________________________________
 
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
+	/**
+	 * <div>
+	 * <p>findAllByParent(recherche enfants KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_ENFANTS_GATEWAY_KOAVEC_MESSAGE)
+	@Test
+	public void testFindAllByParentEnfantsGatewayKOAvecMessage() throws Exception {
 
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-				.thenReturn(null);
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
 
-		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionStockageVide.class);
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
 
-		assertThat(service.getMessage())
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(recherche enfants KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_ENFANTS_GATEWAY_KOSANS_MESSAGE)
+	@Test
+	public void testFindAllByParentEnfantsGatewayKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
+
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(gateway retourne null) : KO_TECHNIQUE_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_GATEWAY_RETOUR_NULL)
+	@Test
+	public void testFindAllByParentGatewayRetourNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent)).thenReturn(null);
+
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessage(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(conversion OutputDTO KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testFindAllByParentConversionOutputDTOKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(conversion OutputDTO KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testFindAllByParentConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produitKo));
+
+		assertThatThrownBy(() -> scenario.service.findAllByParent(parentDto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(vide après filtrage) : liste vide selon ADAPTER réel.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_VIDE_APRES_FILTRAGE)
+	@Test
+	public void testFindAllByParentVideApresFiltrage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(null, null));
+
+		final List<OutputDTO> retour = scenario.service.findAllByParent(parentDto);
+
+		assertThat(retour).isNotNull().isEmpty();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findAllByParent(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_NOMINAL)
+	@Test
+	public void testFindAllByParentNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final SousTypeProduit parent = parentPersistant();
+		final SousTypeProduitDTO.InputDTO parentDto = parentDto(BAZAR, OUTILLAGE);
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
+
+		final List<OutputDTO> retour = scenario.service.findAllByParent(parentDto);
+
+		assertThat(retour).isNotNull().hasSize(2);
+		assertThat(retour).extracting(OutputDTO::getProduit)
+				.containsExactly(MARTEAU, SCIE);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+
+	// ============================ findByDTO =================================
+
+
+	/**
+	 * <div>
+	 * <p>findByDTO(null) : MESSAGE_RECHERCHE_OBJ_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTONULL)
+	@Test
+	public void testFindByDTONull() throws Exception {
+
+		final Scenario scenario = scenario();
+		final OutputDTO retour = scenario.service.findByDTO(null);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OBJ_NULL);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(parent blank) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOPARENT_BLANK)
+	@Test
+	public void testFindByDTOParentBlank() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, ESPACES, MARTEAU);
+		assertThatThrownBy(() -> scenario.service.findByDTO(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(recherche parent KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_PARENT_AVEC_MESSAGE)
+	@Test
+	public void testFindByDTOErreurTechniqueRechercheParentAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(recherche parent KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_PARENT_SANS_MESSAGE)
+	@Test
+	public void testFindByDTOErreurTechniqueRechercheParentSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(parent absent) : null + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOPARENT_ABSENT)
+	@Test
+	public void testFindByDTOParentAbsent() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Collections.emptyList());
+		final OutputDTO retour = scenario.service.findByDTO(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		verify(scenario.gateway, never()).findAllByParent(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(parent non persistant) : null + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOPARENT_NON_PERSISTANT)
+	@Test
+	public void testFindByDTOParentNonPersistant() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentNonPersistant()));
+		final OutputDTO retour = scenario.service.findByDTO(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		verify(scenario.gateway, never()).findAllByParent(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(recherche enfants KO avec message) : KO_TECHNIQUE_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_ENFANTS_AVEC_MESSAGE)
+	@Test
+	public void testFindByDTOErreurTechniqueRechercheEnfantsAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(recherche enfants KO sans message) : KO_TECHNIQUE_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_ENFANTS_SANS_MESSAGE)
+	@Test
+	public void testFindByDTOErreurTechniqueRechercheEnfantsSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(gateway retourne null) : null + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOGATEWAY_RETOUR_NULL)
+	@Test
+	public void testFindByDTOGatewayRetourNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent)).thenReturn(null);
+		final OutputDTO retour = scenario.service.findByDTO(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(vide) : null + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOVIDE)
+	@Test
+	public void testFindByDTOVide() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Collections.emptyList());
+		final OutputDTO retour = scenario.service.findByDTO(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(vide après filtrage) : null + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOVIDE_APRES_FILTRAGE)
+	@Test
+	public void testFindByDTOVideApresFiltrage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(null, null));
+		final OutputDTO retour = scenario.service.findByDTO(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(introuvable dans liste) : null + MESSAGE_RECHERCHE_VIDE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOINTROUVABLE_DANS_LISTE)
+	@Test
+	public void testFindByDTOIntrouvableDansListe() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produitScie));
+		final OutputDTO retour = scenario.service.findByDTO(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(conversion OutputDTO KO avec message) : KO_TECHNIQUE_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOCONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testFindByDTOConversionOutputDTOKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = mock(Produit.class);
+		when(produitKo.getProduit()).thenReturn(MARTEAU);
+		when(produitKo.getSousTypeProduit()).thenThrow(panneTechnique);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produitKo));
+		assertThatThrownBy(() -> scenario.service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(conversion OutputDTO KO sans message) : KO_TECHNIQUE_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTOCONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testFindByDTOConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = mock(Produit.class);
+		when(produitKo.getProduit()).thenReturn(MARTEAU);
+		when(produitKo.getSousTypeProduit()).thenThrow(panneTechnique);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produitKo));
+		assertThatThrownBy(() -> scenario.service.findByDTO(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findByDTO(nominal) : OutputDTO exact + MESSAGE_SUCCES_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_DTO)
+	@DisplayName(DISPLAY_NAME_FIND_BY_DTONOMINAL)
+	@Test
+	public void testFindByDTONominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
+		final OutputDTO retour = scenario.service.findByDTO(dto);
+		assertProduitDTO(retour, 1L, BAZAR, OUTILLAGE, MARTEAU);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+	} // __________________________________________________________________
+
+
+	// ============================ findById =================================
+
+
+	/**
+	 * <div>
+	 * <p>findById(null) : MESSAGE_PARAM_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_NULL)
+	@Test
+	public void testFindByIdNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		final OutputDTO retour = scenario.service.findById(null);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findById(introuvable) : MESSAGE_OBJ_INTROUVABLE + id.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_INTROUVABLE)
+	@Test
+	public void testFindByIdIntrouvable() throws Exception {
+
+		final Scenario scenario = scenario();
+		when(scenario.gateway.findById(999L)).thenReturn(null);
+		final OutputDTO retour = scenario.service.findById(999L);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + 999L);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findById(gateway KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_ERREUR_TECHNIQUE_AVEC_MESSAGE)
+	@Test
+	public void testFindByIdErreurTechniqueAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.findById(100L)).thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.findById(100L))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findById(gateway KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_ERREUR_TECHNIQUE_SANS_MESSAGE)
+	@Test
+	public void testFindByIdErreurTechniqueSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.findById(100L)).thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.findById(100L))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findById(conversion OutputDTO KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testFindByIdConversionOutputDTOKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.findById(100L)).thenReturn(produitKo);
+		assertThatThrownBy(() -> scenario.service.findById(100L))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findById(conversion OutputDTO KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testFindByIdConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		when(scenario.gateway.findById(100L)).thenReturn(produitKo);
+		assertThatThrownBy(() -> scenario.service.findById(100L))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage()).isNull();
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>findById(nominal) : OutputDTO exact + MESSAGE_SUCCES_RECHERCHE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_FIND_BY_ID)
+	@DisplayName(DISPLAY_NAME_FIND_BY_ID_NOMINAL)
+	@Test
+	public void testFindByIdNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final Produit produit = produit(MARTEAU, parentPersistant(), 100L);
+		when(scenario.gateway.findById(100L)).thenReturn(produit);
+		final OutputDTO retour = scenario.service.findById(100L);
+		assertProduitDTO(retour, 100L, BAZAR, OUTILLAGE, MARTEAU);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+
+	// ============================ update =================================
+
+
+	/**
+	 * <div>
+	 * <p>update(null) : ExceptionParametreNull + MESSAGE_PARAM_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_NULL)
+	@Test
+	public void testUpdateNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		assertThatThrownBy(() -> scenario.service.update(null))
+				.isInstanceOf(ExceptionParametreNull.class);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(libellé null) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_LIBELLE_NULL)
+	@Test
+	public void testUpdateLibelleNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, null);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isInstanceOf(ExceptionParametreBlank.class);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_BLANK)
+	@Test
+	public void testUpdateBlank() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, ESPACES);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isInstanceOf(ExceptionParametreBlank.class);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(parent blank) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_BLANK)
+	@Test
+	public void testUpdateParentBlank() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, ESPACES, MARTEAU);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(recherche parent KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_RECHERCHE_PARENT_TECHNIQUE_KO_AVEC_MESSAGE)
+	@Test
+	public void testUpdateRechercheParentTechniqueKoAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(recherche parent KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_RECHERCHE_PARENT_TECHNIQUE_KO_SANS_MESSAGE)
+	@Test
+	public void testUpdateRechercheParentTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(parent absent) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_ABSENT)
+	@Test
+	public void testUpdateParentAbsent() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Collections.emptyList());
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verify(scenario.gateway, never()).findAllByParent(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(parent non persistant) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_PARENT_NON_PERSISTANT)
+	@Test
+	public void testUpdateParentNonPersistant() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentNonPersistant()));
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verify(scenario.gateway, never()).findAllByParent(any(SousTypeProduit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(recherche enfants KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_RECHERCHE_ENFANTS_TECHNIQUE_KO_AVEC_MESSAGE)
+	@Test
+	public void testUpdateRechercheEnfantsTechniqueKoAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(recherche enfants KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_RECHERCHE_ENFANTS_TECHNIQUE_KO_SANS_MESSAGE)
+	@Test
+	public void testUpdateRechercheEnfantsTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(stockage null pendant ré-identification) : null + MESSAGE_OBJ_INTROUVABLE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION)
+	@Test
+	public void testUpdateStockageNullPendantReidentification() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent)).thenReturn(null);
+		final OutputDTO retour = scenario.service.update(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + MARTEAU);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(introuvable) : null + MESSAGE_OBJ_INTROUVABLE.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_INTROUVABLE)
+	@Test
+	public void testUpdateIntrouvable() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produit(SCIE, parent, 2L)));
+		final OutputDTO retour = scenario.service.update(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + MARTEAU);
+		verify(scenario.gateway, never()).update(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(non persistant) : ExceptionNonPersistant.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_NON_PERSISTANT)
+	@Test
+	public void testUpdateNonPersistant() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit sansId = produit(MARTEAU, parent, null);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(sansId));
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isInstanceOf(ExceptionNonPersistant.class)
+				.hasMessage(ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
+		verify(scenario.gateway, never()).update(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(modification technique KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_TECHNIQUE_KO_AVEC_MESSAGE)
+	@Test
+	public void testUpdateModificationTechniqueKoAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(existant));
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.update(any(Produit.class)))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_KO + MARTEAU
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(modification technique KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_TECHNIQUE_KO_SANS_MESSAGE)
+	@Test
+	public void testUpdateModificationTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(existant));
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.update(any(Produit.class)))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_KO + MARTEAU
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(modification retourne null) : null + MESSAGE_MODIF_KO.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NULL)
+	@Test
+	public void testUpdateModificationRetourNull() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(existant));
+		when(scenario.gateway.update(any(Produit.class))).thenReturn(null);
+		final OutputDTO retour = scenario.service.update(dto);
+		assertThat(retour).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_KO + MARTEAU);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(modification retourne non persistant) : ExceptionNonPersistant.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_MODIFICATION_RETOUR_NON_PERSISTANT)
+	@Test
+	public void testUpdateModificationRetourNonPersistant() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(existant));
+		when(scenario.gateway.update(any(Produit.class)))
+				.thenReturn(produit(MARTEAU, parent, null));
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isInstanceOf(ExceptionNonPersistant.class)
+				.hasMessage(ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(conversion OutputDTO KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@Test
+	public void testUpdateConversionOutputDTOKOAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(existant));
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final Produit modifie = mock(Produit.class);
+		when(modifie.getIdProduit()).thenReturn(100L);
+		when(modifie.getSousTypeProduit()).thenThrow(panneTechnique);
+		when(scenario.gateway.update(any(Produit.class)))
+				.thenReturn(modifie);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_KO + MARTEAU
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(conversion OutputDTO KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@Test
+	public void testUpdateConversionOutputDTOKOSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(existant));
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit modifie = mock(Produit.class);
+		when(modifie.getIdProduit()).thenReturn(100L);
+		when(modifie.getSousTypeProduit()).thenThrow(panneTechnique);
+		when(scenario.gateway.update(any(Produit.class)))
+				.thenReturn(modifie);
+		assertThatThrownBy(() -> scenario.service.update(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_KO + MARTEAU
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>update(nominal) : OutputDTO cohérent + ID conservé.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_UPDATE)
+	@DisplayName(DISPLAY_NAME_UPDATE_NOMINAL)
+	@Test
+	public void testUpdateNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit existant = produit(MARTEAU, parent, 100L);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(existant));
+		final Produit modifie = produit(MARTEAU, parent, 100L);
+		final ArgumentCaptor<Produit> captor = ArgumentCaptor.forClass(Produit.class);
+		when(scenario.gateway.update(any(Produit.class))).thenReturn(modifie);
+		final OutputDTO retour = scenario.service.update(dto);
+		assertProduitDTO(retour, 100L, BAZAR, OUTILLAGE, MARTEAU);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_MODIF_OK + MARTEAU);
+		verify(scenario.gateway, times(1)).update(captor.capture());
+		assertThat(captor.getValue().getIdProduit()).isEqualTo(100L);
+		assertThat(captor.getValue().getSousTypeProduit()).isSameAs(parent);
+
+	} // __________________________________________________________________
+
+
+	// ============================ delete =================================
+
+
+	/**
+	 * <div>
+	 * <p>delete(null) : ExceptionParametreNull + MESSAGE_PARAM_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NULL)
+	@Test
+	public void testDeleteNull() {
+
+		final Scenario scenario = scenario();
+		assertThatThrownBy(() -> scenario.service.delete(null))
+				.isInstanceOf(ExceptionParametreNull.class);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(libellé null) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_LIBELLE_NULL)
+	@Test
+	public void testDeleteLibelleNull() {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, null);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isInstanceOf(ExceptionParametreBlank.class);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_BLANK)
+	@Test
+	public void testDeleteBlank() {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, ESPACES);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isInstanceOf(ExceptionParametreBlank.class);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(parent blank) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_BLANK)
+	@Test
+	public void testDeleteParentBlank() {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, ESPACES, MARTEAU);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(recherche parent KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_PARENT_TECHNIQUE_KO_AVEC_MESSAGE)
+	@Test
+	public void testDeleteRechercheParentTechniqueKoAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(recherche parent KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_PARENT_TECHNIQUE_KO_SANS_MESSAGE)
+	@Test
+	public void testDeleteRechercheParentTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		verifyNoInteractions(scenario.gateway);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(parent absent) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_ABSENT)
+	@Test
+	public void testDeleteParentAbsent() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Collections.emptyList());
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verify(scenario.gateway, never()).findAllByParent(any(SousTypeProduit.class));
+		verify(scenario.gateway, never()).delete(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(parent non persistant) : MESSAGE_PAS_PARENT.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_PARENT_NON_PERSISTANT)
+	@Test
+	public void testDeleteParentNonPersistant() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentNonPersistant()));
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+		verify(scenario.gateway, never()).findAllByParent(any(SousTypeProduit.class));
+		verify(scenario.gateway, never()).delete(any(Produit.class));
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(recherche enfants KO avec message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_ENFANTS_TECHNIQUE_KO_AVEC_MESSAGE)
+	@Test
+	public void testDeleteRechercheEnfantsTechniqueKoAvecMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(recherche enfants KO sans message) : exception propagée.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_RECHERCHE_ENFANTS_TECHNIQUE_KO_SANS_MESSAGE)
+	@Test
+	public void testDeleteRechercheEnfantsTechniqueKoSansMessage() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>delete(stockage null pendant ré-identification) : MESSAGE_STOCKAGE_NULL.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_STOCKAGE_NULL_PENDANT_REIDENTIFICATION)
+	@Test
+	public void testDeleteStockageNullPendantReidentification() throws Exception {
+
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent)).thenReturn(null);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-		verify(gateway, never()).delete(any(Produit.class));
+		verify(scenario.gateway, never()).delete(any(Produit.class));
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>delete(introuvable) : aucun objet persistant
-	 * ne correspond au couple [parent, libellé].</p>
-	 * <ul>
-	 * <li>ne lève aucune exception</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
-	 * </ul>
+	 * <p>delete(introuvable) : MESSAGE_OBJ_INTROUVABLE + aucune suppression.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_INTROUVABLE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(introuvable) : aucune exception + message MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testDeleteIntrouvable() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parentPersistant =
-				new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit produitScie = new Produit(SCIE, parentPersistant);
-		produitScie.setIdProduit(2L);
-
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-				.thenReturn(Arrays.asList(produitScie));
-
-		service.delete(dto);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.MESSAGE_OBJ_INTROUVABLE + MARTEAU);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-		verify(gateway, never()).delete(any(Produit.class));
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produit(SCIE, parent, 2L)));
+		scenario.service.delete(dto);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_INTROUVABLE + MARTEAU);
+		verify(scenario.gateway, never()).delete(any(Produit.class));
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>delete(non persisté) : l'objet ré-identifié
-	 * n'a pas d'identifiant persistant.</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionNonPersistant}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_OBJ_NON_PERSISTE}
-	 * + libellé</li>
-	 * <li>n'appelle jamais {@code gateway.delete(...)}</li>
-	 * </ul>
+	 * <p>delete(non persistant) : ExceptionNonPersistant.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NON_PERSISTANT)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(non persisté) : ExceptionNonPersistant + message MESSAGE_OBJ_NON_PERSISTE + libellé")
 	public void testDeleteNonPersistant() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parentPersistant =
-				new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit produitSansId = new Produit(MARTEAU, parentPersistant);
-
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
-				.thenReturn(Arrays.asList(produitSansId));
-
-		assertThatThrownBy(() -> service.delete(dto))
-				.isInstanceOf(ExceptionNonPersistant.class);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-		verify(gateway, never()).delete(any(Produit.class));
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(produit(MARTEAU, parent, null)));
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isInstanceOf(ExceptionNonPersistant.class)
+				.hasMessage(ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_OBJ_NON_PERSISTE + MARTEAU);
+		verify(scenario.gateway, never()).delete(any(Produit.class));
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>delete(KO technique de suppression avec message) :
-	 * la cible est correctement ré-identifiée
-	 * puis la destruction technique échoue.</p>
-	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_DELETE_KO}
-	 * + libellé + tiret + détail technique</li>
-	 * <li>appelle exactement une fois {@code gateway.delete(...)}</li>
-	 * </ul>
+	 * <p>delete(destruction KO avec message) : exception propagée.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KOAVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(KO technique avec message) : exception relancée + message MESSAGE_DELETE_KO + détail technique")
-	public void testDeleteTechniqueKoAvecMessage() throws Exception {
+	public void testDeleteDestructionKOAvecMessage() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		final TypeProduit typeProduit = new TypeProduit(BAZAR);
-		typeProduit.setIdTypeProduit(1L);
-
-		final SousTypeProduit parentPersistant =
-				new SousTypeProduit(OUTILLAGE, typeProduit);
-		parentPersistant.setIdSousTypeProduit(10L);
-
-		final Produit cible = new Produit(MARTEAU, parentPersistant);
-		cible.setIdProduit(100L);
-
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(BAZAR, OUTILLAGE, MARTEAU);
-
-		final IllegalStateException ex =
-				new IllegalStateException(MESSAGE_GATEWAY);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parentPersistant));
-		when(gateway.findAllByParent(parentPersistant))
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit cible = produit(MARTEAU, parent, 100L);
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
 				.thenReturn(Arrays.asList(cible));
-		doThrow(ex).when(gateway).delete(cible);
-
-		assertThatThrownBy(() -> service.delete(dto))
-				.isSameAs(ex);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.MESSAGE_DELETE_KO
-								+ MARTEAU
-								+ ProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
-
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).findAllByParent(parentPersistant);
-		verify(gateway, times(1)).delete(cible);
+		doThrow(panneTechnique).when(scenario.gateway).delete(cible);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_DELETE_KO + MARTEAU
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+		verify(scenario.gateway, times(1)).delete(cible);
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>delete(ok) : succès nominal complet.</p>
-	 * <ul>
-	 * <li>ré-identifie d'abord le bon parent persistant
-	 * sur le couple [type parent, sous-type parent]</li>
-	 * <li>ré-identifie ensuite la bonne cible
-	 * sur le couple [parent, libellé]</li>
-	 * <li>ne détruit jamais l'homonyme rattaché
-	 * à l'autre parent</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_DELETE_OK} + libellé</li>
-	 * </ul>
+	 * <p>delete(destruction KO sans message) : exception propagée.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_DESTRUCTION_KOSANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("delete(ok) : suppression déléguée + message MESSAGE_DELETE_OK + couple [parent, libellé]")
-	public void testDeleteOkAvecPreuveCoupleParentLibelle()
-			throws Exception {
+	public void testDeleteDestructionKOSansMessage() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
+		final Scenario scenario = scenario();
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		final SousTypeProduit parent = parentPersistant();
+		final Produit cible = produit(MARTEAU, parent, 100L);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parent));
+		when(scenario.gateway.findAllByParent(parent))
+				.thenReturn(Arrays.asList(cible));
+		doThrow(panneTechnique).when(scenario.gateway).delete(cible);
+		assertThatThrownBy(() -> scenario.service.delete(dto))
+				.isSameAs(panneTechnique);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_DELETE_KO + MARTEAU
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		verify(scenario.gateway, times(1)).delete(cible);
 
-		final TypeProduit typeProduitA = new TypeProduit(BAZAR);
-		typeProduitA.setIdTypeProduit(1L);
+	} // __________________________________________________________________
 
-		final TypeProduit typeProduitB = new TypeProduit(QUINCAILLERIE);
-		typeProduitB.setIdTypeProduit(2L);
+	/**
+	 * <div>
+	 * <p>delete(nominal) : suppression sur le couple parent/libellé.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_DELETE)
+	@DisplayName(DISPLAY_NAME_DELETE_NOMINAL)
+	@Test
+	public void testDeleteNominal() throws Exception {
 
-		final SousTypeProduit parentA =
-				new SousTypeProduit(OUTILLAGE, typeProduitA);
-		parentA.setIdSousTypeProduit(10L);
-
-		final SousTypeProduit parentB =
-				new SousTypeProduit(OUTILLAGE, typeProduitB);
-		parentB.setIdSousTypeProduit(20L);
-
-		final Produit homonymeAutreParent =
-				new Produit(MARTEAU, parentA);
-		homonymeAutreParent.setIdProduit(100L);
-
-		final Produit cible =
-				new Produit(MARTEAU, parentB);
-		cible.setIdProduit(200L);
-
-		final InputDTO dto =
-				new ProduitDTO.InputDTO(
-						QUINCAILLERIE,
-						OUTILLAGE,
-						MARTEAU);
-
-		when(sousTypeGateway.findByLibelle(OUTILLAGE))
+		final Scenario scenario = scenario();
+		final SousTypeProduit parentA = parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+		final SousTypeProduit parentB = parentPersistant(QUINCAILLERIE, OUTILLAGE, 2L, 20L);
+		final Produit homonymeAutreParent = produit(MARTEAU, parentA, 100L);
+		final Produit cible = produit(MARTEAU, parentB, 200L);
+		final InputDTO dto = input(QUINCAILLERIE, OUTILLAGE, MARTEAU);
+		when(scenario.sousTypeGateway.findByLibelle(OUTILLAGE))
 				.thenReturn(Arrays.asList(parentA, parentB));
-		when(gateway.findAllByParent(parentB))
+		when(scenario.gateway.findAllByParent(parentB))
 				.thenReturn(Arrays.asList(cible));
-
-		service.delete(dto);
-
-		assertThat(service.getMessage())
+		scenario.service.delete(dto);
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_DELETE_OK + MARTEAU);
+		verify(scenario.gateway, never()).findAllByParent(parentA);
+		verify(scenario.gateway, never()).delete(homonymeAutreParent);
+		verify(scenario.gateway, times(1)).delete(cible);
 
-		verify(sousTypeGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).findAllByParent(parentA);
-		verify(gateway, times(1)).findAllByParent(parentB);
-		verify(gateway, never()).delete(homonymeAutreParent);
-		verify(gateway, times(1)).delete(cible);
+	} // __________________________________________________________________
 
-	} // __________________________________________________________________	
 
-	
-	
 	// ============================ count =================================
-	
-	
-	
+
+
 	/**
 	 * <div>
-	 * <p>count(KO technique avec message) :
-	 * le Gateway échoue pendant le comptage
-	 * avec un message exploitable.</p>
-	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + détail technique</li>
-	 * <li>délègue une seule fois au Gateway</li>
-	 * </ul>
+	 * <p>count(gateway KO avec message) : exception propagée.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KOAVEC_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(KO technique avec message) : propage l'exception + message KO_TECHNIQUE_RECHERCHE + détail")
-	public void testCountTechniqueKoAvecMessage() throws Exception {
+	public void testCountGatewayKOAvecMessage() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException(MESSAGE_GATEWAY);
-
-		when(gateway.count()).thenThrow(panneTechnique);
-
-		assertThatThrownBy(() -> service.count())
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		when(scenario.gateway.count()).thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.count())
 				.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ ProduitICuService.TIRET_ESPACE
-								+ MESSAGE_GATEWAY);
-
-		verify(gateway, times(1)).count();
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
-	
-	
 
 	/**
 	 * <div>
-	 * <p>count(KO technique sans message) :
-	 * le Gateway échoue pendant le comptage
-	 * sans message exploitable.</p>
-	 * <ul>
-	 * <li>propage l'exception technique d'origine</li>
-	 * <li>utilise le fallback
-	 * {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE}</li>
-	 * <li>délègue une seule fois au Gateway</li>
-	 * </ul>
+	 * <p>count(gateway KO sans message) : exception propagée.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_GATEWAY_KOSANS_MESSAGE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(KO technique sans message) : fallback MSG_ERREUR_NON_SPECIFIEE")
-	public void testCountTechniqueKoSansMessage() throws Exception {
+	public void testCountGatewayKOSansMessage() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-		final IllegalStateException panneTechnique =
-				new IllegalStateException();
-
-		when(gateway.count()).thenThrow(panneTechnique);
-
-		assertThatThrownBy(() -> service.count())
+		final Scenario scenario = scenario();
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		when(scenario.gateway.count()).thenThrow(panneTechnique);
+		assertThatThrownBy(() -> scenario.service.count())
 				.isSameAs(panneTechnique);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ ProduitICuService.TIRET_ESPACE
-								+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
-
-		verify(gateway, times(1)).count();
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
-	
-	
 
 	/**
 	 * <div>
-	 * <p>count(retour négatif) :
-	 * le Gateway retourne une valeur incohérente
-	 * pour un comptage observable.</p>
-	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne un message technique explicite</li>
-	 * <li>délègue une seule fois au Gateway</li>
-	 * </ul>
+	 * <p>count(retour négatif) : IllegalStateException.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_RETOUR_NEGATIF)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(retour négatif) : IllegalStateException + message technique explicite")
-	public void testCountRetourNegatifIncoherent() throws Exception {
+	public void testCountRetourNegatif() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		when(gateway.count()).thenReturn(-1L);
-
-		assertThatThrownBy(() -> service.count())
+		final Scenario scenario = scenario();
+		when(scenario.gateway.count()).thenReturn(-1L);
+		assertThatThrownBy(() -> scenario.service.count())
 				.isInstanceOf(IllegalStateException.class);
-
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
-								+ ProduitICuService.TIRET_ESPACE
-								+ "comptage négatif incohérent : -1");
-
-		verify(gateway, times(1)).count();
-		verifyNoInteractions(sousTypeGateway);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ "comptage négatif incohérent : -1");
 
 	} // __________________________________________________________________
-	
-	
 
 	/**
 	 * <div>
-	 * <p>count(0) : aucun résultat en stockage.</p>
-	 * <ul>
-	 * <li>retourne {@code 0}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>délègue une seule fois au Gateway</li>
-	 * </ul>
+	 * <p>count(0) : MESSAGE_RECHERCHE_VIDE.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_ZERO)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(0) : retourne 0 + message MESSAGE_RECHERCHE_VIDE")
 	public void testCountZero() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		when(gateway.count()).thenReturn(0L);
-
-		final long retour = service.count();
-
+		final Scenario scenario = scenario();
+		when(scenario.gateway.count()).thenReturn(0L);
+		final long retour = scenario.service.count();
 		assertThat(retour).isZero();
-		assertThat(service.getMessage())
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-		verify(gateway, times(1)).count();
-		verifyNoInteractions(sousTypeGateway);
-
 	} // __________________________________________________________________
-	
-	
 
 	/**
 	 * <div>
-	 * <p>count(positif) : succès nominal du comptage.</p>
-	 * <ul>
-	 * <li>retourne le comptage exact</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>délègue une seule fois au Gateway</li>
-	 * </ul>
+	 * <p>count(nominal) : MESSAGE_RECHERCHE_OK.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_COUNT)
+	@DisplayName(DISPLAY_NAME_COUNT_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("count(positif) : retourne le comptage exact + message MESSAGE_RECHERCHE_OK")
-	public void testCountPositif() throws Exception {
+	public void testCountNominal() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		when(gateway.count()).thenReturn(42L);
-
-		final long retour = service.count();
-
+		final Scenario scenario = scenario();
+		when(scenario.gateway.count()).thenReturn(42L);
+		final long retour = scenario.service.count();
 		assertThat(retour).isEqualTo(42L);
-		assertThat(service.getMessage())
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
-		verify(gateway, times(1)).count();
-		verifyNoInteractions(sousTypeGateway);
+	} // __________________________________________________________________
 
-	} // __________________________________________________________________	
 
-	
-	
-	// ========================== getMessage ==============================
-	
-	
-	
+	// ============================ getMessage =================================
+
+
 	/**
 	 * <div>
-	 * <p>getMessage() au démarrage :
-	 * aucun message n'a encore été produit.</p>
-	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>n'interagit avec aucun Gateway</li>
-	 * </ul>
+	 * <p>getMessage(initial) : null.</p>
 	 * </div>
+	 *
+	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_INITIAL_NULL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(initial) : retourne null + aucune interaction gateway")
 	public void testGetMessageInitialNull() {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		assertThat(service.getMessage()).isNull();
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
+		final Scenario scenario = scenario();
+		assertThat(scenario.service.getMessage()).isNull();
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>getMessage() après erreur locale bénigne :
-	 * le service mémorise le message produit
-	 * par l'opération précédente.</p>
-	 * <ul>
-	 * <li>provoque volontairement
-	 * {@code creer(null)}</li>
-	 * <li>{@code creer(null)} retourne {@code null}</li>
-	 * <li>retourne ensuite exactement
-	 * {@link ProduitICuService#MESSAGE_CREER_NULL}</li>
-	 * <li>n'interagit avec aucun Gateway</li>
-	 * </ul>
+	 * <p>getMessage(après erreur locale) : MESSAGE_CREER_NULL.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après creer(null)) : retourne MESSAGE_CREER_NULL + aucune interaction gateway")
 	public void testGetMessageApresErreurLocale() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		final OutputDTO retour = service.creer(null);
-
+		final Scenario scenario = scenario();
+		final OutputDTO retour = scenario.service.creer(null);
 		assertThat(retour).isNull();
-		assertThat(service.getMessage())
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
-
-		verifyNoInteractions(gateway);
-		verifyNoInteractions(sousTypeGateway);
+		verifyNoInteractions(scenario.gateway);
+		verifyNoInteractions(scenario.sousTypeGateway);
 
 	} // __________________________________________________________________
-	
-	
-	
+
 	/**
 	 * <div>
-	 * <p>getMessage() après succès observable :
-	 * le service retourne le message produit
-	 * par {@code count()} lorsque le comptage vaut zéro.</p>
-	 * <ul>
-	 * <li>délègue une seule fois au Gateway enfant</li>
-	 * <li>retourne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * </ul>
+	 * <p>getMessage(après count zéro) : MESSAGE_RECHERCHE_VIDE.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_ZERO)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(après count zéro) : retourne MESSAGE_RECHERCHE_VIDE")
 	public void testGetMessageApresCountZero() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeGateway =
-				mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service =
-				new ProduitCuService(gateway, sousTypeGateway);
-
-		when(gateway.count()).thenReturn(0L);
-
-		final long retour = service.count();
-
+		final Scenario scenario = scenario();
+		when(scenario.gateway.count()).thenReturn(0L);
+		final long retour = scenario.service.count();
 		assertThat(retour).isZero();
-		assertThat(service.getMessage())
+		assertThat(scenario.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
-
-		verify(gateway, times(1)).count();
-		verifyNoInteractions(sousTypeGateway);
 
 	} // __________________________________________________________________
 
-	
-	
 	/**
 	 * <div>
-	 * <p>getMessage() : le dernier message gagne.</p>
-	 * <ul>
-	 * <li>produit d'abord un message de comptage réussi</li>
-	 * <li>produit ensuite un message plus récent
-	 * via {@code creer(null)}</li>
-	 * <li>retourne enfin le message le plus récent</li>
-	 * </ul>
+	 * <p>getMessage(après count nominal) : MESSAGE_RECHERCHE_OK.</p>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_APRES_COUNT_NOMINAL)
 	@Test
-	@Tag(TAG)
-	@DisplayName("getMessage(dernier message gagne) : MESSAGE_CREER_NULL écrase le message précédent")
+	public void testGetMessageApresCountNominal() throws Exception {
+
+		final Scenario scenario = scenario();
+		when(scenario.gateway.count()).thenReturn(1L);
+		final long retour = scenario.service.count();
+		assertThat(retour).isEqualTo(1L);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+	} // __________________________________________________________________
+
+	/**
+	 * <div>
+	 * <p>getMessage(dernier message gagne) : dernier message observable.</p>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_GET_MESSAGE)
+	@DisplayName(DISPLAY_NAME_GET_MESSAGE_DERNIER_MESSAGE_GAGNE)
+	@Test
 	public void testGetMessageDernierMessageGagne() throws Exception {
 
-		final ProduitGatewayIService gateway =
-				mock(ProduitGatewayIService.class);
+		final Scenario scenario = scenario();
+		when(scenario.gateway.count()).thenReturn(1L);
+		final long retourCount = scenario.service.count();
+		assertThat(retourCount).isEqualTo(1L);
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		final OutputDTO retourCreer = scenario.service.creer(null);
+		assertThat(retourCreer).isNull();
+		assertThat(scenario.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+
+	} // __________________________________________________________________
+
+
+	// ***************************** HELPERS *******************************/
+
+
+	/**
+	 * <div>
+	 * <p>Prépare un scénario Mockito standard pour Produit.</p>
+	 * </div>
+	 *
+	 * @return Scenario
+	 */
+	private static Scenario scenario() {
+
+		final ProduitGatewayIService gateway = mock(ProduitGatewayIService.class);
 		final SousTypeProduitGatewayIService sousTypeGateway =
 				mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service =
 				new ProduitCuService(gateway, sousTypeGateway);
 
-		when(gateway.count()).thenReturn(1L);
+		return new Scenario(gateway, sousTypeGateway, service);
+	}
 
-		final long retourCount = service.count();
 
-		assertThat(retourCount).isEqualTo(1L);
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+	/**
+	 * <div>
+	 * <p>DTO Produit d'entrée.</p>
+	 * </div>
+	 *
+	 * @param typeProduit type parent
+	 * @param sousTypeProduit sous-type parent
+	 * @param produit produit
+	 * @return InputDTO
+	 */
+	private static InputDTO input(
+			final String typeProduit,
+			final String sousTypeProduit,
+			final String produit) {
 
-		final OutputDTO retourCreer = service.creer(null);
+		return new ProduitDTO.InputDTO(
+				typeProduit,
+				sousTypeProduit,
+				produit);
+	}
 
-		assertThat(retourCreer).isNull();
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
 
-		verify(gateway, times(1)).count();
-		verifyNoInteractions(sousTypeGateway);
+	/**
+	 * <div>
+	 * <p>DTO SousTypeProduit parent d'entrée.</p>
+	 * </div>
+	 *
+	 * @param typeProduit type parent
+	 * @param sousTypeProduit objet métier parent
+	 * @return SousTypeProduitDTO.InputDTO
+	 */
+	private static SousTypeProduitDTO.InputDTO parentDto(
+			final String typeProduit,
+			final String sousTypeProduit) {
 
-	} // __________________________________________________________________
-	
-	
-	
+		return new SousTypeProduitDTO.InputDTO(
+				typeProduit,
+				sousTypeProduit);
+	}
+
+
+	/**
+	 * <div>
+	 * <p>Parent persistant nominal.</p>
+	 * </div>
+	 *
+	 * @return SousTypeProduit
+	 */
+	private static SousTypeProduit parentPersistant() {
+
+		return parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+	}
+
+
+	/**
+	 * <div>
+	 * <p>Parent persistant paramétré.</p>
+	 * </div>
+	 *
+	 * @param typeLibelle libellé TypeProduit
+	 * @param sousTypeLibelle libellé SousTypeProduit
+	 * @param typeId id TypeProduit
+	 * @param sousTypeId id SousTypeProduit
+	 * @return SousTypeProduit
+	 */
+	private static SousTypeProduit parentPersistant(
+			final String typeLibelle,
+			final String sousTypeLibelle,
+			final Long typeId,
+			final Long sousTypeId) {
+
+		final TypeProduit typeProduit = new TypeProduit(typeLibelle);
+		typeProduit.setIdTypeProduit(typeId);
+
+		final SousTypeProduit parent =
+				new SousTypeProduit(sousTypeLibelle, typeProduit);
+		parent.setIdSousTypeProduit(sousTypeId);
+
+		return parent;
+	}
+
+
+	/**
+	 * <div>
+	 * <p>Parent non persistant.</p>
+	 * </div>
+	 *
+	 * @return SousTypeProduit
+	 */
+	private static SousTypeProduit parentNonPersistant() {
+
+		final TypeProduit typeProduit = new TypeProduit(BAZAR);
+		typeProduit.setIdTypeProduit(1L);
+
+		return new SousTypeProduit(OUTILLAGE, typeProduit);
+	}
+
+
+	/**
+	 * <div>
+	 * <p>Produit métier paramétré.</p>
+	 * </div>
+	 *
+	 * @param libelle libellé Produit
+	 * @param parent parent SousTypeProduit
+	 * @param id id Produit
+	 * @return Produit
+	 */
+	private static Produit produit(
+			final String libelle,
+			final SousTypeProduit parent,
+			final Long id) {
+
+		final Produit produit = new Produit(libelle, parent);
+		produit.setIdProduit(id);
+
+		return produit;
+	}
+
+
+	/**
+	 * <div>
+	 * <p>Produit mocké qui échoue pendant la conversion OutputDTO.</p>
+	 * </div>
+	 *
+	 * @param panneTechnique panne à jeter
+	 * @return Produit
+	 */
+	private static Produit produitConversionKo(
+			final RuntimeException panneTechnique) {
+
+		final Produit produit = mock(Produit.class);
+		when(produit.getSousTypeProduit()).thenThrow(panneTechnique);
+
+		return produit;
+	}
+
+
+	/**
+	 * <div>
+	 * <p>Vérifie le contenu principal d'un OutputDTO Produit.</p>
+	 * </div>
+	 *
+	 * @param dto DTO contrôlé
+	 * @param id id attendu
+	 * @param typeProduit type attendu
+	 * @param sousTypeProduit sous-type attendu
+	 * @param produit produit attendu
+	 */
+	private static void assertProduitDTO(
+			final OutputDTO dto,
+			final Long id,
+			final String typeProduit,
+			final String sousTypeProduit,
+			final String produit) {
+
+		assertThat(dto).isNotNull();
+		assertThat(dto.getIdProduit()).isEqualTo(id);
+		assertThat(dto.getTypeProduit()).isEqualTo(typeProduit);
+		assertThat(dto.getSousTypeProduit()).isEqualTo(sousTypeProduit);
+		assertThat(dto.getProduit()).isEqualTo(produit);
+	}
+
+
+	/**
+	 * <div>
+	 * <p>Scénario Mockito standard.</p>
+	 * </div>
+	 */
+	private static final class Scenario {
+
+		/** Gateway Produit mocké. */
+		private final ProduitGatewayIService gateway;
+
+		/** Gateway parent SousTypeProduit mocké. */
+		private final SousTypeProduitGatewayIService sousTypeGateway;
+
+		/** SERVICE METIER UC testé. */
+		private final ProduitCuService service;
+
+		/**
+		 * <div>
+		 * <p>Constructeur complet.</p>
+		 * </div>
+		 *
+		 * @param pGateway Gateway Produit
+		 * @param pSousTypeGateway Gateway parent
+		 * @param pService SERVICE METIER UC
+		 */
+		private Scenario(
+				final ProduitGatewayIService pGateway,
+				final SousTypeProduitGatewayIService pSousTypeGateway,
+				final ProduitCuService pService) {
+
+			super();
+			this.gateway = pGateway;
+			this.sousTypeGateway = pSousTypeGateway;
+			this.service = pService;
+		}
+	}
+
 }

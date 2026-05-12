@@ -1725,6 +1725,14 @@ Ce dispositif vise un workflow industriel :
 
 L’IA doit pouvoir être pilotée comme un collaborateur technique travaillant exclusivement sur pièces, sans jamais dépendre d’informations implicites.
 
+Les contrats de la couche IA ont un objectif précis : rendre l’IA capable de reproduire seule, en autonomie contrôlée, le code déjà validé, sans improvisation, sans réinvention de style, sans dépendance à sa mémoire, et sans perte du formalisme exact validé par les tests verts.
+
+Ces contrats ne sont pas des notes générales. Ils constituent une spécification opérationnelle opposable à l’IA. Ils doivent décrire assez concrètement les règles de lecture, les sources de vérité, les matrices de tests, les constantes, les Javadocs, les commentaires, l’ordre des blocs, les interdictions lexicales et les critères de livraison pour empêcher l’IA de reconstruire approximativement un fichier déjà stabilisé.
+
+Lorsqu’un audit utilisateur valide une classe ou un bloc, la couche IA doit conserver les enseignements durables sous forme de règles exploitables : une IA future doit pouvoir relire ces contrats et recoder le fichier validé avec le même formalisme, sans inventer un nouveau style local.
+
+Les contrats de la couche IA doivent également rendre l’IA capable de détecter les classes homologues validées, les formalismes réutilisables et les règles de cohérence transverses du projet. L’IA ne doit pas attendre que l’Utilisateur énumère chaque chaîne d’homogénéité possible : elle doit observer le projet, relire les références validées, repérer les points réutilisables, identifier uniquement ce qui change et transposer intelligemment.
+
 ---
 
 ## 22) Livraison des corrections — règle de complétude et de support de livraison
@@ -3699,15 +3707,517 @@ L'IA doit reprendre le formalisme validé dans la classe au lieu de créer un no
 
 L'IA ne doit pas normaliser, déplacer, renommer, supprimer ou simplifier un élément déjà validé sans demande explicite de l'utilisateur.
 
-## 33) RT-AUTONOMIE-METIER-RECODAGE-01 — Autonomie réelle sur la couche métier validée
+## 33) RT-FORMALISME-SOUSTYPEPRODUIT-CU-MOCK-REFERENCE-01 — Référence autonome SousTypeProduitCuServiceMockTest
 
-### 33.1 Objectif
+### 33.1 Objet
+
+`SousTypeProduitCuServiceMockTest.java`, audité et stabilisé au SHA `a6118d58808e9805b99d899644226a6398eed9ec`, devient une référence complète de formalisme Mockito UC pour le SERVICE METIER UC `SousTypeProduitCuService`.
+
+Cette règle complète les règles générales UC et la référence `TypeProduitCuServiceMockTest.java`. Elle ne remplace jamais le contrat du PORT UC `SousTypeProduitICuService`, mais elle fixe le formalisme exact que l'IA doit savoir reproduire sans réinvention lorsqu'elle travaille sur cette classe ou sur une classe UC Mockito comparable portant sur un objet métier intermédiaire.
+
+`SousTypeProduit` doit être traité comme l'objet métier de la classe testée. Il possède un parent `TypeProduit`. L'IA ne doit pas écrire `sous-type` pour désigner l'objet métier dans les commentaires ou Javadocs de cette classe.
+
+### 33.2 Matrice de recodage obligatoire
+
+Pour recoder seule `SousTypeProduitCuServiceMockTest.java`, l'IA doit reproduire la matrice complète suivante, dans l'ordre exact des blocs du PORT UC :
+
+| Bloc | Nombre de tests |
+|---|---:|
+| `creer` | 16 |
+| `rechercherTous` | 7 |
+| `rechercherTousString` | 8 |
+| `rechercherTousParPage` | 8 |
+| `findByLibelle` | 9 |
+| `findByLibelleRapide` | 9 |
+| `findAllByParent` | 13 |
+| `findByDTO` | 15 |
+| `findById` | 7 |
+| `update` | 20 |
+| `delete` | 16 |
+| `count` | 5 |
+| `getMessage` | 5 |
+
+Total attendu : `138` tests.
+
+L'IA ne doit ni retirer un cas, ni ajouter un nouveau cas, ni renommer un test déjà validé sans demande explicite de l'utilisateur.
+
+### 33.3 Ordre exact des tests validés
+
+L'ordre validé des tests est contractuel.
+
+#### Bloc `creer`
+
+1. `testCreerNull` ;
+2. `testCreerBlank` ;
+3. `testCreerParentBlank` ;
+4. `testCreerControleTechniqueKoAvecMessage` ;
+5. `testCreerControleTechniqueKoSansMessage` ;
+6. `testCreerDoublon` ;
+7. `testCreerParentTechniqueKoAvecMessage` ;
+8. `testCreerParentTechniqueKoSansMessage` ;
+9. `testCreerParentAbsent` ;
+10. `testCreerParentNonPersistant` ;
+11. `testCreerCreationTechniqueKoAvecMessage` ;
+12. `testCreerCreationTechniqueKoSansMessage` ;
+13. `testCreerGatewayRetourneNull` ;
+14. `testCreerConversionTechniqueKoAvecMessage` ;
+15. `testCreerConversionTechniqueKoSansMessage` ;
+16. `testCreerNominal`.
+
+#### Bloc `rechercherTous`
+
+1. `testRechercherTousGatewayRetourNull` ;
+2. `testRechercherTousGatewayKOAvecMessage` ;
+3. `testRechercherTousGatewayKOSansMessage` ;
+4. `testRechercherTousConversionOutputDTOKOAvecMessage` ;
+5. `testRechercherTousConversionOutputDTOKOSansMessage` ;
+6. `testRechercherTousVideApresFiltrage` ;
+7. `testRechercherTousNominal`.
+
+#### Bloc `rechercherTousString`
+
+1. `testRechercherTousStringGatewayRetourNull` ;
+2. `testRechercherTousStringGatewayKOAvecMessage` ;
+3. `testRechercherTousStringGatewayKOSansMessage` ;
+4. `testRechercherTousStringConversionStringKOAvecMessage` ;
+5. `testRechercherTousStringConversionStringKOSansMessage` ;
+6. `testRechercherTousStringVideApresFiltrage` ;
+7. `testRechercherTousStringVideApresLibellesBlank` ;
+8. `testRechercherTousStringNominal`.
+
+#### Bloc `rechercherTousParPage`
+
+1. `testRechercherTousParPageNull` ;
+2. `testRechercherTousParPageGatewayKOAvecMessage` ;
+3. `testRechercherTousParPageGatewayKOSansMessage` ;
+4. `testRechercherTousParPageGatewayRetourNull` ;
+5. `testRechercherTousParPageConversionOutputDTOKOAvecMessage` ;
+6. `testRechercherTousParPageConversionOutputDTOKOSansMessage` ;
+7. `testRechercherTousParPageVideApresFiltrage` ;
+8. `testRechercherTousParPageNominal`.
+
+#### Bloc `findByLibelle`
+
+1. `testFindByLibelleNull` ;
+2. `testFindByLibelleBlank` ;
+3. `testFindByLibelleGatewayRetourNull` ;
+4. `testFindByLibelleGatewayKOAvecMessage` ;
+5. `testFindByLibelleGatewayKOSansMessage` ;
+6. `testFindByLibelleConversionOutputDTOKOAvecMessage` ;
+7. `testFindByLibelleConversionOutputDTOKOSansMessage` ;
+8. `testFindByLibelleIntrouvable` ;
+9. `testFindByLibelleNominal`.
+
+#### Bloc `findByLibelleRapide`
+
+1. `testFindByLibelleRapideNull` ;
+2. `testFindByLibelleRapideBlank` ;
+3. `testFindByLibelleRapideGatewayKOAvecMessage` ;
+4. `testFindByLibelleRapideGatewayKOSansMessage` ;
+5. `testFindByLibelleRapideGatewayRetourNull` ;
+6. `testFindByLibelleRapideConversionOutputDTOKOAvecMessage` ;
+7. `testFindByLibelleRapideConversionOutputDTOKOSansMessage` ;
+8. `testFindByLibelleRapideVideApresFiltrage` ;
+9. `testFindByLibelleRapideNominal`.
+
+#### Bloc `findAllByParent`
+
+1. `testFindAllByParentNull` ;
+2. `testFindAllByParentParentBlank` ;
+3. `testFindAllByParentParentGatewayKOAvecMessage` ;
+4. `testFindAllByParentParentGatewayKOSansMessage` ;
+5. `testFindAllByParentParentAbsent` ;
+6. `testFindAllByParentParentNonPersistant` ;
+7. `testFindAllByParentEnfantsGatewayKOAvecMessage` ;
+8. `testFindAllByParentEnfantsGatewayKOSansMessage` ;
+9. `testFindAllByParentGatewayRetourNull` ;
+10. `testFindAllByParentConversionOutputDTOKOAvecMessage` ;
+11. `testFindAllByParentConversionOutputDTOKOSansMessage` ;
+12. `testFindAllByParentVideApresFiltrage` ;
+13. `testFindAllByParentNominal`.
+
+#### Bloc `findByDTO`
+
+1. `testFindByDTONull` ;
+2. `testFindByDTOParentBlank` ;
+3. `testFindByDTOErreurTechniqueRechercheParentAvecMessage` ;
+4. `testFindByDTOErreurTechniqueRechercheParentSansMessage` ;
+5. `testFindByDTOParentAbsent` ;
+6. `testFindByDTOParentNonPersistant` ;
+7. `testFindByDTOErreurTechniqueRechercheEnfantsAvecMessage` ;
+8. `testFindByDTOErreurTechniqueRechercheEnfantsSansMessage` ;
+9. `testFindByDTOGatewayRetourNull` ;
+10. `testFindByDTOVide` ;
+11. `testFindByDTOVideApresFiltrage` ;
+12. `testFindByDTOIntrouvableDansListe` ;
+13. `testFindByDTOConversionOutputDTOKOAvecMessage` ;
+14. `testFindByDTOConversionOutputDTOKOSansMessage` ;
+15. `testFindByDTONominal`.
+
+#### Bloc `findById`
+
+1. `testFindByIdNull` ;
+2. `testFindByIdIntrouvable` ;
+3. `testFindByIdErreurTechniqueAvecMessage` ;
+4. `testFindByIdErreurTechniqueSansMessage` ;
+5. `testFindByIdConversionOutputDTOKOAvecMessage` ;
+6. `testFindByIdConversionOutputDTOKOSansMessage` ;
+7. `testFindByIdNominal`.
+
+#### Bloc `update`
+
+1. `testUpdateNull` ;
+2. `testUpdateLibelleNull` ;
+3. `testUpdateBlank` ;
+4. `testUpdateParentBlank` ;
+5. `testUpdateRechercheParentTechniqueKoAvecMessage` ;
+6. `testUpdateRechercheParentTechniqueKoSansMessage` ;
+7. `testUpdateParentAbsent` ;
+8. `testUpdateParentNonPersistant` ;
+9. `testUpdateRechercheEnfantsTechniqueKoAvecMessage` ;
+10. `testUpdateRechercheEnfantsTechniqueKoSansMessage` ;
+11. `testUpdateStockageNullPendantReidentification` ;
+12. `testUpdateIntrouvable` ;
+13. `testUpdateNonPersistant` ;
+14. `testUpdateModificationTechniqueKoAvecMessage` ;
+15. `testUpdateModificationTechniqueKoSansMessage` ;
+16. `testUpdateModificationRetourNull` ;
+17. `testUpdateModificationRetourNonPersistant` ;
+18. `testUpdateConversionOutputDTOKOAvecMessage` ;
+19. `testUpdateConversionOutputDTOKOSansMessage` ;
+20. `testUpdateNominal`.
+
+#### Bloc `delete`
+
+1. `testDeleteNull` ;
+2. `testDeleteLibelleNull` ;
+3. `testDeleteBlank` ;
+4. `testDeleteParentBlank` ;
+5. `testDeleteRechercheParentTechniqueKoAvecMessage` ;
+6. `testDeleteRechercheParentTechniqueKoSansMessage` ;
+7. `testDeleteParentAbsent` ;
+8. `testDeleteParentNonPersistant` ;
+9. `testDeleteRechercheEnfantsTechniqueKoAvecMessage` ;
+10. `testDeleteRechercheEnfantsTechniqueKoSansMessage` ;
+11. `testDeleteStockageNullPendantReidentification` ;
+12. `testDeleteIntrouvable` ;
+13. `testDeleteNonPersistant` ;
+14. `testDeleteDestructionKOAvecMessage` ;
+15. `testDeleteDestructionKOSansMessage` ;
+16. `testDeleteNominal`.
+
+#### Bloc `count`
+
+1. `testCountGatewayKOAvecMessage` ;
+2. `testCountGatewayKOSansMessage` ;
+3. `testCountRetourNegatif` ;
+4. `testCountZero` ;
+5. `testCountNominal`.
+
+#### Bloc `getMessage`
+
+1. `testGetMessageInitialNull` ;
+2. `testGetMessageApresErreurLocale` ;
+3. `testGetMessageApresCountZero` ;
+4. `testGetMessageApresCountNominal` ;
+5. `testGetMessageDernierMessageGagne`.
+
+### 33.4 Tags, display names et annotations
+
+La classe doit utiliser exclusivement les tags dédiés par bloc :
+
+- `TAG_CREER` ;
+- `TAG_RECHERCHER_TOUS` ;
+- `TAG_RECHERCHER_TOUS_STRING` ;
+- `TAG_RECHERCHER_TOUS_PAR_PAGE` ;
+- `TAG_FIND_BY_LIBELLE` ;
+- `TAG_FIND_BY_LIBELLE_RAPIDE` ;
+- `TAG_FIND_ALL_BY_PARENT` ;
+- `TAG_FIND_BY_DTO` ;
+- `TAG_FIND_BY_ID` ;
+- `TAG_UPDATE` ;
+- `TAG_DELETE` ;
+- `TAG_COUNT` ;
+- `TAG_GET_MESSAGE`.
+
+La constante générique `TAG = "cu-mock"` ne doit pas être réintroduite.
+
+Tous les `@DisplayName` doivent pointer vers une constante `DISPLAY_NAME_*`. Les `@DisplayName("...")` inline sont interdits dans cette classe.
+
+L'ordre d'annotations corrigé et validé est :
+
+```java
+@Tag(...)
+@DisplayName(...)
+@Test
+```
+
+L'IA ne doit pas revenir à un ordre hétérogène d'annotations et ne doit pas déplacer ces annotations sans demande explicite.
+
+### 33.5 Javadoc de tête et vocabulaire obligatoire
+
+La Javadoc de tête doit conserver explicitement les points suivants :
+
+- tests unitaires JUnit 5 / Mockito du SERVICE METIER UC `SousTypeProduitCuService` ;
+- objet métier `SousTypeProduit` ;
+- parent `TypeProduit` ;
+- SERVICE METIER UC comme point d'entrée dans la logique métier dialoguant directement avec le controller appelant ;
+- respect du PORT `SousTypeProduitICuService` ;
+- Gateway `SousTypeProduitGatewayIService` mocké ;
+- Gateway parent `TypeProduitGatewayIService` mocké ;
+- validations locales des paramètres et des DTO ;
+- messages utilisateur exposés par `getMessage()` ;
+- conversions `InputDTO` -> objet métier -> `OutputDTO` ;
+- recherche préalable du parent lorsque le scénario l'exige ;
+- recherche des objets métier enfants lorsque le scénario l'exige ;
+- délégations attendues vers les Gateways ;
+- absence de délégation Gateway lorsque le SERVICE METIER UC bloque localement l'opération ;
+- propagation des exceptions techniques et rationalisation des messages observables ;
+- cas d'erreur, cas alternatifs et cas nominaux ;
+- reprise stricte des blocs déjà validés, sans réinvention inutile.
+
+Vocabulaire validé à employer :
+
+- `objet métier` pour `SousTypeProduit` ;
+- `parent` pour `TypeProduit` ;
+- `Gateway` ou `Gateway mocké` ;
+- `stockage` ;
+- `SERVICE METIER UC`.
+
+Vocabulaire interdit dans les Javadocs et commentaires de cette classe, sauf citation explicite d'une ancienne erreur à corriger :
+
+- `sous-type` ;
+- `branche locale` ;
+- `non exploitable` ;
+- `objet exploitable` ;
+- `réponse exploitable` ;
+- `scénario sécurisé` ;
+- toute formule vague qui ne dit pas concrètement ce que le test vérifie.
+
+### 33.6 Commentaires internes obligatoires
+
+Les commentaires internes doivent rester simples, concrets et proches des lignes qu'ils documentent.
+
+Libellés validés à conserver selon le scénario :
+
+- `ARRANGE` ;
+- `Configuration du Mock` ;
+- `ACT` ;
+- `ACT - ASSERT` ;
+- `ASSERT`.
+
+Le bloc standard de création des deux Gateways mockés et du service UC doit rester cohérent avec la classe validée :
+
+```java
+/* ARRANGE :
+ * Mocke les services Gateway et les passe
+ * à un service UC instancié dans le test.
+ */
+final SousTypeProduitGatewayIService gateway 
+	= mock(SousTypeProduitGatewayIService.class);
+final TypeProduitGatewayIService typeProduitGateway 
+	= mock(TypeProduitGatewayIService.class);
+final SousTypeProduitCuService service 
+	= new SousTypeProduitCuService(gateway, typeProduitGateway);
+```
+
+L'IA ne doit pas remplacer ce commentaire par une formulation décorative, abstraite ou éloignée des lignes qu'elle documente.
+
+### 33.7 Spécificité de l'objet métier intermédiaire
+
+`SousTypeProduitCuServiceMockTest.java` ne doit pas être généré comme une simple copie de `TypeProduitCuServiceMockTest.java`.
+
+La classe teste un objet métier intermédiaire :
+
+- l'objet métier testé est `SousTypeProduit` ;
+- le parent est `TypeProduit` ;
+- certains scénarios interrogent d'abord le Gateway parent ;
+- certains scénarios interrogent ensuite le Gateway de l'objet métier ;
+- les scénarios nominaux doivent prouver la bonne conversion du parent et de l'objet métier ;
+- les scénarios d'échec doivent distinguer les erreurs de recherche parent, les erreurs de recherche enfants, les retours `null`, les retours vides, les retours non persistants, les introuvables et les conversions finales KO.
+
+L'IA doit donc relire la méthode réelle testée avant de configurer les mocks. Elle ne doit pas stubber un Gateway parent ou enfant par réflexe si l'appel n'est pas consommé dans le scénario réellement exécuté.
+
+### 33.8 Stubbing Mockito strictement consommé
+
+La règle `RT-MOCKITO-STUBBING-STRICTEMENT-CONSOMME-01` est bloquante dans cette classe.
+
+Pour chaque test, l'IA doit déterminer :
+
+1. l'ordre réel des validations locales ;
+2. l'ordre réel des recherches Gateway ;
+3. le point exact où le scénario s'arrête ;
+4. les appels Gateway réellement consommés ;
+5. les conversions DTO / objet métier / DTO réellement exécutées.
+
+Tout stubbing non consommé est interdit, même s'il semble rendre le scénario plus complet.
+
+### 33.9 Contrôle automatique minimal avant livraison
+
+Avant toute livraison complète ou partielle portant sur `SousTypeProduitCuServiceMockTest.java`, l'IA doit contrôler au minimum :
+
+- `138` méthodes de test `public void test*` ;
+- `138` annotations `@Test` ;
+- `138` annotations `@Tag(...)` ;
+- `138` annotations `@DisplayName(...)` ;
+- `13` constantes `TAG_*` dédiées aux blocs ;
+- absence de constante générique `TAG = "cu-mock"` ;
+- absence de `@Tag(TAG)` ;
+- absence de `@DisplayName("...")` inline ;
+- absence de doublon de méthode de test ;
+- présence d'un EOF LF ;
+- absence de CRLF ;
+- absence des formulations interdites listées en `33.5`.
+
+Si l'un de ces contrôles échoue, l'IA ne doit pas livrer le fichier comme stabilisé.
+
+### 33.10 Ordre obligatoire de lecture avant correction
+
+Avant toute analyse, correction, validation ou génération de code dans `SousTypeProduitCuServiceMockTest.java`, l'IA doit relire :
+
+1. le présent contrat IA ;
+2. `docs/contrats/cu/CoucheServicesUC.md` ;
+3. `docs/contrats/cu/SousTypeProduitICuService.md` ;
+4. le PORT Java `SousTypeProduitICuService.java` ;
+5. l'ADAPTER UC réel `SousTypeProduitCuService.java` ;
+6. les DTO et convertisseurs DTO utiles ;
+7. les objets métier `SousTypeProduit` et `TypeProduit` ;
+8. les PORTS Gateway `SousTypeProduitGatewayIService` et `TypeProduitGatewayIService` ;
+9. `TypeProduitCuServiceMockTest.java` uniquement comme référence de formalisme comparable ;
+10. `SousTypeProduitCuServiceMockTest.java` comme classe cible.
+
+Si une dépendance utile n'a pas été relue, l'IA doit déclarer la lecture incomplète et la compléter avant tout verdict ou code.
+
+## 34) RT-NON-REINVENTION-REFERENCES-VALIDEES-01 — Réutilisation obligatoire des points validés
+
+### 34.1 Objectif
+
+Cette règle sacralise un principe général valable pour tout le projet Java, pour les couches actuelles comme pour les couches futures.
+
+L’IA ne doit jamais repartir de zéro lorsqu’une référence validée existe.
+
+Une référence validée peut être une classe, une méthode, une Javadoc, un commentaire de bloc, une structure de test, une convention de nommage, un ordre de méthodes, une matrice de cas, un helper, une constante, un formalisme d’assertions ou tout autre point déjà stabilisé par les tests verts et par la validation utilisateur.
+
+L’objectif n’est pas de figer une liste fermée de chaînes d’homogénéité. L’objectif est d’obliger l’IA à détecter elle-même les références homologues validées et les formalismes réutilisables, puis à les transposer intelligemment partout où cela est possible.
+
+### 34.2 Principe général
+
+Avant toute analyse, audit, validation, correction ou génération de code portant sur une classe ou une méthode Java, l’IA doit appliquer la séquence suivante :
+
+1. détecter les classes homologues validées ;
+2. relire les références amont, voisines ou parentes utiles ;
+3. repérer les formalismes réutilisables ;
+4. identifier uniquement ce qui change réellement ;
+5. transposer intelligemment ;
+6. conserver l’homogénéité du projet.
+
+Cette séquence est obligatoire même si l’Utilisateur n’a pas explicitement listé les classes de référence. Une IA compétente doit observer la structure du projet et détecter les analogies stables : objets métier, DTO, entities JPA, Gateways, services UC, Controllers futurs, tests Mock, tests d’intégration, contrats, Javadocs, commentaires et conventions transverses.
+
+### 34.3 Références homologues validées
+
+Une classe ou méthode est homologue lorsqu’elle joue un rôle comparable dans une chaîne métier, technique ou documentaire du projet.
+
+L’homologie peut provenir notamment :
+
+- d’une hiérarchie métier ou fonctionnelle ;
+- d’un objet métier parent, enfant ou intermédiaire ;
+- d’un DTO équivalent ;
+- d’une entity JPA équivalente ;
+- d’un repository, DAO, Gateway ou service équivalent ;
+- d’un PORT ou ADAPTER comparable ;
+- d’un test Mock comparable ;
+- d’un test d’intégration comparable ;
+- d’un contrat local de couche comparable ;
+- d’une Javadoc ou d’un commentaire validé dans une classe voisine ;
+- d’un ordre de blocs ou de méthodes déjà stabilisé.
+
+L’IA ne doit pas exiger que ces chaînes soient toutes nommées dans le contrat. Si une cohérence apparaît dans le projet, l’IA doit la détecter et l’exploiter.
+
+### 34.4 Adaptation intelligente
+
+Transposer intelligemment ne signifie pas copier mécaniquement.
+
+L’IA doit relire le contrat, la classe cible, la méthode exacte et les dépendances utiles, puis adapter uniquement ce qui change réellement selon le cas :
+
+- objet métier ;
+- parent ou enfant métier ;
+- grand-parent éventuel ;
+- DTO ;
+- entity JPA ;
+- repository, DAO, Gateway ou service ;
+- PORT concerné ;
+- ADAPTER réel ;
+- messages contractuels ;
+- exceptions ;
+- comportement réel observable ;
+- cas supplémentaires propres à un objet métier intermédiaire ou à une couche particulière.
+
+Tout le reste doit être conservé autant que possible : structure, ordre, Javadocs, commentaires, noms, constantes, tags, display names, assertions, vérifications Mockito, stratégie de preuve, vocabulaire métier et niveau de détail.
+
+### 34.5 Interdictions absolues
+
+L’IA ne doit jamais :
+
+- traiter une classe comme une page blanche lorsqu’une référence validée existe ;
+- inventer un nouveau formalisme alors qu’un formalisme réutilisable a été validé ;
+- remplacer une Javadoc validée par une Javadoc générique ;
+- remplacer un commentaire didactique validé par un commentaire abstrait ou décoratif ;
+- créer un gabarit artificiel lorsque la référence fournit déjà une méthode concrète transposable ;
+- créer un helper, un `Scenario`, un mini-framework ou une abstraction si les références validées instancient explicitement les objets dans les tests ;
+- simplifier un code ou un test validé au motif qu’une autre solution serait équivalente ;
+- déplacer, renommer ou supprimer un élément validé sans demande explicite ;
+- perdre l’ordre des blocs, des méthodes ou des cas validés ;
+- oublier de comparer la méthode générée avec la méthode homologue relue ;
+- attendre que l’Utilisateur énumère toutes les chaînes d’homogénéité évidentes du projet.
+
+### 34.6 Contrôle obligatoire avant livraison
+
+Avant toute livraison de code ou de contrat fondée sur une référence homologue, l’IA doit contrôler explicitement :
+
+1. la référence validée relue ;
+2. la méthode ou section homologue relue ;
+3. les différences réelles entre référence et cible ;
+4. les éléments repris à l’identique ;
+5. les éléments adaptés ;
+6. les éléments volontairement non repris, avec justification contractuelle ;
+7. l’absence de réinvention stylistique ;
+8. l’homogénéité finale avec les références validées.
+
+Si la livraison porte sur une classe complète, ce contrôle doit être effectué sur la classe finale réellement livrée, et non sur une intention de génération.
+
+### 34.7 Règle d’arrêt en cas de doute
+
+Si l’IA a un doute, si elle ne sait pas quelle référence est prioritaire, si deux formalismes validés semblent concurrents, si une adaptation n’est pas évidente, ou si le contrat ne permet pas de trancher, elle ne doit jamais improviser.
+
+Elle doit répondre explicitement :
+
+```text
+RÈGLE MANQUANTE OU AMBIGUË.
+Je ne peux pas trancher sans risquer d'improviser.
+Point à arbitrer : ...
+Références relues : ...
+Proposition éventuelle : ...
+```
+
+L’Utilisateur arbitrera alors la règle manquante ou ambiguë, puis cette règle sera injectée dans la couche IA si elle doit devenir durable.
+
+### 34.8 Portée transverse
+
+Cette règle s’applique à toutes les couches du projet : métier, DTO, persistance, Gateway, UC, Controllers futurs, vues futures, contrats, tests, Javadocs, commentaires, helpers et constantes.
+
+Elle complète les règles locales de référence déjà présentes dans le contrat. Ces règles locales restent utiles lorsqu’elles décrivent une classe validée précise, une matrice de tests exacte ou un formalisme stabilisé. Mais elles ne dispensent jamais l’IA de détecter d’autres références homologues validées dans le reste du projet.
+
+---
+
+## 35) RT-AUTONOMIE-METIER-RECODAGE-01 — Autonomie réelle sur la couche métier validée
+
+### 35.1 Objectif
 
 Lorsqu'une couche est déclarée validée et que l'utilisateur demande que l'IA puisse la recoder en autonomie, les contrats IA de cette couche ne doivent pas seulement décrire l'intention générale. Ils doivent fournir une fiche d'autonomie suffisante pour recoder quasiment à l'identique le formalisme général, les Javadocs, les commentaires de bloc, les constantes, les méthodes, les algorithmes réellement appliqués et les tests de verrouillage.
 
 Pour la couche métier, cette règle est obligatoire et prioritaire.
 
-### 33.2 Règle de non-improvisation renforcée
+### 35.2 Règle de non-improvisation renforcée
 
 Pour une classe métier validée, l'IA n'a pas le droit de remplacer un détail validé par une solution seulement équivalente si ce détail est observable dans le code ou les tests.
 
@@ -3728,7 +4238,7 @@ Détails à considérer comme contractuels :
 - retours `null`, chaîne vide, `invalide` ou texte `null` ;
 - commentaires techniques nécessaires à la compréhension des verrous, snapshots, relations bidirectionnelles et clonages profonds.
 
-### 33.3 Fiche d'autonomie obligatoire
+### 35.3 Fiche d'autonomie obligatoire
 
 Chaque contrat local d'une classe métier validée doit contenir ou compléter les informations suivantes :
 
@@ -3742,7 +4252,7 @@ Chaque contrat local d'une classe métier validée doit contenir ou compléter l
 
 Si une fiche locale est incomplète, l'IA doit relire le code validé correspondant et compléter le contrat IA avant de prétendre pouvoir recoder la classe en autonomie.
 
-### 33.4 Hiérarchie lors du recodage autonome
+### 35.4 Hiérarchie lors du recodage autonome
 
 Même après enrichissement des contrats, la hiérarchie reste :
 
@@ -3753,7 +4263,7 @@ Même après enrichissement des contrats, la hiérarchie reste :
 
 Les contrats IA rendent l'IA autonome sur la compréhension et la reproduction du formalisme. Ils ne l'autorisent jamais à ignorer le SHA courant ni à coder depuis un souvenir.
 
-### 33.5 Critère de réussite
+### 35.5 Critère de réussite
 
 La couche IA est considérée comme autonome pour une classe métier uniquement si une IA peut produire un code qui :
 
@@ -3766,9 +4276,9 @@ La couche IA est considérée comme autonome pour une classe métier uniquement 
 - ne modifie pas les chaînes CSV/JTable historiques.
 ---
 
-## 34) RT-COUCHE-IA-01 et RT-WORKFLOW-AUDIT-TEST-01 — Gouvernance des règles détectées et workflow d'audit JUnit
+## 36) RT-COUCHE-IA-01 et RT-WORKFLOW-AUDIT-TEST-01 — Gouvernance des règles détectées et workflow d'audit JUnit
 
-### 34.1 RT-COUCHE-IA-01 (VALIDÉ) — Signalement, validation et intégration des règles détectées
+### 36.1 RT-COUCHE-IA-01 (VALIDÉ) — Signalement, validation et intégration des règles détectées
 
 Lorsqu'une règle nouvelle ou une précision de workflow doit s'imposer dans le projet, l'IA NE DOIT PAS la sacraliser silencieusement.
 
@@ -3791,7 +4301,7 @@ Interdictions :
 - ne jamais livrer un fichier fragile de couche IA sous forme de ZIP global nominal ;
 - ne jamais remplacer la livraison individuelle complète par un extrait ou un patch à reconstituer.
 
-### 34.2 RT-REGLE-CANDIDATE-CODER-01 (VALIDÉ) — Conservation des règles validées en attente du prochain `coder`
+### 36.2 RT-REGLE-CANDIDATE-CODER-01 (VALIDÉ) — Conservation des règles validées en attente du prochain `coder`
 
 Quand l'Utilisateur demande de mémoriser une règle validée, une correction de workflow ou une règle détectée à intégrer plus tard dans la couche IA, l'IA doit la conserver comme règle candidate à intégrer lors de la prochaine demande explicite `coder`.
 
@@ -3805,21 +4315,21 @@ Tant que `coder` n'est pas demandé :
 
 Au prochain `coder`, l'IA doit relire les règles candidates mémorisées et intégrer toutes celles qui sont compatibles avec la demande, sans en oublier.
 
-### 34.3 RT-WORKFLOW-AUDIT-TEST-01 (VALIDÉ) — Workflow complet d'échanges lors de l'audit d'un bloc de test JUnit
+### 36.3 RT-WORKFLOW-AUDIT-TEST-01 (VALIDÉ) — Workflow complet d'échanges lors de l'audit d'un bloc de test JUnit
 
 L'audit d'un bloc de test JUnit est un workflow itératif, pas une génération isolée de méthodes.
 
-#### 34.3.1 Préambule obligatoire
+#### 36.3.1 Préambule obligatoire
 
 Avant toute opération, l'IA relit obligatoirement `CONTRAT_IA.md`.
 
 Cette étape est contractuelle et non négociable.
 
-#### 34.3.2 Demande initiale d'audit d'un test JUnit
+#### 36.3.2 Demande initiale d'audit d'un test JUnit
 
 Lorsque l'Utilisateur demande l'audit d'un test JUnit ou d'une classe de test JUnit, l'IA ne code pas sauf si le message contient explicitement `coder`.
 
-#### 34.3.3 Détermination du périmètre utile
+#### 36.3.3 Détermination du périmètre utile
 
 Si ce n'est pas déjà fait, l'IA détermine le périmètre utile de l'audit :
 
@@ -3832,7 +4342,7 @@ Si ce n'est pas déjà fait, l'IA détermine le périmètre utile de l'audit :
 - références validées ;
 - méthodes déjà validées dans la même classe de test.
 
-#### 34.3.4 Contrôle de la baseline
+#### 36.3.4 Contrôle de la baseline
 
 L'IA contrôle que tous les fichiers du périmètre sont présents, lisibles, corrects et à jour dans la baseline consolidée.
 
@@ -3846,7 +4356,7 @@ Une fois la fenêtre active, l'IA peut travailler directement depuis cette fenê
 - incident de lecture ;
 - fenêtre suspecte, périmée ou incomplète.
 
-#### 34.3.5 Demande d'audit d'un bloc précis
+#### 36.3.5 Demande d'audit d'un bloc précis
 
 Quand l'Utilisateur demande l'audit complet d'un bloc, l'IA relit :
 
@@ -3861,7 +4371,7 @@ Quand l'Utilisateur demande l'audit complet d'un bloc, l'IA relit :
 
 L'IA doit regarder ce qui a déjà été fait dans la classe pour les blocs corrigés ou validés. Elle ne doit pas inventer un nouveau formalisme.
 
-#### 34.3.6 Rapport d'audit sans code
+#### 36.3.6 Rapport d'audit sans code
 
 Si l'Utilisateur n'a pas écrit `coder`, l'IA rend un rapport d'audit sans code.
 
@@ -3878,11 +4388,11 @@ Le rapport doit contenir :
 - proposition d'ordre corrigé ;
 - verdict : conforme, incomplet ou non validable.
 
-#### 34.3.7 Correction de l'analyse par l'Utilisateur
+#### 36.3.7 Correction de l'analyse par l'Utilisateur
 
 Si l'Utilisateur corrige l'analyse de l'IA, l'IA doit prendre cette correction comme prioritaire, reconstruire son analyse, mémoriser la règle de formalisme durable et la conserver comme règle candidate à intégrer dans la couche IA au prochain `coder`.
 
-#### 34.3.8 Livraison seulement après `coder`
+#### 36.3.8 Livraison seulement après `coder`
 
 Si l'Utilisateur écrit `coder`, l'IA livre selon le format attendu par la classe cible.
 
@@ -3912,13 +4422,13 @@ Le bloc complet des tests doit contenir :
 - les `@Tag` conformes ;
 - les `@DisplayName` conformes.
 
-#### 34.3.9 Intégration STS et retour utilisateur
+#### 36.3.9 Intégration STS et retour utilisateur
 
 L'Utilisateur intègre la livraison dans STS et exécute les tests.
 
 L'Utilisateur peut ensuite répondre avec tests verts, tests KO ou corrections, le plus souvent sous forme de fichier joint au chat afin d'éviter un commit/push et un changement de SHA à chaque tour.
 
-#### 34.3.10 Relecture du dernier fichier joint réel
+#### 36.3.10 Relecture du dernier fichier joint réel
 
 Lorsque l'Utilisateur soumet le fichier corrigé, l'IA doit relire le dernier fichier joint réel avec la technique sacralisée :
 
@@ -3928,7 +4438,7 @@ Lorsque l'Utilisateur soumet le fichier corrigé, l'IA doit relire le dernier fi
 - invalider tout ancien état local ;
 - ne jamais conclure depuis une ancienne copie.
 
-#### 34.3.11 Consolidation et recontrôle automatique
+#### 36.3.11 Consolidation et recontrôle automatique
 
 Si les corrections ont bien été apportées et si les tests sont verts, l'IA consolide immédiatement :
 
@@ -3954,11 +4464,11 @@ Le recontrôle porte notamment sur :
 - constantes TAG / DISPLAY_NAME / DN ;
 - formalisme validé de la classe.
 
-#### 34.3.12 Passage au bloc suivant
+#### 36.3.12 Passage au bloc suivant
 
 Si tout est OK, l'Utilisateur passe au bloc suivant et le cycle reprend à la demande d'audit du bloc précis.
 
-### 34.4 RT-WORKFLOW-BLOC-TEST-AUTONOME-01 (VALIDÉ) — Format de livraison des blocs de tests Java
+### 36.4 RT-WORKFLOW-BLOC-TEST-AUTONOME-01 (VALIDÉ) — Format de livraison des blocs de tests Java
 
 Pour toute livraison d'un bloc de tests Java demandé en audit/correction, un bloc autonome doit inclure, lorsque c'est le formalisme établi de la classe ou de la livraison attendue :
 
@@ -3972,7 +4482,7 @@ L'IA ne doit jamais livrer seulement les méthodes isolées si le workflow étab
 
 Les constantes doivent être livrées par familles séparées : TAG, DISPLAY_NAME, puis DN si nécessaire. Une constante DN ne doit jamais être créée par réflexe si une constante existante exprime déjà clairement le scénario.
 
-### 34.5 RT-JAVADOC-TEST-SIMPLE-CONCRETE-01 (VALIDÉ) — Style des Javadocs de tests
+### 36.5 RT-JAVADOC-TEST-SIMPLE-CONCRETE-01 (VALIDÉ) — Style des Javadocs de tests
 
 Dans les Javadocs et commentaires de tests, l'IA doit dire simplement ce que le test vérifie.
 
@@ -3997,7 +4507,7 @@ Formulations attendues :
 - conversion OutputDTO KO avec message ;
 - conversion OutputDTO KO sans message.
 
-### 34.6 RT-UC-CONVERSION-FINALE-TRY-CATCH-01 (VALIDÉ) — Tests Mock UC des conversions finales protégées
+### 36.6 RT-UC-CONVERSION-FINALE-TRY-CATCH-01 (VALIDÉ) — Tests Mock UC des conversions finales protégées
 
 Pour un bloc de test Mock UC, dès que la méthode de service contient une phase de conversion finale protégée par `try/catch` et produisant un message utilisateur rationalisé, les tests du bloc doivent envisager explicitement :
 
