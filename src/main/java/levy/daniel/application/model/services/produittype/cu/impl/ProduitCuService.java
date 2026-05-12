@@ -632,59 +632,106 @@ public class ProduitCuService implements ProduitICuService {
 	/**
 	 * {@inheritDoc}
 	 */
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public List<ProduitDTO.OutputDTO> findByLibelle(
 			final String pLibelle) throws Exception {
 
 		/*
-		 * Erreur utilisateur bénigne :
-		 * libellé blank => null + MESSAGE_PARAM_BLANK, sans exception.
+		 * Si StringUtils.isBlank(pLibelle) : 
+		 * émet un message MESSAGE_PARAM_BLANK et 
+		 * retourne une nouvelle ArrayList vide.
+		 * Pas d'Exception.
 		 */
 		if (StringUtils.isBlank(pLibelle)) {
 			this.message.set(MESSAGE_PARAM_BLANK);
-			return null;
+			return new ArrayList<ProduitDTO.OutputDTO>();
 		}
 
 		/*
-		 * Délègue au GATEWAY la recherche exacte par libellé.
+		 * Délègue au GATEWAY la recherche exacte
+		 * de tous les objets métier portant ce libellé.
 		 */
-		final List<Produit> reponses = this.gateway.findByLibelle(pLibelle);
+		final List<Produit> records;
 
-		/*
-		 * Une réponse technique null du GATEWAY
-		 * est une anomalie de recherche.
-		 * Si reponses == null : 
-		 * émet un message KO_TECHNIQUE_RECHERCHE + LOG + RuntimeException.
-		 */
-		if (reponses == null) {
-			
+		try {
+
+			records = this.gateway.findByLibelle(pLibelle);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE,
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
-					new RuntimeException(KO_TECHNIQUE_RECHERCHE));
+					e);
 		}
 
 		/*
-		 * Retire les null, trie les objets métier,
-		 * puis convertit la réponse en OutputDTO.
+		 * Si le stockage retourne null :
+		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
 		 */
-		final List<Produit> recordsNonNullTries
-				= this.filtrerEtTrier(reponses);
+		if (records == null) {
 
-		final List<ProduitDTO.OutputDTO> dtos
-				= ConvertisseurMetierToOutputDTOProduit
-						.convertList(recordsNonNullTries);
+			return this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					METHODE_FIND_BY_LIBELLE,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+		}
 
 		/*
-		 * Positionne le message observable
-		 * après préparation complète de la réponse.
+		 * Prépare la réponse utilisateur :
+		 * retrait des null, tri métier,
+		 * conversion en OutputDTO,
+		 * puis dédoublonnage en conservant l'ordre.
+		 */
+		final List<ProduitDTO.OutputDTO> dtos;
+
+		try {
+
+			final List<Produit> recordsNonNullTries
+					= this.filtrerEtTrier(records);
+
+			dtos = ConvertisseurMetierToOutputDTOProduit
+					.convertList(recordsNonNullTries);
+
+		} catch (final Exception e) {
+
+			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			return this.traiterErreur(
+					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_BY_LIBELLE,
+					e);
+		}
+
+		/*
+		 * Si aucun résultat exploitable n'est trouvé :
+		 * retourne une liste vide et 
+		 * émet un MESSAGE_OBJ_INTROUVABLE + libellé.
 		 */
 		if (dtos.isEmpty()) {
-			this.message.set(MESSAGE_RECHERCHE_VIDE);
-		} else {
-			this.message.set(MESSAGE_RECHERCHE_OK);
+			this.message.set(MESSAGE_OBJ_INTROUVABLE + pLibelle);
+			return dtos;
 		}
 
+		/*
+		 * Positionne le message observable de succès
+		 * MESSAGE_SUCCES_RECHERCHE 
+		 * après préparation complète de la réponse.
+		 */
+		this.message.set(MESSAGE_SUCCES_RECHERCHE);
+
+		/*
+		 * Retourne toujours une liste non null.
+		 */
 		return dtos;
 	}
 	

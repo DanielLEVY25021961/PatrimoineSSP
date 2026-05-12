@@ -1856,7 +1856,7 @@ Les contrats de la couche IA ont un objectif précis : rendre l’IA capable de 
 
 Ces contrats ne sont pas des notes générales. Ils constituent une spécification opérationnelle opposable à l’IA. Ils doivent décrire assez concrètement les règles de lecture, les sources de vérité, les matrices de tests, les constantes, les Javadocs, les commentaires, l’ordre des blocs, les interdictions lexicales et les critères de livraison pour empêcher l’IA de reconstruire approximativement un fichier déjà stabilisé.
 
-Lorsqu’un audit utilisateur valide une classe ou un bloc, la couche IA doit conserver les enseignements durables sous forme de règles exploitables : une IA future doit pouvoir relire ces contrats et recoder le fichier validé avec le même formalisme, sans inventer un nouveau style local.
+Lorsqu’un audit utilisateur valide une classe ou un bloc, la couche IA doit conserver les enseignements durables sous forme de règles utilisables : une IA future doit pouvoir relire ces contrats et recoder le fichier validé avec le même formalisme, sans inventer un nouveau style local.
 
 Les contrats de la couche IA doivent également rendre l’IA capable de détecter les classes homologues validées, les formalismes réutilisables et les règles de cohérence transverses du projet. L’IA ne doit pas attendre que l’Utilisateur énumère chaque chaîne d’homogénéité possible : elle doit observer le projet, relire les références validées, repérer les points réutilisables, identifier uniquement ce qui change et transposer intelligemment.
 
@@ -1864,7 +1864,7 @@ Les contrats de la couche IA doivent également rendre l’IA capable de détect
 
 ## 22) Livraison des corrections — règle de complétude et de support de livraison
 
-Toute correction ou proposition de code fournie par l’IA doit être livrée sous une forme directement exploitable dans STS, sans reconstruction manuelle par l’Utilisateur.
+Toute correction ou proposition de code fournie par l’IA doit être livrée sous une forme directement copiable dans STS, sans reconstruction manuelle par l’Utilisateur.
 
 Principe directeur :
 
@@ -2035,7 +2035,7 @@ Règle nominale obligatoire :
 4. chaque fichier livré doit pouvoir remplacer directement et intégralement l'ancien fichier dans STS ;
 5. chaque fichier livré doit être relu et contrôlé comme fichier final réel, et non comme membre implicite d'une archive ;
 6. les métadonnées doivent être données par fichier : taille en octets, nombre de lignes, nombre de caractères `\n`, présence du saut de ligne final, SHA-256 ;
-7. la réponse finale doit présenter les fichiers fragiles un par un, dans une liste exploitable directement par l'Utilisateur.
+7. la réponse finale doit présenter les fichiers fragiles un par un, dans une liste directement utilisable par l'Utilisateur.
 
 Interdictions absolues supplémentaires :
 
@@ -4260,9 +4260,11 @@ L’homologie peut provenir notamment :
 
 L’IA ne doit pas exiger que ces chaînes soient toutes nommées dans le contrat. Si une cohérence apparaît dans le projet, l’IA doit la détecter et l’exploiter.
 
-### 34.4 Adaptation intelligente
+### 34.4 Copie mécanique prioritaire puis adaptation minimale
 
-Transposer intelligemment ne signifie pas copier mécaniquement.
+Quand une référence homologue validée existe et que le scénario est le même, transposer intelligemment signifie d'abord copier mécaniquement la structure validée.
+
+L'IA doit recopier la Javadoc, les commentaires, l'ordre des cas, les messages, les assertions, les vérifications et le formalisme autant que possible. Elle ne doit adapter que ce qui change réellement : noms métier, DTO, Gateway, types de retour, getters, constantes réellement différentes ou dépendances objectivement différentes.
 
 L’IA doit relire le contrat, la classe cible, la méthode exacte et les dépendances utiles, puis adapter uniquement ce qui change réellement selon le cas :
 
@@ -4280,6 +4282,8 @@ L’IA doit relire le contrat, la classe cible, la méthode exacte et les dépen
 - cas supplémentaires propres à un objet métier intermédiaire ou à une couche particulière.
 
 Tout le reste doit être conservé autant que possible : structure, ordre, Javadocs, commentaires, noms, constantes, tags, display names, assertions, vérifications Mockito, stratégie de preuve, vocabulaire métier et niveau de détail.
+
+Toute divergence par rapport à une référence homologue validée doit être justifiée par une différence réelle lue dans le PORT, l'ADAPTER, la méthode cible ou une dépendance utile. Une préférence stylistique de l'IA, une reformulation décorative ou une volonté de "faire mieux" ne constitue jamais une justification.
 
 ### 34.5 Interdictions absolues
 
@@ -4361,6 +4365,38 @@ Elle doit notamment conserver :
 La phrase déclarative selon laquelle une classe « reprend le formalisme stabilisé » ne suffit jamais. L’homogénéité doit être prouvée par le contenu réel de la Javadoc livrée.
 
 L’IA ne doit pas livrer `ProduitCuServiceMockTest.java` comme conforme si la Javadoc de tête finale n’a pas été comparée point par point avec la Javadoc homologue relue.
+
+### 34.10 Copie obligatoire des méthodes homologues validées
+
+Lorsqu'une méthode de `Produit`, `SousTypeProduit` ou `TypeProduit` possède une méthode homologue déjà validée, l'IA doit traiter cette méthode validée comme référence de départ.
+
+La règle par défaut est : **recopier ce qui peut être recopié**.
+
+L'IA doit reprendre mécaniquement :
+
+- la structure de la méthode ;
+- la Javadoc ;
+- les commentaires internes ;
+- les scénarios de tests ;
+- l'ordre des tests ;
+- les constantes `DISPLAY_NAME` lorsque le formalisme impose leur correction ;
+- les messages attendus ;
+- les assertions ;
+- les vérifications Mockito ;
+- les cas d'erreur, alternatifs et nominaux.
+
+L'IA ne peut modifier que :
+
+- le nom de l'objet métier ;
+- le nom du parent ;
+- les DTO ;
+- les Gateways ;
+- les getters réellement différents ;
+- les types de retour réellement différents ;
+- les constantes réellement différentes ;
+- les cas supplémentaires imposés par le PORT ou l'ADAPTER relu.
+
+L'IA ne doit jamais créer deux traitements différents pour une même méthode homologue sans preuve de différence métier ou technique relue. Si `SousTypeProduit.findByLibelle(...)` fournit le comportement validé et que `Produit.findByLibelle(...)` doit être harmonisé, l'IA doit copier le comportement, pas inventer une variante.
 
 ---
 
@@ -4641,14 +4677,20 @@ Les constantes doivent être livrées par familles séparées : TAG, DISPLAY_NAM
 
 Dans les Javadocs et commentaires de tests, l'IA doit dire simplement ce que le test vérifie.
 
-Interdictions, sauf si une classe validée les contient explicitement comme formalisme local :
+Interdictions, sauf si l'Utilisateur demande explicitement de conserver une citation ancienne pour audit :
 
 - « vise la branche locale » ;
+- « recherche exacte » ;
+- « libellé exploitable » ;
+- « exploitable » pour qualifier un paramètre, un libellé, une réponse ou un résultat ;
 - « non exploitable » ;
 - « objet exploitable » ;
 - « réponse exploitable » ;
+- « résultat partiel incohérent » ;
 - « scénario sécurisé » ;
 - toute formulation vague, abstraite ou prétentieuse qui ne décrit pas directement le fait testé.
+
+L'IA doit remplacer ces formulations par une description concrète du fait testé : paramètre `null`, chaîne blank, Gateway retourne `null`, liste vide, exception propagée, message positionné, conversion KO, objet absent du stockage, parent absent, parent non persistant.
 
 Formulations attendues :
 
@@ -5038,4 +5080,88 @@ Auto-contrôle avant livraison.
 ```
 
 Une livraison qui viole l'un de ces points doit être rejetée avant d'être remise à l'Utilisateur.
+
+## 38) RT-HOMOGENEITE-FINDBYLIBELLE-PRODUIT-01 — Correction issue du bloc `findByLibelle` Produit
+
+### 38.1 Origine de la règle
+
+Cette règle sacralise les corrections utilisateur apportées après la livraison incorrecte du bloc `findByLibelle` de `ProduitCuServiceMockTest.java`, du PORT `ProduitICuService.java` et de l'ADAPTER `ProduitCuService.java`.
+
+L'erreur de l'IA a été de reformuler, d'inventer une Javadoc et de proposer un comportement différent de la référence `SousTypeProduit`, alors que le besoin réel était l'homogénéité.
+
+### 38.2 Principe opposable
+
+Pour une méthode homologue déjà stabilisée, l'IA ne doit pas "améliorer", reformuler ou redessiner le contrat.
+
+Elle doit :
+
+1. relire le PORT homologue ;
+2. relire l'ADAPTER homologue ;
+3. relire les tests homologues ;
+4. copier le comportement validé ;
+5. remplacer uniquement les noms, DTO, Gateways, getters et types réellement différents ;
+6. conserver les messages contractuels homologues lorsque le comportement attendu est le même.
+
+### 38.3 Règle spécifique `findByLibelle`
+
+Pour `findByLibelle(...)` dans la chaîne `TypeProduit` / `SousTypeProduit` / `Produit`, la référence `SousTypeProduit` impose le comportement à recopier lorsqu'aucune différence métier relue ne justifie autre chose.
+
+Pour `Produit.findByLibelle(...)`, le comportement harmonisé attendu est :
+
+- paramètre `null` ou blank : retourner une liste vide non `null` et positionner `MESSAGE_PARAM_BLANK` ;
+- Gateway retourne `null` : lever `ExceptionStockageVide` et positionner `MESSAGE_STOCKAGE_NULL` ;
+- Gateway KO avec message : propager l'exception et positionner `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message technique` ;
+- Gateway KO sans message : propager l'exception et positionner `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+- conversion OutputDTO KO avec message : propager l'exception et positionner `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message technique` ;
+- conversion OutputDTO KO sans message : propager l'exception et positionner `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+- objet absent du stockage : retourner une liste vide non `null` et positionner `MESSAGE_OBJ_INTROUVABLE + libellé` ;
+- nominal : retourner les `OutputDTO` triés et dédoublonnés, puis positionner `MESSAGE_SUCCES_RECHERCHE`.
+
+L'IA ne doit pas livrer `MESSAGE_RECHERCHE_VIDE` ni `MESSAGE_RECHERCHE_OK` pour `Produit.findByLibelle(...)` si la référence homologue validée attend `MESSAGE_OBJ_INTROUVABLE` et `MESSAGE_SUCCES_RECHERCHE`.
+
+L'IA ne doit pas livrer `return null` pour le cas blank si la référence homologue validée retourne une nouvelle liste vide.
+
+### 38.4 Effet sur le périmètre de codage
+
+Quand l'Utilisateur demande d'harmoniser un comportement de méthode homologue, l'IA doit identifier tout le périmètre réellement nécessaire :
+
+- PORT ;
+- ADAPTER ;
+- tests ;
+- constantes `DISPLAY_NAME` si les messages attendus changent ;
+- commentaires et Javadocs du bloc concerné.
+
+L'IA ne doit pas limiter la correction aux tests si le PORT ou l'ADAPTER exprime encore l'ancien contrat.
+
+Inversement, l'IA ne doit pas modifier d'autres blocs non concernés.
+
+### 38.5 Vocabulaire banni dans les nouvelles livraisons
+
+Dans les nouvelles livraisons PatrimoineSSP, l'IA ne doit plus utiliser les formulations suivantes pour présenter, commenter ou justifier le code :
+
+- « recherche exacte » ;
+- « libellé exploitable » ;
+- « exploitable » pour qualifier un libellé, une réponse ou un résultat ;
+- « résultat partiel incohérent » ;
+- toute phrase décorative qui présente une évidence comme une garantie technique.
+
+L'IA doit écrire le fait contrôlé directement : `libellé`, `paramètre blank`, `liste vide`, `Gateway retourne null`, `message positionné`, `exception propagée`, `objet absent du stockage`, `succès`.
+
+### 38.6 Auto-contrôle obligatoire avant livraison d'une méthode homologue
+
+Avant toute livraison portant sur une méthode homologue, l'IA doit produire ou effectuer l'auto-contrôle suivant :
+
+```text
+Référence homologue relue : oui/non.
+PORT cible relu : oui/non.
+ADAPTER cible relu : oui/non.
+Tests cibles relus : oui/non.
+Comportement copié depuis la référence : oui/non.
+Divergences justifiées par une différence réelle relue : oui/non.
+Vocabulaire banni absent de la livraison : oui/non.
+Messages attendus alignés sur la référence : oui/non.
+Constantes DISPLAY_NAME cohérentes avec le comportement attendu : oui/non.
+```
+
+Si une réponse est `non`, l'IA ne doit pas livrer le code.
 

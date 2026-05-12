@@ -5026,7 +5026,7 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit que la réponse utilisateur :
 		 * - n'est jamais null ;
 		 * - est vide ;
-		 * - porte le message utilisateur d'introuvabilité.
+		 * - porte le message utilisateur de recherche en échec.
 		 */
 		assertThat(retour).isNotNull();
 		assertThat(retour).isEmpty();

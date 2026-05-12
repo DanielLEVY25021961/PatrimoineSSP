@@ -2035,19 +2035,19 @@ public class ProduitCuServiceMockTest {
 
 
 	// ======================== rechercherTous ============================
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTous(gateway retourne null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_STOCKAGE_NULL » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>détecte que le Gateway retourne {@code null} ;</li>
+	 * <li>lève {@link ExceptionStockageVide} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2069,15 +2069,17 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule un Gateway objet métier qui retourne null
+		 * au lieu d'une liste non null attendue par le SERVICE METIER UC.
 		 */
 		when(gateway.rechercherTous()).thenReturn(null);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
+		/* ACT - ASSERT */
+		/* Garantit que service.rechercherTous() :
+		 * - lève ExceptionStockageVide ;
+		 * - émet le message MESSAGE_STOCKAGE_NULL contractuel.
 		 */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isInstanceOf(ExceptionStockageVide.class)
@@ -2085,24 +2087,27 @@ public class ProduitCuServiceMockTest {
 
 		assertThat(service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		/* Garantit que seul le Gateway objet métier
+		 * a été sollicité pour la recherche exhaustive.
+		 */
 		verify(gateway, times(1)).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTous(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway objet métier ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2114,8 +2119,14 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une panne technique avec message.
+		 */
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2123,42 +2134,50 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message au moment
+		 * de l'appel gateway.rechercherTous().
 		 */
 		when(gateway.rechercherTous()).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+
+		/* Garantit que la panne intervient bien sur la recherche
+		 * exhaustive du Gateway objet métier.
+		 */
 		verify(gateway, times(1)).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTous(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway
+	 * objet métier ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2170,8 +2189,13 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une panne technique sans message.
+		 */
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2179,42 +2203,51 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException();
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message au moment
+		 * de l'appel gateway.rechercherTous().
 		 */
 		when(gateway.rechercherTous()).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que la panne intervient bien sur la recherche
+		 * exhaustive du Gateway objet métier.
+		 */
 		verify(gateway, times(1)).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTous(conversion OutputDTO KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>filtre les {@code null} et trie les objets métier ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * <li>propage l'exception levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2226,8 +2259,16 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un objet métier mocké dont l'accès au parent
+		 * provoque une panne pendant la conversion en OutputDTO.
+		 */
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2235,42 +2276,52 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
-		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne une liste non null contenant
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé pour l'échec de conversion.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de conversion côté UC.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTous(conversion OutputDTO KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>filtre les {@code null} et trie les objets métier ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2282,8 +2333,15 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un objet métier mocké dont l'accès au parent
+		 * provoque une panne sans message pendant la conversion en OutputDTO.
+		 */
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2291,42 +2349,49 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException();
-		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne une liste non null contenant
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null en cas d'échec de conversion.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de conversion côté UC.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTous(vide après filtrage) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « liste vide + MESSAGE_RECHERCHE_VIDE » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>retourne une liste non {@code null} et vide ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2338,8 +2403,14 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousVideApresFiltrage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse Gateway non null mais ne contenant
+		 * aucun objet métier non null après filtrage.
+		 */
+		final List<Produit> records = Arrays.asList(null, null);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2348,45 +2419,52 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne une liste non null
+		 * ne contenant aucun objet métier non null.
 		 */
-		when(gateway.rechercherTous())
-				.thenReturn(Arrays.asList(null, null));
-
+		when(gateway.rechercherTous()).thenReturn(records);
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exhaustive via le SERVICE METIER UC.
 		 */
 		final List<OutputDTO> retour = service.rechercherTous();
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse utilisateur :
+		 * - n'est jamais null ;
+		 * - est vide après filtrage ;
+		 * - porte le message utilisateur de recherche vide.
 		 */
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(service.getMessage())
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* Garantit que la recherche exhaustive a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>garantit que rechercherTous(nominal) :</p>
+	 * <p>garantit que rechercherTous(OK) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « filtre, trie, dédoublonne + MESSAGE_RECHERCHE_OK »
-	 * ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>trie les objets métier ;</li>
+	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
+	 * <li>dédoublonne la réponse DTO ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2398,8 +2476,20 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousNominal() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse Gateway contenant :
+		 * - deux objets métier non null ;
+		 * - un élément null à filtrer ;
+		 * - un doublon à dédoublonner côté DTO.
+		 */
+		final SousTypeProduit parent = parentPersistant();
+		
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		final Produit produitMarteauDoublon = produit(MARTEAU, parent, 1L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2407,53 +2497,76 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final SousTypeProduit parent = parentPersistant();
-		final Produit produitScie = produit(SCIE, parent, 2L);
-		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
 
-
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne des objets métier dans un ordre
+		 * non trié, avec un null et un doublon côté DTO.
 		 */
 		when(gateway.rechercherTous())
-				.thenReturn(Arrays.asList(produitScie, null, produitMarteau, produitScie));
-
+				.thenReturn(Arrays.asList(
+						produitScie, null, produitMarteau, produitMarteauDoublon));
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exhaustive via le SERVICE METIER UC.
 		 */
 		final List<OutputDTO> retour = service.rechercherTous();
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - n'est pas null ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
+		 * - est triée par libellé métier ;
+		 * - est dédoublonnée ;
+		 * - expose le message utilisateur de succès.
 		 */
-		assertThat(retour).isNotNull().hasSize(2);
-		assertThat(retour).extracting(OutputDTO::getProduit)
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getProduit)
 				.containsExactly(MARTEAU, SCIE);
-		assertThat(service.getMessage())
+
+		assertThat(retour)
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE, OUTILLAGE);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR, BAZAR);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getIdProduit)
+				.containsExactly(1L, 2L);
+
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* Garantit que la recherche exhaustive a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
+	
 
 
-	// ============================ rechercherTousString =================================
+	// ================== rechercherTousString ============================
 
 
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTousString(gateway retourne null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « propage rechercherTous() » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>détecte que le Gateway retourne {@code null} ;</li>
+	 * <li>lève {@link ExceptionStockageVide} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2475,21 +2588,30 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule un Gateway objet métier qui retourne null
+		 * au lieu d'une liste non null attendue par rechercherTous().
 		 */
 		when(gateway.rechercherTous()).thenReturn(null);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
+		/* ACT - ASSERT */
+		/* Garantit que service.rechercherTousString() :
+		 * - propage ExceptionStockageVide ;
+		 * - conserve le message MESSAGE_STOCKAGE_NULL contractuel.
 		 */
 		assertThatThrownBy(() -> service.rechercherTousString())
-				.isInstanceOf(ExceptionStockageVide.class);
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		assertThat(service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		/* Garantit que seul le Gateway objet métier
+		 * a été sollicité pour la recherche exhaustive.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -2499,13 +2621,13 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousString(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « propage rechercherTous() » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway objet métier ;</li>
+	 * <li>conserve le message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2517,8 +2639,14 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une panne technique avec message.
+		 */
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2526,24 +2654,33 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message au moment
+		 * de l'appel gateway.rechercherTous() déclenché par rechercherTous().
 		 */
 		when(gateway.rechercherTous()).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTousString())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC conserve
+		 * le message utilisateur rationalisé préparé par rechercherTous().
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+
+		/* Garantit que la panne intervient bien sur la recherche
+		 * exhaustive du Gateway objet métier.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -2553,13 +2690,14 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousString(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « propage rechercherTous() » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway
+	 * objet métier ;</li>
+	 * <li>conserve un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2571,8 +2709,13 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une panne technique sans message.
+		 */
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2580,24 +2723,33 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException();
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message au moment
+		 * de l'appel gateway.rechercherTous() déclenché par rechercherTous().
 		 */
 		when(gateway.rechercherTous()).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTousString())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que la panne intervient bien sur la recherche
+		 * exhaustive du Gateway objet métier.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -2607,13 +2759,16 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousString(conversion KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « propage rechercherTous() » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>filtre les {@code null} et trie les objets métier ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * réalisée par {@code rechercherTous()} ;</li>
+	 * <li>propage l'exception levée pendant cette conversion ;</li>
+	 * <li>conserve le message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2625,8 +2780,16 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringConversionStringKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un objet métier mocké dont la conversion en OutputDTO
+		 * échoue avant l'extraction finale des libellés String.
+		 */
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2634,26 +2797,34 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
-		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne une liste non null contenant
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTousString())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC conserve
+		 * le message utilisateur rationalisé pour l'échec de conversion.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de préparation côté UC.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -2663,13 +2834,16 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousString(conversion KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « propage rechercherTous() » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>filtre les {@code null} et trie les objets métier ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * réalisée par {@code rechercherTous()} ;</li>
+	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
+	 * <li>conserve un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2681,8 +2855,15 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringConversionStringKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un objet métier mocké dont la conversion en OutputDTO
+		 * échoue avant l'extraction finale des libellés String.
+		 */
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2690,26 +2871,34 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException();
-		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne une liste non null contenant
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
 		assertThatThrownBy(() -> service.rechercherTousString())
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null en cas d'échec de conversion.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de préparation côté UC.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -2719,13 +2908,13 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousString(vide après filtrage) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « liste vide + MESSAGE_RECHERCHE_VIDE » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>retourne une liste de libellés non {@code null} et vide ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2737,8 +2926,14 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringVideApresFiltrage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse Gateway non null mais ne contenant
+		 * aucun objet métier non null après filtrage.
+		 */
+		final List<Produit> records = Arrays.asList(null, null);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2747,27 +2942,35 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne une liste non null
+		 * ne contenant aucun objet métier non null.
 		 */
-		when(gateway.rechercherTous())
-				.thenReturn(Arrays.asList(null, null));
-
+		when(gateway.rechercherTous()).thenReturn(records);
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exhaustive String via le SERVICE METIER UC.
 		 */
 		final List<String> retour = service.rechercherTousString();
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse utilisateur :
+		 * - n'est jamais null ;
+		 * - est vide après filtrage ;
+		 * - porte le message utilisateur de recherche vide.
 		 */
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(service.getMessage())
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* Garantit que la recherche exhaustive a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -2775,15 +2978,17 @@ public class ProduitCuServiceMockTest {
 
 	/**
 	 * <div>
-	 * <p>garantit que rechercherTousString(libellés blank) :</p>
+	 * <p>garantit que rechercherTousString(vide après libellés blank) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « liste vide + MESSAGE_RECHERCHE_VIDE » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>extrait les libellés via {@code OutputDTO.getProduit()} ;</li>
+	 * <li>ignore les libellés blank ;</li>
+	 * <li>retourne une liste non {@code null} et vide ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2795,8 +3000,15 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringVideApresLibellesBlank() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse Gateway contenant un null
+		 * et un objet métier dont le libellé est blank.
+		 */
+		final SousTypeProduit parent = parentPersistant();
+		final Produit produitBlank = produit(ESPACES, parent, 1L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2804,30 +3016,37 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final SousTypeProduit parent = parentPersistant();
-		final Produit produitBlank = produit(ESPACES, parent, 1L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne une liste non null
+		 * dont les seuls libellés non null sont blank.
 		 */
 		when(gateway.rechercherTous())
-				.thenReturn(Arrays.asList(produitBlank));
-
+				.thenReturn(Arrays.asList(null, produitBlank));
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exhaustive String via le SERVICE METIER UC.
 		 */
 		final List<String> retour = service.rechercherTousString();
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse utilisateur :
+		 * - n'est jamais null ;
+		 * - ne contient aucun libellé blank ;
+		 * - porte le message utilisateur de recherche vide.
 		 */
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(service.getMessage())
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* Garantit que la recherche exhaustive a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -2835,15 +3054,20 @@ public class ProduitCuServiceMockTest {
 
 	/**
 	 * <div>
-	 * <p>garantit que rechercherTousString(nominal) :</p>
+	 * <p>garantit que rechercherTousString(OK) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « libellés triés + MESSAGE_RECHERCHE_OK » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
+	 * {@code rechercherTous()} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>trie les objets métier ;</li>
+	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
+	 * <li>extrait les libellés via {@code OutputDTO.getProduit()} ;</li>
+	 * <li>ignore les libellés blank ;</li>
+	 * <li>retourne les libellés exploitables dans l'ordre préparé
+	 * par {@code rechercherTous()} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2855,8 +3079,22 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringNominal() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse Gateway contenant :
+		 * - deux objets métier non null ;
+		 * - un élément null à filtrer ;
+		 * - un libellé blank à ignorer ;
+		 * - un doublon à dédoublonner côté DTO.
+		 */
+		final SousTypeProduit parent = parentPersistant();
+		
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		final Produit produitBlank = produit(ESPACES, parent, 3L);
+		final Produit produitMarteauDoublon = produit(MARTEAU, parent, 1L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2864,49 +3102,59 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final SousTypeProduit parent = parentPersistant();
-		final Produit produitScie = produit(SCIE, parent, 2L);
-		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTous() retourne des objets métier dans un ordre
+		 * non trié, avec un null, un libellé blank et un doublon côté DTO.
 		 */
 		when(gateway.rechercherTous())
-				.thenReturn(Arrays.asList(produitScie, produitMarteau));
-
+				.thenReturn(Arrays.asList(
+						produitScie, null, produitBlank, produitMarteau, 
+						produitMarteauDoublon));
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exhaustive String via le SERVICE METIER UC.
 		 */
 		final List<String> retour = service.rechercherTousString();
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - n'est pas null ;
+		 * - contient uniquement les libellés non blank ;
+		 * - conserve l'ordre préparé par rechercherTous() ;
+		 * - expose le message utilisateur de succès.
 		 */
+		assertThat(retour).isNotNull();
 		assertThat(retour).containsExactly(MARTEAU, SCIE);
-		assertThat(service.getMessage())
+
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
+		/* Garantit que la recherche exhaustive a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
+
 	} // __________________________________________________________________
+	
 
 
-	// ============================ rechercherTousParPage =================================
+	// ================== rechercherTousParPage ===========================
 
 
 	/**
 	 * <div>
 	 * <p>garantit que rechercherTousParPage(null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAGEABLE_NULL » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>refuse une requête de pagination {@code null} ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAGEABLE_NULL} ;</li>
+	 * <li>n'interagit ni avec le Gateway objet métier
+	 * ni avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2928,16 +3176,20 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
+		/* ACT - ASSERT */
+		/* Garantit que service.rechercherTousParPage(null) :
+		 * - lève IllegalStateException ;
+		 * - émet le message MESSAGE_PAGEABLE_NULL contractuel ;
+		 * - ne sollicite aucun Gateway.
 		 */
-		assertThatThrownBy(() -> service.rechercherTousParPage(null))
+		assertThatThrownBy(
+				() -> service.rechercherTousParPage(null))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage(ProduitICuService.MESSAGE_PAGEABLE_NULL);
 
 		assertThat(service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PAGEABLE_NULL);
+
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
@@ -2949,13 +3201,13 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousParPage(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel
+	 * {@code gateway.rechercherTousParPage(...)} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway objet métier ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2967,8 +3219,14 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousParPageGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une requête de pagination valide pour atteindre
+		 * réellement la délégation gateway.rechercherTousParPage(...).
+		 */
+		final RequetePage requete = new RequetePage(0, 4);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -2976,26 +3234,37 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final RequetePage requete = new RequetePage(0, 4);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message au moment
+		 * de l'appel gateway.rechercherTousParPage(...).
 		 */
-		when(gateway.rechercherTousParPage(requete))
-				.thenThrow(panneTechnique);
+		when(gateway.rechercherTousParPage(requete)).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(
+				() -> service.rechercherTousParPage(requete))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+
+		/* Garantit que la panne intervient bien sur la recherche paginée
+		 * du Gateway objet métier, sans solliciter le Gateway parent.
+		 */
+		verify(gateway, times(1)).rechercherTousParPage(requete);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
@@ -3006,13 +3275,14 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousParPage(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel
+	 * {@code gateway.rechercherTousParPage(...)} ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway
+	 * objet métier ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3024,8 +3294,14 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousParPageGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une requête de pagination valide pour atteindre
+		 * réellement la délégation gateway.rechercherTousParPage(...).
+		 */
+		final RequetePage requete = new RequetePage(0, 4);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3033,26 +3309,35 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final RequetePage requete = new RequetePage(0, 4);
+
 		final IllegalStateException panneTechnique = new IllegalStateException();
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message au moment
+		 * de l'appel gateway.rechercherTousParPage(...).
 		 */
-		when(gateway.rechercherTousParPage(requete))
-				.thenThrow(panneTechnique);
+		when(gateway.rechercherTousParPage(requete)).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(
+				() -> service.rechercherTousParPage(requete))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que la panne intervient bien sur la recherche paginée
+		 * du Gateway objet métier, sans solliciter le Gateway parent.
+		 */
+		verify(gateway, times(1)).rechercherTousParPage(requete);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
@@ -3063,13 +3348,13 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousParPage(gateway retourne null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_RECHERCHE_PAGINEE_KO » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel
+	 * {@code gateway.rechercherTousParPage(...)} ;</li>
+	 * <li>détecte que le Gateway retourne un résultat paginé {@code null} ;</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_KO} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3081,8 +3366,14 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousParPageGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une requête de pagination valide pour atteindre
+		 * réellement la délégation gateway.rechercherTousParPage(...).
+		 */
+		final RequetePage requete = new RequetePage(0, 4);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3090,25 +3381,31 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final RequetePage requete = new RequetePage(0, 4);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule un Gateway qui retourne null au lieu d'un ResultatPage
+		 * non null attendu par le SERVICE METIER UC.
 		 */
-		when(gateway.rechercherTousParPage(requete))
-				.thenReturn(null);
+		when(gateway.rechercherTousParPage(requete)).thenReturn(null);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
+		/* ACT - ASSERT */
+		/* Garantit que le SERVICE METIER UC sécurise le contrat observable
+		 * et refuse une réponse paginée technique null.
 		 */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+		assertThatThrownBy(
+				() -> service.rechercherTousParPage(requete))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
 
 		assertThat(service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_KO);
+
+		/* Garantit que le Gateway objet métier a bien été sollicité
+		 * une seule fois, sans interaction avec le Gateway parent.
+		 */
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -3118,13 +3415,17 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousParPage(conversion OutputDTO KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel
+	 * {@code gateway.rechercherTousParPage(...)} ;</li>
+	 * <li>récupère le contenu via {@code resultatPagine.getContent()} ;</li>
+	 * <li>filtre les {@code null} et trie les objets métier ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * <li>propage l'exception levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3136,8 +3437,25 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousParPageConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse paginée Gateway non null contenant
+		 * un objet métier mocké dont l'accès au parent provoque
+		 * une panne pendant la conversion en OutputDTO.
+		 */
+		final RequetePage requete = new RequetePage(0, 4);
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		final ResultatPage<Produit> resultatGateway
+				= new ResultatPage<Produit>(
+						Arrays.asList(produitKo),
+						0,
+						4,
+						1L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3145,29 +3463,35 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final RequetePage requete = new RequetePage(0, 4);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
-		final Produit produitKo = produitConversionKo(panneTechnique);
-		final ResultatPage<Produit> page = new ResultatPage<Produit>(
-				Arrays.asList(produitKo), 0, 4, 1L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		when(gateway.rechercherTousParPage(requete)).thenReturn(resultatGateway);
+
+		/*
+		 * Configuration du Mock :
+		 * la conversion en OutputDTO lit le parent de l'objet métier ;
+		 * cet accès déclenche ici une panne technique avec message.
 		 */
-		when(gateway.rechercherTousParPage(requete))
-				.thenReturn(page);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(
+				() -> service.rechercherTousParPage(requete))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé pour l'échec de conversion.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + MESSAGE_GATEWAY);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		/* Garantit que le scénario a atteint la recherche paginée Gateway
+		 * avant l'échec de préparation côté UC.
+		 */
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -3177,13 +3501,17 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousParPage(conversion OutputDTO KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel
+	 * {@code gateway.rechercherTousParPage(...)} ;</li>
+	 * <li>récupère le contenu via {@code resultatPagine.getContent()} ;</li>
+	 * <li>filtre les {@code null} et trie les objets métier ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3195,8 +3523,24 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousParPageConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse paginée Gateway non null contenant
+		 * un objet métier mocké dont l'accès au parent provoque
+		 * une panne pendant la conversion en OutputDTO.
+		 */
+		final RequetePage requete = new RequetePage(0, 4);
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		final ResultatPage<Produit> resultatGateway
+				= new ResultatPage<Produit>(
+						Arrays.asList(produitKo),
+						0,
+						4,
+						1L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3204,29 +3548,35 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final RequetePage requete = new RequetePage(0, 4);
-		final IllegalStateException panneTechnique = new IllegalStateException();
-		final Produit produitKo = produitConversionKo(panneTechnique);
-		final ResultatPage<Produit> page = new ResultatPage<Produit>(
-				Arrays.asList(produitKo), 0, 4, 1L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		when(gateway.rechercherTousParPage(requete)).thenReturn(resultatGateway);
+
+		/*
+		 * Configuration du Mock :
+		 * la conversion en OutputDTO lit le parent de l'objet métier ;
+		 * cet accès déclenche ici une panne technique sans message.
 		 */
-		when(gateway.rechercherTousParPage(requete))
-				.thenReturn(page);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.rechercherTousParPage(requete))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(
+				() -> service.rechercherTousParPage(requete))
 				.isSameAs(panneTechnique);
 
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null en cas d'échec de conversion.
+		 */
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ ProduitICuService.TIRET_ESPACE + ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que le scénario a atteint la recherche paginée Gateway
+		 * avant l'échec de préparation côté UC.
+		 */
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -3236,13 +3586,16 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que rechercherTousParPage(vide après filtrage) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « page vide + MESSAGE_RECHERCHE_PAGINEE_OK » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel
+	 * {@code gateway.rechercherTousParPage(...)} ;</li>
+	 * <li>récupère le contenu via {@code resultatPagine.getContent()} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>reconstruit un {@link ResultatPage} DTO non {@code null}
+	 * avec un contenu vide ;</li>
+	 * <li>reprend la pagination observable ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3254,8 +3607,23 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousParPageVideApresFiltrage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse paginée Gateway non null mais ne contenant
+		 * aucun objet métier non null après filtrage.
+		 */
+		final RequetePage requete = new RequetePage(0, 4);
+		
+		final List<Produit> records = Arrays.asList(null, null);
+		
+		final ResultatPage<Produit> resultatGateway
+				= new ResultatPage<Produit>(
+						records,
+						0,
+						4,
+						2L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3263,33 +3631,46 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final RequetePage requete = new RequetePage(0, 4);
-		final ResultatPage<Produit> page = new ResultatPage<Produit>(
-				Arrays.asList(null, null), 0, 4, 2L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTousParPage(...) retourne une page non null
+		 * ne contenant aucun objet métier non null.
 		 */
-		when(gateway.rechercherTousParPage(requete))
-				.thenReturn(page);
-
+		when(gateway.rechercherTousParPage(requete)).thenReturn(resultatGateway);
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche paginée via le SERVICE METIER UC.
 		 */
-		final ResultatPage<OutputDTO> retour = service.rechercherTousParPage(requete);
+		final ResultatPage<OutputDTO> retour 
+				= service.rechercherTousParPage(requete);
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse paginée utilisateur :
+		 * - n'est jamais null ;
+		 * - reprend le numéro de page ;
+		 * - reprend la taille de page ;
+		 * - sécurise le total d'éléments ;
+		 * - contient une page vide après filtrage ;
+		 * - porte le message utilisateur de succès paginé.
 		 */
 		assertThat(retour).isNotNull();
-		assertThat(retour.getContent()).isNotNull().isEmpty();
+		assertThat(retour.getPageNumber()).isEqualTo(0);
+		assertThat(retour.getPageSize()).isEqualTo(4);
 		assertThat(retour.getTotalElements()).isEqualTo(2L);
-		assertThat(service.getMessage())
+
+		assertThat(retour.getContent()).isNotNull();
+		assertThat(retour.getContent()).isEmpty();
+
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* Garantit que la recherche paginée a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -3297,15 +3678,20 @@ public class ProduitCuServiceMockTest {
 
 	/**
 	 * <div>
-	 * <p>garantit que rechercherTousParPage(nominal) :</p>
+	 * <p>garantit que rechercherTousParPage(OK) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « page cohérente + MESSAGE_RECHERCHE_PAGINEE_OK » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel
+	 * {@code gateway.rechercherTousParPage(...)} ;</li>
+	 * <li>récupère le contenu via {@code resultatPagine.getContent()} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>trie les objets métier ;</li>
+	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
+	 * <li>dédoublonne la réponse DTO ;</li>
+	 * <li>reprend le numéro de page, la taille de page
+	 * et le total d'éléments ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3317,8 +3703,33 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousParPageNominal() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse paginée Gateway contenant :
+		 * - deux objets métier non null ;
+		 * - un élément null à filtrer ;
+		 * - un doublon à dédoublonner côté DTO.
+		 */
+		final RequetePage requete = new RequetePage(0, 4);
+		
+		final SousTypeProduit parent = parentPersistant();
+		
+		final Produit produitScie = produit(SCIE, parent, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
+		final Produit produitMarteauDoublon = produit(MARTEAU, parent, 1L);
+		
+		final ResultatPage<Produit> resultatGateway
+				= new ResultatPage<Produit>(
+						Arrays.asList(
+								produitScie,
+								null,
+								produitMarteau,
+								produitMarteauDoublon),
+						0,
+						4,
+						10L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3326,59 +3737,82 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final RequetePage requete = new RequetePage(0, 4);
-		final SousTypeProduit parent = parentPersistant();
-		final Produit produitScie = produit(SCIE, parent, 2L);
-		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
-		final ResultatPage<Produit> page = new ResultatPage<Produit>(
-				Arrays.asList(produitScie, null, produitMarteau, produitScie),
-				0, 4, 10L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.rechercherTousParPage(...) retourne des objets métier
+		 * dans un ordre non trié, avec un null et un doublon côté DTO.
 		 */
-		when(gateway.rechercherTousParPage(requete))
-				.thenReturn(page);
-
+		when(gateway.rechercherTousParPage(requete)).thenReturn(resultatGateway);
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche paginée via le SERVICE METIER UC.
 		 */
-		final ResultatPage<OutputDTO> retour = service.rechercherTousParPage(requete);
+		final ResultatPage<OutputDTO> retour
+				= service.rechercherTousParPage(requete);
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse paginée retournée au controller appelant :
+		 * - n'est pas null ;
+		 * - reprend le numéro de page ;
+		 * - reprend la taille de page ;
+		 * - reprend le total d'éléments ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
+		 * - est triée par libellé métier ;
+		 * - est dédoublonnée ;
+		 * - expose le message utilisateur de succès paginé.
 		 */
 		assertThat(retour).isNotNull();
 		assertThat(retour.getPageNumber()).isEqualTo(0);
 		assertThat(retour.getPageSize()).isEqualTo(4);
 		assertThat(retour.getTotalElements()).isEqualTo(10L);
+
+		assertThat(retour.getContent()).isNotNull();
 		assertThat(retour.getContent()).hasSize(2);
-		assertThat(retour.getContent()).extracting(OutputDTO::getProduit)
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getProduit)
 				.containsExactly(MARTEAU, SCIE);
-		assertThat(service.getMessage())
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE, OUTILLAGE);
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR, BAZAR);
+
+		assertThat(retour.getContent())
+				.extracting(OutputDTO::getIdProduit)
+				.containsExactly(1L, 2L);
+
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
 
+		/* Garantit que la recherche paginée a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).rechercherTousParPage(requete);
+		verifyNoInteractions(sousTypeProduitGateway);
+
 	} // __________________________________________________________________
+	
 
 
-	// ============================ findByLibelle =================================
+	// ====================== findByLibelle ===============================
 
 
+	
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelle(null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « null + MESSAGE_PARAM_BLANK » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>retourne {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit ni avec le Gateway objet métier
+	 * ni avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3400,20 +3834,22 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exacte avec un libellé null.
 		 */
 		final List<OutputDTO> retour = service.findByLibelle(null);
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que l'erreur utilisateur bénigne :
+		 * - retourne null ;
+		 * - positionne MESSAGE_PARAM_BLANK ;
+		 * - ne sollicite aucun Gateway.
 		 */
 		assertThat(retour).isNull();
-		assertThat(service.getMessage())
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
@@ -3425,13 +3861,11 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(blank) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « null + MESSAGE_PARAM_BLANK » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>retourne {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>n'interagit ni avec le Gateway objet métier
+	 * ni avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3443,8 +3877,16 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleBlank() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un libellé blank.
+		 *
+		 * Ce cas doit être bloqué par le SERVICE METIER UC
+		 * avant toute délégation aux Gateways.
+		 */
+		final String libelle = ESPACES;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3453,20 +3895,22 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exacte avec un libellé blank.
 		 */
-		final List<OutputDTO> retour = service.findByLibelle(ESPACES);
+		final List<OutputDTO> retour = service.findByLibelle(libelle);
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que l'erreur utilisateur bénigne :
+		 * - retourne null ;
+		 * - positionne MESSAGE_PARAM_BLANK ;
+		 * - ne sollicite aucun Gateway.
 		 */
 		assertThat(retour).isNull();
-		assertThat(service.getMessage())
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
+
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
@@ -3478,13 +3922,13 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(gateway retourne null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « KO_TECHNIQUE_RECHERCHE » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>détecte que le Gateway retourne {@code null}
+	 * au lieu d'une liste non null attendue ;</li>
+	 * <li>lève {@link ExceptionStockageVide} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3496,8 +3940,14 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleGatewayRetourNull() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un libellé valide pour atteindre réellement
+		 * la délégation gateway.findByLibelle(...).
+		 */
+		final String libelle = MARTEAU;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3506,22 +3956,29 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule un Gateway objet métier qui retourne null
+		 * au lieu d'une liste non null attendue par le SERVICE METIER UC.
 		 */
-		when(gateway.findByLibelle(MARTEAU)).thenReturn(null);
+		when(gateway.findByLibelle(libelle)).thenReturn(null);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
+		/* ACT - ASSERT */
+		/* Garantit que service.findByLibelle(libelle) :
+		 * - lève ExceptionStockageVide ;
+		 * - émet le message MESSAGE_STOCKAGE_NULL contractuel.
 		 */
-		assertThatThrownBy(() -> service.findByLibelle(MARTEAU))
-				.isInstanceOf(RuntimeException.class)
-				.hasMessage(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+		assertThatThrownBy(() -> service.findByLibelle(libelle))
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		/* Garantit que seul le Gateway objet métier
+		 * a été sollicité pour la recherche exacte.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
@@ -3532,13 +3989,12 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée par l'ADAPTER réel » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway objet métier ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3550,8 +4006,16 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleGatewayKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un libellé valide pour atteindre réellement
+		 * la délégation gateway.findByLibelle(...).
+		 */
+		final String libelle = MARTEAU;
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3559,22 +4023,33 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message au moment
+		 * de l'appel gateway.findByLibelle(...).
 		 */
-		when(gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
+		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.findByLibelle(MARTEAU))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.findByLibelle(libelle))
 				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage()).isNull();
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+
+		/* Garantit que la panne intervient bien sur la recherche exacte
+		 * du Gateway objet métier.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
@@ -3585,13 +4060,13 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée par l'ADAPTER réel » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway
+	 * objet métier ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3603,8 +4078,15 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleGatewayKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un libellé valide pour atteindre réellement
+		 * la délégation gateway.findByLibelle(...).
+		 */
+		final String libelle = MARTEAU;
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3612,22 +4094,32 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException();
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message au moment
+		 * de l'appel gateway.findByLibelle(...).
 		 */
-		when(gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
+		when(gateway.findByLibelle(libelle)).thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.findByLibelle(MARTEAU))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.findByLibelle(libelle))
 				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage()).isNull();
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que la panne intervient bien sur la recherche exacte
+		 * du Gateway objet métier.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
@@ -3638,13 +4130,16 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(conversion OutputDTO KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée par l'ADAPTER réel » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>le Gateway retourne une liste non {@code null}
+	 * contenant un objet métier non null ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * <li>propage l'exception levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + message technique ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3656,8 +4151,17 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un objet métier mocké dont l'accès au parent
+		 * provoque une panne pendant la conversion en OutputDTO.
+		 */
+		final String libelle = MARTEAU;
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3665,24 +4169,34 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
-		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.findByLibelle(...) retourne une liste non null contenant
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
-		when(gateway.findByLibelle(MARTEAU))
+		when(gateway.findByLibelle(libelle))
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.findByLibelle(MARTEAU))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.findByLibelle(libelle))
 				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage()).isNull();
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé pour l'échec de conversion.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de conversion côté UC.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -3692,13 +4206,16 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(conversion OutputDTO KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée par l'ADAPTER réel » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>le Gateway retourne une liste non {@code null}
+	 * contenant un objet métier non null ;</li>
+	 * <li>atteint la conversion finale en {@link OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3710,8 +4227,16 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un objet métier mocké dont l'accès au parent
+		 * provoque une panne pendant la conversion en OutputDTO.
+		 */
+		final String libelle = MARTEAU;
+		final IllegalStateException panneTechnique = new IllegalStateException();
+		final Produit produitKo = produitConversionKo(panneTechnique);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3719,24 +4244,34 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException();
-		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.findByLibelle(...) retourne une liste non null contenant
+		 * un objet métier non null retenu par filtrerEtTrier(...).
 		 */
-		when(gateway.findByLibelle(MARTEAU))
+		when(gateway.findByLibelle(libelle))
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
-		assertThatThrownBy(() -> service.findByLibelle(MARTEAU))
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.findByLibelle(libelle))
 				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage()).isNull();
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null en cas d'échec de conversion.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que le scénario a atteint la recherche Gateway
+		 * avant l'échec de conversion côté UC.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -3746,13 +4281,13 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(introuvable) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « liste vide + MESSAGE_RECHERCHE_VIDE » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>le Gateway retourne une liste non {@code null}
+	 * ne contenant aucun objet métier non null ;</li>
+	 * <li>retourne une liste non {@code null} et vide ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3764,8 +4299,14 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleIntrouvable() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare un libellé valide absent du stockage
+		 * selon le Gateway mocké.
+		 */
+		final String libelle = MARTEAU;
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3774,27 +4315,37 @@ public class ProduitCuServiceMockTest {
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * simule un Gateway qui ne trouve aucun objet métier
+		 * pour le libellé recherché.
 		 */
-		when(gateway.findByLibelle(MARTEAU))
+		when(gateway.findByLibelle(libelle))
 				.thenReturn(Collections.emptyList());
 
-
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exacte via le SERVICE METIER UC.
 		 */
-		final List<OutputDTO> retour = service.findByLibelle(MARTEAU);
+		final List<OutputDTO> retour = service.findByLibelle(libelle);
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse utilisateur :
+		 * - n'est jamais null ;
+		 * - est vide ;
+		 * - porte le message utilisateur de recherche en échec.
 		 */
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message).isEqualTo(
+				ProduitCuService.MESSAGE_OBJ_INTROUVABLE
+				+ libelle);
+		
+		/* Garantit que la recherche exacte a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -3802,15 +4353,18 @@ public class ProduitCuServiceMockTest {
 
 	/**
 	 * <div>
-	 * <p>garantit que findByLibelle(nominal) :</p>
+	 * <p>garantit que findByLibelle(OK) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « liste cohérente + MESSAGE_RECHERCHE_OK » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>trie les objets métier par libellé produit ;</li>
+	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
+	 * <li>dédoublonne la réponse DTO ;</li>
+	 * <li>retourne une liste cohérente portant les parents
+	 * et le libellé recherché ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -3822,8 +4376,24 @@ public class ProduitCuServiceMockTest {
 	public void testFindByLibelleNominal() throws Exception {
 
 		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		 * prépare une réponse Gateway contenant :
+		 * - deux objets métier non null portant le libellé recherché ;
+		 * - un élément null à filtrer ;
+		 * - un doublon à dédoublonner côté DTO.
+		 */
+		final String libelle = MARTEAU;
+		
+		final SousTypeProduit parentOutillage = parentPersistant();
+		final SousTypeProduit parentAtelier 
+				= parentPersistant(QUINCAILLERIE, ATELIER, 2L, 20L);
+		
+		final Produit produitOutillage = produit(libelle, parentOutillage, 100L);
+		final Produit produitAtelier = produit(libelle, parentAtelier, 200L);
+		final Produit produitOutillageDoublon = produit(libelle, parentOutillage, 100L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -3831,41 +4401,68 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final SousTypeProduit parentA = parentPersistant();
-		final SousTypeProduit parentB = parentPersistant(QUINCAILLERIE, ATELIER, 2L, 20L);
-		final Produit produitA = produit(MARTEAU, parentA, 100L);
-		final Produit produitB = produit(MARTEAU, parentB, 200L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
+		/*
+		 * Configuration du Mock :
+		 * gateway.findByLibelle(...) retourne des objets métier dans un ordre
+		 * exploitable, avec un null et un doublon côté DTO.
 		 */
-		when(gateway.findByLibelle(MARTEAU))
-				.thenReturn(Arrays.asList(produitA, null, produitB));
-
+		when(gateway.findByLibelle(libelle))
+				.thenReturn(Arrays.asList(
+						produitOutillage,
+						null,
+						produitAtelier,
+						produitOutillageDoublon));
 
 		/* ACT :
-		 * exécute l'appel testé.
+		 * exécute la recherche exacte via le SERVICE METIER UC.
 		 */
-		final List<OutputDTO> retour = service.findByLibelle(MARTEAU);
+		final List<OutputDTO> retour = service.findByLibelle(libelle);
+		final String message = service.getMessage();
 
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
+		/* ASSERT */
+		/* Garantit que la réponse retournée au controller appelant :
+		 * - n'est pas null ;
+		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
+		 * - est dédoublonnée ;
+		 * - expose le message utilisateur de succès.
 		 */
-		assertThat(retour).isNotNull().hasSize(2);
-		assertThat(retour).extracting(OutputDTO::getSousTypeProduit)
-				.containsExactlyInAnyOrder(OUTILLAGE, ATELIER);
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		assertThat(retour).isNotNull();
+		assertThat(retour).hasSize(2);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getProduit)
+				.containsExactly(libelle, libelle);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE, ATELIER);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getTypeProduit)
+				.containsExactly(BAZAR, QUINCAILLERIE);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getIdProduit)
+				.containsExactly(100L, 200L);
+
+		assertThat(message)
+				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+
+		/* Garantit que la recherche exacte a bien été déléguée
+		 * et que le Gateway parent reste inutilisé.
+		 */
+		verify(gateway, times(1)).findByLibelle(libelle);
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
+	
 
 
-	// ============================ findByLibelleRapide =================================
+	// ==================== findByLibelleRapide ===========================
 
 
+	
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(null) :</p>

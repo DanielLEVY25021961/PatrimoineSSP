@@ -743,25 +743,23 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public List<OutputDTO> findByLibelle(
+	public List<SousTypeProduitDTO.OutputDTO> findByLibelle(
 			final String pLibelle) throws Exception {
 
 		/*
-		 * Si le libellé transmis n'est pas exploitable :
-		 * retourne une liste vide avec un message observable,
-		 * sans LOG et sans exception.
 		 * Si StringUtils.isBlank(pLibelle) : 
 		 * émet un message MESSAGE_PARAM_BLANK et 
 		 * retourne une nouvelle ArrayList vide.
+		 * Pas d'Exception.
 		 */
 		if (StringUtils.isBlank(pLibelle)) {
 			this.message.set(MESSAGE_PARAM_BLANK);
-			return new ArrayList<OutputDTO>();
+			return new ArrayList<SousTypeProduitDTO.OutputDTO>();
 		}
 
 		/*
 		 * Délègue au GATEWAY la recherche exacte
-		 * de tous les SousTypeProduit portant ce libellé.
+		 * de tous les objets métier portant ce libellé.
 		 */
 		final List<SousTypeProduit> records;
 
@@ -831,6 +829,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 		/*
 		 * Positionne le message observable de succès
+		 * MESSAGE_SUCCES_RECHERCHE 
 		 * après préparation complète de la réponse.
 		 */
 		this.message.set(MESSAGE_SUCCES_RECHERCHE);

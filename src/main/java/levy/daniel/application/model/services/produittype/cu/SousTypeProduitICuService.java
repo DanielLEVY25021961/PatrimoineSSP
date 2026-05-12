@@ -747,17 +747,19 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche tous les {@link SousTypeProduitDTO.OutputDTO}
-	 * correspondant exactement au libellé transmis.
+	 * Retourne tous les {@link SousTypeProduitDTO.OutputDTO}
+	 * dont le libellé correspond exactement au libellé demandé.
 	 * </p>
 	 * <p style="font-weight:bold;">
 	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
 	 * <li>recevoir un libellé exact depuis la couche appelante ;</li>
-	 * <li>valider le caractère exploitable de ce libellé ;</li>
+	 * <li>valider le caractère exploitable (non null ou blank) 
+	 * de ce libellé ;</li>
 	 * <li>déléguer au composant GATEWAY
-	 * la recherche exacte de tous les {@link SousTypeProduit}
+	 * la recherche exacte de tous les objets métier
+	 * {@link SousTypeProduit}
 	 * correspondant à ce libellé ;</li>
 	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
 	 * <li>retirer les éventuels éléments {@code null},
@@ -765,8 +767,7 @@ public interface SousTypeProduitICuService {
 	 * côté UC si nécessaire ;</li>
 	 * <li>convertir la liste métier en
 	 * {@link SousTypeProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une liste exploitable
-	 * par la couche appelante.</li>
+	 * <li>retourner une liste non null à la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -781,7 +782,7 @@ public interface SousTypeProduitICuService {
 	 * <li>Si le GATEWAY retourne {@code null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
 	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Si aucun résultat exploitable n'est trouvé,
+	 * <li>Si aucun résultat n'est trouvé,
 	 * retourne une {@link List} vide mais non {@code null},
 	 * et positionne {@link #getMessage()}
 	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
@@ -804,16 +805,13 @@ public interface SousTypeProduitICuService {
 	 * </p>
 	 * <ul>
 	 * <li>Le message retourné par {@link #getMessage()}
-	 * reflète l'issue observable de l'opération.</li>
+	 * reflète l'issue de l'opération.</li>
 	 * <li>Le message de succès n'est positionné
 	 * qu'après préparation complète de la réponse utilisateur.</li>
 	 * <li>La liste retournée, si elle n'est pas vide,
-	 * correspond à l'état métier effectivement accessible
-	 * dans le stockage via le GATEWAY,
-	 * exprimé sous forme de DTO.</li>
-	 * <li>Aucun résultat partiel incohérent
-	 * ne doit être exposé à l'appelant.</li>
-	 * <li>Le libellé exact n'étant pas unique pour un
+	 * correspond aux objets métier ayant pour libellé pLibelle
+	 * dans le stockage (liste de DTOs).</li>
+	 * <li>Le libellé n'étant pas unique pour un objet métier
 	 * {@link SousTypeProduit},
 	 * la méthode doit retourner une collection
 	 * et non un DTO unitaire.</li>
