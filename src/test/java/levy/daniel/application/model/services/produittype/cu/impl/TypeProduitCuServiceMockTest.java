@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,8 +25,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import levy.daniel.application.model.dto.produittype.ConvertisseurMetierToOutputDTOTypeProduit;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.OutputDTO;
@@ -267,6 +270,14 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_SANS_MESSAGE
 			= "creer(conversion OutputDTO KO sans message) : "
 					+ "fallback MSG_ERREUR_NON_SPECIFIEE";
+	
+	/**
+	 * "creer(conversion OutputDTO retourne null) :
+	 * MESSAGE_CREER_CONVERSION_KO"
+	 */
+	public static final String DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_RETOUR_NULL
+			= "creer(conversion OutputDTO retourne null) : "
+					+ "MESSAGE_CREER_CONVERSION_KO";
 	
 	/**
 	 * "creer(nominal) : OutputDTO + MESSAGE_CREER_OK"
@@ -1706,6 +1717,111 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		verify(gateway, times(1)).findByLibelle(OUTILLAGE);
 		verify(gateway, times(1)).creer(any(TypeProduit.class));
+		
+	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>garantit que creer(conversion OutputDTO retourne null) :</p>
+	 * <ul>
+	 * <li>contrôle d'abord l'absence de doublon via
+	 * {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
+	 * <li>atteint la conversion finale de l'objet métier créé en
+	 * {@link OutputDTO} ;</li>
+	 * <li>force ponctuellement la méthode static de conversion à retourner
+	 * {@code null} avec un {@link MockedStatic}, parce que le convertisseur
+	 * réel ne retourne {@code null} que si son paramètre est {@code null},
+	 * alors que le SERVICE METIER UC intercepte déjà un retour {@code null}
+	 * du Gateway avant la conversion ;</li>
+	 * <li>jette une {@link IllegalStateException} ;</li>
+	 * <li>positionne le message utilisateur
+	 * {@link TypeProduitICuService#MESSAGE_CREER_CONVERSION_KO}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_RETOUR_NULL)
+	@Test
+	public void testCreerConversionOutputDTORetourNull() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide et non doublon.
+		 *
+		 * Le Gateway retourne ensuite un objet métier créé.
+		 * Le cas défensif à tester est uniquement le retour null
+		 * de la conversion finale.
+		 */
+		final InputDTO dto = new TypeProduitDTO.InputDTO(OUTILLAGE);
+		
+		/* 
+		 * Mocke un service Gateway et le passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
+
+		final TypeProduit cree = new TypeProduit(OUTILLAGE);
+		cree.setIdTypeProduit(1L);
+
+		when(gateway.findByLibelle(OUTILLAGE)).thenReturn(null);
+		when(gateway.creer(any(TypeProduit.class))).thenReturn(cree);
+		
+		/*
+		 * Configuration du MockedStatic :
+		 * - le convertisseur réel est une classe utilitaire static ;
+		 * - avec un objet métier non null, il ne retourne normalement pas null ;
+		 * - gateway.creer(...) ne peut pas retourner null ici,
+		 *   car le SERVICE METIER UC s'arrêterait avant la conversion ;
+		 * - le MockedStatic est donc limité à ce test pour atteindre
+		 *   la branche défensive "dto == null" du SERVICE METIER UC.
+		 */
+		try (MockedStatic<ConvertisseurMetierToOutputDTOTypeProduit> mockedStatic
+				= mockStatic(ConvertisseurMetierToOutputDTOTypeProduit.class)) {
+			
+			/*
+			 * Configuration du MockedStatic :
+			 * la conversion finale en OutputDTO retourne null.
+			 */
+			mockedStatic.when(
+					() -> ConvertisseurMetierToOutputDTOTypeProduit
+							.convert(cree))
+					.thenReturn(null);
+
+			/* ACT - ASSERT */
+			/* Garantit que le SERVICE METIER UC refuse
+			 * une conversion finale null.
+			 */
+			assertThatThrownBy(() -> service.creer(dto))
+					.isInstanceOf(IllegalStateException.class)
+					.hasMessage(TypeProduitICuService.MESSAGE_CREER_CONVERSION_KO);
+
+			/* Garantit que le message utilisateur correspond
+			 * au cas contractuel "conversion retourne null".
+			 */
+			assertThat(service.getMessage())
+					.isEqualTo(TypeProduitICuService.MESSAGE_CREER_CONVERSION_KO);
+
+			/* Garantit que le scénario a atteint la création Gateway
+			 * avant le contrôle du retour null de conversion.
+			 */
+			verify(gateway, times(1)).findByLibelle(OUTILLAGE);
+			verify(gateway, times(1)).creer(any(TypeProduit.class));
+			
+			/* Garantit que le MockedStatic a été strictement limité
+			 * à la conversion finale attendue par le SERVICE METIER UC.
+			 */
+			mockedStatic.verify(
+					() -> ConvertisseurMetierToOutputDTOTypeProduit
+							.convert(cree),
+					times(1));
+		}
 		
 	} // __________________________________________________________________
 	

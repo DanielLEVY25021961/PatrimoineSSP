@@ -422,7 +422,8 @@ public interface ProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Stocke un {@link ProduitDTO.InputDTO},
+	 * Reçoit un {@link ProduitDTO.InputDTO},
+	 * le transforme en objet métier à stocker,
 	 * puis retourne l'objet métier stocké sous forme de
 	 * {@link ProduitDTO.OutputDTO}.
 	 * </p>

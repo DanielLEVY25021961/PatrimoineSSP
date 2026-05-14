@@ -259,9 +259,10 @@ public class ProduitCuService implements ProduitICuService {
 				|| parentPersistant.getIdSousTypeProduit() == null) {
 			
 			return this.traiterErreur(
-					MESSAGE_PAS_PARENT,
+					MESSAGE_CREER_PARENT_NON_PERSISTANT_KO,
 					METHODE_CREER,
-					new IllegalStateException(MESSAGE_PAS_PARENT));
+					new IllegalStateException(
+							MESSAGE_CREER_PARENT_NON_PERSISTANT_KO));
 		}
 
 		/*
@@ -350,7 +351,7 @@ public class ProduitCuService implements ProduitICuService {
 			 * PREFIX_MESSAGE_CREER_GATEWAY_KO ;
 			 * - alimente message avec le message sécurisé ;
 			 * - LOG ;
-			 * - propage l'Exception de gateway.creer(sousTypeProduit). */
+			 * - propage l'Exception de gateway.creer(...). */
 			return this.traiterErreur(
 					PREFIX_MESSAGE_CREER_GATEWAY_KO
 							+ messageSecurise,

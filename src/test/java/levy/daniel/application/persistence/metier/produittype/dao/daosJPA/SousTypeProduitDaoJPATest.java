@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -84,10 +83,13 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
  * <li>cette configuration locale fournit le point d'entrée
  * {@link SpringBootConfiguration} que Spring Boot ne trouvait pas
  * automatiquement en remontant les packages ;</li>
- * <li>elle indique à l'auto-configuration Spring Boot le package des DAO
- * avec {@link AutoConfigurationPackage}, sans déclarer
- * {@code @EnableJpaRepositories} ;</li>
- * <li>elle indique le package des entities JPA avec {@link EntityScan} ;</li>
+ * <li>elle indique à l'auto-configuration Spring Boot, via
+ * {@link AutoConfigurationPackage}, le package du DAO
+ * {@link SousTypeProduitDaoJPA}, le package de l'entity enfant
+ * {@link SousTypeProduitJPA} et le package de l'entity parent
+ * {@link TypeProduitJPA} ;</li>
+ * <li>elle ne déclare ni {@code @EnableJpaRepositories}
+ * ni {@code @EntityScan} ;</li>
  * <li>elle ne scanne pas explicitement les repositories et n'autorise pas
  * l'override des beans ;</li>
  * <li>elle permet donc au test de rester autonome tout en évitant les
@@ -373,15 +375,24 @@ public class SousTypeProduitDaoJPATest {
      * interne locale ;</li>
      * <li>{@link SpringBootConfiguration} fournit le point d'entrée attendu
      * par Spring Boot ;</li>
-     * <li>{@link AutoConfigurationPackage} indique à l'auto-configuration
-     * le package à utiliser pour la tranche JPA du test ;</li>
-     * <li>{@link EntityScan} indique le package des entities JPA, situé dans
-     * un autre package que les DAO.</li>
+     * <li>{@link AutoConfigurationPackage} indique explicitement à
+     * l'auto-configuration Spring Boot les packages nécessaires au test :
+     * le package du DAO {@link SousTypeProduitDaoJPA}, le package de
+     * l'entity enfant {@link SousTypeProduitJPA} et le package de
+     * l'entity parent {@link TypeProduitJPA} ;</li>
+     * <li>le test ne déclare pas {@code @EnableJpaRepositories} :
+     * les repositories restent pris en charge par le slice
+     * {@link DataJpaTest} ;</li>
+     * <li>le test ne déclare pas {@code @EntityScan} :
+     * les packages des entities JPA sont fournis par
+     * {@link AutoConfigurationPackage} avec {@link SousTypeProduitJPA}
+     * et {@link TypeProduitJPA}.</li>
      * </ul>
      *
      * <p style="font-weight:bold;">Ce que cette configuration ne fait pas :</p>
      * <ul>
      * <li>elle ne déclare pas {@code @EnableJpaRepositories} ;</li>
+     * <li>elle ne déclare pas {@code @EntityScan} ;</li>
      * <li>elle ne force aucun scan manuel des repositories ;</li>
      * <li>elle ne charge aucun Gateway ;</li>
      * <li>elle ne charge aucun Controller ;</li>
@@ -391,9 +402,9 @@ public class SousTypeProduitDaoJPATest {
      * </ul>
      *
      * <p>
-     * Le repository testé reste découvert par l'auto-configuration JPA du
-     * slice {@link DataJpaTest}. Le test reste donc un test direct DAO,
-     * autonome, et limité à la persistance JPA.
+     * Le repository testé et les entities JPA utiles sont découverts dans
+     * le périmètre explicite déclaré pour ce test. Le test reste donc un
+     * test direct DAO, autonome, et limité à la persistance JPA.
      * </p>
      * </div>
      *
@@ -402,8 +413,11 @@ public class SousTypeProduitDaoJPATest {
      * @since 09 mai 2026
      */
     @SpringBootConfiguration(proxyBeanMethods = false)
-    @AutoConfigurationPackage(basePackageClasses = SousTypeProduitDaoJPA.class)
-    @EntityScan(basePackageClasses = SousTypeProduitJPA.class)
+    @AutoConfigurationPackage(basePackageClasses = {
+            SousTypeProduitDaoJPA.class,
+            SousTypeProduitJPA.class,
+            TypeProduitJPA.class
+    })
     public static final class ConfigTest { // NOPMD by danyl on 09/05/2026 17:33
 
         /**

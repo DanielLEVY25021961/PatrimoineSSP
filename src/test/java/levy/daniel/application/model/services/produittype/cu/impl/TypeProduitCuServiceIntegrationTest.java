@@ -12,28 +12,29 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ComponentScan.Filter;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
+import org.springframework.context.annotation.Import;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
 
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.OutputDTO;
 import levy.daniel.application.model.services.produittype.cu.TypeProduitICuService;
+import levy.daniel.application.model.services.produittype.gateway.impl.TypeProduitGatewayJPAService;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreNull;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
+import levy.daniel.application.persistence.metier.produittype.dao.daosJPA.TypeProduitDaoJPA;
+import levy.daniel.application.persistence.metier.produittype.entities.entitiesJPA.TypeProduitJPA;
 
 /**
  * <div>
@@ -41,35 +42,66 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  * CLASSE TypeProduitCuServiceIntegrationTest.java :
  * </p>
  * <p>
- * Tests d'intégration complets (avec tests "béton") du SERVICE ADAPTER METIER CU
+ * Tests d'intégration complets (avec tests "béton") du SERVICE ADAPTER METIER UC
  * {@link TypeProduitCuService}.
  * </p>
- * <p>
- * IMPORTANT :
+ *
+ * <p>Ce test vérifie le SERVICE UC avec un vrai stockage JPA/H2.</p>
  * <ul>
- * <li>On ne scanne PAS toute l'application : sinon SPRING instancie aussi les CONTROLLERS
- * qui exigent des {@code @Qualifier} spécifiques (ex. "typeProduitService") et font échouer
- * le chargement du contexte.</li>
- * <li>On fournit donc une configuration de test dédiée, limitée aux packages "métier CU/Gateway"
- * et "persistance TypeProduit".</li>
- * <li>On active le profil "dev" (en plus de "test") car {@link TypeProduitCuService}
- * est profilé {@code {"desktop","dev","prod"}}.</li>
+ * <li>Il injecte le PORT UC {@link TypeProduitICuService}.</li>
+ * <li>Il importe explicitement le SERVICE UC testé
+ * {@link TypeProduitCuService}.</li>
+ * <li>Il importe explicitement le Gateway JPA nécessaire
+ * {@link TypeProduitGatewayJPAService}.</li>
+ * <li>Il utilise un stockage H2 en mémoire via {@link DataJpaTest}.</li>
+ * <li>Il initialise le stockage avec
+ * <code>truncate-test.sql</code> puis <code>data-test.sql</code>.</li>
+ * <li>Il relit certaines références directement en SQL avec
+ * {@link JdbcTemplate}, afin de comparer le résultat UC avec une preuve
+ * indépendante du SERVICE UC testé.</li>
  * </ul>
- * </p>
+ *
+ * <p style="font-weight:bold;">Contexte SERVICE UC slice :</p>
+ * <ul>
+ * <li>{@link DataJpaTest} démarre un contexte Spring réduit, centré sur
+ * JPA, les repositories, les transactions, le stockage de test,
+ * {@link JdbcTemplate} et l'infrastructure JPA ;</li>
+ * <li>ce contexte réduit évite de démarrer toute l'application ;</li>
+ * <li>il ne charge volontairement pas les Controllers, ni un scan applicatif
+ * global, ni leurs configurations d'intégration ;</li>
+ * <li>le SERVICE UC et le Gateway nécessaires au test sont ajoutés
+ * explicitement avec {@link Import} ;</li>
+ * <li>le test reste donc autonome dans STS et rejouable seul ou avec
+ * l'ensemble de la suite.</li>
+ * </ul>
+ *
+ * <p style="font-weight:bold;">Configuration autonome du test :</p>
+ * <ul>
+ * <li>ce test déclare une classe interne {@link ConfigTest}
+ * explicitement chargée par {@link ContextConfiguration} ;</li>
+ * <li>cette configuration locale fournit le point d'entrée
+ * {@link SpringBootConfiguration} que Spring Boot ne trouvait pas
+ * automatiquement en remontant les packages ;</li>
+ * <li>elle indique à l'auto-configuration Spring Boot, via
+ * {@link AutoConfigurationPackage}, le package du DAO
+ * {@link TypeProduitDaoJPA} et le package de l'entity
+ * {@link TypeProduitJPA} ;</li>
+ * <li>elle ne déclare ni {@code @SpringBootTest},
+ * ni {@code @ComponentScan}, ni {@code @EnableJpaRepositories},
+ * ni {@code @EntityScan} ;</li>
+ * <li>elle ne scanne pas explicitement les repositories et n'autorise pas
+ * l'override des beans ;</li>
+ * <li>elle permet donc au test de rester autonome tout en évitant les
+ * collisions de beans observées avec les configurations repository
+ * explicites.</li>
+ * </ul>
  * </div>
  *
  * @author Daniel Lévy
  * @version 1.0
  * @since 21 janvier 2026
  */
-@SpringBootTest(
-		classes = TypeProduitCuServiceIntegrationTest.ConfigTest.class,
-		webEnvironment = SpringBootTest.WebEnvironment.NONE,
-		properties = { "spring.main.web-application-type=none" }
-)
-@ActiveProfiles({ "test-jpa" })
-@Tag(TypeProduitCuServiceIntegrationTest.TAG)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
 @Sql(
 		scripts = {
 				"classpath:/truncate-test.sql",
@@ -77,6 +109,31 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
 		},
 		executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 )
+@DataJpaTest
+@ActiveProfiles({ "test-jpa" })
+@Import({
+		TypeProduitCuService.class,
+		TypeProduitGatewayJPAService.class
+})
+@ContextConfiguration(classes = TypeProduitCuServiceIntegrationTest.ConfigTest.class)
+/*
+ * Recrée le contexte Spring après chaque méthode de test.
+ *
+ * @Sql réinitialise le stockage avant chaque test, mais ne réinitialise pas
+ * l'état local du bean TypeProduitCuService injecté par Spring. Or ce SERVICE UC
+ * mémorise le dernier message utilisateur retourné par getMessage().
+ *
+ * L'annotation est donc placée au niveau de la classe, après la déclaration
+ * du contexte autonome chargé par @ContextConfiguration : elle ne participe pas
+ * à la découverte des repositories et ne masque aucun conflit Spring, mais
+ * force uniquement un nouveau contexte de test après chaque méthode.
+ *
+ * Elle garantit ainsi qu'un test comme testGetMessageInitialNull() reçoit
+ * toujours un SERVICE UC neuf, avec un message initial null, que le test soit
+ * lancé seul, après un autre test, ou dans la suite complète.
+ */
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Tag(TypeProduitCuServiceIntegrationTest.TAG)
 public class TypeProduitCuServiceIntegrationTest {
 
 	// *************************** CONSTANTES ******************************/
@@ -248,41 +305,84 @@ public class TypeProduitCuServiceIntegrationTest {
     
 	/**
 	 * <div>
-	 * <p>CONFIGURATION DE TEST (SPRING).</p>
-	 * <p>
-	 * Déclare explicitement :
+	 * <p style="font-weight:bold;">
+	 * Classe interne de configuration Spring du test d'intégration SERVICE UC.
 	 * </p>
+	 *
+	 * <p>
+	 * Cette classe rend le test autonome : elle fournit au bootstrap Spring
+	 * Boot une configuration locale explicite, au lieu de dépendre d'une
+	 * configuration applicative située ailleurs dans le projet.
+	 * </p>
+	 *
+	 * <p style="font-weight:bold;">Pourquoi cette configuration est nécessaire :</p>
 	 * <ul>
-	 * <li>scan applicatif limité (CU + Gateway TypeProduit + Persistance TypeProduit),
-	 * en excluant les classes de tests,</li>
-	 * <li>scan des entités JPA,</li>
-	 * <li>activation des repositories Spring Data JPA (TypeProduit) une seule fois.</li>
+	 * <li>{@link DataJpaTest} conserve un contexte Spring réduit, centré sur
+	 * JPA, les repositories, les transactions, le stockage de test,
+	 * {@link JdbcTemplate} et l'infrastructure JPA ;</li>
+	 * <li>dans ce projet, {@link DataJpaTest} ne trouve pas tout seul une
+	 * classe racine {@link SpringBootConfiguration} en remontant les packages
+	 * depuis ce test ;</li>
+	 * <li>{@link ContextConfiguration} charge donc explicitement cette classe
+	 * interne locale ;</li>
+	 * <li>{@link SpringBootConfiguration} fournit le point d'entrée attendu
+	 * par Spring Boot ;</li>
+	 * <li>{@link AutoConfigurationPackage} indique explicitement à
+	 * l'auto-configuration Spring Boot les packages nécessaires au test :
+	 * le package du DAO {@link TypeProduitDaoJPA} et le package de l'entity
+	 * {@link TypeProduitJPA} ;</li>
+	 * <li>{@link Import} ajoute explicitement au contexte le SERVICE UC testé
+	 * {@link TypeProduitCuService} et son Gateway JPA
+	 * {@link TypeProduitGatewayJPAService} ;</li>
+	 * <li>le test ne déclare pas {@code @EnableJpaRepositories} :
+	 * les repositories restent pris en charge par le slice
+	 * {@link DataJpaTest} ;</li>
+	 * <li>le test ne déclare pas {@code @EntityScan} :
+	 * le package de l'entity JPA est fourni par
+	 * {@link AutoConfigurationPackage} avec {@link TypeProduitJPA}.</li>
 	 * </ul>
+	 *
+	 * <p style="font-weight:bold;">Ce que cette configuration ne fait pas :</p>
+	 * <ul>
+	 * <li>elle ne déclare pas {@code @SpringBootTest} ;</li>
+	 * <li>elle ne déclare pas {@code @ComponentScan} ;</li>
+	 * <li>elle ne déclare pas {@code @EnableJpaRepositories} ;</li>
+	 * <li>elle ne déclare pas {@code @EntityScan} ;</li>
+	 * <li>elle ne force aucun scan manuel des repositories ;</li>
+	 * <li>elle ne charge aucun Controller ;</li>
+	 * <li>elle n'active pas
+	 * {@code spring.main.allow-bean-definition-overriding=true}.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Le SERVICE UC testé, le Gateway JPA, le repository et l'entity JPA
+	 * utiles sont découverts ou importés dans le périmètre explicite déclaré
+	 * pour ce test. Le test reste donc un test d'intégration SERVICE UC,
+	 * autonome, et limité au stockage JPA nécessaire.
+	 * </p>
 	 * </div>
 	 *
 	 * @author Daniel Lévy
+	 * @version 1.0
+	 * @since 21 janvier 2026
 	 */
-	@Configuration
-	@EnableAutoConfiguration
-	@EntityScan(basePackages = {
-			"levy.daniel.application.persistence.metier.produittype"
+	@SpringBootConfiguration(proxyBeanMethods = false)
+	@AutoConfigurationPackage(basePackageClasses = {
+			TypeProduitDaoJPA.class,
+			TypeProduitJPA.class
 	})
-	@EnableJpaRepositories(basePackages = {
-			"levy.daniel.application.persistence.metier.produittype.dao.daosJPA"
-	})
-	@ComponentScan(
-			basePackages = {
-					"levy.daniel.application.model.services.produittype",
-					"levy.daniel.application.persistence.metier.produittype"
-			},
-			excludeFilters = {
-					@Filter(type = FilterType.REGEX, pattern = ".*IntegrationTest.*"),
-					@Filter(type = FilterType.REGEX, pattern = ".*MockTest.*")
-			}
-	)
-	public static class ConfigTest { // NOPMD by danyl on 21/01/2026 13:00
-		/* configuration de test. */
-	}
+	public static final class ConfigTest { // NOPMD by danyl on 21/01/2026 13:00
+
+		/**
+		 * <div>
+		 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
+		 * </div>
+		 */
+		public ConfigTest() {
+			super();
+		}
+
+	} // FIN DE LA CLASSE INTERNE ConfigTest.------------------------------
 
     
     

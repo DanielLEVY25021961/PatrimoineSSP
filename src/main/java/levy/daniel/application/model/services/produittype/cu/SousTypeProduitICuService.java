@@ -437,7 +437,8 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Stocke un {@link SousTypeProduitDTO.InputDTO},
+	 * Reçoit un {@link SousTypeProduitDTO.InputDTO},
+	 * le transforme en objet métier à stocker,
 	 * puis retourne l'objet métier stocké sous forme de
 	 * {@link SousTypeProduitDTO.OutputDTO}.
 	 * </p>
