@@ -899,3 +899,149 @@ Ce recontrôle porte sur :
 ### 24.11 Cycle bloc par bloc
 
 Si tout est OK, l'Utilisateur passe au bloc suivant et le cycle reprend : audit du bloc, rapport sans code, correction éventuelle de l'analyse, `coder` si demandé, intégration STS, retour utilisateur, relecture du fichier joint, consolidation, recontrôle automatique.
+
+## 25) RT-FORMALISME-UC-INTEGRATION-CREER-01 — Règles locales issues de `TypeProduitCuServiceIntegrationTest.creer(...)`
+
+### 25.1 Objet
+
+Cette section relaie localement, pour la couche `couche_services.uc`, les règles validées pendant la correction du bloc `creer(...)` de `TypeProduitCuServiceIntegrationTest.java`.
+
+Elle complète les règles générales du `CONTRAT_IA.md` et s'applique aux tests UC d'intégration comparables.
+
+### 25.2 Livraison STS en trois blocs
+
+Pour un bloc de tests UC corrigé ou créé, l'IA doit livrer séparément :
+
+1. la constante `TAG_...` du bloc de tests ;
+2. les constantes `DN_...` ou `DISPLAY_NAME_...` du bloc, selon le formalisme local ;
+3. le bloc complet des méthodes de test.
+
+Ces trois éléments ne vont pas au même endroit dans STS.
+
+La livraison ne doit pas mélanger la constante de tag, les constantes de display name et le code des tests.
+
+### 25.3 Tags et display names
+
+Lorsqu'un test de référence utilise des constantes, l'IA doit reproduire ce formalisme :
+
+```java
+@Tag(TAG_CREER)
+@DisplayName(DN_CREER_NULL)
+@Test
+```
+
+Les `@DisplayName("...")` inline sont interdits dans un bloc qui utilise déjà des constantes `DN_...` ou `DISPLAY_NAME_...`.
+
+L'IA ne doit pas changer seule la qualité de livraison en revenant à des chaînes en dur.
+
+### 25.4 Commentaires internes des tests
+
+Les commentaires internes doivent rester simples, factuels et proches du code exécuté.
+
+Ils doivent nommer clairement :
+
+- l'appel testé ;
+- l'exception ou le retour attendu ;
+- le message contractuel attendu ;
+- la preuve réalisée dans le stockage.
+
+Formulation validée :
+
+```java
+/* ACT - ASSERT :
+ * Garantit que this.service.creer(libellé blank)
+ * - jette une ExceptionParametreBlank
+ * - avec un message MESSAGE_CREER_LIBELLE_BLANK_KO.
+ */
+```
+
+L'IA ne doit pas compliquer les commentaires avec des formulations abstraites ou décoratives.
+
+### 25.5 Javadocs des constantes de test
+
+Pour une constante simple, la Javadoc doit d'abord permettre au développeur de voir la valeur littérale dans STS.
+
+Forme attendue :
+
+```java
+/**
+ * "Outil".
+ */
+public static final String OUTIL = "Outil";
+```
+
+Forme à éviter si elle n'apporte rien :
+
+```java
+/**
+ * TypeProduit IT : "IT-TP-PAGE-03".
+ */
+```
+
+La mention `TypeProduit IT :` n'est pas utile si elle ne précise ni un scénario, ni une contrainte, ni un usage.
+
+### 25.6 Valeurs seedées et non seedées dans les tests de création
+
+Dans un test d'intégration UC de création, il faut distinguer :
+
+- une valeur déjà seedée dans le stockage ;
+- une valeur créée par le test.
+
+Pour tester le scénario `créer puis recréer le même libellé afin de provoquer un doublon`, la première création doit utiliser un libellé non seedé.
+
+Exemple validé :
+
+```java
+public static final String OUTIL = "Outil";
+public static final String VETEMENT = "Vêtement";
+public static final String NON_SEEDE = "Eléctronique";
+```
+
+`NON_SEEDE` est utilisé pour installer le doublon par le test lui-même.
+
+Une valeur déjà présente comme `Vêtement` ne doit pas être utilisée pour la première création d'un scénario `créer puis recréer`, car le premier `service.creer(...)` échouerait déjà en `ExceptionDoublon`.
+
+### 25.7 Configuration autonome des tests d'intégration UC
+
+Le modèle validé pour un test d'intégration UC avec stockage JPA/H2 est :
+
+- `@DataJpaTest` ;
+- `@Import` explicite du SERVICE UC testé et des Gateways utiles ;
+- `@ContextConfiguration` avec configuration locale ;
+- `@SpringBootConfiguration(proxyBeanMethods = false)` ;
+- `@AutoConfigurationPackage(basePackageClasses = ...)` ;
+- pas de `@SpringBootTest` si le slice suffit ;
+- pas de `@ComponentScan` large ;
+- pas de `@EnableJpaRepositories` manuel ;
+- pas de `@EntityScan` manuel.
+
+Si le SERVICE UC porte un état local observable par `getMessage()`, la classe de test doit conserver un `@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)` commenté, afin de recréer un SERVICE UC neuf entre les tests.
+
+### 25.8 Preuve SQL après suppression JPA
+
+Lorsqu'un test d'intégration UC supprime un objet via JPA puis prouve la suppression par `JdbcTemplate`, il doit synchroniser le contexte JPA avant la lecture directe du stockage.
+
+Règle validée :
+
+```java
+this.service.delete(input);
+this.entityManager.flush();
+```
+
+Le `flush()` se place après l'appel au SERVICE UC et avant les preuves SQL directes.
+
+### 25.9 Homogénéité des méthodes UC `creer(...)`
+
+Pour les PORTS et ADAPTERS UC `TypeProduit`, `SousTypeProduit` et `Produit`, l'IA doit recopier ligne à ligne tout ce qui peut l'être.
+
+Elle ne doit modifier que ce que l'objet métier impose réellement :
+
+- types DTO, objet métier et Gateway ;
+- libellé métier ;
+- parent pour `SousTypeProduit` et `Produit` ;
+- recherche du parent ;
+- parent absent ;
+- parent non persistant.
+
+Les constantes `MESSAGE_CREER_xxx` et `PREFIX_MESSAGE_CREER_xxx` se déduisent des branches réelles de `creer(...)` et ne doivent pas être inventées.
+

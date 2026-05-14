@@ -730,6 +730,7 @@ fenetres:
       - RT-FORMALISME-TESTS-UC-01
       - RT-CODAGE-TEST-MOCKITO-UC-01
       - RT-CODAGE-TEST-INTEGRATION-UC-01
+      - RT-FORMALISME-UC-INTEGRATION-CREER-01
     reference_gateway:
       package: "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl"
       total_tests: 539

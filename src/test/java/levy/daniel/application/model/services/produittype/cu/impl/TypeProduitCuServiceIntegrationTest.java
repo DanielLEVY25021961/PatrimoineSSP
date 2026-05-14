@@ -23,6 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 
+import jakarta.persistence.EntityManager;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO.OutputDTO;
@@ -117,6 +118,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 })
 @ContextConfiguration(classes = TypeProduitCuServiceIntegrationTest.ConfigTest.class)
 /*
+ * @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
  * Recrée le contexte Spring après chaque méthode de test.
  *
  * @Sql réinitialise le stockage avant chaque test, mais ne réinitialise pas
@@ -139,24 +141,29 @@ public class TypeProduitCuServiceIntegrationTest {
 	// *************************** CONSTANTES ******************************/
 
 	/**
-	 * Tag JUnit : "cu-it".
+	 * "cu-it".
 	 */
 	public static final String TAG = "cu-it";
 
 	/**
-	 * Chaîne blank : "   ".
+	 * "   ".
 	 */
 	public static final String ESPACES = "   ";
 
 	/**
-	 * TypeProduit IT : "IT-TP-ALPHA".
+	 * "Outil"
 	 */
-	public static final String IT_ALPHA = "IT-TP-ALPHA";
+	public static final String OUTIL = "Outil";
 
 	/**
-	 * TypeProduit IT : "IT-TP-BETA".
+	 * "Vêtement"
 	 */
-	public static final String IT_BETA = "IT-TP-BETA";
+	public static final String VETEMENT = "Vêtement";
+	
+	/**
+	 * "Eléctronique"
+	 */
+	public static final String NON_SEEDE = "Eléctronique";
 
 	/**
 	 * TypeProduit IT : "IT-TP-GAMMA".
@@ -262,7 +269,35 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * TypeProduit IT : "IT-TP-COUNT-02".
 	 */
 	public static final String IT_COUNT_02 = "IT-TP-COUNT-02";
+
+	/**
+	 * "cu-it-Creer"
+	 */
+	public static final String TAG_CREER = "cu-it-Creer";
 	
+	/**
+	 * "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé"
+	 */
+	public static final String DN_CREER_NULL
+		= "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé";
+	
+	/**
+	 * "creer(blank) : ExceptionParametreBlank + message exact + stockage inchangé"
+	 */
+	public static final String DN_CREER_BLANK
+		= "creer(blank) : ExceptionParametreBlank + message exact + stockage inchangé";
+	
+	/**
+	 * "creer(doublon) : ExceptionDoublon + message exact + preuve stockage d'unicité"
+	 */
+	public static final String DN_CREER_DOUBLON
+		= "creer(doublon) : ExceptionDoublon + message exact + preuve stockage d'unicité";
+	
+	/**
+	 * "creer(ok) : preuve stockage + message exact + round-trip findByLibelle/findById"
+	 */
+	public static final String DN_CREER_OK
+		= "creer(ok) : preuve stockage + message exact + round-trip findByLibelle/findById";
 	/**
 	 * "SELECT COUNT(*) FROM TYPES_PRODUIT"
 	 */
@@ -283,6 +318,26 @@ public class TypeProduitCuServiceIntegrationTest {
 	 */
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
+	
+	/**
+	 * <div>
+	 * <p>EntityManager JPA du contexte de test.</p>
+	 * <p>
+	 * Dans un test {@link DataJpaTest}, chaque méthode s'exécute dans une
+	 * transaction de test. Une suppression JPA peut rester en attente dans
+	 * le contexte de persistance tant qu'un {@code flush()} n'a pas été
+	 * demandé explicitement.
+	 * </p>
+	 * <p>
+	 * Ce test utilise {@link JdbcTemplate} comme preuve indépendante dans le
+	 * stockage. Avant une preuve JDBC portant sur une suppression, le test
+	 * force donc la synchronisation JPA afin que la lecture SQL directe voie
+	 * l'état réellement demandé au stockage par le SERVICE UC.
+	 * </p>
+	 * </div>
+	 */
+	@Autowired
+	private EntityManager entityManager;
 
     
     
@@ -396,26 +451,68 @@ public class TypeProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>creer(null) : erreur utilisateur bénigne.</p>
+	 * <p>garantit que creer(null) :</p>
 	 * <ul>
 	 * <li>retourne {@code null}</li>
-	 * <li>positionne
+	 * <li>émet un message
 	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL_KO}</li>
-	 * <li>ne lève aucune exception</li>
+	 * <li>ne jette aucune exception</li>
+	 * <li>n'écrit rien dans le stockage réel</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DN_CREER_NULL)
 	@Test
-	@DisplayName("creer(null) : retourne null, message utilisateur, aucune exception")
 	public void testCreerNull() throws Exception {
+		
+		/* ARRANGE :
+		 * compte d'abord (en SQL)
+		 * le nombre d'enregistrements dans le stockage
+		 * avant l'appel au SERVICE UC,
+		 * afin de pouvoir prouver ensuite
+		 * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
+		assertThat(countAvant).isNotNull();
+		
+		/* ACT :
+		 * appelle service.creer(null) :
+		 * - le SERVICE UC retourne null ;
+		 * - positionne le message utilisateur MESSAGE_CREER_NULL_KO
+		 * (message contractuel) ;
+		 * - ne jette aucune exception.
+		 */
 		final OutputDTO dto = this.service.creer(null);
 
+		/* ASSERT :
+		 * garantit que service.creer(null) retourne null.
+		 */
 		assertThat(dto).isNull();
+		
+		/* Garantit que service.creer(null) émet un message 
+		 * MESSAGE_CREER_NULL_KO. */
 		assertThat(this.service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL_KO);
+
+		/* ASSERT :
+		 * compte ensuite (en SQL)
+		 * le nombre d'enregistrements dans le stockage
+		 * après service.creer(null)
+		 * afin de prouver que l'appel au SERVICE UC
+		 * n'a produit aucune écriture dans le stockage.
+		 */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 		
 	} // __________________________________________________________________
 	
@@ -423,201 +520,296 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>creer(blank) : violation de contrat applicatif.</p>
+	 * <p>garantit que creer(...) avec un libellé blank :</p>
 	 * <ul>
-	 * <li>lève {@link ExceptionParametreBlank}</li>
-	 * <li>positionne exactement
+	 * <li>jette une {@link ExceptionParametreBlank}</li>
+	 * <li>émet un message
 	 * {@link TypeProduitICuService#MESSAGE_CREER_LIBELLE_BLANK_KO}</li>
-	 * </ul>
-	 * </div>
-	 */
-	@Test
-	@DisplayName("creer(blank) : positionne message exact + lève ExceptionParametreBlank")
-	public void testCreerBlank() {
-
-		final InputDTO input = new TypeProduitDTO.InputDTO(ESPACES);
-
-		assertThatThrownBy(() -> this.service.creer(input))
-				.isInstanceOf(ExceptionParametreBlank.class);
-
-		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>creer(ok) : test béton avec preuve BD.</p>
-	 * <ul>
-	 * <li>retourne un {@link OutputDTO} persistant</li>
-	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_CREER_OK}</li>
-	 * <li>augmente le comptage de 1</li>
-	 * <li>prouve physiquement l'écriture en base via SQL direct</li>
-	 * <li>reste retrouvable par libellé puis par ID</li>
+	 * <li>n'écrit rien dans le stockage réel</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DN_CREER_BLANK)
 	@Test
-	@DisplayName("creer(ok) : preuve BD + message exact + round-trip findByLibelle/findById")
-	public void testCreerOkAvecPreuveBdEtRoundTrip() throws Exception {
+	public void testCreerBlank() throws Exception {
+		
+		/* ARRANGE :
+		 * compte d'abord (en SQL)
+		 * le nombre d'enregistrements dans le stockage
+		 * avant l'appel au SERVICE UC,
+		 * afin de pouvoir prouver ensuite
+		 * qu'aucune écriture réelle n'a eu lieu dans le stockage.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
-		final long baseline = this.service.count();
-		final InputDTO input = new TypeProduitDTO.InputDTO(IT_ALPHA);
+		assertThat(countAvant).isNotNull();
 
+		/* prépare un InputDTO
+		 * dont le libellé métier est blank. */
+		final InputDTO input = new TypeProduitDTO.InputDTO(ESPACES);
+		
+		/* ACT - ASSERT :
+		 * Garantit que this.service.creer(libellé blank)
+		 * - jette une ExceptionParametreBlank
+		 * - avec un message MESSAGE_CREER_LIBELLE_BLANK_KO.
+		 */
+		assertThatThrownBy(() -> this.service.creer(input))
+				.isInstanceOf(ExceptionParametreBlank.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
+		
+		/* Garantit le message utilisateur MESSAGE_CREER_LIBELLE_BLANK_KO
+		 * (message contractuel attendu).
+		 */
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
+
+		/* ASSERT :
+		 * compte ensuite (en SQL)
+		 * le nombre d'enregistrements dans le stockage
+		 * après l'échec contractuel
+		 * afin de prouver que l'appel au SERVICE UC
+		 * n'a produit aucune écriture dans le stockage.
+		 */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
+		
+	} // __________________________________________________________________
+	
+	
+
+	/**
+	 * <div>
+	 * <p>garantit que si l'appelant tente creer(...)
+	 * avec un libellé déjà présent dans le stockage :</p>
+	 * <ul>
+	 * <li>la première création réussit réellement ;</li>
+	 * <li>la seconde création lève une {@link ExceptionDoublon} ;</li>
+	 * <li>le message utilisateur exact est
+	 * {@link TypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé ;</li>
+	 * <li>aucune nouvelle ligne n'est créée dans le stockage
+	 * lors de la tentative de doublon ;</li>
+	 * <li>l'unique ligne créée portant déjà ce libellé
+	 * reste inchangée.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DN_CREER_DOUBLON)
+	@Test
+	public void testCreerDoublonAvecPreuveStockage() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide non seedé.
+		 *
+		 * Le premier appel à creer(...) créera réellement l'objet métier.
+		 * Le second appel avec le même DTO déclenchera ensuite
+		 * le cas contractuel de doublon.
+		 */
+		final InputDTO input = new TypeProduitDTO.InputDTO(NON_SEEDE);
+
+		/* Vérifie d'abord que le libellé du test
+		 * n'est pas déjà présent dans le stockage.
+		 */
+		assertThat(this.compterTypeProduitParLibelleEnBase(NON_SEEDE))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT :
+		 * crée une première fois l'objet métier.
+		 */
 		final OutputDTO cree = this.service.creer(input);
 
+		/* ASSERT :
+		 * garantit que la première création réussit
+		 * et retourne un DTO persistant.
+		 */
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdTypeProduit()).isNotNull();
-		assertThat(cree.getTypeProduit()).isEqualTo(IT_ALPHA);
+		assertThat(cree.getTypeProduit()).isEqualTo(NON_SEEDE);
 
-		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_OK);
+		/* Garantit physiquement dans le stockage
+		 * qu'une seule ligne porte le libellé créé.
+		 */
+		assertThat(this.compterTypeProduitParLibelleEnBase(NON_SEEDE))
+				.isEqualTo(1L);
 
-		assertThat(this.service.count()).isEqualTo(baseline + 1L);
-
-		/* preuve BD : l'ID créé existe réellement en base. */
+		/* Garantit physiquement dans le stockage
+		 * que l'identifiant retourné correspond à une ligne réelle.
+		 */
 		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
 				.isEqualTo(1L);
 
-		/* preuve BD : la colonne TYPE_PRODUIT porte bien le libellé créé. */
-		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
-				.isEqualTo(IT_ALPHA);
+		final Long countApresPremiereCreation = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
-		/* round-trip complet côté CU. */
-		final OutputDTO trouveParLibelle = this.service.findByLibelle(IT_ALPHA);
+		assertThat(countApresPremiereCreation).isNotNull();
+		assertThat(countApresPremiereCreation).isEqualTo(countAvant + 1L);
+
+		/* ACT - ASSERT :
+		 * sollicite une deuxième fois la méthode creer(...)
+		 * avec le même libellé déjà présent.
+		 *
+		 * Le SERVICE UC doit refuser le doublon avant toute nouvelle
+		 * écriture dans le stockage.
+		 */
+		assertThatThrownBy(() -> this.service.creer(input))
+				.isInstanceOf(ExceptionDoublon.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO + NON_SEEDE);
+
+		/* Garantit le message utilisateur exact. */
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO + NON_SEEDE);
+
+		/* ASSERT :
+		 * contrôle ensuite par SQL direct
+		 * que le stockage contient toujours une seule ligne
+		 * pour ce libellé.
+		 */
+		assertThat(this.compterTypeProduitParLibelleEnBase(NON_SEEDE))
+				.isEqualTo(1L);
+
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(1L);
+
+		/* Garantit enfin que le volume total du stockage
+		 * n'a pas augmenté lors de la tentative de doublon.
+		 */
+		final Long countApresDoublon = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApresDoublon).isNotNull();
+		assertThat(countApresDoublon).isEqualTo(countApresPremiereCreation);
+		
+	} // __________________________________________________________________		
+	
+	
+
+	/**
+	 * <div>
+	 * <p>garantit que creer(OK) :</p>
+	 * <ul>
+	 * <li>crée réellement une ligne dans le stockage ;</li>
+	 * <li>retourne un {@link OutputDTO} persistant ;</li>
+	 * <li>émet un message
+	 * {@link TypeProduitICuService#MESSAGE_CREER_OK}</li>
+	 * <li>rend la donnée retrouvable dans le stockage et via le SERVICE UC ;</li>
+	 * <li>ne supprime ni n'altère les données seedées.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DN_CREER_OK)
+	@Test
+	public void testCreerNominalAvecPreuveStockageEtRoundTrip() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide à créer
+		 * et mémorise le nombre de lignes avant création.
+		 */
+		final InputDTO input = new TypeProduitDTO.InputDTO(OUTIL);
+
+		/* Vérifie d'abord que le libellé du test
+		 * n'est pas déjà présent dans le stockage.
+		 */
+		assertThat(this.compterTypeProduitParLibelleEnBase(OUTIL))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT :
+		 * sollicite la méthode creer(...)
+		 * dans un scénario nominal complet de persistance réelle.
+		 */
+		final OutputDTO cree = this.service.creer(input);
+
+		/* ASSERT :
+		 * garantit d'abord que le DTO retourné
+		 * est bien persistant et correctement renseigné.
+		 */
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdTypeProduit()).isNotNull();
+		assertThat(cree.getTypeProduit()).isEqualTo(OUTIL);
+
+		/* Garantit que le message de succès de création
+		 * est positionné avant tout autre appel au SERVICE UC.
+		 */
+		assertThat(this.service.getMessage())
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_OK);
+
+		/* Garantit que la création augmente bien le nombre total
+		 * de lignes dans le stockage réel.
+		 */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant + 1L);
+
+		/* Garantit physiquement dans le stockage
+		 * qu'une seule ligne porte bien l'identifiant créé.
+		 */
+		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(1L);
+
+		/* Garantit physiquement dans le stockage
+		 * que la colonne TYPE_PRODUIT a bien été écrite
+		 * avec le libellé métier attendu.
+		 */
+		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
+				.isEqualTo(OUTIL);
+
+		/* Garantit physiquement dans le stockage
+		 * qu'une seule ligne porte le libellé créé.
+		 */
+		assertThat(this.compterTypeProduitParLibelleEnBase(OUTIL))
+				.isEqualTo(1L);
+
+		/* Garantit que l'objet nouvellement créé
+		 * est bien retrouvable par libellé via le SERVICE UC.
+		 */
+		final OutputDTO trouveParLibelle = this.service.findByLibelle(OUTIL);
 
 		assertThat(trouveParLibelle).isNotNull();
 		assertThat(trouveParLibelle.getIdTypeProduit())
 				.isEqualTo(cree.getIdTypeProduit());
 		assertThat(trouveParLibelle.getTypeProduit())
-				.isEqualTo(IT_ALPHA);
+				.isEqualTo(OUTIL);
 
+		/* Garantit que l'objet nouvellement créé
+		 * est bien retrouvable par identifiant via le SERVICE UC.
+		 */
 		final OutputDTO trouveParId = this.service.findById(cree.getIdTypeProduit());
 
 		assertThat(trouveParId).isNotNull();
 		assertThat(trouveParId.getIdTypeProduit())
 				.isEqualTo(cree.getIdTypeProduit());
 		assertThat(trouveParId.getTypeProduit())
-				.isEqualTo(IT_ALPHA);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>creer(doublon) : test béton d'unicité observable et physique.</p>
-	 * <ul>
-	 * <li>la première création réussit</li>
-	 * <li>la seconde lève {@link ExceptionDoublon}</li>
-	 * <li>le message utilisateur exact est
-	 * {@link TypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé</li>
-	 * <li>la base reste physiquement avec une seule ligne pour ce libellé</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("creer(doublon) : ExceptionDoublon + message exact + preuve BD d'unicité")
-	public void testCreerDoublonAvecPreuveBd() throws Exception {
-
-		final InputDTO input = new TypeProduitDTO.InputDTO(IT_BETA);
-
-		final OutputDTO cree = this.service.creer(input);
-
-		assertThat(cree).isNotNull();
-		assertThat(cree.getIdTypeProduit()).isNotNull();
-		assertThat(cree.getTypeProduit()).isEqualTo(IT_BETA);
-
-		/* preuve BD après la première création. */
-		assertThat(this.compterTypeProduitParLibelleEnBase(IT_BETA))
-				.isEqualTo(1L);
-
-		assertThatThrownBy(() -> this.service.creer(input))
-				.isInstanceOf(ExceptionDoublon.class);
-
-		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO + IT_BETA);
-
-		/* preuve BD : aucun doublon physique n'a été créé. */
-		assertThat(this.compterTypeProduitParLibelleEnBase(IT_BETA))
-				.isEqualTo(1L);
-
-		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
-				.isEqualTo(1L);
-		
-	} // __________________________________________________________________		
-		
-	
-
-	/**
-	 * <div>
-	 * <p>creer(ok) puis findByLibelle(ok) puis findById(ok) : round-trip complet.</p>
-	 * <p>Test "béton" : garantit la persistance effective dans H2 in-memory.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("creer(ok) puis findByLibelle(ok) puis findById(ok) : round-trip complet")
-	public void testCreerOkFindByLibelleOkFindByIdOk() throws Exception {
-
-		final InputDTO input = new TypeProduitDTO.InputDTO(IT_ALPHA);
-
-		final OutputDTO cree = this.service.creer(input);
-
-		assertThat(cree).isNotNull();
-		assertThat(cree.getIdTypeProduit()).isNotNull();
-		assertThat(cree.getTypeProduit()).isEqualTo(IT_ALPHA);
-
-		final OutputDTO trouveParLibelle = this.service.findByLibelle(IT_ALPHA);
-
-		assertThat(trouveParLibelle).isNotNull();
-		assertThat(trouveParLibelle.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
-		assertThat(trouveParLibelle.getTypeProduit()).isEqualTo(IT_ALPHA);
-
-		final OutputDTO trouveParId = this.service.findById(cree.getIdTypeProduit());
-
-		assertThat(trouveParId).isNotNull();
-		assertThat(trouveParId.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
-		assertThat(trouveParId.getTypeProduit()).isEqualTo(IT_ALPHA);
-		
-	} // __________________________________________________________________
-	
-	
-
-	/**
-	 * <div>
-	 * <p>creer(doublon) : violation de contrat (unicité).</p>
-	 * <ul>
-	 * <li>lève {@link ExceptionDoublon}</li>
-	 * <li>positionne un message contenant {@link TypeProduitICuService#MESSAGE_CREER_DOUBLON_KO}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("creer(doublon) : positionne message + lève ExceptionDoublon")
-	public void testCreerDoublon() throws Exception {
-
-		final InputDTO input = new TypeProduitDTO.InputDTO(IT_BETA);
-
-		final OutputDTO cree = this.service.creer(input);
-
-		assertThat(cree).isNotNull();
-
-		assertThatThrownBy(() -> this.service.creer(input))
-				.isInstanceOf(ExceptionDoublon.class);
-
-		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO);
+				.isEqualTo(OUTIL);
 		
 	} // __________________________________________________________________
     
@@ -1918,6 +2110,25 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		this.service.delete(new TypeProduitDTO.InputDTO(libelle));
 
+		/*
+		 * Synchronise explicitement le contexte de persistance JPA
+		 * avant les preuves SQL directes.
+		 *
+		 * Avec @DataJpaTest, le test s'exécute dans une transaction Spring.
+		 * La suppression réalisée par le Gateway via le DAO JPA peut rester
+		 * en attente dans l'EntityManager jusqu'au flush.
+		 *
+		 * JdbcTemplate ne lit pas à travers l'EntityManager : il interroge
+		 * directement le stockage. Sans flush explicite, la preuve JDBC
+		 * peut donc relire l'état antérieur à la suppression et compter
+		 * encore la ligne supprimée.
+		 *
+		 * Le flush ne modifie pas le scénario métier testé : il rend seulement
+		 * observable dans le stockage la suppression déjà demandée par
+		 * service.delete(...), avant les assertions de preuve physique.
+		 */
+		this.entityManager.flush();
+
 		final Long nombreApresDelete = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_TYPES_PRODUIT,
 				Long.class);
@@ -1932,7 +2143,7 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(apresSuppression).isNull();
 
-	} // __________________________________________________________________	
+	} // __________________________________________________________________		
 
 	
 	

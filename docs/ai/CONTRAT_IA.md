@@ -5165,3 +5165,195 @@ Constantes DISPLAY_NAME cohérentes avec le comportement attendu : oui/non.
 
 Si une réponse est `non`, l'IA ne doit pas livrer le code.
 
+## 39) RT-FORMALISME-UC-INTEGRATION-CREER-01 — Règles issues de `TypeProduitCuServiceIntegrationTest.creer(...)`
+
+### 39.1 Origine de la règle
+
+Cette règle sacralise les corrections utilisateur validées pendant la reprise du bloc `creer(...)` de `TypeProduitCuServiceIntegrationTest.java` et l'harmonisation des PORTS / ADAPTERS UC `creer(...)`.
+
+L'erreur à empêcher est double :
+
+- changer de formalisme alors qu'une référence validée existe déjà ;
+- livrer un bloc de test incomplet pour STS en mélangeant constantes, tags, display names et méthodes.
+
+### 39.2 Référence de formalisme obligatoire
+
+Pour un bloc de tests comparable déjà validé, l'IA doit relire et reprendre le formalisme du test de référence du même niveau.
+
+Pour les tests d'intégration UC, les tests Gateway d'intégration validés peuvent servir de référence de formalisme lorsque leur structure est transposable :
+
+- constantes de tags dédiées par bloc ;
+- constantes de display name ou `DN_...` selon le formalisme local ;
+- annotations dans l'ordre validé ;
+- commentaires internes simples `ARRANGE`, `ACT`, `ACT - ASSERT`, `ASSERT` ;
+- preuve par lecture directe du stockage lorsque le scénario le justifie ;
+- noms de tests stables et proches du scénario ;
+- ordre des cas : erreurs locales, cas alternatifs, scénario nominal.
+
+L'IA ne doit pas introduire un nouveau format comme des séparateurs décoratifs lourds, de nouveaux noms de tests, de nouvelles formulations ou des `@DisplayName("...")` en dur si la référence utilise des constantes.
+
+### 39.3 Livraison STS obligatoire en blocs séparés
+
+Lorsqu'un bloc de tests est codé ou corrigé, l'IA doit livrer séparément les éléments selon leur emplacement réel dans STS.
+
+Ordre de livraison obligatoire :
+
+1. bloc dédié pour la constante de tag du bloc de tests, par exemple `TAG_CREER` ;
+2. bloc dédié pour les constantes de display name du bloc, par exemple `DN_CREER_NULL`, `DN_CREER_BLANK`, `DN_CREER_DOUBLON`, `DN_CREER_OK` ;
+3. bloc dédié pour les méthodes de test, à placer dans le corps de la classe.
+
+La raison est pratique : la constante `TAG_...` ne se place pas au même endroit que les constantes `DN_...`, et les méthodes de test se placent dans une autre zone de la classe.
+
+Interdictions :
+
+- ne pas noyer le tag dans le bloc des `DN_...` ;
+- ne pas mélanger les constantes et les méthodes dans une seule livraison ;
+- ne pas mettre de `@DisplayName` inline si la classe ou la référence utilise des constantes ;
+- ne pas créer une constante inutile lorsque le formalisme local ne l'exige pas ;
+- ne pas renommer un test validé sans demande explicite.
+
+### 39.4 Commentaires de tests : simplicité factuelle obligatoire
+
+Les commentaires de tests doivent rester simples, factuels et utiles.
+
+Ils doivent décrire directement :
+
+- la préparation du scénario ;
+- l'appel testé ;
+- l'exception attendue ou le retour attendu ;
+- le message contractuel attendu ;
+- la preuve de stockage réalisée.
+
+L'IA ne doit pas ajouter de formulation vague, interprétative ou ronflante.
+
+Formulation acceptée :
+
+```java
+/* ACT - ASSERT :
+ * Garantit que this.service.creer(libellé blank)
+ * - jette une ExceptionParametreBlank
+ * - avec un message MESSAGE_CREER_LIBELLE_BLANK_KO.
+ */
+```
+
+Formulation à éviter dans un commentaire d'exécution si elle n'apporte rien au code contrôlé :
+
+```text
+erreur utilisateur bénigne
+échec contractuel
+scénario exploitable
+résultat exploitable
+```
+
+Un commentaire doit nommer l'appel ou le fait contrôlé lorsque cela clarifie le test, par exemple `service.creer(null)`, `service.creer(input)` ou `MESSAGE_CREER_NULL_KO`.
+
+### 39.5 Javadocs des constantes de test
+
+La Javadoc d'une constante de test sert d'abord au développeur dans STS : au survol ou à l'autocomplétion, il doit voir immédiatement la valeur littérale de la constante.
+
+Pour une constante simple, utiliser une Javadoc qui affiche la valeur :
+
+```java
+/**
+ * "IT-TP-ALPHA".
+ */
+public static final String IT_ALPHA = "IT-TP-ALPHA";
+```
+
+Ne pas ajouter un préfixe vague ou décoratif si ce préfixe n'apporte aucune information concrète.
+
+Exemple à éviter :
+
+```java
+/**
+ * TypeProduit IT : "IT-TP-PAGE-03".
+ */
+public static final String IT_PAGE_03 = "IT-TP-PAGE-03";
+```
+
+`TypeProduit IT :` n'éclaire pas le développeur : la classe, le nom de constante et la valeur littérale suffisent déjà.
+
+### 39.6 Valeurs seedées et valeurs créées par le test
+
+Dans les tests d'intégration de création, l'IA doit distinguer strictement :
+
+- les valeurs déjà présentes dans le stockage seedé ;
+- les valeurs créées par le test.
+
+Pour un scénario `créer une première fois, puis recréer le même libellé pour provoquer un doublon`, le libellé utilisé pour la première création doit être absent du stockage initial.
+
+Exemple validé :
+
+- `OUTIL = "Outil"` peut servir au scénario nominal si cette valeur est absente du stockage seedé ;
+- `NON_SEEDE = "Eléctronique"` sert au scénario doublon construit par le test ;
+- `Vêtement` ne doit pas être utilisé pour installer un doublon par première création si `Vêtement` est déjà seedé.
+
+Si le scénario attendu est un doublon immédiat sur une valeur seedée, alors le test doit attendre l'exception dès le premier `service.creer(...)`.
+
+### 39.7 Configuration Spring autonome des tests d'intégration UC
+
+Tous les tests d'intégration DAO, Gateway, Services UC et Controllers doivent être autonomes et rejouables individuellement ou en suite complète.
+
+Pour un test d'intégration UC avec stockage JPA/H2, le modèle validé est :
+
+- `@DataJpaTest` ;
+- `@ContextConfiguration` avec une `ConfigTest` locale ;
+- `@SpringBootConfiguration(proxyBeanMethods = false)` ;
+- `@AutoConfigurationPackage(basePackageClasses = ...)` ;
+- `@Import` explicite du SERVICE UC testé et des Gateways nécessaires ;
+- pas de `@SpringBootTest` si un slice suffit ;
+- pas de `@ComponentScan` large ;
+- pas de `@EnableJpaRepositories` manuel ;
+- pas de `@EntityScan` manuel ;
+- pas de `spring.main.allow-bean-definition-overriding=true`.
+
+Lorsque le SERVICE UC mémorise un état local comme le message retourné par `getMessage()`, `@Sql` ne suffit pas : `@Sql` réinitialise le stockage, mais pas l'état du bean Spring.
+
+Dans ce cas, conserver et commenter :
+
+```java
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+```
+
+La justification doit rester précise : recréer un SERVICE UC neuf entre les tests pour que l'état initial de `getMessage()` soit réellement contrôlable.
+
+### 39.8 Preuves JDBC après suppression JPA sous `@DataJpaTest`
+
+Sous `@DataJpaTest`, chaque méthode s'exécute dans une transaction de test.
+
+Après une suppression JPA, une lecture directe par `JdbcTemplate` peut ne pas voir immédiatement la suppression si le contexte de persistance n'a pas été synchronisé.
+
+Avant une preuve JDBC portant sur une suppression, le test doit injecter `EntityManager` et appeler :
+
+```java
+this.entityManager.flush();
+```
+
+juste après `service.delete(...)` et avant les lectures SQL directes.
+
+Le `flush()` ne change pas le scénario métier : il rend observable dans le stockage la suppression déjà demandée au SERVICE UC.
+
+### 39.9 Homogénéité des PORTS et ADAPTERS UC `creer(...)`
+
+Pour les PORTS et ADAPTERS UC comparables `TypeProduit`, `SousTypeProduit` et `Produit`, l'IA doit recopier à l'identique tout ce qui peut l'être.
+
+Les seules différences autorisées sont celles imposées par l'objet métier :
+
+- types DTO, objet métier et Gateway ;
+- libellé textuel de l'objet métier ;
+- présence du parent pour `SousTypeProduit` et `Produit` ;
+- recherche du parent ;
+- parent absent ;
+- parent non persistant.
+
+Toute autre divergence doit être justifiée par une contrainte métier ou contractuelle relue.
+
+### 39.10 Constantes `MESSAGE_CREER_xxx` et `PREFIX_MESSAGE_CREER_xxx`
+
+Les constantes `MESSAGE_CREER_xxx` et `PREFIX_MESSAGE_CREER_xxx` doivent être déduites mécaniquement des branches observables de la méthode `creer(...)`.
+
+- `MESSAGE_CREER_xxx` correspond à un message complet pour une issue déterministe déjà entièrement connue par le SERVICE UC.
+- `PREFIX_MESSAGE_CREER_xxx` correspond à un contexte UC fixe utilisé lorsqu'une dépendance peut jeter une exception, puis complété par le message sécurisé de cette exception.
+
+L'IA ne doit pas inventer, renommer ou déplacer ces constantes sans lien direct avec une branche relue du code.
+

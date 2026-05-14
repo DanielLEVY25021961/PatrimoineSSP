@@ -124,12 +124,6 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     /** "servicesGateway-Count" */
     public static final String TAG_COUNT = "servicesGateway-Count";
 
-    /** 
-     * "rechercherTous() - retourne la liste seedée (triée, sans doublons)" 
-     */
-    public static final String DN_RECHERCHER_TOUS 
-    	= "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
-
     /**
      * "creer(OK) - ajoute un élément, le rend retrouvable et conserve (ne wipe pas) les données seedées"
      */
@@ -149,6 +143,12 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     	= "creer(blank) - jette ExceptionAppliLibelleBlank (contrat du port)";
 
     /** 
+	 * "rechercherTous() - retourne la liste seedée (triée, sans doublons)" 
+	 */
+	public static final String DN_RECHERCHER_TOUS 
+		= "rechercherTous() - retourne la liste seedée (triée, sans doublons)";
+
+	/** 
      * "findByObjetMetier(null) - jette ExceptionAppliParamNull (contrat du port)"
      */
     public static final String DN_FINDBYOBJETMETIER_NULL 
