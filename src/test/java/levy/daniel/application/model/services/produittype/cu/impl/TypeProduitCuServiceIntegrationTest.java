@@ -300,7 +300,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>retourne {@code null}</li>
 	 * <li>positionne
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL_KO}</li>
 	 * <li>ne lève aucune exception</li>
 	 * </ul>
 	 * </div>
@@ -315,7 +315,7 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL_KO);
 		
 	} // __________________________________________________________________
 	
@@ -327,7 +327,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NOM_BLANK}</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_LIBELLE_BLANK_KO}</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -341,7 +341,7 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isInstanceOf(ExceptionParametreBlank.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 		
 	} // __________________________________________________________________
 	
@@ -416,7 +416,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <li>la première création réussit</li>
 	 * <li>la seconde lève {@link ExceptionDoublon}</li>
 	 * <li>le message utilisateur exact est
-	 * {@link TypeProduitICuService#MESSAGE_DOUBLON} + libellé</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé</li>
 	 * <li>la base reste physiquement avec une seule ligne pour ce libellé</li>
 	 * </ul>
 	 * </div>
@@ -443,7 +443,7 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isInstanceOf(ExceptionDoublon.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_DOUBLON + IT_BETA);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO + IT_BETA);
 
 		/* preuve BD : aucun doublon physique n'a été créé. */
 		assertThat(this.compterTypeProduitParLibelleEnBase(IT_BETA))
@@ -497,7 +497,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <p>creer(doublon) : violation de contrat (unicité).</p>
 	 * <ul>
 	 * <li>lève {@link ExceptionDoublon}</li>
-	 * <li>positionne un message contenant {@link TypeProduitICuService#MESSAGE_DOUBLON}</li>
+	 * <li>positionne un message contenant {@link TypeProduitICuService#MESSAGE_CREER_DOUBLON_KO}</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -517,7 +517,7 @@ public class TypeProduitCuServiceIntegrationTest {
 				.isInstanceOf(ExceptionDoublon.class);
 
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_DOUBLON);
+				.contains(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO);
 		
 	} // __________________________________________________________________
     
@@ -2013,14 +2013,14 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>après {@code creer(null)},
 	 * retourne exactement
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL_KO}</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL")
+	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL_KO")
 	public void testGetMessageApresErreurLocale() throws Exception {
 
 		this.service.creer(null);
@@ -2028,7 +2028,7 @@ public class TypeProduitCuServiceIntegrationTest {
 		final String message = this.service.getMessage();
 
 		assertThat(message)
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 	} // __________________________________________________________________
 
@@ -2042,7 +2042,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>après une erreur locale,
 	 * le message vaut d'abord
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL_KO}</li>
 	 * <li>après un {@code count()} réel,
 	 * le message courant devient le message observable
 	 * du comptage réel</li>
@@ -2062,7 +2062,7 @@ public class TypeProduitCuServiceIntegrationTest {
 		final String messageFinal = this.service.getMessage();
 
 		assertThat(messageErreur)
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		if (retour == 0L) {
 			assertThat(messageFinal)

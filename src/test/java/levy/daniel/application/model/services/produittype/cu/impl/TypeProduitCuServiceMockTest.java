@@ -192,18 +192,18 @@ public class TypeProduitCuServiceMockTest {
 	public static final String MESSAGE_GATEWAY_BIS = "message gateway (bis)";
 	
 	/**
-	 * "creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway"
+	 * "creer(null) : MESSAGE_CREER_NULL_KO + aucune interaction Gateway"
 	 */
 	public static final String DISPLAY_NAME_CREER_NULL
-			= "creer(null) : MESSAGE_CREER_NULL "
+			= "creer(null) : MESSAGE_CREER_NULL_KO "
 					+ "+ aucune interaction Gateway";
 	
 	/**
-	 * "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK"
+	 * "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_LIBELLE_BLANK_KO"
 	 */
 	public static final String DISPLAY_NAME_CREER_BLANK
 			= "creer(blank) : ExceptionParametreBlank "
-					+ "+ MESSAGE_CREER_NOM_BLANK";
+					+ "+ MESSAGE_CREER_LIBELLE_BLANK_KO";
 	
 	/**
 	 * "creer(doublon) : ExceptionDoublon + aucune création Gateway"
@@ -246,11 +246,11 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * "creer(gateway.creer retourne null) :
-	 * MESSAGE_CREATION_TECHNIQUE_KO_CREER"
+	 * MESSAGE_CREER_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_CREER_GATEWAY_CREER_RETOUR_NULL
 			= "creer(gateway.creer retourne null) : "
-					+ "MESSAGE_CREATION_TECHNIQUE_KO_CREER";
+					+ "MESSAGE_CREER_GATEWAY_KO";
 	
 	/**
 	 * "creer(conversion OutputDTO KO avec message) :
@@ -966,11 +966,11 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * "getMessage(après erreur locale) :
-	 * MESSAGE_CREER_NULL"
+	 * MESSAGE_CREER_NULL_KO"
 	 */
 	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE
 			= "getMessage(après erreur locale) : "
-					+ "MESSAGE_CREER_NULL";
+					+ "MESSAGE_CREER_NULL_KO";
 	
 	/**
 	 * "getMessage(après count 0) :
@@ -1024,7 +1024,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne le message utilisateur
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL} ;</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL_KO} ;</li>
 	 * <li>n'interagit jamais avec le Gateway.</li>
 	 * </ul>
 	 * </div>
@@ -1058,7 +1058,7 @@ public class TypeProduitCuServiceMockTest {
 		 * - ne sollicite jamais le Gateway.
 		 */
 		assertThat(retour).isNull();
-		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+		assertThat(message).isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		verifyNoInteractions(gateway);
 		
@@ -1072,7 +1072,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>jette une {@link ExceptionParametreBlank} ;</li>
 	 * <li>émet le message
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NOM_BLANK} ;</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_LIBELLE_BLANK_KO} ;</li>
 	 * <li>n'interagit jamais avec le Gateway.</li>
 	 * </ul>
 	 * <p>
@@ -1108,15 +1108,15 @@ public class TypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une ExceptionParametreBlank ;
-		 * - émet le message MESSAGE_CREER_NOM_BLANK
+		 * - émet le message MESSAGE_CREER_LIBELLE_BLANK_KO
 		 *   contractuel du PORT UC.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(ExceptionParametreBlank.class)
-				.hasMessage(TypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.hasMessage(TypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 
 		/* Garantit que le Gateway mocké n'a pas été appelé. */
 		verifyNoInteractions(gateway);
@@ -1135,7 +1135,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>jette une {@link ExceptionDoublon} si le Gateway retourne
 	 * un objet métier existant ;</li>
 	 * <li>émet le message
-	 * {@link TypeProduitICuService#MESSAGE_DOUBLON} + libellé ;</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé ;</li>
 	 * <li>ne délègue jamais la création au Gateway.</li>
 	 * </ul>
 	 * </div>
@@ -1173,14 +1173,14 @@ public class TypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une ExceptionDoublon ;
-		 * - émet le message MESSAGE_DOUBLON + libellé.
+		 * - émet le message MESSAGE_CREER_DOUBLON_KO + libellé.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(ExceptionDoublon.class)
-				.hasMessage(TypeProduitICuService.MESSAGE_DOUBLON + VETEMENT);
+				.hasMessage(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO + VETEMENT);
 
 		assertThat(service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_DOUBLON + VETEMENT);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_DOUBLON_KO + VETEMENT);
 
 		/* Garantit que le contrôle d'unicité a été exécuté
 		 * et que la création n'a jamais été déléguée au Gateway.
@@ -1203,7 +1203,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique levée par
 	 * {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER}
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREER_DOUBLON_KO}
 	 * + message technique ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
@@ -1248,11 +1248,11 @@ public class TypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé 
-		 * PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER + LECTURE_TECHNIQUE_KO.
+		 * PREFIX_MESSAGE_CREER_DOUBLON_KO + LECTURE_TECHNIQUE_KO.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+						TypeProduitICuService.PREFIX_MESSAGE_CREER_DOUBLON_KO
 						+ LECTURE_TECHNIQUE_KO);
 
 		/* Garantit que la création n'est jamais tentée
@@ -1276,7 +1276,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par
 	 * {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER}
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREER_DOUBLON_KO}
 	 * + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
@@ -1323,7 +1323,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+						TypeProduitICuService.PREFIX_MESSAGE_CREER_DOUBLON_KO
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit que la création n'est jamais tentée
@@ -1347,7 +1347,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique levée par
 	 * {@code gateway.creer(...)} ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER}
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREER_GATEWAY_KO}
 	 * + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -1398,11 +1398,11 @@ public class TypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé 
-		 * PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER + MESSAGE_GATEWAY.
+		 * PREFIX_MESSAGE_CREER_GATEWAY_KO + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+						TypeProduitICuService.PREFIX_MESSAGE_CREER_GATEWAY_KO
 						+ MESSAGE_GATEWAY);
 
 		/* Garantit l'ordre fonctionnel du scénario :
@@ -1426,7 +1426,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par
 	 * {@code gateway.creer(...)} ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER}
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREER_GATEWAY_KO}
 	 * + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -1479,7 +1479,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+						TypeProduitICuService.PREFIX_MESSAGE_CREER_GATEWAY_KO
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit l'ordre fonctionnel du scénario :
@@ -1502,7 +1502,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>jette une {@link IllegalStateException} lorsque le Gateway
 	 * retourne {@code null} ;</li>
 	 * <li>positionne le message
-	 * {@link TypeProduitICuService#MESSAGE_CREATION_TECHNIQUE_KO_CREER} ;</li>
+	 * {@link TypeProduitICuService#MESSAGE_CREER_GATEWAY_KO} ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
 	 * </div>
@@ -1543,10 +1543,10 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(TypeProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+				.hasMessage(TypeProduitICuService.MESSAGE_CREER_GATEWAY_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_GATEWAY_KO);
 
 		/* Garantit que le Gateway a bien été sollicité
 		 * jusqu'à la création, puis que l'anomalie null est traitée côté UC.
@@ -1569,7 +1569,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@link OutputDTO} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER}
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREER_CONVERSION_KO}
 	 * + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -1622,7 +1622,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+						TypeProduitICuService.PREFIX_MESSAGE_CREER_CONVERSION_KO
 						+ MESSAGE_GATEWAY_BIS);
 
 		/* Garantit que le scénario a atteint la création Gateway
@@ -1646,7 +1646,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@link OutputDTO} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER}
+	 * {@link TypeProduitICuService#PREFIX_MESSAGE_CREER_CONVERSION_KO}
 	 * + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -1698,7 +1698,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+						TypeProduitICuService.PREFIX_MESSAGE_CREER_CONVERSION_KO
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit que le scénario a atteint la création Gateway
@@ -1813,6 +1813,124 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
+	 * <p>garantit que rechercherTous(gateway KO avec message) :</p>
+	 * <ul>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * + tiret + message technique.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_AVEC_MESSAGE)
+	@Test
+	public void testRechercherTousGatewayKOAvecMessage() throws Exception {
+	
+		/* ARRANGE :
+		 * Mocke un service Gateway et le passe
+		 * à un service UC instancié dans le test.
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
+	
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+	
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique avec message au moment
+		 * de l'appel gateway.rechercherTous().
+		 */
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+	
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.rechercherTous())
+				.isSameAs(panneTechnique);
+	
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé
+		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+	
+		/* Garantit que la panne intervient bien sur la recherche Gateway. */
+		verify(gateway, times(1)).rechercherTous();
+		
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTous(gateway KO sans message) :</p>
+	 * <ul>
+	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
+	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_SANS_MESSAGE)
+	@Test
+	public void testRechercherTousGatewayKOSansMessage() throws Exception {
+	
+		/* ARRANGE :
+		 * Mocke un service Gateway et le passe
+		 * à un service UC instancié dans le test.
+		 */
+		final TypeProduitGatewayIService gateway 
+			= mock(TypeProduitGatewayIService.class);
+		final TypeProduitCuService service 
+			= new TypeProduitCuService(gateway);
+	
+		final IllegalStateException panneTechnique = new IllegalStateException();
+	
+		/*
+		 * Configuration du Mock :
+		 * simule une panne technique sans message au moment
+		 * de l'appel gateway.rechercherTous().
+		 */
+		when(gateway.rechercherTous()).thenThrow(panneTechnique);
+	
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.rechercherTous())
+				.isSameAs(panneTechnique);
+	
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						+ TypeProduitICuService.TIRET_ESPACE
+						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+	
+		/* Garantit que la panne intervient bien sur la recherche Gateway. */
+		verify(gateway, times(1)).rechercherTous();
+		
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
 	 * <p>garantit que rechercherTous(gateway retourne null) :</p>
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
@@ -1853,130 +1971,12 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isInstanceOf(ExceptionStockageVide.class)
-				.hasMessage(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.hasMessage(TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		/* Garantit que le Gateway a bien été sollicité une seule fois. */
-		verify(gateway, times(1)).rechercherTous();
-		
-	} // __________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>garantit que rechercherTous(gateway KO avec message) :</p>
-	 * <ul>
-	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
-	 * <li>propage l'exception technique levée par le Gateway ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + message technique.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_RECHERCHER_TOUS)
-	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_AVEC_MESSAGE)
-	@Test
-	public void testRechercherTousGatewayKOAvecMessage() throws Exception {
-
-		/* ARRANGE :
-		 * Mocke un service Gateway et le passe
-		 * à un service UC instancié dans le test.
-		 */
-		final TypeProduitGatewayIService gateway 
-			= mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service 
-			= new TypeProduitCuService(gateway);
-
-		final IllegalStateException panneTechnique
-				= new IllegalStateException(MESSAGE_GATEWAY);
-
-		/*
-		 * Configuration du Mock :
-		 * simule une panne technique avec message au moment
-		 * de l'appel gateway.rechercherTous().
-		 */
-		when(gateway.rechercherTous()).thenThrow(panneTechnique);
-
-		/* ACT - ASSERT */
-		/* Garantit que l'exception technique d'origine est propagée. */
-		assertThatThrownBy(() -> service.rechercherTous())
-				.isSameAs(panneTechnique);
-
-		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
-		 */
-		assertThat(service.getMessage())
-				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ TypeProduitICuService.TIRET_ESPACE
-						+ MESSAGE_GATEWAY);
-
-		/* Garantit que la panne intervient bien sur la recherche Gateway. */
-		verify(gateway, times(1)).rechercherTous();
-		
-	} // __________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>garantit que rechercherTous(gateway KO sans message) :</p>
-	 * <ul>
-	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
-	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
-	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
-	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_RECHERCHER_TOUS)
-	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_SANS_MESSAGE)
-	@Test
-	public void testRechercherTousGatewayKOSansMessage() throws Exception {
-
-		/* ARRANGE :
-		 * Mocke un service Gateway et le passe
-		 * à un service UC instancié dans le test.
-		 */
-		final TypeProduitGatewayIService gateway 
-			= mock(TypeProduitGatewayIService.class);
-		final TypeProduitCuService service 
-			= new TypeProduitCuService(gateway);
-
-		final IllegalStateException panneTechnique = new IllegalStateException();
-
-		/*
-		 * Configuration du Mock :
-		 * simule une panne technique sans message au moment
-		 * de l'appel gateway.rechercherTous().
-		 */
-		when(gateway.rechercherTous()).thenThrow(panneTechnique);
-
-		/* ACT - ASSERT */
-		/* Garantit que l'exception technique d'origine est propagée. */
-		assertThatThrownBy(() -> service.rechercherTous())
-				.isSameAs(panneTechnique);
-
-		/* Garantit que le SERVICE METIER UC ne produit jamais
-		 * un message utilisateur null.
-		 */
-		assertThat(service.getMessage())
-				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
-						+ TypeProduitICuService.TIRET_ESPACE
-						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
-
-		/* Garantit que la panne intervient bien sur la recherche Gateway. */
 		verify(gateway, times(1)).rechercherTous();
 		
 	} // __________________________________________________________________
@@ -1993,7 +1993,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -2048,7 +2048,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -2071,7 +2071,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -2125,7 +2125,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -2342,7 +2342,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -2380,11 +2380,11 @@ public class TypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY_BIS.
+		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + MESSAGE_GATEWAY_BIS.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -2402,7 +2402,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -2442,7 +2442,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -2463,7 +2463,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code TypeProduit.getTypeProduit()} ;</li>
 	 * <li>propage l'exception levée pendant cette extraction ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -2518,7 +2518,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -2541,7 +2541,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code TypeProduit.getTypeProduit()} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette extraction ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -2595,7 +2595,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -2866,7 +2866,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.rechercherTousParPage(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -2911,11 +2911,11 @@ public class TypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -2934,7 +2934,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.rechercherTousParPage(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -2981,7 +2981,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -3065,7 +3065,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -3124,7 +3124,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -3149,7 +3149,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -3207,7 +3207,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -3589,7 +3589,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -3637,7 +3637,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -3655,7 +3655,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -3702,7 +3702,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -3723,7 +3723,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -3773,7 +3773,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -3796,7 +3796,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -3845,7 +3845,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4075,7 +4075,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -4123,7 +4123,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -4143,7 +4143,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -4190,7 +4190,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4277,7 +4277,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -4333,7 +4333,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -4359,7 +4359,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -4414,7 +4414,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4826,7 +4826,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -4875,7 +4875,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -4894,7 +4894,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -4942,7 +4942,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4964,7 +4964,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -5015,7 +5015,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -5039,7 +5039,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -5089,7 +5089,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -5295,7 +5295,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findById(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -5343,7 +5343,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -5361,7 +5361,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findById(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -5408,7 +5408,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -5429,7 +5429,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -5479,7 +5479,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -5502,7 +5502,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -5551,7 +5551,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -5818,7 +5818,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée pendant la recherche ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente jamais {@code gateway.update(...)}.</li>
 	 * </ul>
@@ -5867,11 +5867,11 @@ public class TypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + LECTURE_TECHNIQUE_KO.
+		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + LECTURE_TECHNIQUE_KO.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -5892,7 +5892,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée pendant la recherche ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente jamais {@code gateway.update(...)}.</li>
 	 * </ul>
@@ -5944,7 +5944,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -7010,7 +7010,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée pendant la recherche ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente jamais {@code gateway.delete(...)}.</li>
 	 * </ul>
@@ -7059,11 +7059,11 @@ public class TypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + LECTURE_TECHNIQUE_KO.
+		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + LECTURE_TECHNIQUE_KO.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -7084,7 +7084,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée pendant la recherche ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente jamais {@code gateway.delete(...)}.</li>
 	 * </ul>
@@ -7136,7 +7136,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -7544,7 +7544,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.count()} ;</li>
 	 * <li>propage l'exception technique levée pendant le comptage ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'expose aucun comptage au controller appelant.</li>
 	 * </ul>
@@ -7577,7 +7577,7 @@ public class TypeProduitCuServiceMockTest {
 		 * Configuration du Mock :
 		 * gateway.count() jette une exception avec message.
 		 * Le SERVICE METIER UC doit propager l'exception d'origine
-		 * et produire KO_TECHNIQUE_RECHERCHE + détail technique.
+		 * et produire MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + détail technique.
 		 */
 		when(gateway.count()).thenThrow(panneTechnique);
 
@@ -7591,7 +7591,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -7610,7 +7610,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée
 	 * pendant le comptage ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'expose aucun comptage au controller appelant.</li>
 	 * </ul>
@@ -7658,7 +7658,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -7677,7 +7677,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>détecte qu'un comptage strictement négatif est incohérent ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne un message technique explicite avec
-	 * {@link TypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + valeur incohérente ;</li>
 	 * <li>n'expose jamais cette valeur incohérente
 	 * au controller appelant.</li>
@@ -7699,7 +7699,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		final long comptageIncoherent = -1L;
 		final String messageTechnique
-				= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+				= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ "comptage négatif incohérent : "
 				+ comptageIncoherent;
@@ -7937,7 +7937,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>lit le message positionné par une opération UC précédente ;</li>
 	 * <li>retourne exactement
-	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL}
+	 * {@link TypeProduitICuService#MESSAGE_CREER_NULL_KO}
 	 * après {@code creer(null)} ;</li>
 	 * <li>ne recalcule pas le message ;</li>
 	 * <li>n'interagit jamais avec le Gateway.</li>
@@ -7973,7 +7973,7 @@ public class TypeProduitCuServiceMockTest {
 		 * par creer(null), sans recalcul ni transformation.
 		 */
 		assertThat(message)
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		/* Garantit que creer(null) puis getMessage() restent locaux
 		 * et ne sollicitent jamais le Gateway.
@@ -8184,7 +8184,7 @@ public class TypeProduitCuServiceMockTest {
 		 * le message local produit par creer(null).
 		 */
 		assertThat(messageErreur)
-				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(TypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		/* Garantit que la seconde opération retourne son comptage
 		 * et remplace le message observable par MESSAGE_RECHERCHE_OK.

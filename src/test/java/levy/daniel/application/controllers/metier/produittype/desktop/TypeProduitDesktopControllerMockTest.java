@@ -320,7 +320,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -452,7 +452,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -694,7 +694,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -912,7 +912,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -1142,7 +1142,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -1359,7 +1359,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -1533,7 +1533,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -1748,7 +1748,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 
@@ -2086,7 +2086,7 @@ public class TypeProduitDesktopControllerMockTest {
 		final IllegalStateException panneTechnique
 			= new IllegalStateException(TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 		final String messageService
-			= TypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+			= TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 				+ TypeProduitICuService.TIRET_ESPACE
 				+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE;
 

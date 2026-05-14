@@ -205,9 +205,9 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_CREER_BLANK
 			= "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK";
 
-	/** "creer(parent blank) : MESSAGE_PAS_PARENT + aucune interaction Gateway". */
+	/** "creer(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune interaction Gateway". */
 	public static final String DISPLAY_NAME_CREER_PARENT_BLANK
-			= "creer(parent blank) : MESSAGE_PAS_PARENT + aucune interaction Gateway";
+			= "creer(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune interaction Gateway";
 
 	/** "creer(contrôle technique KO avec message) : exception propagée + message rationalisé". */
 	public static final String DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_AVEC_MESSAGE
@@ -229,13 +229,13 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_SANS_MESSAGE
 			= "creer(parent technique KO sans message) : exception propagée + message rationalisé";
 
-	/** "creer(parent absent) : MESSAGE_PAS_PARENT + aucune création Gateway". */
+	/** "creer(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway". */
 	public static final String DISPLAY_NAME_CREER_PARENT_ABSENT
-			= "creer(parent absent) : MESSAGE_PAS_PARENT + aucune création Gateway";
+			= "creer(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway";
 
-	/** "creer(parent non persistant) : MESSAGE_PAS_PARENT + aucune création Gateway". */
+	/** "creer(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway". */
 	public static final String DISPLAY_NAME_CREER_PARENT_NON_PERSISTANT
-			= "creer(parent non persistant) : MESSAGE_PAS_PARENT + aucune création Gateway";
+			= "creer(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway";
 
 	/** "creer(création technique KO avec message) : exception propagée + message rationalisé". */
 	public static final String DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_AVEC_MESSAGE
@@ -425,13 +425,13 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL
 			= "findByLibelleRapide(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK";
 
-	/** "findAllByParent(null) : RECHERCHE_SOUSTYPEPRODUIT_NULL". */
+	/** "findAllByParent(null) : RECHERCHE_PARENT_NULL". */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL
-			= "findAllByParent(null) : RECHERCHE_SOUSTYPEPRODUIT_NULL";
+			= "findAllByParent(null) : RECHERCHE_PARENT_NULL";
 
-	/** "findAllByParent(parent blank) : MESSAGE_PAS_PARENT". */
+	/** "findAllByParent(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK
-			= "findAllByParent(parent blank) : MESSAGE_PAS_PARENT";
+			= "findAllByParent(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
 	/** "findAllByParent(recherche parent KO avec message) : exception propagée". */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KOAVEC_MESSAGE
@@ -441,13 +441,13 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KOSANS_MESSAGE
 			= "findAllByParent(recherche parent KO sans message) : exception propagée";
 
-	/** "findAllByParent(parent absent) : MESSAGE_PAS_PARENT". */
+	/** "findAllByParent(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_ABSENT
-			= "findAllByParent(parent absent) : MESSAGE_PAS_PARENT";
+			= "findAllByParent(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
-	/** "findAllByParent(parent non persistant) : MESSAGE_PAS_PARENT". */
+	/** "findAllByParent(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_NON_PERSISTANT
-			= "findAllByParent(parent non persistant) : MESSAGE_PAS_PARENT";
+			= "findAllByParent(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
 	/** "findAllByParent(recherche enfants KO avec message) : exception propagée". */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_ENFANTS_GATEWAY_KOAVEC_MESSAGE
@@ -481,9 +481,9 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_DTONULL
 			= "findByDTO(null) : MESSAGE_RECHERCHE_OBJ_NULL";
 
-	/** "findByDTO(parent blank) : MESSAGE_PAS_PARENT". */
+	/** "findByDTO(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_FIND_BY_DTOPARENT_BLANK
-			= "findByDTO(parent blank) : MESSAGE_PAS_PARENT";
+			= "findByDTO(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
 	/** "findByDTO(recherche parent KO avec message) : exception propagée". */
 	public static final String DISPLAY_NAME_FIND_BY_DTOERREUR_TECHNIQUE_RECHERCHE_PARENT_AVEC_MESSAGE
@@ -577,9 +577,9 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_UPDATE_BLANK
 			= "update(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
 
-	/** "update(parent blank) : MESSAGE_PAS_PARENT". */
+	/** "update(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_UPDATE_PARENT_BLANK
-			= "update(parent blank) : MESSAGE_PAS_PARENT";
+			= "update(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
 	/** "update(recherche parent KO avec message) : exception propagée". */
 	public static final String DISPLAY_NAME_UPDATE_RECHERCHE_PARENT_TECHNIQUE_KO_AVEC_MESSAGE
@@ -589,13 +589,13 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_UPDATE_RECHERCHE_PARENT_TECHNIQUE_KO_SANS_MESSAGE
 			= "update(recherche parent KO sans message) : exception propagée";
 
-	/** "update(parent absent) : MESSAGE_PAS_PARENT". */
+	/** "update(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_UPDATE_PARENT_ABSENT
-			= "update(parent absent) : MESSAGE_PAS_PARENT";
+			= "update(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
-	/** "update(parent non persistant) : MESSAGE_PAS_PARENT". */
+	/** "update(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_UPDATE_PARENT_NON_PERSISTANT
-			= "update(parent non persistant) : MESSAGE_PAS_PARENT";
+			= "update(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
 	/** "update(recherche enfants KO avec message) : exception propagée". */
 	public static final String DISPLAY_NAME_UPDATE_RECHERCHE_ENFANTS_TECHNIQUE_KO_AVEC_MESSAGE
@@ -657,9 +657,9 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_DELETE_BLANK
 			= "delete(blank) : ExceptionParametreBlank + MESSAGE_PARAM_BLANK";
 
-	/** "delete(parent blank) : MESSAGE_PAS_PARENT". */
+	/** "delete(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_DELETE_PARENT_BLANK
-			= "delete(parent blank) : MESSAGE_PAS_PARENT";
+			= "delete(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
 	/** "delete(recherche parent KO avec message) : exception propagée". */
 	public static final String DISPLAY_NAME_DELETE_RECHERCHE_PARENT_TECHNIQUE_KO_AVEC_MESSAGE
@@ -669,13 +669,13 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_DELETE_RECHERCHE_PARENT_TECHNIQUE_KO_SANS_MESSAGE
 			= "delete(recherche parent KO sans message) : exception propagée";
 
-	/** "delete(parent absent) : MESSAGE_PAS_PARENT". */
+	/** "delete(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_DELETE_PARENT_ABSENT
-			= "delete(parent absent) : MESSAGE_PAS_PARENT";
+			= "delete(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
-	/** "delete(parent non persistant) : MESSAGE_PAS_PARENT". */
+	/** "delete(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO". */
 	public static final String DISPLAY_NAME_DELETE_PARENT_NON_PERSISTANT
-			= "delete(parent non persistant) : MESSAGE_PAS_PARENT";
+			= "delete(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
 	/** "delete(recherche enfants KO avec message) : exception propagée". */
 	public static final String DISPLAY_NAME_DELETE_RECHERCHE_ENFANTS_TECHNIQUE_KO_AVEC_MESSAGE
@@ -890,7 +890,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>contrôle localement le libellé du parent ;</li>
 	 * <li>jette une {@link IllegalStateException} ;</li>
 	 * <li>émet le message
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway objet métier
 	 * ni avec le Gateway parent.</li>
 	 * </ul>
@@ -925,7 +925,7 @@ public class ProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une IllegalStateException ;
-		 * - émet le message MESSAGE_PAS_PARENT.
+		 * - émet le message MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
@@ -1336,7 +1336,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>jette une {@link IllegalStateException} si le parent
 	 * est absent du stockage ;</li>
 	 * <li>émet le message
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
 	 * </div>
@@ -1377,7 +1377,7 @@ public class ProduitCuServiceMockTest {
 
 		/* ACT - ASSERT */
 		/* Garantit que l'absence de parent est refusée
-		 * avec le message utilisateur MESSAGE_PAS_PARENT.
+		 * avec le message utilisateur MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
@@ -1406,7 +1406,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>jette une {@link IllegalStateException} si le parent retrouvé
 	 * ne porte pas d'identifiant persistant ;</li>
 	 * <li>émet le message
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
 	 * </div>
@@ -4447,7 +4447,7 @@ public class ProduitCuServiceMockTest {
 				.containsExactly(100L, 200L);
 
 		assertThat(message)
-				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(ProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
 		/* Garantit que la recherche exacte a bien été déléguée
 		 * et que le Gateway parent reste inutilisé.
@@ -4963,7 +4963,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findAllByParent(null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « RECHERCHE_SOUSTYPEPRODUIT_NULL » ;</li>
+	 * <li>exécute le scénario « RECHERCHE_PARENT_NULL » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -4996,9 +4996,9 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(null))
 				.isInstanceOf(RuntimeException.class)
-				.hasMessage(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
+				.hasMessage(ProduitICuService.RECHERCHE_PARENT_NULL);
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
+				.isEqualTo(ProduitICuService.RECHERCHE_PARENT_NULL);
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
@@ -5010,7 +5010,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findAllByParent(parent blank) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -5166,7 +5166,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findAllByParent(parent absent) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -5221,7 +5221,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findAllByParent(parent non persistant) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -5741,7 +5741,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByDTO(parent blank) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -7052,7 +7052,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que update(parent blank) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -7210,7 +7210,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que update(parent absent) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -7264,7 +7264,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que update(parent non persistant) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -8186,7 +8186,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que delete(parent blank) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -8344,7 +8344,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que delete(parent absent) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link
@@ -8399,7 +8399,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que delete(parent non persistant) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PAS_PARENT » ;</li>
+	 * <li>exécute le scénario « MESSAGE_CREER_PARENT_NON_PERSISTANT_KO » ;</li>
 	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
 	 * UC ;</li>
 	 * <li>contrôle le message utilisateur exposé par {@link

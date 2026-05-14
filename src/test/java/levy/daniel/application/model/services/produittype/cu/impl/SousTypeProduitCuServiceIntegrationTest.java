@@ -312,7 +312,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>retourne {@code null}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
@@ -320,7 +320,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("creer(null) : retourne null + message exact MESSAGE_CREER_NULL + aucune écriture BD")
+	@DisplayName("creer(null) : retourne null + message exact MESSAGE_CREER_NULL_KO + aucune écriture BD")
 	public void testCreerNull() throws Exception {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -335,7 +335,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -348,7 +348,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link ExceptionParametreBlank}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NOM_BLANK}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_LIBELLE_BLANK_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
@@ -371,7 +371,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -384,13 +384,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("creer(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("creer(parent blank) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testCreerParentBlank() {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -407,7 +407,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -420,13 +420,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("creer(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("creer(parent absent) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testCreerPasParent() {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -443,7 +443,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -537,7 +537,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <li>la première création réussit</li>
 	 * <li>la seconde lève {@link ExceptionDoublon}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_DOUBLON} + libellé</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé</li>
 	 * <li>la base reste physiquement avec une seule ligne
 	 * pour le couple parent/sous-type</li>
 	 * </ul>
@@ -571,7 +571,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isInstanceOf(ExceptionDoublon.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_DOUBLON + IT_STP_BETA);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_DOUBLON_KO + IT_STP_BETA);
 
 		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_A, IT_STP_BETA))
 				.isEqualTo(1L);
@@ -1151,7 +1151,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 						creeB.getIdSousTypeProduit());
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
 		assertThat(this.compterSousTypeProduitEnBase(creeA.getIdSousTypeProduit()))
 				.isEqualTo(1L);
@@ -1362,7 +1362,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <p>findAllByParent(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#RECHERCHE_TYPEPRODUIT_NULL}</li>
+	 * <li>positionne {@link SousTypeProduitICuService#RECHERCHE_PARENT_NULL}</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -1372,10 +1372,10 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThatThrownBy(() -> this.service.findAllByParent(null))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+				.hasMessage(SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+				.isEqualTo(SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
 
 	} // __________________________________________________________________
 	
@@ -1386,22 +1386,22 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <p>findAllByParent(parent blank) : parent non exploitable.</p>
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("findAllByParent(parent blank) : positionne MESSAGE_PAS_PARENT + lève IllegalStateException")
+	@DisplayName("findAllByParent(parent blank) : positionne MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + lève IllegalStateException")
 	public void testFindAllByParentParentBlank() {
 
 		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(ESPACES);
 
 		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 	} // __________________________________________________________________
 	
@@ -1412,12 +1412,12 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <p>findAllByParent(parent absent) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("findAllByParent(parent absent) : positionne MESSAGE_PAS_PARENT + lève IllegalStateException")
+	@DisplayName("findAllByParent(parent absent) : positionne MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + lève IllegalStateException")
 	public void testFindAllByParentPasParent() {
 
 		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(IT_TP_PARENT_B);
@@ -1425,10 +1425,10 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		/* Parent non créé. */
 		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		
 	} // __________________________________________________________________
 	
@@ -1595,13 +1595,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>Lève {@link IllegalStateException}.</li>
 	 * <li>Positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}.</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}.</li>
 	 * <li>N'écrit rien en base.</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("findByDTO(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("findByDTO(parent blank) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testFindByDTOParentBlank() {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -1620,7 +1620,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -2025,13 +2025,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testUpdateParentBlank() {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -2050,7 +2050,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -2063,7 +2063,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
@@ -2071,7 +2071,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testUpdateParentAbsent() throws Exception {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -2090,7 +2090,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -2361,13 +2361,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("delete(parent blank) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testDeleteParentBlank() {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -2386,7 +2386,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -2399,7 +2399,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
@@ -2407,7 +2407,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("delete(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("delete(parent absent) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testDeleteParentAbsent() throws Exception {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -2426,7 +2426,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				Long.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(nombreApres).isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
@@ -2773,21 +2773,21 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>après {@code creer(null)},
 	 * retourne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL_KO}</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL")
+	@DisplayName("getMessage(après erreur locale) : retourne MESSAGE_CREER_NULL_KO")
 	public void testGetMessageApresErreurLocale() throws Exception {
 
 		this.service.creer(null);
 		final String message = this.service.getMessage();
 
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 	} // __________________________________________________________________
 	
@@ -2801,7 +2801,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>après une erreur locale,
 	 * le message vaut d'abord
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL_KO}</li>
 	 * <li>après un {@code count()} réel,
 	 * le message courant devient
 	 * le message observable du comptage réel</li>
@@ -2821,7 +2821,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		final String messageFinal = this.service.getMessage();
 
 		assertThat(messageErreur)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		if (retour == 0L) {
 			assertThat(messageFinal)

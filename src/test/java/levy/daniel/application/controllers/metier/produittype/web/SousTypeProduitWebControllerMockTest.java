@@ -276,17 +276,17 @@ public class SousTypeProduitWebControllerMockTest {
 		final InputDTO dto = new SousTypeProduitDTO.InputDTO(BAZAR, OUTILLAGE);
 
 		final IllegalStateException parentAbsent
-			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		when(service.creer(dto)).thenThrow(parentAbsent);
-		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> controller.creer(dto))
 				.isSameAs(parentAbsent);
 
 		assertThat(controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(service, times(1)).creer(dto);
 		verify(service, times(1)).getMessage();
@@ -1500,17 +1500,17 @@ public class SousTypeProduitWebControllerMockTest {
 		final TypeProduitDTO.InputDTO parentDto
 			= new TypeProduitDTO.InputDTO("type-produit-absent");
 		final IllegalStateException panneTechnique
-			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		when(service.findAllByParent(parentDto)).thenThrow(panneTechnique);
-		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> controller.findAllByParent(parentDto))
 				.isSameAs(panneTechnique);
 
 		assertThat(controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(service, times(1)).findAllByParent(parentDto);
 		verify(service, times(1)).getMessage();
@@ -1583,17 +1583,17 @@ public class SousTypeProduitWebControllerMockTest {
 			= new SousTypeProduitWebController(service);
 		final InputDTO inputDTO = new SousTypeProduitDTO.InputDTO(ESPACES, OUTILLAGE);
 		final IllegalStateException panneTechnique
-			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		when(service.findByDTO(inputDTO)).thenThrow(panneTechnique);
-		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> controller.findByDTO(inputDTO))
 				.isSameAs(panneTechnique);
 
 		assertThat(controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(service, times(1)).findByDTO(inputDTO);
 		verify(service, times(1)).getMessage();
@@ -2145,17 +2145,17 @@ public class SousTypeProduitWebControllerMockTest {
 		final InputDTO inputDTO
 			= new SousTypeProduitDTO.InputDTO("type-produit-parent-absent", OUTILLAGE);
 		final IllegalStateException exception
-			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		when(service.update(inputDTO)).thenThrow(exception);
-		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> controller.update(inputDTO))
 				.isSameAs(exception);
 
 		assertThat(controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(service, times(1)).update(inputDTO);
 		verify(service, times(1)).getMessage();
@@ -2432,17 +2432,17 @@ public class SousTypeProduitWebControllerMockTest {
 		final InputDTO inputDTO
 			= new SousTypeProduitDTO.InputDTO("type-produit-parent-absent", OUTILLAGE);
 		final IllegalStateException exception
-			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+			= new IllegalStateException(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		doThrow(exception).when(service).delete(inputDTO);
-		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> controller.delete(inputDTO))
 				.isSameAs(exception);
 
 		assertThat(controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(service, times(1)).delete(inputDTO);
 		verify(service, times(1)).getMessage();

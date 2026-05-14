@@ -515,6 +515,7 @@ public class TypeProduitGatewayJPAServiceIntegrationTest {
     @EnableJpaRepositories(basePackageClasses = TypeProduitDaoJPA.class)
     @EntityScan(basePackageClasses = TypeProduitJPA.class)
     public static final class ConfigTest { // NOPMD by danyl on 24/01/2026 00:00
+    	/* configuration de test. */
     }
 
     

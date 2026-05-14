@@ -1,5 +1,5 @@
 /* ********************************************************************* */
-/* ********************* PORT SERVICE CU ******************************* */
+/* *************** PORT SERVICE METIER USE CASE (CU) ******************* */
 /* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.cu;
 
@@ -7,6 +7,12 @@ import java.util.List;
 
 import levy.daniel.application.model.dto.produittype.TypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.TypeProduit;
+import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionTechniqueGateway;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionNonPersistant;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreNull;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionStockageVide;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
@@ -47,7 +53,8 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  */
 public interface TypeProduitICuService {
 
-	//* ------------------------ATTRIBUTS -------------------------------*//
+	//* ---------------------- CONSTANTES ----------------------------- *//
+	
 	/**
 	 * <div>
 	 * <p>" - "</p>
@@ -55,73 +62,88 @@ public interface TypeProduitICuService {
 	 */
 	String TIRET_ESPACE = " - ";
 
-	// * ---------------- CREER ---------------------- *//
+
+	//* ----------------- CONSTANTES DE MESSAGES ---------------------- *//
+
+	/* --------------------------- Creer ------------------------------- */
+	
 	/**
 	 * <div>
-	 * <p>"vous ne pouvez pas sauvegarder un Type de Produit null."</p>
+	 * <p>"KO - vous ne pouvez pas sauvegarder un Type de Produit null."</p>
 	 * </div>
 	 */
-	String MESSAGE_CREER_NULL 
-		= "vous ne pouvez pas sauvegarder un Type de Produit null.";
+	String MESSAGE_CREER_NULL_KO 
+		= "KO - vous ne pouvez pas sauvegarder un Type de Produit null.";
 
 	/**
 	 * <div>
-	 * <p>"vous ne pouvez pas sauvegarder un Type de Produit 
+	 * <p>"KO - vous ne pouvez pas sauvegarder un Type de Produit 
 	 * dont le libellé est blank (null ou que des espaces)."</p>
 	 * </div>
 	 */
-	String MESSAGE_CREER_NOM_BLANK 
-		= "vous ne pouvez pas sauvegarder un Type de Produit "
+	String MESSAGE_CREER_LIBELLE_BLANK_KO 
+		= "KO - vous ne pouvez pas sauvegarder un Type de Produit "
 			+ "dont le libellé est blank (null ou que des espaces).";
 	
 	/**
 	 * <div>
-	 * <p>"Impossible de vérifier l'unicité 
+	 * <p>"KO - Impossible de vérifier l'unicité 
 	 * du Type de Produit dans le stockage : "</p>
 	 * </div>
 	 */
-	String PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER =
-			"Impossible de vérifier l'unicité "
+	String PREFIX_MESSAGE_CREER_DOUBLON_KO =
+			"KO - Impossible de vérifier l'unicité "
 			+ "du Type de Produit dans le stockage : ";
 	
 	/**
 	 * <div>
-	 * <p>"Impossible de créer le Type de Produit dans le stockage : "</p>
+	 * <p>"KO - Vous ne pouvez pas sauvegarder un Type de Produit 
+	 * déjà existant dans le stockage : "</p>
 	 * </div>
 	 */
-	String PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER =
-			"Impossible de créer le Type de Produit dans le stockage : ";
+	String MESSAGE_CREER_DOUBLON_KO 
+		= "KO - Vous ne pouvez pas sauvegarder un Type de Produit "
+			+ "déjà existant dans le stockage : ";
+
+
+	/**
+	 * <div>
+	 * <p>"KO - Impossible de créer le Type de Produit dans le stockage : "</p>
+	 * </div>
+	 */
+	String PREFIX_MESSAGE_CREER_GATEWAY_KO =
+			"KO - Impossible de créer le Type de Produit dans le stockage : ";
 	
 	/**
 	 * <div>
-	 * <p>"Impossible de créer le Type de Produit - 
+	 * <p>"KO - Impossible de créer le Type de Produit - 
 	 * le stockage n'a retourné aucun objet créé."</p>
 	 * </div>
 	 */
-	String MESSAGE_CREATION_TECHNIQUE_KO_CREER =
-			"Impossible de créer le Type de Produit - "
+	String MESSAGE_CREER_GATEWAY_KO =
+			"KO - Impossible de créer le Type de Produit - "
 					+ "le stockage n'a retourné aucun objet créé.";
 	
 	/**
 	 * <div>
-	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * <p>"KO - Impossible de créer l'OutputDTO 
 	 * après la création du Type de Produit : "</p>
 	 * </div>
 	 */
-	String PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER =
-			"Impossible de préparer la réponse utilisateur "
+	String PREFIX_MESSAGE_CREER_CONVERSION_KO =
+			"KO - Impossible de créer l'OutputDTO "
 					+ "après la création du Type de Produit : ";
 	
 	/**
 	 * <div>
-	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * <p>"KO - OutputDTO null via la conversion  
 	 * après la création du Type de Produit."</p>
 	 * </div>
 	 */
-	String MESSAGE_CONVERSION_TECHNIQUE_KO_CREER =
-			"Impossible de préparer la réponse utilisateur "
+	String MESSAGE_CREER_CONVERSION_KO =
+			"KO - OutputDTO null via la conversion "
 					+ "après la création du Type de Produit.";
-	
+
 	/**
 	 * <div>
 	 * <p>"OK - La création de l'objet s'est bien déroulée."</p>
@@ -130,16 +152,32 @@ public interface TypeProduitICuService {
 	String MESSAGE_CREER_OK 
 		= "OK - La création de l'objet s'est bien déroulée.";
 
+	/* ----------------------- rechercherTous -------------------------- */
+
 	/**
 	 * <div>
-	 * <p>"Vous ne pouvez pas sauvegarder un Type de Produit 
-	 * déjà existant dans le stockage : "</p>
+	 * <p>"KO - rechercherTous() - le Gateway a jeté Exception".</p>
 	 * </div>
 	 */
-	String MESSAGE_DOUBLON 
-		= "Vous ne pouvez pas sauvegarder un Type de Produit "
-			+ "déjà existant dans le stockage : ";
+	String MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+		= "KO - rechercherTous() - le Gateway a jeté Exception";
 	
+	/**
+	 * <div>
+	 * <p>"KO - rechercherTous() - le Gateway a retourné Null".</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO
+		= "KO - rechercherTous() - le Gateway a retourné Null";
+	
+	/**
+	 * <div>
+	 * <p>"KO - rechercherTous() - convertirEtDedoublonner(...) a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
+		= "KO - rechercherTous() - convertirEtDedoublonner(...) a jeté Exception";
+
 	/**
 	 * <div>
 	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>
@@ -274,15 +312,6 @@ public interface TypeProduitICuService {
 	 */
 	String MESSAGE_DELETE_KO = "KO - échec de la destruction de : ";
 
-	/**
-	 * <div>
-	 * <p>"Une recherche technique a échouée".</p>
-	 * </div>
-	 */
-	String KO_TECHNIQUE_RECHERCHE
-		= "Une recherche technique a échouée";
-
-
 	// -------------------Constantes Méthodes ---------------------------//
 	
 	/**
@@ -344,9 +373,8 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Stocke un {@link TypeProduitDTO.InputDTO} en pilotant 
-	 * un scénario complet de SERVICE UC,
-	 * puis retourne la réponse sous forme de
+	 * Stocke un {@link TypeProduitDTO.InputDTO},
+	 * puis retourne l'objet métier stocké sous forme de
 	 * {@link TypeProduitDTO.OutputDTO}.
 	 * </p>
 	 * <p style="font-weight:bold;">
@@ -355,35 +383,84 @@ public interface TypeProduitICuService {
 	 * <ul>
 	 * <li>recevoir un {@link TypeProduitDTO.InputDTO} 
 	 * provenant de la couche de présentation ;</li>
-	 * <li>valider les préconditions applicatives observables 
-	 * par l'utilisateur ;</li>
+	 * <li>vérifier préalablement que l'objet métier peut être stocké 
+	 * ({@link TypeProduitDTO.InputDTO} ne peut être null
+	 * , ne peut avoir un libellé blank, ne peut créer de doublon) ;</li>
 	 * <li>convertir l'InputDTO en objet métier {@link TypeProduit} ;</li>
-	 * <li>déléguer l'écriture au composant technique GATEWAY ;</li>
-	 * <li>récupérer l'objet métier effectivement stocké ;</li>
-	 * <li>convertir l'objet métier retourné en
+	 * <li>déléguer l'écriture de l'objet métier dans le stockage 
+	 * au service technique GATEWAY ;</li>
+	 * <li>récupérer l'objet métier persistant ;</li>
+	 * <li>convertir l'objet métier persistant retourné par le GATEWAY en
 	 * {@link TypeProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une réponse exploitable par le CONTROLLER appelant.</li>
+	 * <li>retourner le {@link TypeProduitDTO.OutputDTO} 
+	 * correspondant à l'objet métier persistant 
+	 * au CONTROLLER appelant (peut être {@code null}) avec 
+	 * un message utilisateur de succès de la création dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null}, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL}
+	 * <li>Elimine les paramètres invalides :</li>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null} : retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL_KO}
 	 * et n'émet ni LOG ni Exception.</li>
-	 * <li>Si {@code pInputDTO.getTypeProduit()} est blank, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NOM_BLANK},
-	 * émet un LOG de service et lève une exception applicative.</li>
-	 * <li>Si le DTO correspond à un doublon fonctionnel, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_DOUBLON} + libellé,
-	 * émet un LOG de service et lève une exception métier.</li>
-	 * <li>Sinon, délègue la création au composant GATEWAY, puis retourne
-	 * l'{@link TypeProduitDTO.OutputDTO} correspondant à l'objet réellement
-	 * stocké.</li>
-	 * <li>En cas d'échec remonté par le GATEWAY ou par une étape interne du
-	 * SERVICE UC, propage une exception circonstanciée conforme à
-	 * l'implémentation.</li>
+	 * <li>Si le libellé de l'objet métier 
+	 * {@code pInputDTO.getTypeProduit()} est blank : 
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_CREER_LIBELLE_BLANK_KO},
+	 * émet un LOG et jette une exception applicative 
+	 * {@code ExceptionParametreBlank}.</li>
+	 * </ul>
+	 * <li>Vérifie que creer(...) ne risque pas de créer un doublon 
+	 * dans le stockage via la méthode private {@code isDoublon(pInputDTO)} : 
+	 * </li>
+	 * <ul>
+	 * <li>Si la méthode private {@code isDoublon(pInputDTO)} 
+	 * jette Exception : 
+	 * crée un message sécurisé basé sur 
+	 * {@link #PREFIX_MESSAGE_CREER_DOUBLON_KO}, 
+	 * positionne {@link #getMessage()} sur le message sécurisé, LOG, 
+	 * et propage l'Exception.</li>
+	 * <li>Si {@code pInputDTO} correspond à un doublon, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_DOUBLON_KO} + libellé,
+	 * émet un LOG de service et lève une exception métier 
+	 * {@code ExceptionDoublon}.</li>
+	 * </ul>
+	 * <li>Convertit l'InputDTO en objet métier, 
+	 * et tente la création de l'objet métier dans le stockage en déléguant 
+	 * au service GATEWAY via {@code gateway.creer(...)}.</li>
+	 * <ul>
+	 * <li>Si {@code gateway.creer(...)} jette Exception : 
+	 * crée un message sécurisé basé sur 
+	 * {@link #PREFIX_MESSAGE_CREER_GATEWAY_KO}, 
+	 * positionne {@link #getMessage()} sur le message sécurisé, 
+	 * LOG, et propage l'Exception.</li>
+	 * <li>Si {@code gateway.creer(...)} retourne null : 
+	 * positionne {@link #getMessage()} sur 
+	 * {@link #MESSAGE_CREER_GATEWAY_KO}, LOG, 
+	 * et jette une {@code IllegalStateException}.</li>
+	 * </ul>
+	 * <li>Convertit l'objet métier persistant en 
+	 * {@link TypeProduitDTO.OutputDTO} via 
+	 * {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} : </li>
+	 * <ul>
+	 * <li>Si {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} 
+	 * jette Exception : crée un message sécurisé basé sur 
+	 * {@link #PREFIX_MESSAGE_CREER_CONVERSION_KO}, 
+	 * positionne {@link #getMessage()} sur le message sécurisé, 
+	 * LOG, et propage l'Exception.</li>
+	 * <li>Si {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} 
+	 * retourne null :  
+	 * positionne {@link #getMessage()} sur 
+	 * {@link #MESSAGE_CREER_CONVERSION_KO}, 
+	 * LOG, et jette une {@code IllegalStateException}.</li>
+	 * </ul>
+	 * <li>Si tout se passe bien : positionne {@link #getMessage()} 
+	 * à {@link #MESSAGE_CREER_OK}, puis retourne le 
+	 * {@link TypeProduitDTO.OutputDTO} correspondant 
+	 * à l'objet métier persistant.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -393,13 +470,13 @@ public interface TypeProduitICuService {
 	 * </p>
 	 * <ul>
 	 * <li>Le message retourné par {@link #getMessage()} reflète l'issue
-	 * observable de l'opération pour l'appelant.</li>
+	 * de l'opération pour l'appelant.</li>
 	 * <li>En cas de succès, {@link #getMessage()} est positionné à
 	 * {@link #MESSAGE_CREER_OK}.</li>
-	 * <li>En cas d'échec métier ou applicatif,
-	 * le SERVICE UC produit un message utilisateur déterministe et traçable.</li>
+	 * <li>En cas d'échec métier (doublon) ou applicatif,
+	 * le SERVICE UC produit un message utilisateur explicite.</li>
 	 * <li>Le résultat retourné, s'il est non {@code null},
-	 * correspond à l'état métier effectivement créé dans le stockage
+	 * correspond à l'objet métier effectivement créé dans le stockage
 	 * via le GATEWAY.</li>
 	 * <li>Le SERVICE UC conserve son rôle d'orchestration applicative entre
 	 * couche de présentation, métier, GATEWAY et message utilisateur.</li>
@@ -434,13 +511,13 @@ public interface TypeProduitICuService {
 	 * <div>
 	 * <p style="font-weight:bold;">
 	 * Retourne tous les {@link TypeProduitDTO.OutputDTO}
-	 * disponibles en pilotant un scénario complet de SERVICE UC.
+	 * présents dans le stockage.
 	 * </p>
 	 * <p style="font-weight:bold;">
 	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>demander au composant GATEWAY la liste complète
+	 * <li>demander au service GATEWAY la liste complète
 	 * des {@link TypeProduit} présents dans le stockage ;</li>
 	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
 	 * <li>filtrer les éventuels éléments {@code null},
@@ -448,17 +525,24 @@ public interface TypeProduitICuService {
 	 * si nécessaire ;</li>
 	 * <li>convertir la liste métier en
 	 * {@link TypeProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une liste exploitable par la couche appelante.</li>
+	 * <li>retourner une liste non {@code null} (éventuellement vide) 
+	 * à la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Délègue la recherche exhaustive au composant GATEWAY.</li>
+	 * <li>Délègue la recherche exhaustive au composant GATEWAY 
+	 * via {@code gateway.rechercherTous()}.</li>
+	 * <li>Si le GATEWAY jette une Exception, positionne
+	 * {@link #getMessage()} 
+	 * à {@link #MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO} + message sécurisé,
+	 * émet un LOG et propage l'Exception provenant du Gateway.</li>
 	 * <li>Si le GATEWAY retourne {@code null}, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
-	 * émet un LOG de service et lève une exception.</li>
+	 * {@link #getMessage()} 
+	 * à {@link #MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO},
+	 * émet un LOG et lève une ExceptionStockageVide.</li>
 	 * <li>Sinon, retourne une {@link List} de
 	 * {@link TypeProduitDTO.OutputDTO} jamais {@code null}
 	 * (éventuellement vide).</li>
@@ -480,7 +564,7 @@ public interface TypeProduitICuService {
 	 * </p>
 	 * <ul>
 	 * <li>Le message retourné par {@link #getMessage()}
-	 * reflète l'issue observable de l'opération.</li>
+	 * reflète l'issue de l'opération.</li>
 	 * <li>Le message de succès n'est positionné
 	 * qu'après préparation complète de la réponse utilisateur.</li>
 	 * <li>La liste retournée, si elle n'est pas vide,

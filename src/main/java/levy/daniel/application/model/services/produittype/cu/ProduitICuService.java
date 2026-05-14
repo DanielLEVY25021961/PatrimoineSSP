@@ -1,5 +1,5 @@
 /* ********************************************************************* */
-/* ********************* PORT SERVICE CU ******************************* */
+/* *************** PORT SERVICE METIER USE CASE (CU) ******************* */
 /* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.cu;
 
@@ -9,9 +9,13 @@ import levy.daniel.application.model.dto.produittype.ProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.Produit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
+import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionTechniqueGateway;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionNonPersistant;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreBlank;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionParametreNull;
+import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionStockageVide;
 import levy.daniel.application.model.services.produittype.pagination.RequetePage;
 import levy.daniel.application.model.services.produittype.pagination.ResultatPage;
 
@@ -57,87 +61,128 @@ import levy.daniel.application.model.services.produittype.pagination.ResultatPag
  */
 public interface ProduitICuService {
 
-	//* -----------------------CONSTANTES ------------------------------*//
-
+	//* ---------------------- CONSTANTES ----------------------------- *//
+	
 	/**
-	 * Chaîne " - ".
+	 * <div>
+	 * <p>" - "</p>
+	 * </div>
 	 */
 	String TIRET_ESPACE = " - ";
 
+
+	//* ----------------- CONSTANTES DE MESSAGES ---------------------- *//
+
+
+	/* --------------------------- Creer ------------------------------- */
+	
 	/**
 	 * <div>
-	 * <p>"vous ne pouvez pas sauvegarder un Produit null."</p>
+	 * <p>"KO - vous ne pouvez pas sauvegarder 
+	 * un Produit null."</p>
 	 * </div>
 	 */
-	String MESSAGE_CREER_NULL 
-		= "vous ne pouvez pas sauvegarder un Produit null.";
+	String MESSAGE_CREER_NULL_KO 
+		= "KO - vous ne pouvez pas sauvegarder "
+				+ "un Produit null.";
 
 	/**
 	 * <div>
-	 * <p>"vous ne pouvez pas sauvegarder un Produit 
-	 * dont le libellé est blank."</p>
+	 * <p>"KO - vous ne pouvez pas sauvegarder un Produit 
+	 * dont le libellé est blank (null ou que des espaces)."</p>
 	 * </div>
 	 */
-	String MESSAGE_CREER_NOM_BLANK 
-		= "vous ne pouvez pas sauvegarder un Produit "
-				+ "dont le libellé est blank.";
+	String MESSAGE_CREER_LIBELLE_BLANK_KO 
+		= "KO - vous ne pouvez pas sauvegarder un Produit "
+			+ "dont le libellé est blank (null ou que des espaces).";
+	
+	/**
+	 * "KO - Le Produit doit posséder un parent (SousTypeProduit) 
+	 * avec un libellé non blank."
+	 */
+	String MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO
+	= "KO - Le Produit doit posséder un parent (SousTypeProduit) "
+			+ "avec un libellé non blank.";
+	
+	/**
+	 * "KO - Impossible de trouver le parent via 
+	 * sousTypeProduitGateway.findByLibelle(...) 
+	 * avec le libellé parent indiqué : "
+	 */
+	String PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO 
+		= "KO - Impossible de trouver le parent via "
+				+ "sousTypeProduitGateway.findByLibelle(...) "
+				+ "avec le libellé parent indiqué : ";
+
 
 	/**
 	 * <div>
-	 * <p>"Impossible de vérifier l'unicité 
+	 * <p>"KO - Le Produit doit posséder un parent 
+	 * (SousTypeProduit) persistant".</p>
+	 * </div>
+	 */
+	String MESSAGE_CREER_PARENT_NON_PERSISTANT_KO
+		= "KO - Le Produit doit posséder un parent "
+				+ "(SousTypeProduit) persistant";
+
+
+	/**
+	 * <div>
+	 * <p>"KO - Impossible de vérifier l'unicité 
 	 * du Produit dans le stockage : "</p>
 	 * </div>
 	 */
-	String PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER =
-			"Impossible de vérifier l'unicité "
-					+ "du Produit dans le stockage : ";
-
+	String PREFIX_MESSAGE_CREER_DOUBLON_KO =
+			"KO - Impossible de vérifier l'unicité "
+			+ "du Produit dans le stockage : ";
+	
 	/**
 	 * <div>
-	 * <p>"Impossible de vérifier le Sous-Type de Produit parent 
-	 * dans le stockage : "</p>
+	 * <p>"KO - Vous ne pouvez pas sauvegarder un Produit 
+	 * déjà existant dans le stockage : "</p>
 	 * </div>
 	 */
-	String PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER =
-			"Impossible de vérifier le Sous-Type de Produit parent "
-					+ "dans le stockage : ";
+	String MESSAGE_CREER_DOUBLON_KO 
+		= "KO - Vous ne pouvez pas sauvegarder un Produit "
+			+ "déjà existant dans le stockage : ";
+
 
 	/**
 	 * <div>
-	 * <p>"Impossible de créer le Produit dans le stockage : "</p>
+	 * <p>"KO - Impossible de créer le Produit dans le stockage : "</p>
 	 * </div>
 	 */
-	String PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER =
-			"Impossible de créer le Produit dans le stockage : ";
-
+	String PREFIX_MESSAGE_CREER_GATEWAY_KO =
+			"KO - Impossible de créer le Produit dans le stockage : ";
+	
 	/**
 	 * <div>
-	 * <p>"Impossible de créer le Produit - 
-	 * le stockage n'a retourné aucun objet créé."</p>
+	 * <p>"KO - Impossible de créer le Produit - 
+	 * le stockage n'a retourné aucun objet métier créé."</p>
 	 * </div>
 	 */
-	String MESSAGE_CREATION_TECHNIQUE_KO_CREER =
-			"Impossible de créer le Produit - "
-					+ "le stockage n'a retourné aucun objet créé.";
-
+	String MESSAGE_CREER_GATEWAY_KO =
+			"KO - Impossible de créer le Produit - "
+					+ "le stockage n'a retourné aucun objet métier créé.";
+	
 	/**
 	 * <div>
-	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * <p>"KO - Impossible de créer l'OutputDTO 
 	 * après la création du Produit : "</p>
 	 * </div>
 	 */
-	String PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER =
-			"Impossible de préparer la réponse utilisateur "
+	String PREFIX_MESSAGE_CREER_CONVERSION_KO =
+			"KO - Impossible de créer l'OutputDTO "
 					+ "après la création du Produit : ";
-
+	
 	/**
 	 * <div>
-	 * <p>"Impossible de préparer la réponse utilisateur 
+	 * <p>"KO - OutputDTO null via la conversion  
 	 * après la création du Produit."</p>
 	 * </div>
 	 */
-	String MESSAGE_CONVERSION_TECHNIQUE_KO_CREER =
-			"Impossible de préparer la réponse utilisateur "
+	String MESSAGE_CREER_CONVERSION_KO =
+			"KO - OutputDTO null via la conversion "
 					+ "après la création du Produit.";
 
 	/**
@@ -148,23 +193,7 @@ public interface ProduitICuService {
 	String MESSAGE_CREER_OK 
 		= "OK - La création de l'objet s'est bien déroulée.";
 
-	/**
-	 * <div>
-	 * <p>"Vous ne pouvez pas sauvegarder un Produit 
-	 * déjà existant dans le stockage : "</p>
-	 * </div>
-	 */
-	String MESSAGE_DOUBLON 
-		= "Vous ne pouvez pas sauvegarder un Produit "
-				+ "déjà existant dans le stockage : ";
-
-	/**
-	 * <div>
-	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>
-	 * </div>
-	 */
-	String MESSAGE_STOCKAGE_NULL
-		= "Le stockage n'a pas retourné d'enregistrements (null).";
+	/* ----------------------- rechercherTous -------------------------- */
 	
 	/**
 	 * <div>
@@ -193,48 +222,6 @@ public interface ProduitICuService {
 
 	/**
 	 * <div>
-	 * <p>"Erreur non spécifiée".</p>
-	 * </div>
-	 */
-	String MSG_ERREUR_NON_SPECIFIEE = "Erreur non spécifiée";
-
-	/**
-	 * <div>
-	 * <p>"Erreur lors de la création de l'objet".</p>
-	 * </div>
-	 */
-	String MESSAGE_CREER_KO = "Erreur lors de la création de l'objet";
-
-	/**
-	 * <div>
-	 * <p>"Aucun enregistrement ne correspond à la recherche".</p>
-	 * </div>
-	 */
-	String MESSAGE_RECHERCHE_VIDE = "Aucun enregistrement ne correspond à la recherche";
-
-	/**
-	 * <div>
-	 * <p>"La recherche a retourné des enregistrements".</p>
-	 * </div>
-	 */
-	String MESSAGE_RECHERCHE_OK = "La recherche a retourné des enregistrements";
-
-	/**
-	 * <div>
-	 * <p>"La recherche a abouti".</p>
-	 * </div>
-	 */
-	String MESSAGE_SUCCES_RECHERCHE = "La recherche a abouti";
-
-	/**
-	 * <div>
-	 * <p>"Le Produit est null".</p>
-	 * </div>
-	 */
-	String MESSAGE_RECHERCHE_OBJ_NULL = "Le Produit est null";
-
-	/**
-	 * <div>
 	 * <p>"Objet Introuvable : ".</p>
 	 * </div>
 	 */
@@ -242,66 +229,110 @@ public interface ProduitICuService {
 
 	/**
 	 * <div>
-	 * <p>"Objet non persisté en base : ".</p>
+	 * <p>"Impossible de modifier - 
+	 * l'objet n'est pas persistant (pas d'ID dans le stockage) : "</p>
 	 * </div>
 	 */
-	String MESSAGE_OBJ_NON_PERSISTE = "Objet non persisté en base : ";
+	String MESSAGE_OBJ_NON_PERSISTE
+		= "Impossible de modifier - "
+			+ "l'objet n'est pas persistant (pas d'ID dans le stockage) : ";
+	
+	/**
+	 * <div>
+	 * <p>"Erreur non spécifiée".</p>
+	 * </div>
+	 */
+	String MSG_ERREUR_NON_SPECIFIEE = "Erreur non spécifiée";
+
+	/**
+	 * "OK - findByLibelle(...) a retourné des enregistrements"
+	 */
+	String MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE 
+		= "OK - findByLibelle(...) a retourné des enregistrements";
+	
+	/**
+	 * <div>
+	 * <p>"l'objet à rechercher ne doit pas être null."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_OBJ_NULL 
+		= "l'objet à rechercher ne doit pas être null.";
+	
+	/**
+	 * <div>
+	 * <p>"La recherche n'a retourné aucun résutat."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_VIDE 
+		= "La recherche n'a retourné aucun résutat.";
 
 	/**
 	 * <div>
-	 * <p>"La recherche paginée a abouti".</p>
+	 * <p>"OK - La recherche a retourné des résultats."</p>
 	 * </div>
 	 */
-	String MESSAGE_RECHERCHE_PAGINEE_OK = "La recherche paginée a abouti";
+	String MESSAGE_RECHERCHE_OK 
+		= "OK - La recherche a retourné des résultats.";
 
 	/**
 	 * <div>
-	 * <p>"la recherche paginée a échoué".</p>
+	 * <p>"KO - la recherche paginée a retourné null."</p>
 	 * </div>
 	 */
-	String MESSAGE_RECHERCHE_PAGINEE_KO = "la recherche paginée a échoué";
+	String MESSAGE_RECHERCHE_PAGINEE_KO 
+		= "KO - la recherche paginée a retourné null.";
+	
+	/**
+	 * <div>
+	 * <p>"OK - la recherche paginée a retourné des résultats."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_PAGINEE_OK 
+		= "OK - la recherche paginée a retourné des résultats.";
 
 	/**
 	 * <div>
-	 * <p>"La modification a été effectuée".</p>
+	 * <p>"KO - la modification a retourné null : "</p>
 	 * </div>
 	 */
-	String MESSAGE_MODIF_OK = "La modification a été effectuée";
+	String MESSAGE_MODIF_KO = "KO - la modification a retourné null : ";
+	
+	/**
+	 * <div>
+	 * <p>"OK - modification réussie de : "</p>
+	 * </div>
+	 */
+	String MESSAGE_MODIF_OK = "OK - modification réussie de : ";
 
 	/**
 	 * <div>
-	 * <p>"La modification a échouée".</p>
-	 * </div>
+	 * <p>"OK - destruction réussie de : "</p>
+	 * </div> 
 	 */
-	String MESSAGE_MODIF_KO = "La modification a échouée";
+	String MESSAGE_DELETE_OK = "OK - destruction réussie de : ";
 
 	/**
 	 * <div>
-	 * <p>"La suppression a été effectuée".</p>
-	 * </div>
+	 * <p>"KO - échec de la destruction de : "</p>
+	 * </div> 
 	 */
-	String MESSAGE_DELETE_OK = "La suppression a été effectuée";
-
-	/**
-	 * <div>
-	 * <p>"La suppression a échouée".</p>
-	 * </div>
-	 */
-	String MESSAGE_DELETE_KO = "La suppression a échouée";
+	String MESSAGE_DELETE_KO = "KO - échec de la destruction de : ";
 
 	/**
 	 * <div>
 	 * <p>"Le SousTypeProduit parent ne doit pas être null".</p>
 	 * </div>
 	 */
-	String RECHERCHE_SOUSTYPEPRODUIT_NULL = "Le SousTypeProduit parent ne doit pas être null";
+	String RECHERCHE_PARENT_NULL 
+		= "Le SousTypeProduit parent ne doit pas être null";
 
 	/**
 	 * <div>
 	 * <p>"Le SousTypeProduit ne doit pas être null".</p>
 	 * </div>
 	 */
-	String MESSAGE_SOUSTYPEPRODUIT_NULL = "Le SousTypeProduit ne doit pas être null";
+	String MESSAGE_PARENT_NULL 
+		= "Le SousTypeProduit ne doit pas être null";
 
 	/**
 	 * <div>
@@ -392,7 +423,7 @@ public interface ProduitICuService {
 	 * <div>
 	 * <p style="font-weight:bold;">
 	 * Stocke un {@link ProduitDTO.InputDTO},
-	 * puis retourne la réponse sous forme de
+	 * puis retourne l'objet métier stocké sous forme de
 	 * {@link ProduitDTO.OutputDTO}.
 	 * </p>
 	 * <p style="font-weight:bold;">
@@ -401,46 +432,107 @@ public interface ProduitICuService {
 	 * <ul>
 	 * <li>recevoir un {@link ProduitDTO.InputDTO}
 	 * provenant de la couche de présentation ;</li>
-	 * <li>valider les préconditions applicatives observables
-	 * par l'utilisateur ;</li>
-	 * <li>vérifier l'absence de doublon fonctionnel ;</li>
-	 * <li>récupérer le {@link SousTypeProduit} parent persistant
-	 * nécessaire au rattachement métier ;</li>
+	 * <li>vérifier préalablement que l'objet métier peut être stocké 
+	 * ({@link ProduitDTO.InputDTO} ne peut être null
+	 * , ne peut avoir un libellé blank, doit avoir un parent persistant, 
+	 * ne peut créer de doublon) ;</li>
 	 * <li>convertir l'InputDTO en objet métier {@link Produit} ;</li>
-	 * <li>déléguer l'écriture au composant technique GATEWAY ;</li>
-	 * <li>récupérer l'objet métier effectivement stocké ;</li>
-	 * <li>convertir l'objet métier retourné en
+	 * <li>déléguer l'écriture de l'objet métier dans le stockage 
+	 * au service technique GATEWAY ;</li>
+	 * <li>récupérer l'objet métier persistant ;</li>
+	 * <li>convertir l'objet métier persistant retourné par le GATEWAY en
 	 * {@link ProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une réponse exploitable par le CONTROLLER appelant.</li>
+	 * <li>retourner le {@link ProduitDTO.OutputDTO} 
+	 * correspondant à l'objet métier persistant 
+	 * au CONTROLLER appelant (peut être {@code null}) avec 
+	 * un message utilisateur de succès de la création dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Si {@code pInputDTO == null}, retourne {@code null}, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL}
+	 * <li>Elimine les paramètres invalides :</li>
+	 * <ul>
+	 * <li>Si {@code pInputDTO == null} : retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL_KO}
 	 * et n'émet ni LOG ni Exception.</li>
-	 * <li>Si {@code pInputDTO.getProduit()} est blank, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NOM_BLANK},
-	 * émet un LOG de service et lève une exception de validation.</li>
-	 * <li>Si le libellé du parent est blank,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT},
-	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
-	 * <li>Si le DTO correspond à un doublon fonctionnel, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_DOUBLON} + libellé,
-	 * émet un LOG de service et lève une exception métier.</li>
-	 * <li>Si le parent {@link SousTypeProduit} n'existe pas dans le stockage
+	 * <li>Si le libellé de l'objet métier 
+	 * {@code pInputDTO.getSousTypeProduit()} est blank : 
+	 * positionne {@link #getMessage()} à 
+	 * {@link #MESSAGE_CREER_LIBELLE_BLANK_KO},
+	 * LOG et jette une exception applicative 
+	 * {@code ExceptionParametreBlank}.</li>
+	 * <li>Si le libellé du parent est blank dans {@code pInputDTO},
+	 * positionne {@link #getMessage()} à 
+	 * {@link #MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO},
+	 * LOG et lève une {@code IllegalStateException}.</li>
+	 * </ul>
+	 * <li>Utilise la méthode private 
+	 * {@code this.rechercherParentPersistant(pInputDTO)} 
+	 * pour la récupération du parent persistant. 
+	 * C'est obligatoire car le libellé d'un parent {@code SousTypeProduit} 
+	 * n'est pas unique dans le stockage : </li>
+	 * <ul>
+	 * <li>Si {@code this.rechercherParentPersistant(pInputDTO)} 
+	 * jette une Exception : 
+	 * crée un message sécurisé basé sur 
+	 * {@link #PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO},
+	 * positionne {@link #getMessage()} sur le message sécurisé,  
+	 * LOG et propage l'Exception.</li>
+	 * <li>Si le parent {@link TypeProduit} n'existe pas dans le stockage
 	 * ou n'est pas persistant, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PAS_PARENT},
-	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
-	 * <li>Sinon, délègue la création au composant GATEWAY, puis retourne
-	 * l'{@link ProduitDTO.OutputDTO} correspondant à l'objet réellement
-	 * stocké et rattaché à son parent persistant.</li>
-	 * <li>En cas d'échec remonté par la vérification d'unicité,
-	 * par la vérification du parent,
-	 * par le GATEWAY ou par une étape interne du SERVICE UC,
-	 * propage une exception circonstanciée conforme à l'implémentation.</li>
+	 * à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO},
+	 * LOG et jette une {@link IllegalStateException}.</li>
+	 * </ul>
+	 * <li>Vérifie que creer(...) ne risque pas de créer un doublon 
+	 * dans le stockage via la méthode private {@code isDoublon(pInputDTO)} : </li>
+	 * <ul>
+	 * <li>Si la méthode private {@code isDoublon(pInputDTO)} 
+	 * jette Exception : 
+	 * crée un message sécurisé basé sur 
+	 * {@link #PREFIX_MESSAGE_CREER_DOUBLON_KO}, 
+	 * positionne {@link #getMessage()} sur le message sécurisé, LOG, 
+	 * et propage l'Exception.</li>
+	 * <li>Si {@code pInputDTO} correspond à un doublon, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_CREER_DOUBLON_KO} + libellé,
+	 * émet un LOG de service et lève une exception métier 
+	 * {@code ExceptionDoublon}.</li>
+	 * </ul>
+	 * <li>Convertit l'InputDTO en objet métier, 
+	 * rattache le parent persistant à l'objet métier,
+	 * et tente la création de l'objet métier dans le stockage en déléguant 
+	 * au service GATEWAY via {@code gateway.creer(...)}.</li>
+	 * <ul>
+	 * <li>Si {@code gateway.creer(...)} jette Exception : 
+	 * crée un message sécurisé basé sur 
+	 * {@link #PREFIX_MESSAGE_CREER_GATEWAY_KO}, 
+	 * positionne {@link #getMessage()} sur le message sécurisé, 
+	 * LOG, et propage l'Exception.</li>
+	 * <li>Si {@code gateway.creer(...)} retourne null : 
+	 * positionne {@link #getMessage()} sur 
+	 * {@link #MESSAGE_CREER_GATEWAY_KO}, LOG, 
+	 * et jette une IllegalStateException</li>
+	 * </ul>
+	 * <li>Convertit l'objet métier persistant en 
+	 * {@link ProduitDTO.OutputDTO} via 
+	 * {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} </li>
+	 * <ul>
+	 * <li>Si {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} 
+	 * jette Exception : crée un message sécurisé basé sur 
+	 * {@link #PREFIX_MESSAGE_CREER_CONVERSION_KO}, 
+	 * positionne {@link #getMessage()} sur le message sécurisé, 
+	 * LOG, et propage l'Exception.</li>
+	 * <li>Si {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} 
+	 * retourne null :  
+	 * positionne {@link #getMessage()} sur 
+	 * {@link #MESSAGE_CREER_CONVERSION_KO}, 
+	 * LOG, et jette une {@code IllegalStateException}.</li>
+	 * </ul>
+	 * <li>Si tout se passe bien : positionne {@link #getMessage()} 
+	 * à {@link #MESSAGE_CREER_OK}, puis retourne le 
+	 * {@link ProduitDTO.OutputDTO} correspondant 
+	 * à l'objet métier persistant.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -878,13 +970,13 @@ public interface ProduitICuService {
 	 * <ul>
 	 * <li>si {@code pSousTypeProduit == null},
 	 * positionne {@link #getMessage()} à
-	 * {@link #RECHERCHE_SOUSTYPEPRODUIT_NULL}
+	 * {@link #RECHERCHE_PARENT_NULL}
 	 * puis lève une exception ;</li>
 	 * <li>si le libellé du parent est blank,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}
 	 * puis lève une exception ;</li>
 	 * <li>si le parent n'est pas trouvé ou n'est pas persistant,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAS_PARENT}
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}
 	 * puis lève une exception ;</li>
 	 * <li>si le GATEWAY retourne {@code null},
 	 * positionne {@link #getMessage()} à
@@ -960,7 +1052,7 @@ public interface ProduitICuService {
 	 * sans lever d'exception ;</li>
 	 * <li>si le parent porté par {@code pInputDTO}
 	 * est blank, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PAS_PARENT}
+	 * à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}
 	 * puis lève une exception ;</li>
 	 * <li>si aucun parent persistant n'est trouvé,
 	 * retourne {@code null}
@@ -1113,7 +1205,7 @@ public interface ProduitICuService {
 	 * <li>Si le parent porté par le DTO
 	 * est blank, absent ou non persistant,
 	 * positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PAS_PARENT},
+	 * à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO},
 	 * émet un LOG de service
 	 * et lève une {@link IllegalStateException} ;</li>
 	 * <li>Si aucun {@link Produit} persistant
@@ -1231,7 +1323,7 @@ public interface ProduitICuService {
 	 * <li>Si le parent porté par le DTO
 	 * est blank, absent ou non persistant,
 	 * positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PAS_PARENT}
+	 * à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}
 	 * et lève une {@code IllegalStateException}.</li>
 	 * <li>Si la recherche des enfants du parent
 	 * retourne {@code null},

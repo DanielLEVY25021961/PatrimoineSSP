@@ -136,7 +136,7 @@ public final class ProduitDTO {
 		/**
 		 * <div>
 		 * <p>Libellé du sous-type de produit 
-		 * (exemple : "Homme", "Femme", "Canne", ...).</p>
+		 * (exemple : "vêtement pour Homme", "vêtement pour Femme", ...).</p>
 		 * </div>
 		 */
 		private String sousTypeProduit;
@@ -144,7 +144,7 @@ public final class ProduitDTO {
 		/**
 		 * <div>
 		 * <p>Libellé du produit.</p>
-		 * <p>(exemple : "chemise à manches longues", ...).</p>
+		 * <p>(exemple : "chemise à manches longues pour Homme", ...).</p>
 		 * </div>
 		 */
 		private String produit;
@@ -303,7 +303,7 @@ public final class ProduitDTO {
 		/**
 		 * <div>
 		 * <p>Getter du Libellé du sous-type de produit 
-		 * (exemple : "Homme", "Femme", "Canne", ...).</p>
+		 * (exemple : "vêtement pour Homme", "vêtement pour Femme", ...).</p>
 		 * </div>
 		 *
 		 * @return <code>this.sousTypeProduit</code> : String
@@ -317,7 +317,7 @@ public final class ProduitDTO {
 		/**
 		 * <div>
 		 * <p>Setter du Libellé du sous-type de produit 
-		 * (exemple : "Homme", "Femme", "Canne", ...).</p>
+		 * (exemple : "vêtement pour Homme", "vêtement pour Femme", ...).</p>
 		 * </div>
 		 *
 		 * @param pSousTypeProduit : String : 
@@ -332,6 +332,7 @@ public final class ProduitDTO {
 		/**
 		 * <div>
 		 * <p>Getter du Libellé du produit.</p>
+		 * <p>(exemple : "chemise à manches longues pour Homme", ...).</p>
 		 * </div>
 		 *
 		 * @return <code>this.produit</code> : String
@@ -345,6 +346,7 @@ public final class ProduitDTO {
 		/**
 		 * <div>
 		 * <p>Setter du Libellé du produit.</p>
+		 * <p>(exemple : "chemise à manches longues pour Homme", ...).</p>
 		 * </div>
 		 *
 		 * @param pProduit : String : 

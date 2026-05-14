@@ -1,5 +1,5 @@
 /* ********************************************************************* */
-/* ******************** ADAPTER SERVICE CU ***************************** */
+/* *************** ADAPTER SERVICE METIER USE CASE (CU) **************** */
 /* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.cu.impl;
 
@@ -161,106 +161,88 @@ public class ProduitCuService implements ProduitICuService {
 			final InputDTO pInputDTO) throws Exception {
 
 		/*
-		 * Erreur utilisateur bénigne :
+		 * si pInputDTO == null : 
 		 * aucun traitement, aucun LOG, aucune Exception.
-		 * Si pInputDTO == null :
-		 * Retourne null avec un message utilisateur MESSAGE_CREER_NULL.
+		 * Retourne null avec un message utilisateur MESSAGE_CREER_NULL_KO.
 		 */
 		if (pInputDTO == null) {
-			this.message.set(MESSAGE_CREER_NULL);
+			this.message.set(MESSAGE_CREER_NULL_KO);
 			return null;
 		}
 
 		/*
-		 * Récupère le libellé métier du Produit.
+		 * Récupère le libellé dans l'InputDTO.
 		 */
 		final String libelle = pInputDTO.getProduit();
 
 		/*
-		 * Si le libellé est blank :
-		 * émet MESSAGE_CREER_NOM_BLANK + LOG + ExceptionParametreBlank.
+		 * si le libellé dans l'InputDTO pInputDTO est blank : 
+		 * - émet un Message MESSAGE_CREER_LIBELLE_BLANK_KO ; 
+		 * - LOG ;
+		 * - jette une Exception applicative ExceptionParametreBlank.
 		 */
 		if (StringUtils.isBlank(libelle)) {
 			
 			return this.traiterErreur(
-					MESSAGE_CREER_NOM_BLANK,
+					MESSAGE_CREER_LIBELLE_BLANK_KO,
 					METHODE_CREER,
-					new ExceptionParametreBlank(MESSAGE_CREER_NOM_BLANK));
+					new ExceptionParametreBlank(
+							MESSAGE_CREER_LIBELLE_BLANK_KO));
 		}
-
+		
 		/*
-		 * Le parent SousTypeProduit est une 
-		 * précondition observable du SERVICE UC.
-		 * Si son libellé est blank :
-		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * RECUPERATION DU PARENT ***
+		 * Si le libellé du parent est blank : 
+		 * - émet un message MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO; 
+		 * - LOG ;
+		 * - jette une IllegalStateException.
 		 */
 		final String libelleParent = pInputDTO.getSousTypeProduit();
 
 		if (StringUtils.isBlank(libelleParent)) {
 			
 			return this.traiterErreur(
-					MESSAGE_PAS_PARENT,
+					MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO,
 					METHODE_CREER,
-					new IllegalStateException(MESSAGE_PAS_PARENT));
-		}
-
-		/*
-		 * Vérifie le doublon fonctionnel.
-		 * Toute anomalie technique pendant ce contrôle
-		 * est rationalisée côté UC.
-		 */
-		final boolean doublon;
-
-		try {
-
-			doublon = this.isDoublon(pInputDTO);
-
-		} catch (final Exception e) {
-
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
-					? e.getMessage()
-					: MSG_ERREUR_NON_SPECIFIEE;
-
-			return this.traiterErreur(
-					PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
-							+ messageSecurise,
-					METHODE_CREER,
-					e);
-		}
-
-		/*
-		 * Si doublon :
-		 * émet MESSAGE_DOUBLON + libellé + LOG + ExceptionDoublon.
-		 */
-		if (doublon) {
-
-			final String messageDoublon = MESSAGE_DOUBLON + libelle;
-
-			return this.traiterErreur(
-					messageDoublon,
-					METHODE_CREER,
-					new ExceptionDoublon(messageDoublon));
+					new IllegalStateException(
+							MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO));
 		}
 
 		/*
 		 * Récupère le parent persistant.
-		 * Toute anomalie technique de recherche du parent
-		 * est rationalisée côté UC.
 		 */
 		final SousTypeProduit parentPersistant;
 
 		try {
 
+			/* Utilise la méthode private 
+			 * this.rechercherParentPersistant(pInputDTO) 
+			 * pour la récupération du parent persistant 
+			 * (obligatoire car le libellé d'un SousTypeProduit 
+			 * n'est pas unique). */
 			parentPersistant = this.rechercherParentPersistant(pInputDTO);
 
 		} catch (final Exception e) {
 
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * rechercherParentPersistant(pInputDTO) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
+			/* Si rechercherParentPersistant(pInputDTO) 
+			 * jette une Exception : 
+			 * - crée un message sécurisé basé sur 
+			 * PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception de 
+			 * rechercherParentPersistant(pInputDTO). */
 			return this.traiterErreur(
-					PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
+					PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO
 							+ messageSecurise,
 					METHODE_CREER,
 					e);
@@ -269,7 +251,9 @@ public class ProduitCuService implements ProduitICuService {
 		/*
 		 * Si le parent n'existe pas en stockage
 		 * ou n'est pas persistant :
-		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * - émet MESSAGE_CREER_PARENT_NON_PERSISTANT_KO
+		 * - LOG
+		 * - jette une IllegalStateException.
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdSousTypeProduit() == null) {
@@ -281,11 +265,61 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		/*
-		 * Convertit l'InputDTO en objet métier
-		 * puis rattache explicitement le parent persistant.
+		 * Vérifie que creer(...) ne provoquera pas un doublon 
+		 * dans le stockage.
+		 */
+		final boolean doublon;
+
+		try {
+
+			/* vérifie que pInputDTO ne créera pas de doublon. */
+			doublon = this.isDoublon(pInputDTO);
+
+		} catch (final Exception e) {
+
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par this.isDoublon(pInputDTO) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
+					? e.getMessage()
+					: MSG_ERREUR_NON_SPECIFIEE;
+
+			/* Si isDoublon(pInputDTO) jette Exception : 
+			 * - crée un message sécurisé basé sur 
+			 * PREFIX_MESSAGE_CREER_DOUBLON_KO ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception de isDoublon(pInputDTO). */
+			return this.traiterErreur(
+					PREFIX_MESSAGE_CREER_DOUBLON_KO
+							+ messageSecurise,
+					METHODE_CREER,
+					e);
+		}
+
+		/*
+		 * si pInputDTO représente un doublon : 
+		 * - émet un message basé sur MESSAGE_CREER_DOUBLON_KO ; 
+		 * - LOG ; 
+		 * - jette une Exception applicative ExceptionDoublon.
+		 */
+		if (doublon) {
+
+			final String messageDoublon = MESSAGE_CREER_DOUBLON_KO + libelle;
+
+			return this.traiterErreur(
+					messageDoublon,
+					METHODE_CREER,
+					new ExceptionDoublon(messageDoublon));
+		}
+
+		/*
+		 * Convertit l'InputDTO en objet métier.
 		 */
 		final Produit produit = this.convertirInputDTOEnMetier(pInputDTO);
 
+		/* rattache le parent persistant à l'objet métier à créer. */
 		produit.setSousTypeProduit(parentPersistant);
 
 		/*
@@ -302,37 +336,48 @@ public class ProduitCuService implements ProduitICuService {
 
 		} catch (final Exception e) {
 
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * gateway.creer(...) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
+			/* Si gateway.creer(...) jette Exception : 
+			 * - crée un message sécurisé basé sur 
+			 * PREFIX_MESSAGE_CREER_GATEWAY_KO ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception de gateway.creer(sousTypeProduit). */
 			return this.traiterErreur(
-					PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+					PREFIX_MESSAGE_CREER_GATEWAY_KO
 							+ messageSecurise,
 					METHODE_CREER,
 					e);
 		}
 
 		/*
-		 * Le GATEWAY ne doit pas conduire à un succès
-		 * si aucun objet créé n'est réellement disponible.
-		 * Si cree == null :
-		 * émet MESSAGE_CREATION_TECHNIQUE_KO_CREER
-		 * + LOG + IllegalStateException.
+		 * Si gateway.creer(...) retourne null :
+		 * - alimente message avec MESSAGE_CREER_GATEWAY_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException.
 		 */
 		if (cree == null) {
 			
 			return this.traiterErreur(
-					MESSAGE_CREATION_TECHNIQUE_KO_CREER,
+					MESSAGE_CREER_GATEWAY_KO,
 					METHODE_CREER,
 					new IllegalStateException(
-							MESSAGE_CREATION_TECHNIQUE_KO_CREER));
+							MESSAGE_CREER_GATEWAY_KO));
 		}
 
+
 		/*
-		 * Prépare la réponse utilisateur finale.
-		 * Le message de succès n'est positionné
-		 * qu'après conversion réussie.
+		 * Prépare la conversion finale en OutputDTO.
+		 * Le message utilisateur de succès n'est positionné 
+		 * qu'après la conversion réussie.
 		 */
 		final ProduitDTO.OutputDTO dto;
 
@@ -342,43 +387,55 @@ public class ProduitCuService implements ProduitICuService {
 			dto = ConvertisseurMetierToOutputDTOProduit.convert(cree);
 
 		} catch (final Exception e) {
-
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * ConvertisseurMetierToOutputDTOProduit.convert(cree)
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
-
+			
+			/* Si ConvertisseurMetierToOutputDTOProduit.convert(cree) 
+			 * jette Exception : 
+			 * - crée un message sécurisé basé sur 
+			 * PREFIX_MESSAGE_CREER_CONVERSION_KO;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception de 
+			 * ConvertisseurMetierToOutputDTOProduit.convert(cree). */
 			return this.traiterErreur(
-					PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
-							+ messageSecurise,
+					PREFIX_MESSAGE_CREER_CONVERSION_KO 
+					+ messageSecurise,
 					METHODE_CREER,
 					e);
 		}
 
-		/*
-		 * Si dto == null :
-		 * émet MESSAGE_CONVERSION_TECHNIQUE_KO_CREER
-		 * + LOG + IllegalStateException.
-		 */
+		/* Si ConvertisseurMetierToOutputDTOProduit.convert(cree) 
+		 * retourne null : 
+		 * - alimente message avec MESSAGE_CREER_CONVERSION_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException. */
 		if (dto == null) {
 			
 			return this.traiterErreur(
-					MESSAGE_CONVERSION_TECHNIQUE_KO_CREER,
+					MESSAGE_CREER_CONVERSION_KO,
 					METHODE_CREER,
 					new IllegalStateException(
-							MESSAGE_CONVERSION_TECHNIQUE_KO_CREER));
+							MESSAGE_CREER_CONVERSION_KO));
 		}
 
-		/*
-		 * Positionne le message observable seulement
-		 * après préparation complète de la réponse.
-		 */
+		/* émet le message de création OK posé 
+		 * après la conversion réussie. */
 		this.message.set(MESSAGE_CREER_OK);
 
 		/*
 		 * Retourne l'OutputDTO final.
 		 */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -727,7 +784,7 @@ public class ProduitCuService implements ProduitICuService {
 		 * MESSAGE_SUCCES_RECHERCHE 
 		 * après préparation complète de la réponse.
 		 */
-		this.message.set(MESSAGE_SUCCES_RECHERCHE);
+		this.message.set(MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
 		/*
 		 * Retourne toujours une liste non null.
@@ -818,20 +875,20 @@ public class ProduitCuService implements ProduitICuService {
 		/*
 		 * Le parent demandé est une précondition observable.
 		 * Si pSousTypeProduit == null :
-		 * émet RECHERCHE_SOUSTYPEPRODUIT_NULL + LOG + RuntimeException.
+		 * émet RECHERCHE_PARENT_NULL + LOG + RuntimeException.
 		 */
 		if (pSousTypeProduit == null) {
 			
 			return this.traiterErreur(
-					RECHERCHE_SOUSTYPEPRODUIT_NULL,
+					RECHERCHE_PARENT_NULL,
 					METHODE_FIND_ALL_BY_PARENT,
-					new RuntimeException(RECHERCHE_SOUSTYPEPRODUIT_NULL));
+					new RuntimeException(RECHERCHE_PARENT_NULL));
 		}
 	
 		/*
 		 * Le libellé du parent ne doit pas être blank.
 		 * Si blank :
-		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * émet MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException.
 		 */
 		if (StringUtils.isBlank(pSousTypeProduit.getSousTypeProduit())) {
 			
@@ -863,7 +920,7 @@ public class ProduitCuService implements ProduitICuService {
 		/*
 		 * Refuse un parent absent ou non persistant.
 		 * Si parent null ou non persistant : 
-		 * émet un message MESSAGE_PAS_PARENT + LOG + IllegalStateException
+		 * émet un message MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdSousTypeProduit() == null) {
@@ -942,7 +999,7 @@ public class ProduitCuService implements ProduitICuService {
 		 * Le parent SousTypeProduit est une 
 		 * précondition observable du SERVICE UC.
 		 * Si le type parent ou le sous-type parent est blank :
-		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * émet MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException.
 		 */
 		if (StringUtils.isBlank(pInputDTO.getTypeProduit())
 				|| StringUtils.isBlank(pInputDTO.getSousTypeProduit())) {
@@ -1157,7 +1214,7 @@ public class ProduitCuService implements ProduitICuService {
 		/*
 		 * Le parent est une précondition observable du SERVICE UC.
 		 * Si le type parent ou le sous-type parent est blank :
-		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * émet MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException.
 		 */
 		if (StringUtils.isBlank(libelleType)
 				|| StringUtils.isBlank(libelleSousType)) {
@@ -1217,7 +1274,7 @@ public class ProduitCuService implements ProduitICuService {
 
 		/*
 		 * Si aucun parent persistant cohérent n'est retrouvé :
-		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * émet MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException.
 		 */
 		if (parentPersistant == null) {
 			
@@ -1481,7 +1538,7 @@ public class ProduitCuService implements ProduitICuService {
 		/*
 		 * Le parent est une précondition observable du SERVICE UC.
 		 * Si le type parent ou le sous-type parent est blank :
-		 * émet MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * émet MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException.
 		 */
 		if (StringUtils.isBlank(libelleType)
 				|| StringUtils.isBlank(libelleSousType)) {
@@ -1522,7 +1579,7 @@ public class ProduitCuService implements ProduitICuService {
 
 		/*
 		 * Le parent doit exister et être persistant :
-		 * sinon MESSAGE_PAS_PARENT + LOG + IllegalStateException.
+		 * sinon MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException.
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdSousTypeProduit() == null) {
@@ -1828,6 +1885,15 @@ public class ProduitCuService implements ProduitICuService {
 	 * <div>
 	 * <p>Recherche le {@link SousTypeProduit} parent persistant
 	 * correspondant au DTO d'entrée.</p>
+	 * <ul>
+	 * <li>Si pInputDTO est null ou sans libellé parent : retourne null.</li>
+	 * <li>Délègue au Gateway parent la recherche 
+	 * de la liste des parents possibles.</li>
+	 * <li>Si la liste des parents possible est null ou vide : 
+	 * retourne null.</li>
+	 * <li>retourne le parent (SousTypeProduit) ayant 
+	 * même libellé parent et même libellé grand-parent que pInputDTO.</li>
+	 * </ul>
 	 * </div>
 	 *
 	 * @param pInputDTO : ProduitDTO.InputDTO
@@ -1837,40 +1903,52 @@ public class ProduitCuService implements ProduitICuService {
 	private SousTypeProduit rechercherParentPersistant(
 			final ProduitDTO.InputDTO pInputDTO) throws Exception {
 
+		/* Si pInputDTO est null ou sans libellé parent : retourne null. */
 		if (pInputDTO == null
 				|| StringUtils.isBlank(pInputDTO.getSousTypeProduit())) {
 			return null;
 		}
 
-		final String libelleSousTypeRecherche = pInputDTO.getSousTypeProduit();
-		final String libelleTypeRecherche = pInputDTO.getTypeProduit();
+		final String libelleParent = pInputDTO.getSousTypeProduit();
+		final String libelleGrandParent = pInputDTO.getTypeProduit();
 
+		/* Délègue au Gateway parent la recherche 
+		 * de la liste des parents possibles. */
 		final List<SousTypeProduit> parents
-				= this.sousTypeProduitGateway.findByLibelle(libelleSousTypeRecherche);
+				= this.sousTypeProduitGateway.findByLibelle(libelleParent);
 
+		/* Si la liste des parents possible est null ou vide : 
+		 * retourne null. */
 		if (parents == null || parents.isEmpty()) {
 			return null;
 		}
 
+		/* examine chacun des parents possibles. */
 		for (final SousTypeProduit parent : parents) {
 
+			/* Si le parent parcouru est null, continue. */
 			if (parent == null) {
 				continue;
 			}
 
+			/* Si la parent parcouru n'est pas persistant (pas d'ID), 
+			 * continue. */
 			if (parent.getIdSousTypeProduit() == null) {
 				continue;
 			}
 
-			final String libelleSousType = parent.getSousTypeProduit();
-			final String libelleType = parent.getTypeProduit() != null
+			final String libelleParentParcouru = parent.getSousTypeProduit();
+			final String libelleGrandParentParcouru 
+				= parent.getTypeProduit() != null
 					? parent.getTypeProduit().getTypeProduit()
 					: null;
 
-			final boolean typeCompatible = StringUtils.isBlank(libelleTypeRecherche)
-					|| Strings.CI.equals(libelleTypeRecherche, libelleType);
+			final boolean typeCompatible 
+				= StringUtils.isBlank(libelleGrandParent)
+					|| Strings.CI.equals(
+							libelleGrandParent, libelleGrandParentParcouru);
 
-			if (Strings.CI.equals(libelleSousTypeRecherche, libelleSousType)
+			if (Strings.CI.equals(libelleParent, libelleParentParcouru)
 					&& typeCompatible) {
 				return parent;
 			}
@@ -2108,7 +2186,7 @@ public class ProduitCuService implements ProduitICuService {
 		if (pException instanceof RuntimeException) {
 			return Strings.CI.equals(
 					pMessage,
-					RECHERCHE_SOUSTYPEPRODUIT_NULL);
+					RECHERCHE_PARENT_NULL);
 		}
 	
 		return false;

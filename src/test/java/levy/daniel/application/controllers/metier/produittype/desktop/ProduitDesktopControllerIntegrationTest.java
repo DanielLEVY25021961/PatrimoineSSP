@@ -1220,7 +1220,7 @@ public class ProduitDesktopControllerIntegrationTest {
 	 * <p>findAllByParent(parent absent) : propagation brute de l'exception du service.</p>
 	 * <ul>
 	 * <li>propage l'exception du service</li>
-	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>ne modifie pas physiquement la base</li>
 	 * </ul>
 	 * </div>
@@ -1286,7 +1286,7 @@ public class ProduitDesktopControllerIntegrationTest {
 	 * <ul>
 	 * <li>ne bloque pas localement un parent blank</li>
 	 * <li>laisse le service lever l'exception</li>
-	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne exactement {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * </ul>
 	 * </div>
 	 */

@@ -368,13 +368,13 @@ public class SousTypeProduitWebControllerIntegrationTest {
 	 * <ul>
 	 * <li>propage {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>ne modifie pas physiquement la base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("creer(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("creer(parent absent) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testCreerParentAbsent() {
 
 		/* ===================== ARRANGE ===================== */
@@ -386,7 +386,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 				.isInstanceOf(IllegalStateException.class);
 
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
 		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_ABSENT, IT_STP_BETA))
 				.isZero();
@@ -1271,7 +1271,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 	 * <p>findAllByParent(parent absent) : le controller propage l'échec du service.</p>
 	 * <ul>
 	 * <li>propage {@link IllegalStateException}</li>
-	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>ne modifie pas physiquement la base</li>
 	 * </ul>
 	 * </div>
@@ -1288,10 +1288,10 @@ public class SousTypeProduitWebControllerIntegrationTest {
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> this.controller.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
 
 	} // __________________________________________________________________
@@ -1472,7 +1472,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 	 * <p>findByDTO(parent blank) : le controller délègue au service.</p>
 	 * <ul>
 	 * <li>propage {@link IllegalStateException}</li>
-	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>ne modifie pas physiquement la base</li>
 	 * </ul>
 	 * </div>
@@ -1490,7 +1490,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 				.isInstanceOf(IllegalStateException.class);
 
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
 
 	} // __________________________________________________________________
@@ -1845,7 +1845,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 	 * <p>update(parent absent) : le controller propage l'échec du service.</p>
 	 * <ul>
 	 * <li>propage {@link IllegalStateException}</li>
-	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>ne modifie pas physiquement la base</li>
 	 * </ul>
 	 * </div>
@@ -1861,10 +1861,10 @@ public class SousTypeProduitWebControllerIntegrationTest {
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> this.controller.update(input))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
 		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_ABSENT, IT_STP_ALPHA))
 				.isZero();
@@ -2066,7 +2066,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 	 * <p>delete(parent absent) : le controller propage l'échec du service.</p>
 	 * <ul>
 	 * <li>propage {@link IllegalStateException}</li>
-	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne exactement {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>ne modifie pas physiquement la base</li>
 	 * </ul>
 	 * </div>
@@ -2082,10 +2082,10 @@ public class SousTypeProduitWebControllerIntegrationTest {
 		/* =================== ACT & ASSERT ================== */
 		assertThatThrownBy(() -> this.controller.delete(input))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline);
 		assertThat(this.compterSousTypeProduitParCoupleEnBase(IT_TP_PARENT_ABSENT, IT_STP_ALPHA))
 				.isZero();

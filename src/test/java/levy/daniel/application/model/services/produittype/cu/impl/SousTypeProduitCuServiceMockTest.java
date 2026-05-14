@@ -188,10 +188,10 @@ public class SousTypeProduitCuServiceMockTest {
 		= "liste vide + MESSAGE_RECHERCHE_VIDE";
 	
 	/**
-	 * "IllegalStateException + MESSAGE_PAS_PARENT"
+	 * "IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String ILLEGAL_STATE_EXCEPTION_MESSAGE 
-		= "IllegalStateException + MESSAGE_PAS_PARENT";
+		= "IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 	
 	/**
 	 * "null + MESSAGE_RECHERCHE_VIDE"
@@ -275,22 +275,22 @@ public class SousTypeProduitCuServiceMockTest {
 	public static final String TAG_GET_MESSAGE = "getMessage";
 
 	/**
-	 * "creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway"
+	 * "creer(null) : MESSAGE_CREER_NULL_KO + aucune interaction Gateway"
 	 */
 	public static final String DISPLAY_NAME_CREER_NULL
-			= "creer(null) : MESSAGE_CREER_NULL "
+			= "creer(null) : MESSAGE_CREER_NULL_KO "
 					+ "+ aucune interaction Gateway";
 	
 	/**
-	 * "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK"
+	 * "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_LIBELLE_BLANK_KO"
 	 */
 	public static final String DISPLAY_NAME_CREER_BLANK
 			= "creer(blank) : ExceptionParametreBlank "
-					+ "+ MESSAGE_CREER_NOM_BLANK";
+					+ "+ MESSAGE_CREER_LIBELLE_BLANK_KO";
 	
 	/**
 	 * "creer(libellé parent blank) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_CREER_PARENT_BLANK
 			= "creer(libellé parent blank) : "
@@ -336,15 +336,15 @@ public class SousTypeProduitCuServiceMockTest {
 					+ FALLBACK;
 	
 	/**
-	 * "creer(parent absent) : IllegalStateException + MESSAGE_PAS_PARENT"
+	 * "creer(parent absent) : IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_CREER_PARENT_ABSENT
 			= "creer(parent absent) : IllegalStateException "
-					+ "+ MESSAGE_PAS_PARENT";
+					+ "+ MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 	
 	/**
 	 * "creer(parent non persistant) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_CREER_PARENT_NON_PERSISTANT
 			= "creer(parent non persistant) : "
@@ -368,11 +368,11 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "creer(gateway.creer retourne null) :
-	 * MESSAGE_CREATION_TECHNIQUE_KO_CREER"
+	 * MESSAGE_CREER_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_CREER_GATEWAY_CREER_RETOUR_NULL
 			= "creer(gateway.creer retourne null) : "
-					+ "MESSAGE_CREATION_TECHNIQUE_KO_CREER";
+					+ "MESSAGE_CREER_GATEWAY_KO";
 	
 	/**
 	 * "creer(conversion OutputDTO KO avec message) :
@@ -728,15 +728,15 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findAllByParent(null) :
-	 * IllegalStateException + RECHERCHE_TYPEPRODUIT_NULL"
+	 * IllegalStateException + RECHERCHE_PARENT_NULL"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL
 			= "findAllByParent(null) : "
-					+ "IllegalStateException + RECHERCHE_TYPEPRODUIT_NULL";
+					+ "IllegalStateException + RECHERCHE_PARENT_NULL";
 	
 	/**
 	 * "findAllByParent(libellé parent blank) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK
 			= "findAllByParent(libellé parent blank) : "
@@ -760,7 +760,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findAllByParent(parent absent) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_ABSENT
 			= "findAllByParent(parent absent) : "
@@ -768,7 +768,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findAllByParent(parent non persistant) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_NON_PERSISTANT
 			= "findAllByParent(parent non persistant) : "
@@ -840,7 +840,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findByDTO(libellé parent blank) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_DTO_PARENT_BLANK
 			= "findByDTO(libellé parent blank) : "
@@ -1032,7 +1032,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "update(libellé parent blank) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_UPDATE_PARENT_BLANK
 			= "update(libellé parent blank) : "
@@ -1056,7 +1056,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "update(parent absent) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_UPDATE_PARENT_ABSENT
 			= "update(parent absent) : "
@@ -1064,7 +1064,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "update(parent non persistant) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_UPDATE_PARENT_NON_PERSISTANT
 			= "update(parent non persistant) : "
@@ -1192,7 +1192,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "delete(libellé parent blank) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_DELETE_PARENT_BLANK
 			= "delete(libellé parent blank) : "
@@ -1216,7 +1216,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "delete(parent absent) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_DELETE_PARENT_ABSENT
 			= "delete(parent absent) : "
@@ -1224,7 +1224,7 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "delete(parent non persistant) :
-	 * IllegalStateException + MESSAGE_PAS_PARENT"
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_DELETE_PARENT_NON_PERSISTANT
 			= "delete(parent non persistant) : "
@@ -1344,11 +1344,11 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "getMessage(après erreur locale) :
-	 * MESSAGE_CREER_NULL"
+	 * MESSAGE_CREER_NULL_KO"
 	 */
 	public static final String DISPLAY_NAME_GET_MESSAGE_APRES_ERREUR_LOCALE
 			= "getMessage(après erreur locale) : "
-					+ "MESSAGE_CREER_NULL";
+					+ "MESSAGE_CREER_NULL_KO";
 	
 	/**
 	 * "getMessage(après count 0) :
@@ -1402,7 +1402,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>retourne {@code null} ;</li>
 	 * <li>positionne le message utilisateur
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -1440,7 +1440,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(retour).isNull();
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -1455,7 +1455,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>jette une {@link ExceptionParametreBlank} ;</li>
 	 * <li>émet le message
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NOM_BLANK} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_LIBELLE_BLANK_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway objet métier
 	 * ni avec le Gateway parent.</li>
 	 * </ul>
@@ -1488,15 +1488,15 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une ExceptionParametreBlank ;
-		 * - émet le message MESSAGE_CREER_NOM_BLANK
+		 * - émet le message MESSAGE_CREER_LIBELLE_BLANK_KO
 		 *   contractuel du PORT UC.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(ExceptionParametreBlank.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 
 		/* Garantit qu'aucun Gateway mocké n'a été appelé. */
 		verifyNoInteractions(gateway);
@@ -1513,7 +1513,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>contrôle localement le libellé du parent ;</li>
 	 * <li>jette une {@link IllegalStateException} ;</li>
 	 * <li>émet le message
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -1547,14 +1547,14 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une IllegalStateException ;
-		 * - émet le message MESSAGE_PAS_PARENT.
+		 * - émet le message MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* Garantit qu'aucun Gateway mocké n'a été appelé. */
 		verifyNoInteractions(gateway);
@@ -1575,7 +1575,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique levée par
 	 * {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREER_DOUBLON_KO}
 	 * + message technique ;</li>
 	 * <li>ne cherche jamais le parent ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
@@ -1624,11 +1624,11 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER + MESSAGE_GATEWAY.
+		 * PREFIX_MESSAGE_CREER_DOUBLON_KO + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_CREER_DOUBLON_KO
 						+ MESSAGE_GATEWAY);
 
 		/* Garantit que la création et la recherche du parent
@@ -1653,7 +1653,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par
 	 * {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREER_DOUBLON_KO}
 	 * + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne cherche jamais le parent ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
@@ -1704,7 +1704,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_CREER_DOUBLON_KO
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit que la création et la recherche du parent
@@ -1729,7 +1729,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * et le même libellé ;</li>
 	 * <li>jette une {@link ExceptionDoublon} ;</li>
 	 * <li>émet le message
-	 * {@link SousTypeProduitICuService#MESSAGE_DOUBLON} + libellé ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé ;</li>
 	 * <li>ne cherche jamais le parent ;</li>
 	 * <li>ne délègue jamais la création au Gateway SousTypeProduit.</li>
 	 * </ul>
@@ -1778,15 +1778,15 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une ExceptionDoublon ;
-		 * - émet le message MESSAGE_DOUBLON + libellé.
+		 * - émet le message MESSAGE_CREER_DOUBLON_KO + libellé.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(ExceptionDoublon.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_DOUBLON
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_DOUBLON_KO
 						+ OUTILLAGE);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_DOUBLON
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_DOUBLON_KO
 						+ OUTILLAGE);
 
 		/* Garantit que le contrôle d'unicité a été exécuté,
@@ -1810,7 +1810,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique levée par
 	 * {@code typeProduitGateway.findByLibelle(...)} ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER_KO}
 	 * + message technique ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
@@ -1862,11 +1862,11 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER + MESSAGE_GATEWAY.
+		 * PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER_KO + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER_KO
 						+ MESSAGE_GATEWAY);
 
 		/* Garantit que la création n'est jamais tentée
@@ -1889,7 +1889,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par
 	 * {@code typeProduitGateway.findByLibelle(...)} ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER_KO}
 	 * + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
@@ -1944,7 +1944,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER_KO
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit que la création n'est jamais tentée
@@ -1967,7 +1967,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>jette une {@link IllegalStateException} si le parent
 	 * est absent du stockage ;</li>
 	 * <li>émet le message
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
 	 * </div>
@@ -2008,14 +2008,14 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ACT - ASSERT */
 		/* Garantit que l'absence de parent est refusée
-		 * avec le message utilisateur MESSAGE_PAS_PARENT.
+		 * avec le message utilisateur MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* Garantit que la création n'est jamais tentée
 		 * lorsque le parent est absent.
@@ -2037,7 +2037,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>jette une {@link IllegalStateException} si le parent retrouvé
 	 * ne porte pas d'identifiant persistant ;</li>
 	 * <li>émet le message
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
 	 * </ul>
 	 * </div>
@@ -2085,10 +2085,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* Garantit que la création n'est jamais tentée
 		 * lorsque le parent n'est pas persistant.
@@ -2111,7 +2111,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
 	 * <li>propage l'exception levée par {@code gateway.creer(...)} ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREER_GATEWAY_KO}
 	 * + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -2170,7 +2170,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_CREER_GATEWAY_KO
 						+ MESSAGE_GATEWAY);
 
 		/* Garantit que le scénario a atteint la création Gateway. */
@@ -2193,7 +2193,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception sans message levée par
 	 * {@code gateway.creer(...)} ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREER_GATEWAY_KO}
 	 * + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -2251,7 +2251,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_CREER_GATEWAY_KO
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit que le scénario a atteint la création Gateway. */
@@ -2273,7 +2273,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>jette une {@link IllegalStateException} si le Gateway
 	 * ne retourne aucun objet créé ;</li>
 	 * <li>émet le message
-	 * {@link SousTypeProduitICuService#MESSAGE_CREATION_TECHNIQUE_KO_CREER}.</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_GATEWAY_KO}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -2323,11 +2323,11 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage(
-						SousTypeProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+						SousTypeProduitICuService.MESSAGE_CREER_GATEWAY_KO);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+						SousTypeProduitICuService.MESSAGE_CREER_GATEWAY_KO);
 
 		/* Garantit que le Gateway a bien été sollicité jusqu'à la création,
 		 * puis que l'anomalie null est traitée côté UC.
@@ -2351,7 +2351,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * {@link OutputDTO} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREER_CONVERSION_KO}
 	 * + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -2413,7 +2413,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_CREER_CONVERSION_KO
 						+ MESSAGE_GATEWAY_BIS);
 
 		/* Garantit que le scénario a atteint la création Gateway
@@ -2438,7 +2438,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * {@link OutputDTO} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER}
+	 * {@link SousTypeProduitICuService#PREFIX_MESSAGE_CREER_CONVERSION_KO}
 	 * + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -2499,7 +2499,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+						SousTypeProduitICuService.PREFIX_MESSAGE_CREER_CONVERSION_KO
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit que le scénario a atteint la création Gateway
@@ -5146,7 +5146,7 @@ public class SousTypeProduitCuServiceMockTest {
 
 		assertThat(message)
 				.isEqualTo(
-						SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
 		/* Garantit que la recherche exacte a bien été déléguée
 		 * et que le Gateway TypeProduit reste inutilisé.
@@ -5910,7 +5910,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#RECHERCHE_TYPEPRODUIT_NULL} ;</li>
+	 * {@link SousTypeProduitICuService#RECHERCHE_PARENT_NULL} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -5937,16 +5937,16 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.findAllByParent(null) :
 		 * - lève IllegalStateException ;
-		 * - émet le message RECHERCHE_TYPEPRODUIT_NULL contractuel ;
+		 * - émet le message RECHERCHE_PARENT_NULL contractuel ;
 		 * - ne sollicite aucun Gateway.
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(null))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+				.hasMessage(SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.RECHERCHE_TYPEPRODUIT_NULL);
+						SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -5961,7 +5961,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -5997,15 +5997,15 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.findAllByParent(parentDto) :
 		 * - lève IllegalStateException ;
-		 * - émet le message MESSAGE_PAS_PARENT ;
+		 * - émet le message MESSAGE_CREER_PARENT_NON_PERSISTANT_KO ;
 		 * - ne sollicite aucun Gateway.
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -6172,7 +6172,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>lève une {@link IllegalStateException} si le parent
 	 * est absent du stockage ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -6210,14 +6210,14 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ACT - ASSERT */
 		/* Garantit que l'absence de parent est refusée
-		 * avec le message utilisateur MESSAGE_PAS_PARENT.
+		 * avec le message utilisateur MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* Garantit que la recherche des objets métier enfants
 		 * n'est jamais tentée lorsque le parent est absent.
@@ -6237,7 +6237,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>lève une {@link IllegalStateException} si le parent retrouvé
 	 * ne porte pas d'identifiant persistant ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -6283,10 +6283,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* Garantit que la recherche des objets métier enfants
 		 * n'est jamais tentée lorsque le parent n'est pas persistant.
@@ -6989,7 +6989,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>teste un DTO dont le parent a un libellé blank ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -7025,10 +7025,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.findByDTO(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -8008,7 +8008,9 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
 		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(
+						SousTypeProduitICuService
+						.MESSAGE_FINDBYDTO_SUCCES_RECHERCHE);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verify(gateway, times(1)).findAllByParent(parentPersistant);
@@ -8692,7 +8694,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>refuse ce parent dont le libellé est blank ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -8726,10 +8728,10 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit que le parent au libellé blank est refusé avant toute délégation. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -8879,7 +8881,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>teste le cas où le parent est absent du stockage ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -8918,10 +8920,10 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit que l'absence du parent bloque la modification. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
@@ -8938,7 +8940,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>teste le cas où le parent retrouvé ne porte pas d'identifiant ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -8980,10 +8982,10 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit qu'un parent non persistant bloque la modification. */
 		assertThatThrownBy(() -> service.update(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
@@ -10111,7 +10113,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>refuse ce parent dont le libellé est blank ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -10145,10 +10147,10 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit que le parent au libellé blank est refusé avant toute délégation. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -10298,7 +10300,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>teste le cas où le parent est absent du stockage ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -10337,10 +10339,10 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit que l'absence du parent bloque la suppression. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
@@ -10357,7 +10359,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>teste le cas où le parent retrouvé ne porte pas d'identifiant ;</li>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_PAS_PARENT} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -10399,10 +10401,10 @@ public class SousTypeProduitCuServiceMockTest {
 		/* Garantit qu'un parent non persistant bloque la suppression. */
 		assertThatThrownBy(() -> service.delete(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		verify(typeProduitGateway, times(1)).findByLibelle(BAZAR);
 		verifyNoInteractions(gateway);
@@ -11421,7 +11423,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>lit le message positionné par une opération UC précédente ;</li>
 	 * <li>retourne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL}
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_NULL_KO}
 	 * après {@code creer(null)} ;</li>
 	 * <li>ne recalcule pas le message ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
@@ -11460,7 +11462,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * par creer(null), sans recalcul ni transformation.
 		 */
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		/* Garantit que creer(null) puis getMessage() restent locaux
 		 * et ne sollicitent jamais les Gateways.
@@ -11683,7 +11685,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 * le message local produit par creer(null).
 		 */
 		assertThat(messageErreur)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		/* Garantit que la seconde opération retourne son comptage
 		 * et remplace le message observable par MESSAGE_RECHERCHE_OK.

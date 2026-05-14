@@ -1,5 +1,5 @@
 /* ********************************************************************* */
-/* ******************** ADAPTER SERVICE CU ***************************** */
+/* *************** ADAPTER SERVICE METIER USE CASE (CU) **************** */
 /* ********************************************************************* */
 package levy.daniel.application.model.services.produittype.cu.impl;
 
@@ -180,65 +180,79 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	public TypeProduitDTO.OutputDTO creer(
 			final TypeProduitDTO.InputDTO pInputDTO) throws Exception {
 
-		/* REGLES METIER. */
 		/*
-		 * ERREUR UTILISATEUR BENIGNE :
 		 * si pInputDTO == null : 
 		 * aucun traitement, aucun LOG, aucune Exception.
-		 * Retourne null avec un message utilisateur.
+		 * Retourne null avec un message utilisateur MESSAGE_CREER_NULL_KO.
 		 */
 		if (pInputDTO == null) {
-			this.message.set(MESSAGE_CREER_NULL);
+			this.message.set(MESSAGE_CREER_NULL_KO);
 			return null;
 		}
 
 		/*
-		 * Récupère le libellé dans l'InputDTO.
+		 * Récupère le libellé de l'objet métier dans l'InputDTO.
 		 */
 		final String libelle = pInputDTO.getTypeProduit();
 
 		/*
-		 * si le libellé dans le DTO est blank : 
-		 * émet un Message, LOG et jette une Exception applicative 
-		 * ExceptionParametreBlank.
+		 * si le libellé dans l'InputDTO pInputDTO est blank : 
+		 * - émet un Message MESSAGE_CREER_LIBELLE_BLANK_KO ; 
+		 * - LOG ;
+		 * - jette une Exception applicative ExceptionParametreBlank.
 		 */
 		if (StringUtils.isBlank(libelle)) {
+			
 			return this.traiterErreur(
-					MESSAGE_CREER_NOM_BLANK,
+					MESSAGE_CREER_LIBELLE_BLANK_KO,
 					METHODE_CREER,
-					new ExceptionParametreBlank(MESSAGE_CREER_NOM_BLANK));
+					new ExceptionParametreBlank(
+							MESSAGE_CREER_LIBELLE_BLANK_KO));
 		}
 
 		/*
-		 * Vérifie le doublon fonctionnel.
-		 * Toute anomalie technique lors de ce contrôle
-		 * est transformée en message utilisateur rationalisé.
+		 * Vérifie que creer(...) ne provoquera pas un doublon 
+		 * dans le stockage.
 		 */
 		final boolean doublon;
 		
 		try {
 			
+			/* vérifie que pInputDTO ne créera pas de doublon. */
 			doublon = this.isDoublon(pInputDTO);
 			
 		} catch (final Exception e) {
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par this.isDoublon(pInputDTO) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
+			/* Si isDoublon(pInputDTO) jette Exception : 
+			 * - crée un message sécurisé basé sur 
+			 * PREFIX_MESSAGE_CREER_DOUBLON_KO ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception de isDoublon(pInputDTO). */
 			return this.traiterErreur(
-					PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER + messageSecurise,
+					PREFIX_MESSAGE_CREER_DOUBLON_KO 
+					+ messageSecurise,
 					METHODE_CREER,
 					e);
 		}
 
 		/*
-		 * si le DTO représente un doublon : 
-		 * émet un message, LOG et jette une Exception applicative 
-		 * ExceptionDoublon.
+		 * si pInputDTO représente un doublon : 
+		 * - émet un message basé sur MESSAGE_CREER_DOUBLON_KO ; 
+		 * - LOG ; 
+		 * - jette une Exception applicative ExceptionDoublon.
 		 */
 		if (doublon) {
 			
-			final String messageDoublon = MESSAGE_DOUBLON + libelle;
+			final String messageDoublon = MESSAGE_CREER_DOUBLON_KO + libelle;
 			
 			return this.traiterErreur(
 					messageDoublon,
@@ -247,8 +261,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		/*
-		 * Convertit l'InputDTO en objet métier
-		 * puis délègue la création au Gateway.
+		 * Convertit l'InputDTO en objet métier.
 		 */
 		final TypeProduit typeProduit 
 			= this.convertirInputDTOEnMetier(pInputDTO);
@@ -257,75 +270,110 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		
 		try {
 			
-			/* appelle le SERVICE GATEWAY pour l'opération 
-			 * sur le stockage et récupère l'objet métier 
-			 * retourné par GATEWAY. */
+			/* délègue au SERVICE GATEWAY objet métier l'opération 
+			 * de création dans le stockage et récupère l'objet métier 
+			 * retourné par le GATEWAY. */
 			cree = this.gateway.creer(typeProduit);
 			
 		} catch (final Exception e) {
 			
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * gateway.creer(...) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
+			/* Si gateway.creer(...) jette Exception : 
+			 * - crée un message sécurisé basé sur 
+			 * PREFIX_MESSAGE_CREER_GATEWAY_KO ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception de gateway.creer(typeProduit). */
 			return this.traiterErreur(
-					PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER + messageSecurise,
+					PREFIX_MESSAGE_CREER_GATEWAY_KO 
+					+ messageSecurise,
 					METHODE_CREER,
 					e);
 		}
 
 		/*
-		 * Sécurise le contrat observable du UC :
-		 * le Gateway ne doit pas conduire à un succès
-		 * si aucun objet créé n'est réellement disponible.
+		 * Si gateway.creer(...) retourne null :
+		 * - alimente message avec MESSAGE_CREER_GATEWAY_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException.
 		 */
 		if (cree == null) {
 			
 			return this.traiterErreur(
-					MESSAGE_CREATION_TECHNIQUE_KO_CREER,
+					MESSAGE_CREER_GATEWAY_KO,
 					METHODE_CREER,
 					new IllegalStateException(
-							MESSAGE_CREATION_TECHNIQUE_KO_CREER));
+							MESSAGE_CREER_GATEWAY_KO));
 		}
 
 		/*
-		 * Prépare la réponse utilisateur finale.
-		 * Le message de succès n'est posé qu'après conversion réussie.
+		 * Prépare la conversion finale en OutputDTO.
+		 * Le message utilisateur de succès n'est positionné 
+		 * qu'après la conversion réussie.
 		 */
 		final TypeProduitDTO.OutputDTO dto;
 		
 		try {
 			
-			/* convertit l'objet métier -> OutputDTO. */
+			/* Convertit l'objet métier créé en OutputDTO. */
 			dto = ConvertisseurMetierToOutputDTOTypeProduit.convert(cree);
 			
 		} catch (final Exception e) {
 			
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * ConvertisseurMetierToOutputDTOTypeProduit.convert(cree)
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
+			/* Si ConvertisseurMetierToOutputDTOTypeProduit.convert(cree) 
+			 * jette Exception : 
+			 * - crée un message sécurisé basé sur 
+			 * PREFIX_MESSAGE_CREER_CONVERSION_KO;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception de 
+			 * ConvertisseurMetierToOutputDTOTypeProduit.convert(cree). */
 			return this.traiterErreur(
-					PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER + messageSecurise,
+					PREFIX_MESSAGE_CREER_CONVERSION_KO 
+					+ messageSecurise,
 					METHODE_CREER,
 					e);
 		}
 
+		/* Si ConvertisseurMetierToOutputDTOTypeProduit.convert(cree) 
+		 * retourne null : 
+		 * - alimente message avec MESSAGE_CREER_CONVERSION_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException. */
 		if (dto == null) {
 			
 			return this.traiterErreur(
-					MESSAGE_CONVERSION_TECHNIQUE_KO_CREER,
+					MESSAGE_CREER_CONVERSION_KO,
 					METHODE_CREER,
 					new IllegalStateException(
-							MESSAGE_CONVERSION_TECHNIQUE_KO_CREER));
+							MESSAGE_CREER_CONVERSION_KO));
 		}
 
-		/* émet le message de création OK. */
+		/* émet le message de création OK posé 
+		 * après la conversion réussie. */
 		this.message.set(MESSAGE_CREER_OK);
 
 		/* retourne l'OutputDTO. */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -333,10 +381,12 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public List<TypeProduitDTO.OutputDTO> rechercherTous() throws Exception {
+	public List<TypeProduitDTO.OutputDTO> rechercherTous() 
+			throws Exception {
 
 		/*
-		 * Délègue au GATEWAY la recherche exhaustive dans le stockage.
+		 * Délègue au GATEWAY la recherche exhaustive dans le stockage 
+		 * de tous les objets métier.
 		 * Toute anomalie technique de recherche est transformée
 		 * en message utilisateur rationalisé côté UC.
 		 */
@@ -344,34 +394,50 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		
 		try {
 			
+			/* Délègue au GATEWAY la recherche exhaustive 
+			 * dans le stockage de tous les objets métier. */
 			records = this.gateway.rechercherTous();
 			
 		} catch (final Exception e) {
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par le Gateway 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
+			/* Si gateway.rechercherTous() jette Exception : 
+			 * - crée un message sécurisé ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception du Gateway. */
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO 
+					+ TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS,
 					e);
 		}
 
 		/*
-		 * Sécurise le contrat observable du UC :
-		 * le stockage ne doit pas retourner null.
+		 * Si gateway.rechercherTous() retourne null :
+		 * - alimente message avec MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO ;
+		 * - LOG ;
+		 * - jette une ExceptionStockageVide.
 		 */
 		if (records == null) {
+			
 			return this.traiterErreur(
-					MESSAGE_STOCKAGE_NULL,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO,
 					METHODE_RECHERCHER_TOUS,
-					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+					new ExceptionStockageVide(
+							MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO));
 		}
 
 		/*
-		 * Sécurise la réponse côté UC :
-		 * retrait des nulls, tri métier,
-		 * puis conversion en OutputDTO avec dédoublonnage.
+		 * - retire les eventuels nulls de la liste d'objets métier ;
+		 * - trie la liste d'objets métier
 		 */
 		final List<TypeProduit> recordsNonNullTries 
 			= this.filtrerEtTrier(records);
@@ -380,21 +446,28 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		
 		try {
 			
+			/* convertit la liste d'objets métier en liste d'OutputDTO. */
 			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
 			
 		} catch (final Exception e) {
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * convertirEtDedoublonner(recordsNonNullTries) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS,
 					e);
 		}
 
 		/*
-		 * Le message observable n'est positionné
+		 * Le message utilisateur n'est alimenté
 		 * qu'après préparation complète de la réponse utilisateur.
 		 */
 		if (dtos.isEmpty()) {
@@ -435,7 +508,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
@@ -493,7 +566,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
@@ -555,7 +628,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_PAGE,
 					e);
 		}
@@ -613,7 +686,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_PAGE,
 					e);
 		}
@@ -669,7 +742,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
@@ -703,7 +776,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
@@ -714,7 +787,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 * Si dto == null : émet un meassage + LOG + IllegalStateException
 		 */
 		if (dto == null) {
-			final String messageTechnique = KO_TECHNIQUE_RECHERCHE
+			final String messageTechnique = MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 					+ TIRET_ESPACE
 					+ MSG_ERREUR_NON_SPECIFIEE;
 			
@@ -784,7 +857,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					e);
 		}
@@ -827,7 +900,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					e);
 		}
@@ -916,7 +989,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_ID,
 					e);
 		}
@@ -950,7 +1023,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_ID,
 					e);
 		}
@@ -962,7 +1035,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 * émet un message + LOG + IllegalStateException.
 		 */
 		if (dto == null) {
-			final String messageTechnique = KO_TECHNIQUE_RECHERCHE
+			final String messageTechnique = MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 					+ TIRET_ESPACE
 					+ MSG_ERREUR_NON_SPECIFIEE;
 			
@@ -1040,7 +1113,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_UPDATE,
 					e);
 		}
@@ -1238,7 +1311,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 							+ TIRET_ESPACE
 							+ messageSecurise,
 					METHODE_DELETE,
@@ -1339,7 +1412,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 							+ TIRET_ESPACE
 							+ messageSecurise,
 					METHODE_COUNT,
@@ -1354,7 +1427,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 */
 		if (resultat < 0L) {
 			
-			final String messageTechnique = KO_TECHNIQUE_RECHERCHE
+			final String messageTechnique = MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 					+ TIRET_ESPACE
 					+ "comptage négatif incohérent : "
 					+ resultat;
@@ -1396,14 +1469,16 @@ public class TypeProduitCuService implements TypeProduitICuService {
 
 
 	
-	// ========================== METHODES PRIVEES =========================
+	// ========================= METHODES PRIVEES =========================
 
 	
 	
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Détermine si un Objet métier existe déjà dans le stockage.</p>
+	 * Détermine si un Objet métier avec un même libellé 
+	 * existe déjà dans le stockage via 
+	 * {@code gateway.findByLibelle(...)}.</p>
 	 * <p>retourne true si c'est le cas.</p>
 	 * </div>
 	 *
@@ -1554,7 +1629,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	 * <div>
 	 * <p>Centralise le traitement des erreurs :
 	 * <ul>
-	 * <li>alimente le message utilisateur ; </li>
+	 * <li>alimente le message utilisateur {@link #message} ; </li>
 	 * <li>ajoute le nom de la méthode appelante au message de l'utilisateur 
 	 * pour former le message visible dans les logs ; </li>
 	 * <li>journalise selon la nature de l'erreur ; </li>
@@ -1588,16 +1663,19 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		this.message.set(messageFinal);
 
 		final String messagePourLog = pMethode + TIRET_ESPACE + messageFinal;
+		
 		/*
 		 * Une erreur métier attendue ne nécessite pas
 		 * de pile complète dans les logs :
 		 * un DEBUG avec le message suffit.
 		 */
 		if (this.isErreurMetierAttendue(messageFinal, pE)) {
+			
 			if (LOG.isDebugEnabled()) {
 				
 				LOG.debug(messagePourLog);
 			}
+			
 		} else if (LOG.isErrorEnabled()) {
 			/*
 			 * Une erreur technique ou inattendue

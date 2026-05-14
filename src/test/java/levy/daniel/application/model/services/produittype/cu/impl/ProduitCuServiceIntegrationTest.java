@@ -1077,7 +1077,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * <p>findAllByParent(null) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève une exception ;</li>
-	 * <li>positionne {@link ProduitICuService#RECHERCHE_SOUSTYPEPRODUIT_NULL}.</li>
+	 * <li>positionne {@link ProduitICuService#RECHERCHE_PARENT_NULL}.</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -1089,7 +1089,7 @@ public class ProduitCuServiceIntegrationTest {
 				.isInstanceOf(RuntimeException.class);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.RECHERCHE_SOUSTYPEPRODUIT_NULL);
+				.isEqualTo(ProduitICuService.RECHERCHE_PARENT_NULL);
 
 	} // __________________________________________________________________
 
@@ -1100,7 +1100,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * <p>findAllByParent(parent absent) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève une exception ;</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}.</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}.</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -1233,7 +1233,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * <p>findByDTO(parent blank) : violation de contrat.</p>
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * <li>positionne {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * </ul>
 	 * </div>
 	 */
@@ -1333,7 +1333,7 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(dto.getSousTypeProduit()).isEqualTo(IT_STP_PARENT_A);
 		assertThat(dto.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(ProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
 	} // __________________________________________________________________	
 
@@ -1543,7 +1543,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
@@ -1551,7 +1551,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("update(parent blank) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testUpdateParentBlank() throws Exception {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -1593,7 +1593,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
@@ -1601,7 +1601,7 @@ public class ProduitCuServiceIntegrationTest {
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("update(parent absent) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testUpdateParentAbsent() throws Exception {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -1865,13 +1865,13 @@ public class ProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(parent blank) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("delete(parent blank) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testDeleteParentBlank() {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
@@ -1906,13 +1906,13 @@ public class ProduitCuServiceIntegrationTest {
 	 * <ul>
 	 * <li>lève {@link IllegalStateException}</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_PAS_PARENT}</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
 	 * <li>n'écrit rien en base</li>
 	 * </ul>
 	 * </div>
 	 */
 	@Test
-	@DisplayName("delete(parent absent) : IllegalStateException + message exact MESSAGE_PAS_PARENT + aucune écriture BD")
+	@DisplayName("delete(parent absent) : IllegalStateException + message exact MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune écriture BD")
 	public void testDeleteParentAbsent() {
 
 		final Long nombreAvant = this.jdbcTemplate.queryForObject(
