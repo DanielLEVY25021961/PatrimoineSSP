@@ -276,6 +276,11 @@ public class TypeProduitCuServiceIntegrationTest {
 	public static final String TAG_CREER = "cu-it-Creer";
 	
 	/**
+	 * "cu-it-RechercherTous"
+	 */
+	public static final String TAG_RECHERCHERTOUS ="cu-it-RechercherTous"; 
+	
+	/**
 	 * "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé"
 	 */
 	public static final String DN_CREER_NULL
@@ -710,7 +715,7 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <li>retourne un {@link OutputDTO} persistant ;</li>
 	 * <li>émet un message
 	 * {@link TypeProduitICuService#MESSAGE_CREER_OK}</li>
-	 * <li>rend la donnée retrouvable dans le stockage et via le SERVICE UC ;</li>
+	 * <li>rend la donnée retrouvable dans le stockage via le SERVICE UC ;</li>
 	 * <li>ne supprime ni n'altère les données seedées.</li>
 	 * </ul>
 	 * </div>
@@ -803,7 +808,8 @@ public class TypeProduitCuServiceIntegrationTest {
 		/* Garantit que l'objet nouvellement créé
 		 * est bien retrouvable par identifiant via le SERVICE UC.
 		 */
-		final OutputDTO trouveParId = this.service.findById(cree.getIdTypeProduit());
+		final OutputDTO trouveParId 
+			= this.service.findById(cree.getIdTypeProduit());
 
 		assertThat(trouveParId).isNotNull();
 		assertThat(trouveParId.getIdTypeProduit())
@@ -825,9 +831,10 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * </div>
 	 *
 	 * @throws Exception
-	 */
-	@Test
+	 */	
+	@Tag(TAG_RECHERCHERTOUS)
 	@DisplayName("rechercherTous() : retourne une liste non nulle contenant les créations du test")
+	@Test
 	public void testRechercherTous() throws Exception {
 
 		this.service.creer(new TypeProduitDTO.InputDTO(IT_GAMMA));

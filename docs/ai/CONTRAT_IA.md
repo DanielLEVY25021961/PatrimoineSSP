@@ -5357,3 +5357,105 @@ Les constantes `MESSAGE_CREER_xxx` et `PREFIX_MESSAGE_CREER_xxx` doivent être d
 
 L'IA ne doit pas inventer, renommer ou déplacer ces constantes sans lien direct avec une branche relue du code.
 
+## 40) RT-RECOPIE-REFERENCE-VALIDEE-01 — Référence validée d'abord, recopie maximale, adaptation minimale
+
+### 40.1 Origine de la règle
+
+Cette règle sacralise une correction de méthode de travail : l'IA ne doit pas recréer un bloc, un commentaire ou un formalisme lorsqu'une référence validée existe déjà et peut être recopiée.
+
+L'erreur à empêcher est la suivante :
+
+- relire une référence validée ;
+- constater qu'elle contient déjà la structure attendue ;
+- puis malgré tout réécrire des commentaires, des annotations, un ordre de tests ou des assertions différents, moins homogènes et moins fiables.
+
+Cette erreur coûte du temps, dégrade la cohérence du projet et augmente le risque d'introduire des divergences inutiles.
+
+### 40.2 Règle générale obligatoire
+
+Avant de coder, corriger ou auditer un bloc comparable, l'IA doit d'abord rechercher puis relire la référence validée existante du même niveau.
+
+Si une méthode, un bloc de tests, une Javadoc, un commentaire, une structure `ARRANGE / ACT / ASSERT`, un ordre de cas, une constante, une annotation ou une assertion peut être recopié depuis cette référence, l'IA doit le recopier.
+
+L'IA ne doit adapter que ce que l'objet métier cible impose réellement.
+
+Le réflexe obligatoire est :
+
+```text
+référence validée d'abord ;
+recopie maximale ;
+adaptation minimale.
+```
+
+### 40.3 Ce qui doit être recopié
+
+Lorsque le métier cible le permet, l'IA doit recopier depuis la référence validée :
+
+- l'ordre des cas de test ;
+- les noms de tests ;
+- les annotations `@Tag`, `@DisplayName`, `@Test` ;
+- les constantes `TAG_...`, `DN_...` ou `DISPLAY_NAME_...` ;
+- les Javadocs de méthodes de test ;
+- les commentaires internes `ARRANGE`, `ACT`, `ACT - ASSERT`, `ASSERT` ;
+- les assertions ;
+- les preuves de stockage ;
+- la structure générale du bloc ;
+- les choix de vocabulaire déjà validés.
+
+### 40.4 Adaptations autorisées
+
+Les seules adaptations autorisées sont celles imposées par l'objet métier cible ou par le contrat relu :
+
+- types DTO ;
+- types métier ;
+- Gateway, DAO, service ou repository ciblé ;
+- constantes du PORT cible ;
+- libellés métier ;
+- présence ou absence d'un parent ;
+- méthode de recherche du parent ;
+- table ou stockage contrôlé ;
+- preuve spécifique indispensable au comportement cible.
+
+Toute autre divergence doit être considérée comme suspecte et doit être justifiée explicitement par une contrainte relue.
+
+### 40.5 Interdictions
+
+L'IA ne doit pas :
+
+- recréer des commentaires lorsque ceux de la référence validée peuvent être repris ;
+- réordonner les cas sans raison métier ;
+- renommer des tests validés sans nécessité ;
+- inventer de nouvelles constantes si la référence fournit déjà le motif ;
+- remplacer des constantes `DN_...` ou `DISPLAY_NAME_...` par des `@DisplayName("...")` inline ;
+- changer la structure `ARRANGE / ACT / ASSERT` lorsqu'elle est transposable ;
+- livrer un bloc homogène sur le fond mais divergent dans la forme alors qu'une recopie était possible.
+
+### 40.6 Application aux tests UC d'intégration `creer(...)`
+
+Pour `SousTypeProduitCuServiceIntegrationTest.creer(...)`, la référence première est `TypeProduitCuServiceIntegrationTest.creer(...)`.
+
+Pour une méthode comme `testCreerNull()`, le cas s'arrête avant toute logique de parent. La méthode de référence `TypeProduitCuServiceIntegrationTest.testCreerNull()` peut donc être reprise presque intégralement.
+
+Les seules adaptations attendues sont mécaniques :
+
+- `TypeProduitICuService` vers `SousTypeProduitICuService` ;
+- `TypeProduitDTO.OutputDTO` vers `SousTypeProduitDTO.OutputDTO` ou `OutputDTO` importé ;
+- `SELECT_COUNT_FROM_TYPES_PRODUIT` vers `SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT` ;
+- preuve de stockage sur `TYPES_PRODUIT` vers preuve de stockage sur `SOUS_TYPES_PRODUIT`.
+
+L'IA doit donc commencer par vérifier si la référence peut être recopiée, puis recopier, puis adapter seulement ces éléments.
+
+### 40.7 Critère de livraison
+
+Avant de livrer un bloc comparable, l'IA doit contrôler :
+
+```text
+Référence validée relue : oui/non.
+Éléments recopiables identifiés : oui/non.
+Éléments effectivement recopiés : oui/non.
+Adaptations limitées aux différences métier : oui/non.
+Divergences restantes justifiées par le contrat ou le code cible : oui/non.
+```
+
+Si une réponse est `non`, l'IA ne doit pas livrer le code.
+

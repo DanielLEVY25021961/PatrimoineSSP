@@ -1369,7 +1369,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * n'est positionné qu'après préparation complète
 		 * de la réponse utilisateur.
 		 */
-		this.message.set(MESSAGE_FINDBYDTO_SUCCES_RECHERCHE);
+		this.message.set(MESSAGE_FINDBYDTO_OK);
 
 		/*
 		 * Retourne l'OutputDTO correspondant
@@ -1483,11 +1483,11 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		/*
-		 * Le message de succès MESSAGE_FINDBYDTO_SUCCES_RECHERCHE
+		 * Le message de succès MESSAGE_FINDBYDTO_OK
 		 * n'est positionné qu'après préparation complète
 		 * de la réponse utilisateur.
 		 */
-		this.message.set(MESSAGE_FINDBYDTO_SUCCES_RECHERCHE);
+		this.message.set(MESSAGE_FINDBYDTO_OK);
 
 		/* Retourne l'OutputDTO résultat. */
 		return dto;

@@ -9,7 +9,6 @@ import levy.daniel.application.model.dto.produittype.ProduitDTO;
 import levy.daniel.application.model.dto.produittype.SousTypeProduitDTO;
 import levy.daniel.application.model.metier.produittype.Produit;
 import levy.daniel.application.model.metier.produittype.SousTypeProduit;
-import levy.daniel.application.model.metier.produittype.TypeProduit;
 import levy.daniel.application.model.services.produittype.exceptionsgateway.ExceptionTechniqueGateway;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionDoublon;
 import levy.daniel.application.model.services.produittype.exceptionsservices.ExceptionNonPersistant;
@@ -459,7 +458,7 @@ public interface ProduitICuService {
 	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL_KO}
 	 * et n'émet ni LOG ni Exception.</li>
 	 * <li>Si le libellé de l'objet métier 
-	 * {@code pInputDTO.getSousTypeProduit()} est blank : 
+	 * {@code pInputDTO.getProduit()} est blank : 
 	 * positionne {@link #getMessage()} à 
 	 * {@link #MESSAGE_CREER_LIBELLE_BLANK_KO},
 	 * LOG et jette une exception applicative 
@@ -481,7 +480,7 @@ public interface ProduitICuService {
 	 * {@link #PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO},
 	 * positionne {@link #getMessage()} sur le message sécurisé,  
 	 * LOG et propage l'Exception.</li>
-	 * <li>Si le parent {@link TypeProduit} n'existe pas dans le stockage
+	 * <li>Si le parent {@link SousTypeProduit} n'existe pas dans le stockage
 	 * ou n'est pas persistant, positionne {@link #getMessage()}
 	 * à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO},
 	 * LOG et jette une {@link IllegalStateException}.</li>

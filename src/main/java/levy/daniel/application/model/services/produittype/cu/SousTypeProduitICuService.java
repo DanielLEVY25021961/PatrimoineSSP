@@ -308,8 +308,14 @@ public interface SousTypeProduitICuService {
 	/**
 	 * "OK - FindByDTO(...) a retourné un enregistrement"
 	 */
-	String MESSAGE_FINDBYDTO_SUCCES_RECHERCHE 
+	String MESSAGE_FINDBYDTO_OK 
 		= "OK - FindByDTO(...) a retourné un enregistrement";
+	
+	/**
+	 * "OK - FindById(...) a retourné un enregistrement"
+	 */
+	String MESSAGE_FINDBYID_OK 
+		= "OK - FindById(...) a retourné un enregistrement";
 	
 	/**
 	 * <div>
@@ -546,7 +552,7 @@ public interface SousTypeProduitICuService {
 	 * </ul>
 	 * <li>Si tout se passe bien : positionne {@link #getMessage()} 
 	 * à {@link #MESSAGE_CREER_OK}, puis retourne le 
-	 * {@link TypeProduitDTO.OutputDTO} correspondant 
+	 * {@link SousTypeProduitDTO.OutputDTO} correspondant 
 	 * à l'objet métier persistant.</li>
 	 * </ul>
 	 * </div>

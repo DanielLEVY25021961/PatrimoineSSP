@@ -48,6 +48,8 @@ policy:
     livraison_code_methode_bloc_interdit_lien_telechargement_principal: true
     livraison_code_methode_bloc_interdit_fichier_joint_principal: true
     livraison_code_methode_bloc_copiable_sts_obligatoire: true
+    recopie_reference_validee_obligatoire: true
+    recopie_reference_validee_adaptation_minimale_obligatoire: true
     livraison_code_methode_bloc_chemin_sts_obligatoire: true
     livraison_code_methode_bloc_snippet_interdit: true
     livraison_code_methode_bloc_ellipsis_interdit: true
@@ -731,6 +733,7 @@ fenetres:
       - RT-CODAGE-TEST-MOCKITO-UC-01
       - RT-CODAGE-TEST-INTEGRATION-UC-01
       - RT-FORMALISME-UC-INTEGRATION-CREER-01
+      - RT-RECOPIE-REFERENCE-VALIDEE-UC-01
     reference_gateway:
       package: "src/test/java/levy/daniel/application/model/services/produittype/gateway/impl"
       total_tests: 539

@@ -1045,3 +1045,86 @@ Elle ne doit modifier que ce que l'objet métier impose réellement :
 
 Les constantes `MESSAGE_CREER_xxx` et `PREFIX_MESSAGE_CREER_xxx` se déduisent des branches réelles de `creer(...)` et ne doivent pas être inventées.
 
+## 26) RT-RECOPIE-REFERENCE-VALIDEE-UC-01 — Référence validée d'abord, recopie maximale, adaptation minimale
+
+### 26.1 Objet
+
+Cette règle relaie localement, pour la couche `couche_services.uc`, la règle générale `RT-RECOPIE-REFERENCE-VALIDEE-01` du `CONTRAT_IA.md`.
+
+Elle s'applique à tous les PORTS, ADAPTERS et tests UC comparables.
+
+### 26.2 Réflexe obligatoire
+
+Avant de coder ou corriger un bloc UC comparable, l'IA doit d'abord relire la référence validée existante du même niveau.
+
+Le réflexe obligatoire est :
+
+```text
+référence validée d'abord ;
+recopie maximale ;
+adaptation minimale.
+```
+
+L'IA ne doit pas recréer un commentaire, une structure de test, un ordre de cas, un nom de constante, une annotation ou une assertion lorsqu'une référence validée permet de le recopier.
+
+### 26.3 Éléments à recopier
+
+Lorsque le métier cible le permet, l'IA doit recopier depuis la référence validée :
+
+- la structure du bloc ;
+- les Javadocs de tests ;
+- les commentaires internes `ARRANGE / ACT / ASSERT` ;
+- les annotations `@Tag`, `@DisplayName`, `@Test` ;
+- les constantes `TAG_...`, `DN_...` ou `DISPLAY_NAME_...` ;
+- l'ordre des cas ;
+- les assertions ;
+- les preuves de stockage ;
+- les noms de tests lorsque le scénario est équivalent.
+
+### 26.4 Adaptations autorisées
+
+Les adaptations doivent être limitées à ce que le contrat ou l'objet métier cible impose :
+
+- type DTO ;
+- objet métier ;
+- PORT ou ADAPTER cible ;
+- Gateway cible ;
+- constantes du PORT cible ;
+- libellé métier ;
+- parent métier éventuel ;
+- table ou requête de preuve de stockage ;
+- différence réelle de comportement observée dans le code cible.
+
+Toute divergence supplémentaire doit être justifiée par une lecture du contrat, du code cible ou de ses dépendances.
+
+### 26.5 Application directe à `SousTypeProduitCuServiceIntegrationTest.creer(...)`
+
+Pour coder ou corriger le bloc `creer(...)` de `SousTypeProduitCuServiceIntegrationTest`, la référence obligatoire est `TypeProduitCuServiceIntegrationTest.creer(...)`.
+
+L'IA doit commencer par vérifier si chaque méthode équivalente peut être recopiée.
+
+Exemple : `testCreerNull()` peut être repris presque intégralement depuis `TypeProduitCuServiceIntegrationTest.testCreerNull()`, car le cas `pInputDTO == null` s'arrête avant toute logique de parent.
+
+Les adaptations sont seulement mécaniques :
+
+- PORT cible ;
+- DTO cible ;
+- constante de comptage ;
+- table contrôlée dans le stockage.
+
+L'IA ne doit donc pas inventer de nouveaux commentaires pour ce test.
+
+### 26.6 Contrôle avant livraison
+
+Avant toute livraison de code UC comparable, l'IA doit contrôler :
+
+```text
+Référence validée relue : oui/non.
+Recopie maximale effectuée : oui/non.
+Adaptations limitées au métier cible : oui/non.
+Commentaires recréés inutilement : oui/non.
+Annotations et constantes homogènes : oui/non.
+```
+
+Si `Commentaires recréés inutilement` vaut `oui`, l'IA ne doit pas livrer le code.
+
