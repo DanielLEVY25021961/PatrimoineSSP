@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,8 +24,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import levy.daniel.application.model.dto.produittype.ConvertisseurMetierToOutputDTOProduit;
 import levy.daniel.application.model.dto.produittype.ProduitDTO;
 import levy.daniel.application.model.dto.produittype.ProduitDTO.InputDTO;
 import levy.daniel.application.model.dto.produittype.ProduitDTO.OutputDTO;
@@ -157,6 +160,18 @@ public class ProduitCuServiceMockTest {
 
 	/** "message gateway (bis)". */
 	public static final String MESSAGE_GATEWAY_BIS = "message gateway (bis)";
+	
+	/**
+	 * "exception propagée + message rationalisé"
+	 */
+	public static final String EXCEPTION_PROPAGEE_MESSAGE 
+		= "exception propagée + message rationalisé";
+	
+	/**
+	 * "fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String FALLBACK_MESSAGE 
+		= "fallback MSG_ERREUR_NON_SPECIFIEE";
 
 	/** "creer". */
 	public static final String TAG_CREER = "creer";
@@ -197,69 +212,135 @@ public class ProduitCuServiceMockTest {
 	/** "getMessage". */
 	public static final String TAG_GET_MESSAGE = "getMessage";
 
-	/** "creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway". */
+	/**
+	 * "creer(null) : MESSAGE_CREER_NULL_KO + aucune interaction Gateway"
+	 */
 	public static final String DISPLAY_NAME_CREER_NULL
-			= "creer(null) : MESSAGE_CREER_NULL + aucune interaction Gateway";
+			= "creer(null) : MESSAGE_CREER_NULL_KO "
+					+ "+ aucune interaction Gateway";
 
-	/** "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK". */
+	/**
+	 * "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_LIBELLE_BLANK_KO"
+	 */
 	public static final String DISPLAY_NAME_CREER_BLANK
-			= "creer(blank) : ExceptionParametreBlank + MESSAGE_CREER_NOM_BLANK";
+			= "creer(blank) : ExceptionParametreBlank "
+					+ "+ MESSAGE_CREER_LIBELLE_BLANK_KO";
 
-	/** "creer(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune interaction Gateway". */
+	/**
+	 * "creer(libellé parent blank) :
+	 * IllegalStateException + MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO"
+	 */
 	public static final String DISPLAY_NAME_CREER_PARENT_BLANK
-			= "creer(parent blank) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune interaction Gateway";
+			= "creer(libellé parent blank) : IllegalStateException "
+					+ "+ MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO";
 
-	/** "creer(contrôle technique KO avec message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_AVEC_MESSAGE
-			= "creer(contrôle technique KO avec message) : exception propagée + message rationalisé";
+	/**
+	 * "creer(parent KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_CREER_PARENT_TECHNIQUE_AVEC_MESSAGE
+			= "creer(parent KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
 
-	/** "creer(contrôle technique KO sans message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_SANS_MESSAGE
-			= "creer(contrôle technique KO sans message) : exception propagée + message rationalisé";
+	/**
+	 * "creer(parent KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_CREER_PARENT_TECHNIQUE_SANS_MESSAGE
+			= "creer(parent KO sans message) : "
+					+ FALLBACK_MESSAGE;
 
-	/** "creer(doublon) : ExceptionDoublon + aucune création Gateway". */
-	public static final String DISPLAY_NAME_CREER_DOUBLON
-			= "creer(doublon) : ExceptionDoublon + aucune création Gateway";
-
-	/** "creer(parent technique KO avec message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_AVEC_MESSAGE
-			= "creer(parent technique KO avec message) : exception propagée + message rationalisé";
-
-	/** "creer(parent technique KO sans message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_SANS_MESSAGE
-			= "creer(parent technique KO sans message) : exception propagée + message rationalisé";
-
-	/** "creer(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway". */
+	/**
+	 * "creer(parent absent) : IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
+	 */
 	public static final String DISPLAY_NAME_CREER_PARENT_ABSENT
-			= "creer(parent absent) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway";
+			= "creer(parent absent) : IllegalStateException "
+					+ "+ MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
-	/** "creer(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway". */
+	/**
+	 * "creer(parent non persistant) :
+	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
+	 */
 	public static final String DISPLAY_NAME_CREER_PARENT_NON_PERSISTANT
-			= "creer(parent non persistant) : MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + aucune création Gateway";
+			= "creer(parent non persistant) : "
+					+ "IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
 
-	/** "creer(création technique KO avec message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_AVEC_MESSAGE
-			= "creer(création technique KO avec message) : exception propagée + message rationalisé";
+	/**
+	 * "creer(doublon) : ExceptionDoublon + aucune création Gateway"
+	 */
+	public static final String DISPLAY_NAME_CREER_DOUBLON
+			= "creer(doublon) : ExceptionDoublon "
+					+ "+ aucune création Gateway";
 
-	/** "creer(création technique KO sans message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_SANS_MESSAGE
-			= "creer(création technique KO sans message) : exception propagée + message rationalisé";
+	/**
+	 * "creer(contrôle doublon KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_CREER_CONTROLE_DOUBLON_AVEC_MESSAGE
+			= "creer(contrôle doublon KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
 
-	/** "creer(gateway retourne null) : MESSAGE_CREATION_TECHNIQUE_KO_CREER". */
-	public static final String DISPLAY_NAME_CREER_GATEWAY_RETOURNE_NULL
-			= "creer(gateway retourne null) : MESSAGE_CREATION_TECHNIQUE_KO_CREER";
+	/**
+	 * "creer(contrôle doublon KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_CREER_CONTROLE_DOUBLON_SANS_MESSAGE
+			= "creer(contrôle doublon KO sans message) : "
+					+ FALLBACK_MESSAGE;
 
-	/** "creer(conversion OutputDTO KO avec message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_AVEC_MESSAGE
-			= "creer(conversion OutputDTO KO avec message) : exception propagée + message rationalisé";
+	/**
+	 * "creer(gateway.creer KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_CREER_GATEWAY_CREER_AVEC_MESSAGE
+			= "creer(gateway.creer KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
 
-	/** "creer(conversion OutputDTO KO sans message) : exception propagée + message rationalisé". */
-	public static final String DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_SANS_MESSAGE
-			= "creer(conversion OutputDTO KO sans message) : exception propagée + message rationalisé";
+	/**
+	 * "creer(gateway.creer KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_CREER_GATEWAY_CREER_SANS_MESSAGE
+			= "creer(gateway.creer KO sans message) : "
+					+ FALLBACK_MESSAGE;
 
-	/** "creer(nominal) : OutputDTO cohérent + MESSAGE_CREER_OK". */
+	/**
+	 * "creer(gateway.creer retourne null) :
+	 * MESSAGE_CREER_GATEWAY_KO"
+	 */
+	public static final String DISPLAY_NAME_CREER_GATEWAY_CREER_RETOUR_NULL
+			= "creer(gateway.creer retourne null) : "
+					+ "MESSAGE_CREER_GATEWAY_KO";
+
+	/**
+	 * "creer(conversion OutputDTO KO avec message) :
+	 * exception propagée + message rationalisé"
+	 */
+	public static final String DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_AVEC_MESSAGE
+			= "creer(conversion OutputDTO KO avec message) : "
+					+ EXCEPTION_PROPAGEE_MESSAGE;
+
+	/**
+	 * "creer(conversion OutputDTO KO sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_SANS_MESSAGE
+			= "creer(conversion OutputDTO KO sans message) : "
+					+ FALLBACK_MESSAGE;
+
+	/**
+	 * "creer(conversion OutputDTO retourne null) :
+	 * MESSAGE_CREER_CONVERSION_KO"
+	 */
+	public static final String DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_RETOUR_NULL
+			= "creer(conversion OutputDTO retourne null) : "
+					+ "MESSAGE_CREER_CONVERSION_KO";
+
+	/**
+	 * "creer(nominal) : OutputDTO + MESSAGE_CREER_OK"
+	 */
 	public static final String DISPLAY_NAME_CREER_NOMINAL
-			= "creer(nominal) : OutputDTO cohérent + MESSAGE_CREER_OK";
+			= "creer(nominal) : OutputDTO + MESSAGE_CREER_OK";
 
 	/** "rechercherTous(gateway retourne null) : MESSAGE_STOCKAGE_NULL". */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_RETOUR_NULL
@@ -767,18 +848,18 @@ public class ProduitCuServiceMockTest {
 
 
 	// ============================ creer =================================
-
 	
-
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(null) :</p>
 	 * <ul>
 	 * <li>retourne {@code null} ;</li>
-	 * <li>positionne le message utilisateur {@link
-	 * ProduitICuService#MESSAGE_CREER_NULL} ;</li>
-	 * <li>n'interagit ni avec le Gateway objet métier 
-	 * ni avec le Gateway parent.</li>
+	 * <li>positionne le message utilisateur
+	 * {@link ProduitICuService#MESSAGE_CREER_NULL_KO} ;</li>
+	 * <li>n'interagit ni avec le Gateway Produit
+	 * ni avec le Gateway parent SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -814,33 +895,31 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(retour).isNull();
 		assertThat(message)
-				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(libellé blank) :</p>
 	 * <ul>
 	 * <li>jette une {@link ExceptionParametreBlank} ;</li>
-	 * <li>positionne le message utilisateur {@link
-	 * ProduitICuService#MESSAGE_CREER_NOM_BLANK} ;</li>
-	 * <li>n'interagit ni avec le Gateway objet métier
-	 * ni avec le Gateway parent.</li>
+	 * <li>émet le message
+	 * {@link ProduitICuService#MESSAGE_CREER_LIBELLE_BLANK_KO} ;</li>
+	 * <li>n'interagit ni avec le Gateway Produit
+	 * ni avec le Gateway parent SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
-	 *
-	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
 	@DisplayName(DISPLAY_NAME_CREER_BLANK)
 	@Test
-	public void testCreerBlank() throws Exception {
+	public void testCreerBlank() {
 
 		/* ARRANGE :
 		 * prépare un DTO dont le libellé de l'objet métier est blank.
@@ -850,70 +929,67 @@ public class ProduitCuServiceMockTest {
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, ESPACES);
 		
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
 		final SousTypeProduitGatewayIService sousTypeProduitGateway 
 			= mock(SousTypeProduitGatewayIService.class);
-		
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une ExceptionParametreBlank ;
-		 * - émet le message MESSAGE_CREER_NOM_BLANK
+		 * - émet le message MESSAGE_CREER_LIBELLE_BLANK_KO
 		 *   contractuel du PORT UC.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(ExceptionParametreBlank.class)
-				.hasMessage(ProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.hasMessage(ProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_CREER_NOM_BLANK);
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_LIBELLE_BLANK_KO);
 
 		/* Garantit qu'aucun Gateway mocké n'a été appelé. */
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(libellé parent blank) :</p>
 	 * <ul>
-	 * <li>contrôle localement le libellé du parent ;</li>
+	 * <li>contrôle localement le libellé du parent direct ;</li>
 	 * <li>jette une {@link IllegalStateException} ;</li>
 	 * <li>émet le message
-	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
-	 * <li>n'interagit ni avec le Gateway objet métier
-	 * ni avec le Gateway parent.</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO} ;</li>
+	 * <li>n'interagit ni avec le Gateway Produit
+	 * ni avec le Gateway parent SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
-	 *
-	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
 	@DisplayName(DISPLAY_NAME_CREER_PARENT_BLANK)
 	@Test
-	public void testCreerParentBlank() throws Exception {
+	public void testCreerParentBlank() {
 
 		/* ARRANGE :
-		 * prépare un DTO dont le libellé parent est blank.
+		 * prépare un DTO dont le libellé du parent direct est blank.
 		 *
 		 * Le SERVICE METIER UC doit refuser ce parent avant
 		 * toute délégation aux Gateways.
 		 */
 		final InputDTO dto = input(BAZAR, ESPACES, MARTEAU);
-
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
 		final ProduitGatewayIService gateway 
 			= mock(ProduitGatewayIService.class);
@@ -925,278 +1001,51 @@ public class ProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.creer(dto) :
 		 * - jette une IllegalStateException ;
-		 * - émet le message MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
+		 * - émet le message MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO.
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO);
 
 		/* Garantit qu'aucun Gateway mocké n'a été appelé. */
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>garantit que creer(contrôle de doublon KO avec message) :</p>
+	 * <p>garantit que creer(parent KO avec message) :</p>
 	 * <ul>
-	 * <li>atteint le bloc {@code try/catch} qui appelle
-	 * {@code isDoublon(...)} ;</li>
-	 * <li>{@code isDoublon(...)} appelle
-	 * {@code gateway.findByLibelle(...)} ;</li>
-	 * <li>propage l'exception technique levée par
-	 * {@code gateway.findByLibelle(...)} ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER}
-	 * + message technique ;</li>
-	 * <li>ne cherche jamais le parent ;</li>
-	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_AVEC_MESSAGE)
-	@Test
-	public void testCreerControleTechniqueKoAvecMessage() throws Exception {
-
-		/* ARRANGE :
-		 * prépare un DTO valide pour atteindre réellement
-		 * le contrôle d'unicité.
-		 */
-		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		
-		/* 
-		 * Mocke les services Gateway et les passe 
-		 * à un service UC instancié dans le test. 
-		 */
-		final ProduitGatewayIService gateway 
-			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
-			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
-			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
-		final IllegalStateException panneTechnique
-				= new IllegalStateException(MESSAGE_GATEWAY);
-
-		/*
-		 * Configuration du Mock :
-		 * simule une panne technique de gateway.findByLibelle(...)
-		 * pendant le contrôle de doublon réalisé par isDoublon(...).
-		 */
-		when(gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
-
-		/* ACT - ASSERT */
-		/* Garantit que l'exception technique d'origine est propagée. */
-		assertThatThrownBy(() -> service.creer(dto))
-				.isSameAs(panneTechnique);
-
-		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé
-		 * PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER + MESSAGE_GATEWAY.
-		 */
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
-						+ MESSAGE_GATEWAY);
-
-		/* Garantit que la création et la recherche du parent
-		 * ne sont jamais tentées après l'échec du contrôle de doublon.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verify(gateway, never()).creer(any(Produit.class));
-		verifyNoInteractions(sousTypeProduitGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>garantit que creer(contrôle de doublon KO sans message) :</p>
-	 * <ul>
-	 * <li>atteint le bloc {@code try/catch} qui appelle
-	 * {@code isDoublon(...)} ;</li>
-	 * <li>{@code isDoublon(...)} appelle
-	 * {@code gateway.findByLibelle(...)} ;</li>
-	 * <li>propage l'exception technique sans message levée par
-	 * {@code gateway.findByLibelle(...)} ;</li>
-	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER}
-	 * + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
-	 * <li>ne cherche jamais le parent ;</li>
-	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_CONTROLE_TECHNIQUE_KO_SANS_MESSAGE)
-	@Test
-	public void testCreerControleTechniqueKoSansMessage() throws Exception {
-
-		/* ARRANGE :
-		 * prépare un DTO valide pour atteindre réellement
-		 * le contrôle d'unicité.
-		 */
-		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		
-		/* 
-		 * Mocke les services Gateway et les passe 
-		 * à un service UC instancié dans le test. 
-		 */
-		final ProduitGatewayIService gateway 
-			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
-			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
-			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
-		final IllegalStateException panneTechnique = new IllegalStateException();
-
-		/*
-		 * Configuration du Mock :
-		 * simule une panne technique sans message de gateway.findByLibelle(...)
-		 * pendant le contrôle de doublon réalisé par isDoublon(...).
-		 */
-		when(gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
-
-		/* ACT - ASSERT */
-		/* Garantit que l'exception technique d'origine est propagée. */
-		assertThatThrownBy(() -> service.creer(dto))
-				.isSameAs(panneTechnique);
-
-		/* Garantit que le SERVICE METIER UC ne produit jamais
-		 * un message utilisateur null.
-		 */
-		assertThat(service.getMessage())
-				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER
-						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
-
-		/* Garantit que la création et la recherche du parent
-		 * ne sont jamais tentées après l'échec du contrôle de doublon.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verify(gateway, never()).creer(any(Produit.class));
-		verifyNoInteractions(sousTypeProduitGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>garantit que creer(doublon fonctionnel) :</p>
-	 * <ul>
-	 * <li>contrôle l'unicité via {@code isDoublon(...)} ;</li>
-	 * <li>{@code isDoublon(...)} interroge le Gateway objet métier
-	 * via {@code gateway.findByLibelle(...)} ;</li>
-	 * <li>retient seulement le doublon portant le même parent
-	 * et le même libellé ;</li>
-	 * <li>jette une {@link ExceptionDoublon} ;</li>
-	 * <li>émet le message
-	 * {@link ProduitICuService#MESSAGE_DOUBLON} + libellé ;</li>
-	 * <li>ne cherche jamais le parent ;</li>
-	 * <li>ne délègue jamais la création au Gateway objet métier.</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_DOUBLON)
-	@Test
-	public void testCreerDoublon() throws Exception {
-
-		/* ARRANGE :
-		 * prépare un DTO valide dont le couple [parent, libellé]
-		 * existe déjà dans le stockage selon le Gateway mocké.
-		 */
-		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		
-		final SousTypeProduit parent = parentPersistant();
-		final Produit existant = produit(MARTEAU, parent, 100L);
-
-		/* 
-		 * Mocke les services Gateway et les passe 
-		 * à un service UC instancié dans le test. 
-		 */
-		final ProduitGatewayIService gateway 
-			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
-			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
-			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
-		/*
-		 * Configuration du Mock :
-		 * simule un doublon fonctionnel détecté par isDoublon(...)
-		 * via l'appel gateway.findByLibelle(...).
-		 */
-		when(gateway.findByLibelle(MARTEAU))
-				.thenReturn(Arrays.asList(existant));
-
-		/* ACT - ASSERT */
-		/* Garantit que service.creer(dto) :
-		 * - jette une ExceptionDoublon ;
-		 * - émet le message MESSAGE_DOUBLON + libellé.
-		 */
-		assertThatThrownBy(() -> service.creer(dto))
-				.isInstanceOf(ExceptionDoublon.class)
-				.hasMessage(ProduitICuService.MESSAGE_DOUBLON
-						+ MARTEAU);
-
-		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_DOUBLON
-						+ MARTEAU);
-
-		/* Garantit que le contrôle d'unicité a été exécuté,
-		 * que la création n'a jamais été déléguée au Gateway objet métier,
-		 * et que le parent n'a pas été recherché après le doublon.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
-		verify(gateway, never()).creer(any(Produit.class));
-		verifyNoInteractions(sousTypeProduitGateway);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>garantit que creer(recherche parent KO avec message) :</p>
-	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
-	 * <li>atteint la recherche du parent persistant ;</li>
-	 * <li>propage l'exception technique levée par
+	 * <li>atteint la récupération du parent persistant via
 	 * {@code sousTypeProduitGateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception technique levée par le Gateway parent ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER}
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO}
 	 * + message technique ;</li>
-	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
+	 * <li>ne sollicite jamais le Gateway Produit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_AVEC_MESSAGE)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_TECHNIQUE_AVEC_MESSAGE)
 	@Test
 	public void testCreerParentTechniqueKoAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide sans doublon afin d'atteindre
-		 * réellement la recherche du parent.
+		 * prépare un DTO valide pour atteindre réellement
+		 * la recherche du parent persistant.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
 		
@@ -1210,18 +1059,16 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
+
 		final IllegalStateException panneTechnique
 				= new IllegalStateException(MESSAGE_GATEWAY);
 
 		/*
 		 * Configuration du Mock :
-		 * - findByLibelle(...) sur le Gateway objet métier retourne une liste vide
-		 *   pour simuler l'absence de doublon ;
-		 * - findByLibelle(...) sur le Gateway parent lève une panne technique.
+		 * simule une panne technique de
+		 * sousTypeProduitGateway.findByLibelle(...)
+		 * pendant la récupération du parent persistant.
 		 */
-		when(gateway.findByLibelle(MARTEAU))
-				.thenReturn(Collections.emptyList());
 		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
 				.thenThrow(panneTechnique);
 
@@ -1231,50 +1078,46 @@ public class ProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé
-		 * PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER + MESSAGE_GATEWAY.
+		 * un message utilisateur rationalisé pour l'échec parent.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
+						ProduitICuService
+								.PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO
 						+ MESSAGE_GATEWAY);
 
-		/* Garantit que la création n'est jamais tentée
-		 * après l'échec de recherche du parent.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		/* Garantit que seule la recherche parent a été atteinte. */
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).creer(any(Produit.class));
+		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>garantit que creer(recherche parent KO sans message) :</p>
+	 * <p>garantit que creer(parent KO sans message) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
-	 * <li>atteint la recherche du parent persistant ;</li>
-	 * <li>propage l'exception technique sans message levée par
+	 * <li>atteint la récupération du parent persistant via
 	 * {@code sousTypeProduitGateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception sans message levée par le Gateway parent ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER}
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO}
 	 * + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
-	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
+	 * <li>ne sollicite jamais le Gateway Produit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_PARENT_TECHNIQUE_KO_SANS_MESSAGE)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_TECHNIQUE_SANS_MESSAGE)
 	@Test
 	public void testCreerParentTechniqueKoSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide sans doublon afin d'atteindre
-		 * réellement la recherche du parent.
+		 * prépare un DTO valide pour atteindre réellement
+		 * la recherche du parent persistant.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
 		
@@ -1288,18 +1131,14 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
+
 		final IllegalStateException panneTechnique = new IllegalStateException();
 
 		/*
 		 * Configuration du Mock :
-		 * - findByLibelle(...) sur le Gateway objet métier retourne une liste vide
-		 *   pour simuler l'absence de doublon ;
-		 * - findByLibelle(...) sur le Gateway parent lève une panne technique
-		 *   sans message.
+		 * simule une panne technique sans message de
+		 * sousTypeProduitGateway.findByLibelle(...).
 		 */
-		when(gateway.findByLibelle(MARTEAU))
-				.thenReturn(Collections.emptyList());
 		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
 				.thenThrow(panneTechnique);
 
@@ -1309,35 +1148,32 @@ public class ProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC ne produit jamais
-		 * un message utilisateur null.
+		 * un message utilisateur null en cas d'échec parent.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER
+						ProduitICuService
+								.PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
-		/* Garantit que la création n'est jamais tentée
-		 * après l'échec de recherche du parent.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		/* Garantit que seule la recherche parent a été atteinte. */
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).creer(any(Produit.class));
+		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(parent absent) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
-	 * <li>cherche le parent persistant ;</li>
-	 * <li>jette une {@link IllegalStateException} si le parent
-	 * est absent du stockage ;</li>
+	 * <li>interroge le Gateway parent ;</li>
+	 * <li>détecte que le parent n'existe pas dans le stockage ;</li>
+	 * <li>jette une {@link IllegalStateException} ;</li>
 	 * <li>émet le message
 	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
-	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
+	 * <li>ne sollicite jamais le Gateway Produit.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1349,8 +1185,7 @@ public class ProduitCuServiceMockTest {
 	public void testCreerParentAbsent() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide dont le parent n'existe pas
-		 * dans le stockage selon le Gateway parent mocké.
+		 * prépare un DTO valide dont le parent est introuvable.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
 		
@@ -1367,47 +1202,41 @@ public class ProduitCuServiceMockTest {
 
 		/*
 		 * Configuration du Mock :
-		 * - le Gateway objet métier ne détecte aucun doublon ;
-		 * - le Gateway parent ne retrouve aucun parent persistant.
+		 * simule un parent non trouvé dans le stockage.
 		 */
-		when(gateway.findByLibelle(MARTEAU))
-				.thenReturn(Collections.emptyList());
-		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Collections.emptyList());
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE)).thenReturn(null);
 
 		/* ACT - ASSERT */
-		/* Garantit que l'absence de parent est refusée
-		 * avec le message utilisateur MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
-		 */
+		/* Garantit que service.creer(dto) refuse un parent absent. */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
-		/* Garantit que la création n'est jamais tentée
-		 * lorsque le parent est absent.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		/* Garantit que le scénario s'arrête après la recherche parent. */
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).creer(any(Produit.class));
+		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(parent non persistant) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
-	 * <li>cherche le parent ;</li>
-	 * <li>jette une {@link IllegalStateException} si le parent retrouvé
-	 * ne porte pas d'identifiant persistant ;</li>
+	 * <li>interroge le Gateway parent ;</li>
+	 * <li>détecte que le parent retourné ne possède pas d'identifiant ;</li>
+	 * <li>jette une {@link IllegalStateException} ;</li>
 	 * <li>émet le message
 	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
-	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
+	 * <li>ne sollicite jamais le Gateway Produit.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1419,10 +1248,11 @@ public class ProduitCuServiceMockTest {
 	public void testCreerParentNonPersistant() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide et un parent retrouvé
-		 * mais dépourvu d'identifiant persistant.
+		 * prépare un DTO valide dont le parent retourné par le Gateway
+		 * ne porte pas d'identifiant persistant.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		
 		final SousTypeProduit parentNonPersistant = parentNonPersistant();
 		
 		/* 
@@ -1438,64 +1268,63 @@ public class ProduitCuServiceMockTest {
 
 		/*
 		 * Configuration du Mock :
-		 * - le Gateway objet métier ne détecte aucun doublon ;
-		 * - le Gateway parent retourne un objet sans identifiant.
+		 * simule un parent trouvé mais non persistant.
 		 */
-		when(gateway.findByLibelle(MARTEAU))
-				.thenReturn(Collections.emptyList());
 		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
 				.thenReturn(Arrays.asList(parentNonPersistant));
 
 		/* ACT - ASSERT */
-		/* Garantit qu'un parent non persistant est refusé
-		 * avec le même message utilisateur qu'un parent absent.
-		 */
+		/* Garantit que service.creer(dto) refuse un parent non persistant. */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(ProduitICuService.MESSAGE_PAS_PARENT);
+				.hasMessage(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_PAS_PARENT);
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
-		/* Garantit que la création n'est jamais tentée
-		 * lorsque le parent n'est pas persistant.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		/* Garantit que le scénario s'arrête après la recherche parent. */
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, never()).creer(any(Produit.class));
+		verifyNoInteractions(gateway);
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>garantit que creer(gateway.creer(...) KO avec message) :</p>
+	 * <p>garantit que creer(doublon) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
-	 * <li>récupère le parent persistant ;</li>
-	 * <li>convertit l'InputDTO en objet métier rattaché au parent ;</li>
-	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
-	 * <li>propage l'exception levée par {@code gateway.creer(...)} ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER}
-	 * + message technique.</li>
+	 * <li>récupère d'abord le parent persistant ;</li>
+	 * <li>contrôle l'unicité via {@code isDoublon(...)} ;</li>
+	 * <li>{@code isDoublon(...)} interroge le Gateway Produit via
+	 * {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>jette une {@link ExceptionDoublon} si un même libellé existe
+	 * déjà sous le même parent ;</li>
+	 * <li>émet le message
+	 * {@link ProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé ;</li>
+	 * <li>ne délègue jamais la création au Gateway Produit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_AVEC_MESSAGE)
+	@DisplayName(DISPLAY_NAME_CREER_DOUBLON)
 	@Test
-	public void testCreerCreationTechniqueKoAvecMessage() throws Exception {
+	public void testCreerDoublon() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide, non doublon, avec parent persistant,
-		 * pour atteindre réellement la délégation gateway.creer(...).
+		 * prépare un DTO valide dont le couple [parent, libellé]
+		 * existe déjà dans le stockage selon les Gateways mockés.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		final SousTypeProduit parent = parentPersistant();
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
+		final Produit doublon = produit(MARTEAU, parentPersistant, 100L);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -1507,22 +1336,255 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
-		final IllegalStateException panneTechnique
-				= new IllegalStateException(MESSAGE_GATEWAY);
-		final ArgumentCaptor<Produit> captor 
-				= ArgumentCaptor.forClass(Produit.class);
 
 		/*
 		 * Configuration du Mock :
-		 * - aucun doublon objet métier n'est détecté ;
-		 * - le parent persistant est retrouvé ;
-		 * - gateway.creer(...) échoue avec un message technique.
+		 * - le parent est persistant ;
+		 * - le Gateway Produit retourne un objet portant le même couple
+		 *   [parent, libellé].
 		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findByLibelle(MARTEAU))
+				.thenReturn(Arrays.asList(doublon));
+
+		/* ACT - ASSERT */
+		/* Garantit que service.creer(dto) :
+		 * - jette une ExceptionDoublon ;
+		 * - émet le message MESSAGE_CREER_DOUBLON_KO + libellé.
+		 */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isInstanceOf(ExceptionDoublon.class)
+				.hasMessage(
+						ProduitICuService.MESSAGE_CREER_DOUBLON_KO
+						+ MARTEAU);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_CREER_DOUBLON_KO
+						+ MARTEAU);
+
+		/* Garantit que le parent et le contrôle d'unicité ont été exécutés,
+		 * et que la création n'a jamais été déléguée au Gateway Produit.
+		 */
+		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, never()).creer(any(Produit.class));
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que creer(contrôle de doublon KO avec message) :</p>
+	 * <ul>
+	 * <li>récupère d'abord le parent persistant ;</li>
+	 * <li>atteint le bloc {@code try/catch} qui appelle
+	 * {@code isDoublon(...)} ;</li>
+	 * <li>{@code isDoublon(...)} appelle
+	 * {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception technique levée par
+	 * {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_DOUBLON_KO}
+	 * + message technique ;</li>
+	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONTROLE_DOUBLON_AVEC_MESSAGE)
+	@Test
+	public void testCreerControleDoublonKOAvecMessage() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre réellement
+		 * le contrôle d'unicité.
+		 */
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final ProduitGatewayIService gateway 
+			= mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service 
+			= new ProduitCuService(gateway, sousTypeProduitGateway);
+
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
+
+		/*
+		 * Configuration du Mock :
+		 * - le parent est persistant ;
+		 * - le contrôle de doublon échoue techniquement.
+		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		/* Garantit que le SERVICE METIER UC expose
+		 * un message utilisateur rationalisé pour l'échec
+		 * du contrôle d'unicité.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CREER_DOUBLON_KO
+						+ MESSAGE_GATEWAY);
+
+		/* Garantit que la création n'a jamais été appelée. */
+		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, never()).creer(any(Produit.class));
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que creer(contrôle de doublon KO sans message) :</p>
+	 * <ul>
+	 * <li>récupère d'abord le parent persistant ;</li>
+	 * <li>atteint le bloc {@code try/catch} qui appelle
+	 * {@code isDoublon(...)} ;</li>
+	 * <li>{@code isDoublon(...)} appelle
+	 * {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>propage l'exception sans message levée par
+	 * {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>positionne un message utilisateur sûr avec
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_DOUBLON_KO}
+	 * + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>ne tente jamais {@code gateway.creer(...)}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONTROLE_DOUBLON_SANS_MESSAGE)
+	@Test
+	public void testCreerControleDoublonKOSansMessage() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide pour atteindre réellement
+		 * le contrôle d'unicité.
+		 */
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final ProduitGatewayIService gateway 
+			= mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service 
+			= new ProduitCuService(gateway, sousTypeProduitGateway);
+
+		final IllegalStateException panneTechnique = new IllegalStateException();
+
+		/*
+		 * Configuration du Mock :
+		 * - le parent est persistant ;
+		 * - le contrôle de doublon échoue techniquement sans message.
+		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findByLibelle(MARTEAU)).thenThrow(panneTechnique);
+
+		/* ACT - ASSERT */
+		/* Garantit que l'exception technique d'origine est propagée. */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isSameAs(panneTechnique);
+
+		/* Garantit que le SERVICE METIER UC ne produit jamais
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
+		 */
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.PREFIX_MESSAGE_CREER_DOUBLON_KO
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		/* Garantit que la création n'a jamais été appelée. */
+		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, never()).creer(any(Produit.class));
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que creer(gateway.creer KO avec message) :</p>
+	 * <ul>
+	 * <li>récupère le parent persistant ;</li>
+	 * <li>contrôle l'absence de doublon ;</li>
+	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
+	 * <li>propage l'exception technique levée par
+	 * {@code gateway.creer(...)} ;</li>
+	 * <li>positionne un message utilisateur rationalisé avec
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_GATEWAY_KO}
+	 * + message technique.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_GATEWAY_CREER_AVEC_MESSAGE)
+	@Test
+	public void testCreerGatewayCreerKOAvecMessage() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO valide et non doublon.
+		 */
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final ProduitGatewayIService gateway 
+			= mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service 
+			= new ProduitCuService(gateway, sousTypeProduitGateway);
+
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
+
+		/*
+		 * Configuration du Mock :
+		 * - le parent est persistant ;
+		 * - aucun doublon n'est trouvé ;
+		 * - la création technique échoue avec message.
+		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
 		when(gateway.findByLibelle(MARTEAU))
 				.thenReturn(Collections.emptyList());
-		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parent));
 		when(gateway.creer(any(Produit.class)))
 				.thenThrow(panneTechnique);
 
@@ -1536,35 +1598,29 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
-						+ MESSAGE_GATEWAY);
+						ProduitICuService.PREFIX_MESSAGE_CREER_GATEWAY_KO
+						+ MESSAGE_GATEWAY_BIS);
 
-		/* Garantit que le scénario a atteint la création Gateway
-		 * avec un objet métier rattaché au parent persistant.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		/* Garantit que le scénario a atteint la création Gateway. */
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).creer(captor.capture());
-
-		assertThat(captor.getValue().getProduit()).isEqualTo(MARTEAU);
-		assertThat(captor.getValue().getSousTypeProduit()).isSameAs(parent);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, times(1)).creer(any(Produit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>garantit que creer(gateway.creer(...) KO sans message) :</p>
+	 * <p>garantit que creer(gateway.creer KO sans message) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
 	 * <li>récupère le parent persistant ;</li>
-	 * <li>convertit l'InputDTO en objet métier rattaché au parent ;</li>
+	 * <li>contrôle l'absence de doublon ;</li>
 	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
 	 * <li>propage l'exception sans message levée par
 	 * {@code gateway.creer(...)} ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER}
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_GATEWAY_KO}
 	 * + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -1572,16 +1628,16 @@ public class ProduitCuServiceMockTest {
 	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_CREATION_TECHNIQUE_KO_SANS_MESSAGE)
+	@DisplayName(DISPLAY_NAME_CREER_GATEWAY_CREER_SANS_MESSAGE)
 	@Test
-	public void testCreerCreationTechniqueKoSansMessage() throws Exception {
+	public void testCreerGatewayCreerKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide, non doublon, avec parent persistant,
-		 * pour atteindre réellement la délégation gateway.creer(...).
+		 * prépare un DTO valide et non doublon.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		final SousTypeProduit parent = parentPersistant();
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -1593,21 +1649,19 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
+
 		final IllegalStateException panneTechnique = new IllegalStateException();
-		final ArgumentCaptor<Produit> captor 
-				= ArgumentCaptor.forClass(Produit.class);
 
 		/*
 		 * Configuration du Mock :
-		 * - aucun doublon objet métier n'est détecté ;
-		 * - le parent persistant est retrouvé ;
-		 * - gateway.creer(...) échoue sans message technique.
+		 * - le parent est persistant ;
+		 * - aucun doublon n'est trouvé ;
+		 * - la création technique échoue sans message.
 		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
 		when(gateway.findByLibelle(MARTEAU))
 				.thenReturn(Collections.emptyList());
-		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parent));
 		when(gateway.creer(any(Produit.class)))
 				.thenThrow(panneTechnique);
 
@@ -1617,55 +1671,50 @@ public class ProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC ne produit jamais
-		 * un message utilisateur null en cas d'échec de création.
+		 * un message utilisateur null lorsque l'exception technique
+		 * ne porte aucun message.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER
+						ProduitICuService.PREFIX_MESSAGE_CREER_GATEWAY_KO
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
-		/* Garantit que le scénario a atteint la création Gateway
-		 * avec un objet métier rattaché au parent persistant.
-		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		/* Garantit que le scénario a atteint la création Gateway. */
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).creer(captor.capture());
-
-		assertThat(captor.getValue().getProduit()).isEqualTo(MARTEAU);
-		assertThat(captor.getValue().getSousTypeProduit()).isSameAs(parent);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, times(1)).creer(any(Produit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
-	 * <p>garantit que creer(gateway.creer(...) retourne null) :</p>
+	 * <p>garantit que creer(gateway.creer retourne null) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
 	 * <li>récupère le parent persistant ;</li>
-	 * <li>convertit l'InputDTO en objet métier rattaché au parent ;</li>
+	 * <li>contrôle l'absence de doublon ;</li>
 	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
-	 * <li>jette une {@link IllegalStateException} si le Gateway
-	 * ne retourne aucun objet créé ;</li>
-	 * <li>émet le message
-	 * {@link ProduitICuService#MESSAGE_CREATION_TECHNIQUE_KO_CREER}.</li>
+	 * <li>détecte que le Gateway retourne {@code null} ;</li>
+	 * <li>jette une {@link IllegalStateException} ;</li>
+	 * <li>positionne le message
+	 * {@link ProduitICuService#MESSAGE_CREER_GATEWAY_KO}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_GATEWAY_RETOURNE_NULL)
+	@DisplayName(DISPLAY_NAME_CREER_GATEWAY_CREER_RETOUR_NULL)
 	@Test
-	public void testCreerGatewayRetourneNull() throws Exception {
+	public void testCreerGatewayCreerKORetourNull() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide, non doublon, avec parent persistant,
-		 * pour atteindre réellement la délégation gateway.creer(...).
+		 * prépare un DTO valide et non doublon.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		final SousTypeProduit parent = parentPersistant();
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -1677,22 +1726,18 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
-		final ArgumentCaptor<Produit> captor 
-				= ArgumentCaptor.forClass(Produit.class);
 
 		/*
 		 * Configuration du Mock :
-		 * - aucun doublon objet métier n'est détecté ;
-		 * - le parent persistant est retrouvé ;
+		 * - le parent est persistant ;
+		 * - aucun doublon n'est trouvé ;
 		 * - gateway.creer(...) retourne null.
 		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
 		when(gateway.findByLibelle(MARTEAU))
 				.thenReturn(Collections.emptyList());
-		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parent));
-		when(gateway.creer(any(Produit.class)))
-				.thenReturn(null);
+		when(gateway.creer(any(Produit.class))).thenReturn(null);
 
 		/* ACT - ASSERT */
 		/* Garantit que le SERVICE METIER UC sécurise le succès apparent
@@ -1700,39 +1745,36 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.creer(dto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(ProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+				.hasMessage(
+						ProduitICuService.MESSAGE_CREER_GATEWAY_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_CREATION_TECHNIQUE_KO_CREER);
+				.isEqualTo(
+						ProduitICuService.MESSAGE_CREER_GATEWAY_KO);
 
-		/* Garantit que le Gateway a bien été sollicité jusqu'à la création,
-		 * avec un objet métier rattaché au parent persistant,
+		/* Garantit que le scénario a atteint la création Gateway,
 		 * puis que l'anomalie null est traitée côté UC.
 		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).creer(captor.capture());
-
-		assertThat(captor.getValue().getProduit()).isEqualTo(MARTEAU);
-		assertThat(captor.getValue().getSousTypeProduit()).isSameAs(parent);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, times(1)).creer(any(Produit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(conversion OutputDTO KO avec message) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
 	 * <li>récupère le parent persistant ;</li>
-	 * <li>convertit l'InputDTO en objet métier rattaché au parent ;</li>
+	 * <li>contrôle l'absence de doublon ;</li>
 	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
 	 * <li>atteint la conversion finale de l'objet métier créé en
 	 * {@link OutputDTO} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER}
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_CONVERSION_KO}
 	 * + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -1740,17 +1782,19 @@ public class ProduitCuServiceMockTest {
 	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_AVEC_MESSAGE)
+	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_AVEC_MESSAGE)
 	@Test
-	public void testCreerConversionTechniqueKoAvecMessage() throws Exception {
+	public void testCreerConversionOutputDTOKOAvecMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide, non doublon, avec parent persistant,
-		 * pour atteindre réellement la création Gateway puis
-		 * la conversion finale en OutputDTO.
+		 * prépare un DTO valide et non doublon.
+		 *
+		 * Le Gateway retourne ensuite un objet métier mocké dont l'accès
+		 * au parent provoque une panne pendant la conversion en OutputDTO.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		final SousTypeProduit parent = parentPersistant();
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -1762,27 +1806,16 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
+
 		final IllegalStateException panneTechnique
 				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
 		final Produit cree = produitConversionKo(panneTechnique);
-		final ArgumentCaptor<Produit> captor 
-				= ArgumentCaptor.forClass(Produit.class);
 
-		/*
-		 * Configuration du Mock :
-		 * - aucun doublon objet métier n'est détecté ;
-		 * - le parent persistant est retrouvé ;
-		 * - gateway.creer(...) retourne un objet métier créé ;
-		 * - la conversion en OutputDTO de cet objet déclenche
-		 *   une panne technique avec message.
-		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
 		when(gateway.findByLibelle(MARTEAU))
 				.thenReturn(Collections.emptyList());
-		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parent));
-		when(gateway.creer(any(Produit.class)))
-				.thenReturn(cree);
+		when(gateway.creer(any(Produit.class))).thenReturn(cree);
 
 		/* ACT - ASSERT */
 		/* Garantit que l'exception technique d'origine est propagée. */
@@ -1794,38 +1827,32 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+						ProduitICuService.PREFIX_MESSAGE_CREER_CONVERSION_KO
 						+ MESSAGE_GATEWAY_BIS);
 
 		/* Garantit que le scénario a atteint la création Gateway
-		 * avec un objet métier rattaché au parent persistant,
-		 * puis la conversion finale côté UC.
+		 * avant l'échec de conversion côté UC.
 		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).creer(captor.capture());
-		verify(cree, times(1)).getSousTypeProduit();
-
-		assertThat(captor.getValue().getProduit()).isEqualTo(MARTEAU);
-		assertThat(captor.getValue().getSousTypeProduit()).isSameAs(parent);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, times(1)).creer(any(Produit.class));
 
 	} // __________________________________________________________________
-
-
-
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(conversion OutputDTO KO sans message) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon ;</li>
 	 * <li>récupère le parent persistant ;</li>
-	 * <li>convertit l'InputDTO en objet métier rattaché au parent ;</li>
+	 * <li>contrôle l'absence de doublon ;</li>
 	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
 	 * <li>atteint la conversion finale de l'objet métier créé en
 	 * {@link OutputDTO} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER}
+	 * {@link ProduitICuService#PREFIX_MESSAGE_CREER_CONVERSION_KO}
 	 * + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -1833,17 +1860,19 @@ public class ProduitCuServiceMockTest {
 	 * @throws Exception
 	 */
 	@Tag(TAG_CREER)
-	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_TECHNIQUE_KO_SANS_MESSAGE)
+	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_SANS_MESSAGE)
 	@Test
-	public void testCreerConversionTechniqueKoSansMessage() throws Exception {
+	public void testCreerConversionOutputDTOKOSansMessage() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide, non doublon, avec parent persistant,
-		 * pour atteindre réellement la création Gateway puis
-		 * la conversion finale en OutputDTO.
+		 * prépare un DTO valide et non doublon.
+		 *
+		 * Le Gateway retourne ensuite un objet métier mocké dont l'accès
+		 * au parent provoque une panne sans message pendant la conversion.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		final SousTypeProduit parent = parentPersistant();
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -1855,26 +1884,15 @@ public class ProduitCuServiceMockTest {
 			= mock(SousTypeProduitGatewayIService.class);
 		final ProduitCuService service 
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
+
 		final IllegalStateException panneTechnique = new IllegalStateException();
 		final Produit cree = produitConversionKo(panneTechnique);
-		final ArgumentCaptor<Produit> captor 
-				= ArgumentCaptor.forClass(Produit.class);
 
-		/*
-		 * Configuration du Mock :
-		 * - aucun doublon objet métier n'est détecté ;
-		 * - le parent persistant est retrouvé ;
-		 * - gateway.creer(...) retourne un objet métier créé ;
-		 * - la conversion en OutputDTO de cet objet déclenche
-		 *   une panne technique sans message.
-		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
 		when(gateway.findByLibelle(MARTEAU))
 				.thenReturn(Collections.emptyList());
-		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parent));
-		when(gateway.creer(any(Produit.class)))
-				.thenReturn(cree);
+		when(gateway.creer(any(Produit.class))).thenReturn(cree);
 
 		/* ACT - ASSERT */
 		/* Garantit que l'exception technique d'origine est propagée. */
@@ -1886,39 +1904,149 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER
+						ProduitICuService.PREFIX_MESSAGE_CREER_CONVERSION_KO
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
 		/* Garantit que le scénario a atteint la création Gateway
-		 * avec un objet métier rattaché au parent persistant,
-		 * puis la conversion finale côté UC.
+		 * avant l'échec de conversion côté UC.
 		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
-		verify(gateway, times(1)).creer(captor.capture());
-		verify(cree, times(1)).getSousTypeProduit();
-
-		assertThat(captor.getValue().getProduit()).isEqualTo(MARTEAU);
-		assertThat(captor.getValue().getSousTypeProduit()).isSameAs(parent);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, times(1)).creer(any(Produit.class));
 
 	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que creer(conversion OutputDTO retourne null) :</p>
+	 * <ul>
+	 * <li>récupère le parent persistant ;</li>
+	 * <li>contrôle l'absence de doublon ;</li>
+	 * <li>atteint l'appel {@code gateway.creer(...)} ;</li>
+	 * <li>atteint la conversion finale de l'objet métier créé en
+	 * {@link OutputDTO} ;</li>
+	 * <li>force ponctuellement la méthode static de conversion à retourner
+	 * {@code null} avec un {@link MockedStatic}, parce que le convertisseur
+	 * réel ne retourne {@code null} que si son paramètre est {@code null},
+	 * alors que le SERVICE METIER UC intercepte déjà un retour {@code null}
+	 * du Gateway avant la conversion ;</li>
+	 * <li>jette une {@link IllegalStateException} ;</li>
+	 * <li>positionne le message utilisateur
+	 * {@link ProduitICuService#MESSAGE_CREER_CONVERSION_KO}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_CONVERSION_OUTPUT_DTO_RETOUR_NULL)
+	@Test
+	public void testCreerConversionOutputDTORetourNull() throws Exception {
 
+		/* ARRANGE :
+		 * prépare un DTO valide et non doublon.
+		 *
+		 * Le Gateway retourne ensuite un objet métier créé.
+		 * Le cas défensif à tester est uniquement le retour null
+		 * de la conversion finale.
+		 */
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
+		
+		final SousTypeProduit parentPersistant = parentPersistant();
+		final Produit cree = produit(MARTEAU, parentPersistant, 100L);
+		
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
+		 */
+		final ProduitGatewayIService gateway 
+			= mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service 
+			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(gateway.creer(any(Produit.class))).thenReturn(cree);
+		
+		/*
+		 * Configuration du MockedStatic :
+		 * - le convertisseur réel est une classe utilitaire static ;
+		 * - avec un objet métier non null, il ne retourne normalement pas null ;
+		 * - gateway.creer(...) ne peut pas retourner null ici,
+		 *   car le SERVICE METIER UC s'arrêterait avant la conversion ;
+		 * - le MockedStatic est donc limité à ce test pour atteindre
+		 *   la branche défensive "dto == null" du SERVICE METIER UC.
+		 */
+		try (MockedStatic<ConvertisseurMetierToOutputDTOProduit> mockedStatic
+				= mockStatic(ConvertisseurMetierToOutputDTOProduit.class)) {
+			
+			/*
+			 * Configuration du MockedStatic :
+			 * la conversion finale en OutputDTO retourne null.
+			 */
+			mockedStatic.when(
+					() -> ConvertisseurMetierToOutputDTOProduit
+							.convert(cree))
+					.thenReturn(null);
 
+			/* ACT - ASSERT */
+			/* Garantit que le SERVICE METIER UC refuse
+			 * une conversion finale null.
+			 */
+			assertThatThrownBy(() -> service.creer(dto))
+					.isInstanceOf(IllegalStateException.class)
+					.hasMessage(
+							ProduitICuService
+									.MESSAGE_CREER_CONVERSION_KO);
+
+			/* Garantit que le message utilisateur correspond
+			 * au cas contractuel "conversion retourne null".
+			 */
+			assertThat(service.getMessage())
+					.isEqualTo(
+							ProduitICuService
+									.MESSAGE_CREER_CONVERSION_KO);
+
+			/* Garantit que le scénario a atteint la création Gateway
+			 * avant le contrôle du retour null de conversion.
+			 */
+			verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
+			verify(gateway, times(1)).findByLibelle(MARTEAU);
+			verify(gateway, times(1)).creer(any(Produit.class));
+			
+			/* Garantit que le MockedStatic a été strictement limité
+			 * à la conversion finale attendue par le SERVICE METIER UC.
+			 */
+			mockedStatic.verify(
+					() -> ConvertisseurMetierToOutputDTOProduit
+							.convert(cree),
+					times(1));
+		}
+
+	} // __________________________________________________________________
+	
+	
+	
 	/**
 	 * <div>
 	 * <p>garantit que creer(OK) :</p>
 	 * <ul>
-	 * <li>contrôle d'abord l'absence de doublon via
-	 * {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>récupère le parent persistant via
 	 * {@code sousTypeProduitGateway.findByLibelle(...)} ;</li>
+	 * <li>contrôle l'absence de doublon via
+	 * {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>convertit l'InputDTO en objet métier rattaché
 	 * au parent persistant ;</li>
 	 * <li>délègue la création à {@code gateway.creer(...)} ;</li>
 	 * <li>convertit l'objet métier créé en {@link OutputDTO} ;</li>
 	 * <li>retourne un {@link OutputDTO} portant l'identifiant généré,
-	 * le bon type, le bon parent et le bon libellé ;</li>
+	 * le bon libellé et le bon parent ;</li>
 	 * <li>positionne le message
 	 * {@link ProduitICuService#MESSAGE_CREER_OK}.</li>
 	 * </ul>
@@ -1936,46 +2064,38 @@ public class ProduitCuServiceMockTest {
 		 * créé par le Gateway, et un captor pour contrôler précisément
 		 * l'objet métier envoyé à gateway.creer(...).
 		 */
-		final InputDTO dto = new ProduitDTO.InputDTO(
-				BAZAR, OUTILLAGE, MARTEAU);
+		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
 		
-		final TypeProduit typePersistant = new TypeProduit(BAZAR);
-		typePersistant.setIdTypeProduit(1L);
-		
-		final SousTypeProduit parentPersistant
-				= new SousTypeProduit(OUTILLAGE, typePersistant);
-		parentPersistant.setIdSousTypeProduit(10L);
-		
-		final Produit cree = new Produit(MARTEAU, parentPersistant);
-		cree.setIdProduit(100L);
+		final SousTypeProduit parentPersistant = parentPersistant();
+		final Produit cree = produit(MARTEAU, parentPersistant, 100L);
 		
 		final ArgumentCaptor<Produit> captor
 				= ArgumentCaptor.forClass(Produit.class);
 		
-		/*
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
+		/* 
+		 * Mocke les services Gateway et les passe 
+		 * à un service UC instancié dans le test. 
 		 */
-		final ProduitGatewayIService gateway
-				= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway
-				= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service
-				= new ProduitCuService(gateway, sousTypeProduitGateway);
+		final ProduitGatewayIService gateway 
+			= mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+			= mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service 
+			= new ProduitCuService(gateway, sousTypeProduitGateway);
 		
 		/*
 		 * Configuration du Mock :
-		 * - findByLibelle(...) sur le Gateway objet métier retourne
-		 *   une liste vide pour simuler l'absence de doublon fonctionnel ;
 		 * - findByLibelle(...) sur le Gateway parent retourne le parent
 		 *   persistant ;
+		 * - findByLibelle(...) sur le Gateway Produit retourne une liste vide
+		 *   pour simuler l'absence de doublon fonctionnel ;
 		 * - creer(...) retourne l'objet métier réellement créé
 		 *   avec l'identifiant généré par le stockage.
 		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
 		when(gateway.findByLibelle(MARTEAU))
 				.thenReturn(Collections.emptyList());
-		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Collections.singletonList(parentPersistant));
 		when(gateway.creer(any(Produit.class))).thenReturn(cree);
 
 		/* ACT :
@@ -1986,14 +2106,14 @@ public class ProduitCuServiceMockTest {
 
 		/* ASSERT */
 		/* Garantit que les Gateways ont bien été sollicités
-		 * dans l'ordre fonctionnel attendu :
-		 * contrôle d'unicité, recherche du parent, puis création.
+		 * dans le scénario attendu :
+		 * recherche du parent, contrôle d'unicité, puis création.
 		 */
-		verify(gateway, times(1)).findByLibelle(MARTEAU);
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
 		verify(gateway, times(1)).creer(captor.capture());
 
-		/* Garantit que l'objet métier envoyé au Gateway objet métier :
+		/* Garantit que l'objet métier envoyé au Gateway Produit :
 		 * - n'est pas null ;
 		 * - ne porte pas encore d'identifiant ;
 		 * - porte le libellé métier issu de l'InputDTO ;
@@ -2004,32 +2124,27 @@ public class ProduitCuServiceMockTest {
 		assertThat(envoye).isNotNull();
 		assertThat(envoye.getIdProduit()).isNull();
 		assertThat(envoye.getProduit()).isEqualTo(MARTEAU);
-		assertThat(envoye.getSousTypeProduit()).isSameAs(parentPersistant);
-		assertThat(envoye.getSousTypeProduit().getIdSousTypeProduit())
-				.isEqualTo(10L);
+		assertThat(envoye.getSousTypeProduit()).isNotNull();
 		assertThat(envoye.getSousTypeProduit().getSousTypeProduit())
 				.isEqualTo(OUTILLAGE);
+		assertThat(envoye.getSousTypeProduit().getIdSousTypeProduit())
+				.isEqualTo(10L);
 		assertThat(envoye.getSousTypeProduit().getTypeProduit()).isNotNull();
-		assertThat(envoye.getSousTypeProduit().getTypeProduit().getIdTypeProduit())
-				.isEqualTo(1L);
 		assertThat(envoye.getSousTypeProduit().getTypeProduit().getTypeProduit())
 				.isEqualTo(BAZAR);
+		assertThat(envoye.getSousTypeProduit().getTypeProduit().getIdTypeProduit())
+				.isEqualTo(1L);
 
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
 		 * - porte l'identifiant généré ;
-		 * - porte le bon type ;
-		 * - porte le bon parent ;
 		 * - porte le bon libellé métier ;
+		 * - porte le bon parent ;
 		 * - expose le message utilisateur de succès.
 		 */
-		assertThat(retour).isNotNull();
-		assertThat(retour.getIdProduit()).isEqualTo(100L);
-		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
-		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
-		assertThat(retour.getProduit()).isEqualTo(MARTEAU);
+		assertProduitDTO(retour, 100L, BAZAR, OUTILLAGE, MARTEAU);
 		assertThat(message).isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
-		
+
 	} // __________________________________________________________________
 	
 
@@ -9286,7 +9401,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(retour).isNull();
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL_KO);
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
@@ -9457,7 +9572,7 @@ public class ProduitCuServiceMockTest {
 		final OutputDTO retourCreer = service.creer(null);
 		assertThat(retourCreer).isNull();
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL);
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_NULL_KO);
 
 	} // __________________________________________________________________
 

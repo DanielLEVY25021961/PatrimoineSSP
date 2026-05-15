@@ -939,7 +939,7 @@ public class SousTypeProduitDesktopControllerMockTest {
 		when(service.findByLibelle(libelle))
 				.thenReturn(java.util.List.of(trouveA, trouveB));
 		when(service.getMessage())
-				.thenReturn(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		/* ======================= ACT ======================= */
 		final java.util.List<OutputDTO> retour = controller.findByLibelle(libelle);
@@ -957,7 +957,7 @@ public class SousTypeProduitDesktopControllerMockTest {
 		assertThat(retour)
 				.extracting(SousTypeProduitDTO.OutputDTO::getSousTypeProduit)
 				.containsExactly(libelle, libelle);
-		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		assertThat(message).isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		verify(service, times(1)).findByLibelle(libelle);
 		verify(service, times(1)).getMessage();
@@ -1673,7 +1673,7 @@ public class SousTypeProduitDesktopControllerMockTest {
 		final OutputDTO trouve = new SousTypeProduitDTO.OutputDTO(1L, BAZAR, OUTILLAGE, null);
 
 		when(service.findByDTO(inputDTO)).thenReturn(trouve);
-		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		/* ======================= ACT ======================= */
 		final OutputDTO retour = controller.findByDTO(inputDTO);
@@ -1685,7 +1685,7 @@ public class SousTypeProduitDesktopControllerMockTest {
 		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
 		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		verify(service, times(1)).findByDTO(inputDTO);
 		verify(service, times(1)).getMessage();
@@ -1806,7 +1806,7 @@ public class SousTypeProduitDesktopControllerMockTest {
 		final OutputDTO trouve = new SousTypeProduitDTO.OutputDTO(id, BAZAR, OUTILLAGE, null);
 
 		when(service.findById(id)).thenReturn(trouve);
-		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+		when(service.getMessage()).thenReturn(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		/* ======================= ACT ======================= */
 		final OutputDTO retour = controller.findById(id);
@@ -1818,7 +1818,7 @@ public class SousTypeProduitDesktopControllerMockTest {
 		assertThat(retour.getTypeProduit()).isEqualTo(BAZAR);
 		assertThat(retour.getSousTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		verify(service, times(1)).findById(id);
 		verify(service, times(1)).getMessage();

@@ -508,20 +508,26 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	@DisplayName(DN_CREER_NULL)
 	@Test
 	public void testCreerNull() throws Exception {
-
+		
 		/* ARRANGE :
-		 * compte d'abord en SQL
+		 * compte d'abord (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * avant l'appel au SERVICE UC.
+		 * avant l'appel au SERVICE UC,
+		 * afin de pouvoir prouver ensuite
+		 * qu'aucune écriture réelle n'a eu lieu dans le stockage.
 		 */
 		final Long countAvant = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
 				Long.class);
 
 		assertThat(countAvant).isNotNull();
-
+		
 		/* ACT :
-		 * appelle service.creer(null).
+		 * appelle service.creer(null) :
+		 * - le SERVICE UC retourne null ;
+		 * - positionne le message utilisateur MESSAGE_CREER_NULL_KO
+		 * (message contractuel) ;
+		 * - ne jette aucune exception.
 		 */
 		final OutputDTO dto = this.service.creer(null);
 
@@ -529,18 +535,18 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		 * garantit que service.creer(null) retourne null.
 		 */
 		assertThat(dto).isNull();
-
-		/* Garantit que service.creer(null) émet un message
-		 * MESSAGE_CREER_NULL_KO.
-		 */
+		
+		/* Garantit que service.creer(null) émet un message 
+		 * MESSAGE_CREER_NULL_KO. */
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_NULL_KO);
 
 		/* ASSERT :
-		 * compte ensuite en SQL
+		 * compte ensuite (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * après service.creer(null),
-		 * afin de prouver que l'appel n'a produit aucune écriture.
+		 * après service.creer(null)
+		 * afin de prouver que l'appel au SERVICE UC
+		 * n'a produit aucune écriture dans le stockage.
 		 */
 		final Long countApres = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -548,14 +554,14 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countApres).isNotNull();
 		assertThat(countApres).isEqualTo(countAvant);
-
+		
 	} // __________________________________________________________________
-
-
+	
+	
 
 	/**
 	 * <div>
-	 * <p>garantit que creer(...) avec un libellé enfant blank :</p>
+	 * <p>garantit que creer(...) avec un libellé blank :</p>
 	 * <ul>
 	 * <li>jette une {@link ExceptionParametreBlank}</li>
 	 * <li>émet un message
@@ -570,11 +576,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	@DisplayName(DN_CREER_BLANK)
 	@Test
 	public void testCreerBlank() throws Exception {
-
+		
 		/* ARRANGE :
-		 * compte d'abord en SQL
+		 * compte d'abord (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * avant l'appel au SERVICE UC.
+		 * avant l'appel au SERVICE UC,
+		 * afin de pouvoir prouver ensuite
+		 * qu'aucune écriture réelle n'a eu lieu dans le stockage.
 		 */
 		final Long countAvant = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -582,13 +590,12 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countAvant).isNotNull();
 
-		/* Prépare un InputDTO
-		 * dont le libellé métier enfant est blank.
-		 */
+		/* prépare un InputDTO
+		 * dont le libellé métier est blank. */
 		final InputDTO input = new SousTypeProduitDTO.InputDTO(
 				OUTIL,
 				ESPACES);
-
+		
 		/* ACT - ASSERT :
 		 * Garantit que this.service.creer(libellé blank)
 		 * - jette une ExceptionParametreBlank
@@ -599,9 +606,9 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.hasMessage(
 						SousTypeProduitICuService
 								.MESSAGE_CREER_LIBELLE_BLANK_KO);
-
-		/* Garantit le message utilisateur
-		 * MESSAGE_CREER_LIBELLE_BLANK_KO.
+		
+		/* Garantit le message utilisateur MESSAGE_CREER_LIBELLE_BLANK_KO
+		 * (message contractuel attendu).
 		 */
 		assertThat(this.service.getMessage())
 				.isEqualTo(
@@ -609,9 +616,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 								.MESSAGE_CREER_LIBELLE_BLANK_KO);
 
 		/* ASSERT :
-		 * compte ensuite en SQL
+		 * compte ensuite (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * après l'échec contractuel.
+		 * après l'échec contractuel
+		 * afin de prouver que l'appel au SERVICE UC
+		 * n'a produit aucune écriture dans le stockage.
 		 */
 		final Long countApres = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -619,10 +628,10 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countApres).isNotNull();
 		assertThat(countApres).isEqualTo(countAvant);
-
+		
 	} // __________________________________________________________________
-
-
+	
+	
 
 	/**
 	 * <div>
@@ -641,11 +650,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	@DisplayName(DN_CREER_PARENT_BLANK)
 	@Test
 	public void testCreerParentBlank() throws Exception {
-
+		
 		/* ARRANGE :
-		 * compte d'abord en SQL
+		 * compte d'abord (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * avant l'appel au SERVICE UC.
+		 * avant l'appel au SERVICE UC,
+		 * afin de pouvoir prouver ensuite
+		 * qu'aucune écriture réelle n'a eu lieu dans le stockage.
 		 */
 		final Long countAvant = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -653,13 +664,12 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countAvant).isNotNull();
 
-		/* Prépare un InputDTO
-		 * dont le libellé parent est blank.
-		 */
+		/* prépare un InputDTO
+		 * dont le libellé parent est blank. */
 		final InputDTO input = new SousTypeProduitDTO.InputDTO(
 				ESPACES,
 				MARTEAU);
-
+		
 		/* ACT - ASSERT :
 		 * Garantit que this.service.creer(parent blank)
 		 * - jette une IllegalStateException
@@ -670,9 +680,9 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.hasMessage(
 						SousTypeProduitICuService
 								.MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO);
-
-		/* Garantit le message utilisateur
-		 * MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO.
+		
+		/* Garantit le message utilisateur MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO
+		 * (message contractuel attendu).
 		 */
 		assertThat(this.service.getMessage())
 				.isEqualTo(
@@ -680,9 +690,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 								.MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO);
 
 		/* ASSERT :
-		 * compte ensuite en SQL
+		 * compte ensuite (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * après l'échec contractuel.
+		 * après l'échec contractuel
+		 * afin de prouver que l'appel au SERVICE UC
+		 * n'a produit aucune écriture dans le stockage.
 		 */
 		final Long countApres = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -690,10 +702,10 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countApres).isNotNull();
 		assertThat(countApres).isEqualTo(countAvant);
-
+		
 	} // __________________________________________________________________
-
-
+	
+	
 
 	/**
 	 * <div>
@@ -712,11 +724,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	@DisplayName(DN_CREER_PARENT_ABSENT)
 	@Test
 	public void testCreerParentAbsent() throws Exception {
-
+		
 		/* ARRANGE :
-		 * compte d'abord en SQL
+		 * compte d'abord (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * avant l'appel au SERVICE UC.
+		 * avant l'appel au SERVICE UC,
+		 * afin de pouvoir prouver ensuite
+		 * qu'aucune écriture réelle n'a eu lieu dans le stockage.
 		 */
 		final Long countAvant = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -724,13 +738,12 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countAvant).isNotNull();
 
-		/* Prépare un InputDTO
-		 * dont le parent n'a pas été créé dans le stockage.
-		 */
+		/* prépare un InputDTO valide
+		 * dont le parent n'a pas été créé dans le stockage. */
 		final InputDTO input = new SousTypeProduitDTO.InputDTO(
 				OUTIL,
 				MARTEAU);
-
+		
 		/* ACT - ASSERT :
 		 * Garantit que this.service.creer(parent absent)
 		 * - jette une IllegalStateException
@@ -741,9 +754,9 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.hasMessage(
 						SousTypeProduitICuService
 								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
-
-		/* Garantit le message utilisateur
-		 * MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
+		
+		/* Garantit le message utilisateur MESSAGE_CREER_PARENT_NON_PERSISTANT_KO
+		 * (message contractuel attendu).
 		 */
 		assertThat(this.service.getMessage())
 				.isEqualTo(
@@ -751,9 +764,11 @@ public class SousTypeProduitCuServiceIntegrationTest {
 								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
 
 		/* ASSERT :
-		 * compte ensuite en SQL
+		 * compte ensuite (en SQL)
 		 * le nombre d'enregistrements dans le stockage
-		 * après l'échec contractuel.
+		 * après l'échec contractuel
+		 * afin de prouver que l'appel au SERVICE UC
+		 * n'a produit aucune écriture dans le stockage.
 		 */
 		final Long countApres = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
@@ -761,23 +776,24 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countApres).isNotNull();
 		assertThat(countApres).isEqualTo(countAvant);
-
+		
 	} // __________________________________________________________________
-
-
+	
+	
 
 	/**
 	 * <div>
 	 * <p>garantit que si l'appelant tente creer(...)
-	 * avec un couple [parent, libellé] déjà présent dans le stockage :</p>
+	 * avec un objet métier déjà présent dans le stockage sous le même parent :</p>
 	 * <ul>
-	 * <li>la première création réussit réellement</li>
-	 * <li>la seconde création lève une {@link ExceptionDoublon}</li>
+	 * <li>la première création réussit réellement ;</li>
+	 * <li>la seconde création lève une {@link ExceptionDoublon} ;</li>
 	 * <li>le message utilisateur exact est
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_CREER_DOUBLON_KO} + libellé ;</li>
 	 * <li>aucune nouvelle ligne n'est créée dans le stockage
-	 * lors de la tentative de doublon</li>
-	 * <li>l'unique ligne créée portant déjà ce couple reste inchangée</li>
+	 * lors de la tentative de doublon ;</li>
+	 * <li>l'unique ligne créée portant déjà cet objet métier
+	 * reste inchangée.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -793,7 +809,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		 */
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(OUTIL));
 
-		/* Prépare un DTO valide non seedé.
+		/* prépare un DTO valide non seedé.
 		 *
 		 * Le premier appel à creer(...) créera réellement l'objet métier.
 		 * Le second appel avec le même DTO déclenchera ensuite
@@ -803,8 +819,8 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				OUTIL,
 				TOURNEVIS);
 
-		/* Vérifie d'abord que le couple du test
-		 * n'est pas déjà présent dans le stockage.
+		/* Vérifie d'abord que l'objet métier du test
+		 * n'est pas déjà présent dans le stockage sous ce parent.
 		 */
 		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
 				OUTIL,
@@ -832,7 +848,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(cree.getTypeProduit()).isEqualTo(OUTIL);
 
 		/* Garantit physiquement dans le stockage
-		 * qu'une seule ligne porte le couple créé.
+		 * qu'une seule ligne porte l'objet métier créé sous ce parent.
 		 */
 		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
 				OUTIL,
@@ -845,6 +861,14 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(this.compterSousTypeProduitDansStockage(
 				cree.getIdSousTypeProduit()))
 				.isEqualTo(1L);
+
+		/* Garantit physiquement dans le stockage
+		 * que la colonne SOUS_TYPE_PRODUIT a bien été écrite
+		 * avec le libellé métier attendu.
+		 */
+		assertThat(this.lireLibelleSousTypeProduitDansStockage(
+				cree.getIdSousTypeProduit()))
+				.isEqualTo(TOURNEVIS);
 
 		/* Garantit physiquement dans le stockage
 		 * que le parent stocké est le parent attendu.
@@ -862,7 +886,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		/* ACT - ASSERT :
 		 * sollicite une deuxième fois la méthode creer(...)
-		 * avec le même couple déjà présent.
+		 * avec le même objet métier déjà présent sous le même parent.
 		 *
 		 * Le SERVICE UC doit refuser le doublon avant toute nouvelle
 		 * écriture dans le stockage.
@@ -873,8 +897,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 						SousTypeProduitICuService.MESSAGE_CREER_DOUBLON_KO
 								+ TOURNEVIS);
 
-		/* Garantit le message utilisateur exact.
-		 */
+		/* Garantit le message utilisateur exact. */
 		assertThat(this.service.getMessage())
 				.isEqualTo(
 						SousTypeProduitICuService.MESSAGE_CREER_DOUBLON_KO
@@ -883,7 +906,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		/* ASSERT :
 		 * contrôle ensuite par SQL direct
 		 * que le stockage contient toujours une seule ligne
-		 * pour ce couple.
+		 * pour cet objet métier sous ce parent.
 		 */
 		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
 				OUTIL,
@@ -903,22 +926,22 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 		assertThat(countApresDoublon).isNotNull();
 		assertThat(countApresDoublon).isEqualTo(countApresPremiereCreation);
-
+		
 	} // __________________________________________________________________
-
-
+	
+	
 
 	/**
 	 * <div>
 	 * <p>garantit que creer(OK) :</p>
 	 * <ul>
-	 * <li>crée d'abord le parent persistant requis</li>
-	 * <li>crée réellement une ligne dans le stockage</li>
-	 * <li>retourne un {@link OutputDTO} persistant</li>
+	 * <li>crée d'abord le parent persistant requis ;</li>
+	 * <li>crée réellement une ligne dans le stockage ;</li>
+	 * <li>retourne un {@link OutputDTO} persistant ;</li>
 	 * <li>émet un message
 	 * {@link SousTypeProduitICuService#MESSAGE_CREER_OK}</li>
-	 * <li>prouve le rattachement au parent dans le stockage</li>
-	 * <li>rend la donnée retrouvable via le SERVICE UC par libellé et par ID</li>
+	 * <li>prouve le rattachement au parent dans le stockage ;</li>
+	 * <li>rend la donnée retrouvable via le SERVICE UC par libellé et par ID.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -935,14 +958,15 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		 */
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(OUTIL));
 
-		/* Prépare un DTO valide à créer.
+		/* prépare un DTO valide à créer
+		 * et mémorise le nombre de lignes avant création.
 		 */
 		final InputDTO input = new SousTypeProduitDTO.InputDTO(
 				OUTIL,
 				MARTEAU);
 
-		/* Vérifie d'abord que le couple du test
-		 * n'est pas déjà présent dans le stockage.
+		/* Vérifie d'abord que l'objet métier du test
+		 * n'est pas déjà présent dans le stockage sous ce parent.
 		 */
 		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
 				OUTIL,
@@ -1009,7 +1033,7 @@ public class SousTypeProduitCuServiceIntegrationTest {
 				.isEqualTo(OUTIL);
 
 		/* Garantit physiquement dans le stockage
-		 * qu'une seule ligne porte le couple créé.
+		 * qu'une seule ligne porte l'objet métier créé sous ce parent.
 		 */
 		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
 				OUTIL,
@@ -1034,15 +1058,15 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		/* Garantit que l'objet nouvellement créé
 		 * est bien retrouvable par identifiant via le SERVICE UC.
 		 */
-		final OutputDTO trouveParId = this.service.findById(
-				cree.getIdSousTypeProduit());
+		final OutputDTO trouveParId 
+			= this.service.findById(cree.getIdSousTypeProduit());
 
 		assertThat(trouveParId).isNotNull();
 		assertThat(trouveParId.getIdSousTypeProduit())
 				.isEqualTo(cree.getIdSousTypeProduit());
 		assertThat(trouveParId.getSousTypeProduit()).isEqualTo(MARTEAU);
 		assertThat(trouveParId.getTypeProduit()).isEqualTo(OUTIL);
-
+		
 	} // __________________________________________________________________
     
     

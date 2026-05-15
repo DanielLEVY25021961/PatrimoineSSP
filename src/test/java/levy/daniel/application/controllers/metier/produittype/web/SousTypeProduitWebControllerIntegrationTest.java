@@ -933,7 +933,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 				.extracting(SousTypeProduitDTO.OutputDTO::getTypeProduit)
 				.containsExactlyInAnyOrder(IT_TP_PARENT_A, parentB);
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		final OutputDTO trouveA = dtos.stream()
 				.filter(dto -> IT_TP_PARENT_A.equals(dto.getTypeProduit()))
@@ -1603,7 +1603,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 		assertThat(trouve.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 		assertThat(trouve.getSousTypeProduit()).isEqualTo(IT_STP_ALPHA);
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline + 1L);
 		assertThat(this.compterSousTypeProduitEnBase(cree.getIdSousTypeProduit())).isEqualTo(1L);
@@ -1687,7 +1687,7 @@ public class SousTypeProduitWebControllerIntegrationTest {
 		assertThat(trouve.getTypeProduit()).isEqualTo(IT_TP_PARENT_A);
 		assertThat(trouve.getSousTypeProduit()).isEqualTo(IT_STP_ALPHA);
 		assertThat(this.controller.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		assertThat(this.compterTousLesSousTypeProduitEnBase()).isEqualTo(baseline + 1L);
 		assertThat(this.compterSousTypeProduitEnBase(cree.getIdSousTypeProduit())).isEqualTo(1L);

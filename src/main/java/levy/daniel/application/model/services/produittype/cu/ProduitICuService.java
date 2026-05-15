@@ -193,6 +193,18 @@ public interface ProduitICuService {
 		= "OK - La création de l'objet s'est bien déroulée.";
 
 	/* ----------------------- rechercherTous -------------------------- */
+	/**
+	 * <div>
+	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>
+	 * </div>
+	 */
+	String MESSAGE_STOCKAGE_NULL
+		= "Le stockage n'a pas retourné d'enregistrements (null).";
+
+	/**
+	 * "à modifier"
+	 */
+	String MESSAGE_SUCCES_RECHERCHE = "à modifier";
 	
 	/**
 	 * <div>
