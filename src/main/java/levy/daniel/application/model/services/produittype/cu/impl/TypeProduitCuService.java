@@ -395,7 +395,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		try {
 			
 			/* Délègue au GATEWAY la recherche exhaustive 
-			 * dans le stockage de tous les objets métier. */
+			 * dans le stockage de tous les objets métier 
+			 * via gateway.rechercherTous(). */
 			records = this.gateway.rechercherTous();
 			
 		} catch (final Exception e) {
@@ -446,7 +447,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		
 		try {
 			
-			/* convertit la liste d'objets métier en liste d'OutputDTO. */
+			/* convertit la liste d'objets métier en liste d'OutputDTO 
+			 * via la méthode private convertirEtDedoublonner(...). */
 			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
 			
 		} catch (final Exception e) {
@@ -460,20 +462,41 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
+			/*
+			 * Si convertirEtDedoublonner(...) jette Exception :
+			 * - alimente message avec un message sécurisé basé 
+			 * sur MESSAGE_RECHERCHER_TOUS_CONVERSION_KO ;
+			 * - LOG ;
+			 * - propage l'Exception.
+			 */
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_CONVERSION_KO 
+					+ TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS,
 					e);
 		}
-
+		
+		/* Si convertirEtDedoublonner(...) retourne null : 
+		 * - alimente message avec MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException. */
+		if (dtos == null) {
+			
+			return this.traiterErreur(
+					MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO,
+					METHODE_RECHERCHER_TOUS,
+					new IllegalStateException(
+							MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO));
+		}
+		
 		/*
 		 * Le message utilisateur n'est alimenté
 		 * qu'après préparation complète de la réponse utilisateur.
 		 */
 		if (dtos.isEmpty()) {
-			this.message.set(MESSAGE_RECHERCHE_VIDE);
+			this.message.set(MESSAGE_RECHERCHER_TOUS_VIDE);
 		} else {
-			this.message.set(MESSAGE_RECHERCHE_OK);
+			this.message.set(MESSAGE_RECHERCHER_TOUS_OK);
 		}
 
 		/*
@@ -481,7 +504,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 * (éventuellement vide).
 		 */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 
 
 	

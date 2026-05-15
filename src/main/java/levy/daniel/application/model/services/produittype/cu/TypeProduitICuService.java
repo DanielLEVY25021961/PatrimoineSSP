@@ -177,6 +177,24 @@ public interface TypeProduitICuService {
 	 */
 	String MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 		= "KO - rechercherTous() - convertirEtDedoublonner(...) a jeté Exception";
+	
+	/**
+	 * "KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null"
+	 */
+	String MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO 
+		= "KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null";
+	
+	/**
+	 * "OK - La recherche n'a retourné aucun résutat."
+	 */
+	String MESSAGE_RECHERCHER_TOUS_VIDE 
+		= "OK - La recherche n'a retourné aucun résutat.";
+	
+	/**
+	 * "OK - La recherche a retourné des résultats."
+	 */
+	String MESSAGE_RECHERCHER_TOUS_OK 
+		= "OK - La recherche a retourné des résultats.";
 
 	/**
 	 * <div>
@@ -520,7 +538,6 @@ public interface TypeProduitICuService {
 	 * <ul>
 	 * <li>demander au service GATEWAY la liste complète
 	 * des {@link TypeProduit} présents dans le stockage ;</li>
-	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
 	 * <li>filtrer les éventuels éléments {@code null},
 	 * trier les objets métier et dédoublonner la réponse côté UC
 	 * si nécessaire ;</li>
@@ -536,6 +553,7 @@ public interface TypeProduitICuService {
 	 * <ul>
 	 * <li>Délègue la recherche exhaustive au composant GATEWAY 
 	 * via {@code gateway.rechercherTous()}.</li>
+	 * <ul>
 	 * <li>Si le GATEWAY jette une Exception, positionne
 	 * {@link #getMessage()} 
 	 * à {@link #MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO} + message sécurisé,
@@ -543,19 +561,30 @@ public interface TypeProduitICuService {
 	 * <li>Si le GATEWAY retourne {@code null}, positionne
 	 * {@link #getMessage()} 
 	 * à {@link #MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO},
-	 * émet un LOG et lève une ExceptionStockageVide.</li>
-	 * <li>Sinon, retourne une {@link List} de
+	 * émet un LOG et lève une {@code ExceptionStockageVide}.</li>
+	 * </ul>
+	 * <li>Filtre les null et trie la liste d'objets métier 
+	 * retournée par le GATEWAY.</li>
+	 * <li>Convertit la liste d'objets métier en liste d'OutputDTO 
+	 * en dédoublonnant via la méthode private 
+	 * {@code convertirEtDedoublonner(...)}.</li>
+	 * <ul>
+	 * <li>Si convertirEtDedoublonner(...) jette Exception : 
+	 * alimente message avec un message sécurisé basé sur 
+	 * {@link #MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}, 
+	 * LOG, propage l'Exception</li>
+	 * <li>Si convertirEtDedoublonner(...) retourne null : 
+	 * positionne {@link #getMessage()} à 
+	 * {@link #MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO}, LOG, 
+	 * jette une {@code IllegalStateException}</li>
+	 * </ul>
+	 * <li>Si la liste résultat est vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHER_TOUS_VIDE}.</li>
+	 * <li>Si la liste résultat n'est pas vide, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHER_TOUS_OK}.</li>
+	 * <li>Retourne une {@link List} de
 	 * {@link TypeProduitDTO.OutputDTO} jamais {@code null}
 	 * (éventuellement vide).</li>
-	 * <li>Si la liste résultat est vide, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
-	 * <li>Si la liste résultat n'est pas vide, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
-	 * <li>En cas d'échec technique remonté par le GATEWAY
-	 * ou par la préparation de la réponse utilisateur,
-	 * positionne un message utilisateur technique cohérent
-	 * puis propage une exception circonstanciée
-	 * conforme à l'implémentation.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -572,8 +601,6 @@ public interface TypeProduitICuService {
 	 * correspond à l'état métier effectivement accessible
 	 * dans le stockage via le GATEWAY,
 	 * exprimé sous forme de DTO.</li>
-	 * <li>Aucun résultat partiel incohérent
-	 * ne doit être exposé à l'appelant.</li>
 	 * </ul>
 	 * </div>
 	 *

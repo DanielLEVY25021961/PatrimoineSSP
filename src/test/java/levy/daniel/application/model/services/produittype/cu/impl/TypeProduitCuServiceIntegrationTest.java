@@ -270,6 +270,8 @@ public class TypeProduitCuServiceIntegrationTest {
 	 */
 	public static final String IT_COUNT_02 = "IT-TP-COUNT-02";
 
+	// ============================ TAG =================================//
+		
 	/**
 	 * "cu-it-Creer"
 	 */
@@ -278,8 +280,10 @@ public class TypeProduitCuServiceIntegrationTest {
 	/**
 	 * "cu-it-RechercherTous"
 	 */
-	public static final String TAG_RECHERCHERTOUS ="cu-it-RechercherTous"; 
-	
+	public static final String TAG_RECHERCHER_TOUS = "cu-it-RechercherTous";
+
+	// ============================ DN ==================================//
+		
 	/**
 	 * "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé"
 	 */
@@ -303,11 +307,34 @@ public class TypeProduitCuServiceIntegrationTest {
 	 */
 	public static final String DN_CREER_OK
 		= "creer(ok) : preuve stockage + message exact + round-trip findByLibelle/findById";
+	
+	/**
+	 * "rechercherTous(vide) : liste vide + MESSAGE_RECHERCHER_TOUS_VIDE + stockage vide"
+	 */
+	public static final String DN_RECHERCHER_TOUS_VIDE
+		= "rechercherTous(vide) : liste vide "
+				+ "+ MESSAGE_RECHERCHER_TOUS_VIDE + stockage vide";
+
+	/**
+	 * "rechercherTous(ok) : MESSAGE_RECHERCHER_TOUS_OK + créations présentes dans le stockage"
+	 */
+	public static final String DN_RECHERCHER_TOUS_NOMINAL
+		= "rechercherTous(ok) : MESSAGE_RECHERCHER_TOUS_OK "
+				+ "+ créations présentes dans le stockage";
+
+	// ========================== SELECT ================================//
+	
 	/**
 	 * "SELECT COUNT(*) FROM TYPES_PRODUIT"
 	 */
 	public static final String SELECT_COUNT_FROM_TYPES_PRODUIT 
 		= "SELECT COUNT(*) FROM TYPES_PRODUIT";
+	
+	/**
+	 * "SELECT COUNT(*) FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = ?"
+	 */
+	public static final String SELECT_COUNT_FROM_TYPEPRODUIT 
+		= "SELECT COUNT(*) FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = ?";
 
 	// *************************** ATTRIBUTS *******************************/
 
@@ -821,153 +848,242 @@ public class TypeProduitCuServiceIntegrationTest {
     
     
     
-    // ======================== RechercherTous ============================
+    // ======================== rechercherTous ============================
 	
 	
 	
 	/**
 	 * <div>
-	 * <p>rechercherTous() : doit retourner une liste non nulle contenant les créations du test.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */	
-	@Tag(TAG_RECHERCHERTOUS)
-	@DisplayName("rechercherTous() : retourne une liste non nulle contenant les créations du test")
-	@Test
-	public void testRechercherTous() throws Exception {
-
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_GAMMA));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_DELTA));
-
-		final List<OutputDTO> dtos = this.service.rechercherTous();
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos)
-				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
-				.contains(IT_GAMMA, IT_DELTA);
-		
-	}// __________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>rechercherTous() : scénario nominal béton avec preuve BD.</p>
+	 * <p>garantit que rechercherTous() avec un stockage vide :</p>
 	 * <ul>
-	 * <li>retourne une liste non {@code null}</li>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>retourne une liste vide ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>reste cohérent avec {@link TypeProduitICuService#count()}</li>
-	 * <li>contient les créations du test</li>
-	 * <li>permet de relier les DTO retournés à des lignes réellement présentes
-	 * en base</li>
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_VIDE} ;</li>
+	 * <li>ne crée aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
-	@Test
-	@DisplayName("rechercherTous(ok) : message exact + cohérence count + présence des créations + preuve BD")
-	public void testRechercherTousOkAvecPreuveBd() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		final OutputDTO creeGamma = this.service.creer(
-				new TypeProduitDTO.InputDTO(IT_GAMMA));
-		final OutputDTO creeDelta = this.service.creer(
-				new TypeProduitDTO.InputDTO(IT_DELTA));
-
-		final long attendu = this.service.count();
-
-		/* ======================= ACT ======================= */
-		final List<TypeProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
-
-		/* ===================== ASSERT ====================== */
-		assertThat(dtos).isNotNull();
-		assertThat(dtos.size()).isEqualTo((int) attendu);
-
-		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		assertThat(dtos)
-				.extracting(TypeProduitDTO.OutputDTO::getTypeProduit)
-				.contains(IT_GAMMA, IT_DELTA);
-
-		final OutputDTO dtoGamma = dtos.stream()
-				.filter(dto -> IT_GAMMA.equals(dto.getTypeProduit()))
-				.findFirst()
-				.orElse(null);
-
-		final OutputDTO dtoDelta = dtos.stream()
-				.filter(dto -> IT_DELTA.equals(dto.getTypeProduit()))
-				.findFirst()
-				.orElse(null);
-
-		assertThat(dtoGamma).isNotNull();
-		assertThat(dtoGamma.getIdTypeProduit())
-				.isEqualTo(creeGamma.getIdTypeProduit());
-
-		assertThat(dtoDelta).isNotNull();
-		assertThat(dtoDelta.getIdTypeProduit())
-				.isEqualTo(creeDelta.getIdTypeProduit());
-
-		/* preuve BD : les lignes existent physiquement et portent le bon libellé. */
-		assertThat(this.compterTypeProduitEnBase(creeGamma.getIdTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(creeGamma.getIdTypeProduit()))
-				.isEqualTo(IT_GAMMA);
-
-		assertThat(this.compterTypeProduitEnBase(creeDelta.getIdTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(creeDelta.getIdTypeProduit()))
-				.isEqualTo(IT_DELTA);
-
-		assertThat(this.compterTypeProduitParLibelleEnBase(IT_GAMMA))
-				.isEqualTo(1L);
-		assertThat(this.compterTypeProduitParLibelleEnBase(IT_DELTA))
-				.isEqualTo(1L);
-		
-	}// __________________________________________________________________
-
-	
-
-	/**
-	 * <div>
-	 * <p>rechercherTous() : stockage vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>reste cohérent avec une base physiquement vide</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
+	@Tag(TAG_RECHERCHER_TOUS)
 	@Sql(
 			scripts = "classpath:/truncate-test.sql",
 			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-	@DisplayName("rechercherTous(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + base vide")
+	@DisplayName(DN_RECHERCHER_TOUS_VIDE)
+	@Test
 	public void testRechercherTousVide() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		assertThat(this.service.count()).isEqualTo(0L);
+		/* ARRANGE :
+		 * contrôle d'abord que le stockage ne contient aucun TypeProduit.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
-		/* ======================= ACT ======================= */
-		final List<TypeProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
 
-		/* ===================== ASSERT ====================== */
+		/* ACT :
+		 * exécute la recherche exhaustive via le SERVICE UC.
+		 */
+		final List<OutputDTO> dtos = this.service.rechercherTous();
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * garantit que rechercherTous() retourne une liste non null et vide.
+		 */
 		assertThat(dtos).isNotNull();
 		assertThat(dtos).isEmpty();
 
-		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		/* Garantit que le message utilisateur est celui
+		 * de la branche rechercherTous() vide.
+		 */
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_VIDE);
+
+		/* Garantit que l'appel n'a rien écrit dans le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(0L);
 		
-	}// __________________________________________________________________
+	} // __________________________________________________________________
 
 	
 	
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTous(OK) :</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_OK} ;</li>
+	 * <li>contient les créations réalisées par le test ;</li>
+	 * <li>retourne pour ces créations les identifiants persistants
+	 * effectivement écrits dans le stockage ;</li>
+	 * <li>reste aligné avec le nombre de lignes présentes
+	 * dans le stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DN_RECHERCHER_TOUS_NOMINAL)
+	@Test
+	public void testRechercherTousNominalAvecPreuveStockage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * prépare deux TypeProduit non seedés et mémorise le volume
+		 * du stockage avant création.
+		 */
+		final InputDTO inputOutil = new TypeProduitDTO.InputDTO(OUTIL);
+		final InputDTO inputNonSeede = new TypeProduitDTO.InputDTO(NON_SEEDE);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				OUTIL))
+				.isEqualTo(0L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				NON_SEEDE))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT :
+		 * crée réellement deux TypeProduit dans le stockage.
+		 */
+		final OutputDTO creeOutil = this.service.creer(inputOutil);
+		final OutputDTO creeNonSeede = this.service.creer(inputNonSeede);
+
+		/*
+		 * Synchronise explicitement le contexte de persistance JPA
+		 * avant les preuves SQL directes.
+		 */
+		this.entityManager.flush();
+
+		/* ASSERT :
+		 * garantit que les deux créations retournent des DTO persistants.
+		 */
+		assertThat(creeOutil).isNotNull();
+		assertThat(creeOutil.getIdTypeProduit()).isNotNull();
+		assertThat(creeOutil.getTypeProduit()).isEqualTo(OUTIL);
+
+		assertThat(creeNonSeede).isNotNull();
+		assertThat(creeNonSeede.getIdTypeProduit()).isNotNull();
+		assertThat(creeNonSeede.getTypeProduit()).isEqualTo(NON_SEEDE);
+
+		/* Garantit physiquement dans le stockage
+		 * que les deux créations existent avant la recherche exhaustive.
+		 */
+		assertThat(this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+				Long.class,
+				creeOutil.getIdTypeProduit()))
+				.isEqualTo(1L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				"SELECT TYPE_PRODUIT FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+				String.class,
+				creeOutil.getIdTypeProduit()))
+				.isEqualTo(OUTIL);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				"SELECT COUNT(*) FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+				Long.class,
+				creeNonSeede.getIdTypeProduit()))
+				.isEqualTo(1L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				"SELECT TYPE_PRODUIT FROM TYPES_PRODUIT WHERE ID_TYPE_PRODUIT = ?",
+				String.class,
+				creeNonSeede.getIdTypeProduit()))
+				.isEqualTo(NON_SEEDE);
+
+		final Long countApresCreation = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApresCreation).isNotNull();
+		assertThat(countApresCreation).isEqualTo(countAvant + 2L);
+
+		/* ACT :
+		 * exécute la recherche exhaustive via le SERVICE UC.
+		 */
+		final List<OutputDTO> dtos = this.service.rechercherTous();
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * garantit que rechercherTous() retourne une liste non null
+		 * et positionne le message dédié à rechercherTous().
+		 */
+		assertThat(dtos).isNotNull();
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
+
+		/* Garantit que la taille de la liste retournée correspond
+		 * au nombre de lignes présentes dans le stockage.
+		 */
+		assertThat(dtos.size()).isEqualTo(countApresCreation.intValue());
+
+		/* Garantit que les deux créations du test sont présentes
+		 * dans la réponse de rechercherTous().
+		 */
+		assertThat(dtos)
+				.extracting(OutputDTO::getTypeProduit)
+				.contains(OUTIL, NON_SEEDE);
+
+		final OutputDTO dtoOutil = dtos.stream()
+				.filter(dto -> OUTIL.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		final OutputDTO dtoNonSeede = dtos.stream()
+				.filter(dto -> NON_SEEDE.equals(dto.getTypeProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(dtoOutil).isNotNull();
+		assertThat(dtoOutil.getIdTypeProduit())
+				.isEqualTo(creeOutil.getIdTypeProduit());
+		assertThat(dtoOutil.getTypeProduit()).isEqualTo(OUTIL);
+
+		assertThat(dtoNonSeede).isNotNull();
+		assertThat(dtoNonSeede.getIdTypeProduit())
+				.isEqualTo(creeNonSeede.getIdTypeProduit());
+		assertThat(dtoNonSeede.getTypeProduit()).isEqualTo(NON_SEEDE);
+
+		/* Garantit que les deux créations restent bien présentes
+		 * dans le stockage après rechercherTous().
+		 */
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				OUTIL))
+				.isEqualTo(1L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				NON_SEEDE))
+				.isEqualTo(1L);
+		
+	} // __________________________________________________________________
+	
+	
+		
 	// ===================== rechercherTousString =========================
 	
 	
@@ -2474,7 +2590,7 @@ public class TypeProduitCuServiceIntegrationTest {
 			final String pLibelle) {
 
 		return this.jdbcTemplate.queryForObject(
-				"SELECT COUNT(*) FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = ?",
+				SELECT_COUNT_FROM_TYPEPRODUIT,
 				Long.class,
 				pLibelle);
 		
