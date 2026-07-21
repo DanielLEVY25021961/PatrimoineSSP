@@ -131,6 +131,9 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	 * </div>
 	 */
 	private final ThreadLocal<String> message = new ThreadLocal<>();
+	
+	// *************************** LOG ******************************/
+
 
 	/**
 	 * <style>p, ul, li {line-height : 1em;}</style>

@@ -196,6 +196,8 @@ public interface TypeProduitICuService {
 	String MESSAGE_RECHERCHER_TOUS_OK 
 		= "OK - La recherche a retourné des résultats.";
 
+	/* ------------------ rechercherTousString ------------------------- */
+	
 	/**
 	 * <div>
 	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>

@@ -5,7 +5,9 @@ package levy.daniel.application.model.services.produittype.cu.impl;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -128,7 +130,16 @@ public class ProduitCuService implements ProduitICuService {
 	// *************************** LOG ******************************/
 
 	/**
-	 * Log Apache Commons.
+	 * <style>p, ul, li {line-height : 1em;}</style>
+	 * <div>
+	 * <p>LOG : Logger : </p>
+	 * <p>Logger pour Log4j (utilisant org.apache.logging.log4j).</p>
+	 * <p>dépendances : </p>
+	 * <ul>
+	 * <li><code>org.apache.logging.log4j.Logger</code></li>
+	 * <li><code>org.apache.logging.log4j.LogManager</code></li>
+	 * </ul>
+	 * </div>
 	 */
 	private static final Log LOG = LogFactory.getLog(ProduitCuService.class);
 
@@ -137,22 +148,34 @@ public class ProduitCuService implements ProduitICuService {
 
 	/**
 	 * <div>
-	 * <p>Constructeur Spring (DI).</p>
+	 * <p style="font-weight:bold;">CONSTRUCTEUR COMPLET</p>
+	 * <p>Indispensable pour l'injection par SPRING
+	 * du ProduitGatewayIService via le constructeur.</p>
+	 * <p>ATTENTION : Ne surtout pas créer de Constructeur d'arité nulle
+	 * dans cette classe, faute de quoi SPRING ne pourra plus injecter.</p>
 	 * </div>
 	 *
-	 * @param pGateway gateway Produit
-	 * @param pSousTypeProduitGateway gateway SousTypeProduit
+	 * @param pGateway : ProduitGatewayIService : gateway objet métier
+	 * @param pSousTypeProduitGateway : SousTypeProduitGatewayIService : 
+	 * gateway parent
 	 */
 	public ProduitCuService(
 			final ProduitGatewayIService pGateway,
 			final SousTypeProduitGatewayIService pSousTypeProduitGateway) {
+		
 		super();
 		this.gateway = pGateway;
 		this.sousTypeProduitGateway = pSousTypeProduitGateway;
-	}
+		
+	} // __________________________________________________________________
+	
+	
+	
 
 	// *************************** METHODES *******************************/
 
+	
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -444,78 +467,119 @@ public class ProduitCuService implements ProduitICuService {
 	* {@inheritDoc}
 	*/
 	@Override
-	public List<OutputDTO> rechercherTous() throws Exception {
+	public List<ProduitDTO.OutputDTO> rechercherTous()
+								throws Exception {
 
 		/*
-		 * Appelle le GATEWAY pour lire tous les Produit.
+		 * Délègue au GATEWAY la recherche exhaustive dans le stockage 
+		 * de tous les objets métier.
 		 */
 		final List<Produit> records;
 
 		try {
 
+			/* Délègue au GATEWAY la recherche exhaustive 
+			 * dans le stockage de tous les objets métier 
+			 * via gateway.rechercherTous(). */
 			records = this.gateway.rechercherTous();
 
 		} catch (final Exception e) {
 
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par le Gateway 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
+			/* Si gateway.rechercherTous() jette Exception : 
+			 * - crée un message sécurisé ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception du Gateway. */
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO 
+					+ TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS,
 					e);
 		}
 
 		/*
-		 * Si le stockage retourne null :
-		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 * Si gateway.rechercherTous() retourne null :
+		 * - alimente message avec MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO ;
+		 * - LOG ;
+		 * - jette une ExceptionStockageVide.
 		 */
 		if (records == null) {
-			
 			return this.traiterErreur(
-					MESSAGE_STOCKAGE_NULL,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO,
 					METHODE_RECHERCHER_TOUS,
-					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+					new ExceptionStockageVide(
+							MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO));
 		}
 
 		/*
-		 * Retire les null et trie les objets métier.
+		 * - retire les eventuels nulls de la liste d'objets métier ;
+		 * - trie la liste d'objets métier.
 		 */
 		final List<Produit> recordsNonNullTries
 			= this.filtrerEtTrier(records);
 
-		/*
-		 * Convertit la liste métier en OutputDTO
-		 * puis dédoublonne la réponse.
-		 */
-		final List<OutputDTO> dtos;
+		final List<ProduitDTO.OutputDTO> dtos;
 
 		try {
 
-			dtos = ConvertisseurMetierToOutputDTOProduit
-					.convertList(recordsNonNullTries);
+			/* convertit la liste d'objets métier en liste d'OutputDTO 
+			 * via la méthode private convertirEtDedoublonner(...). */
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
 
 		} catch (final Exception e) {
 
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * convertirEtDedoublonner(recordsNonNullTries) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
+			/*
+			 * Si convertirEtDedoublonner(...) jette Exception :
+			 * - alimente message avec un message sécurisé basé 
+			 * sur MESSAGE_RECHERCHER_TOUS_CONVERSION_KO ;
+			 * - LOG ;
+			 * - propage l'Exception.
+			 */
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_CONVERSION_KO 
+					+ TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS,
 					e);
 		}
-
+		
+		/* Si convertirEtDedoublonner(...) retourne null : 
+		 * - alimente message avec MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException. */
+		if (dtos == null) {
+			
+			return this.traiterErreur(
+					MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO,
+					METHODE_RECHERCHER_TOUS,
+					new IllegalStateException(
+							MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO));
+		}
+		
 		/*
-		 * Positionne le message observable
-		 * après préparation complète de la réponse.
+		 * Positionne le message utilisateur après conversion de la liste
+		 * d'objets métier en liste d'OutputDTO non null.
 		 */
 		if (dtos.isEmpty()) {
-			this.message.set(MESSAGE_RECHERCHE_VIDE);
+			this.message.set(MESSAGE_RECHERCHER_TOUS_VIDE);
 		} else {
-			this.message.set(MESSAGE_RECHERCHE_OK);
+			this.message.set(MESSAGE_RECHERCHER_TOUS_OK);
 		}
 
 		/*
@@ -523,7 +587,8 @@ public class ProduitCuService implements ProduitICuService {
 		 * (éventuellement vide).
 		 */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -562,7 +627,8 @@ public class ProduitCuService implements ProduitICuService {
 
 		/* Retourne la liste exhaustive des libellés. */
 		return retour;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -683,7 +749,8 @@ public class ProduitCuService implements ProduitICuService {
 		 * lorsque le scénario se termine avec succès.
 		 */
 		return resultatUc;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -791,7 +858,8 @@ public class ProduitCuService implements ProduitICuService {
 		 * Retourne toujours une liste non null.
 		 */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -861,7 +929,8 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 	
 
 	
@@ -973,7 +1042,8 @@ public class ProduitCuService implements ProduitICuService {
 	
 		/* retourne la liste d'OutputDTO. */
 		return retours;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -1113,7 +1183,8 @@ public class ProduitCuService implements ProduitICuService {
 					METHODE_FIND_BY_DTO,
 					e);
 		}
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -1168,7 +1239,8 @@ public class ProduitCuService implements ProduitICuService {
 		 * Retourne l'OutputDTO final.
 		 */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -1491,7 +1563,8 @@ public class ProduitCuService implements ProduitICuService {
 
 		/* Retourne l'OutputDTO modifié. */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -1712,7 +1785,8 @@ public class ProduitCuService implements ProduitICuService {
 		 * de l'objet persistant.
 		 */
 		this.message.set(MESSAGE_DELETE_OK + libelleProduit);
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -1787,7 +1861,8 @@ public class ProduitCuService implements ProduitICuService {
 
 		/* Retourne le comptage final validé. */
 		return resultat;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -1811,11 +1886,46 @@ public class ProduitCuService implements ProduitICuService {
 		 */
 		return this.message.get();
 
-	}
+	} // __________________________________________________________________
 	
 	
 	
 	// *************************** METHODES UTILITAIRES ********************/
+	
+	
+	
+	/**
+	 * <div>
+	 * <p style="font-weight:bold;">
+	 * Convertit une liste d'objets métier en OutputDTO et dédoublonne
+	 * en conservant l'ordre d'insertion.</p>
+	 * </div>
+	 *
+	 * @param pMetiers : List&lt;Produit&gt; (non null de préférence)
+	 * @return List&lt;ProduitDTO.OutputDTO&gt; : liste non nulle
+	 */
+	private List<ProduitDTO.OutputDTO> convertirEtDedoublonner(
+			final List<Produit> pMetiers) {
+
+		final Set<ProduitDTO.OutputDTO> uniques
+			= new LinkedHashSet<ProduitDTO.OutputDTO>();
+
+		if (pMetiers != null) {
+			for (final Produit produit : pMetiers) {
+
+				final ProduitDTO.OutputDTO dto
+					= ConvertisseurMetierToOutputDTOProduit
+						.convert(produit);
+
+				if (dto != null) {
+					uniques.add(dto);
+				}
+			}
+		}
+
+		return new ArrayList<ProduitDTO.OutputDTO>(uniques);
+		
+	} // __________________________________________________________________
 
 
 	
@@ -1878,7 +1988,8 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		return false;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -1956,7 +2067,8 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		return null;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -1976,7 +2088,8 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		return new Produit(pInputDTO.getProduit());
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -2014,7 +2127,8 @@ public class ProduitCuService implements ProduitICuService {
 		});
 
 		return resultat;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -2040,7 +2154,8 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		return total;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -2067,7 +2182,8 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		return stp.getSousTypeProduit();
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -2133,7 +2249,7 @@ public class ProduitCuService implements ProduitICuService {
 
 		throw new Exception(messageFinal);
 
-	}
+	} // __________________________________________________________________
 	
 	
 
@@ -2191,8 +2307,9 @@ public class ProduitCuService implements ProduitICuService {
 		}
 	
 		return false;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
-}
+} // FIN DE LA CLASSE ProduitCuService.------------------------------------

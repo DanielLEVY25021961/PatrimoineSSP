@@ -152,6 +152,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	 * </div>
 	 */
 	private final ThreadLocal<String> message = new ThreadLocal<>();
+	
+	// *************************** LOG ******************************/
 
 	/**
 	 * <style>p, ul, li {line-height : 1em;}</style>
@@ -168,7 +170,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	private static final Logger LOG
 		= LogManager.getLogger(SousTypeProduitCuService.class);
 
-	// ************************* METHODES **********************************/
+
+	// ************************* CONSTRUCTEURS ****************************/
 
 	/**
 	 * <div>
@@ -194,7 +197,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		this.gateway = pGateway;
 		this.typeProduitGateway = pTypeProduitGateway;
 
-	}
+	} // __________________________________________________________________
 
 
 
@@ -490,21 +493,31 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		/*
 		 * Délègue au GATEWAY la recherche exhaustive dans le stockage 
 		 * de tous les objets métier.
-		 * Toute anomalie technique de recherche est transformée
-		 * en message utilisateur rationalisé côté UC.
 		 */
 		final List<SousTypeProduit> records;
 
 		try {
 
+			/* Délègue au GATEWAY la recherche exhaustive 
+			 * dans le stockage de tous les objets métier 
+			 * via gateway.rechercherTous(). */
 			records = this.gateway.rechercherTous();
 
 		} catch (final Exception e) {
 
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par le Gateway 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
+			/* Si gateway.rechercherTous() jette Exception : 
+			 * - crée un message sécurisé ;
+			 * - alimente message avec le message sécurisé ;
+			 * - LOG ;
+			 * - propage l'Exception du Gateway. */
 			return this.traiterErreur(
 					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO 
 					+ TIRET_ESPACE + messageSecurise,
@@ -513,52 +526,81 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		/*
-		 * Si le stockage retourne null :
-		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 * Si gateway.rechercherTous() retourne null :
+		 * - alimente message avec MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO ;
+		 * - LOG ;
+		 * - jette une ExceptionStockageVide.
 		 */
 		if (records == null) {
 			return this.traiterErreur(
-					MESSAGE_STOCKAGE_NULL,
+					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO,
 					METHODE_RECHERCHER_TOUS,
-					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+					new ExceptionStockageVide(
+							MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO));
 		}
 
 		/*
-		 * Retire les null et trie les objets métier.
+		 * - retire les eventuels nulls de la liste d'objets métier ;
+		 * - trie la liste d'objets métier.
 		 */
 		final List<SousTypeProduit> recordsNonNullTries
 			= this.filtrerEtTrier(records);
 
-		/*
-		 * Convertit la liste métier en OutputDTO
-		 * puis dédoublonne la réponse.
-		 */
 		final List<SousTypeProduitDTO.OutputDTO> dtos;
 
 		try {
 
+			/* convertit la liste d'objets métier en liste d'OutputDTO 
+			 * via la méthode private convertirEtDedoublonner(...). */
 			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
 
 		} catch (final Exception e) {
 
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
+			/* crée un message sécurisé 
+			 * (au cas où l'Exception jetée par 
+			 * convertirEtDedoublonner(recordsNonNullTries) 
+			 * aurait un message blank). */
+			final String messageSecurise 
+				= StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
+			/*
+			 * Si convertirEtDedoublonner(...) jette Exception :
+			 * - alimente message avec un message sécurisé basé 
+			 * sur MESSAGE_RECHERCHER_TOUS_CONVERSION_KO ;
+			 * - LOG ;
+			 * - propage l'Exception.
+			 */
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_CONVERSION_KO 
+					+ TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS,
 					e);
 		}
-
+		
+		/* Si convertirEtDedoublonner(...) retourne null : 
+		 * - alimente message avec 
+		 * MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException. */
+		if (dtos == null) {
+			
+			return this.traiterErreur(
+					MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO,
+					METHODE_RECHERCHER_TOUS,
+					new IllegalStateException(
+							MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO));
+		}
+		
 		/*
-		 * Positionne le message observable
-		 * après préparation complète de la réponse.
+		 * Positionne le message utilisateur après conversion de la liste
+		 * d'objets métier en liste d'OutputDTO non null.
 		 */
 		if (dtos.isEmpty()) {
-			this.message.set(MESSAGE_RECHERCHE_VIDE);
+			this.message.set(MESSAGE_RECHERCHER_TOUS_VIDE);
 		} else {
-			this.message.set(MESSAGE_RECHERCHE_OK);
+			this.message.set(MESSAGE_RECHERCHER_TOUS_OK);
 		}
 
 		/*
@@ -566,7 +608,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * (éventuellement vide).
 		 */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 	
 
 
