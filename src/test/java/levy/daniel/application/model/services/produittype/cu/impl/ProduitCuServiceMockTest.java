@@ -173,6 +173,8 @@ public class ProduitCuServiceMockTest {
 	public static final String FALLBACK_MESSAGE 
 		= "fallback MSG_ERREUR_NON_SPECIFIEE";
 
+	// ============================ TAGS ==================================
+	
 	/** "creer". */
 	public static final String TAG_CREER = "creer";
 
@@ -212,6 +214,11 @@ public class ProduitCuServiceMockTest {
 	/** "getMessage". */
 	public static final String TAG_GET_MESSAGE = "getMessage";
 
+	
+	// =================== MESSAGES_DISPLAY_NAME ==========================
+
+	// ---------------------- creer(...) ----------------------------------
+	
 	/**
 	 * "creer(null) : MESSAGE_CREER_NULL_KO + aucune interaction Gateway"
 	 */
@@ -264,6 +271,23 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_CREER_PARENT_NON_PERSISTANT
 			= "creer(parent non persistant) : "
 					+ "IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO";
+
+	/**
+	 * "creer(parent ambigu sans TypeProduit) :
+	 * IllegalStateException + aucune interaction Gateway Produit"
+	 */
+	public static final String DISPLAY_NAME_CREER_PARENT_AMBIGU_SANS_TYPE_PRODUIT
+			= "creer(parent ambigu sans TypeProduit) : "
+					+ "IllegalStateException "
+					+ "+ aucune interaction Gateway Produit";
+
+	/**
+	 * "creer(parent unique sans TypeProduit) :
+	 * OutputDTO + TypeProduit déduit du parent"
+	 */
+	public static final String DISPLAY_NAME_CREER_PARENT_UNIQUE_SANS_TYPE_PRODUIT
+			= "creer(parent unique sans TypeProduit) : "
+					+ "OutputDTO + TypeProduit déduit du parent";
 
 	/**
 	 * "creer(doublon) : ExceptionDoublon + aucune création Gateway"
@@ -341,35 +365,71 @@ public class ProduitCuServiceMockTest {
 	 */
 	public static final String DISPLAY_NAME_CREER_NOMINAL
 			= "creer(nominal) : OutputDTO + MESSAGE_CREER_OK";
-
-	/** "rechercherTous(gateway retourne null) : MESSAGE_STOCKAGE_NULL". */
+	
+	// ------------------------ rechercherTous() --------------------------
+	
+	/**
+	 * "rechercherTous(gateway.rechercherTous() retourne null) :
+	 * ExceptionStockageVide + MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO"
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_RETOUR_NULL
-			= "rechercherTous(gateway retourne null) : MESSAGE_STOCKAGE_NULL";
+			= "rechercherTous(gateway.rechercherTous() retourne null) : "
+					+ "ExceptionStockageVide "
+					+ "+ MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO";
 
-	/** "rechercherTous(gateway KO avec message) : exception propagée". */
+	/**
+	 * "rechercherTous(gateway.rechercherTous() jette Exception avec message) :
+	 * exception propagée + message sécurisé"
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KOAVEC_MESSAGE
-			= "rechercherTous(gateway KO avec message) : exception propagée";
+			= "rechercherTous(gateway.rechercherTous() jette Exception "
+					+ "avec message) : exception propagée "
+					+ "+ message sécurisé";
 
-	/** "rechercherTous(gateway KO sans message) : exception propagée". */
+	/**
+	 * "rechercherTous(gateway.rechercherTous() jette Exception sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KOSANS_MESSAGE
-			= "rechercherTous(gateway KO sans message) : exception propagée";
+			= "rechercherTous(gateway.rechercherTous() jette Exception "
+					+ "sans message) : fallback MSG_ERREUR_NON_SPECIFIEE";
 
-	/** "rechercherTous(conversion OutputDTO KO avec message) : exception propagée". */
+	/**
+	 * "rechercherTous(convertirEtDedoublonner(...) jette Exception avec message) :
+	 * exception propagée + message sécurisé"
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
-			= "rechercherTous(conversion OutputDTO KO avec message) : exception propagée";
+			= "rechercherTous(convertirEtDedoublonner(...) jette Exception "
+					+ "avec message) : exception propagée "
+					+ "+ message sécurisé";
 
-	/** "rechercherTous(conversion OutputDTO KO sans message) : exception propagée". */
+	/**
+	 * "rechercherTous(convertirEtDedoublonner(...) jette Exception sans message) :
+	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
-			= "rechercherTous(conversion OutputDTO KO sans message) : exception propagée";
+			= "rechercherTous(convertirEtDedoublonner(...) jette Exception "
+					+ "sans message) : fallback MSG_ERREUR_NON_SPECIFIEE";
 
-	/** "rechercherTous(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE". */
+	/**
+	 * "rechercherTous(liste résultat vide) :
+	 * liste vide + MESSAGE_RECHERCHER_TOUS_VIDE"
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_VIDE_APRES_FILTRAGE
-			= "rechercherTous(vide après filtrage) : liste vide + MESSAGE_RECHERCHE_VIDE";
+			= "rechercherTous(liste résultat vide) : "
+					+ "liste vide + MESSAGE_RECHERCHER_TOUS_VIDE";
 
-	/** "rechercherTous(nominal) : filtre, trie, dédoublonne + MESSAGE_RECHERCHE_OK". */
+	/**
+	 * "rechercherTous(liste résultat non vide) :
+	 * OutputDTO triés dédoublonnés + MESSAGE_RECHERCHER_TOUS_OK"
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_NOMINAL
-			= "rechercherTous(nominal) : filtre, trie, dédoublonne + MESSAGE_RECHERCHE_OK";
-
+			= "rechercherTous(liste résultat non vide) : "
+					+ "OutputDTO triés dédoublonnés "
+					+ "+ MESSAGE_RECHERCHER_TOUS_OK";
+	
+	// -------------------------- rechercherTousString() ------------------
+	
 	/** "rechercherTousString(gateway retourne null) : propage rechercherTous()". */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_RETOUR_NULL
 			= "rechercherTousString(gateway retourne null) : propage rechercherTous()";
@@ -402,6 +462,8 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_NOMINAL
 			= "rechercherTousString(nominal) : libellés triés + MESSAGE_RECHERCHE_OK";
 
+	// ---------------------- rechercherTousParPage(...) ------------------
+	
 	/** "rechercherTousParPage(null) : MESSAGE_PAGEABLE_NULL". */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL
 			= "rechercherTousParPage(null) : MESSAGE_PAGEABLE_NULL";
@@ -434,17 +496,23 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL
 			= "rechercherTousParPage(nominal) : page cohérente + MESSAGE_RECHERCHE_PAGINEE_OK";
 
-	/** "findByLibelle(null) : null + MESSAGE_PARAM_BLANK". */
+	// --------------------- findByLibelle(...) ---------------------------
+	
+	/** "findByLibelle(null) : liste vide + MESSAGE_PARAM_BLANK". */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_NULL
-			= "findByLibelle(null) : null + MESSAGE_PARAM_BLANK";
+			= "findByLibelle(null) : liste vide + MESSAGE_PARAM_BLANK";
 
-	/** "findByLibelle(blank) : null + MESSAGE_PARAM_BLANK". */
+	/** "findByLibelle(blank) : liste vide + MESSAGE_PARAM_BLANK". */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_BLANK
-			= "findByLibelle(blank) : null + MESSAGE_PARAM_BLANK";
+			= "findByLibelle(blank) : liste vide + MESSAGE_PARAM_BLANK";
 
-	/** "findByLibelle(gateway retourne null) : KO_TECHNIQUE_RECHERCHE". */
+	/**
+	 * "findByLibelle(gateway retourne null) :
+	 * ExceptionStockageVide + MESSAGE_STOCKAGE_NULL"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_RETOUR_NULL
-			= "findByLibelle(gateway retourne null) : KO_TECHNIQUE_RECHERCHE";
+			= "findByLibelle(gateway retourne null) : "
+					+ "ExceptionStockageVide + MESSAGE_STOCKAGE_NULL";
 
 	/** "findByLibelle(gateway KO avec message) : exception propagée par l'ADAPTER réel". */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KOAVEC_MESSAGE
@@ -462,14 +530,24 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
 			= "findByLibelle(conversion OutputDTO KO sans message) : exception propagée par l'ADAPTER réel";
 
-	/** "findByLibelle(introuvable) : liste vide + MESSAGE_RECHERCHE_VIDE". */
+	/**
+	 * "findByLibelle(introuvable) :
+	 * liste vide + MESSAGE_OBJ_INTROUVABLE + libellé"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_INTROUVABLE
-			= "findByLibelle(introuvable) : liste vide + MESSAGE_RECHERCHE_VIDE";
+			= "findByLibelle(introuvable) : liste vide "
+					+ "+ MESSAGE_OBJ_INTROUVABLE + libellé";
 
-	/** "findByLibelle(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK". */
+	/**
+	 * "findByLibelle(nominal) :
+	 * liste cohérente + MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_NOMINAL
-			= "findByLibelle(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK";
-
+			= "findByLibelle(nominal) : liste cohérente "
+					+ "+ MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE";
+	
+	// ---------------------- findByLibelleRapide(...) --------------------
+	
 	/** "findByLibelleRapide(null) : MESSAGE_PARAM_NULL". */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL
 			= "findByLibelleRapide(null) : MESSAGE_PARAM_NULL";
@@ -1296,6 +1374,89 @@ public class ProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
+	 * <p>garantit que creer(parent ambigu sans TypeProduit) :</p>
+	 * <ul>
+	 * <li>n'impose pas artificiellement un TypeProduit dans l'InputDTO ;</li>
+	 * <li>interroge le Gateway parent avec le libellé SousTypeProduit ;</li>
+	 * <li>détecte que deux parents persistants homonymes distincts
+	 * restent compatibles faute de critère permettant de les départager ;</li>
+	 * <li>ne sélectionne jamais arbitrairement le premier parent ;</li>
+	 * <li>jette une {@link IllegalStateException} ;</li>
+	 * <li>émet le message
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
+	 * <li>ne sollicite jamais le Gateway Produit.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_AMBIGU_SANS_TYPE_PRODUIT)
+	@Test
+	public void testCreerParentAmbiguSansTypeProduit() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO sans TypeProduit et deux SousTypeProduit persistants
+		 * homonymes rattachés à deux TypeProduit différents.
+		 *
+		 * Sans TypeProduit dans le DTO, les deux parents directs restent
+		 * compatibles et aucun ne peut être choisi arbitrairement.
+		 */
+		final InputDTO dto = input(null, OUTILLAGE, MARTEAU);
+
+		final SousTypeProduit parentBazar
+				= parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+		final SousTypeProduit parentQuincaillerie
+				= parentPersistant(QUINCAILLERIE, OUTILLAGE, 2L, 20L);
+
+		/*
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final ProduitGatewayIService gateway
+			= mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
+			= mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service
+			= new ProduitCuService(gateway, sousTypeProduitGateway);
+
+		/*
+		 * Configuration du Mock :
+		 * retourne deux parents persistants distincts portant
+		 * le même libellé SousTypeProduit.
+		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(
+						parentBazar,
+						parentQuincaillerie));
+
+		/* ACT - ASSERT */
+		/* Garantit que le SERVICE METIER UC refuse
+		 * de sélectionner arbitrairement un parent direct.
+		 */
+		assertThatThrownBy(() -> service.creer(dto))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+
+		/* Garantit que le scénario s'arrête après la résolution ambiguë
+		 * du parent et avant tout contrôle ou création Produit.
+		 */
+		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
+		verifyNoInteractions(gateway);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
 	 * <p>garantit que creer(doublon) :</p>
 	 * <ul>
 	 * <li>récupère d'abord le parent persistant ;</li>
@@ -2035,14 +2196,105 @@ public class ProduitCuServiceMockTest {
 	
 	/**
 	 * <div>
+	 * <p>garantit que creer(parent unique sans TypeProduit) :</p>
+	 * <ul>
+	 * <li>n'impose pas artificiellement un TypeProduit dans l'InputDTO ;</li>
+	 * <li>résout l'unique SousTypeProduit parent direct persistant ;</li>
+	 * <li>contrôle l'absence de doublon sur le couple
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>rattache exactement ce parent à l'objet envoyé au Gateway Produit ;</li>
+	 * <li>retourne un {@link OutputDTO} dont le TypeProduit
+	 * est déduit du SousTypeProduit parent ;</li>
+	 * <li>positionne le message
+	 * {@link ProduitICuService#MESSAGE_CREER_OK}.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DISPLAY_NAME_CREER_PARENT_UNIQUE_SANS_TYPE_PRODUIT)
+	@Test
+	public void testCreerParentUniqueSansTypeProduit() throws Exception {
+
+		/* ARRANGE :
+		 * prépare un DTO sans TypeProduit, mais avec un seul
+		 * SousTypeProduit parent direct persistant compatible.
+		 */
+		final InputDTO dto = input(null, OUTILLAGE, MARTEAU);
+
+		final SousTypeProduit parentPersistant = parentPersistant();
+		final Produit cree = produit(MARTEAU, parentPersistant, 100L);
+
+		final ArgumentCaptor<Produit> captor
+				= ArgumentCaptor.forClass(Produit.class);
+
+		/*
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final ProduitGatewayIService gateway
+			= mock(ProduitGatewayIService.class);
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
+			= mock(SousTypeProduitGatewayIService.class);
+		final ProduitCuService service
+			= new ProduitCuService(gateway, sousTypeProduitGateway);
+
+		/*
+		 * Configuration du Mock :
+		 * - le seul parent compatible est persistant ;
+		 * - aucun Produit de même libellé n'existe ;
+		 * - gateway.creer(...) retourne l'objet créé.
+		 */
+		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
+				.thenReturn(Arrays.asList(parentPersistant));
+		when(gateway.findByLibelle(MARTEAU))
+				.thenReturn(Collections.emptyList());
+		when(gateway.creer(any(Produit.class))).thenReturn(cree);
+
+		/* ACT */
+		final OutputDTO retour = service.creer(dto);
+		final String message = service.getMessage();
+
+		/* ASSERT */
+		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
+		verify(gateway, times(1)).findByLibelle(MARTEAU);
+		verify(gateway, times(1)).creer(captor.capture());
+
+		/* Garantit que le parent direct persistant résolu
+		 * est exactement celui rattaché au Produit créé.
+		 */
+		final Produit envoye = captor.getValue();
+
+		assertThat(envoye).isNotNull();
+		assertThat(envoye.getIdProduit()).isNull();
+		assertThat(envoye.getProduit()).isEqualTo(MARTEAU);
+		assertThat(envoye.getSousTypeProduit()).isSameAs(parentPersistant);
+		assertThat(envoye.getSousTypeProduit().getIdSousTypeProduit())
+				.isEqualTo(10L);
+
+		/* Garantit que le grand-parent TypeProduit est restitué
+		 * depuis le SousTypeProduit parent, bien qu'il soit absent du DTO.
+		 */
+		assertProduitDTO(retour, 100L, BAZAR, OUTILLAGE, MARTEAU);
+		assertThat(message).isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
+
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
 	 * <p>garantit que creer(OK) :</p>
 	 * <ul>
-	 * <li>récupère le parent persistant via
-	 * {@code sousTypeProduitGateway.findByLibelle(...)} ;</li>
-	 * <li>contrôle l'absence de doublon via
-	 * {@code gateway.findByLibelle(...)} ;</li>
+	 * <li>résout le bon SousTypeProduit parent parmi deux parents homonymes
+	 * appartenant à deux TypeProduit différents ;</li>
+	 * <li>contrôle l'absence de doublon sur le couple
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>ne considère pas comme doublon un même libellé Produit
+	 * existant sous un autre SousTypeProduit parent ;</li>
 	 * <li>convertit l'InputDTO en objet métier rattaché
-	 * au parent persistant ;</li>
+	 * au parent persistant exact ;</li>
 	 * <li>délègue la création à {@code gateway.creer(...)} ;</li>
 	 * <li>convertit l'objet métier créé en {@link OutputDTO} ;</li>
 	 * <li>retourne un {@link OutputDTO} portant l'identifiant généré,
@@ -2060,54 +2312,62 @@ public class ProduitCuServiceMockTest {
 	public void testCreerNominal() throws Exception {
 
 		/* ARRANGE :
-		 * prépare un DTO valide, le parent persistant, le retour métier
-		 * créé par le Gateway, et un captor pour contrôler précisément
-		 * l'objet métier envoyé à gateway.creer(...).
+		 * prépare :
+		 * - le parent persistant exact BAZAR / OUTILLAGE ;
+		 * - un parent homonyme QUINCAILLERIE / OUTILLAGE ;
+		 * - un Produit MARTEAU déjà existant sous cet autre parent ;
+		 * - le retour métier créé sous le parent exact.
 		 */
 		final InputDTO dto = input(BAZAR, OUTILLAGE, MARTEAU);
-		
-		final SousTypeProduit parentPersistant = parentPersistant();
-		final Produit cree = produit(MARTEAU, parentPersistant, 100L);
-		
+
+		final SousTypeProduit parentPersistantExact
+				= parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+		final SousTypeProduit parentHomonymeAutreType
+				= parentPersistant(QUINCAILLERIE, OUTILLAGE, 2L, 20L);
+
+		final Produit homonymeSousAutreParent
+				= produit(MARTEAU, parentHomonymeAutreType, 200L);
+		final Produit cree
+				= produit(MARTEAU, parentPersistantExact, 100L);
+
 		final ArgumentCaptor<Produit> captor
 				= ArgumentCaptor.forClass(Produit.class);
-		
-		/* 
-		 * Mocke les services Gateway et les passe 
-		 * à un service UC instancié dans le test. 
+
+		/*
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
 		 */
-		final ProduitGatewayIService gateway 
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		
+
 		/*
 		 * Configuration du Mock :
-		 * - findByLibelle(...) sur le Gateway parent retourne le parent
-		 *   persistant ;
-		 * - findByLibelle(...) sur le Gateway Produit retourne une liste vide
-		 *   pour simuler l'absence de doublon fonctionnel ;
-		 * - creer(...) retourne l'objet métier réellement créé
-		 *   avec l'identifiant généré par le stockage.
+		 * - le Gateway parent retourne d'abord le parent homonyme incorrect,
+		 *   puis le parent exact demandé par le DTO ;
+		 * - le Gateway Produit retourne un même libellé MARTEAU,
+		 *   mais sous l'autre parent direct : ce n'est pas un doublon ;
+		 * - creer(...) retourne l'objet créé sous le parent exact.
 		 */
 		when(sousTypeProduitGateway.findByLibelle(OUTILLAGE))
-				.thenReturn(Arrays.asList(parentPersistant));
+				.thenReturn(Arrays.asList(
+						parentHomonymeAutreType,
+						parentPersistantExact));
 		when(gateway.findByLibelle(MARTEAU))
-				.thenReturn(Collections.emptyList());
+				.thenReturn(Arrays.asList(homonymeSousAutreParent));
 		when(gateway.creer(any(Produit.class))).thenReturn(cree);
 
-		/* ACT :
-		 * exécute la création via le SERVICE METIER UC.
-		 */
+		/* ACT */
 		final OutputDTO retour = service.creer(dto);
 		final String message = service.getMessage();
 
 		/* ASSERT */
-		/* Garantit que les Gateways ont bien été sollicités
-		 * dans le scénario attendu :
-		 * recherche du parent, contrôle d'unicité, puis création.
+		/* Garantit que les Gateways ont été sollicités
+		 * dans l'ordre fonctionnel attendu :
+		 * résolution du parent, contrôle d'unicité, puis création.
 		 */
 		verify(sousTypeProduitGateway, times(1)).findByLibelle(OUTILLAGE);
 		verify(gateway, times(1)).findByLibelle(MARTEAU);
@@ -2116,15 +2376,19 @@ public class ProduitCuServiceMockTest {
 		/* Garantit que l'objet métier envoyé au Gateway Produit :
 		 * - n'est pas null ;
 		 * - ne porte pas encore d'identifiant ;
-		 * - porte le libellé métier issu de l'InputDTO ;
-		 * - porte le parent persistant retrouvé via le Gateway parent.
+		 * - porte le libellé issu de l'InputDTO ;
+		 * - porte le parent persistant exact BAZAR / OUTILLAGE,
+		 *   et non le premier parent homonyme retourné.
 		 */
 		final Produit envoye = captor.getValue();
 
 		assertThat(envoye).isNotNull();
 		assertThat(envoye.getIdProduit()).isNull();
 		assertThat(envoye.getProduit()).isEqualTo(MARTEAU);
-		assertThat(envoye.getSousTypeProduit()).isNotNull();
+		assertThat(envoye.getSousTypeProduit())
+				.isSameAs(parentPersistantExact);
+		assertThat(envoye.getSousTypeProduit())
+				.isNotSameAs(parentHomonymeAutreType);
 		assertThat(envoye.getSousTypeProduit().getSousTypeProduit())
 				.isEqualTo(OUTILLAGE);
 		assertThat(envoye.getSousTypeProduit().getIdSousTypeProduit())
@@ -2135,12 +2399,8 @@ public class ProduitCuServiceMockTest {
 		assertThat(envoye.getSousTypeProduit().getTypeProduit().getIdTypeProduit())
 				.isEqualTo(1L);
 
-		/* Garantit que la réponse retournée au controller appelant :
-		 * - n'est pas null ;
-		 * - porte l'identifiant généré ;
-		 * - porte le bon libellé métier ;
-		 * - porte le bon parent ;
-		 * - expose le message utilisateur de succès.
+		/* Garantit que la réponse retournée au controller appelant
+		 * correspond à l'objet effectivement créé sous le parent exact.
 		 */
 		assertProduitDTO(retour, 100L, BAZAR, OUTILLAGE, MARTEAU);
 		assertThat(message).isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
@@ -2161,7 +2421,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>détecte que le Gateway retourne {@code null} ;</li>
 	 * <li>lève {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
@@ -2194,14 +2454,18 @@ public class ProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.rechercherTous() :
 		 * - lève ExceptionStockageVide ;
-		 * - émet le message MESSAGE_STOCKAGE_NULL contractuel.
+		 * - émet le message MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO.
 		 */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isInstanceOf(ExceptionStockageVide.class)
-				.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.hasMessage(
+						ProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		/* Garantit que seul le Gateway objet métier
 		 * a été sollicité pour la recherche exhaustive.
@@ -2220,7 +2484,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway objet métier ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -2264,11 +2528,12 @@ public class ProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+		 * + TIRET_ESPACE + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -2290,7 +2555,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par le Gateway
 	 * objet métier ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -2336,7 +2601,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -2360,7 +2625,7 @@ public class ProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -2410,7 +2675,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -2434,7 +2699,7 @@ public class ProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -2479,11 +2744,12 @@ public class ProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC ne produit jamais
-		 * un message utilisateur null en cas d'échec de conversion.
+		 * un message utilisateur null en cas d'échec de conversion
+		 * et utilise MESSAGE_RECHERCHER_TOUS_CONVERSION_KO.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -2505,7 +2771,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>filtre les éléments {@code null} ;</li>
 	 * <li>retourne une liste non {@code null} et vide ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_VIDE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
@@ -2556,7 +2822,8 @@ public class ProduitCuServiceMockTest {
 		assertThat(retour).isNotNull();
 		assertThat(retour).isEmpty();
 		assertThat(message)
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+				.isEqualTo(
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_VIDE);
 
 		/* Garantit que la recherche exhaustive a bien été déléguée
 		 * et que le Gateway parent reste inutilisé.
@@ -2578,7 +2845,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
 	 * <li>dédoublonne la réponse DTO ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_OK} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
@@ -2656,7 +2923,8 @@ public class ProduitCuServiceMockTest {
 				.containsExactly(1L, 2L);
 
 		assertThat(message)
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+				.isEqualTo(
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
 
 		/* Garantit que la recherche exhaustive a bien été déléguée
 		 * et que le Gateway parent reste inutilisé.
@@ -2680,7 +2948,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>détecte que le Gateway retourne {@code null} ;</li>
 	 * <li>lève {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
@@ -2713,14 +2981,19 @@ public class ProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.rechercherTousString() :
 		 * - propage ExceptionStockageVide ;
-		 * - conserve le message MESSAGE_STOCKAGE_NULL contractuel.
+		 * - conserve le message
+		 *   MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO contractuel.
 		 */
 		assertThatThrownBy(() -> service.rechercherTousString())
 				.isInstanceOf(ExceptionStockageVide.class)
-				.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.hasMessage(
+						ProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		/* Garantit que seul le Gateway objet métier
 		 * a été sollicité pour la recherche exhaustive.
@@ -2740,7 +3013,7 @@ public class ProduitCuServiceMockTest {
 	 * {@code rechercherTous()} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway objet métier ;</li>
 	 * <li>conserve le message utilisateur rationalisé avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -2787,7 +3060,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -2810,7 +3083,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par le Gateway
 	 * objet métier ;</li>
 	 * <li>conserve un message utilisateur sûr avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -2856,7 +3129,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -2881,7 +3154,7 @@ public class ProduitCuServiceMockTest {
 	 * réalisée par {@code rechercherTous()} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>conserve le message utilisateur rationalisé avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -2931,7 +3204,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -2956,7 +3229,7 @@ public class ProduitCuServiceMockTest {
 	 * réalisée par {@code rechercherTous()} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>conserve un message utilisateur sûr avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -3005,7 +3278,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -3923,7 +4196,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(null) :</p>
 	 * <ul>
-	 * <li>retourne {@code null} ;</li>
+	 * <li>retourne une liste non {@code null} et vide ;</li>
 	 * <li>positionne exactement
 	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
 	 * <li>n'interagit ni avec le Gateway objet métier
@@ -3957,11 +4230,12 @@ public class ProduitCuServiceMockTest {
 
 		/* ASSERT */
 		/* Garantit que l'erreur utilisateur bénigne :
-		 * - retourne null ;
+		 * - retourne une liste non null et vide ;
 		 * - positionne MESSAGE_PARAM_BLANK ;
 		 * - ne sollicite aucun Gateway.
 		 */
-		assertThat(retour).isNull();
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
 		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
 
@@ -3976,7 +4250,7 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelle(blank) :</p>
 	 * <ul>
-	 * <li>retourne {@code null} ;</li>
+	 * <li>retourne une liste non {@code null} et vide ;</li>
 	 * <li>positionne exactement
 	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
 	 * <li>n'interagit ni avec le Gateway objet métier
@@ -4018,11 +4292,12 @@ public class ProduitCuServiceMockTest {
 
 		/* ASSERT */
 		/* Garantit que l'erreur utilisateur bénigne :
-		 * - retourne null ;
+		 * - retourne une liste non null et vide ;
 		 * - positionne MESSAGE_PARAM_BLANK ;
 		 * - ne sollicite aucun Gateway.
 		 */
-		assertThat(retour).isNull();
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
 		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
 
@@ -4401,7 +4676,7 @@ public class ProduitCuServiceMockTest {
 	 * ne contenant aucun objet métier non null ;</li>
 	 * <li>retourne une liste non {@code null} et vide ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
@@ -4448,13 +4723,14 @@ public class ProduitCuServiceMockTest {
 		/* Garantit que la réponse utilisateur :
 		 * - n'est jamais null ;
 		 * - est vide ;
-		 * - porte le message utilisateur de recherche en échec.
+		 * - porte le message utilisateur d'objet introuvable.
 		 */
 		assertThat(retour).isNotNull();
 		assertThat(retour).isEmpty();
-		assertThat(message).isEqualTo(
-				ProduitCuService.MESSAGE_OBJ_INTROUVABLE
-				+ libelle);
+		assertThat(message)
+				.isEqualTo(
+						ProduitICuService.MESSAGE_OBJ_INTROUVABLE
+						+ libelle);
 		
 		/* Garantit que la recherche exacte a bien été déléguée
 		 * et que le Gateway parent reste inutilisé.
@@ -4478,7 +4754,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>retourne une liste cohérente portant les parents
 	 * et le libellé recherché ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * {@link ProduitICuService#MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
 	 * </div>
@@ -4540,7 +4816,7 @@ public class ProduitCuServiceMockTest {
 		 * - n'est pas null ;
 		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
 		 * - est dédoublonnée ;
-		 * - expose le message utilisateur de succès.
+		 * - expose le message utilisateur spécifique de succès.
 		 */
 		assertThat(retour).isNotNull();
 		assertThat(retour).hasSize(2);
@@ -4562,7 +4838,9 @@ public class ProduitCuServiceMockTest {
 				.containsExactly(100L, 200L);
 
 		assertThat(message)
-				.isEqualTo(ProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
 		/* Garantit que la recherche exacte a bien été déléguée
 		 * et que le Gateway parent reste inutilisé.

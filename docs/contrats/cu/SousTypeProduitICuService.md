@@ -338,66 +338,100 @@ Signature cible :
 Le scénario nominal de `creer(...)` est :
 
 1. recevoir un `SousTypeProduitDTO.InputDTO` ;
-2. valider les préconditions visibles côté appelant ;
-3. vérifier l’absence de doublon ;
-4. retrouver le `TypeProduit` parent persistant ;
-5. convertir l’`InputDTO` en objet métier ;
-6. rattacher explicitement le parent persistant ;
-7. déléguer la création au `GATEWAY` ;
-8. récupérer l’objet métier réellement créé ;
-9. convertir la réponse en `OutputDTO` ;
-10. positionner le message de succès ;
-11. retourner la réponse finale.
+2. valider que le DTO, le libellé du `SousTypeProduit` et le libellé du parent sont exploitables ;
+3. retrouver le `TypeProduit` parent persistant via `typeProduitGateway.findByLibelle(...)` ;
+4. vérifier l’absence de doublon fonctionnel sur le couple `[parent, libellé]` ;
+5. convertir l’`InputDTO` en objet métier `SousTypeProduit` ;
+6. rattacher explicitement le parent persistant à l’objet métier ;
+7. déléguer la création à `gateway.creer(...)` ;
+8. récupérer l’objet métier réellement créé dans le stockage ;
+9. convertir l’objet métier créé en `SousTypeProduitDTO.OutputDTO` ;
+10. positionner `getMessage()` à `MESSAGE_CREER_OK` uniquement après la conversion réussie ;
+11. retourner la réponse finale exploitable par la couche appelante.
 
 ### 10.2 Cas observables attendus
 
 - si `pInputDTO == null` :
   - retourne `null`,
-  - positionne `getMessage()` à `MESSAGE_CREER_NULL`,
-  - n’émet ni LOG ni exception ;
+  - positionne `getMessage()` à `MESSAGE_CREER_NULL_KO`,
+  - n’émet ni LOG ni exception,
+  - ne sollicite aucun `GATEWAY` ;
 
 - si `pInputDTO.getSousTypeProduit()` est blank :
-  - positionne `getMessage()` à `MESSAGE_CREER_NOM_BLANK`,
+  - positionne `getMessage()` à `MESSAGE_CREER_LIBELLE_BLANK_KO`,
   - émet un LOG,
-  - lève une exception de validation ;
+  - lève une `ExceptionParametreBlank`,
+  - ne sollicite aucun `GATEWAY` ;
 
 - si `pInputDTO.getTypeProduit()` est blank :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+  - positionne `getMessage()` à `MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException`,
+  - ne sollicite aucun `GATEWAY` ;
+
+- si `typeProduitGateway.findByLibelle(...)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO + message sécurisé`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si le parent n’existe pas dans le stockage ou ne possède pas d’identifiant persistant :
+  - positionne `getMessage()` à `MESSAGE_CREER_PARENT_NON_PERSISTANT_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException`,
+  - ne sollicite pas `gateway.creer(...)` ;
+
+- si le contrôle d’unicité lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_DOUBLON_KO + message sécurisé`,
+  - émet un LOG,
+  - propage l’exception d’origine,
+  - ne sollicite pas `gateway.creer(...)` ;
+
+- si un doublon est détecté sur le couple `[parent, libellé]` :
+  - positionne `getMessage()` à `MESSAGE_CREER_DOUBLON_KO + libellé`,
+  - émet un LOG,
+  - lève une `ExceptionDoublon`,
+  - ne sollicite pas `gateway.creer(...)` ;
+
+- si `gateway.creer(...)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_GATEWAY_KO + message sécurisé`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si `gateway.creer(...)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_CREER_GATEWAY_KO`,
   - émet un LOG,
   - lève une `IllegalStateException` ;
 
-- si le doublon est détecté :
-  - positionne `getMessage()` à `MESSAGE_DOUBLON + libellé`,
+- si `ConvertisseurMetierToOutputDTOSousTypeProduit.convert(...)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_CONVERSION_KO + message sécurisé`,
   - émet un LOG,
-  - lève une `ExceptionDoublon` ;
+  - propage l’exception d’origine ;
 
-- si le parent n’existe pas ou n’est pas persistant :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+- si `ConvertisseurMetierToOutputDTOSousTypeProduit.convert(...)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_CREER_CONVERSION_KO`,
   - émet un LOG,
   - lève une `IllegalStateException` ;
-
-- si une anomalie technique survient pendant :
-  - le contrôle d’unicité,
-  - la vérification du parent,
-  - la création via le `GATEWAY`,
-  - la conversion finale,
-  alors le SERVICE UC :
-  - positionne un message circonstancié,
-  - émet un LOG,
-  - propage une exception conforme à l’implémentation ;
 
 - en cas de succès :
-  - retourne un `SousTypeProduitDTO.OutputDTO` non null,
-  - positionne `getMessage()` à `MESSAGE_CREER_OK`
-    uniquement après préparation complète de la réponse.
+  - retourne un `SousTypeProduitDTO.OutputDTO` non `null`,
+  - restitue le parent persistant et l’identifiant réellement créés dans le stockage,
+  - positionne `getMessage()` à `MESSAGE_CREER_OK` uniquement après préparation complète de la réponse.
 
 ### 10.3 Garanties spécifiques de `creer(...)`
 
+- le parent persistant est recherché et validé avant le contrôle d’unicité et avant toute création ;
+- le doublon fonctionnel est contrôlé sur le couple `[parent, libellé]`, sans tenir compte de la casse ;
+- aucun appel à `gateway.creer(...)` n’est effectué si une précondition, le parent ou l’unicité sont invalides ;
 - aucun succès ne doit être exposé si le parent n’est pas persistant ;
 - aucun succès ne doit être exposé si le `GATEWAY` retourne `null` ;
 - aucun succès ne doit être exposé si la conversion finale retourne `null` ;
-- le DTO retourné doit représenter l’état réellement créé dans le stockage ;
-- le message utilisateur doit être lisible, stable et testable.
+- le DTO retourné doit représenter l’état réellement créé dans le stockage et son rattachement au parent persistant ;
+- le message utilisateur doit être déterministe, stable et vérifiable par les tests Mock et d’intégration ;
+- les tests d’intégration doivent prouver l’écriture réelle dans le stockage, l’unicité du couple `[parent, libellé]` et le round-trip par les méthodes de recherche.
 
 ## 11) Contrat spécifique de `rechercherTous()`
 
@@ -420,30 +454,49 @@ Le scénario nominal de `rechercherTous()` est :
 
 ### 11.2 Cas observables attendus
 
+- si le `GATEWAY` lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si le `GATEWAY` lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
 - si le `GATEWAY` retourne `null` :
-  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
-  - émet un LOG,
-  - lève une `ExceptionStockageVide` ;
-
-- si le `GATEWAY` lève une exception technique avec message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO`,
   - émet un LOG,
-  - propage l’exception ;
+  - lève une `ExceptionStockageVide` portant ce même message ;
 
-- si le `GATEWAY` lève une exception technique sans message :
+- si `convertirEtDedoublonner(...)` lève une exception avec message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+    `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + message`,
   - émet un LOG,
-  - propage l’exception ;
+  - propage l’exception d’origine ;
 
-- si la liste retournée devient vide après filtrage / conversion :
+- si `convertirEtDedoublonner(...)` lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si `convertirEtDedoublonner(...)` retourne `null` :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException` portant ce même message ;
+
+- si la liste d’`OutputDTO` est vide après filtrage, tri, conversion et dédoublonnage :
   - retourne une liste vide mais non `null`,
-  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_VIDE` ;
 
-- si la liste retournée contient des résultats :
+- si la liste d’`OutputDTO` contient des résultats :
   - retourne une liste non `null`,
-  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_OK`.
 
 ### 11.3 Garanties spécifiques de `rechercherTous()`
 
@@ -1297,11 +1350,20 @@ Pour `creer(...)`, l’absence de doublon côté GATEWAY doit être simulée par
 Le contrat réel du GATEWAY ne doit pas être simulé par un `get(0)` non sécurisé.
 
 Pour `rechercherTous()`, les tests Mock doivent verrouiller au minimum :
-- le cas `gateway.rechercherTous() == null` ;
-- le cas exception technique avec message ;
-- le cas exception technique sans message ;
-- le cas résultats vides après filtrage ;
-- le cas nominal avec filtrage, tri et dédoublonnage.
+- le cas `gateway.rechercherTous() == null` avec
+  `ExceptionStockageVide` et `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO` ;
+- le cas exception du `GATEWAY` avec message et
+  `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + message` ;
+- le cas exception du `GATEWAY` sans message et
+  `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+- le cas exception de conversion avec message et
+  `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + message` ;
+- le cas exception de conversion sans message et
+  `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+- le cas résultats vides après filtrage avec
+  `MESSAGE_RECHERCHER_TOUS_VIDE` ;
+- le cas nominal avec filtrage, tri, conversion, dédoublonnage et
+  `MESSAGE_RECHERCHER_TOUS_OK`.
 
 Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
 - le cas `gateway.rechercherTous() == null` ;
@@ -1425,7 +1487,8 @@ Pour `rechercherTous()`, le test d’intégration cible doit, à terme, prouver 
 - la cohérence entre la liste retournée et `count()` ;
 - la présence réelle dans le stockage des lignes retournées ;
 - la cohérence du parent pour chaque sous-type vérifié ;
-- le cas stockage vide avec `MESSAGE_RECHERCHE_VIDE`.
+- le cas stockage vide avec `MESSAGE_RECHERCHER_TOUS_VIDE` ;
+- le cas stockage non vide avec `MESSAGE_RECHERCHER_TOUS_OK`.
 
 Pour `rechercherTousString()`, le test d’intégration cible doit, à terme, prouver :
 - la présence des libellés créés dans la réponse ;
@@ -1528,20 +1591,50 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | Constante | Valeur littérale Java validée |
 |---|---|
 | `TIRET_ESPACE` | `" - "` |
-| `PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER` | `"Impossible de vérifier l'unicité " + "du Sous-Type de Produit dans le stockage : "` |
-| `PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER` | `"Impossible de vérifier le Type de Produit parent " + "dans le stockage : "` |
-| `PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER` | `"Impossible de créer le Sous-Type de Produit dans le stockage : "` |
-| `MESSAGE_CREATION_TECHNIQUE_KO_CREER` | `"Impossible de créer le Sous-Type de Produit - " + "le stockage n'a retourné aucun objet créé."` |
-| `PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Sous-Type de Produit : "` |
-| `MESSAGE_CONVERSION_TECHNIQUE_KO_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Sous-Type de Produit."` |
+| `MESSAGE_CREER_NULL_KO` | `"KO - vous ne pouvez pas sauvegarder " + "un Sous-Type de Produit null."` |
+| `MESSAGE_CREER_LIBELLE_BLANK_KO` | `"KO - vous ne pouvez pas sauvegarder un Sous-Type de Produit " + "dont le libellé est blank (null ou que des espaces)."` |
+| `MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO` | `"KO - Le Sous-Type de Produit doit posséder un parent (TypeProduit) " + "avec un libellé non blank."` |
+| `PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO` | `"KO - Impossible de trouver le parent via " + "typeProduitGateway.findByLibelle(...) " + "avec le libellé parent indiqué : "` |
+| `MESSAGE_CREER_PARENT_NON_PERSISTANT_KO` | `"KO - Le Sous-Type de Produit doit posséder un parent " + "(TypeProduit) persistant"` |
+| `PREFIX_MESSAGE_CREER_DOUBLON_KO` | `"KO - Impossible de vérifier l'unicité " + "du Sous-Type de Produit dans le stockage : "` |
+| `MESSAGE_CREER_DOUBLON_KO` | `"KO - Vous ne pouvez pas sauvegarder un Sous-Type de Produit " + "déjà existant dans le stockage : "` |
+| `PREFIX_MESSAGE_CREER_GATEWAY_KO` | `"KO - Impossible de créer le Sous-Type de Produit dans le stockage : "` |
+| `MESSAGE_CREER_GATEWAY_KO` | `"KO - Impossible de créer le Sous-Type de Produit - " + "le stockage n'a retourné aucun objet métier créé."` |
+| `PREFIX_MESSAGE_CREER_CONVERSION_KO` | `"KO - Impossible de créer l'OutputDTO " + "après la création du Sous-Type de Produit : "` |
+| `MESSAGE_CREER_CONVERSION_KO` | `"KO - OutputDTO null via la conversion " + "après la création du Sous-Type de Produit."` |
+| `MESSAGE_CREER_OK` | `"OK - La création de l'objet s'est bien déroulée."` |
+| `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO` | `"KO - rechercherTous() - le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO` | `"KO - rechercherTous() - le Gateway a retourné Null"` |
+| `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null"` |
+| `MESSAGE_RECHERCHER_TOUS_VIDE` | `"OK - La recherche n'a retourné aucun résutat."` |
+| `MESSAGE_RECHERCHER_TOUS_OK` | `"OK - La recherche a retourné des résultats."` |
+| `MESSAGE_STOCKAGE_NULL` | `"Le stockage n'a pas retourné d'enregistrements (null)."` |
+| `MESSAGE_PAGEABLE_NULL` | `"l'indication de page demandée ne doit pas être null."` |
+| `MESSAGE_PARAM_NULL` | `"Le paramètre ne doit pas être null."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
+| `MESSAGE_OBJ_INTROUVABLE` | `"Impossible de trouver dans le stockage l'objet : "` |
+| `MESSAGE_OBJ_NON_PERSISTE` | `"Impossible de modifier - " + "l'objet n'est pas persistant (pas d'ID dans le stockage) : "` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
+| `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE` | `"OK - findByLibelle(...) a retourné des enregistrements"` |
+| `MESSAGE_RECHERCHE_OBJ_NULL` | `"l'objet à rechercher ne doit pas être null."` |
+| `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |
+| `MESSAGE_RECHERCHE_OK` | `"OK - La recherche a retourné des résultats."` |
+| `MESSAGE_RECHERCHE_PAGINEE_KO` | `"KO - la recherche paginée a retourné null."` |
+| `MESSAGE_RECHERCHE_PAGINEE_OK` | `"OK - la recherche paginée a retourné des résultats."` |
+| `MESSAGE_FINDBYDTO_OK` | `"OK - FindByDTO(...) a retourné un enregistrement"` |
+| `MESSAGE_FINDBYID_OK` | `"OK - FindById(...) a retourné un enregistrement"` |
 | `MESSAGE_MODIF_KO` | `"KO - la modification a retourné null : "` |
 | `MESSAGE_MODIF_OK` | `"OK - modification réussie de : "` |
 | `MESSAGE_DELETE_OK` | `"OK - destruction réussie de : "` |
 | `MESSAGE_DELETE_KO` | `"KO - échec de la destruction de : "` |
+| `RECHERCHE_PARENT_NULL` | `"Le TypeProduit parent ne doit pas être null"` |
+| `MESSAGE_PARENT_NULL` | `"Le TypeProduit parent ne doit pas être null"` |
+| `KO_TECHNIQUE_RECHERCHE` | `"Une recherche technique a échouée"` |
 | `METHODE_CREER` | `"méthode Creer(...)"` |
 | `METHODE_RECHERCHER_TOUS` | `"méthode rechercherTous()"` |
+| `METHODE_RECHERCHER_TOUS_STRING` | `"méthode rechercherTousString()"` |
+| `METHODE_RECHERCHER_TOUS_PAGE` | `"méthode rechercherTousParPage(...)"` |
 | `METHODE_FIND_BY_LIBELLE` | `"méthode findByLibelle(...)"` |
 | `METHODE_FIND_BY_LIBELLE_RAPIDE` | `"méthode findByLibelleRapide()"` |
 | `METHODE_FIND_ALL_BY_PARENT` | `"méthode FindAllByParent(...)"` |
@@ -1567,6 +1660,7 @@ Ces constantes sont observables via les tests UC et les messages `getMessage()`.
 - `SousTypeProduitDTO.OutputDTO update( SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `void delete(SousTypeProduitDTO.InputDTO pInputDTO) throws Exception;`
 - `long count() throws Exception;`
+- `String getMessage();`
 
 ### A.3) ADAPTER UC associé
 
@@ -1617,33 +1711,33 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 
 | Bloc | Nombre de tests | Méthodes de test |
 |---|---:|---|
-| `creer` | 16 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerControleTechniqueKoAvecMessage`<br>`testCreerControleTechniqueKoSansMessage`<br>`testCreerDoublon`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentTechniqueKoSansMessage`<br>`testCreerParentAbsent`<br>`testCreerParentNonPersistant`<br>`testCreerCreationTechniqueKoAvecMessage`<br>`testCreerCreationTechniqueKoSansMessage`<br>`testCreerGatewayRetourneNull`<br>`testCreerConversionTechniqueKoAvecMessage`<br>`testCreerConversionTechniqueKoSansMessage`<br>`testCreerNominal` |
+| `creer` | 17 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentTechniqueKoSansMessage`<br>`testCreerParentAbsent`<br>`testCreerParentNonPersistant`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerConversionOutputDTORetourNull`<br>`testCreerNominal` |
 | `rechercherTous` | 7 | `testRechercherTousGatewayRetourNull`<br>`testRechercherTousGatewayKOAvecMessage`<br>`testRechercherTousGatewayKOSansMessage`<br>`testRechercherTousConversionOutputDTOKOAvecMessage`<br>`testRechercherTousConversionOutputDTOKOSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousNominal` |
 | `rechercherTousString` | 8 | `testRechercherTousStringGatewayRetourNull`<br>`testRechercherTousStringGatewayKOAvecMessage`<br>`testRechercherTousStringGatewayKOSansMessage`<br>`testRechercherTousStringConversionStringKOAvecMessage`<br>`testRechercherTousStringConversionStringKOSansMessage`<br>`testRechercherTousStringVideApresFiltrage`<br>`testRechercherTousStringVideApresLibellesBlank`<br>`testRechercherTousStringNominal` |
 | `rechercherTousParPage` | 8 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageGatewayKOAvecMessage`<br>`testRechercherTousParPageGatewayKOSansMessage`<br>`testRechercherTousParPageGatewayRetourNull`<br>`testRechercherTousParPageConversionOutputDTOKOAvecMessage`<br>`testRechercherTousParPageConversionOutputDTOKOSansMessage`<br>`testRechercherTousParPageVideApresFiltrage`<br>`testRechercherTousParPageNominal` |
 | `findByLibelle` | 9 | `testFindByLibelleNull`<br>`testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleGatewayKOAvecMessage`<br>`testFindByLibelleGatewayKOSansMessage`<br>`testFindByLibelleConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleConversionOutputDTOKOSansMessage`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleNominal` |
 | `findByLibelleRapide` | 9 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayKOAvecMessage`<br>`testFindByLibelleRapideGatewayKOSansMessage`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleRapideConversionOutputDTOKOSansMessage`<br>`testFindByLibelleRapideVideApresFiltrage`<br>`testFindByLibelleRapideNominal` |
 | `findAllByParent` | 13 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentParentGatewayKOAvecMessage`<br>`testFindAllByParentParentGatewayKOSansMessage`<br>`testFindAllByParentParentAbsent`<br>`testFindAllByParentParentNonPersistant`<br>`testFindAllByParentEnfantsGatewayKOAvecMessage`<br>`testFindAllByParentEnfantsGatewayKOSansMessage`<br>`testFindAllByParentGatewayRetourNull`<br>`testFindAllByParentConversionOutputDTOKOAvecMessage`<br>`testFindAllByParentConversionOutputDTOKOSansMessage`<br>`testFindAllByParentVideApresFiltrage`<br>`testFindAllByParentNominal` |
-| `findByDTO` | 10 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOErreurTechniqueRechercheParentAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheParentSansMessage`<br>`testFindByDTOParentNonPersistant`<br>`testFindByDTOErreurTechniqueRechercheEnfantsAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheEnfantsSansMessage`<br>`testFindByDTOVide`<br>`testFindByDTOIntrouvableDansListe`<br>`testFindByDTOOk` |
-| `findById` | 5 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdErreurTechniqueAvecMessage`<br>`testFindByIdErreurTechniqueSansMessage`<br>`testFindByIdOk` |
-| `update` | 17 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateRechercheParentTechniqueKoAvecMessage`<br>`testUpdateRechercheParentTechniqueKoSansMessage`<br>`testUpdateParentAbsent`<br>`testUpdateParentNonPersistant`<br>`testUpdateRechercheEnfantsTechniqueKoAvecMessage`<br>`testUpdateRechercheEnfantsTechniqueKoSansMessage`<br>`testUpdateStockageNullPendantReidentification`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateModificationTechniqueKoAvecMessage`<br>`testUpdateModificationTechniqueKoSansMessage`<br>`testUpdateGatewayNull`<br>`testUpdateRetourNonPersistant`<br>`testUpdateOk` |
-| `delete` | 15 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteRechercheParentTechniqueKoAvecMessage`<br>`testDeleteRechercheParentTechniqueKoSansMessage`<br>`testDeleteParentAbsent`<br>`testDeleteParentNonPersistant`<br>`testDeleteRechercheEnfantsTechniqueKoAvecMessage`<br>`testDeleteRechercheEnfantsTechniqueKoSansMessage`<br>`testDeleteStockageNullPendantReidentification`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteTechniqueKoAvecMessage`<br>`testDeleteTechniqueKoSansMessage`<br>`testDeleteOk` |
-| `count` | 5 | `testCountTechniqueKoAvecMessage`<br>`testCountTechniqueKoSansMessage`<br>`testCountRetourNegatifIncoherent`<br>`testCountZero`<br>`testCountPositif` |
-| `getMessage` | 5 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageApresCountPositif`<br>`testGetMessageDernierMessageGagne` |
+| `findByDTO` | 15 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOErreurTechniqueRechercheParentAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheParentSansMessage`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOParentNonPersistant`<br>`testFindByDTOErreurTechniqueRechercheEnfantsAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheEnfantsSansMessage`<br>`testFindByDTOGatewayRetourNull`<br>`testFindByDTOVide`<br>`testFindByDTOVideApresFiltrage`<br>`testFindByDTOIntrouvableDansListe`<br>`testFindByDTOConversionOutputDTOKOAvecMessage`<br>`testFindByDTOConversionOutputDTOKOSansMessage`<br>`testFindByDTONominal` |
+| `findById` | 7 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdErreurTechniqueAvecMessage`<br>`testFindByIdErreurTechniqueSansMessage`<br>`testFindByIdConversionOutputDTOKOAvecMessage`<br>`testFindByIdConversionOutputDTOKOSansMessage`<br>`testFindByIdNominal` |
+| `update` | 20 | `testUpdateNull`<br>`testUpdateLibelleNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateRechercheParentTechniqueKoAvecMessage`<br>`testUpdateRechercheParentTechniqueKoSansMessage`<br>`testUpdateParentAbsent`<br>`testUpdateParentNonPersistant`<br>`testUpdateRechercheEnfantsTechniqueKoAvecMessage`<br>`testUpdateRechercheEnfantsTechniqueKoSansMessage`<br>`testUpdateStockageNullPendantReidentification`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateModificationTechniqueKoAvecMessage`<br>`testUpdateModificationTechniqueKoSansMessage`<br>`testUpdateModificationRetourNull`<br>`testUpdateModificationRetourNonPersistant`<br>`testUpdateConversionOutputDTOKOAvecMessage`<br>`testUpdateConversionOutputDTOKOSansMessage`<br>`testUpdateNominal` |
+| `delete` | 16 | `testDeleteNull`<br>`testDeleteLibelleNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteRechercheParentTechniqueKoAvecMessage`<br>`testDeleteRechercheParentTechniqueKoSansMessage`<br>`testDeleteParentAbsent`<br>`testDeleteParentNonPersistant`<br>`testDeleteRechercheEnfantsTechniqueKoAvecMessage`<br>`testDeleteRechercheEnfantsTechniqueKoSansMessage`<br>`testDeleteStockageNullPendantReidentification`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteDestructionKOAvecMessage`<br>`testDeleteDestructionKOSansMessage`<br>`testDeleteNominal` |
+| `count` | 5 | `testCountGatewayKOAvecMessage`<br>`testCountGatewayKOSansMessage`<br>`testCountRetourNegatif`<br>`testCountZero`<br>`testCountNominal` |
+| `getMessage` | 5 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageApresCountNominal`<br>`testGetMessageDernierMessageGagne` |
 
 ### A.5) Matrice Intégration UC actuelle
 
 | Bloc | Nombre de tests | Méthodes de test |
 |---|---:|---|
-| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerPasParent`<br>`testCreerOkAvecPreuveBdEtRoundTrip`<br>`testCreerDoublonAvecPreuveBd` |
-| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveBd`<br>`testRechercherTousVide` |
-| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveBd`<br>`testRechercherTousStringVide` |
-| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
+| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentAbsent`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
+| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveStockage`<br>`testRechercherTousVide` |
+| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveStockage`<br>`testRechercherTousStringVide` |
+| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveStockage` |
 | `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
-| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |
-| `findAllByParent` | 5 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentVide`<br>`testFindAllByParentOkAvecPreuveBd` |
-| `findByDTO` | 5 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOCoupleIntrouvableAvecPreuveBd`<br>`testFindByDTOOkAvecPreuveCoupleParentLibelle` |
-| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOkAvecPreuveBd` |
+| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveStockage` |
+| `findAllByParent` | 5 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentVide`<br>`testFindAllByParentOkAvecPreuveStockage` |
+| `findByDTO` | 5 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOCoupleIntrouvableAvecPreuveStockage`<br>`testFindByDTOOkAvecPreuveCoupleParentLibelle` |
+| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOkAvecPreuveStockage` |
 | `update` | 6 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveCoupleParentLibelleEtIdConserve` |
 | `delete` | 6 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteParentAbsent`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
 | `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |

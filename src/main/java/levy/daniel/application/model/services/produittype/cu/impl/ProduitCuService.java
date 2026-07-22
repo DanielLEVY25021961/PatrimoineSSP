@@ -238,11 +238,13 @@ public class ProduitCuService implements ProduitICuService {
 
 		try {
 
-			/* Utilise la méthode private 
-			 * this.rechercherParentPersistant(pInputDTO) 
-			 * pour la récupération du parent persistant 
-			 * (obligatoire car le libellé d'un SousTypeProduit 
-			 * n'est pas unique). */
+			/* Utilise la méthode private
+			 * this.rechercherParentPersistant(pInputDTO)
+			 * pour récupérer le SousTypeProduit parent direct persistant.
+			 * Le TypeProduit porté par le DTO sert uniquement, lorsqu'il est
+			 * renseigné, à départager les SousTypeProduit homonymes ;
+			 * il appartient à l'identité du SousTypeProduit parent
+			 * et non à une identité en triplet du Produit. */
 			parentPersistant = this.rechercherParentPersistant(pInputDTO);
 
 		} catch (final Exception e) {
@@ -296,7 +298,8 @@ public class ProduitCuService implements ProduitICuService {
 
 		try {
 
-			/* vérifie que pInputDTO ne créera pas de doublon. */
+			/* Vérifie l'absence du couple fonctionnel
+			 * [SousTypeProduit parent direct, Produit]. */
 			doublon = this.isDoublon(pInputDTO);
 
 		} catch (final Exception e) {
@@ -1931,58 +1934,95 @@ public class ProduitCuService implements ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p>Détermine si un {@link ProduitDTO.InputDTO}
-	 * correspond à un doublon fonctionnel.</p>
+	 * <p>Détermine si le couple fonctionnel
+	 * {@code [SousTypeProduit, Produit]} existe déjà dans le stockage.</p>
+	 * <ul>
+	 * <li>Si pInputDTO == null : return false.</li>
+	 * <li>Si le libellé du parent est blank dans l'inputDTO 
+	 * passé en paramètre : return false.</li>
+	 * <li>Si la liste gateway.findByLibelle(libelleProduitRecherche) 
+	 * est null ou vide : return false.</li>
+	 * <li>Détecte un doublon : 
+	 * si même libellé et même parent -> doublon : return true.</li>
+	 * <li>Le libellé du Produit est comparé sans tenir compte de la casse.</li>
+	 * <li>Le parent direct est le SousTypeProduit porté par le Produit.</li>
+	 * <li>Le TypeProduit est uniquement une composante de l'identité
+	 * du SousTypeProduit parent ; il ne constitue jamais une troisième
+	 * composante de l'identité du Produit.</li>
+	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : ProduitDTO.InputDTO
-	 * @return boolean : true si doublon, false sinon.
+	 * @param pInputDTO : ProduitDTO.InputDTO :
+	 * DTO portant le libellé du Produit et l'identité métier
+	 * de son SousTypeProduit parent direct.
+	 * @return boolean : true si le couple
+	 * {@code [SousTypeProduit, Produit]} existe déjà, false sinon.
 	 * @throws Exception
+	 * si le GATEWAY Produit échoue pendant la recherche par libellé.
 	 */
 	private boolean isDoublon(
 			final ProduitDTO.InputDTO pInputDTO) throws Exception {
 
+		/* Si pInputDTO == null : return false. */
 		if (pInputDTO == null) {
 			return false;
 		}
 
 		final String libelleProduitRecherche = pInputDTO.getProduit();
-		final String libelleSousTypeRecherche = pInputDTO.getSousTypeProduit();
-		final String libelleTypeRecherche = pInputDTO.getTypeProduit();
+		final String libelleSousTypeParentRecherche
+				= pInputDTO.getSousTypeProduit();
+		final String libelleTypeDuParentRecherche
+				= pInputDTO.getTypeProduit();
 
-		if (StringUtils.isBlank(libelleSousTypeRecherche)) {
+		/* Si le libellé du parent est blank dans l'inputDTO 
+		 * passé en paramètre : return false. */
+		if (StringUtils.isBlank(libelleSousTypeParentRecherche)) {
 			return false;
 		}
 
 		final List<Produit> produitsExistants
 				= this.gateway.findByLibelle(libelleProduitRecherche);
 
+		/* Si la liste gateway.findByLibelle(libelleProduitRecherche) 
+		 * est null ou vide : return false. */
 		if (produitsExistants == null || produitsExistants.isEmpty()) {
 			return false;
 		}
 
+		// RECHERCHE DES DOUBLONS.
 		for (final Produit existant : produitsExistants) {
 
+			/* passe un éventuel Produit null (impossible). */
 			if (existant == null) {
 				continue;
 			}
 
-			final String produitExistant = existant.getProduit();
-			final SousTypeProduitI sousTypeExistantObjet = existant.getSousTypeProduit();
-			final String sousTypeExistant = sousTypeExistantObjet != null
-					? sousTypeExistantObjet.getSousTypeProduit()
-					: null;
-			final String typeExistant = sousTypeExistantObjet != null
-					&& sousTypeExistantObjet.getTypeProduit() != null
-							? sousTypeExistantObjet.getTypeProduit().getTypeProduit()
+			final SousTypeProduitI parentDirectExistant
+					= existant.getSousTypeProduit();
+			final String libelleSousTypeParentExistant
+					= parentDirectExistant != null
+						? parentDirectExistant.getSousTypeProduit()
+						: null;
+			final String libelleTypeDuParentExistant
+					= parentDirectExistant != null
+						&& parentDirectExistant.getTypeProduit() != null
+							? parentDirectExistant.getTypeProduit().getTypeProduit()
 							: null;
 
-			final boolean typeCompatible = StringUtils.isBlank(libelleTypeRecherche)
-					|| Strings.CI.equals(libelleTypeRecherche, typeExistant);
+			/* Compare l'identité métier du SousTypeProduit parent direct. */
+			final boolean memeParentDirect
+					= Strings.CI.equals(
+							libelleSousTypeParentRecherche,
+							libelleSousTypeParentExistant)
+					&& (StringUtils.isBlank(libelleTypeDuParentRecherche)
+							|| Strings.CI.equals(
+									libelleTypeDuParentRecherche,
+									libelleTypeDuParentExistant));
 
-			if (Strings.CI.equals(libelleProduitRecherche, produitExistant)
-					&& Strings.CI.equals(libelleSousTypeRecherche, sousTypeExistant)
-					&& typeCompatible) {
+			/* Si même libellé et même parent -> doublon : return true. */
+			if (Strings.CI.equals(
+					libelleProduitRecherche, existant.getProduit())
+					&& memeParentDirect) {
 				return true;
 			}
 		}
@@ -1995,22 +2035,29 @@ public class ProduitCuService implements ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p>Recherche le {@link SousTypeProduit} parent persistant
+	 * <p>Recherche le {@link SousTypeProduit} parent direct persistant
 	 * correspondant au DTO d'entrée.</p>
 	 * <ul>
-	 * <li>Si pInputDTO est null ou sans libellé parent : retourne null.</li>
-	 * <li>Délègue au Gateway parent la recherche 
-	 * de la liste des parents possibles.</li>
-	 * <li>Si la liste des parents possible est null ou vide : 
+	 * <li>Si le DTO est null ou sans libellé parent 
+	 * SousTypeProduit : retourne null.</li>
+	 * <li>Délègue au GATEWAY parent la recherche des parents
+	 * portant le libellé demandé.</li>
+	 * <li>Si la liste des parents possibles est null ou vide : 
 	 * retourne null.</li>
-	 * <li>retourne le parent (SousTypeProduit) ayant 
-	 * même libellé parent et même libellé grand-parent que pInputDTO.</li>
+	 * <li>Écarte les réponses nulles et non persistantes.</li>
+	 * <li>retourne le seul parent persistant.</li>
+	 * <li>Si plusieurs parents persistants compatibles 
+	 * avec les critères fournis sont trouvés : return null.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pInputDTO : ProduitDTO.InputDTO
-	 * @return SousTypeProduit : parent persistant ou null.
+	 * @param pInputDTO : ProduitDTO.InputDTO :
+	 * DTO portant le libellé du SousTypeProduit parent direct et,
+	 * éventuellement, le libellé de son TypeProduit.
+	 * @return SousTypeProduit : parent direct persistant non ambigu,
+	 * ou null si aucun parent exploitable ne peut être déterminé.
 	 * @throws Exception
+	 * si le GATEWAY parent échoue pendant la recherche par libellé.
 	 */
 	private SousTypeProduit rechercherParentPersistant(
 			final ProduitDTO.InputDTO pInputDTO) throws Exception {
@@ -2024,49 +2071,66 @@ public class ProduitCuService implements ProduitICuService {
 		final String libelleParent = pInputDTO.getSousTypeProduit();
 		final String libelleGrandParent = pInputDTO.getTypeProduit();
 
-		/* Délègue au Gateway parent la recherche 
+		/* Délègue au GATEWAY parent la recherche
 		 * de la liste des parents possibles. */
 		final List<SousTypeProduit> parents
 				= this.sousTypeProduitGateway.findByLibelle(libelleParent);
 
-		/* Si la liste des parents possible est null ou vide : 
+		/* Si la liste des parents possibles est null ou vide :
 		 * retourne null. */
 		if (parents == null || parents.isEmpty()) {
 			return null;
 		}
 
-		/* examine chacun des parents possibles. */
+		SousTypeProduit candidatUnique = null;
+
+		/* Examine chacun des parents possibles. */
 		for (final SousTypeProduit parent : parents) {
 
-			/* Si le parent parcouru est null, continue. */
-			if (parent == null) {
+			/* Ignore les réponses nulles ou non persistantes. */
+			if (parent == null
+					|| parent.getIdSousTypeProduit() == null) {
 				continue;
 			}
 
-			/* Si la parent parcouru n'est pas persistant (pas d'ID), 
-			 * continue. */
-			if (parent.getIdSousTypeProduit() == null) {
+			/* Conserve uniquement les parents portant exactement
+			 * le libellé parent SousTypeProduit demandé. */
+			if (!Strings.CI.equals(
+					libelleParent, parent.getSousTypeProduit())) {
 				continue;
 			}
 
-			final String libelleParentParcouru = parent.getSousTypeProduit();
-			final String libelleGrandParentParcouru 
-				= parent.getTypeProduit() != null
-					? parent.getTypeProduit().getTypeProduit()
-					: null;
+			/* Lorsque le TypeProduit (grand-parent) est renseigné,
+			 * départage les parents homonymes. */
+			if (StringUtils.isNotBlank(libelleGrandParent)) {
 
-			final boolean typeCompatible 
-				= StringUtils.isBlank(libelleGrandParent)
-					|| Strings.CI.equals(
-							libelleGrandParent, libelleGrandParentParcouru);
+				final String libelleGrandParentParcouru
+						= parent.getTypeProduit() != null
+							? parent.getTypeProduit().getTypeProduit()
+							: null;
 
-			if (Strings.CI.equals(libelleParent, libelleParentParcouru)
-					&& typeCompatible) {
-				return parent;
+				if (!Strings.CI.equals(
+						libelleGrandParent,
+						libelleGrandParentParcouru)) {
+					continue;
+				}
+			}
+
+			/* Mémorise le premier parent persistant compatible. */
+			if (candidatUnique == null) {
+				candidatUnique = parent;
+				continue;
+			}
+
+			/* Plusieurs identifiants persistants distincts compatibles
+			 * rendent la résolution du parent ambiguë : return null. */
+			if (!candidatUnique.getIdSousTypeProduit().equals(
+					parent.getIdSousTypeProduit())) {
+				return null;
 			}
 		}
 
-		return null;
+		return candidatUnique;
 		
 	} // __________________________________________________________________
 

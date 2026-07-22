@@ -298,6 +298,12 @@ public class ProduitCuServiceIntegrationTest {
 	 */
 	public static final String RECHERCHE_ZZ = "Recherche Zz";
 
+	/**
+	 * "+ message exact + stockage inchangé"
+	 */
+	public static final String EXACT_INCHANGE 
+		= "+ message exact + stockage inchangé";
+	
 	// =========================== TAG ==================================//
 		
 	/**
@@ -306,6 +312,8 @@ public class ProduitCuServiceIntegrationTest {
 	public static final String TAG_CREER = "cu-it-Creer";
 
 	// ============================ DN ==================================//
+
+	// ---------------------------- creer(...) ----------------------------
 	
 	/**
 	 * "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé".
@@ -319,21 +327,37 @@ public class ProduitCuServiceIntegrationTest {
 	 */
 	public static final String DN_CREER_BLANK
 		= "creer(blank) : ExceptionParametreBlank "
-				+ "+ message exact + stockage inchangé";
+				+ EXACT_INCHANGE;
 
 	/**
 	 * "creer(parent blank) : IllegalStateException + message exact + stockage inchangé".
 	 */
 	public static final String DN_CREER_PARENT_BLANK
 		= "creer(parent blank) : IllegalStateException "
-				+ "+ message exact + stockage inchangé";
+				+ EXACT_INCHANGE;
 
 	/**
 	 * "creer(parent absent) : IllegalStateException + message exact + stockage inchangé".
 	 */
 	public static final String DN_CREER_PARENT_ABSENT
 		= "creer(parent absent) : IllegalStateException "
-				+ "+ message exact + stockage inchangé";
+				+ EXACT_INCHANGE;
+
+	/**
+	 * "creer(parent ambigu sans TypeProduit) :
+	 * IllegalStateException + message exact + stockage inchangé".
+	 */
+	public static final String DN_CREER_PARENT_AMBIGU_SANS_TYPE_PRODUIT
+		= "creer(parent ambigu sans TypeProduit) : IllegalStateException "
+				+ EXACT_INCHANGE;
+
+	/**
+	 * "creer(parent unique sans TypeProduit) :
+	 * création réelle + TypeProduit déduit + preuve stockage".
+	 */
+	public static final String DN_CREER_PARENT_UNIQUE_SANS_TYPE_PRODUIT
+		= "creer(parent unique sans TypeProduit) : création réelle "
+				+ "+ TypeProduit déduit + preuve stockage";
 
 	/**
 	 * "creer(doublon) : ExceptionDoublon + message exact + preuve stockage d'unicité".
@@ -343,12 +367,13 @@ public class ProduitCuServiceIntegrationTest {
 				+ "+ message exact + preuve stockage d'unicité";
 
 	/**
-	 * "creer(ok) : preuve stockage + parent prouvé + message exact + round-trip findByLibelle/findById".
+	 * "creer(ok) : homonyme sous autre parent non doublon
+	 * + preuve stockage + round-trip findByLibelle/findById".
 	 */
 	public static final String DN_CREER_OK
-		= "creer(ok) : preuve stockage + parent prouvé "
-				+ "+ message exact + round-trip findByLibelle/findById";
-
+		= "creer(ok) : homonyme sous autre parent non doublon "
+				+ "+ preuve stockage + round-trip findByLibelle/findById";
+	
 	// ========================== SELECT ================================//
 	
 	/**
@@ -829,6 +854,109 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(countApres).isEqualTo(countAvant);
 		
 	} // __________________________________________________________________
+
+
+	
+	/**
+	 * <div>
+	 * <p>garantit que creer(...) sans TypeProduit
+	 * refuse une résolution ambiguë du parent direct :</p>
+	 * <ul>
+	 * <li>crée deux SousTypeProduit persistants homonymes
+	 * sous deux TypeProduit différents ;</li>
+	 * <li>ne sélectionne jamais arbitrairement le premier parent ;</li>
+	 * <li>jette une {@link IllegalStateException} ;</li>
+	 * <li>émet le message
+	 * {@link ProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
+	 * <li>ne crée aucun Produit dans le stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DN_CREER_PARENT_AMBIGU_SANS_TYPE_PRODUIT)
+	@Test
+	public void testCreerParentAmbiguSansTypeProduitAvecPreuveStockageInchange()
+			throws Exception {
+
+		/* ARRANGE :
+		 * crée deux parents directs persistants portant le même libellé
+		 * SousTypeProduit sous deux TypeProduit différents.
+		 */
+		this.creerParentsDansStockage(LOISIR, OUTILLAGE);
+		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
+
+		/* prépare un DTO sans TypeProduit.
+		 * Les deux parents persistants restent donc compatibles.
+		 */
+		final InputDTO input = new ProduitDTO.InputDTO(
+				null,
+				OUTILLAGE,
+				PINCE);
+
+		/* Vérifie qu'aucun Produit du test n'existe
+		 * sous l'un ou l'autre parent avant l'appel au SERVICE UC.
+		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR,
+				OUTILLAGE,
+				PINCE))
+				.isEqualTo(0L);
+
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PINCE))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT - ASSERT :
+		 * garantit que le SERVICE UC refuse de sélectionner
+		 * arbitrairement un parent direct parmi plusieurs parents
+		 * persistants distincts restant compatibles.
+		 */
+		assertThatThrownBy(() -> this.service.creer(input))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+
+		/* Garantit le message utilisateur exact. */
+		assertThat(this.service.getMessage())
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+
+		/* ASSERT :
+		 * prouve que le refus de la résolution ambiguë
+		 * n'a créé aucune ligne Produit dans le stockage.
+		 */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
+
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR,
+				OUTILLAGE,
+				PINCE))
+				.isEqualTo(0L);
+
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PINCE))
+				.isEqualTo(0L);
+
+	} // __________________________________________________________________
 	
 	
 
@@ -1006,17 +1134,153 @@ public class ProduitCuServiceIntegrationTest {
 	} // __________________________________________________________________
 	
 	
+	
+	/**
+	 * <div>
+	 * <p>garantit que creer(...) sans TypeProduit
+	 * accepte un parent direct persistant unique :</p>
+	 * <ul>
+	 * <li>résout l'unique SousTypeProduit persistant compatible ;</li>
+	 * <li>crée réellement le Produit sous ce parent ;</li>
+	 * <li>déduit le TypeProduit depuis le SousTypeProduit parent ;</li>
+	 * <li>retourne un {@link OutputDTO} persistant ;</li>
+	 * <li>émet le message
+	 * {@link ProduitICuService#MESSAGE_CREER_OK} ;</li>
+	 * <li>prouve l'écriture exacte dans le stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_CREER)
+	@DisplayName(DN_CREER_PARENT_UNIQUE_SANS_TYPE_PRODUIT)
+	@Test
+	public void testCreerParentUniqueSansTypeProduitAvecPreuveStockage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * crée un unique parent direct persistant portant
+		 * le libellé SousTypeProduit demandé.
+		 */
+		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
+
+		/* prépare un DTO sans TypeProduit.
+		 * Le parent direct reste néanmoins résoluble sans ambiguïté.
+		 */
+		final InputDTO input = new ProduitDTO.InputDTO(
+				null,
+				OUTILLAGE,
+				PERCEUSE);
+
+		/* Vérifie que le couple fonctionnel
+		 * [SousTypeProduit parent, Produit]
+		 * n'est pas déjà présent dans le stockage.
+		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PERCEUSE))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT :
+		 * sollicite creer(...) sans TypeProduit
+		 * avec un parent direct persistant unique.
+		 */
+		final OutputDTO cree = this.service.creer(input);
+
+		/* Synchronise explicitement le contexte JPA
+		 * avant les preuves SQL directes.
+		 */
+		this.entityManager.flush();
+
+		/* ASSERT :
+		 * garantit que le DTO retourné est persistant
+		 * et que son TypeProduit est déduit du parent direct.
+		 */
+		assertThat(cree).isNotNull();
+		assertThat(cree.getIdProduit()).isNotNull();
+		assertThat(cree.getProduit()).isEqualTo(PERCEUSE);
+		assertThat(cree.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(cree.getTypeProduit()).isEqualTo(OUTIL);
+
+		/* Garantit le message de succès avant tout autre appel au SERVICE UC. */
+		assertThat(this.service.getMessage())
+				.isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
+
+		/* Garantit que la création a ajouté exactement une ligne Produit. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant + 1L);
+
+		/* Garantit physiquement l'existence de l'identifiant créé. */
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS_BY_ID,
+				Long.class,
+				cree.getIdProduit()))
+				.isEqualTo(1L);
+
+		/* Garantit physiquement le libellé Produit écrit. */
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_PRODUIT_LIBELLE_BY_ID,
+				String.class,
+				cree.getIdProduit()))
+				.isEqualTo(PERCEUSE);
+
+		/* Garantit physiquement le SousTypeProduit parent écrit. */
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_PARENT_SOUS_TYPE_BY_ID_PRODUIT,
+				String.class,
+				cree.getIdProduit()))
+				.isEqualTo(OUTILLAGE);
+
+		/* Garantit le couple fonctionnel exact
+		 * [SousTypeProduit parent, Produit] dans le stockage.
+		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PERCEUSE))
+				.isEqualTo(1L);
+
+		/* Garantit le round-trip par identifiant
+		 * et la déduction du TypeProduit depuis le parent direct.
+		 */
+		final OutputDTO trouveParId = this.service.findById(
+				cree.getIdProduit());
+
+		assertThat(trouveParId).isNotNull();
+		assertThat(trouveParId.getIdProduit())
+				.isEqualTo(cree.getIdProduit());
+		assertThat(trouveParId.getProduit()).isEqualTo(PERCEUSE);
+		assertThat(trouveParId.getSousTypeProduit()).isEqualTo(OUTILLAGE);
+		assertThat(trouveParId.getTypeProduit()).isEqualTo(OUTIL);
+
+	} // __________________________________________________________________
+	
+	
 
 	/**
 	 * <div>
 	 * <p>garantit que creer(OK) :</p>
 	 * <ul>
-	 * <li>crée d'abord le parent persistant requis ;</li>
-	 * <li>crée réellement une ligne dans le stockage ;</li>
+	 * <li>crée deux SousTypeProduit homonymes
+	 * sous deux TypeProduit différents ;</li>
+	 * <li>crée d'abord le même libellé Produit sous l'autre parent direct ;</li>
+	 * <li>ne considère pas cet homonyme sous un autre parent comme un doublon ;</li>
+	 * <li>crée réellement une nouvelle ligne sous le parent direct exact ;</li>
 	 * <li>retourne un {@link OutputDTO} persistant ;</li>
 	 * <li>émet un message
-	 * {@link ProduitICuService#MESSAGE_CREER_OK}</li>
-	 * <li>prouve le rattachement au parent dans le stockage ;</li>
+	 * {@link ProduitICuService#MESSAGE_CREER_OK} ;</li>
+	 * <li>prouve les deux couples distincts dans le stockage ;</li>
 	 * <li>rend la donnée retrouvable via le SERVICE UC par libellé et par ID.</li>
 	 * </ul>
 	 * </div>
@@ -1030,26 +1294,55 @@ public class ProduitCuServiceIntegrationTest {
 			throws Exception {
 
 		/* ARRANGE :
-		 * crée d'abord le parent persistant requis.
+		 * crée deux SousTypeProduit persistants homonymes
+		 * sous deux TypeProduit différents.
 		 */
+		this.creerParentsDansStockage(LOISIR, OUTILLAGE);
 		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
 
-		/* prépare un DTO valide à créer
-		 * et mémorise le nombre de lignes avant création.
+		/* Crée d'abord le même libellé Produit sous l'autre parent direct.
+		 * Cette première ligne ne doit pas devenir un doublon
+		 * pour le parent OUTIL / OUTILLAGE.
 		 */
-		final InputDTO input = new ProduitDTO.InputDTO(
-				OUTIL,
+		final InputDTO inputSousAutreParent = new ProduitDTO.InputDTO(
+				LOISIR,
 				OUTILLAGE,
 				TOURNEVIS);
 
-		/* Vérifie d'abord que l'objet métier du test
-		 * n'est pas déjà présent dans le stockage sous ce parent.
+		final OutputDTO creeSousAutreParent
+			= this.service.creer(inputSousAutreParent);
+
+		this.entityManager.flush();
+
+		assertThat(creeSousAutreParent).isNotNull();
+		assertThat(creeSousAutreParent.getIdProduit()).isNotNull();
+		assertThat(creeSousAutreParent.getProduit()).isEqualTo(TOURNEVIS);
+		assertThat(creeSousAutreParent.getSousTypeProduit())
+				.isEqualTo(OUTILLAGE);
+		assertThat(creeSousAutreParent.getTypeProduit()).isEqualTo(LOISIR);
+
+		/* Prouve que le même libellé Produit existe uniquement
+		 * sous l'autre parent direct avant la création testée.
 		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR,
+				OUTILLAGE,
+				TOURNEVIS))
+				.isEqualTo(1L);
+
 		assertThat(this.compterProduitParCoupleDansStockage(
 				OUTIL,
 				OUTILLAGE,
 				TOURNEVIS))
 				.isEqualTo(0L);
+
+		/* prépare le DTO à créer sous le parent direct exact
+		 * OUTIL / OUTILLAGE.
+		 */
+		final InputDTO input = new ProduitDTO.InputDTO(
+				OUTIL,
+				OUTILLAGE,
+				TOURNEVIS);
 
 		final Long countAvant = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_PRODUITS,
@@ -1058,20 +1351,20 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(countAvant).isNotNull();
 
 		/* ACT :
-		 * sollicite la méthode creer(...)
-		 * dans un scénario nominal complet de persistance réelle.
+		 * sollicite creer(...) sous le second parent direct.
+		 * Le Produit homonyme sous l'autre parent
+		 * ne doit pas être considéré comme un doublon.
 		 */
 		final OutputDTO cree = this.service.creer(input);
 
-		/*
-		 * Synchronise explicitement le contexte de persistance JPA
+		/* Synchronise explicitement le contexte de persistance JPA
 		 * avant les preuves SQL directes.
 		 */
 		this.entityManager.flush();
 
 		/* ASSERT :
-		 * garantit d'abord que le DTO retourné
-		 * est bien persistant et correctement renseigné.
+		 * garantit que le DTO retourné
+		 * est persistant et rattaché au parent direct exact.
 		 */
 		assertThat(cree).isNotNull();
 		assertThat(cree.getIdProduit()).isNotNull();
@@ -1085,8 +1378,8 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_CREER_OK);
 
-		/* Garantit que la création augmente bien le nombre total
-		 * de lignes dans le stockage réel.
+		/* Garantit que la seconde création augmente bien
+		 * le nombre total de lignes Produit d'une unité.
 		 */
 		final Long countApres = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_PRODUITS,
@@ -1096,7 +1389,7 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(countApres).isEqualTo(countAvant + 1L);
 
 		/* Garantit physiquement dans le stockage
-		 * qu'une seule ligne porte bien l'identifiant créé.
+		 * qu'une seule ligne porte l'identifiant créé.
 		 */
 		assertThat(this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_PRODUITS_BY_ID,
@@ -1105,8 +1398,7 @@ public class ProduitCuServiceIntegrationTest {
 				.isEqualTo(1L);
 
 		/* Garantit physiquement dans le stockage
-		 * que la colonne PRODUIT a bien été écrite
-		 * avec le libellé métier attendu.
+		 * que la colonne PRODUIT porte le libellé attendu.
 		 */
 		assertThat(this.jdbcTemplate.queryForObject(
 				SELECT_PRODUIT_LIBELLE_BY_ID,
@@ -1115,7 +1407,7 @@ public class ProduitCuServiceIntegrationTest {
 				.isEqualTo(TOURNEVIS);
 
 		/* Garantit physiquement dans le stockage
-		 * que le parent stocké est le parent attendu.
+		 * que le SousTypeProduit parent stocké est le parent attendu.
 		 */
 		assertThat(this.jdbcTemplate.queryForObject(
 				SELECT_PARENT_SOUS_TYPE_BY_ID_PRODUIT,
@@ -1123,36 +1415,62 @@ public class ProduitCuServiceIntegrationTest {
 				cree.getIdProduit()))
 				.isEqualTo(OUTILLAGE);
 
-		/* Garantit physiquement dans le stockage
-		 * qu'une seule ligne porte l'objet métier créé sous ce parent.
+		/* Garantit physiquement les deux couples fonctionnels distincts :
+		 * - [LOISIR / OUTILLAGE, TOURNEVIS] ;
+		 * - [OUTIL / OUTILLAGE, TOURNEVIS].
+		 * Le TypeProduit sert ici uniquement à identifier sans ambiguïté
+		 * chacun des SousTypeProduit parents homonymes.
 		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR,
+				OUTILLAGE,
+				TOURNEVIS))
+				.isEqualTo(1L);
+
 		assertThat(this.compterProduitParCoupleDansStockage(
 				OUTIL,
 				OUTILLAGE,
 				TOURNEVIS))
 				.isEqualTo(1L);
 
-		/* Garantit que l'objet nouvellement créé
-		 * est bien retrouvable par libellé via le SERVICE UC.
+		/* Garantit que les deux Produits homonymes
+		 * sont retrouvables par libellé via le SERVICE UC.
 		 */
 		final List<OutputDTO> trouvesParLibelle = this.service.findByLibelle(
 				TOURNEVIS);
 
 		assertThat(trouvesParLibelle).isNotNull();
-		assertThat(trouvesParLibelle).hasSize(1);
-		assertThat(trouvesParLibelle.get(0).getIdProduit())
-				.isEqualTo(cree.getIdProduit());
-		assertThat(trouvesParLibelle.get(0).getProduit())
-				.isEqualTo(TOURNEVIS);
-		assertThat(trouvesParLibelle.get(0).getSousTypeProduit())
+		assertThat(trouvesParLibelle).hasSize(2);
+
+		final OutputDTO trouveParLibelleExact = trouvesParLibelle.stream()
+				.filter(dto -> dto != null
+						&& cree.getIdProduit().equals(dto.getIdProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(trouveParLibelleExact).isNotNull();
+		assertThat(trouveParLibelleExact.getProduit()).isEqualTo(TOURNEVIS);
+		assertThat(trouveParLibelleExact.getSousTypeProduit())
 				.isEqualTo(OUTILLAGE);
-		assertThat(trouvesParLibelle.get(0).getTypeProduit())
-				.isEqualTo(OUTIL);
+		assertThat(trouveParLibelleExact.getTypeProduit()).isEqualTo(OUTIL);
+
+		final OutputDTO trouveSousAutreParent = trouvesParLibelle.stream()
+				.filter(dto -> dto != null
+						&& creeSousAutreParent.getIdProduit()
+								.equals(dto.getIdProduit()))
+				.findFirst()
+				.orElse(null);
+
+		assertThat(trouveSousAutreParent).isNotNull();
+		assertThat(trouveSousAutreParent.getProduit()).isEqualTo(TOURNEVIS);
+		assertThat(trouveSousAutreParent.getSousTypeProduit())
+				.isEqualTo(OUTILLAGE);
+		assertThat(trouveSousAutreParent.getTypeProduit()).isEqualTo(LOISIR);
 
 		/* Garantit que l'objet nouvellement créé
-		 * est bien retrouvable par identifiant via le SERVICE UC.
+		 * est retrouvable par identifiant via le SERVICE UC.
 		 */
-		final OutputDTO trouveParId 
+		final OutputDTO trouveParId
 			= this.service.findById(cree.getIdProduit());
 
 		assertThat(trouveParId).isNotNull();
@@ -1161,9 +1479,9 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(trouveParId.getProduit()).isEqualTo(TOURNEVIS);
 		assertThat(trouveParId.getSousTypeProduit()).isEqualTo(OUTILLAGE);
 		assertThat(trouveParId.getTypeProduit()).isEqualTo(OUTIL);
-		
+
 	} // __________________________________________________________________
-    
+	
     
        
     // ======================== RechercherTous ============================
@@ -3060,14 +3378,23 @@ public class ProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>Compte le nombre de lignes physiques pour un triplet
-	 * [type parent, sous-type parent, produit].</p>
+	 * <p>Compte le nombre de lignes physiques pour le couple fonctionnel
+	 * {@code [SousTypeProduit parent, Produit]}.</p>
+	 * <p>
+	 * Le libellé TypeProduit ne constitue pas une troisième composante
+	 * de l'identité du Produit. Il sert uniquement à identifier
+	 * sans ambiguïté le SousTypeProduit parent lorsque plusieurs parents
+	 * homonymes existent dans le stockage.
+	 * </p>
 	 * </div>
 	 *
-	 * @param pTypeProduit : String : libellé du TypeProduit parent.
-	 * @param pSousTypeProduit : String : libellé du SousTypeProduit parent.
+	 * @param pTypeProduit : String :
+	 * libellé du TypeProduit permettant d'identifier le parent.
+	 * @param pSousTypeProduit : String :
+	 * libellé du SousTypeProduit parent direct.
 	 * @param pProduit : String : libellé exact du Produit.
-	 * @return Long : nombre de lignes trouvées pour ce triplet.
+	 * @return Long : nombre de lignes trouvées pour le couple
+	 * {@code [SousTypeProduit parent, Produit]} demandé.
 	 */
 	private Long compterProduitParCoupleDansStockage(
 			final String pTypeProduit,
@@ -3090,7 +3417,7 @@ public class ProduitCuServiceIntegrationTest {
 				pProduit);
 
 	} // __________________________________________________________________
-
+	
 	
 
 	/**

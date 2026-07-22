@@ -530,11 +530,15 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | Constante | Valeur littérale Java validée |
 |---|---|
 | `TIRET_ESPACE` | `" - "` |
-| `PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER` | `"Impossible de vérifier l'unicité " + "du Type de Produit dans le stockage : "` |
-| `PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER` | `"Impossible de créer le Type de Produit dans le stockage : "` |
-| `MESSAGE_CREATION_TECHNIQUE_KO_CREER` | `"Impossible de créer le Type de Produit - " + "le stockage n'a retourné aucun objet créé."` |
-| `PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Type de Produit : "` |
-| `MESSAGE_CONVERSION_TECHNIQUE_KO_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Type de Produit."` |
+| `MESSAGE_CREER_NULL_KO` | `"KO - vous ne pouvez pas sauvegarder un Type de Produit null."` |
+| `MESSAGE_CREER_LIBELLE_BLANK_KO` | `"KO - vous ne pouvez pas sauvegarder un Type de Produit " + "dont le libellé est blank (null ou que des espaces)."` |
+| `PREFIX_MESSAGE_CREER_DOUBLON_KO` | `"KO - Impossible de vérifier l'unicité " + "du Type de Produit dans le stockage : "` |
+| `MESSAGE_CREER_DOUBLON_KO` | `"KO - Vous ne pouvez pas sauvegarder un Type de Produit " + "déjà existant dans le stockage : "` |
+| `PREFIX_MESSAGE_CREER_GATEWAY_KO` | `"KO - Impossible de créer le Type de Produit dans le stockage : "` |
+| `MESSAGE_CREER_GATEWAY_KO` | `"KO - Impossible de créer le Type de Produit - " + "le stockage n'a retourné aucun objet créé."` |
+| `PREFIX_MESSAGE_CREER_CONVERSION_KO` | `"KO - Impossible de créer l'OutputDTO " + "après la création du Type de Produit : "` |
+| `MESSAGE_CREER_CONVERSION_KO` | `"KO - OutputDTO null via la conversion " + "après la création du Type de Produit."` |
+| `MESSAGE_CREER_OK` | `"OK - La création de l'objet s'est bien déroulée."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
 | `MESSAGE_MODIF_KO` | `"KO - la modification a retourné null : "` |
@@ -612,7 +616,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 
 | Bloc | Nombre de tests | Méthodes de test |
 |---|---:|---|
-| `creer` | 11 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerNominal` |
+| `creer` | 12 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerConversionOutputDTORetourNull`<br>`testCreerNominal` |
 | `rechercherTous` | 7 | `testRechercherTousGatewayRetourNull`<br>`testRechercherTousGatewayKOAvecMessage`<br>`testRechercherTousGatewayKOSansMessage`<br>`testRechercherTousConversionOutputDTOKOAvecMessage`<br>`testRechercherTousConversionOutputDTOKOSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousNominal` |
 | `rechercherTousString` | 8 | `testRechercherTousStringGatewayRetourNull`<br>`testRechercherTousStringGatewayKOAvecMessage`<br>`testRechercherTousStringGatewayKOSansMessage`<br>`testRechercherTousStringConversionStringKOAvecMessage`<br>`testRechercherTousStringConversionStringKOSansMessage`<br>`testRechercherTousStringVideApresFiltrage`<br>`testRechercherTousStringVideApresLibellesBlank`<br>`testRechercherTousStringNominal` |
 | `rechercherTousParPage` | 8 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageGatewayKOAvecMessage`<br>`testRechercherTousParPageGatewayKOSansMessage`<br>`testRechercherTousParPageGatewayRetourNull`<br>`testRechercherTousParPageConversionOutputDTOKOAvecMessage`<br>`testRechercherTousParPageConversionOutputDTOKOSansMessage`<br>`testRechercherTousParPageVideApresFiltrage`<br>`testRechercherTousParPageNominal` |
@@ -629,7 +633,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 
 | Bloc | Nombre de tests | Méthodes de test |
 |---|---:|---|
-| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerOkAvecPreuveBdEtRoundTrip`<br>`testCreerDoublonAvecPreuveBd`<br>`testCreerOkFindByLibelleOkFindByIdOk`<br>`testCreerDoublon` |
+| `creer` | 4 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
 | `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveBd`<br>`testRechercherTousVide` |
 | `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveBd`<br>`testRechercherTousStringVide` |
 | `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |

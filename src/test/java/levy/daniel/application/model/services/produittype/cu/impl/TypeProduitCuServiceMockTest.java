@@ -127,6 +127,8 @@ public class TypeProduitCuServiceMockTest {
 	 * "lecture technique KO"
 	 */
 	public static final String LECTURE_TECHNIQUE_KO = "lecture technique KO";
+
+	// =========================== TAGS ===================================
 	
 	/**
 	 * "creer"
@@ -193,6 +195,10 @@ public class TypeProduitCuServiceMockTest {
 
 	/** "message gateway (bis)" */
 	public static final String MESSAGE_GATEWAY_BIS = "message gateway (bis)";
+	
+	// ==================== DISPLAY_NAME ==================================
+	
+	// ---------------------------- creer(...) ----------------------------
 	
 	/**
 	 * "creer(null) : MESSAGE_CREER_NULL_KO + aucune interaction Gateway"
@@ -285,6 +291,8 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_CREER_NOMINAL
 			= "creer(nominal) : OutputDTO + MESSAGE_CREER_OK";
 
+	// ------------------------ rechercherTous() --------------------------
+	
 	/**
 	 * "rechercherTous(gateway.rechercherTous() retourne null) :
 	 * ExceptionStockageVide + MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO"
@@ -344,6 +352,8 @@ public class TypeProduitCuServiceMockTest {
 			= "rechercherTous(liste résultat non vide) : "
 					+ "OutputDTO triés dédoublonnés "
 					+ "+ MESSAGE_RECHERCHER_TOUS_OK";
+
+	// ---------------------- rechercherTousString() ----------------------
 	
 	/**
 	 * "rechercherTousString(gateway retourne null) :
@@ -408,6 +418,8 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_NOMINAL
 			= "rechercherTousString(nominal) : "
 					+ "libellés triés dédoublonnés + MESSAGE_RECHERCHE_OK";
+
+	// -------------------------- rechercherTousParPage(...) --------------
 	
 	/**
 	 * "rechercherTousParPage(null) :
@@ -473,6 +485,8 @@ public class TypeProduitCuServiceMockTest {
 			= "rechercherTousParPage(nominal) : "
 					+ "pagination reprise + OutputDTO triés dédoublonnés";
 
+	// ----------------------- findByLibelle(...) -------------------------
+	
 	/**
 	 * "findByLibelle(null) :
 	 * null + MESSAGE_PARAM_BLANK"
@@ -536,6 +550,8 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_NOMINAL
 			= "findByLibelle(nominal) : "
 					+ "OutputDTO + MESSAGE_SUCCES_RECHERCHE";
+
+	// ---------------------- findByLibelleRapide(...) --------------------
 	
 	/**
 	 * "findByLibelleRapide(null) :
@@ -608,6 +624,8 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL
 			= "findByLibelleRapide(nominal) : "
 					+ "OutputDTO triés dédoublonnés + MESSAGE_RECHERCHE_OK";
+
+	// ------------------------ findByDTO(...) ----------------------------
 	
 	/**
 	 * "findByDTO(null) :
@@ -682,6 +700,8 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_DTO_NOMINAL
 			= "findByDTO(nominal) : "
 					+ "OutputDTO + MESSAGE_SUCCES_RECHERCHE";
+
+	// -------------------------- findById(...) ---------------------------
 	
 	/**
 	 * "findById(null) :
@@ -739,6 +759,8 @@ public class TypeProduitCuServiceMockTest {
 			= "findById(nominal) : "
 					+ "OutputDTO + MESSAGE_SUCCES_RECHERCHE";
 
+	// --------------------------- update(...) ----------------------------
+	
 	/**
 	 * "update(null) :
 	 * ExceptionParametreNull + MESSAGE_PARAM_NULL"
@@ -851,6 +873,8 @@ public class TypeProduitCuServiceMockTest {
 			= "update(nominal) : "
 					+ "OutputDTO + MESSAGE_MODIF_OK";
 
+	// -------------------------- delete(...) -----------------------------
+	
 	/**
 	 * "delete(null) :
 	 * ExceptionParametreNull + MESSAGE_PARAM_NULL"
@@ -930,6 +954,8 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_DELETE_NOMINAL
 			= "delete(nominal) : "
 					+ "MESSAGE_DELETE_OK + destruction déléguée";
+
+	// -------------------------- count() ---------------------------------
 	
 	/**
 	 * "count(gateway KO avec message) :
@@ -971,6 +997,8 @@ public class TypeProduitCuServiceMockTest {
 			= "count(nominal) : "
 					+ "comptage exact + MESSAGE_RECHERCHE_OK";
 
+	// ------------------------- getMessage() -----------------------------
+	
 	/**
 	 * "getMessage(initial) :
 	 * null + aucune interaction Gateway"

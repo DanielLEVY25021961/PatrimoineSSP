@@ -322,67 +322,131 @@ Signature cible :
 Le scénario nominal de `creer(...)` est :
 
 1. recevoir un `ProduitDTO.InputDTO` ;
-2. valider les préconditions visibles côté appelant ;
-3. vérifier l’absence de doublon fonctionnel ;
-4. retrouver le `SousTypeProduit` parent persistant ;
-5. convertir l’`InputDTO` en objet métier ;
-6. rattacher explicitement le parent persistant ;
-7. déléguer la création au `GATEWAY` ;
-8. récupérer l’objet métier réellement créé ;
-9. convertir la réponse en `OutputDTO` ;
-10. positionner le message de succès ;
-11. retourner la réponse finale.
+2. valider que le DTO, le libellé du `Produit` et le libellé du `SousTypeProduit` parent direct sont exploitables ;
+3. rechercher les `SousTypeProduit` persistants portant le libellé parent demandé ;
+4. résoudre un unique `SousTypeProduit` parent direct compatible :
+   - lorsque `pInputDTO.getTypeProduit()` est renseigné, l’utiliser uniquement pour départager les `SousTypeProduit` homonymes selon l’identité propre du parent `[TypeProduit, SousTypeProduit]` ;
+   - lorsque `pInputDTO.getTypeProduit()` est blank, accepter la résolution uniquement si un seul parent persistant compatible subsiste ;
+5. vérifier l’absence de doublon fonctionnel sur le couple `[SousTypeProduit, Produit]` ;
+6. convertir l’`InputDTO` en objet métier `Produit` ;
+7. rattacher explicitement le `SousTypeProduit` parent persistant exact à l’objet métier ;
+8. déléguer la création à `gateway.creer(...)` ;
+9. récupérer l’objet métier réellement créé dans le stockage ;
+10. convertir l’objet métier créé en `ProduitDTO.OutputDTO` ;
+11. positionner `getMessage()` à `MESSAGE_CREER_OK` uniquement après la conversion réussie ;
+12. retourner la réponse finale exploitable par la couche appelante.
 
 ### 10.2 Cas observables attendus
 
 - si `pInputDTO == null` :
   - retourne `null`,
-  - positionne `getMessage()` à `MESSAGE_CREER_NULL`,
-  - n’émet ni LOG ni exception ;
+  - positionne `getMessage()` à `MESSAGE_CREER_NULL_KO`,
+  - n’émet ni LOG ni exception,
+  - ne sollicite aucun `GATEWAY` ;
 
 - si `pInputDTO.getProduit()` est blank :
-  - positionne `getMessage()` à `MESSAGE_CREER_NOM_BLANK`,
+  - positionne `getMessage()` à `MESSAGE_CREER_LIBELLE_BLANK_KO`,
   - émet un LOG,
-  - lève une exception de validation ;
+  - lève une `ExceptionParametreBlank`,
+  - ne sollicite aucun `GATEWAY` ;
 
-- si le libellé du parent est blank :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+- si `pInputDTO.getSousTypeProduit()` est blank :
+  - positionne `getMessage()` à `MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException`,
+  - ne sollicite aucun `GATEWAY` ;
+
+- si `rechercherParentPersistant(...)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO + message sécurisé`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si aucun `SousTypeProduit` parent direct persistant ne correspond aux critères fournis :
+  - positionne `getMessage()` à `MESSAGE_CREER_PARENT_NON_PERSISTANT_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException`,
+  - ne sollicite pas le `GATEWAY` Produit ;
+
+- si `pInputDTO.getTypeProduit()` est blank et qu’un seul `SousTypeProduit` parent direct persistant est compatible :
+  - accepte ce parent unique,
+  - poursuit le contrôle d’unicité et la création,
+  - déduit le `TypeProduit` du `SousTypeProduit` parent dans la réponse finale ;
+
+- si `pInputDTO.getTypeProduit()` est blank et que plusieurs `SousTypeProduit` persistants distincts restent compatibles :
+  - ne sélectionne jamais arbitrairement le premier parent retourné,
+  - positionne `getMessage()` à `MESSAGE_CREER_PARENT_NON_PERSISTANT_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException`,
+  - ne sollicite pas le `GATEWAY` Produit ;
+
+- si `pInputDTO.getTypeProduit()` est renseigné :
+  - l’utilise uniquement pour résoudre l’identité propre du `SousTypeProduit` parent `[TypeProduit, SousTypeProduit]`,
+  - ne l’ajoute jamais comme troisième composante à l’identité du `Produit` ;
+
+- si le contrôle d’unicité lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_DOUBLON_KO + message sécurisé`,
+  - émet un LOG,
+  - propage l’exception d’origine,
+  - ne sollicite pas `gateway.creer(...)` ;
+
+- si un doublon est détecté sur le couple `[SousTypeProduit, Produit]` :
+  - positionne `getMessage()` à `MESSAGE_CREER_DOUBLON_KO + libellé`,
+  - émet un LOG,
+  - lève une `ExceptionDoublon`,
+  - ne sollicite pas `gateway.creer(...)` ;
+
+- si un même libellé `Produit` existe sous un autre `SousTypeProduit` parent direct :
+  - ne le considère pas comme un doublon,
+  - poursuit la création sous le parent direct résolu ;
+
+- si `gateway.creer(...)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_GATEWAY_KO + message sécurisé`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si `gateway.creer(...)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_CREER_GATEWAY_KO`,
   - émet un LOG,
   - lève une `IllegalStateException` ;
 
-- si le doublon est détecté :
-  - positionne `getMessage()` à `MESSAGE_DOUBLON + libellé`,
+- si `ConvertisseurMetierToOutputDTOProduit.convert(...)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE` lorsque nécessaire,
+  - positionne `getMessage()` à `PREFIX_MESSAGE_CREER_CONVERSION_KO + message sécurisé`,
   - émet un LOG,
-  - lève une `ExceptionDoublon` ;
+  - propage l’exception d’origine ;
 
-- si le parent n’existe pas ou n’est pas persistant :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
+- si `ConvertisseurMetierToOutputDTOProduit.convert(...)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_CREER_CONVERSION_KO`,
   - émet un LOG,
   - lève une `IllegalStateException` ;
-
-- si une anomalie technique survient pendant :
-  - le contrôle d’unicité,
-  - la vérification du parent,
-  - la création via le `GATEWAY`,
-  - la conversion finale,
-
-  alors le SERVICE UC :
-  - positionne un message circonstancié,
-  - émet un LOG,
-  - propage une exception conforme à l’implémentation ;
 
 - en cas de succès :
-  - retourne un `ProduitDTO.OutputDTO` non null,
-  - positionne `getMessage()` à `MESSAGE_CREER_OK`
-    uniquement après préparation complète de la réponse.
+  - retourne un `ProduitDTO.OutputDTO` non `null`,
+  - restitue le couple métier exact `[SousTypeProduit, Produit]` et l’identifiant réellement créés dans le stockage,
+  - restitue le `TypeProduit` déduit du `SousTypeProduit` parent,
+  - positionne `getMessage()` à `MESSAGE_CREER_OK` uniquement après préparation complète de la réponse.
 
 ### 10.3 Garanties spécifiques de `creer(...)`
 
-- aucun succès ne doit être exposé si le parent n’est pas persistant ;
+- le parent direct d’un `Produit` est un `SousTypeProduit` ;
+- l’identité fonctionnelle et la contrainte d’unicité de `Produit` portent exclusivement sur le couple `[SousTypeProduit, Produit]` ;
+- le `TypeProduit` est le grand-parent du `Produit` et se déduit du `SousTypeProduit` parent ; il ne constitue jamais une troisième composante de l’identité du `Produit` ;
+- le `TypeProduit` porté par l’`InputDTO` est facultatif pour `creer(...)` et sert uniquement, lorsqu’il est renseigné, à départager les `SousTypeProduit` homonymes selon l’identité propre du parent ;
+- lorsque le `TypeProduit` est absent, un parent persistant unique peut être résolu et utilisé ;
+- lorsque plusieurs parents persistants distincts restent compatibles avec les critères fournis, aucun parent ne doit être choisi arbitrairement et la création doit être refusée ;
+- le parent direct persistant exact est recherché et validé avant le contrôle d’unicité et avant toute création ;
+- un même libellé `Produit` sous un autre `SousTypeProduit` parent direct ne constitue pas un doublon ;
+- aucun appel à `gateway.creer(...)` n’est effectué si une précondition, la résolution du parent direct ou l’unicité sont invalides ;
+- aucun succès ne doit être exposé si le parent direct n’est pas persistant ou si sa résolution reste ambiguë ;
 - aucun succès ne doit être exposé si le `GATEWAY` retourne `null` ;
 - aucun succès ne doit être exposé si la conversion finale retourne `null` ;
-- le DTO retourné doit représenter l’état réellement créé dans le stockage ;
-- le message utilisateur doit être lisible, stable et testable.
+- le DTO retourné doit représenter l’état réellement créé dans le stockage et son rattachement au `SousTypeProduit` parent persistant exact ;
+- le message utilisateur doit être déterministe, stable et vérifiable par les tests Mock et d’intégration ;
+- les 19 tests Mock du bloc `creer(...)` doivent verrouiller notamment le parent ambigu sans `TypeProduit`, le parent unique sans `TypeProduit`, le doublon sur le même parent et l’absence de doublon sous un autre parent ;
+- les tests d’intégration doivent prouver l’écriture réelle dans le stockage, l’unicité du couple `[SousTypeProduit, Produit]` et le round-trip par les méthodes de recherche.
 
 ## 11) Contrat spécifique de `rechercherTousString()`
 
@@ -1018,12 +1082,18 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | Constante | Valeur littérale Java validée |
 |---|---|
 | `TIRET_ESPACE` | `" - "` |
-| `PREFIX_MESSAGE_CONTROLE_TECHNIQUE_CREER` | `"Impossible de vérifier l'unicité " + "du Produit dans le stockage : "` |
-| `PREFIX_MESSAGE_PARENT_TECHNIQUE_CREER` | `"Impossible de vérifier le Sous-Type de Produit parent " + "dans le stockage : "` |
-| `PREFIX_MESSAGE_CREATION_TECHNIQUE_CREER` | `"Impossible de créer le Produit dans le stockage : "` |
-| `MESSAGE_CREATION_TECHNIQUE_KO_CREER` | `"Impossible de créer le Produit - " + "le stockage n'a retourné aucun objet créé."` |
-| `PREFIX_MESSAGE_CONVERSION_TECHNIQUE_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Produit : "` |
-| `MESSAGE_CONVERSION_TECHNIQUE_KO_CREER` | `"Impossible de préparer la réponse utilisateur " + "après la création du Produit."` |
+| `MESSAGE_CREER_NULL_KO` | `"KO - vous ne pouvez pas sauvegarder " + "un Produit null."` |
+| `MESSAGE_CREER_LIBELLE_BLANK_KO` | `"KO - vous ne pouvez pas sauvegarder un Produit " + "dont le libellé est blank (null ou que des espaces)."` |
+| `MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO` | `"KO - Le Produit doit posséder un parent (SousTypeProduit) " + "avec un libellé non blank."` |
+| `PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO` | `"KO - Impossible de trouver le parent via " + "sousTypeProduitGateway.findByLibelle(...) " + "avec le libellé parent indiqué : "` |
+| `MESSAGE_CREER_PARENT_NON_PERSISTANT_KO` | `"KO - Le Produit doit posséder un parent " + "(SousTypeProduit) persistant"` |
+| `PREFIX_MESSAGE_CREER_DOUBLON_KO` | `"KO - Impossible de vérifier l'unicité " + "du Produit dans le stockage : "` |
+| `MESSAGE_CREER_DOUBLON_KO` | `"KO - Vous ne pouvez pas sauvegarder un Produit " + "déjà existant dans le stockage : "` |
+| `PREFIX_MESSAGE_CREER_GATEWAY_KO` | `"KO - Impossible de créer le Produit dans le stockage : "` |
+| `MESSAGE_CREER_GATEWAY_KO` | `"KO - Impossible de créer le Produit - " + "le stockage n'a retourné aucun objet métier créé."` |
+| `PREFIX_MESSAGE_CREER_CONVERSION_KO` | `"KO - Impossible de créer l'OutputDTO " + "après la création du Produit : "` |
+| `MESSAGE_CREER_CONVERSION_KO` | `"KO - OutputDTO null via la conversion " + "après la création du Produit."` |
+| `MESSAGE_CREER_OK` | `"OK - La création de l'objet s'est bien déroulée."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
 | `MESSAGE_CREER_KO` | `"Erreur lors de la création de l'objet"` |
@@ -1120,7 +1190,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 
 | Bloc | Nombre de tests | Méthodes de test |
 |---|---:|---|
-| `creer` | 10 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerControleTechniqueKoAvecMessage`<br>`testCreerDoublon`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentAbsent`<br>`testCreerCreationTechniqueKoAvecMessage`<br>`testCreerRetourGatewayNull`<br>`testCreerOk` |
+| `creer` | 19 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentTechniqueKoSansMessage`<br>`testCreerParentAbsent`<br>`testCreerParentNonPersistant`<br>`testCreerParentAmbiguSansTypeProduit`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerConversionOutputDTORetourNull`<br>`testCreerParentUniqueSansTypeProduit`<br>`testCreerNominal` |
 | `rechercherTous` | 5 | `testRechercherTousStockageNull`<br>`testRechercherTousKoTechniqueAvecMessage`<br>`testRechercherTousKoTechniqueSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousOk` |
 | `rechercherTousString` | 2 | `testRechercherTousStringVide`<br>`testRechercherTousStringOk` |
 | `rechercherTousParPage` | 5 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageKoTechniqueAvecMessage`<br>`testRechercherTousParPageKoTechniqueSansMessage`<br>`testRechercherTousParPageRetourNull`<br>`testRechercherTousParPageOk` |
@@ -1138,7 +1208,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 
 | Bloc | Nombre de tests | Méthodes de test |
 |---|---:|---|
-| `creer` | 5 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerDoublon`<br>`testCreerOk` |
+| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentAbsent`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
 | `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecCohherenceCount`<br>`testRechercherTousVide` |
 | `rechercherTousString` | 2 | `testRechercherTousStringOk`<br>`testRechercherTousStringVide` |
 | `rechercherTousParPage` | 2 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk` |

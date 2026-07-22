@@ -277,6 +277,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 */
 	public static final String TAG_GET_MESSAGE = "getMessage";
 
+	// ------------------------- creer(...)--------------------------------
+	
 	/**
 	 * "creer(null) : MESSAGE_CREER_NULL_KO + aucune interaction Gateway"
 	 */
@@ -406,62 +408,70 @@ public class SousTypeProduitCuServiceMockTest {
 	 */
 	public static final String DISPLAY_NAME_CREER_NOMINAL
 			= "creer(nominal) : OutputDTO + MESSAGE_CREER_OK";
+
+	// ------------------------ rechercherTous() --------------------------
 	
 	/**
-	 * "rechercherTous(gateway retourne null) :
-	 * ExceptionStockageVide + MESSAGE_STOCKAGE_NULL"
+	 * "rechercherTous(gateway.rechercherTous() retourne null) :
+	 * ExceptionStockageVide + MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_RETOUR_NULL
-			= "rechercherTous(gateway retourne null) : "
-					+ EXCEPTION_STOCKAGE_VIDE_MESSAGE;
+			= "rechercherTous(gateway.rechercherTous() retourne null) : "
+					+ "ExceptionStockageVide "
+					+ "+ MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO";
 	
 	/**
-	 * "rechercherTous(gateway KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * "rechercherTous(gateway.rechercherTous() jette Exception avec message) :
+	 * exception propagée + message sécurisé"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_AVEC_MESSAGE
-			= "rechercherTous(gateway KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
+			= "rechercherTous(gateway.rechercherTous() jette Exception "
+					+ "avec message) : exception propagée "
+					+ "+ message sécurisé";
 	
 	/**
-	 * "rechercherTous(gateway KO sans message) :
+	 * "rechercherTous(gateway.rechercherTous() jette Exception sans message) :
 	 * fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_GATEWAY_KO_SANS_MESSAGE
-			= "rechercherTous(gateway KO sans message) : "
-					+ FALLBACK;
+			= "rechercherTous(gateway.rechercherTous() jette Exception "
+					+ "sans message) : fallback MSG_ERREUR_NON_SPECIFIEE";
 	
 	/**
-	 * "rechercherTous(conversion OutputDTO KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * "rechercherTous(convertirEtDedoublonner(...) jette Exception avec message) :
+	 * exception propagée + message sécurisé"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTO_AVEC_MESSAGE
-			= "rechercherTous(conversion OutputDTO KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
+			= "rechercherTous(convertirEtDedoublonner(...) jette Exception "
+					+ "avec message) : exception propagée "
+					+ "+ message sécurisé";
 	
 	/**
-	 * "rechercherTous(conversion OutputDTO KO sans message) :
+	 * "rechercherTous(convertirEtDedoublonner(...) jette Exception sans message) :
 	 * fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_CONVERSION_OUTPUT_DTO_SANS_MESSAGE
-			= "rechercherTous(conversion OutputDTO KO sans message) : "
-					+ FALLBACK;
+			= "rechercherTous(convertirEtDedoublonner(...) jette Exception "
+					+ "sans message) : fallback MSG_ERREUR_NON_SPECIFIEE";
 	
 	/**
-	 * "rechercherTous(vide après filtrage) :
-	 * liste vide + MESSAGE_RECHERCHE_VIDE"
+	 * "rechercherTous(liste résultat vide) :
+	 * liste vide + MESSAGE_RECHERCHER_TOUS_VIDE"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_VIDE_APRES_FILTRAGE
-			= "rechercherTous(vide après filtrage) : "
-					+ LISTE_VIDE_MESSAGE;
+			= "rechercherTous(liste résultat vide) : "
+					+ "liste vide + MESSAGE_RECHERCHER_TOUS_VIDE";
 	
 	/**
-	 * "rechercherTous(nominal) :
-	 * OutputDTO triés dédoublonnés + MESSAGE_RECHERCHE_OK"
+	 * "rechercherTous(liste résultat non vide) :
+	 * OutputDTO triés dédoublonnés + MESSAGE_RECHERCHER_TOUS_OK"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_NOMINAL
-			= "rechercherTous(nominal) : "
-					+ "OutputDTO triés dédoublonnés + MESSAGE_RECHERCHE_OK";
+			= "rechercherTous(liste résultat non vide) : "
+					+ "OutputDTO triés dédoublonnés "
+					+ "+ MESSAGE_RECHERCHER_TOUS_OK";
+
+	// -------------------- rechercherTousString() ------------------------
 	
 	/**
 	 * "rechercherTousString(gateway retourne null) :
@@ -526,6 +536,8 @@ public class SousTypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_NOMINAL
 			= "rechercherTousString(nominal) : "
 					+ "libellés triés dédoublonnés + MESSAGE_RECHERCHE_OK";
+
+	// -------------------- rechercherTousParPage(...) --------------------
 	
 	/**
 	 * "rechercherTousParPage(null) :
@@ -591,6 +603,8 @@ public class SousTypeProduitCuServiceMockTest {
 			= "rechercherTousParPage(nominal) : "
 					+ "page OutputDTO triée dédoublonnée "
 					+ "+ MESSAGE_RECHERCHE_PAGINEE_OK";
+
+	// ---------------------- findByLibelle(...) --------------------------
 	
 	/**
 	 * "findByLibelle(null) :
@@ -2763,7 +2777,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>détecte que le Gateway retourne {@code null} ;</li>
 	 * <li>lève {@link ExceptionStockageVide} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -2796,14 +2810,18 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.rechercherTous() :
 		 * - lève ExceptionStockageVide ;
-		 * - émet le message MESSAGE_STOCKAGE_NULL contractuel.
+		 * - émet le message MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO.
 		 */
 		assertThatThrownBy(() -> service.rechercherTous())
 				.isInstanceOf(ExceptionStockageVide.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.hasMessage(
+						SousTypeProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_STOCKAGE_NULL);
+				.isEqualTo(
+						SousTypeProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO);
 
 		/* Garantit que seul le Gateway SousTypeProduit
 		 * a été sollicité pour la recherche exhaustive.
@@ -2823,7 +2841,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique levée par le Gateway
 	 * SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -2867,7 +2885,8 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+		 * + TIRET_ESPACE + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
@@ -2893,7 +2912,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par le Gateway
 	 * SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -2963,7 +2982,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -3017,11 +3036,13 @@ public class SousTypeProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé pour l'échec de conversion.
+		 * MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
+		 * + TIRET_ESPACE + MESSAGE_GATEWAY_BIS.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -3045,7 +3066,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -3098,11 +3119,13 @@ public class SousTypeProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC ne produit jamais
-		 * un message utilisateur null en cas d'échec de conversion.
+		 * un message utilisateur null en cas d'échec de conversion
+		 * et utilise MESSAGE_RECHERCHER_TOUS_CONVERSION_KO.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService
+								.MESSAGE_RECHERCHER_TOUS_CONVERSION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -3124,7 +3147,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>filtre les éléments {@code null} ;</li>
 	 * <li>retourne une liste non {@code null} et vide ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_VIDE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -3176,7 +3199,8 @@ public class SousTypeProduitCuServiceMockTest {
 		assertThat(retour).isNotNull();
 		assertThat(retour).isEmpty();
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_RECHERCHER_TOUS_VIDE);
 
 		/* Garantit que la recherche exhaustive a bien été déléguée
 		 * et que le Gateway TypeProduit reste inutilisé.
@@ -3198,7 +3222,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
 	 * <li>dédoublonne la réponse DTO ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_OK} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -3281,7 +3305,8 @@ public class SousTypeProduitCuServiceMockTest {
 				.containsExactly(1L, 2L);
 
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+				.isEqualTo(
+						SousTypeProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
 
 		/* Garantit que la recherche exhaustive a bien été déléguée
 		 * et que le Gateway TypeProduit reste inutilisé.
@@ -3290,7 +3315,7 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-
+	
 	
 	
 	// ===================== rechercherTousString =========================

@@ -100,9 +100,9 @@ public interface ProduitICuService {
 	 * avec un libellé non blank."
 	 */
 	String MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO
-	= "KO - Le Produit doit posséder un parent (SousTypeProduit) "
-			+ "avec un libellé non blank.";
-	
+		= "KO - Le Produit doit posséder un parent (SousTypeProduit) "
+				+ "avec un libellé non blank.";
+
 	/**
 	 * "KO - Impossible de trouver le parent via 
 	 * sousTypeProduitGateway.findByLibelle(...) 
@@ -191,7 +191,7 @@ public interface ProduitICuService {
 	 */
 	String MESSAGE_CREER_OK 
 		= "OK - La création de l'objet s'est bien déroulée.";
-
+	
 	/* ----------------------- rechercherTous -------------------------- */
 
 	/**
@@ -477,10 +477,11 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p style="font-weight:bold;">
+	 * <p>
 	 * Reçoit un {@link ProduitDTO.InputDTO},
-	 * le transforme en objet métier à stocker,
-	 * puis retourne l'objet métier stocké sous forme de
+	 * crée le {@link Produit} correspondant sous son
+	 * {@link SousTypeProduit} parent direct persistant,
+	 * puis retourne l'objet créé sous forme de
 	 * {@link ProduitDTO.OutputDTO}.
 	 * </p>
 	 * <p style="font-weight:bold;">
@@ -489,107 +490,102 @@ public interface ProduitICuService {
 	 * <ul>
 	 * <li>recevoir un {@link ProduitDTO.InputDTO}
 	 * provenant de la couche de présentation ;</li>
-	 * <li>vérifier préalablement que l'objet métier peut être stocké 
-	 * ({@link ProduitDTO.InputDTO} ne peut être null
-	 * , ne peut avoir un libellé blank, doit avoir un parent persistant, 
-	 * ne peut créer de doublon) ;</li>
-	 * <li>convertir l'InputDTO en objet métier {@link Produit} ;</li>
-	 * <li>déléguer l'écriture de l'objet métier dans le stockage 
-	 * au service technique GATEWAY ;</li>
-	 * <li>récupérer l'objet métier persistant ;</li>
-	 * <li>convertir l'objet métier persistant retourné par le GATEWAY en
+	 * <li>valider le libellé du {@link Produit}
+	 * et le libellé du {@link SousTypeProduit} parent direct ;</li>
+	 * <li>retrouver le {@link SousTypeProduit} parent direct persistant ;</li>
+	 * <li>vérifier l'absence de doublon fonctionnel sur le couple
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>convertir l'InputDTO en objet métier {@link Produit}
+	 * et lui rattacher le parent direct persistant ;</li>
+	 * <li>déléguer la création au GATEWAY Produit ;</li>
+	 * <li>convertir l'objet métier créé en
 	 * {@link ProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner le {@link ProduitDTO.OutputDTO} 
-	 * correspondant à l'objet métier persistant 
-	 * au CONTROLLER appelant (peut être {@code null}) avec 
-	 * un message utilisateur de succès de la création dans le stockage.</li>
+	 * <li>positionner le message de succès uniquement après préparation
+	 * complète de la réponse et retourner le DTO créé.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Elimine les paramètres invalides :</li>
+	 * <li>Élimine les paramètres invalides :</li>
 	 * <ul>
 	 * <li>Si {@code pInputDTO == null} : retourne {@code null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_CREER_NULL_KO}
 	 * et n'émet ni LOG ni Exception.</li>
-	 * <li>Si le libellé de l'objet métier 
-	 * {@code pInputDTO.getProduit()} est blank : 
-	 * positionne {@link #getMessage()} à 
+	 * <li>Si {@code pInputDTO.getProduit()} est blank :
+	 * positionne {@link #getMessage()} à
 	 * {@link #MESSAGE_CREER_LIBELLE_BLANK_KO},
-	 * LOG et jette une exception applicative 
-	 * {@code ExceptionParametreBlank}.</li>
-	 * <li>Si le libellé du parent est blank dans {@code pInputDTO},
-	 * positionne {@link #getMessage()} à 
+	 * émet un LOG et lève une {@link ExceptionParametreBlank}.</li>
+	 * <li>Si {@code pInputDTO.getSousTypeProduit()} est blank :
+	 * positionne {@link #getMessage()} à
 	 * {@link #MESSAGE_CREER_PARENT_LIBELLE_BLANK_KO},
-	 * LOG et lève une {@code IllegalStateException}.</li>
+	 * émet un LOG et lève une {@link IllegalStateException}.</li>
 	 * </ul>
-	 * <li>Utilise la méthode private 
-	 * {@code this.rechercherParentPersistant(pInputDTO)} 
-	 * pour la récupération du parent persistant. 
-	 * C'est obligatoire car le libellé d'un parent {@code SousTypeProduit} 
-	 * n'est pas unique dans le stockage : </li>
+	 * <li>Utilise la méthode private
+	 * {@code this.rechercherParentPersistant(pInputDTO)}
+	 * pour retrouver le {@link SousTypeProduit} parent direct persistant :</li>
 	 * <ul>
-	 * <li>Si {@code this.rechercherParentPersistant(pInputDTO)} 
-	 * jette une Exception : 
-	 * crée un message sécurisé basé sur 
+	 * <li>Si {@code this.rechercherParentPersistant(pInputDTO)}
+	 * lève une Exception :
+	 * construit un message sécurisé fondé sur
 	 * {@link #PREFIX_MESSAGE_CREER_RECHERCHE_PARENT_KO},
-	 * positionne {@link #getMessage()} sur le message sécurisé,  
-	 * LOG et propage l'Exception.</li>
-	 * <li>Si le parent {@link SousTypeProduit} n'existe pas dans le stockage
-	 * ou n'est pas persistant, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO},
-	 * LOG et jette une {@link IllegalStateException}.</li>
+	 * positionne {@link #getMessage()} sur ce message,
+	 * émet un LOG et propage l'Exception d'origine.</li>
+	 * <li>Si le parent direct est absent du stockage
+	 * ou ne possède pas d'identifiant persistant :
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO},
+	 * émet un LOG et lève une {@link IllegalStateException}.</li>
 	 * </ul>
-	 * <li>Vérifie que creer(...) ne risque pas de créer un doublon 
-	 * dans le stockage via la méthode private {@code isDoublon(pInputDTO)} : </li>
+	 * <li>Vérifie l'absence de doublon dans le stockage
+	 * via la méthode private {@code isDoublon(pInputDTO)}
+	 * sur le couple {@code [SousTypeProduit, Produit]} :</li>
 	 * <ul>
-	 * <li>Si la méthode private {@code isDoublon(pInputDTO)} 
-	 * jette Exception : 
-	 * crée un message sécurisé basé sur 
-	 * {@link #PREFIX_MESSAGE_CREER_DOUBLON_KO}, 
-	 * positionne {@link #getMessage()} sur le message sécurisé, LOG, 
-	 * et propage l'Exception.</li>
-	 * <li>Si {@code pInputDTO} correspond à un doublon, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_CREER_DOUBLON_KO} + libellé,
-	 * émet un LOG de service et lève une exception métier 
-	 * {@code ExceptionDoublon}.</li>
+	 * <li>Si {@code isDoublon(pInputDTO)} lève une Exception :
+	 * construit un message sécurisé fondé sur
+	 * {@link #PREFIX_MESSAGE_CREER_DOUBLON_KO},
+	 * positionne {@link #getMessage()} sur ce message,
+	 * émet un LOG et propage l'Exception d'origine.</li>
+	 * <li>Si {@code pInputDTO} correspond à un doublon :
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_CREER_DOUBLON_KO} + libellé,
+	 * émet un LOG et lève une {@link ExceptionDoublon}.</li>
 	 * </ul>
-	 * <li>Convertit l'InputDTO en objet métier, 
-	 * rattache le parent persistant à l'objet métier,
-	 * et tente la création de l'objet métier dans le stockage en déléguant 
-	 * au service GATEWAY via {@code gateway.creer(...)}.</li>
+	 * <li>Convertit l'InputDTO en objet métier,
+	 * rattache le {@link SousTypeProduit} parent direct persistant,
+	 * puis délègue la création à {@code gateway.creer(...)} :</li>
 	 * <ul>
-	 * <li>Si {@code gateway.creer(...)} jette Exception : 
-	 * crée un message sécurisé basé sur 
-	 * {@link #PREFIX_MESSAGE_CREER_GATEWAY_KO}, 
-	 * positionne {@link #getMessage()} sur le message sécurisé, 
-	 * LOG, et propage l'Exception.</li>
-	 * <li>Si {@code gateway.creer(...)} retourne null : 
-	 * positionne {@link #getMessage()} sur 
-	 * {@link #MESSAGE_CREER_GATEWAY_KO}, LOG, 
-	 * et jette une IllegalStateException</li>
+	 * <li>Si {@code gateway.creer(...)} lève une Exception :
+	 * construit un message sécurisé fondé sur
+	 * {@link #PREFIX_MESSAGE_CREER_GATEWAY_KO},
+	 * positionne {@link #getMessage()} sur ce message,
+	 * émet un LOG et propage l'Exception d'origine.</li>
+	 * <li>Si {@code gateway.creer(...)} retourne {@code null} :
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_CREER_GATEWAY_KO},
+	 * émet un LOG et lève une {@link IllegalStateException}.</li>
 	 * </ul>
-	 * <li>Convertit l'objet métier persistant en 
-	 * {@link ProduitDTO.OutputDTO} via 
-	 * {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} </li>
+	 * <li>Convertit l'objet métier créé en
+	 * {@link ProduitDTO.OutputDTO}
+	 * via {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} :</li>
 	 * <ul>
-	 * <li>Si {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} 
-	 * jette Exception : crée un message sécurisé basé sur 
-	 * {@link #PREFIX_MESSAGE_CREER_CONVERSION_KO}, 
-	 * positionne {@link #getMessage()} sur le message sécurisé, 
-	 * LOG, et propage l'Exception.</li>
-	 * <li>Si {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} 
-	 * retourne null :  
-	 * positionne {@link #getMessage()} sur 
-	 * {@link #MESSAGE_CREER_CONVERSION_KO}, 
-	 * LOG, et jette une {@code IllegalStateException}.</li>
+	 * <li>Si la conversion lève une Exception :
+	 * construit un message sécurisé fondé sur
+	 * {@link #PREFIX_MESSAGE_CREER_CONVERSION_KO},
+	 * positionne {@link #getMessage()} sur ce message,
+	 * émet un LOG et propage l'Exception d'origine.</li>
+	 * <li>Si la conversion retourne {@code null} :
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_CREER_CONVERSION_KO},
+	 * émet un LOG et lève une {@link IllegalStateException}.</li>
 	 * </ul>
-	 * <li>Si tout se passe bien : positionne {@link #getMessage()} 
-	 * à {@link #MESSAGE_CREER_OK}, puis retourne le 
-	 * {@link ProduitDTO.OutputDTO} correspondant 
-	 * à l'objet métier persistant.</li>
+	 * <li>En cas de succès :
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_CREER_OK}
+	 * uniquement après préparation complète du DTO,
+	 * puis retourne le {@link ProduitDTO.OutputDTO}
+	 * correspondant au couple métier exact
+	 * {@code [SousTypeProduit, Produit]} créé dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -598,41 +594,52 @@ public interface ProduitICuService {
 	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
 	 * </p>
 	 * <ul>
-	 * <li>Le message retourné par {@link #getMessage()} reflète l'issue
-	 * observable de l'opération pour l'appelant.</li>
-	 * <li>En cas de succès, {@link #getMessage()} est positionné à
-	 * {@link #MESSAGE_CREER_OK} uniquement après préparation complète
-	 * de la réponse utilisateur.</li>
-	 * <li>En cas d'échec métier, applicatif ou technique,
-	 * le SERVICE UC produit un message utilisateur déterministe et traçable.</li>
-	 * <li>Le résultat retourné, s'il est non {@code null},
-	 * correspond à l'état métier effectivement créé dans le stockage
-	 * avec rattachement à un parent persistant.</li>
-	 * <li>Le SERVICE UC conserve son rôle d'orchestration applicative entre
-	 * couche de présentation, métier, GATEWAY et message utilisateur.</li>
+	 * <li>Le parent direct d'un {@link Produit}
+	 * est un {@link SousTypeProduit}.</li>
+	 * <li>L'identité fonctionnelle et la contrainte d'unicité
+	 * du {@link Produit} portent sur le couple
+	 * {@code [SousTypeProduit, Produit]}.</li>
+	 * <li>Le TypeProduit est le grand-parent du {@link Produit}
+	 * et se déduit du {@link SousTypeProduit} parent ;
+	 * il ne constitue jamais une troisième composante
+	 * de l'identité du {@link Produit}.</li>
+	 * <li>Aucun appel à {@code gateway.creer(...)} n'est effectué
+	 * si une précondition, le parent direct ou l'unicité sont invalides.</li>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>{@link #MESSAGE_CREER_OK} n'est positionné
+	 * qu'après création et conversion finales réussies.</li>
+	 * <li>Le DTO retourné, s'il est non {@code null},
+	 * représente l'état réellement créé dans le stockage,
+	 * rattaché au {@link SousTypeProduit} parent direct persistant.</li>
+	 * <li>Aucun résultat partiel ou ambigu
+	 * n'est exposé à la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pInputDTO : ProduitDTO.InputDTO :
-	 * le Produit à créer via le SERVICE UC.
+	 * le Produit à créer, avec le libellé du SousTypeProduit parent direct
+	 * et le libellé du Produit.
 	 * @return ProduitDTO.OutputDTO :
-	 * le Produit créé et retourné à la couche appelante ;
-	 * peut être {@code null} si {@code pInputDTO == null}.
+	 * le Produit effectivement créé et retourné à la couche appelante ;
+	 * peut être {@code null} uniquement si {@code pInputDTO == null}.
 	 * @throws ExceptionParametreBlank
 	 * si le libellé du Produit porté par {@code pInputDTO} est blank.
 	 * @throws ExceptionDoublon
-	 * si {@code pInputDTO} correspond à un doublon fonctionnel.
+	 * si le couple {@code [SousTypeProduit, Produit]}
+	 * correspond à un doublon fonctionnel.
 	 * @throws ExceptionTechniqueGateway
-	 * si une erreur technique survient lors du contrôle d'unicité,
-	 * lors de la vérification du parent
-	 * ou lors de la création via le GATEWAY.
+	 * si une erreur technique survient lors de la recherche du parent,
+	 * du contrôle d'unicité ou de la création via le GATEWAY.
 	 * @throws IllegalStateException
-	 * si le parent est absent, non persistant,
+	 * si le libellé du SousTypeProduit parent direct est blank,
+	 * si le parent direct est absent ou non persistant,
 	 * si le GATEWAY retourne {@code null}
 	 * ou si la conversion finale en {@link ProduitDTO.OutputDTO}
 	 * retourne {@code null}.
 	 * @throws Exception
-	 * toute autre exception levée par l'implémentation.
+	 * toute autre exception levée par l'implémentation,
+	 * notamment pendant la conversion finale.
 	 */
 	ProduitDTO.OutputDTO creer(
 			ProduitDTO.InputDTO pInputDTO) throws Exception;
