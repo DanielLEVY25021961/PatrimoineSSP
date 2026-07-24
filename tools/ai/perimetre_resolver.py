@@ -91,10 +91,39 @@ def _iter_root_candidates(root_dir: Path, recursive: bool) -> Iterable[Path]:
         yield from root_dir.iterdir()
 
 
+def _expand_globstar_patterns(pattern: str) -> list[str]:
+    variants: list[str] = []
+    pending: list[str] = [pattern]
+    seen: set[str] = set()
+
+    while pending:
+        current = pending.pop()
+        if current in seen:
+            continue
+
+        seen.add(current)
+        variants.append(current)
+
+        search_from = 0
+        while True:
+            marker_index = current.find("**/", search_from)
+            if marker_index < 0:
+                break
+
+            pending.append(
+                current[:marker_index] + current[marker_index + len("**/") :]
+            )
+            search_from = marker_index + 1
+
+    return variants
+
+
 def _matches_any_glob(candidate: str, patterns: list[str]) -> bool:
-    if not patterns:
-        return True
-    return any(fnmatch(candidate, pattern) for pattern in patterns)
+    return any(
+        fnmatch(candidate, variant)
+        for pattern in patterns
+        for variant in _expand_globstar_patterns(pattern)
+    )
 
 
 def _resolve_root(repo_root: Path, spec: RootSpec) -> list[str]:
@@ -114,10 +143,16 @@ def _resolve_root(repo_root: Path, spec: RootSpec) -> list[str]:
 
         relative_to_root = candidate.relative_to(root_dir).as_posix()
 
-        if not _matches_any_glob(relative_to_root, spec.include_globs):
+        if spec.include_globs and not _matches_any_glob(
+            relative_to_root,
+            spec.include_globs,
+        ):
             continue
 
-        if _matches_any_glob(relative_to_root, spec.exclude_globs):
+        if spec.exclude_globs and _matches_any_glob(
+            relative_to_root,
+            spec.exclude_globs,
+        ):
             continue
 
         resolved.append(candidate.relative_to(repo_root).as_posix())
