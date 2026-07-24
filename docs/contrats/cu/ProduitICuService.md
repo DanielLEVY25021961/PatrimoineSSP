@@ -62,6 +62,7 @@ En cas d’ambiguïté :
 Les méthodes suivantes sont considérées comme **références de formalisme UC**
 dans le PORT `ProduitICuService` :
 - `ProduitDTO.OutputDTO creer(ProduitDTO.InputDTO pInputDTO) throws Exception;`
+- `List<ProduitDTO.OutputDTO> rechercherTous() throws Exception;`
 
 ### Règle absolue
 
@@ -445,15 +446,113 @@ Le scénario nominal de `creer(...)` est :
 - aucun succès ne doit être exposé si la conversion finale retourne `null` ;
 - le DTO retourné doit représenter l’état réellement créé dans le stockage et son rattachement au `SousTypeProduit` parent persistant exact ;
 - le message utilisateur doit être déterministe, stable et vérifiable par les tests Mock et d’intégration ;
-- les 19 tests Mock du bloc `creer(...)` doivent verrouiller notamment le parent ambigu sans `TypeProduit`, le parent unique sans `TypeProduit`, le doublon sur le même parent et l’absence de doublon sous un autre parent ;
+- les tests Mock du bloc `creer(...)` doivent être dérivés de toutes les branches observables, notamment le parent ambigu sans `TypeProduit`, le parent unique sans `TypeProduit`, le doublon sur le même parent et l’absence de doublon sous un autre parent ;
 - les tests d’intégration doivent prouver l’écriture réelle dans le stockage, l’unicité du couple `[SousTypeProduit, Produit]` et le round-trip par les méthodes de recherche.
 
-## 11) Contrat spécifique de `rechercherTousString()`
+## 11) Contrat spécifique de `rechercherTous()`
+
+Signature cible :
+
+- `List<ProduitDTO.OutputDTO> rechercherTous() throws Exception;`
+
+### 11.1) Scénario nominal attendu
+
+Le scénario nominal de `rechercherTous()` est :
+
+1. demander au `GATEWAY` la liste complète des `Produit` accessibles dans le stockage ;
+2. sécuriser le retour technique du stockage ;
+3. retirer les éventuels objets métier `null` ;
+4. trier les objets métier selon l’ordre naturel de `Produit` :
+   - d’abord le `SousTypeProduit` parent direct ;
+   - puis le libellé du `Produit` ;
+5. respecter l’identité propre du parent direct `[TypeProduit, SousTypeProduit]` pendant la comparaison des parents ;
+6. convertir chaque objet métier en `ProduitDTO.OutputDTO` ;
+7. dédoublonner les DTO en conservant l’ordre de la liste triée ;
+8. positionner le message observable après préparation complète de la réponse ;
+9. retourner une liste non `null`, éventuellement vide.
+
+### 11.2) Cas observables attendus
+
+- si `gateway.rechercherTous()` lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si `gateway.rechercherTous()` lève une exception sans message :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si `gateway.rechercherTous()` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` portant ce même message ;
+
+- si `convertirEtDedoublonner(...)` lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si `convertirEtDedoublonner(...)` lève une exception sans message :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si `convertirEtDedoublonner(...)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO`,
+  - émet un LOG,
+  - lève une `IllegalStateException` portant ce même message ;
+
+- si la liste d’`OutputDTO` est vide après filtrage, tri, conversion et dédoublonnage :
+  - retourne une liste vide mais non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_VIDE` ;
+
+- si la liste d’`OutputDTO` contient des résultats :
+  - retourne une liste non `null`,
+  - positionne `getMessage()` à `MESSAGE_RECHERCHER_TOUS_OK`.
+
+### 11.3) Garanties spécifiques de `rechercherTous()`
+
+- la méthode ne retourne jamais `null` lorsque le stockage est exploitable ;
+- le tri respecte l’ordre naturel métier `[SousTypeProduit, Produit]` ;
+- le `SousTypeProduit` parent conserve sa propre identité `[TypeProduit, SousTypeProduit]` ;
+- le `TypeProduit` reste le grand-parent déduit du parent direct et ne devient jamais une troisième composante de l’identité du `Produit` ;
+- deux Produits portant le même libellé sous deux `SousTypeProduit` parents directs distincts restent deux résultats distincts ;
+- deux représentations du même Produit sous le même parent direct sont dédoublonnées selon l’égalité des `OutputDTO` ;
+- les éléments métier `null` et les conversions individuelles `null` ne sont jamais exposés à l’appelant ;
+- le message de succès n’est positionné qu’après conversion et dédoublonnage complets ;
+- la lecture ne modifie jamais le stockage ;
+- la branche défensive `dtos == null` reste contractuelle, mais aucun test distinct ne doit être inventé tant que le helper privé réel `convertirEtDedoublonner(...)` garantit toujours une liste non `null` et ne peut pas être substitué sans modifier le code de production.
+
+### 11.4) Dérivation des preuves attendues
+
+Les tests Mock doivent être dérivés des différences observables suivantes :
+
+- exception Gateway avec message ;
+- exception Gateway sans message ;
+- retour Gateway `null` ;
+- exception de conversion avec message ;
+- exception de conversion sans message ;
+- résultat vide après filtrage et conversion ;
+- scénario nominal combinant filtrage, ordre naturel complet, conversion, dédoublonnage, conservation des homonymes sous des parents distincts, message final et interactions Gateway.
+
+Les tests d’intégration doivent prouver selon le scénario :
+
+- le cas réellement vide dans le stockage ;
+- le message dédié `MESSAGE_RECHERCHER_TOUS_VIDE` ;
+- le cas nominal avec des identifiants persistants ;
+- la présence physique des couples `[SousTypeProduit, Produit]` retournés ;
+- la conservation du même libellé Produit sous plusieurs parents directs ;
+- l’ordre naturel de la réponse ;
+- le message dédié `MESSAGE_RECHERCHER_TOUS_OK` ;
+- l’absence de modification du stockage pendant la lecture.
+
+## 12) Contrat spécifique de `rechercherTousString()`
 
 Signature cible :
 - `List<String> rechercherTousString() throws Exception;`
 
-### 11.1) Scénario nominal attendu
+### 12.1) Scénario nominal attendu
 
 Le scénario nominal de `rechercherTousString()` est :
 
@@ -464,7 +563,7 @@ Le scénario nominal de `rechercherTousString()` est :
 5. positionner le message observable ;
 6. retourner la liste finale de `String`.
 
-### 11.2) Cas observables attendus
+### 12.2) Cas observables attendus
 
 - si `rechercherTous()` échoue :
   - propage l'exception ;
@@ -478,7 +577,7 @@ Le scénario nominal de `rechercherTousString()` est :
   - retourne une liste non `null` ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
-### 11.3) Garanties spécifiques de `rechercherTousString()`
+### 12.3) Garanties spécifiques de `rechercherTousString()`
 
 - la méthode ne doit jamais retourner `null`
   si la recherche exhaustive a abouti ;
@@ -488,12 +587,12 @@ Le scénario nominal de `rechercherTousString()` est :
 - les libellés retournés doivent correspondre
   aux `ProduitDTO.OutputDTO` réellement préparés par `rechercherTous()`.
   
-  ## 12) Contrat spécifique de `rechercherTousParPage(...)`
+## 13) Contrat spécifique de `rechercherTousParPage(...)`
 
 Signature cible :
 - `ResultatPage<ProduitDTO.OutputDTO> rechercherTousParPage(RequetePage pRequetePage) throws Exception;`
 
-### 12.1) Scénario nominal attendu
+### 13.1) Scénario nominal attendu
 
 Le scénario nominal de `rechercherTousParPage(...)` est :
 
@@ -508,7 +607,7 @@ Le scénario nominal de `rechercherTousParPage(...)` est :
 9. positionner le message observable ;
 10. retourner la page finale.
 
-### 12.2) Cas observables attendus
+### 13.2) Cas observables attendus
 
 - si `pRequetePage == null` :
   - positionne `getMessage()` à `MESSAGE_PAGEABLE_NULL` ;
@@ -533,19 +632,19 @@ Le scénario nominal de `rechercherTousParPage(...)` est :
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_OK`
     uniquement après préparation complète de la réponse paginée.
 
-### 12.3) Garanties spécifiques de `rechercherTousParPage(...)`
+### 13.3) Garanties spécifiques de `rechercherTousParPage(...)`
 
 - la méthode ne doit jamais exposer une réponse paginée partielle incohérente ;
 - le contenu paginé retourné doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
 - le message de succès ne doit être positionné qu'après conversion complète de la page résultat ;
 - `pageNumber`, `pageSize` et `totalElements` doivent rester cohérents avec la réponse technique paginée préparée par le service UC.
 
-## 13) Contrat spécifique de `findByLibelle(...)`
+## 14) Contrat spécifique de `findByLibelle(...)`
 
 Signature cible :
 - `List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;`
 
-### 13.1) Scénario nominal attendu
+### 14.1) Scénario nominal attendu
 
 Le scénario nominal de `findByLibelle(...)` est :
 
@@ -558,7 +657,7 @@ Le scénario nominal de `findByLibelle(...)` est :
 7. positionner le message observable ;
 8. retourner la liste finale.
 
-### 13.2) Cas observables attendus
+### 14.2) Cas observables attendus
 
 - si `pLibelle` est blank :
   - retourne `null` ;
@@ -577,7 +676,7 @@ Le scénario nominal de `findByLibelle(...)` est :
   - retourne une liste non `null` ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
-### 13.3) Garanties spécifiques de `findByLibelle(...)`
+### 14.3) Garanties spécifiques de `findByLibelle(...)`
 
 - la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
 - la liste retournée, si elle n'est pas vide,
@@ -587,12 +686,12 @@ Le scénario nominal de `findByLibelle(...)` est :
 - la recherche exacte peut retourner plusieurs `OutputDTO`
   si plusieurs `Produit` distincts partagent le même libellé exact.
 
-## 14) Contrat spécifique de `findByLibelleRapide(...)`
+## 15) Contrat spécifique de `findByLibelleRapide(...)`
 
 Signature cible :
 - `List<ProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
 
-### 14.1) Scénario nominal attendu
+### 15.1) Scénario nominal attendu
 
 Le scénario nominal de `findByLibelleRapide(...)` est :
 
@@ -606,7 +705,7 @@ Le scénario nominal de `findByLibelleRapide(...)` est :
 8. positionner le message observable ;
 9. retourner la liste finale.
 
-### 14.2) Cas observables attendus
+### 15.2) Cas observables attendus
 
 - si `pContenu == null` :
   - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
@@ -628,7 +727,7 @@ Le scénario nominal de `findByLibelleRapide(...)` est :
   - retourne une liste non `null` ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
-### 14.3) Garanties spécifiques de `findByLibelleRapide(...)`
+### 15.3) Garanties spécifiques de `findByLibelleRapide(...)`
 
 - la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
 - la liste retournée, si elle n'est pas vide,
@@ -638,12 +737,12 @@ Le scénario nominal de `findByLibelleRapide(...)` est :
 - un contenu blank ne doit pas être traité comme une recherche technique,
   mais comme une délégation explicite à `rechercherTous()`.
   
-  ## 15) Contrat spécifique de `findAllByParent(...)`
+## 16) Contrat spécifique de `findAllByParent(...)`
 
 Signature cible :
 - `List<ProduitDTO.OutputDTO> findAllByParent(SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception;`
 
-### 15.1) Scénario nominal attendu
+### 16.1) Scénario nominal attendu
 
 Le scénario nominal de `findAllByParent(...)` est :
 
@@ -658,7 +757,7 @@ Le scénario nominal de `findAllByParent(...)` est :
 9. positionner le message observable ;
 10. retourner la liste finale.
 
-### 15.2) Cas observables attendus
+### 16.2) Cas observables attendus
 
 - si `pSousTypeProduit == null` :
   - positionne `getMessage()` à `RECHERCHE_SOUSTYPEPRODUIT_NULL` ;
@@ -684,7 +783,7 @@ Le scénario nominal de `findAllByParent(...)` est :
   - retourne une liste non `null` ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
-### 15.3) Garanties spécifiques de `findAllByParent(...)`
+### 16.3) Garanties spécifiques de `findAllByParent(...)`
 
 - la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
 - la liste retournée, si elle n'est pas vide,
@@ -694,12 +793,12 @@ Le scénario nominal de `findAllByParent(...)` est :
   qu'après préparation complète de la réponse utilisateur ;
 - aucun résultat partiel incohérent ne doit être exposé à l'appelant.
 
-## 16) Contrat spécifique de `findByDTO(...)`
+## 17) Contrat spécifique de `findByDTO(...)`
 
 Signature cible :
 - `ProduitDTO.OutputDTO findByDTO(ProduitDTO.InputDTO pInputDTO) throws Exception;`
 
-### 16.1) Scénario nominal attendu
+### 17.1) Scénario nominal attendu
 
 Le scénario nominal de `findByDTO(...)` est :
 
@@ -713,7 +812,7 @@ Le scénario nominal de `findByDTO(...)` est :
 8. positionner le message observable ;
 9. retourner la réponse finale.
 
-### 16.2) Cas observables attendus
+### 17.2) Cas observables attendus
 
 - si `pInputDTO == null` :
   - retourne `null` ;
@@ -736,7 +835,7 @@ Le scénario nominal de `findByDTO(...)` est :
   - retourne un `ProduitDTO.OutputDTO` non `null` ;
   - positionne `getMessage()` à `MESSAGE_SUCCES_RECHERCHE`.
 
-### 16.3) Garanties spécifiques de `findByDTO(...)`
+### 17.3) Garanties spécifiques de `findByDTO(...)`
 
 - la méthode ne doit jamais exposer de résultat incohérent à l'appelant ;
 - l'objet retourné, s'il n'est pas `null`,
@@ -747,12 +846,12 @@ Le scénario nominal de `findByDTO(...)` est :
   la méthode doit retourner `null`
   avec `MESSAGE_RECHERCHE_VIDE`.
   
-  ## 17) Contrat spécifique de `findById(...)`
+## 18) Contrat spécifique de `findById(...)`
 
 Signature cible :
 - `ProduitDTO.OutputDTO findById(Long pId) throws Exception;`
 
-### 17.1) Scénario nominal attendu
+### 18.1) Scénario nominal attendu
 
 Le scénario nominal de `findById(...)` est :
 
@@ -763,7 +862,7 @@ Le scénario nominal de `findById(...)` est :
 5. positionner le message observable ;
 6. retourner la réponse finale.
 
-### 17.2) Cas observables attendus
+### 18.2) Cas observables attendus
 
 - si `pId == null` :
   - retourne `null` ;
@@ -782,7 +881,7 @@ Le scénario nominal de `findById(...)` est :
   ou par la conversion finale :
   - propage une exception conforme à l'implémentation.
 
-### 17.3) Garanties spécifiques de `findById(...)`
+### 18.3) Garanties spécifiques de `findById(...)`
 
 - la méthode ne doit jamais exposer de résultat incohérent à l'appelant ;
 - l'objet retourné, s'il n'est pas `null`,
@@ -793,12 +892,12 @@ Le scénario nominal de `findById(...)` est :
   la méthode doit retourner `null`
   avec un message observable explicite.
   
-  ## 18) Contrat spécifique de `update(...)`
+## 19) Contrat spécifique de `update(...)`
 
 Signature cible :
 - `ProduitDTO.OutputDTO update(ProduitDTO.InputDTO pInputDTO) throws Exception;`
 
-### 18.1) Scénario nominal attendu
+### 19.1) Scénario nominal attendu
 
 Le scénario nominal de `update(...)` est :
 
@@ -818,7 +917,7 @@ Le scénario nominal de `update(...)` est :
 10. positionner le message observable ;
 11. retourner la réponse finale.
 
-### 18.2) Cas observables attendus
+### 19.2) Cas observables attendus
 
 - si `pInputDTO == null` :
   - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
@@ -862,7 +961,7 @@ Le scénario nominal de `update(...)` est :
     uniquement après préparation complète
     de la réponse utilisateur.
 
-### 18.3) Garanties spécifiques de `update(...)`
+### 19.3) Garanties spécifiques de `update(...)`
 
 - la ré-identification de l'objet à modifier
   s'appuie sur le couple `[parent, libellé]`
@@ -877,12 +976,12 @@ Le scénario nominal de `update(...)` est :
   correspond à un `Produit` effectivement modifié
   dans le stockage et exprimé sous forme de DTO.
   
-  ## 19) Contrat spécifique de `delete(...)`
+## 20) Contrat spécifique de `delete(...)`
 
 Signature cible :
 - `void delete(ProduitDTO.InputDTO pInputDTO) throws Exception;`
 
-### 19.1) Scénario nominal attendu
+### 20.1) Scénario nominal attendu
 
 Le scénario nominal de `delete(...)` est :
 
@@ -898,7 +997,7 @@ Le scénario nominal de `delete(...)` est :
 7. positionner le message observable ;
 8. terminer sans exposer de résultat incohérent à la couche appelante.
 
-### 19.2) Cas observables attendus
+### 20.2) Cas observables attendus
 
 - si `pInputDTO == null` :
   - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
@@ -944,7 +1043,7 @@ Le scénario nominal de `delete(...)` est :
   - positionne `getMessage()` à `MESSAGE_DELETE_OK + libellé`
     uniquement après destruction effective.
 
-### 19.3) Garanties spécifiques de `delete(...)`
+### 20.3) Garanties spécifiques de `delete(...)`
 
 - la ré-identification de l'objet à détruire
   s'appuie sur le couple `[parent, libellé]`
@@ -960,12 +1059,12 @@ Le scénario nominal de `delete(...)` est :
   doivent verrouiller explicitement
   la preuve du couple `[parent, libellé]`.
   
-  ## 20) Contrat spécifique de `count()`
+## 21) Contrat spécifique de `count()`
 
 Signature cible :
 - `long count() throws Exception;`
 
-### 20.1) Scénario nominal attendu
+### 21.1) Scénario nominal attendu
 
 Le scénario nominal de `count()` est :
 
@@ -974,7 +1073,7 @@ Le scénario nominal de `count()` est :
 3. retourner un résultat de comptage exploitable par la couche appelante ;
 4. positionner un message utilisateur cohérent avec l'issue observable du comptage.
 
-### 20.2) Cas observables attendus
+### 21.2) Cas observables attendus
 
 - si le `GATEWAY` lève une exception technique avec message :
   - positionne `getMessage()` à
@@ -1002,7 +1101,7 @@ Le scénario nominal de `count()` est :
   - retourne ce résultat,
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
-### 20.3) Garanties spécifiques de `count()`
+### 21.3) Garanties spécifiques de `count()`
 
 - le message retourné par `getMessage()`
   reflète l'issue observable réelle du comptage ;
@@ -1023,12 +1122,12 @@ Le scénario nominal de `count()` est :
   - le retour strictement positif,
   - la cohérence avec le `COUNT(*)` physique.
   
-  ## 21) Contrat spécifique de `getMessage()`
+## 22) Contrat spécifique de `getMessage()`
 
 Signature cible :
 - `String getMessage();`
 
-### 21.1) Scénario nominal attendu
+### 22.1) Scénario nominal attendu
 
 Le scénario nominal de `getMessage()` est :
 
@@ -1038,7 +1137,7 @@ Le scénario nominal de `getMessage()` est :
 4. ne déléguer à aucun `GATEWAY` ;
 5. ne produire aucun effet de bord.
 
-### 21.2) Cas observables attendus
+### 22.2) Cas observables attendus
 
 - avant toute opération précédente ayant produit un message :
   - retourne `null` ;
@@ -1056,7 +1155,7 @@ Le scénario nominal de `getMessage()` est :
   - n'écrit rien ;
   - ne lève aucune exception.
 
-### 21.3) Garanties spécifiques de `getMessage()`
+### 22.3) Garanties spécifiques de `getMessage()`
 
 - `getMessage()` est une lecture pure ;
 - `getMessage()` ne délègue jamais à un `GATEWAY` ;
@@ -1186,41 +1285,131 @@ Règle : conserver cette injection telle que validée. Ne pas remplacer par une 
 
 Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être supprimés, fusionnés ou remplacés par une version approximative sans relire le code validé et les tests concernés.
 
-### A.4) Matrice Mock UC actuelle
+### A.4) Méthode générative de dérivation des tests Mock UC
 
-| Bloc | Nombre de tests | Méthodes de test |
-|---|---:|---|
-| `creer` | 19 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentTechniqueKoSansMessage`<br>`testCreerParentAbsent`<br>`testCreerParentNonPersistant`<br>`testCreerParentAmbiguSansTypeProduit`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerConversionOutputDTORetourNull`<br>`testCreerParentUniqueSansTypeProduit`<br>`testCreerNominal` |
-| `rechercherTous` | 5 | `testRechercherTousStockageNull`<br>`testRechercherTousKoTechniqueAvecMessage`<br>`testRechercherTousKoTechniqueSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousOk` |
-| `rechercherTousString` | 2 | `testRechercherTousStringVide`<br>`testRechercherTousStringOk` |
-| `rechercherTousParPage` | 5 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageKoTechniqueAvecMessage`<br>`testRechercherTousParPageKoTechniqueSansMessage`<br>`testRechercherTousParPageRetourNull`<br>`testRechercherTousParPageOk` |
-| `findByLibelle` | 4 | `testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
-| `findByLibelleRapide` | 5 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOk` |
-| `findAllByParent` | 6 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentGatewayRetourNull`<br>`testFindAllByParentIntrouvable`<br>`testFindAllByParentOk` |
-| `findByDTO` | 5 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOk` |
-| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOk` |
-| `update` | 7 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateOk` |
-| `delete` | 10 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteRechercheParentTechniqueKoAvecMessage`<br>`testDeleteParentAbsent`<br>`testDeleteStockageNull`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteTechniqueKoAvecMessage`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
-| `count` | 5 | `testCountTechniqueKoAvecMessage`<br>`testCountTechniqueKoSansMessage`<br>`testCountRetourNegatifIncoherent`<br>`testCountZero`<br>`testCountPositif` |
-| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageDernierMessageGagne` |
+Le contrat ne fixe aucun nombre de tests. L’IA détermine les tests nécessaires à partir des branches observables décrites pour chaque méthode.
 
-### A.5) Matrice Intégration UC actuelle
+#### A.4.1) Branche observable distincte
 
-| Bloc | Nombre de tests | Méthodes de test |
-|---|---:|---|
-| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentAbsent`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
-| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecCohherenceCount`<br>`testRechercherTousVide` |
-| `rechercherTousString` | 2 | `testRechercherTousStringOk`<br>`testRechercherTousStringVide` |
-| `rechercherTousParPage` | 2 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk` |
-| `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
-| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOk` |
-| `findAllByParent` | 4 | `testFindAllByParentNull`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentIntrouvable`<br>`testFindAllByParentOk` |
-| `findByDTO` | 4 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOk` |
-| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOk` |
-| `update` | 6 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveBdEtJdbcTemplate` |
-| `delete` | 6 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteParentAbsent`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
-| `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |
-| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCount`<br>`testGetMessageDernierMessageGagne` |
+Un test Mock distinct est requis lorsque le scénario modifie au moins un élément observable :
+
+- retour ;
+- message `getMessage()` ;
+- LOG ;
+- exception ;
+- interaction Gateway ;
+- absence d’interaction ;
+- conversion ou garde défensive.
+
+#### A.4.2) Cas techniques avec et sans message
+
+Lorsqu’une exception technique est sécurisée par `MSG_ERREUR_NON_SPECIFIEE`, l’IA doit dériver deux scénarios :
+
+1. exception avec message ;
+2. exception sans message.
+
+Ces scénarios sont distincts parce que le message observable diffère.
+
+#### A.4.3) Retours techniques incohérents
+
+L’IA doit dériver un test lorsque l’ADAPTER traite explicitement :
+
+- un retour Gateway `null` ;
+- une collection `null` ;
+- un résultat paginé `null` ;
+- une conversion `null` lorsque le cas est atteignable sans altérer le code de production ;
+- un objet non persistant ;
+- un comptage négatif ;
+- un parent absent, non persistant ou ambigu.
+
+Une garde défensive inatteignable avec les helpers privés réels reste documentée, mais ne justifie pas à elle seule un test artificiel qui modifierait le code de production.
+
+#### A.4.4) Résultats vides après transformation
+
+Une branche vide doit être testée lorsqu’elle apparaît après :
+
+- filtrage des objets métier `null` ;
+- suppression des libellés blank ;
+- recherche sans résultat ;
+- dédoublonnage ;
+- sélection d’un couple `[SousTypeProduit, Produit]`.
+
+Le test doit vérifier le retour et le message exact associé.
+
+#### A.4.5) Scénario nominal
+
+Le scénario nominal doit prouver ensemble les garanties compatibles du même chemin d’exécution :
+
+- identité métier `[SousTypeProduit, Produit]` ;
+- identité propre du parent `[TypeProduit, SousTypeProduit]` ;
+- rattachement au parent persistant exact ;
+- filtrage ;
+- tri par parent direct puis par libellé Produit ;
+- conversion ;
+- dédoublonnage ;
+- conservation d’un même libellé Produit sous deux parents directs différents ;
+- message final ;
+- interactions Gateway exactes.
+
+L’IA ne doit pas créer plusieurs tests nominaux redondants lorsque ces garanties peuvent être prouvées clairement dans un seul scénario.
+
+#### A.4.6) Contrôle Mockito
+
+Avant toute livraison, l’IA doit vérifier :
+
+- chaque stubbing est consommé ;
+- aucun getter n’est stubé après le point d’arrêt du scénario ;
+- les Gateways non concernés n’ont aucune interaction ;
+- les appels attendus sont vérifiés avec leurs arguments ;
+- les constantes, annotations, Javadocs et commentaires reprennent le formalisme validé.
+
+### A.5) Méthode générative de dérivation des tests d’intégration UC
+
+Les tests d’intégration ne sont pas déduits d’un total à atteindre. Ils sont déduits des garanties métier qui nécessitent des collaborateurs réels et une preuve observable dans le stockage.
+
+#### A.5.1) Cas nécessitant une intégration
+
+Une preuve d’intégration est nécessaire lorsque le contrat exige notamment :
+
+- une création, modification ou suppression réelle ;
+- un identifiant persistant ;
+- un rattachement au `SousTypeProduit` parent direct ;
+- une identité métier fondée sur le couple `[SousTypeProduit, Produit]` ;
+- une résolution non ambiguë de l’identité propre du parent `[TypeProduit, SousTypeProduit]` ;
+- une absence réelle de donnée ;
+- une cohérence entre une liste UC et le contenu du stockage ;
+- une absence d’effet de bord pour une lecture ;
+- un round-trip par une autre méthode du SERVICE UC.
+
+#### A.5.2) Répartition des preuves
+
+Les tests d’intégration doivent vérifier :
+
+- le retour ou le DTO observable ;
+- le message final exact ;
+- l’exception métier ou de validation lorsqu’elle est intégrablement testable ;
+- la preuve directe dans le stockage avec `JdbcTemplate` lorsque cette preuve sert le contrat ;
+- le `flush()` JPA avant une lecture SQL directe lorsque nécessaire ;
+- la conservation des autres couples homonymes lors d’une modification ou suppression ciblée.
+
+Ils ne doivent pas recontrôler exhaustivement :
+
+- les fallbacks d’exception technique ;
+- tous les appels Mockito ;
+- les clauses internes déjà prouvées par les tests Gateway ou Mock UC.
+
+#### A.5.3) Lectures pures
+
+Pour une méthode de lecture, l’intégration doit prouver selon le contrat :
+
+- le cas vide réel ;
+- le cas nominal réel ;
+- les identifiants et couples métier retournés ;
+- la cohérence du message ;
+- l’ordre métier lorsque celui-ci est contractuel ;
+- l’absence de modification du stockage.
+
+Le nombre de méthodes de test utilisé pour fournir ces preuves reste un choix de conception contrôlé par la lisibilité et l’absence de redondance.
 
 ### A.6) Règle de correction locale
 

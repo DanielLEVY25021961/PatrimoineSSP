@@ -2622,7 +2622,8 @@ public class ProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
 	 * <li>filtre les {@code null} et trie les objets métier ;</li>
 	 * <li>atteint la conversion finale en {@link OutputDTO}
-	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * via {@code convertirEtDedoublonner(...)} et<br>
+	 * {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
 	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
@@ -2696,7 +2697,8 @@ public class ProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
 	 * <li>filtre les {@code null} et trie les objets métier ;</li>
 	 * <li>atteint la conversion finale en {@link OutputDTO}
-	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
+	 * via {@code convertirEtDedoublonner(...)} et<br>
+	 * {@code ConvertisseurMetierToOutputDTOProduit.convert(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
 	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_CONVERSION_KO}
@@ -2841,9 +2843,13 @@ public class ProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
 	 * <li>filtre les éléments {@code null} ;</li>
-	 * <li>trie les objets métier ;</li>
+	 * <li>trie selon l'ordre naturel
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>respecte l'identité propre du parent
+	 * {@code [TypeProduit, SousTypeProduit]} ;</li>
 	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
-	 * <li>dédoublonne la réponse DTO ;</li>
+	 * <li>dédoublonne le même Produit sous le même parent ;</li>
+	 * <li>conserve le même libellé Produit sous des parents directs distincts ;</li>
 	 * <li>positionne exactement
 	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_OK} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
@@ -2858,16 +2864,34 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousNominal() throws Exception {
 
 		/* ARRANGE :
-		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier non null ;
+		 * prépare trois parents persistants distincts :
+		 * - [bazar, atelier] ;
+		 * - [bazar, outillage] ;
+		 * - [quincaillerie, outillage].
+		 *
+		 * La réponse Gateway contient :
+		 * - des objets dans un ordre non trié ;
 		 * - un élément null à filtrer ;
-		 * - un doublon à dédoublonner côté DTO.
+		 * - un doublon exact à dédoublonner ;
+		 * - le même libellé Produit sous plusieurs parents directs.
 		 */
-		final SousTypeProduit parent = parentPersistant();
-		
-		final Produit produitScie = produit(SCIE, parent, 2L);
-		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
-		final Produit produitMarteauDoublon = produit(MARTEAU, parent, 1L);
+		final SousTypeProduit parentBazarAtelier
+			= parentPersistant(BAZAR, ATELIER, 1L, 11L);
+		final SousTypeProduit parentBazarOutillage
+			= parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+		final SousTypeProduit parentQuincaillerieOutillage
+			= parentPersistant(QUINCAILLERIE, OUTILLAGE, 2L, 20L);
+
+		final Produit marteauBazarAtelier
+			= produit(MARTEAU, parentBazarAtelier, 2L);
+		final Produit marteauBazarOutillage
+			= produit(MARTEAU, parentBazarOutillage, 1L);
+		final Produit marteauBazarOutillageDoublon
+			= produit(MARTEAU, parentBazarOutillage, 1L);
+		final Produit scieBazarOutillage
+			= produit(SCIE, parentBazarOutillage, 4L);
+		final Produit marteauQuincaillerieOutillage
+			= produit(MARTEAU, parentQuincaillerieOutillage, 3L);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -2882,12 +2906,17 @@ public class ProduitCuServiceMockTest {
 
 		/*
 		 * Configuration du Mock :
-		 * gateway.rechercherTous() retourne des objets métier dans un ordre
-		 * non trié, avec un null et un doublon côté DTO.
+		 * retourne les objets métier dans un ordre volontairement incorrect,
+		 * avec un null et un doublon exact.
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(
-						produitScie, null, produitMarteau, produitMarteauDoublon));
+						marteauQuincaillerieOutillage,
+						scieBazarOutillage,
+						null,
+						marteauBazarOutillageDoublon,
+						marteauBazarAtelier,
+						marteauBazarOutillage));
 
 		/* ACT :
 		 * exécute la recherche exhaustive via le SERVICE METIER UC.
@@ -2898,29 +2927,23 @@ public class ProduitCuServiceMockTest {
 		/* ASSERT */
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
-		 * - est triée par libellé métier ;
-		 * - est dédoublonnée ;
+		 * - filtre le null ;
+		 * - dédoublonne le couple exact [parent, Produit] ;
+		 * - conserve les homonymes rattachés à des parents distincts ;
+		 * - respecte l'ordre naturel complet ;
 		 * - expose le message utilisateur de succès.
 		 */
 		assertThat(retour).isNotNull();
-		assertThat(retour).hasSize(2);
+		assertThat(retour).hasSize(4);
 
-		assertThat(retour)
-				.extracting(OutputDTO::getProduit)
-				.containsExactly(MARTEAU, SCIE);
-
-		assertThat(retour)
-				.extracting(OutputDTO::getSousTypeProduit)
-				.containsExactly(OUTILLAGE, OUTILLAGE);
-
-		assertThat(retour)
-				.extracting(OutputDTO::getTypeProduit)
-				.containsExactly(BAZAR, BAZAR);
-
-		assertThat(retour)
-				.extracting(OutputDTO::getIdProduit)
-				.containsExactly(1L, 2L);
+		assertProduitDTO(
+				retour.get(0), 2L, BAZAR, ATELIER, MARTEAU);
+		assertProduitDTO(
+				retour.get(1), 1L, BAZAR, OUTILLAGE, MARTEAU);
+		assertProduitDTO(
+				retour.get(2), 4L, BAZAR, OUTILLAGE, SCIE);
+		assertProduitDTO(
+				retour.get(3), 3L, QUINCAILLERIE, OUTILLAGE, MARTEAU);
 
 		assertThat(message)
 				.isEqualTo(

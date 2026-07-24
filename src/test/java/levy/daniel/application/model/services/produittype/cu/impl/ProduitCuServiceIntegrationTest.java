@@ -311,6 +311,12 @@ public class ProduitCuServiceIntegrationTest {
 	 */
 	public static final String TAG_CREER = "cu-it-Creer";
 
+	/**
+	 * "cu-it-RechercherTous"
+	 */
+	public static final String TAG_RECHERCHER_TOUS
+		= "cu-it-RechercherTous";
+
 	// ============================ DN ==================================//
 
 	// ---------------------------- creer(...) ----------------------------
@@ -373,6 +379,24 @@ public class ProduitCuServiceIntegrationTest {
 	public static final String DN_CREER_OK
 		= "creer(ok) : homonyme sous autre parent non doublon "
 				+ "+ preuve stockage + round-trip findByLibelle/findById";
+
+	// ------------------------ rechercherTous() --------------------------
+
+	/**
+	 * "rechercherTous(vide) : liste vide
+	 * + MESSAGE_RECHERCHER_TOUS_VIDE + stockage vide".
+	 */
+	public static final String DN_RECHERCHER_TOUS_VIDE
+		= "rechercherTous(vide) : liste vide "
+				+ "+ MESSAGE_RECHERCHER_TOUS_VIDE + stockage vide";
+
+	/**
+	 * "rechercherTous(ok) : ordre métier + identités persistantes
+	 * + MESSAGE_RECHERCHER_TOUS_OK + stockage inchangé".
+	 */
+	public static final String DN_RECHERCHER_TOUS_NOMINAL
+		= "rechercherTous(ok) : ordre métier + identités persistantes "
+				+ "+ MESSAGE_RECHERCHER_TOUS_OK + stockage inchangé";
 	
 	// ========================== SELECT ================================//
 	
@@ -1490,142 +1514,257 @@ public class ProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>rechercherTous() : doit retourner une liste non nulle contenant les créations du test.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("rechercherTous() : retourne une liste non nulle contenant les créations du test")
-	public void testRechercherTous() throws Exception {
-
-		creerParentsDansStockage(OUTIL, OUTILLAGE);
-
-		this.service.creer(new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, PERCEUSE));
-		this.service.creer(new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, PINCE));
-
-		final List<OutputDTO> dtos = this.service.rechercherTous();
-
-		assertThat(dtos).isNotNull();
-		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getProduit)
-				.contains(PERCEUSE, PINCE);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTous() : scénario nominal avec preuve de stockage et cohérence count.</p>
+	 * <p>garantit que rechercherTous() avec un stockage vide :</p>
 	 * <ul>
-	 * <li>retourne une liste non {@code null}</li>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>retourne une liste vide ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>reste cohérent avec {@link ProduitICuService#count()}</li>
-	 * <li>contient les créations du test</li>
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_VIDE} ;</li>
+	 * <li>ne crée aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
-	@Test
-	@DisplayName("rechercherTous(ok) : message exact + cohérence count + présence des créations")
-	public void testRechercherTousOkAvecCohherenceCount() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		creerParentsDansStockage(OUTIL, OUTILLAGE);
-		creerParentsDansStockage(LOISIR, ATELIER);
-
-		final OutputDTO creeGamma = this.service.creer(
-				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, PERCEUSE));
-		final OutputDTO creeDelta = this.service.creer(
-				new ProduitDTO.InputDTO(LOISIR, ATELIER, PINCE));
-
-		final long attendu = this.service.count();
-
-		/* ======================= ACT ======================= */
-		final List<ProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
-
-		/* ===================== ASSERT ====================== */
-		assertThat(dtos).isNotNull();
-		assertThat(dtos.size()).isEqualTo((int) attendu);
-
-		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getProduit)
-				.contains(PERCEUSE, PINCE);
-
-		final OutputDTO dtoGamma = dtos.stream()
-				.filter(dto -> PERCEUSE.equals(dto.getProduit()))
-				.findFirst()
-				.orElse(null);
-
-		final OutputDTO dtoDelta = dtos.stream()
-				.filter(dto -> PINCE.equals(dto.getProduit()))
-				.findFirst()
-				.orElse(null);
-
-		assertThat(dtoGamma).isNotNull();
-		assertThat(dtoGamma.getIdProduit())
-				.isEqualTo(creeGamma.getIdProduit());
-		assertThat(dtoGamma.getTypeProduit())
-				.isEqualTo(OUTIL);
-		assertThat(dtoGamma.getSousTypeProduit())
-				.isEqualTo(OUTILLAGE);
-
-		assertThat(dtoDelta).isNotNull();
-		assertThat(dtoDelta.getIdProduit())
-				.isEqualTo(creeDelta.getIdProduit());
-		assertThat(dtoDelta.getTypeProduit())
-				.isEqualTo(LOISIR);
-		assertThat(dtoDelta.getSousTypeProduit())
-				.isEqualTo(ATELIER);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTous() : stockage vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>reste cohérent avec une stockage physiquement vide</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
+	@Tag(TAG_RECHERCHER_TOUS)
 	@Sql(
-			scripts = { "classpath:/truncate-test.sql" },
-			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
-	)
-	@DisplayName("rechercherTous(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + stockage vide")
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName(DN_RECHERCHER_TOUS_VIDE)
+	@Test
 	public void testRechercherTousVide() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		assertThat(this.service.count()).isEqualTo(0L);
+		/* ARRANGE :
+		 * contrôle d'abord que le stockage ne contient aucun Produit.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		/* ======================= ACT ======================= */
-		final List<ProduitDTO.OutputDTO> dtos = this.service.rechercherTous();
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
 
-		/* ===================== ASSERT ====================== */
+		/* ACT :
+		 * exécute la recherche exhaustive via le SERVICE UC.
+		 */
+		final List<OutputDTO> dtos = this.service.rechercherTous();
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * garantit que rechercherTous() retourne une liste non null et vide.
+		 */
 		assertThat(dtos).isNotNull();
 		assertThat(dtos).isEmpty();
 
-		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		/* Garantit que le message utilisateur est celui
+		 * de la branche rechercherTous() vide.
+		 */
+		assertThat(message)
+				.isEqualTo(
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_VIDE);
 
-	} // __________________________________________________________________	
+		/* Garantit que l'appel n'a rien écrit dans le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(0L);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTous(OK) :</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_OK} ;</li>
+	 * <li>retourne les identifiants persistants créés par le test ;</li>
+	 * <li>trie selon l'ordre naturel
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>conserve le même libellé Produit sous des parents directs distincts ;</li>
+	 * <li>ne modifie pas le stockage pendant la lecture.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS)
+	@DisplayName(DN_RECHERCHER_TOUS_NOMINAL)
+	@Test
+	public void testRechercherTousNominalAvecPreuveStockage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * prépare trois SousTypeProduit parents directs persistants :
+		 * - [Loisir, Outillage] ;
+		 * - [Outil, Atelier] ;
+		 * - [Outil, Outillage].
+		 */
+		this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(LOISIR));
+		this.sousTypeProduitService.creer(
+				new SousTypeProduitDTO.InputDTO(LOISIR, OUTILLAGE));
+
+		this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(OUTIL));
+		this.sousTypeProduitService.creer(
+				new SousTypeProduitDTO.InputDTO(OUTIL, ATELIER));
+		this.sousTypeProduitService.creer(
+				new SousTypeProduitDTO.InputDTO(OUTIL, OUTILLAGE));
+
+		/* Vérifie que les couples utilisés par le scénario
+		 * ne sont pas déjà présents dans le stockage.
+		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR, OUTILLAGE, MARTEAU))
+				.isEqualTo(0L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, ATELIER, MARTEAU))
+				.isEqualTo(0L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, MARTEAU))
+				.isEqualTo(0L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, SCIE))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* Crée quatre Produits réels, dont trois homonymes
+		 * sous trois parents directs distincts.
+		 */
+		final OutputDTO creeLoisirOutillageMarteau = this.service.creer(
+				new ProduitDTO.InputDTO(
+						LOISIR, OUTILLAGE, MARTEAU));
+		final OutputDTO creeOutilAtelierMarteau = this.service.creer(
+				new ProduitDTO.InputDTO(
+						OUTIL, ATELIER, MARTEAU));
+		final OutputDTO creeOutilOutillageScie = this.service.creer(
+				new ProduitDTO.InputDTO(
+						OUTIL, OUTILLAGE, SCIE));
+		final OutputDTO creeOutilOutillageMarteau = this.service.creer(
+				new ProduitDTO.InputDTO(
+						OUTIL, OUTILLAGE, MARTEAU));
+
+		/* Synchronise explicitement le contexte de persistance JPA
+		 * avant les preuves SQL directes.
+		 */
+		this.entityManager.flush();
+
+		/* Garantit que les créations portent des identifiants persistants. */
+		assertThat(creeLoisirOutillageMarteau).isNotNull();
+		assertThat(creeLoisirOutillageMarteau.getIdProduit()).isNotNull();
+		assertThat(creeOutilAtelierMarteau).isNotNull();
+		assertThat(creeOutilAtelierMarteau.getIdProduit()).isNotNull();
+		assertThat(creeOutilOutillageScie).isNotNull();
+		assertThat(creeOutilOutillageScie.getIdProduit()).isNotNull();
+		assertThat(creeOutilOutillageMarteau).isNotNull();
+		assertThat(creeOutilOutillageMarteau.getIdProduit()).isNotNull();
+
+		/* Garantit physiquement les quatre couples métier dans le stockage. */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR, OUTILLAGE, MARTEAU))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, ATELIER, MARTEAU))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, MARTEAU))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, SCIE))
+				.isEqualTo(1L);
+
+		final Long countApresCreations = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApresCreations).isNotNull();
+		assertThat(countApresCreations).isEqualTo(countAvant + 4L);
+
+		/* ACT :
+		 * exécute la recherche exhaustive via le SERVICE UC.
+		 */
+		final List<OutputDTO> dtos = this.service.rechercherTous();
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * garantit la cohérence entre la réponse UC et le stockage.
+		 */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).hasSize(countApresCreations.intValue());
+		assertThat(message)
+				.isEqualTo(
+						ProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
+
+		final List<Long> idsCrees = List.of(
+				creeLoisirOutillageMarteau.getIdProduit(),
+				creeOutilAtelierMarteau.getIdProduit(),
+				creeOutilOutillageMarteau.getIdProduit(),
+				creeOutilOutillageScie.getIdProduit());
+
+		final List<OutputDTO> dtosCrees = dtos.stream()
+				.filter(dto -> dto != null
+						&& idsCrees.contains(dto.getIdProduit()))
+				.toList();
+
+		/* Garantit l'ordre naturel :
+		 * [Loisir, Outillage, Marteau],
+		 * [Outil, Atelier, Marteau],
+		 * [Outil, Outillage, Marteau],
+		 * [Outil, Outillage, Scie].
+		 */
+		assertThat(dtosCrees).hasSize(4);
+
+		assertThat(dtosCrees.get(0).getIdProduit())
+				.isEqualTo(creeLoisirOutillageMarteau.getIdProduit());
+		assertThat(dtosCrees.get(0).getTypeProduit()).isEqualTo(LOISIR);
+		assertThat(dtosCrees.get(0).getSousTypeProduit())
+				.isEqualTo(OUTILLAGE);
+		assertThat(dtosCrees.get(0).getProduit()).isEqualTo(MARTEAU);
+
+		assertThat(dtosCrees.get(1).getIdProduit())
+				.isEqualTo(creeOutilAtelierMarteau.getIdProduit());
+		assertThat(dtosCrees.get(1).getTypeProduit()).isEqualTo(OUTIL);
+		assertThat(dtosCrees.get(1).getSousTypeProduit())
+				.isEqualTo(ATELIER);
+		assertThat(dtosCrees.get(1).getProduit()).isEqualTo(MARTEAU);
+
+		assertThat(dtosCrees.get(2).getIdProduit())
+				.isEqualTo(creeOutilOutillageMarteau.getIdProduit());
+		assertThat(dtosCrees.get(2).getTypeProduit()).isEqualTo(OUTIL);
+		assertThat(dtosCrees.get(2).getSousTypeProduit())
+				.isEqualTo(OUTILLAGE);
+		assertThat(dtosCrees.get(2).getProduit()).isEqualTo(MARTEAU);
+
+		assertThat(dtosCrees.get(3).getIdProduit())
+				.isEqualTo(creeOutilOutillageScie.getIdProduit());
+		assertThat(dtosCrees.get(3).getTypeProduit()).isEqualTo(OUTIL);
+		assertThat(dtosCrees.get(3).getSousTypeProduit())
+				.isEqualTo(OUTILLAGE);
+		assertThat(dtosCrees.get(3).getProduit()).isEqualTo(SCIE);
+
+		/* Garantit que rechercherTous() n'a rien modifié dans le stockage. */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApresRecherche).isNotNull();
+		assertThat(countApresRecherche).isEqualTo(countApresCreations);
+
+	} // __________________________________________________________________
 
 	
 	
+
 	// ===================== rechercherTousString =========================
 	
 	

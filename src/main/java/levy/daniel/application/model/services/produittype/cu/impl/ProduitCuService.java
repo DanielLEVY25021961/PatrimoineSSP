@@ -4,7 +4,7 @@
 package levy.daniel.application.model.services.produittype.cu.impl;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -2159,8 +2159,10 @@ public class ProduitCuService implements ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p>Filtre les nulls, puis trie 
-	 * par libellé produit (case-insensitive).</p>
+	 * <p>Filtre les nulls, puis trie selon l'ordre naturel métier
+	 * {@code [SousTypeProduit, Produit]}.</p>
+	 * <p>Le {@code SousTypeProduit} parent conserve sa propre identité
+	 * {@code [TypeProduit, SousTypeProduit]}.</p>
 	 * </div>
 	 *
 	 * @param pListe liste potentiellement null
@@ -2171,24 +2173,15 @@ public class ProduitCuService implements ProduitICuService {
 
 		final List<Produit> resultat = new ArrayList<Produit>();
 
-		if (pListe == null) {
-			return resultat;
-		}
-
-		for (final Produit p : pListe) {
-			if (p != null) {
-				resultat.add(p);
+		if (pListe != null) {
+			for (final Produit p : pListe) {
+				if (p != null) {
+					resultat.add(p);
+				}
 			}
 		}
 
-		resultat.sort(new Comparator<Produit>() {
-			@Override
-			public int compare(final Produit o1, final Produit o2) {
-				final String s1 = (o1 != null) ? o1.getProduit() : null;
-				final String s2 = (o2 != null) ? o2.getProduit() : null;
-				return Strings.CI.compare(s1, s2);
-			}
-		});
+		Collections.sort(resultat);
 
 		return resultat;
 		

@@ -1,6 +1,6 @@
-# docs/contrats/cu/SousTypeProduitICuService.md
-
 # Contrat comportemental — SousTypeProduitICuService (SERVICE METIER UC)
+
+> Chemin : `docs/contrats/cu/SousTypeProduitICuService.md`
 
 ## 1) Port concerné
 
@@ -1707,51 +1707,140 @@ Règle : conserver cette injection telle que validée. Ne pas remplacer par une 
 
 Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être supprimés, fusionnés ou remplacés par une version approximative sans relire le code validé et les tests concernés.
 
-### A.4) Matrice Mock UC actuelle
+### A.4) Méthode générative de dérivation des tests Mock UC
 
-| Bloc | Nombre de tests | Méthodes de test |
-|---|---:|---|
-| `creer` | 17 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentTechniqueKoAvecMessage`<br>`testCreerParentTechniqueKoSansMessage`<br>`testCreerParentAbsent`<br>`testCreerParentNonPersistant`<br>`testCreerDoublon`<br>`testCreerControleDoublonKOAvecMessage`<br>`testCreerControleDoublonKOSansMessage`<br>`testCreerGatewayCreerKOAvecMessage`<br>`testCreerGatewayCreerKOSansMessage`<br>`testCreerGatewayCreerKORetourNull`<br>`testCreerConversionOutputDTOKOAvecMessage`<br>`testCreerConversionOutputDTOKOSansMessage`<br>`testCreerConversionOutputDTORetourNull`<br>`testCreerNominal` |
-| `rechercherTous` | 7 | `testRechercherTousGatewayRetourNull`<br>`testRechercherTousGatewayKOAvecMessage`<br>`testRechercherTousGatewayKOSansMessage`<br>`testRechercherTousConversionOutputDTOKOAvecMessage`<br>`testRechercherTousConversionOutputDTOKOSansMessage`<br>`testRechercherTousVideApresFiltrage`<br>`testRechercherTousNominal` |
-| `rechercherTousString` | 8 | `testRechercherTousStringGatewayRetourNull`<br>`testRechercherTousStringGatewayKOAvecMessage`<br>`testRechercherTousStringGatewayKOSansMessage`<br>`testRechercherTousStringConversionStringKOAvecMessage`<br>`testRechercherTousStringConversionStringKOSansMessage`<br>`testRechercherTousStringVideApresFiltrage`<br>`testRechercherTousStringVideApresLibellesBlank`<br>`testRechercherTousStringNominal` |
-| `rechercherTousParPage` | 8 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageGatewayKOAvecMessage`<br>`testRechercherTousParPageGatewayKOSansMessage`<br>`testRechercherTousParPageGatewayRetourNull`<br>`testRechercherTousParPageConversionOutputDTOKOAvecMessage`<br>`testRechercherTousParPageConversionOutputDTOKOSansMessage`<br>`testRechercherTousParPageVideApresFiltrage`<br>`testRechercherTousParPageNominal` |
-| `findByLibelle` | 9 | `testFindByLibelleNull`<br>`testFindByLibelleBlank`<br>`testFindByLibelleGatewayRetourNull`<br>`testFindByLibelleGatewayKOAvecMessage`<br>`testFindByLibelleGatewayKOSansMessage`<br>`testFindByLibelleConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleConversionOutputDTOKOSansMessage`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleNominal` |
-| `findByLibelleRapide` | 9 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideGatewayKOAvecMessage`<br>`testFindByLibelleRapideGatewayKOSansMessage`<br>`testFindByLibelleRapideGatewayRetourNull`<br>`testFindByLibelleRapideConversionOutputDTOKOAvecMessage`<br>`testFindByLibelleRapideConversionOutputDTOKOSansMessage`<br>`testFindByLibelleRapideVideApresFiltrage`<br>`testFindByLibelleRapideNominal` |
-| `findAllByParent` | 13 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentParentGatewayKOAvecMessage`<br>`testFindAllByParentParentGatewayKOSansMessage`<br>`testFindAllByParentParentAbsent`<br>`testFindAllByParentParentNonPersistant`<br>`testFindAllByParentEnfantsGatewayKOAvecMessage`<br>`testFindAllByParentEnfantsGatewayKOSansMessage`<br>`testFindAllByParentGatewayRetourNull`<br>`testFindAllByParentConversionOutputDTOKOAvecMessage`<br>`testFindAllByParentConversionOutputDTOKOSansMessage`<br>`testFindAllByParentVideApresFiltrage`<br>`testFindAllByParentNominal` |
-| `findByDTO` | 15 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOErreurTechniqueRechercheParentAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheParentSansMessage`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOParentNonPersistant`<br>`testFindByDTOErreurTechniqueRechercheEnfantsAvecMessage`<br>`testFindByDTOErreurTechniqueRechercheEnfantsSansMessage`<br>`testFindByDTOGatewayRetourNull`<br>`testFindByDTOVide`<br>`testFindByDTOVideApresFiltrage`<br>`testFindByDTOIntrouvableDansListe`<br>`testFindByDTOConversionOutputDTOKOAvecMessage`<br>`testFindByDTOConversionOutputDTOKOSansMessage`<br>`testFindByDTONominal` |
-| `findById` | 7 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdErreurTechniqueAvecMessage`<br>`testFindByIdErreurTechniqueSansMessage`<br>`testFindByIdConversionOutputDTOKOAvecMessage`<br>`testFindByIdConversionOutputDTOKOSansMessage`<br>`testFindByIdNominal` |
-| `update` | 20 | `testUpdateNull`<br>`testUpdateLibelleNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateRechercheParentTechniqueKoAvecMessage`<br>`testUpdateRechercheParentTechniqueKoSansMessage`<br>`testUpdateParentAbsent`<br>`testUpdateParentNonPersistant`<br>`testUpdateRechercheEnfantsTechniqueKoAvecMessage`<br>`testUpdateRechercheEnfantsTechniqueKoSansMessage`<br>`testUpdateStockageNullPendantReidentification`<br>`testUpdateIntrouvable`<br>`testUpdateNonPersistant`<br>`testUpdateModificationTechniqueKoAvecMessage`<br>`testUpdateModificationTechniqueKoSansMessage`<br>`testUpdateModificationRetourNull`<br>`testUpdateModificationRetourNonPersistant`<br>`testUpdateConversionOutputDTOKOAvecMessage`<br>`testUpdateConversionOutputDTOKOSansMessage`<br>`testUpdateNominal` |
-| `delete` | 16 | `testDeleteNull`<br>`testDeleteLibelleNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteRechercheParentTechniqueKoAvecMessage`<br>`testDeleteRechercheParentTechniqueKoSansMessage`<br>`testDeleteParentAbsent`<br>`testDeleteParentNonPersistant`<br>`testDeleteRechercheEnfantsTechniqueKoAvecMessage`<br>`testDeleteRechercheEnfantsTechniqueKoSansMessage`<br>`testDeleteStockageNullPendantReidentification`<br>`testDeleteIntrouvable`<br>`testDeleteNonPersistant`<br>`testDeleteDestructionKOAvecMessage`<br>`testDeleteDestructionKOSansMessage`<br>`testDeleteNominal` |
-| `count` | 5 | `testCountGatewayKOAvecMessage`<br>`testCountGatewayKOSansMessage`<br>`testCountRetourNegatif`<br>`testCountZero`<br>`testCountNominal` |
-| `getMessage` | 5 | `testGetMessageInitialNull`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageApresCountZero`<br>`testGetMessageApresCountNominal`<br>`testGetMessageDernierMessageGagne` |
+Le contrat ne fixe aucun nombre de tests. L’IA détermine les tests nécessaires à partir des branches observables décrites pour chaque méthode.
 
-### A.5) Matrice Intégration UC actuelle
+#### A.4.1 Branche observable distincte
 
-| Bloc | Nombre de tests | Méthodes de test |
-|---|---:|---|
-| `creer` | 6 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerParentBlank`<br>`testCreerParentAbsent`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
-| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveStockage`<br>`testRechercherTousVide` |
-| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveStockage`<br>`testRechercherTousStringVide` |
-| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveStockage` |
-| `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOk` |
-| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveStockage` |
-| `findAllByParent` | 5 | `testFindAllByParentNull`<br>`testFindAllByParentParentBlank`<br>`testFindAllByParentPasParent`<br>`testFindAllByParentVide`<br>`testFindAllByParentOkAvecPreuveStockage` |
-| `findByDTO` | 5 | `testFindByDTONull`<br>`testFindByDTOParentBlank`<br>`testFindByDTOParentAbsent`<br>`testFindByDTOCoupleIntrouvableAvecPreuveStockage`<br>`testFindByDTOOkAvecPreuveCoupleParentLibelle` |
-| `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOkAvecPreuveStockage` |
-| `update` | 6 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateParentBlank`<br>`testUpdateParentAbsent`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveCoupleParentLibelleEtIdConserve` |
-| `delete` | 6 | `testDeleteNull`<br>`testDeleteBlank`<br>`testDeleteParentBlank`<br>`testDeleteParentAbsent`<br>`testDeleteIntrouvable`<br>`testDeleteOkAvecPreuveCoupleParentLibelle` |
-| `count` | 2 | `testCountRetourneLeNombrePhysiqueEtLeMessageObservable`<br>`testCountCoherentAvecMessagesAvantApresCreationsPuisNettoyage` |
-| `getMessage` | 4 | `testGetMessageInitialNull`<br>`testGetMessageApresSuccesReel`<br>`testGetMessageApresErreurLocale`<br>`testGetMessageDernierMessageGagne` |
+Un test Mock distinct est requis lorsque le scénario modifie au moins un élément observable :
+
+- retour ;
+- message `getMessage()` ;
+- LOG ;
+- exception ;
+- interaction Gateway ;
+- absence d’interaction ;
+- conversion ou garde défensive.
+
+#### A.4.2 Cas techniques avec et sans message
+
+Lorsqu’une exception technique est sécurisée par `MSG_ERREUR_NON_SPECIFIEE`, l’IA doit dériver deux scénarios :
+
+1. exception avec message ;
+2. exception sans message.
+
+Ces scénarios sont distincts parce que le message observable diffère.
+
+#### A.4.3 Retours techniques incohérents
+
+L’IA doit dériver un test lorsque l’ADAPTER traite explicitement :
+
+- un retour Gateway `null` ;
+- une collection `null` ;
+- un résultat paginé `null` ;
+- une conversion `null` ;
+- un objet non persistant ;
+- un comptage négatif ;
+- un parent absent ou non persistant.
+
+#### A.4.4 Résultats vides après transformation
+
+Une branche vide doit être testée lorsqu’elle apparaît après :
+
+- filtrage des objets métier `null` ;
+- suppression des libellés blank ;
+- recherche sans résultat ;
+- dédoublonnage ;
+- sélection d’un couple `[parent, libellé]`.
+
+Le test doit vérifier la collection ou le DTO retourné et le message exact associé.
+
+#### A.4.5 Scénario nominal
+
+Le scénario nominal doit prouver ensemble les garanties compatibles du même chemin d’exécution :
+
+- identité métier `[TypeProduit, SousTypeProduit]` ;
+- rattachement au parent persistant ;
+- filtrage ;
+- tri par parent puis par libellé lorsque la méthode l’impose ;
+- conversion ;
+- dédoublonnage ;
+- conservation d’un même libellé enfant sous deux parents différents ;
+- message final ;
+- interactions Gateway exactes.
+
+L’IA ne doit pas créer plusieurs tests nominaux redondants lorsque ces garanties peuvent être prouvées clairement dans un seul scénario.
+
+#### A.4.6 Contrôle Mockito
+
+Avant toute livraison, l’IA doit vérifier :
+
+- chaque stubbing est consommé ;
+- aucun getter n’est stubé après le point d’arrêt du scénario ;
+- les Gateways non concernés n’ont aucune interaction ;
+- les appels attendus sont vérifiés avec leurs arguments ;
+- les constantes, annotations, Javadocs et commentaires reprennent le formalisme validé.
+
+### A.5) Méthode générative de dérivation des tests d’intégration UC
+
+Les tests d’intégration ne sont pas déduits d’un total à atteindre. Ils sont déduits des garanties métier qui nécessitent des collaborateurs réels et une preuve observable dans le stockage.
+
+#### A.5.1 Cas nécessitant une intégration
+
+Une preuve d’intégration est nécessaire lorsque le contrat exige notamment :
+
+- une création, modification ou suppression réelle ;
+- un identifiant persistant ;
+- un rattachement au parent ;
+- une identité métier fondée sur le couple `[TypeProduit, SousTypeProduit]` ;
+- une absence réelle de donnée ;
+- une cohérence entre une liste UC et le contenu du stockage ;
+- une absence d’effet de bord pour une lecture ;
+- un round-trip par une autre méthode du SERVICE UC.
+
+#### A.5.2 Répartition des preuves
+
+Les tests d’intégration doivent vérifier :
+
+- le retour ou le DTO observable ;
+- le message final exact ;
+- l’exception métier ou de validation lorsqu’elle est intégrablement testable ;
+- la preuve directe dans le stockage avec `JdbcTemplate` lorsque cette preuve sert le contrat ;
+- le `flush()` JPA avant une lecture SQL directe lorsque nécessaire ;
+- la conservation des autres couples homonymes lors d’une modification ou suppression ciblée.
+
+Ils ne doivent pas recontrôler exhaustivement :
+
+- les fallbacks d’exception technique ;
+- tous les appels Mockito ;
+- les clauses internes déjà prouvées par les tests Gateway ou Mock UC.
+
+#### A.5.3 Lectures pures
+
+Pour une méthode de lecture, l’intégration doit prouver selon le contrat :
+
+- le cas vide réel ;
+- le cas nominal réel ;
+- les identifiants et couples métier retournés ;
+- la cohérence du message ;
+- l’absence de modification du stockage.
+
+Le nombre de méthodes de test utilisé pour fournir ces preuves reste un choix de conception contrôlé par la lisibilité et l’absence de redondance.
 
 ### A.6) Règle de correction locale
 
-Pour corriger ou coder un bloc `SousTypeProduit`, l'IA doit :
+Pour corriger ou coder un bloc `SousTypeProduit`, l’IA doit :
 
 1. relire le présent contrat ;
 2. relire le PORT UC Java ;
-3. relire l'ADAPTER UC associé ;
+3. relire l’ADAPTER UC associé ;
 4. relire le Gateway utilisé par le bloc ;
-5. relire les DTO/convertisseurs et exceptionsservices utiles ;
-6. relire les tests déjà validés du même bloc ;
-7. reprendre le nommage, l'ordre, la Javadoc et les commentaires du bloc de référence le plus proche ;
-8. livrer uniquement un bloc complet dans le chat pour les méthodes Java ou un fichier complet individuel pour les contrats fragiles.
+5. relire les DTO, convertisseurs et exceptionsservices utiles ;
+6. relire les tests déjà validés du même bloc comme preuves et références de formalisme ;
+7. établir la matrice générative `branche -> observations -> preuve -> test nécessaire` ;
+8. reprendre le nommage, l’ordre, la Javadoc et les commentaires du bloc de référence le plus proche ;
+9. calculer le nombre de tests seulement après dérivation ;
+10. livrer uniquement un bloc complet dans le chat pour les méthodes Java ou un fichier Markdown complet individuel pour les contrats fragiles.
+
+Aucun inventaire chiffré de tests ne doit être ajouté au présent contrat. Toute liste de tests actuellement codés relève d’un rapport d’audit ponctuel, non de la sacralisation durable.

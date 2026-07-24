@@ -539,6 +539,12 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `PREFIX_MESSAGE_CREER_CONVERSION_KO` | `"KO - Impossible de créer l'OutputDTO " + "après la création du Type de Produit : "` |
 | `MESSAGE_CREER_CONVERSION_KO` | `"KO - OutputDTO null via la conversion " + "après la création du Type de Produit."` |
 | `MESSAGE_CREER_OK` | `"OK - La création de l'objet s'est bien déroulée."` |
+| `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO` | `"KO - rechercherTous() - le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO` | `"KO - rechercherTous() - le Gateway a retourné Null"` |
+| `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null"` |
+| `MESSAGE_RECHERCHER_TOUS_VIDE` | `"OK - La recherche n'a retourné aucun résutat."` |
+| `MESSAGE_RECHERCHER_TOUS_OK` | `"OK - La recherche a retourné des résultats."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
 | `MESSAGE_MODIF_KO` | `"KO - la modification a retourné null : "` |
@@ -634,7 +640,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 | Bloc | Nombre de tests | Méthodes de test |
 |---|---:|---|
 | `creer` | 4 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
-| `rechercherTous` | 3 | `testRechercherTous`<br>`testRechercherTousOkAvecPreuveBd`<br>`testRechercherTousVide` |
+| `rechercherTous` | 2 | `testRechercherTousVide`<br>`testRechercherTousNominalAvecPreuveStockage` |
 | `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveBd`<br>`testRechercherTousStringVide` |
 | `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
 | `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOkAvecPreuveBd` |

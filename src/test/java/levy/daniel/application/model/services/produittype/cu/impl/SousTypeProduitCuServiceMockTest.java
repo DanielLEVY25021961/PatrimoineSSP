@@ -3218,9 +3218,10 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} ;</li>
 	 * <li>filtre les éléments {@code null} ;</li>
-	 * <li>trie les objets métier ;</li>
+	 * <li>trie les objets métier par parent puis par libellé ;</li>
 	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
-	 * <li>dédoublonne la réponse DTO ;</li>
+	 * <li>dédoublonne un même couple parent / libellé ;</li>
+	 * <li>conserve un même libellé rattaché à deux parents différents ;</li>
 	 * <li>positionne exactement
 	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_OK} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
@@ -3236,24 +3237,32 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier non null ;
+		 * - trois objets métier non null répartis entre deux parents ;
 		 * - un élément null à filtrer ;
-		 * - un doublon à dédoublonner côté DTO.
+		 * - un doublon du même couple parent / libellé à dédoublonner ;
+		 * - le même libellé sous deux parents différents à conserver.
 		 */
-		final TypeProduit parent = new TypeProduit(BAZAR);
-		parent.setIdTypeProduit(1L);
+		final TypeProduit parentBazar = new TypeProduit(BAZAR);
+		parentBazar.setIdTypeProduit(1L);
+
+		final TypeProduit parentTourisme = new TypeProduit(TOURISME);
+		parentTourisme.setIdTypeProduit(2L);
 		
-		final SousTypeProduit stpVetement 
-			= new SousTypeProduit(VETEMENT, parent);
-		stpVetement.setIdSousTypeProduit(2L);
+		final SousTypeProduit stpVetementBazar
+			= new SousTypeProduit(VETEMENT, parentBazar);
+		stpVetementBazar.setIdSousTypeProduit(2L);
 		
-		final SousTypeProduit stpOutillage 
-			= new SousTypeProduit(OUTILLAGE, parent);
-		stpOutillage.setIdSousTypeProduit(1L);
+		final SousTypeProduit stpOutillageTourisme
+			= new SousTypeProduit(OUTILLAGE, parentTourisme);
+		stpOutillageTourisme.setIdSousTypeProduit(3L);
 		
-		final SousTypeProduit stpOutillageDoublon 
-			= new SousTypeProduit(OUTILLAGE, parent);
-		stpOutillageDoublon.setIdSousTypeProduit(1L);
+		final SousTypeProduit stpOutillageBazar
+			= new SousTypeProduit(OUTILLAGE, parentBazar);
+		stpOutillageBazar.setIdSousTypeProduit(1L);
+		
+		final SousTypeProduit stpOutillageBazarDoublon
+			= new SousTypeProduit(OUTILLAGE, parentBazar);
+		stpOutillageBazarDoublon.setIdSousTypeProduit(1L);
 		
 		/* 
 		 * Mocke les services Gateway et les passe 
@@ -3269,11 +3278,16 @@ public class SousTypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.rechercherTous() retourne des objets métier dans un ordre
-		 * non trié, avec un null et un doublon côté DTO.
+		 * non trié, avec un null, un doublon réel et un même libellé
+		 * rattaché à deux parents différents.
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(
-						stpVetement, null, stpOutillage, stpOutillageDoublon));
+						stpVetementBazar,
+						null,
+						stpOutillageTourisme,
+						stpOutillageBazar,
+						stpOutillageBazarDoublon));
 
 		/* ACT :
 		 * exécute la recherche exhaustive via le SERVICE METIER UC.
@@ -3284,25 +3298,26 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ASSERT */
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les objets métier non null convertis en OutputDTO ;
-		 * - est triée par parent puis libellé métier ;
-		 * - est dédoublonnée ;
+		 * - filtre l'élément null ;
+		 * - dédoublonne le même couple parent / libellé ;
+		 * - conserve le même libellé sous deux parents différents ;
+		 * - est triée par parent puis par libellé métier ;
 		 * - expose le message utilisateur de succès.
 		 */
 		assertThat(retour).isNotNull();
-		assertThat(retour).hasSize(2);
-
-		assertThat(retour)
-				.extracting(OutputDTO::getSousTypeProduit)
-				.containsExactly(OUTILLAGE, VETEMENT);
+		assertThat(retour).hasSize(3);
 
 		assertThat(retour)
 				.extracting(OutputDTO::getTypeProduit)
-				.containsExactly(BAZAR, BAZAR);
+				.containsExactly(BAZAR, BAZAR, TOURISME);
+
+		assertThat(retour)
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(OUTILLAGE, VETEMENT, OUTILLAGE);
 
 		assertThat(retour)
 				.extracting(OutputDTO::getIdSousTypeProduit)
-				.containsExactly(1L, 2L);
+				.containsExactly(1L, 2L, 3L);
 
 		assertThat(message)
 				.isEqualTo(
