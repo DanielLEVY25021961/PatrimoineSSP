@@ -200,6 +200,25 @@ public interface TypeProduitICuService {
 	
 	/**
 	 * <div>
+	 * <p>"KO - rechercherTousString()
+	 * - le Gateway a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO
+		= "KO - rechercherTousString() - le Gateway a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - rechercherTousString()
+	 * - la préparation de la réponse utilisateur a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO
+		= "KO - rechercherTousString() "
+				+ "- la préparation de la réponse utilisateur a jeté Exception";
+
+	/**
+	 * <div>
 	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>
 	 * </div>
 	 */
@@ -647,23 +666,29 @@ public interface TypeProduitICuService {
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>Délègue la recherche exhaustive au composant GATEWAY.</li>
+	 * <li>Délègue la recherche exhaustive au composant GATEWAY
+	 * via {@code gateway.rechercherTous()}.</li>
+	 * <li>Si le GATEWAY jette une Exception, positionne
+	 * {@link #getMessage()} à
+	 * {@link #MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO}
+	 * + message sécurisé, émet un LOG et propage
+	 * l'Exception provenant du GATEWAY.</li>
 	 * <li>Si le GATEWAY retourne {@code null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
 	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Sinon, retourne une {@link List} de {@link String}
-	 * jamais {@code null}, éventuellement vide.</li>
-	 * <li>La liste retournée ne contient que des libellés non blank,
-	 * dédoublonnés côté UC si nécessaire.</li>
+	 * <li>Filtre les objets métier {@code null}, trie les objets métier,
+	 * extrait uniquement les libellés non blank
+	 * et les dédoublonne en conservant leur ordre.</li>
+	 * <li>Si la préparation de la réponse utilisateur jette une Exception,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO}
+	 * + message sécurisé, émet un LOG et propage l'Exception.</li>
 	 * <li>Si la liste résultat est vide, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
 	 * <li>Si la liste résultat n'est pas vide, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
-	 * <li>En cas d'échec technique remonté par le GATEWAY
-	 * ou par la préparation de la réponse utilisateur,
-	 * positionne un message utilisateur technique cohérent
-	 * puis propage une exception circonstanciée
-	 * conforme à l'implémentation.</li>
+	 * <li>Retourne une {@link List} de {@link String}
+	 * jamais {@code null}, éventuellement vide.</li>
 	 * </ul>
 	 * </div>
 	 *

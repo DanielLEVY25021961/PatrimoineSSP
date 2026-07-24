@@ -524,10 +524,10 @@ Le scénario nominal de `rechercherTousString()` est :
 1. demander au `GATEWAY` la liste complète des `SousTypeProduit` ;
 2. sécuriser le retour technique du stockage ;
 3. retirer les éventuels éléments `null` ;
-4. trier les objets métier ;
+4. trier les objets métier selon leur ordre naturel `[TypeProduit, SousTypeProduit]` ;
 5. extraire les libellés exploitables ;
 6. retirer les libellés blank ;
-7. dédoublonner les libellés en conservant l’ordre utile ;
+7. dédoublonner les libellés en conservant l’ordre issu du tri métier ;
 8. positionner le message observable ;
 9. retourner une liste exploitable par la couche appelante.
 
@@ -540,13 +540,25 @@ Le scénario nominal de `rechercherTousString()` est :
 
 - si le `GATEWAY` lève une exception technique avec message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+    `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO + TIRET_ESPACE + message`,
   - émet un LOG,
   - propage l’exception ;
 
 - si le `GATEWAY` lève une exception technique sans message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+    `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si la préparation de la réponse utilisateur lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception ;
+
+- si la préparation de la réponse utilisateur lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
   - émet un LOG,
   - propage l’exception ;
 
@@ -573,9 +585,15 @@ Le scénario nominal de `rechercherTousString()` est :
   ne doivent jamais fuiter jusqu’à l’appelant ;
 - les libellés retournés doivent correspondre
   à des objets métier réellement accessibles via le `GATEWAY` ;
-- le dédoublonnage doit conserver un ordre stable
-  pour la couche appelante ;
-- aucun libellé blank ne doit être exposé.
+- le tri préalable doit respecter
+  l’identité métier `[TypeProduit, SousTypeProduit]` ;
+- deux `SousTypeProduit` homonymes rattachés à deux parents distincts
+  restent deux objets métier distincts dans le stockage ;
+- leur projection en `String` peut être dédoublonnée côté UC ;
+- le dédoublonnage String doit conserver l’ordre issu du tri métier ;
+- aucun libellé blank ne doit être exposé ;
+- un échec de préparation côté UC
+  ne doit jamais être attribué au `GATEWAY`.
 
 ## 13) Contrat spécifique de `rechercherTousParPage(...)`
 
@@ -1366,11 +1384,20 @@ Pour `rechercherTous()`, les tests Mock doivent verrouiller au minimum :
   `MESSAGE_RECHERCHER_TOUS_OK`.
 
 Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
-- le cas `gateway.rechercherTous() == null` ;
-- le cas exception technique avec message ;
-- le cas exception technique sans message ;
-- le cas résultats vides après filtrage ;
-- le cas nominal avec filtrage, tri, suppression des blank et dédoublonnage.
+- le cas `gateway.rechercherTous() == null` avec
+  `ExceptionStockageVide` et `MESSAGE_STOCKAGE_NULL` ;
+- le cas exception du `GATEWAY` avec message et
+  `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO + TIRET_ESPACE + message` ;
+- le cas exception du `GATEWAY` sans message et
+  `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+- le cas exception de préparation avec message et
+  `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO + TIRET_ESPACE + message` ;
+- le cas exception de préparation sans message et
+  `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+- le cas résultats vides après filtrage des objets `null` ;
+- le cas résultats vides après suppression des libellés blank ;
+- le cas nominal avec filtrage, tri `[TypeProduit, SousTypeProduit]`,
+  suppression des blank, dédoublonnage String et message exact.
 
 Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas `pRequetePage == null` ;
@@ -1490,12 +1517,19 @@ Pour `rechercherTous()`, le test d’intégration cible doit, à terme, prouver 
 - le cas stockage vide avec `MESSAGE_RECHERCHER_TOUS_VIDE` ;
 - le cas stockage non vide avec `MESSAGE_RECHERCHER_TOUS_OK`.
 
-Pour `rechercherTousString()`, le test d’intégration cible doit, à terme, prouver :
-- la présence des libellés créés dans la réponse ;
-- l’absence de doublon dans la réponse ;
-- l’absence de libellé blank dans la réponse ;
-- la présence physique dans le stockage des lignes correspondant aux libellés vérifiés ;
-- le cas stockage vide avec `MESSAGE_RECHERCHE_VIDE`.
+Pour `rechercherTousString()`, l’intégration doit prouver :
+- le cas stockage vide réel avant et après l’appel,
+  avec liste vide et `MESSAGE_RECHERCHE_VIDE` ;
+- le cas nominal avec des couples `[TypeProduit, SousTypeProduit]`
+  réellement présents dans le stockage ;
+- la conservation de deux sous-types homonymes
+  rattachés à deux parents distincts ;
+- la correspondance exacte entre la liste String retournée
+  et les libellés lus directement dans le stockage,
+  après ordre métier puis dédoublonnage String ;
+- l’absence de doublon et de libellé blank dans la réponse ;
+- le message exact `MESSAGE_RECHERCHE_OK` ;
+- l’absence de modification du stockage par cette lecture.
 
 Pour `rechercherTousParPage(...)`, le test d’intégration cible doit, à terme, prouver :
 - la cohérence entre la pagination retournée et `count()` ;
@@ -1609,6 +1643,8 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null"` |
 | `MESSAGE_RECHERCHER_TOUS_VIDE` | `"OK - La recherche n'a retourné aucun résutat."` |
 | `MESSAGE_RECHERCHER_TOUS_OK` | `"OK - La recherche a retourné des résultats."` |
+| `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO` | `"KO - rechercherTousString() - le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO` | `"KO - rechercherTousString() " + "- la préparation de la réponse utilisateur a jeté Exception"` |
 | `MESSAGE_STOCKAGE_NULL` | `"Le stockage n'a pas retourné d'enregistrements (null)."` |
 | `MESSAGE_PAGEABLE_NULL` | `"l'indication de page demandée ne doit pas être null."` |
 | `MESSAGE_PARAM_NULL` | `"Le paramètre ne doit pas être null."` |
@@ -1731,6 +1767,13 @@ Lorsqu’une exception technique est sécurisée par `MSG_ERREUR_NON_SPECIFIEE`,
 2. exception sans message.
 
 Ces scénarios sont distincts parce que le message observable diffère.
+
+Pour `rechercherTousString()`, les zones techniques doivent également rester distinctes :
+
+- échec de `gateway.rechercherTous()` : `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO` ;
+- échec de préparation de la réponse String côté UC : `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO`.
+
+Un échec de préparation côté UC ne doit jamais être présenté comme une panne du `GATEWAY`.
 
 #### A.4.3 Retours techniques incohérents
 

@@ -448,7 +448,91 @@ la preuve d’intégration doit au minimum démontrer :
 - ou l’absence réelle de donnée correspondante ;
 - et la cohérence du message final.
 
-## 12) Règle spécifique à `getMessage()`
+## 12) Contrat spécifique de `rechercherTousString()`
+
+Signature cible :
+
+- `List<String> rechercherTousString() throws Exception;`
+
+### 12.1) Scénario nominal attendu
+
+Le scénario nominal de `rechercherTousString()` est :
+
+1. appeler une seule fois `gateway.rechercherTous()` ;
+2. vérifier que la liste retournée par le `GATEWAY` n'est pas `null` ;
+3. retirer les éventuels `TypeProduit` `null` ;
+4. trier les `TypeProduit` selon leur ordre métier ;
+5. extraire les libellés avec `TypeProduit.getTypeProduit()` ;
+6. retirer les libellés `null` ou blank ;
+7. dédoublonner les libellés en conservant l'ordre issu du tri ;
+8. positionner le message observable après préparation complète de la liste ;
+9. retourner une liste de `String` non `null`.
+
+### 12.2) Cas observables attendus
+
+- si `gateway.rechercherTous()` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - émet un LOG ;
+  - lève une `ExceptionStockageVide`
+    portant exactement `MESSAGE_STOCKAGE_NULL` ;
+
+- si `gateway.rechercherTous()` lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si `gateway.rechercherTous()` lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si `TypeProduit.getTypeProduit()` lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si `TypeProduit.getTypeProduit()` lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si la liste devient vide après retrait des objets `null` :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si tous les libellés extraits sont `null` ou blank :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si des libellés non blank sont disponibles :
+  - retourne une liste non `null` ;
+  - trie les libellés selon l'ordre métier des `TypeProduit` ;
+  - supprime les doublons ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 12.3) Garanties spécifiques de `rechercherTousString()`
+
+- la méthode ne retourne jamais `null` lorsque le scénario aboutit ;
+- elle ne retourne aucun élément `null` ;
+- elle ne retourne aucun libellé blank ;
+- elle ne retourne aucun doublon ;
+- elle ne positionne le message de succès ou d'absence de résultat
+  qu'après préparation complète de la liste ;
+- elle ne retourne aucune liste partiellement préparée
+  lorsqu'une exception survient ;
+- les libellés retournés proviennent des `TypeProduit`
+  effectivement fournis par le `GATEWAY` ;
+- l'appel à `rechercherTousString()` n'écrit rien dans le stockage.
+
+## 13) Règle spécifique à `getMessage()`
 
 La méthode `getMessage()` est un **getter du message courant local**
 du SERVICE METIER UC.
@@ -480,7 +564,7 @@ Les tests Mock et Intégration doivent verrouiller :
 - la restitution d’un message de succès ;
 - la règle **« le dernier message gagne »**.
 
-## 13) Ordre de traitement contractuel d’une méthode UC
+## 14) Ordre de traitement contractuel d’une méthode UC
 
 Pour toute méthode UC,
 l’ordre de travail obligatoire est :
@@ -494,7 +578,7 @@ l’ordre de travail obligatoire est :
 Aucune étape ultérieure ne doit être engagée
 si l’étape précédente n’est pas stabilisée.
 
-## 14) Règle de non-régression documentaire
+## 15) Règle de non-régression documentaire
 
 Dès qu’une méthode UC a été remise au carré :
 
@@ -506,7 +590,7 @@ Dès qu’une méthode UC a été remise au carré :
 - aucune signature documentée ne doit être redégradée
   en type brut ou en forme abrégée.
 
-## 15) Objectif de cette sacralisation
+## 16) Objectif de cette sacralisation
 
 L’objectif n’est pas seulement de documenter les méthodes,
 mais de rendre impossible :
@@ -641,7 +725,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 |---|---:|---|
 | `creer` | 4 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
 | `rechercherTous` | 2 | `testRechercherTousVide`<br>`testRechercherTousNominalAvecPreuveStockage` |
-| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveBd`<br>`testRechercherTousStringVide` |
+| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveStockage`<br>`testRechercherTousStringVide` |
 | `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
 | `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOkAvecPreuveBd` |
 | `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |

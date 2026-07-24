@@ -620,7 +620,9 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	public List<String> rechercherTousString() throws Exception {
 
 		/*
-		 * Appelle le GATEWAY pour lire tous les SousTypeProduit.
+		 * Délègue au GATEWAY la recherche exhaustive dans le stockage.
+		 * Toute anomalie technique de recherche est transformée
+		 * en message utilisateur rationalisé côté UC.
 		 */
 		final List<SousTypeProduit> records;
 
@@ -629,34 +631,31 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			records = this.gateway.rechercherTous();
 
 		} catch (final Exception e) {
-
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
 
 		/*
-		 * Si le stockage retourne null :
-		 * émet MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO 
-		 * + LOG + ExceptionStockageVide.
+		 * Sécurise le contrat observable du UC :
+		 * le stockage ne doit pas retourner null.
 		 */
 		if (records == null) {
-			
+
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO,
+					MESSAGE_STOCKAGE_NULL,
 					METHODE_RECHERCHER_TOUS_STRING,
-					new ExceptionStockageVide(
-							MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO));
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
 		/*
-		 * Prépare la liste finale des libellés :
-		 * retrait des null, tri métier,
+		 * Prépare la réponse utilisateur complète :
+		 * retrait des nulls, tri métier,
 		 * extraction des libellés non blank,
 		 * puis dédoublonnage en conservant l'ordre.
 		 */
@@ -664,8 +663,9 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 		try {
 
+			/* filtre les null et trie. */
 			final List<SousTypeProduit> recordsNonNullTries
-				= this.filtrerEtTrier(records);
+					= this.filtrerEtTrier(records);
 
 			final Set<String> uniques = new LinkedHashSet<String>();
 
@@ -689,20 +689,19 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			libelles = new ArrayList<String>(uniques);
 
 		} catch (final Exception e) {
-
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
 
 		/*
-		 * Positionne le message observable
-		 * après préparation complète de la réponse.
+		 * Le message observable n'est positionné
+		 * qu'après préparation complète de la réponse utilisateur.
 		 */
 		if (libelles.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
@@ -716,7 +715,6 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 */
 		return libelles;
 	}
-	
 
 
 	/**

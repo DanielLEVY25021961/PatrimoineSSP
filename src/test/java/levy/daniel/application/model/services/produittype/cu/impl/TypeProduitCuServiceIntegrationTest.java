@@ -282,6 +282,12 @@ public class TypeProduitCuServiceIntegrationTest {
 	 */
 	public static final String TAG_RECHERCHER_TOUS = "cu-it-RechercherTous";
 
+	/**
+	 * "cu-it-RechercherTousString"
+	 */
+	public static final String TAG_RECHERCHER_TOUS_STRING
+		= "cu-it-RechercherTousString";
+
 	// ============================ DN ==================================//
 		
 	/**
@@ -321,6 +327,20 @@ public class TypeProduitCuServiceIntegrationTest {
 	public static final String DN_RECHERCHER_TOUS_NOMINAL
 		= "rechercherTous(ok) : MESSAGE_RECHERCHER_TOUS_OK "
 				+ "+ créations présentes dans le stockage";
+
+	/**
+	 * "rechercherTousString(vide) : liste vide + MESSAGE_RECHERCHE_VIDE + stockage vide"
+	 */
+	public static final String DN_RECHERCHER_TOUS_STRING_VIDE
+		= "rechercherTousString(vide) : liste vide "
+				+ "+ MESSAGE_RECHERCHE_VIDE + stockage vide";
+
+	/**
+	 * "rechercherTousString(ok) : MESSAGE_RECHERCHE_OK + libellés exacts du stockage + stockage inchangé"
+	 */
+	public static final String DN_RECHERCHER_TOUS_STRING_NOMINAL
+		= "rechercherTousString(ok) : MESSAGE_RECHERCHE_OK "
+				+ "+ libellés exacts du stockage + stockage inchangé";
 
 	// ========================== SELECT ================================//
 	
@@ -1090,124 +1110,205 @@ public class TypeProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : doit retourner une liste non nulle contenant les libellés créés.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("rechercherTousString() : retourne une liste non nulle contenant les libellés créés")
-	public void testRechercherTousString() throws Exception {
-
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_EPSILON));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_ZETA));
-
-		final List<String> libelles = this.service.rechercherTousString();
-
-		assertThat(libelles).isNotNull();
-		assertThat(libelles).contains(IT_EPSILON, IT_ZETA);
-		
-	}// __________________________________________________________________
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>rechercherTousString() : scénario nominal béton avec preuve BD.</p>
+	 * <p>garantit que rechercherTousString(vide) :</p>
 	 * <ul>
-	 * <li>retourne une liste non {@code null}</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>contient les libellés créés</li>
-	 * <li>n'expose aucun doublon</li>
-	 * <li>reste cohérent avec la présence physique en base</li>
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>ne crée aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@Sql(
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName(DN_RECHERCHER_TOUS_STRING_VIDE)
 	@Test
-	@DisplayName("rechercherTousString(ok) : message exact + contient les créations + sans doublon + preuve BD")
-	public void testRechercherTousStringOkAvecPreuveBd() throws Exception {
+	public void testRechercherTousStringVide() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
+		/* ARRANGE :
+		 * contrôle d'abord que le stockage ne contient aucun TypeProduit.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
+
+		/* ACT :
+		 * exécute la recherche exhaustive String via le SERVICE UC.
+		 */
+		final List<String> libelles = this.service.rechercherTousString();
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * garantit que rechercherTousString() retourne
+		 * une liste non null et vide.
+		 */
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).isEmpty();
+
+		/* Garantit que le message utilisateur est celui
+		 * de la branche rechercherTousString() vide.
+		 */
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* Garantit que l'appel n'a rien écrit dans le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(0L);
+		
+	} // __________________________________________________________________
+	
+	
+	
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTousString(OK) :</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>retourne exactement les libellés présents dans le stockage,
+	 * triés selon l'ordre métier et sans doublon ;</li>
+	 * <li>contient les créations réalisées par le test ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DN_RECHERCHER_TOUS_STRING_NOMINAL)
+	@Test
+	public void testRechercherTousStringNominalAvecPreuveStockage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * prépare deux TypeProduit non seedés et mémorise le volume
+		 * du stockage avant création.
+		 */
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_EPSILON))
+				.isEqualTo(0L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_ZETA))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT :
+		 * crée réellement deux TypeProduit dans le stockage.
+		 */
 		final OutputDTO creeEpsilon = this.service.creer(
 				new TypeProduitDTO.InputDTO(IT_EPSILON));
 		final OutputDTO creeZeta = this.service.creer(
 				new TypeProduitDTO.InputDTO(IT_ZETA));
 
+		/*
+		 * Synchronise explicitement le contexte de persistance JPA
+		 * avant les preuves SQL directes.
+		 */
+		this.entityManager.flush();
+
+		/* ASSERT :
+		 * garantit que les deux créations retournent des DTO persistants.
+		 */
 		assertThat(creeEpsilon).isNotNull();
+		assertThat(creeEpsilon.getIdTypeProduit()).isNotNull();
+		assertThat(creeEpsilon.getTypeProduit()).isEqualTo(IT_EPSILON);
+
 		assertThat(creeZeta).isNotNull();
+		assertThat(creeZeta.getIdTypeProduit()).isNotNull();
+		assertThat(creeZeta.getTypeProduit()).isEqualTo(IT_ZETA);
 
-		/* ======================= ACT ======================= */
+		/* Garantit directement dans le stockage
+		 * que les deux créations existent avant la recherche exhaustive.
+		 */
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_EPSILON))
+				.isEqualTo(1L);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_ZETA))
+				.isEqualTo(1L);
+
+		final Long countAvantRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvantRecherche).isNotNull();
+		assertThat(countAvantRecherche).isEqualTo(countAvant + 2L);
+
+		final List<String> libellesStockesAvantRecherche
+				= this.jdbcTemplate.queryForList(
+						"SELECT TYPE_PRODUIT FROM TYPES_PRODUIT",
+						String.class);
+
+		libellesStockesAvantRecherche.sort(String.CASE_INSENSITIVE_ORDER);
+
+		/* ACT :
+		 * exécute la recherche exhaustive String via le SERVICE UC.
+		 */
 		final List<String> libelles = this.service.rechercherTousString();
+		final String message = this.service.getMessage();
 
-		/* ===================== ASSERT ====================== */
+		/* ASSERT :
+		 * garantit que la réponse correspond exactement
+		 * aux libellés présents dans le stockage avant la lecture.
+		 */
 		assertThat(libelles).isNotNull();
+		assertThat(libelles)
+				.containsExactlyElementsOf(libellesStockesAvantRecherche);
 		assertThat(libelles).contains(IT_EPSILON, IT_ZETA);
 		assertThat(libelles).doesNotHaveDuplicates();
-		assertThat(libelles).allMatch(libelle -> libelle != null && !libelle.isBlank());
+		assertThat(libelles)
+				.allMatch(libelle -> libelle != null && !libelle.isBlank());
 
-		assertThat(this.service.getMessage())
+		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
-		/* preuve BD : les lignes créées existent physiquement. */
-		assertThat(this.compterTypeProduitEnBase(creeEpsilon.getIdTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(creeEpsilon.getIdTypeProduit()))
-				.isEqualTo(IT_EPSILON);
+		/* Garantit que la lecture n'a pas modifié le stockage. */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
-		assertThat(this.compterTypeProduitEnBase(creeZeta.getIdTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(creeZeta.getIdTypeProduit()))
-				.isEqualTo(IT_ZETA);
+		assertThat(countApresRecherche).isNotNull();
+		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
 
-		assertThat(this.compterTypeProduitParLibelleEnBase(IT_EPSILON))
-				.isEqualTo(1L);
-		assertThat(this.compterTypeProduitParLibelleEnBase(IT_ZETA))
-				.isEqualTo(1L);
+		final List<String> libellesStockesApresRecherche
+				= this.jdbcTemplate.queryForList(
+						"SELECT TYPE_PRODUIT FROM TYPES_PRODUIT",
+						String.class);
 
-	} // __________________________________________________________________
+		libellesStockesApresRecherche.sort(String.CASE_INSENSITIVE_ORDER);
 
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTousString() : stockage vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>reste cohérent avec une base physiquement vide</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Sql(
-			scripts = "classpath:/truncate-test.sql",
-			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-	@DisplayName("rechercherTousString(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + base vide")
-	public void testRechercherTousStringVide() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		assertThat(this.service.count()).isEqualTo(0L);
-
-		/* ======================= ACT ======================= */
-		final List<String> libelles = this.service.rechercherTousString();
-
-		/* ===================== ASSERT ====================== */
-		assertThat(libelles).isNotNull();
-		assertThat(libelles).isEmpty();
-
-		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(libellesStockesApresRecherche)
+				.containsExactlyElementsOf(libellesStockesAvantRecherche);
 
 	} // __________________________________________________________________
 
-
-    
     // ================== rechercherTousParPage ===========================
     
     

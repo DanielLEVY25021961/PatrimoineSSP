@@ -201,6 +201,30 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	public static final String LIME = "Lime";
 
 	/**
+	 * Parent IT rechercherTousString A : "IT-STP-STRING-PARENT-A".
+	 */
+	public static final String IT_RECHERCHER_TOUS_STRING_PARENT_A
+		= "IT-STP-STRING-PARENT-A";
+
+	/**
+	 * Parent IT rechercherTousString B : "IT-STP-STRING-PARENT-B".
+	 */
+	public static final String IT_RECHERCHER_TOUS_STRING_PARENT_B
+		= "IT-STP-STRING-PARENT-B";
+
+	/**
+	 * Libellé commun IT rechercherTousString : "IT-STP-STRING-COMMUN".
+	 */
+	public static final String IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN
+		= "IT-STP-STRING-COMMUN";
+
+	/**
+	 * Libellé unique IT rechercherTousString : "IT-STP-STRING-UNIQUE".
+	 */
+	public static final String IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE
+		= "IT-STP-STRING-UNIQUE";
+
+	/**
 	 * "Raboteuse".
 	 */
 	public static final String RABOTEUSE = "Raboteuse";
@@ -295,6 +319,12 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 */
 	public static final String TAG_RECHERCHER_TOUS
 		= "cu-it-RechercherTous";
+
+	/**
+	 * "cu-it-RechercherTousString".
+	 */
+	public static final String TAG_RECHERCHER_TOUS_STRING
+		= "cu-it-RechercherTousString";
 	
 	/**
 	 * "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé".
@@ -351,12 +381,38 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	public static final String DN_RECHERCHER_TOUS_NOMINAL
 		= "rechercherTous(ok) : MESSAGE_RECHERCHER_TOUS_OK "
 				+ "+ créations présentes dans le stockage";
+
+	/**
+	 * "rechercherTousString(vide) : liste vide + MESSAGE_RECHERCHE_VIDE + stockage vide".
+	 */
+	public static final String DN_RECHERCHER_TOUS_STRING_VIDE
+		= "rechercherTousString(vide) : liste vide "
+				+ "+ MESSAGE_RECHERCHE_VIDE + stockage vide";
+
+	/**
+	 * "rechercherTousString(ok) : MESSAGE_RECHERCHE_OK + libellés exacts du stockage + stockage inchangé".
+	 */
+	public static final String DN_RECHERCHER_TOUS_STRING_NOMINAL
+		= "rechercherTousString(ok) : MESSAGE_RECHERCHE_OK "
+				+ "+ libellés exacts du stockage + stockage inchangé";
 	
 	/**
 	 * "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT".
 	 */
 	public static final String SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT
 		= "SELECT COUNT(*) FROM SOUS_TYPES_PRODUIT";
+
+	/**
+	 * Sélectionne les libellés des SousTypeProduit dans l'ordre métier
+	 * [TypeProduit, SousTypeProduit].
+	 */
+	public static final String SELECT_LIBELLES_SOUS_TYPES_PRODUIT_ORDONNES
+		= "SELECT stp.SOUS_TYPE_PRODUIT "
+				+ "FROM SOUS_TYPES_PRODUIT stp "
+				+ "INNER JOIN TYPES_PRODUIT tp "
+				+ "ON stp.TYPE_PRODUIT = tp.ID_TYPE_PRODUIT "
+				+ "ORDER BY LOWER(tp.TYPE_PRODUIT), "
+				+ "LOWER(stp.SOUS_TYPE_PRODUIT)";
 
 	// *************************** ATTRIBUTS *******************************/
 	
@@ -1349,142 +1405,268 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	
 
-	// ===================== rechercherTousString =========================
-	
-	
-	
-	/**
-	 * <div>
-	 * <p>rechercherTousString() : doit retourner une liste non nulle contenant les libellés créés.</p>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("rechercherTousString() : retourne une liste non nulle contenant les libellés créés")
-	public void testRechercherTousString() throws Exception {
-
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(OUTIL));
-
-		this.service.creer(new SousTypeProduitDTO.InputDTO(OUTIL, SCIE));
-		this.service.creer(new SousTypeProduitDTO.InputDTO(OUTIL, LIME));
-
-		final List<String> libelles = this.service.rechercherTousString();
-
-		assertThat(libelles).isNotNull();
-		assertThat(libelles).contains(SCIE, LIME);
-
-	} // __________________________________________________________________
+    // ===================== rechercherTousString =========================
 
 
 
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : scénario nominal béton avec preuve stockage.</p>
+	 * <p>garantit que rechercherTousString(vide) :</p>
 	 * <ul>
-	 * <li>retourne une liste non {@code null}</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>contient les libellés créés</li>
-	 * <li>n'expose aucun doublon</li>
-	 * <li>n'expose aucun libellé blank</li>
-	 * <li>reste cohérent avec la présence physique dans le stockage</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>ne crée aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
-	@Test
-	@DisplayName("rechercherTousString(ok) : message exact + contient les créations + sans doublon + preuve stockage")
-	public void testRechercherTousStringOkAvecPreuveStockage() throws Exception {
-
-		/* ===================== ARRANGE ===================== */
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(OUTIL));
-
-		final OutputDTO creeEpsilon = this.service.creer(
-				new SousTypeProduitDTO.InputDTO(OUTIL, SCIE));
-		final OutputDTO creeZeta = this.service.creer(
-				new SousTypeProduitDTO.InputDTO(OUTIL, LIME));
-
-		assertThat(creeEpsilon).isNotNull();
-		assertThat(creeZeta).isNotNull();
-
-		/* ======================= ACT ======================= */
-		final List<String> libelles = this.service.rechercherTousString();
-
-		/* ===================== ASSERT ====================== */
-		assertThat(libelles).isNotNull();
-		assertThat(libelles).contains(SCIE, LIME);
-		assertThat(libelles).doesNotHaveDuplicates();
-		assertThat(libelles).allMatch(libelle -> libelle != null && !libelle.isBlank());
-
-		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
-
-		/* preuve stockage : les lignes créées existent physiquement. */
-		assertThat(this.compterSousTypeProduitDansStockage(creeEpsilon.getIdSousTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleSousTypeProduitDansStockage(creeEpsilon.getIdSousTypeProduit()))
-				.isEqualTo(SCIE);
-		assertThat(this.lireParentSousTypeProduitDansStockage(creeEpsilon.getIdSousTypeProduit()))
-				.isEqualTo(OUTIL);
-
-		assertThat(this.compterSousTypeProduitDansStockage(creeZeta.getIdSousTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleSousTypeProduitDansStockage(creeZeta.getIdSousTypeProduit()))
-				.isEqualTo(LIME);
-		assertThat(this.lireParentSousTypeProduitDansStockage(creeZeta.getIdSousTypeProduit()))
-				.isEqualTo(OUTIL);
-
-		assertThat(this.compterSousTypeProduitParCoupleDansStockage(OUTIL, SCIE))
-				.isEqualTo(1L);
-		assertThat(this.compterSousTypeProduitParCoupleDansStockage(OUTIL, LIME))
-				.isEqualTo(1L);
-
-	} // __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTousString() : stockage vide.</p>
-	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
-	 * <li>reste cohérent avec un stockage physiquement vide</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@Sql(
 			scripts = "classpath:/truncate-test.sql",
 			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-	@DisplayName("rechercherTousString(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE + stockage vide")
+	@DisplayName(DN_RECHERCHER_TOUS_STRING_VIDE)
+	@Test
 	public void testRechercherTousStringVide() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		assertThat(this.service.count()).isEqualTo(0L);
-		assertThat(this.jdbcTemplate.queryForObject(
+		/* ARRANGE :
+		 * contrôle d'abord que le stockage ne contient
+		 * aucun SousTypeProduit.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
 				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
-				Long.class)).isEqualTo(0L);
+				Long.class);
 
-		/* ======================= ACT ======================= */
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
+
+		/* ACT :
+		 * exécute la recherche exhaustive String via le SERVICE UC.
+		 */
 		final List<String> libelles = this.service.rechercherTousString();
+		final String message = this.service.getMessage();
 
-		/* ===================== ASSERT ====================== */
+		/* ASSERT :
+		 * garantit que rechercherTousString() retourne
+		 * une liste non null et vide.
+		 */
 		assertThat(libelles).isNotNull();
 		assertThat(libelles).isEmpty();
 
-		assertThat(this.service.getMessage())
+		assertThat(message)
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		/* Garantit que l'appel n'a rien écrit dans le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(0L);
+		assertThat(countApres).isEqualTo(countAvant);
 
 	} // __________________________________________________________________
 
 
-    
+
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTousString(OK) :</p>
+	 * <ul>
+	 * <li>retourne une liste non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>retourne exactement les libellés présents dans le stockage,
+	 * ordonnés selon l'ordre métier [TypeProduit, SousTypeProduit],
+	 * puis dédoublonnés côté String ;</li>
+	 * <li>conserve dans le stockage deux SousTypeProduit homonymes
+	 * rattachés à deux TypeProduit distincts ;</li>
+	 * <li>n'expose qu'une fois leur libellé commun dans la réponse String ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@DisplayName(DN_RECHERCHER_TOUS_STRING_NOMINAL)
+	@Test
+	public void testRechercherTousStringNominalAvecPreuveStockage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * crée deux parents propres au scénario afin de prouver
+		 * l'identité [TypeProduit, SousTypeProduit].
+		 */
+		final TypeProduitDTO.OutputDTO parentA = this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_PARENT_A));
+		final TypeProduitDTO.OutputDTO parentB = this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_PARENT_B));
+
+		assertThat(parentA).isNotNull();
+		assertThat(parentA.getIdTypeProduit()).isNotNull();
+		assertThat(parentA.getTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_PARENT_A);
+
+		assertThat(parentB).isNotNull();
+		assertThat(parentB.getIdTypeProduit()).isNotNull();
+		assertThat(parentB.getTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_PARENT_B);
+
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(0L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE))
+				.isEqualTo(0L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_B,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* Crée deux homonymes sous deux parents distincts
+		 * et un libellé supplémentaire sous le premier parent.
+		 */
+		final OutputDTO communParentA = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_PARENT_A,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN));
+		final OutputDTO uniqueParentA = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_PARENT_A,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE));
+		final OutputDTO communParentB = this.service.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_PARENT_B,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN));
+
+		this.entityManager.flush();
+
+		assertThat(communParentA).isNotNull();
+		assertThat(communParentA.getIdSousTypeProduit()).isNotNull();
+		assertThat(communParentA.getTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_PARENT_A);
+		assertThat(communParentA.getSousTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN);
+
+		assertThat(uniqueParentA).isNotNull();
+		assertThat(uniqueParentA.getIdSousTypeProduit()).isNotNull();
+		assertThat(uniqueParentA.getTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_PARENT_A);
+		assertThat(uniqueParentA.getSousTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE);
+
+		assertThat(communParentB).isNotNull();
+		assertThat(communParentB.getIdSousTypeProduit()).isNotNull();
+		assertThat(communParentB.getTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_PARENT_B);
+		assertThat(communParentB.getSousTypeProduit())
+				.isEqualTo(IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN);
+
+		/* Prouve directement que les trois identités existent
+		 * dans le stockage avant la recherche.
+		 */
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_B,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(1L);
+
+		final Long countAvantRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvantRecherche).isNotNull();
+		assertThat(countAvantRecherche).isEqualTo(countAvant + 3L);
+
+		/* Construit l'oracle directement depuis le stockage :
+		 * ordre [TypeProduit, SousTypeProduit], filtrage blank,
+		 * puis dédoublonnage String en conservant l'ordre.
+		 */
+		final List<String> libellesStockesAvantRecherche
+				= this.jdbcTemplate.queryForList(
+						SELECT_LIBELLES_SOUS_TYPES_PRODUIT_ORDONNES,
+						String.class);
+
+		final List<String> libellesAttendus
+				= libellesStockesAvantRecherche.stream()
+						.filter(libelle -> libelle != null && !libelle.isBlank())
+						.distinct()
+						.toList();
+
+		/* ACT : exécute la recherche exhaustive String. */
+		final List<String> libelles = this.service.rechercherTousString();
+		final String message = this.service.getMessage();
+
+		/* ASSERT : compare exactement la réponse avec l'oracle stockage. */
+		assertThat(libelles).isNotNull();
+		assertThat(libelles).containsExactlyElementsOf(libellesAttendus);
+		assertThat(libelles)
+				.contains(
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE);
+		assertThat(libelles).doesNotHaveDuplicates();
+		assertThat(libelles.stream()
+				.filter(IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN::equals)
+				.count())
+				.isEqualTo(1L);
+		assertThat(libelles)
+				.allMatch(libelle -> libelle != null && !libelle.isBlank());
+		assertThat(message)
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* Prouve que la lecture n'a modifié ni le volume,
+		 * ni les valeurs, ni les identités présentes dans le stockage.
+		 */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApresRecherche).isNotNull();
+		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
+
+		final List<String> libellesStockesApresRecherche
+				= this.jdbcTemplate.queryForList(
+						SELECT_LIBELLES_SOUS_TYPES_PRODUIT_ORDONNES,
+						String.class);
+
+		assertThat(libellesStockesApresRecherche)
+				.containsExactlyElementsOf(libellesStockesAvantRecherche);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE))
+				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_PARENT_B,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(1L);
+
+	} // __________________________________________________________________
+
+
+
     // ================== rechercherTousParPage ===========================
     
     

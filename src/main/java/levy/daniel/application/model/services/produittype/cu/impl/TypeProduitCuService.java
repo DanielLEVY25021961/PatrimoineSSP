@@ -535,7 +535,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
@@ -593,7 +593,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO + TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_STRING,
 					e);
 		}
