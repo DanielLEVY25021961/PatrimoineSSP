@@ -659,7 +659,8 @@ public interface ProduitICuService {
 	 * <li>demander au composant GATEWAY la liste complète
 	 * des {@link Produit} présents dans le stockage ;</li>
 	 * <li>filtrer les éventuels éléments {@code null}
-	 * et trier les objets métier ;</li>
+	 * et trier les objets métier selon leur ordre naturel
+	 * {@code [SousTypeProduit, Produit]} ;</li>
 	 * <li>convertir la liste métier en
 	 * {@link ProduitDTO.OutputDTO}
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
@@ -683,8 +684,9 @@ public interface ProduitICuService {
 	 * à {@link #MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO},
 	 * émet un LOG et lève une {@code ExceptionStockageVide}.</li>
 	 * </ul>
-	 * <li>Filtre les null et trie la liste d'objets métier 
-	 * retournée par le GATEWAY.</li>
+	 * <li>Filtre les null et trie la liste d'objets métier
+	 * selon l'ordre naturel de {@link Produit} :
+	 * parent direct {@code SousTypeProduit}, puis libellé Produit.</li>
 	 * <li>Convertit la liste d'objets métier en liste d'OutputDTO 
 	 * en dédoublonnant via la méthode private 
 	 * {@code convertirEtDedoublonner(...)}.</li>
@@ -722,6 +724,12 @@ public interface ProduitICuService {
 	 * correspond à l'état métier effectivement accessible
 	 * dans le stockage via le GATEWAY,
 	 * exprimé sous forme de DTO.</li>
+	 * <li>Deux Produits portant le même libellé sous deux
+	 * {@code SousTypeProduit} parents directs distincts
+	 * restent deux résultats distincts.</li>
+	 * <li>Le {@code TypeProduit} est le grand-parent déduit
+	 * du {@code SousTypeProduit} ; il ne constitue jamais
+	 * une troisième composante de l'identité du Produit.</li>
 	 * </ul>
 	 * </div>
 	 *
