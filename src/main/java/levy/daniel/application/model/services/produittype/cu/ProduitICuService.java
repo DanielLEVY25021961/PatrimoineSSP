@@ -751,55 +751,75 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p>Retourne tous les libellés de {@link Produit}
-	 * accessibles dans le stockage.</p>
-	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
+	 * <p style="font-weight:bold;">
+	 * Retourne les libellés des {@link Produit} préparés par
+	 * {@link #rechercherTous()} sous forme de {@link String}.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>déléguer la recherche exhaustive à {@link #rechercherTous()} ;</li>
-	 * <li>extraire de la réponse les libellés Produit exploitables ;</li>
-	 * <li>retirer les éventuels libellés {@code null} ou blank ;</li>
-	 * <li>retourner une liste de {@link String} exploitable
-	 * par la couche appelante.</li>
+	 * <li>déléguer une seule fois la recherche exhaustive
+	 * à {@link #rechercherTous()} ;</li>
+	 * <li>parcourir dans l'ordre la liste non {@code null}
+	 * de {@link ProduitDTO.OutputDTO} préparée par cette méthode ;</li>
+	 * <li>extraire uniquement les libellés Produit non blank ;</li>
+	 * <li>conserver l'ordre et la multiplicité des DTO distincts ;</li>
+	 * <li>retourner une liste exploitable par la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>délègue la recherche exhaustive à {@link #rechercherTous()} ;</li>
-	 * <li>si {@link #rechercherTous()} échoue, propage l'exception
-	 * et conserve le message déjà positionné par cette méthode ;</li>
-	 * <li>si aucun libellé exploitable n'est disponible en sortie,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}
-	 * et retourne une liste vide mais non {@code null} ;</li>
-	 * <li>si au moins un libellé exploitable est disponible,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}
-	 * et retourne la liste des libellés ;</li>
-	 * <li>ne retourne jamais {@code null} lorsque la recherche aboutit.</li>
+	 * <li>Délègue la recherche exhaustive à {@link #rechercherTous()}
+	 * et ne contacte directement aucun GATEWAY.</li>
+	 * <li>Si {@link #rechercherTous()} échoue, propage la même exception
+	 * et conserve exactement le message déjà positionné par cette méthode.</li>
+	 * <li>Si aucun libellé exploitable n'est disponible, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}
+	 * et retourne une liste vide mais non {@code null}.</li>
+	 * <li>Si au moins un libellé exploitable est disponible, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}
+	 * et retourne les libellés dans l'ordre préparé par
+	 * {@link #rechercherTous()}.</li>
+	 * <li>Ne réalise aucun dédoublonnage supplémentaire au niveau String :
+	 * deux Produits homonymes sous deux parents directs distincts
+	 * produisent deux occurrences du même libellé.</li>
+	 * <li>Ne retourne jamais {@code null} lorsque la recherche aboutit.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
 	 * <ul>
-	 * <li>le message retourné par {@link #getMessage()}
-	 * reflète l'issue observable de l'opération ;</li>
-	 * <li>le message de succès n'est positionné
-	 * qu'après préparation complète de la réponse utilisateur ;</li>
-	 * <li>les libellés retournés correspondent aux
-	 * {@link ProduitDTO.OutputDTO} réellement préparés par
-	 * {@link #rechercherTous()} ;</li>
-	 * <li>aucun libellé {@code null} ou blank
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message final n'est positionné
+	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * <li>Les libellés retournés correspondent, occurrence par occurrence,
+	 * aux {@link ProduitDTO.OutputDTO} réellement préparés par
+	 * {@link #rechercherTous()}.</li>
+	 * <li>Aucun DTO {@code null}, libellé {@code null} ou libellé blank
 	 * n'est exposé à l'appelant.</li>
+	 * <li>La méthode n'écrit rien dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @return List<String> :
-	 * liste de tous les libellés Produit accessibles ;
-	 * jamais {@code null}, éventuellement vide.
+	 * @return List&lt;String&gt; :
+	 * liste des libellés Produit préparés par {@link #rechercherTous()} ;
+	 * jamais {@code null}, éventuellement vide, ordonnée et susceptible
+	 * de contenir plusieurs occurrences d'un même libellé lorsque celles-ci
+	 * proviennent de Produits distincts.
+	 * @throws ExceptionStockageVide
+	 * si {@link #rechercherTous()} détecte une réponse technique {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient pendant la recherche exhaustive.
 	 * @throws Exception
-	 * si une erreur survient lors de la recherche exhaustive
-	 * ou lors de la préparation finale de la réponse.
+	 * toute autre exception propagée par {@link #rechercherTous()},
+	 * notamment lors de la conversion en OutputDTO.
 	 */
 	List<String> rechercherTousString() throws Exception;
 	

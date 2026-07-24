@@ -602,15 +602,23 @@ public class ProduitCuService implements ProduitICuService {
 	public List<String> rechercherTousString() throws Exception {
 
 		/*
-		 * Délègue d'abord la recherche exhaustive
-		 * à rechercherTous().
+		 * Délègue la recherche exhaustive à rechercherTous().
+		 * Cette délégation conserve intégralement les messages
+		 * et les exceptions des branches Gateway et conversion.
 		 */
 		final List<OutputDTO> dtos = this.rechercherTous();
 
 		/*
-		 * Extrait ensuite uniquement les libellés Produit exploitables.
+		 * Prépare la réponse String dans l'ordre des OutputDTO :
+		 * - ignore les éventuels DTO null ;
+		 * - ignore les libellés null ou blank ;
+		 * - conserve une occurrence par OutputDTO distinct.
+		 *
+		 * Aucun dédoublonnage String supplémentaire n'est effectué :
+		 * deux Produits homonymes sous deux parents directs distincts
+		 * restent deux occurrences dans la réponse.
 		 */
-		final List<String> retour = new ArrayList<>();
+		final List<String> retour = new ArrayList<String>();
 
 		for (final OutputDTO dto : dtos) {
 			if (dto != null && StringUtils.isNotBlank(dto.getProduit())) {
@@ -619,8 +627,8 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		/*
-		 * Positionne le message observable
-		 * après préparation complète de la réponse.
+		 * Positionne le message observable uniquement
+		 * après préparation complète de la réponse String.
 		 */
 		if (retour.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
@@ -628,7 +636,10 @@ public class ProduitCuService implements ProduitICuService {
 			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
-		/* Retourne la liste exhaustive des libellés. */
+		/*
+		 * Retourne toujours une liste non null,
+		 * éventuellement vide.
+		 */
 		return retour;
 		
 	} // __________________________________________________________________

@@ -478,28 +478,28 @@ Le scénario nominal de `rechercherTousString()` est :
 
 - si `gateway.rechercherTous()` lève une exception avec message :
   - positionne `getMessage()` à
-    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO`
     `+ TIRET_ESPACE + <message technique>` ;
   - émet un LOG ;
   - propage la même exception ;
 
 - si `gateway.rechercherTous()` lève une exception sans message :
   - positionne `getMessage()` à
-    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO`
     `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
   - émet un LOG ;
   - propage la même exception ;
 
 - si `TypeProduit.getTypeProduit()` lève une exception avec message :
   - positionne `getMessage()` à
-    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO`
     `+ TIRET_ESPACE + <message technique>` ;
   - émet un LOG ;
   - propage la même exception ;
 
 - si `TypeProduit.getTypeProduit()` lève une exception sans message :
   - positionne `getMessage()` à
-    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO`
     `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
   - émet un LOG ;
   - propage la même exception ;
@@ -530,7 +530,9 @@ Le scénario nominal de `rechercherTousString()` est :
   lorsqu'une exception survient ;
 - les libellés retournés proviennent des `TypeProduit`
   effectivement fournis par le `GATEWAY` ;
-- l'appel à `rechercherTousString()` n'écrit rien dans le stockage.
+- l'appel à `rechercherTousString()` n'écrit rien dans le stockage ;
+- un échec de préparation de la réponse String côté UC
+  ne doit jamais être attribué au `GATEWAY`.
 
 ## 13) Règle spécifique à `getMessage()`
 
@@ -629,6 +631,11 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null"` |
 | `MESSAGE_RECHERCHER_TOUS_VIDE` | `"OK - La recherche n'a retourné aucun résutat."` |
 | `MESSAGE_RECHERCHER_TOUS_OK` | `"OK - La recherche a retourné des résultats."` |
+| `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO` | `"KO - rechercherTousString() - le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO` | `"KO - rechercherTousString() " + "- la préparation de la réponse utilisateur a jeté Exception"` |
+| `MESSAGE_STOCKAGE_NULL` | `"Le stockage n'a pas retourné d'enregistrements (null)."` |
+| `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |
+| `MESSAGE_RECHERCHE_OK` | `"OK - La recherche a retourné des résultats."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
 | `MESSAGE_MODIF_KO` | `"KO - la modification a retourné null : "` |
@@ -637,6 +644,7 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_DELETE_KO` | `"KO - échec de la destruction de : "` |
 | `METHODE_CREER` | `"méthode Creer(...)"` |
 | `METHODE_RECHERCHER_TOUS` | `"méthode rechercherTous()"` |
+| `METHODE_RECHERCHER_TOUS_STRING` | `"méthode rechercherTousString()"` |
 | `METHODE_FIND_BY_LIBELLE` | `"méthode findByLibelle(...)"` |
 | `METHODE_FIND_BY_LIBELLE_RAPIDE` | `"méthode findByLibelleRapide()"` |
 | `METHODE_FIND_BY_ID` | `"méthode findById(...)"` |
@@ -725,7 +733,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 |---|---:|---|
 | `creer` | 4 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
 | `rechercherTous` | 2 | `testRechercherTousVide`<br>`testRechercherTousNominalAvecPreuveStockage` |
-| `rechercherTousString` | 3 | `testRechercherTousString`<br>`testRechercherTousStringOkAvecPreuveStockage`<br>`testRechercherTousStringVide` |
+| `rechercherTousString` | 2 | `testRechercherTousStringVide`<br>`testRechercherTousStringNominalAvecPreuveStockage` |
 | `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
 | `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOkAvecPreuveBd` |
 | `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |

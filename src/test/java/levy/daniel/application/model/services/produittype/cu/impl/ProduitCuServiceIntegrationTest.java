@@ -119,7 +119,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
 @Sql(
 		scripts = {
-				"classpath:/truncate-test.sql",
+				"classpath:/truncate-test.sql", // NOPMD by danyl on 24/07/2026 22:27
 				"classpath:/data-test.sql"
 		},
 		executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
@@ -268,6 +268,34 @@ public class ProduitCuServiceIntegrationTest {
 	 */
 	public static final String PRODUIT_INCONNU = "Produit inconnu";
 
+	/** "IT-PRD-STRING-TYPE-A". */
+	public static final String IT_RECHERCHER_TOUS_STRING_TYPE_A
+		= "IT-PRD-STRING-TYPE-A";
+
+	/** "IT-PRD-STRING-TYPE-B". */
+	public static final String IT_RECHERCHER_TOUS_STRING_TYPE_B
+		= "IT-PRD-STRING-TYPE-B";
+
+	/** "IT-PRD-STRING-STP-A". */
+	public static final String IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_A
+		= "IT-PRD-STRING-STP-A";
+
+	/** "IT-PRD-STRING-STP-B". */
+	public static final String IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_B
+		= "IT-PRD-STRING-STP-B";
+
+	/** "IT-PRD-STRING-STP-C". */
+	public static final String IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C
+		= "IT-PRD-STRING-STP-C";
+
+	/** "IT-PRD-STRING-COMMUN". */
+	public static final String IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN
+		= "IT-PRD-STRING-COMMUN";
+
+	/** "IT-PRD-STRING-UNIQUE". */
+	public static final String IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE
+		= "IT-PRD-STRING-UNIQUE";
+
 	/**
 	 * "Produit modification absent".
 	 */
@@ -316,6 +344,12 @@ public class ProduitCuServiceIntegrationTest {
 	 */
 	public static final String TAG_RECHERCHER_TOUS
 		= "cu-it-RechercherTous";
+
+	/**
+	 * "cu-it-RechercherTousString"
+	 */
+	public static final String TAG_RECHERCHER_TOUS_STRING
+		= "cu-it-RechercherTousString";
 
 	// ============================ DN ==================================//
 
@@ -397,6 +431,24 @@ public class ProduitCuServiceIntegrationTest {
 	public static final String DN_RECHERCHER_TOUS_NOMINAL
 		= "rechercherTous(ok) : ordre métier + identités persistantes "
 				+ "+ MESSAGE_RECHERCHER_TOUS_OK + stockage inchangé";
+
+	// --------------------- rechercherTousString() -----------------------
+
+	/**
+	 * "rechercherTousString(vide) : liste vide
+	 * + MESSAGE_RECHERCHE_VIDE + stockage vide".
+	 */
+	public static final String DN_RECHERCHER_TOUS_STRING_VIDE
+		= "rechercherTousString(vide) : liste vide "
+				+ "+ MESSAGE_RECHERCHE_VIDE + stockage vide";
+
+	/**
+	 * "rechercherTousString(ok) : ordre + multiplicité des homonymes
+	 * + MESSAGE_RECHERCHE_OK + stockage inchangé".
+	 */
+	public static final String DN_RECHERCHER_TOUS_STRING_NOMINAL
+		= "rechercherTousString(ok) : ordre + multiplicité des homonymes "
+				+ "+ MESSAGE_RECHERCHE_OK + stockage inchangé";
 	
 	// ========================== SELECT ================================//
 	
@@ -427,6 +479,22 @@ public class ProduitCuServiceIntegrationTest {
 		+ "INNER JOIN PRODUITS p "
 		+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
 		+ "WHERE p.ID_PRODUIT = ?";
+
+
+	/**
+	 * Libellés Produit ordonnés selon l'ordre métier
+	 * [TypeProduit, SousTypeProduit, Produit].
+	 */
+	public static final String SELECT_LIBELLES_PRODUITS_ORDONNES
+		= "SELECT p.PRODUIT "
+		+ "FROM PRODUITS p "
+		+ "INNER JOIN SOUS_TYPES_PRODUIT stp "
+		+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
+		+ "INNER JOIN TYPES_PRODUIT tp "
+		+ "ON stp.TYPE_PRODUIT = tp.ID_TYPE_PRODUIT "
+		+ "ORDER BY UPPER(tp.TYPE_PRODUIT), "
+		+ "UPPER(stp.SOUS_TYPE_PRODUIT), "
+		+ "UPPER(p.PRODUIT), p.ID_PRODUIT";
 
 
 	// *************************** ATTRIBUTS *******************************/
@@ -1771,46 +1839,194 @@ public class ProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : scénario nominal.</p>
+	 * <p>garantit que rechercherTousString(OK) :</p>
 	 * <ul>
-	 * <li>crée d'abord la hiérarchie parent persistante requise ;</li>
-	 * <li>crée plusieurs Produit dans le stockage ;</li>
 	 * <li>retourne une liste non {@code null} ;</li>
-	 * <li>retourne les libellés créés ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>retourne exactement les libellés lus dans le stockage
+	 * selon l'ordre métier
+	 * {@code [TypeProduit, SousTypeProduit, Produit]} ;</li>
+	 * <li>conserve une occurrence par Produit distinct ;</li>
+	 * <li>conserve trois occurrences d'un même libellé Produit
+	 * sous trois parents directs distincts ;</li>
+	 * <li>n'expose aucun libellé {@code null} ou blank ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
+	@Sql(
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName(DN_RECHERCHER_TOUS_STRING_NOMINAL)
 	@Test
-	@DisplayName("rechercherTousString(ok) : retourne les libellés créés + message MESSAGE_RECHERCHE_OK")
 	public void testRechercherTousStringOk() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
+		/* ARRANGE :
+		 * part d'un stockage vide puis crée trois parents directs
+		 * persistants et non ambigus.
+		 */
+		this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_TYPE_A));
+		this.sousTypeProduitService.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_TYPE_A,
+						IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_A));
 
-		this.service.creer(
+		this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_TYPE_B));
+		this.sousTypeProduitService.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_TYPE_B,
+						IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_B));
+		this.sousTypeProduitService.creer(
+				new SousTypeProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_TYPE_B,
+						IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C));
+
+		/* Garantit que les quatre couples propres au scénario
+		 * sont absents avant création.
+		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_A,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(0L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(0L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(0L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE))
+				.isEqualTo(0L);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
+
+		/* Crée trois Produits homonymes sous trois parents distincts
+		 * et un Produit supplémentaire.
+		 */
+		final OutputDTO communParentA = this.service.creer(
 				new ProduitDTO.InputDTO(
-						OUTIL,
-						OUTILLAGE,
-						PERCEUSE));
-
-		this.service.creer(
+						IT_RECHERCHER_TOUS_STRING_TYPE_A,
+						IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_A,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN));
+		final OutputDTO communParentB = this.service.creer(
 				new ProduitDTO.InputDTO(
-						OUTIL,
-						OUTILLAGE,
-						PINCE));
+						IT_RECHERCHER_TOUS_STRING_TYPE_B,
+						IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_B,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN));
+		final OutputDTO communParentC = this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_TYPE_B,
+						IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN));
+		final OutputDTO uniqueParentC = this.service.creer(
+				new ProduitDTO.InputDTO(
+						IT_RECHERCHER_TOUS_STRING_TYPE_B,
+						IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C,
+						IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE));
 
-		/* ======================= ACT ======================= */
+		this.entityManager.flush();
+
+		assertThat(communParentA).isNotNull();
+		assertThat(communParentA.getIdProduit()).isNotNull();
+		assertThat(communParentB).isNotNull();
+		assertThat(communParentB.getIdProduit()).isNotNull();
+		assertThat(communParentC).isNotNull();
+		assertThat(communParentC.getIdProduit()).isNotNull();
+		assertThat(uniqueParentC).isNotNull();
+		assertThat(uniqueParentC.getIdProduit()).isNotNull();
+
+		/* Prouve directement les quatre identités dans le stockage. */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_A,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_A,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				IT_RECHERCHER_TOUS_STRING_TYPE_B,
+				IT_RECHERCHER_TOUS_STRING_SOUS_TYPE_C,
+				IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE))
+				.isEqualTo(1L);
+
+		final Long countAvantRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countAvantRecherche).isNotNull();
+		assertThat(countAvantRecherche).isEqualTo(countAvant + 4L);
+
+		/* Construit l'oracle directement depuis le stockage.
+		 * Aucun distinct() n'est appliqué : la multiplicité des Produits
+		 * homonymes doit être conservée.
+		 */
+		final List<String> libellesStockesAvantRecherche
+				= this.jdbcTemplate.queryForList(
+						SELECT_LIBELLES_PRODUITS_ORDONNES,
+						String.class);
+		final List<String> libellesAttendus
+				= libellesStockesAvantRecherche.stream()
+						.filter(libelle -> libelle != null && !libelle.isBlank())
+						.toList();
+
+		/* ACT : exécute la méthode UC sous test. */
 		final List<String> retour = this.service.rechercherTousString();
+		final String message = this.service.getMessage();
 
-		/* ===================== ASSERT ====================== */
+		/* ASSERT : compare exactement la réponse avec l'oracle stockage. */
 		assertThat(retour).isNotNull();
-		assertThat(retour).contains(PERCEUSE, PINCE);
-		assertThat(this.service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		assertThat(retour).containsExactlyElementsOf(libellesAttendus);
+		assertThat(retour.stream()
+				.filter(IT_RECHERCHER_TOUS_STRING_LIBELLE_COMMUN::equals)
+				.count())
+				.isEqualTo(3L);
+		assertThat(retour.stream()
+				.filter(IT_RECHERCHER_TOUS_STRING_LIBELLE_UNIQUE::equals)
+				.count())
+				.isEqualTo(1L);
+		assertThat(retour)
+				.allMatch(libelle -> libelle != null && !libelle.isBlank());
+		assertThat(message)
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		/* Prouve que la lecture n'a modifié ni le volume ni les valeurs. */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
+
+		final List<String> libellesStockesApresRecherche
+				= this.jdbcTemplate.queryForList(
+						SELECT_LIBELLES_PRODUITS_ORDONNES,
+						String.class);
+		assertThat(libellesStockesApresRecherche)
+				.containsExactlyElementsOf(libellesStockesAvantRecherche);
 
 	} // __________________________________________________________________
 
@@ -1818,36 +2034,54 @@ public class ProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>rechercherTousString() : stockage vide.</p>
+	 * <p>garantit que rechercherTousString(vide) :</p>
 	 * <ul>
+	 * <li>le stockage Produit est réellement vide avant l'appel ;</li>
 	 * <li>retourne une liste vide mais non {@code null} ;</li>
 	 * <li>positionne exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>ne crée aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
-	@Test
+	@Tag(TAG_RECHERCHER_TOUS_STRING)
 	@Sql(
-			scripts = { "classpath:/truncate-test.sql" },
-			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
-	)
-	@DisplayName("rechercherTousString(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName(DN_RECHERCHER_TOUS_STRING_VIDE)
+	@Test
 	public void testRechercherTousStringVide() throws Exception {
 
-		/* ======================= ACT ======================= */
+		/* ARRANGE : contrôle directement le stockage et le message initial. */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
+		assertThat(this.service.getMessage()).isNull();
+
+		/* ACT : exécute la méthode UC sous test. */
 		final List<String> retour = this.service.rechercherTousString();
+		final String message = this.service.getMessage();
 
-		/* ===================== ASSERT ====================== */
-		assertThat(retour).isNotNull().isEmpty();
-		assertThat(this.service.getMessage())
-			.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		/* ASSERT : contrôle le résultat, le message et l'absence d'écriture. */
+		assertThat(retour).isNotNull();
+		assertThat(retour).isEmpty();
+		assertThat(message)
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
-	} // __________________________________________________________________	
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(0L);
+
+	} // __________________________________________________________________
 
 
-    
+
     // ================== rechercherTousParPage ===========================
     
     

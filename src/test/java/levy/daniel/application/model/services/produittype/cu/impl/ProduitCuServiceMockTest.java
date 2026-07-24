@@ -458,9 +458,13 @@ public class ProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_VIDE_APRES_LIBELLES_BLANK
 			= "rechercherTousString(libellés blank) : liste vide + MESSAGE_RECHERCHE_VIDE";
 
-	/** "rechercherTousString(nominal) : libellés triés + MESSAGE_RECHERCHE_OK". */
+	/**
+	 * "rechercherTousString(nominal) : ordre + multiplicité des homonymes
+	 * + MESSAGE_RECHERCHE_OK".
+	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_NOMINAL
-			= "rechercherTousString(nominal) : libellés triés + MESSAGE_RECHERCHE_OK";
+			= "rechercherTousString(nominal) : ordre + multiplicité des homonymes "
+					+ "+ MESSAGE_RECHERCHE_OK";
 
 	// ---------------------- rechercherTousParPage(...) ------------------
 	
@@ -3470,12 +3474,15 @@ public class ProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.rechercherTous()} via
 	 * {@code rechercherTous()} ;</li>
 	 * <li>filtre les éléments {@code null} ;</li>
-	 * <li>trie les objets métier ;</li>
-	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
+	 * <li>trie selon l'ordre métier
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>convertit et dédoublonne les identités Produit
+	 * dans {@code rechercherTous()} ;</li>
 	 * <li>extrait les libellés via {@code OutputDTO.getProduit()} ;</li>
 	 * <li>ignore les libellés blank ;</li>
-	 * <li>retourne les libellés exploitables dans l'ordre préparé
-	 * par {@code rechercherTous()} ;</li>
+	 * <li>conserve l'ordre et la multiplicité des DTO distincts ;</li>
+	 * <li>conserve deux occurrences d'un même libellé Produit
+	 * lorsque les Produits sont rattachés à deux parents distincts ;</li>
 	 * <li>positionne exactement
 	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
@@ -3490,62 +3497,75 @@ public class ProduitCuServiceMockTest {
 	public void testRechercherTousStringNominal() throws Exception {
 
 		/* ARRANGE :
-		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier non null ;
-		 * - un élément null à filtrer ;
-		 * - un libellé blank à ignorer ;
-		 * - un doublon à dédoublonner côté DTO.
+		 * prépare deux parents persistants distincts afin de verrouiller
+		 * l'identité [SousTypeProduit, Produit].
 		 */
-		final SousTypeProduit parent = parentPersistant();
-		
-		final Produit produitScie = produit(SCIE, parent, 2L);
-		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
-		final Produit produitBlank = produit(ESPACES, parent, 3L);
-		final Produit produitMarteauDoublon = produit(MARTEAU, parent, 1L);
-		
-		/* 
-		 * Mocke les services Gateway et les passe 
-		 * à un service UC instancié dans le test. 
+		final SousTypeProduit parentBazarOutillage
+				= parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+		final SousTypeProduit parentQuincaillerieAtelier
+				= parentPersistant(QUINCAILLERIE, ATELIER, 2L, 20L);
+
+		/*
+		 * Prépare :
+		 * - deux Produits homonymes sous deux parents distincts ;
+		 * - un Produit supplémentaire ;
+		 * - un libellé blank ;
+		 * - un doublon de la même identité ;
+		 * - un élément null.
 		 */
-		final ProduitGatewayIService gateway 
+		final Produit marteauBazar
+				= produit(MARTEAU, parentBazarOutillage, 1L);
+		final Produit scieBazar
+				= produit(SCIE, parentBazarOutillage, 2L);
+		final Produit blankBazar
+				= produit(ESPACES, parentBazarOutillage, 3L);
+		final Produit marteauQuincaillerie
+				= produit(MARTEAU, parentQuincaillerieAtelier, 4L);
+		final Produit doublonMarteauBazar
+				= produit(MARTEAU, parentBazarOutillage, 1L);
+		
+		/*
+		 * Mocke les services Gateway et les passe
+		 * à un service UC instancié dans le test.
+		 */
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
 		/*
-		 * Configuration du Mock :
-		 * gateway.rechercherTous() retourne des objets métier dans un ordre
-		 * non trié, avec un null, un libellé blank et un doublon côté DTO.
+		 * Retourne les objets dans un ordre volontairement non métier.
 		 */
 		when(gateway.rechercherTous())
 				.thenReturn(Arrays.asList(
-						produitScie, null, produitBlank, produitMarteau, 
-						produitMarteauDoublon));
+						marteauQuincaillerie,
+						scieBazar,
+						null,
+						blankBazar,
+						doublonMarteauBazar,
+						marteauBazar));
 
-		/* ACT :
-		 * exécute la recherche exhaustive String via le SERVICE METIER UC.
-		 */
+		/* ACT : exécute la recherche exhaustive String. */
 		final List<String> retour = service.rechercherTousString();
 		final String message = service.getMessage();
 
-		/* ASSERT */
-		/* Garantit que la réponse retournée au controller appelant :
-		 * - n'est pas null ;
-		 * - contient uniquement les libellés non blank ;
-		 * - conserve l'ordre préparé par rechercherTous() ;
-		 * - expose le message utilisateur de succès.
+		/* ASSERT :
+		 * - le doublon de même identité est retiré par rechercherTous() ;
+		 * - les deux homonymes sous parents distincts restent deux occurrences ;
+		 * - l'ordre préparé par rechercherTous() est conservé.
 		 */
 		assertThat(retour).isNotNull();
-		assertThat(retour).containsExactly(MARTEAU, SCIE);
-
+		assertThat(retour).containsExactly(MARTEAU, SCIE, MARTEAU);
+		assertThat(retour.stream().filter(MARTEAU::equals).count())
+				.isEqualTo(2L);
+		assertThat(retour)
+				.allMatch(libelle -> libelle != null && !libelle.isBlank());
 		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
-		/* Garantit que la recherche exhaustive a bien été déléguée
-		 * et que le Gateway parent reste inutilisé.
-		 */
+		/* Garantit la délégation unique et l'absence d'appel au Gateway parent. */
 		verify(gateway, times(1)).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 

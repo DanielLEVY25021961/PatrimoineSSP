@@ -550,43 +550,112 @@ Les tests d’intégration doivent prouver selon le scénario :
 ## 12) Contrat spécifique de `rechercherTousString()`
 
 Signature cible :
+
 - `List<String> rechercherTousString() throws Exception;`
 
 ### 12.1) Scénario nominal attendu
 
 Le scénario nominal de `rechercherTousString()` est :
 
-1. déléguer la recherche exhaustive à `rechercherTous()` ;
-2. récupérer la liste de `ProduitDTO.OutputDTO` préparée par cette méthode ;
-3. extraire les libellés Produit exploitables ;
-4. retirer les éventuels libellés `null` ou blank ;
-5. positionner le message observable ;
-6. retourner la liste finale de `String`.
+1. déléguer une seule fois la recherche exhaustive à `rechercherTous()` ;
+2. récupérer la liste non `null`, ordonnée et dédoublonnée par identité
+   de `ProduitDTO.OutputDTO` préparée par `rechercherTous()` ;
+3. parcourir cette liste dans l'ordre reçu ;
+4. extraire les libellés avec `ProduitDTO.OutputDTO.getProduit()` ;
+5. retirer les éventuels DTO `null` et les libellés `null` ou blank ;
+6. conserver l'ordre et la multiplicité des libellés issus des DTO distincts ;
+7. positionner le message observable après préparation complète de la liste ;
+8. retourner une liste finale de `String` non `null`.
 
 ### 12.2) Cas observables attendus
 
-- si `rechercherTous()` échoue :
-  - propage l'exception ;
-  - conserve le message déjà positionné par `rechercherTous()` ;
+- si le `GATEWAY` Produit retourne `null` pendant `rechercherTous()` :
+  - propage l'`ExceptionStockageVide` levée par `rechercherTous()` ;
+  - conserve exactement le message
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO` ;
 
-- si aucun libellé exploitable n'est disponible :
+- si le `GATEWAY` Produit lève une exception avec message
+  pendant `rechercherTous()` :
+  - propage la même exception ;
+  - conserve exactement
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+
+- si le `GATEWAY` Produit lève une exception sans message
+  pendant `rechercherTous()` :
+  - propage la même exception ;
+  - conserve exactement
+    `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+
+- si la conversion en `ProduitDTO.OutputDTO` lève une exception avec message
+  pendant `rechercherTous()` :
+  - propage la même exception ;
+  - conserve exactement
+    `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+
+- si la conversion en `ProduitDTO.OutputDTO` lève une exception sans message
+  pendant `rechercherTous()` :
+  - propage la même exception ;
+  - conserve exactement
+    `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+
+- si la liste préparée par `rechercherTous()` est vide
+  ou ne contient aucun libellé exploitable :
   - retourne une liste vide mais non `null` ;
-  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+  - remplace le message de la recherche DTO par
+    `MESSAGE_RECHERCHE_VIDE` ;
 
 - si au moins un libellé exploitable est disponible :
   - retourne une liste non `null` ;
-  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+  - conserve l'ordre de la liste d'`OutputDTO` ;
+  - conserve une occurrence par `OutputDTO` distinct ;
+  - remplace le message de la recherche DTO par
+    `MESSAGE_RECHERCHE_OK`.
 
 ### 12.3) Garanties spécifiques de `rechercherTousString()`
 
-- la méthode ne doit jamais retourner `null`
-  si la recherche exhaustive a abouti ;
-- aucun libellé `null` ou blank ne doit être exposé à l'appelant ;
-- le message de succès ne doit être positionné
+- la méthode ne retourne jamais `null` lorsque `rechercherTous()` aboutit ;
+- elle ne retourne aucun élément `null` ;
+- elle ne retourne aucun libellé blank ;
+- elle ne contacte directement aucun `GATEWAY` ;
+- elle n'écrit rien dans le stockage ;
+- elle conserve l'ordre métier déjà préparé par `rechercherTous()` ;
+- elle ne réalise aucun dédoublonnage supplémentaire au niveau `String` ;
+- deux `Produit` homonymes rattachés à deux `SousTypeProduit`
+  parents directs distincts restent deux DTO distincts et produisent donc
+  deux occurrences du même libellé dans la réponse `String` ;
+- deux représentations du même Produit déjà dédoublonnées par
+  `rechercherTous()` ne réapparaissent pas artificiellement ;
+- le message de succès ou d'absence de résultat n'est positionné
   qu'après préparation complète de la liste finale ;
-- les libellés retournés doivent correspondre
-  aux `ProduitDTO.OutputDTO` réellement préparés par `rechercherTous()`.
-  
+- si `rechercherTous()` échoue, aucune liste partielle n'est retournée
+  et le message posé par cette méthode est conservé.
+
+### 12.4) Tests de référence du bloc
+
+Les tests Mock du bloc sont exactement :
+
+- `testRechercherTousStringGatewayRetourNull` ;
+- `testRechercherTousStringGatewayKOAvecMessage` ;
+- `testRechercherTousStringGatewayKOSansMessage` ;
+- `testRechercherTousStringConversionStringKOAvecMessage` ;
+- `testRechercherTousStringConversionStringKOSansMessage` ;
+- `testRechercherTousStringVideApresFiltrage` ;
+- `testRechercherTousStringVideApresLibellesBlank` ;
+- `testRechercherTousStringNominal`.
+
+Les tests d'intégration du bloc sont exactement :
+
+- `testRechercherTousStringOk` ;
+- `testRechercherTousStringVide`.
+
+Le test nominal d'intégration doit comparer la liste UC à un oracle lu
+directement dans le stockage, conserver les occurrences homonymes issues
+de parents distincts et prouver que la lecture ne modifie aucune ligne.
+
 ## 13) Contrat spécifique de `rechercherTousParPage(...)`
 
 Signature cible :
@@ -1193,11 +1262,18 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `PREFIX_MESSAGE_CREER_CONVERSION_KO` | `"KO - Impossible de créer l'OutputDTO " + "après la création du Produit : "` |
 | `MESSAGE_CREER_CONVERSION_KO` | `"KO - OutputDTO null via la conversion " + "après la création du Produit."` |
 | `MESSAGE_CREER_OK` | `"OK - La création de l'objet s'est bien déroulée."` |
+| `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO` | `"KO - rechercherTous() - le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_TECHNIQUE_NULL_KO` | `"KO - rechercherTous() - le Gateway a retourné Null"` |
+| `MESSAGE_RECHERCHER_TOUS_CONVERSION_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_CONVERSION_NULL_KO` | `"KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null"` |
+| `MESSAGE_RECHERCHER_TOUS_VIDE` | `"OK - La recherche n'a retourné aucun résutat."` |
+| `MESSAGE_RECHERCHER_TOUS_OK` | `"OK - La recherche a retourné des résultats."` |
+| `MESSAGE_STOCKAGE_NULL` | `"Le stockage n'a pas retourné d'enregistrements (null)."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
 | `MESSAGE_CREER_KO` | `"Erreur lors de la création de l'objet"` |
-| `MESSAGE_RECHERCHE_VIDE` | `"Aucun enregistrement ne correspond à la recherche"` |
-| `MESSAGE_RECHERCHE_OK` | `"La recherche a retourné des enregistrements"` |
+| `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |
+| `MESSAGE_RECHERCHE_OK` | `"OK - La recherche a retourné des résultats."` |
 | `MESSAGE_RECHERCHE_OBJ_NULL` | `"Le Produit est null"` |
 | `MESSAGE_SUCCES_RECHERCHE` | `"La recherche a abouti"` |
 | `MESSAGE_OBJ_INTROUVABLE` | `"Objet Introuvable : "` |
@@ -1214,6 +1290,7 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `KO_TECHNIQUE_RECHERCHE` | `"Une recherche technique a échouée"` |
 | `METHODE_CREER` | `"méthode Creer(...)"` |
 | `METHODE_RECHERCHER_TOUS` | `"méthode rechercherTous()"` |
+| `METHODE_RECHERCHER_TOUS_STRING` | `"méthode rechercherTousString()"` |
 | `METHODE_FIND_BY_LIBELLE` | `"méthode findByLibelle(...)"` |
 | `METHODE_FIND_BY_LIBELLE_RAPIDE` | `"méthode findByLibelleRapide()"` |
 | `METHODE_FIND_ALL_BY_PARENT` | `"méthode FindAllByParent(...)"` |
