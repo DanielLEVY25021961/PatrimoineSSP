@@ -634,6 +634,11 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO` | `"KO - rechercherTousString() - le Gateway a jeté Exception"` |
 | `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO` | `"KO - rechercherTousString() " + "- la préparation de la réponse utilisateur a jeté Exception"` |
 | `MESSAGE_STOCKAGE_NULL` | `"Le stockage n'a pas retourné d'enregistrements (null)."` |
+| `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO` | `"KO - rechercherTousParPage(...) " + "- le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO` | `"KO - rechercherTousParPage(...) " + "- la préparation de la page DTO a jeté Exception"` |
+| `MESSAGE_PAGEABLE_NULL` | `"l'indication de page demandée ne doit pas être null."` |
+| `MESSAGE_RECHERCHE_PAGINEE_KO` | `"KO - la recherche paginée a retourné null."` |
+| `MESSAGE_RECHERCHE_PAGINEE_OK` | `"OK - la recherche paginée a retourné des résultats."` |
 | `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |
 | `MESSAGE_RECHERCHE_OK` | `"OK - La recherche a retourné des résultats."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
@@ -645,6 +650,7 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `METHODE_CREER` | `"méthode Creer(...)"` |
 | `METHODE_RECHERCHER_TOUS` | `"méthode rechercherTous()"` |
 | `METHODE_RECHERCHER_TOUS_STRING` | `"méthode rechercherTousString()"` |
+| `METHODE_RECHERCHER_TOUS_PAGE` | `"méthode rechercherTousParPage(...)"` |
 | `METHODE_FIND_BY_LIBELLE` | `"méthode findByLibelle(...)"` |
 | `METHODE_FIND_BY_LIBELLE_RAPIDE` | `"méthode findByLibelleRapide()"` |
 | `METHODE_FIND_BY_ID` | `"méthode findById(...)"` |
@@ -734,7 +740,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 | `creer` | 4 | `testCreerNull`<br>`testCreerBlank`<br>`testCreerDoublonAvecPreuveStockage`<br>`testCreerNominalAvecPreuveStockageEtRoundTrip` |
 | `rechercherTous` | 2 | `testRechercherTousVide`<br>`testRechercherTousNominalAvecPreuveStockage` |
 | `rechercherTousString` | 2 | `testRechercherTousStringVide`<br>`testRechercherTousStringNominalAvecPreuveStockage` |
-| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageOk`<br>`testRechercherTousParPageOkAvecPreuveBd` |
+| `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageVide`<br>`testRechercherTousParPageNominalAvecPreuveStockage` |
 | `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleOkAvecPreuveBd` |
 | `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |
 | `findByDTO` | 4 | `testFindByDTONull`<br>`testFindByDTOBlank`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOkAvecPreuveBd` |

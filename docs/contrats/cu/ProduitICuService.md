@@ -668,45 +668,71 @@ Le scénario nominal de `rechercherTousParPage(...)` est :
 1. recevoir une `RequetePage` ;
 2. valider que la requête de pagination n'est pas `null` ;
 3. déléguer la recherche paginée au `GATEWAY` Produit ;
-4. récupérer la page métier correspondante ;
+4. sécuriser la page métier retournée ;
 5. retirer les éventuels éléments métier `null` ;
 6. trier les objets métier ;
 7. convertir le contenu métier en `ProduitDTO.OutputDTO` ;
-8. reconstruire un `ResultatPage<ProduitDTO.OutputDTO>` cohérent ;
-9. positionner le message observable ;
-10. retourner la page finale.
+8. dédoublonner les DTO en conservant l'ordre métier ;
+9. reconstruire un `ResultatPage<ProduitDTO.OutputDTO>` cohérent ;
+10. positionner le message observable après reconstruction complète ;
+11. retourner la page finale.
 
 ### 13.2) Cas observables attendus
 
 - si `pRequetePage == null` :
   - positionne `getMessage()` à `MESSAGE_PAGEABLE_NULL` ;
+  - émet un LOG de service ;
   - lève une `IllegalStateException` ;
+  - ne sollicite aucun `GATEWAY` ;
 
 - si le `GATEWAY` lève une exception technique avec message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + <message technique>` ;
-  - propage l'exception ;
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO + TIRET_ESPACE + <message technique>` ;
+  - émet un LOG de service ;
+  - propage l'exception d'origine ;
 
 - si le `GATEWAY` lève une exception technique sans message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
-  - propage l'exception ;
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG de service ;
+  - propage l'exception d'origine ;
 
 - si le `GATEWAY` retourne `null` :
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_KO` ;
+  - émet un LOG de service ;
   - lève une `IllegalStateException` ;
 
-- si la recherche paginée aboutit :
+- si le filtrage, le tri, la conversion
+  ou la reconstruction de la page DTO lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO + TIRET_ESPACE + <message technique>` ;
+  - émet un LOG de service ;
+  - propage l'exception d'origine ;
+
+- si cette préparation lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG de service ;
+  - propage l'exception d'origine ;
+
+- si la réponse paginée est correctement reconstruite :
   - retourne un `ResultatPage<ProduitDTO.OutputDTO>` non `null` ;
-  - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_OK`
-    uniquement après préparation complète de la réponse paginée.
+  - reprend `pageNumber`, `pageSize` et `totalElements` sécurisés ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_OK`.
 
 ### 13.3) Garanties spécifiques de `rechercherTousParPage(...)`
 
-- la méthode ne doit jamais exposer une réponse paginée partielle incohérente ;
-- le contenu paginé retourné doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
-- le message de succès ne doit être positionné qu'après conversion complète de la page résultat ;
-- `pageNumber`, `pageSize` et `totalElements` doivent rester cohérents avec la réponse technique paginée préparée par le service UC.
+- la méthode ne doit jamais retourner `null` lorsque le scénario aboutit ;
+- le message observable doit refléter la branche réellement exécutée ;
+- une panne de préparation côté UC ne doit jamais être attribuée au `GATEWAY` ;
+- le message de succès doit être positionné après reconstruction complète de la page DTO ;
+- les `null` techniques issus du stockage ne doivent jamais fuiter jusqu'à l'appelant ;
+- le contenu DTO doit être non `null`, filtré, trié et dédoublonné ;
+- `pageNumber`, `pageSize` et `totalElements` doivent provenir de la réponse technique sécurisée ;
+- les DTO vérifiés doivent correspondre aux identités métier `[SousTypeProduit, Produit]` réellement présentes dans le stockage ;
+- le `TypeProduit` grand-parent peut être lu uniquement pour désambiguïser le `SousTypeProduit` parent direct, sans devenir une composante supplémentaire de l'identité Produit ;
+- la lecture paginée ne doit pas modifier le stockage ;
+- aucun résultat paginé partiel incohérent ne doit être exposé.
 
 ## 14) Contrat spécifique de `findByLibelle(...)`
 
@@ -1269,6 +1295,9 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_RECHERCHER_TOUS_VIDE` | `"OK - La recherche n'a retourné aucun résutat."` |
 | `MESSAGE_RECHERCHER_TOUS_OK` | `"OK - La recherche a retourné des résultats."` |
 | `MESSAGE_STOCKAGE_NULL` | `"Le stockage n'a pas retourné d'enregistrements (null)."` |
+| `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO` | `"KO - rechercherTousParPage(...) " + "- le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO` | `"KO - rechercherTousParPage(...) " + "- la préparation de la page DTO a jeté Exception"` |
+| `MESSAGE_PAGEABLE_NULL` | `"l'indication de page demandée ne doit pas être null."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
 | `MESSAGE_CREER_KO` | `"Erreur lors de la création de l'objet"` |
@@ -1278,8 +1307,8 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_SUCCES_RECHERCHE` | `"La recherche a abouti"` |
 | `MESSAGE_OBJ_INTROUVABLE` | `"Objet Introuvable : "` |
 | `MESSAGE_OBJ_NON_PERSISTE` | `"Objet non persisté en base : "` |
-| `MESSAGE_RECHERCHE_PAGINEE_OK` | `"La recherche paginée a abouti"` |
-| `MESSAGE_RECHERCHE_PAGINEE_KO` | `"la recherche paginée a échoué"` |
+| `MESSAGE_RECHERCHE_PAGINEE_OK` | `"OK - la recherche paginée a retourné des résultats."` |
+| `MESSAGE_RECHERCHE_PAGINEE_KO` | `"KO - la recherche paginée a retourné null."` |
 | `MESSAGE_MODIF_OK` | `"La modification a été effectuée"` |
 | `MESSAGE_MODIF_KO` | `"La modification a échouée"` |
 | `MESSAGE_DELETE_OK` | `"La suppression a été effectuée"` |
@@ -1291,6 +1320,7 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `METHODE_CREER` | `"méthode Creer(...)"` |
 | `METHODE_RECHERCHER_TOUS` | `"méthode rechercherTous()"` |
 | `METHODE_RECHERCHER_TOUS_STRING` | `"méthode rechercherTousString()"` |
+| `METHODE_RECHERCHER_TOUS_PAGE` | `"méthode rechercherTousParPage(...)"` |
 | `METHODE_FIND_BY_LIBELLE` | `"méthode findByLibelle(...)"` |
 | `METHODE_FIND_BY_LIBELLE_RAPIDE` | `"méthode findByLibelleRapide()"` |
 | `METHODE_FIND_ALL_BY_PARENT` | `"méthode FindAllByParent(...)"` |

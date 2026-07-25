@@ -127,6 +127,16 @@ public class TypeProduitCuServiceMockTest {
 	 * "lecture technique KO"
 	 */
 	public static final String LECTURE_TECHNIQUE_KO = "lecture technique KO";
+	
+	/**
+	 * "exception propagée "
+	 */
+	public static final String EXCEPTION_PROPAGEE = "exception propagée ";
+	
+	/**
+	 * "+ fallback MSG_ERREUR_NON_SPECIFIEE"
+	 */
+	public static final String FALLBACK = "+ fallback MSG_ERREUR_NON_SPECIFIEE";
 
 	// =========================== TAGS ===================================
 	
@@ -369,7 +379,7 @@ public class TypeProduitCuServiceMockTest {
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KO_AVEC_MESSAGE
 			= "rechercherTousString(gateway KO avec message) : "
-					+ "exception propagée "
+					+ EXCEPTION_PROPAGEE
 					+ "+ MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO";
 	
 	/**
@@ -380,7 +390,7 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KO_SANS_MESSAGE
 			= "rechercherTousString(gateway KO sans message) : "
 					+ "MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO "
-					+ "+ fallback MSG_ERREUR_NON_SPECIFIEE";
+					+ FALLBACK;
 	
 	/**
 	 * "rechercherTousString(conversion String KO avec message) :
@@ -388,7 +398,7 @@ public class TypeProduitCuServiceMockTest {
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KO_AVEC_MESSAGE
 			= "rechercherTousString(conversion String KO avec message) : "
-					+ "exception propagée "
+					+ EXCEPTION_PROPAGEE
 					+ "+ MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO";
 	
 	/**
@@ -399,7 +409,7 @@ public class TypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KO_SANS_MESSAGE
 			= "rechercherTousString(conversion String KO sans message) : "
 					+ "MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO "
-					+ "+ fallback MSG_ERREUR_NON_SPECIFIEE";
+					+ FALLBACK;
 	
 	/**
 	 * "rechercherTousString(vide après filtrage) :
@@ -437,19 +447,22 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * "rechercherTousParPage(gateway KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO_AVEC_MESSAGE
 			= "rechercherTousParPage(gateway KO avec message) : "
-					+ "exception propagée + message rationalisé";
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO";
 	
 	/**
 	 * "rechercherTousParPage(gateway KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO_SANS_MESSAGE
 			= "rechercherTousParPage(gateway KO sans message) : "
-					+ "fallback MSG_ERREUR_NON_SPECIFIEE";
+					+ "MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO "
+					+ FALLBACK;
 	
 	/**
 	 * "rechercherTousParPage(gateway retourne null) :
@@ -461,19 +474,22 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * "rechercherTousParPage(conversion OutputDTO KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
 			= "rechercherTousParPage(conversion OutputDTO KO avec message) : "
-					+ "exception propagée + message rationalisé";
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO";
 	
 	/**
 	 * "rechercherTousParPage(conversion OutputDTO KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
 			= "rechercherTousParPage(conversion OutputDTO KO sans message) : "
-					+ "fallback MSG_ERREUR_NON_SPECIFIEE";
+					+ "MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO "
+					+ FALLBACK;
 	
 	/**
 	 * "rechercherTousParPage(vide après filtrage) :
@@ -3026,7 +3042,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.rechercherTousParPage(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -3071,11 +3087,11 @@ public class TypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 * MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO + TIRET_ESPACE + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -3094,7 +3110,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.rechercherTousParPage(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -3141,7 +3157,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -3225,7 +3241,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -3284,7 +3300,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -3309,7 +3325,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -3367,7 +3383,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 

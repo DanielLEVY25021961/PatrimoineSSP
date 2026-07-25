@@ -105,7 +105,7 @@ import levy.daniel.application.persistence.metier.produittype.entities.entitiesJ
 @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
 @Sql(
 		scripts = {
-				"classpath:/truncate-test.sql",
+				"classpath:/truncate-test.sql", // NOPMD by danyl on 25/07/2026 08:22
 				"classpath:/data-test.sql"
 		},
 		executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
@@ -288,6 +288,12 @@ public class TypeProduitCuServiceIntegrationTest {
 	public static final String TAG_RECHERCHER_TOUS_STRING
 		= "cu-it-RechercherTousString";
 
+	/**
+	 * "cu-it-RechercherTousParPage"
+	 */
+	public static final String TAG_RECHERCHER_TOUS_PAR_PAGE
+		= "cu-it-RechercherTousParPage";
+
 	// ============================ DN ==================================//
 		
 	/**
@@ -342,6 +348,30 @@ public class TypeProduitCuServiceIntegrationTest {
 		= "rechercherTousString(ok) : MESSAGE_RECHERCHE_OK "
 				+ "+ libellés exacts du stockage + stockage inchangé";
 
+	/**
+	 * "rechercherTousParPage(null) : IllegalStateException
+	 * + MESSAGE_PAGEABLE_NULL + stockage inchangé"
+	 */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL
+		= "rechercherTousParPage(null) : IllegalStateException "
+				+ "+ MESSAGE_PAGEABLE_NULL + stockage inchangé";
+
+	/**
+	 * "rechercherTousParPage(stockage vide) : page vide
+	 * + MESSAGE_RECHERCHE_PAGINEE_OK + stockage inchangé"
+	 */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_VIDE
+		= "rechercherTousParPage(stockage vide) : page vide "
+				+ "+ MESSAGE_RECHERCHE_PAGINEE_OK + stockage inchangé";
+
+	/**
+	 * "rechercherTousParPage(ok) : page DTO cohérente
+	 * + message exact + stockage inchangé"
+	 */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL
+		= "rechercherTousParPage(ok) : page DTO cohérente "
+				+ "+ message exact + stockage inchangé";
+
 	// ========================== SELECT ================================//
 	
 	/**
@@ -355,6 +385,13 @@ public class TypeProduitCuServiceIntegrationTest {
 	 */
 	public static final String SELECT_COUNT_FROM_TYPEPRODUIT 
 		= "SELECT COUNT(*) FROM TYPES_PRODUIT WHERE TYPE_PRODUIT = ?";
+	
+	/**
+	 * "SELECT TYPE_PRODUIT FROM TYPES_PRODUIT"
+	 */
+	public static final String SELECT_TYPEPRODUIT 
+		= "SELECT TYPE_PRODUIT FROM TYPES_PRODUIT";
+	
 
 	// *************************** ATTRIBUTS *******************************/
 
@@ -1263,7 +1300,7 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		final List<String> libellesStockesAvantRecherche
 				= this.jdbcTemplate.queryForList(
-						"SELECT TYPE_PRODUIT FROM TYPES_PRODUIT",
+						SELECT_TYPEPRODUIT,
 						String.class);
 
 		libellesStockesAvantRecherche.sort(String.CASE_INSENSITIVE_ORDER);
@@ -1299,7 +1336,7 @@ public class TypeProduitCuServiceIntegrationTest {
 
 		final List<String> libellesStockesApresRecherche
 				= this.jdbcTemplate.queryForList(
-						"SELECT TYPE_PRODUIT FROM TYPES_PRODUIT",
+						SELECT_TYPEPRODUIT,
 						String.class);
 
 		libellesStockesApresRecherche.sort(String.CASE_INSENSITIVE_ORDER);
@@ -1315,94 +1352,148 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage(null) : violation de contrat.</p>
+	 * <p>garantit que rechercherTousParPage(null) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link TypeProduitICuService#MESSAGE_PAGEABLE_NULL}</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_PAGEABLE_NULL} ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL)
 	@Test
-	@DisplayName("rechercherTousParPage(null) : positionne message + lève IllegalStateException")
 	public void testRechercherTousParPageNull() {
 
+		/* ARRANGE :
+		 * mémorise le volume du stockage avant l'appel invalide.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT - ASSERT :
+		 * Garantit que rechercherTousParPage(null)
+		 * - jette une IllegalStateException
+		 * - avec le message MESSAGE_PAGEABLE_NULL.
+		 */
 		assertThatThrownBy(() -> this.service.rechercherTousParPage(null))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(TypeProduitICuService.MESSAGE_PAGEABLE_NULL);
 
 		assertThat(this.service.getMessage())
-				.contains(TypeProduitICuService.MESSAGE_PAGEABLE_NULL);
+				.isEqualTo(TypeProduitICuService.MESSAGE_PAGEABLE_NULL);
+
+		/* Garantit que l'appel invalide n'a pas modifié le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 		
-	}// __________________________________________________________________
+	} // __________________________________________________________________
 	
 	
 
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage(ok) : test "béton" sur la cohérence du {@link ResultatPage}.</p>
+	 * <p>garantit que rechercherTousParPage(stockage vide) :</p>
 	 * <ul>
-	 * <li>le {@code totalElements} reflète l'état base + créations</li>
-	 * <li>la page et la taille sont reprises</li>
-	 * <li>le contenu n'excède pas {@code pageSize}</li>
-	 * </ul>
-	 * </div>
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@DisplayName("rechercherTousParPage(ok) : retourne ResultatPage cohérent (totalElements repris)")
-	public void testRechercherTousParPageOk() throws Exception {
-
-		final long baseline = this.service.count();
-
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_PAGE_01));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_PAGE_02));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_PAGE_03));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_PAGE_04));
-		this.service.creer(new TypeProduitDTO.InputDTO(IT_PAGE_05));
-
-		final long attendu = baseline + 5L;
-
-		final RequetePage requete = new RequetePage(0, 2);
-
-		final ResultatPage<OutputDTO> rp = this.service.rechercherTousParPage(requete);
-
-		assertThat(rp).isNotNull();
-		assertThat(rp.getPageNumber()).isEqualTo(0);
-		assertThat(rp.getPageSize()).isEqualTo(2);
-		assertThat(rp.getTotalElements()).isEqualTo(attendu);
-		assertThat(rp.getContent()).isNotNull();
-		assertThat(rp.getContent().size()).isLessThanOrEqualTo(2);
-		
-	}// __________________________________________________________________
-
-
-
-	/**
-	 * <div>
-	 * <p>rechercherTousParPage(ok) : test béton avec pagination cohérente
-	 * et preuve BD.</p>
-	 * <ul>
-	 * <li>retourne un {@link ResultatPage} non {@code null}</li>
-	 * <li>reprend le numéro de page</li>
-	 * <li>reprend la taille de page</li>
-	 * <li>reprend le total d'éléments</li>
-	 * <li>retourne un contenu DTO cohérent avec les créations du test</li>
+	 * <li>retourne un {@link ResultatPage} non {@code null} ;</li>
+	 * <li>retourne un contenu DTO vide mais non {@code null} ;</li>
+	 * <li>retourne un total d'éléments égal à zéro ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}</li>
-	 * <li>prouve physiquement l'existence en base
-	 * des objets créés</li>
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK} ;</li>
+	 * <li>ne crée aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@Sql(
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_VIDE)
 	@Test
-	@DisplayName("rechercherTousParPage(ok) : ResultatPage cohérent + message exact + preuve BD")
-	public void testRechercherTousParPageOkAvecPreuveBd() throws Exception {
+	public void testRechercherTousParPageVide() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
-		final long baseline = this.service.count();
+		/* ARRANGE :
+		 * contrôle que le stockage ne contient aucun TypeProduit.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
+
+		final RequetePage requete = new RequetePage(0, 20);
+
+		/* ACT :
+		 * exécute la recherche paginée via le SERVICE UC.
+		 */
+		final ResultatPage<OutputDTO> resultat
+				= this.service.rechercherTousParPage(requete);
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * garantit que la page DTO vide reprend la pagination demandée.
+		 */
+		assertThat(resultat).isNotNull();
+		assertThat(resultat.getPageNumber()).isEqualTo(0);
+		assertThat(resultat.getPageSize()).isEqualTo(20);
+		assertThat(resultat.getTotalElements()).isEqualTo(0L);
+		assertThat(resultat.getContent()).isNotNull();
+		assertThat(resultat.getContent()).isEmpty();
+
+		assertThat(message)
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* Garantit que la lecture paginée n'a rien écrit dans le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(0L);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTousParPage(OK) :</p>
+	 * <ul>
+	 * <li>retourne un {@link ResultatPage} non {@code null} ;</li>
+	 * <li>reprend le numéro de page, la taille de page
+	 * et le total d'éléments du stockage ;</li>
+	 * <li>retourne exactement les libellés présents dans le stockage,
+	 * triés selon l'ordre métier et sans doublon ;</li>
+	 * <li>retourne les identifiants persistants
+	 * des cinq créations réalisées par le test ;</li>
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK} ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL)
+	@Test
+	public void testRechercherTousParPageNominalAvecPreuveStockage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * crée cinq TypeProduit non seedés dans le stockage.
+		 */
 		final OutputDTO cree01 = this.service.creer(
 				new TypeProduitDTO.InputDTO(IT_PAGE_01));
 		final OutputDTO cree02 = this.service.creer(
@@ -1414,32 +1505,61 @@ public class TypeProduitCuServiceIntegrationTest {
 		final OutputDTO cree05 = this.service.creer(
 				new TypeProduitDTO.InputDTO(IT_PAGE_05));
 
-		final long attendu = baseline + 5L;
+		/*
+		 * Synchronise le contexte de persistance JPA
+		 * avant les preuves SQL directes.
+		 */
+		this.entityManager.flush();
+
+		assertThat(cree01).isNotNull();
+		assertThat(cree02).isNotNull();
+		assertThat(cree03).isNotNull();
+		assertThat(cree04).isNotNull();
+		assertThat(cree05).isNotNull();
+
+		assertThat(cree01.getIdTypeProduit()).isNotNull();
+		assertThat(cree02.getIdTypeProduit()).isNotNull();
+		assertThat(cree03.getIdTypeProduit()).isNotNull();
+		assertThat(cree04.getIdTypeProduit()).isNotNull();
+		assertThat(cree05.getIdTypeProduit()).isNotNull();
+
+		final Long countAvantRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvantRecherche).isNotNull();
+
+		final List<String> libellesStockesAvantRecherche
+				= this.jdbcTemplate.queryForList(
+						SELECT_TYPEPRODUIT,
+						String.class);
+
+		libellesStockesAvantRecherche.sort(String.CASE_INSENSITIVE_ORDER);
 
 		final RequetePage requete = new RequetePage(0, 100);
 
-		/* ======================= ACT ======================= */
-		final ResultatPage<OutputDTO> rp = this.service.rechercherTousParPage(requete);
+		/* ACT :
+		 * exécute la recherche paginée via le SERVICE UC.
+		 */
+		final ResultatPage<OutputDTO> resultat
+				= this.service.rechercherTousParPage(requete);
+		final String message = this.service.getMessage();
 
-		/* ===================== ASSERT ====================== */
-		assertThat(rp).isNotNull();
-		assertThat(rp.getPageNumber()).isEqualTo(0);
-		assertThat(rp.getPageSize()).isEqualTo(100);
-		assertThat(rp.getTotalElements()).isEqualTo(attendu);
+		/* ASSERT :
+		 * garantit que la page DTO correspond à l'état du stockage
+		 * observé avant la lecture paginée.
+		 */
+		assertThat(resultat).isNotNull();
+		assertThat(resultat.getPageNumber()).isEqualTo(0);
+		assertThat(resultat.getPageSize()).isEqualTo(100);
+		assertThat(resultat.getTotalElements()).isEqualTo(countAvantRecherche);
+		assertThat(resultat.getContent()).isNotNull();
 
-		assertThat(rp.getContent()).isNotNull();
-		assertThat(rp.getContent().size()).isLessThanOrEqualTo(100);
-
-		assertThat(rp.getContent())
+		assertThat(resultat.getContent())
 				.extracting(OutputDTO::getTypeProduit)
-				.contains(
-						IT_PAGE_01,
-						IT_PAGE_02,
-						IT_PAGE_03,
-						IT_PAGE_04,
-						IT_PAGE_05);
+				.containsExactlyElementsOf(libellesStockesAvantRecherche);
 
-		assertThat(rp.getContent())
+		assertThat(resultat.getContent())
 				.extracting(OutputDTO::getIdTypeProduit)
 				.contains(
 						cree01.getIdTypeProduit(),
@@ -1448,39 +1568,67 @@ public class TypeProduitCuServiceIntegrationTest {
 						cree04.getIdTypeProduit(),
 						cree05.getIdTypeProduit());
 
-		assertThat(this.service.getMessage())
+		assertThat(resultat.getContent()).doesNotHaveDuplicates();
+
+		assertThat(message)
 				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
 
-		/* preuve BD : les 5 créations existent physiquement. */
-		assertThat(this.compterTypeProduitEnBase(cree01.getIdTypeProduit()))
+		/* Garantit directement dans le stockage
+		 * que les cinq créations existent après la lecture paginée.
+		 */
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_PAGE_01))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(cree01.getIdTypeProduit()))
-				.isEqualTo(IT_PAGE_01);
 
-		assertThat(this.compterTypeProduitEnBase(cree02.getIdTypeProduit()))
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_PAGE_02))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(cree02.getIdTypeProduit()))
-				.isEqualTo(IT_PAGE_02);
 
-		assertThat(this.compterTypeProduitEnBase(cree03.getIdTypeProduit()))
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_PAGE_03))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(cree03.getIdTypeProduit()))
-				.isEqualTo(IT_PAGE_03);
 
-		assertThat(this.compterTypeProduitEnBase(cree04.getIdTypeProduit()))
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_PAGE_04))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(cree04.getIdTypeProduit()))
-				.isEqualTo(IT_PAGE_04);
 
-		assertThat(this.compterTypeProduitEnBase(cree05.getIdTypeProduit()))
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				IT_PAGE_05))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(cree05.getIdTypeProduit()))
-				.isEqualTo(IT_PAGE_05);
 
-	} // __________________________________________________________________	
+		/* Garantit que la lecture paginée n'a pas modifié le stockage. */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApresRecherche).isNotNull();
+		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
+
+		final List<String> libellesStockesApresRecherche
+				= this.jdbcTemplate.queryForList(
+						SELECT_TYPEPRODUIT,
+						String.class);
+
+		libellesStockesApresRecherche.sort(String.CASE_INSENSITIVE_ORDER);
+
+		assertThat(libellesStockesApresRecherche)
+				.containsExactlyElementsOf(libellesStockesAvantRecherche);
+
+	} // __________________________________________________________________
 	
 	
 	
+
 	// ========================= findByLibelle ============================
 	
 	

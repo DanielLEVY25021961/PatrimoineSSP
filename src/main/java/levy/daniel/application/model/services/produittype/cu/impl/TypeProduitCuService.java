@@ -626,8 +626,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 
 		/*
 		 * Le contrat UC refuse une requête de pagination null.
-		 * Si pRequetePage == null : émet un message MESSAGE_PAGEABLE_NULL 
-		 * + LOG + IllegalStateException.
+		 * Aucun appel Gateway n'est réalisé dans ce cas.
 		 */
 		if (pRequetePage == null) {
 			return this.traiterErreur(
@@ -637,16 +636,15 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		/*
-		 * Délègue au GATEWAY la recherche paginée.
-		 * Toute anomalie technique de recherche est transformée
-		 * en message utilisateur rationalisé côté UC.
+		 * Délègue au GATEWAY la recherche paginée dans le stockage.
+		 * Une exception Gateway produit un message dédié
+		 * à rechercherTousParPage(...), puis l'exception est propagée.
 		 */
 		final ResultatPage<TypeProduit> resultatPagine;
 
 		try {
 			
-			/* Délègue au GATEWAY la recherche paginée. */
-			resultatPagine 
+			resultatPagine
 				= this.gateway.rechercherTousParPage(pRequetePage);
 			
 		} catch (final Exception e) {
@@ -655,17 +653,15 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_PAGE,
 					e);
 		}
 
 		/*
-		 * Sécurise le contrat observable du UC :
-		 * une réponse paginée null du GATEWAY
-		 * est une rupture technique.
-		 * Si resultatPagine == null : émet un MESSAGE_RECHERCHE_PAGINEE_KO 
-		 * + LOG + IllegalStateException.
+		 * Refuse une page Gateway null :
+		 * le SERVICE UC ne retourne jamais un résultat paginé null.
 		 */
 		if (resultatPagine == null) {
 			return this.traiterErreur(
@@ -675,24 +671,19 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		/*
-		 * Prépare la réponse paginée utilisateur complète :
-		 * retrait des nulls, tri métier,
-		 * conversion en OutputDTO avec dédoublonnage,
-		 * puis reconstruction d'un ResultatPage cohérent.
+		 * Filtre et trie les objets métier,
+		 * les convertit en OutputDTO en les dédoublonnant,
+		 * puis reconstruit la page DTO.
 		 */
 		final ResultatPage<OutputDTO> resultatUc;
 
 		try {
 			
-			/* Récupère la liste d'objets métier auprès du resultatPagine. */
 			final List<TypeProduit> contenus = resultatPagine.getContent();
 
-			/* Retire les null, trie la liste d'objets métier. */
 			final List<TypeProduit> recordsNonNullTries
 					= this.filtrerEtTrier(contenus);
 
-			/* Convertit la liste d'objets métier sans null 
-			 * en dédoublonnant et en conservant l'ordre. */
 			final List<TypeProduitDTO.OutputDTO> dtos
 					= this.convertirEtDedoublonner(recordsNonNullTries);
 
@@ -700,7 +691,6 @@ public class TypeProduitCuService implements TypeProduitICuService {
 			final int pageSize = resultatPagine.getPageSize();
 			final long totalElements = this.safeTotalElements(resultatPagine);
 
-			/* Reconstruit un ResultatPage cohérent. */
 			resultatUc = new ResultatPage<OutputDTO>(
 					dtos,
 					numeroPage,
@@ -713,22 +703,18 @@ public class TypeProduitCuService implements TypeProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 			
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_RECHERCHER_TOUS_PAGE,
 					e);
 		}
 
 		/*
-		 * Le message observable de succès MESSAGE_RECHERCHE_PAGINEE_OK
-		 * n'est positionné qu'après préparation complète
-		 * de la réponse paginée utilisateur.
+		 * Positionne le message de succès uniquement
+		 * après reconstruction complète de la page DTO.
 		 */
 		this.message.set(MESSAGE_RECHERCHE_PAGINEE_OK);
 
-		/*
-		 * Retourne toujours un ResultatPage non null
-		 * lorsque le scénario se termine avec succès.
-		 */
 		return resultatUc;
 	}
 	

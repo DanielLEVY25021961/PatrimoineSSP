@@ -246,6 +246,28 @@ public interface ProduitICuService {
 	String MESSAGE_STOCKAGE_NULL
 		= "Le stockage n'a pas retourné d'enregistrements (null).";
 
+	/* ---------------- rechercherTousParPage -------------------------- */
+
+	/**
+	 * <div>
+	 * <p>"KO - rechercherTousParPage(...)
+	 * - le Gateway a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO
+		= "KO - rechercherTousParPage(...) "
+				+ "- le Gateway a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - rechercherTousParPage(...)
+	 * - la préparation de la page DTO a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO
+		= "KO - rechercherTousParPage(...) "
+				+ "- la préparation de la page DTO a jeté Exception";
+
 	/**
 	 * "à modifier"
 	 */
@@ -827,65 +849,93 @@ public interface ProduitICuService {
 	
 	/**
 	 * <div>
-	 * <p>Retourne une page de {@link ProduitDTO.OutputDTO}
-	 * correspondant à la requête de pagination fournie.</p>
-	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
+	 * <p style="font-weight:bold;">
+	 * Retourne tous les {@link ProduitDTO.OutputDTO}
+	 * disponibles sous forme paginée
+	 * en pilotant un scénario complet de SERVICE UC.
+	 * </p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>valider la requête de pagination reçue ;</li>
-	 * <li>déléguer la recherche paginée au GATEWAY Produit ;</li>
-	 * <li>convertir le contenu métier de la page
-	 * en {@link ProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une réponse paginée exploitable
-	 * par la couche appelante.</li>
+	 * <li>valider la requête de pagination transmise
+	 * par la couche appelante ;</li>
+	 * <li>déléguer au composant GATEWAY
+	 * la recherche paginée des {@link Produit}
+	 * dans le stockage ;</li>
+	 * <li>sécuriser la page retournée par le GATEWAY ;</li>
+	 * <li>filtrer les éléments {@code null}
+	 * et trier les objets métier ;</li>
+	 * <li>convertir les objets métier
+	 * en {@link ProduitDTO.OutputDTO}
+	 * et dédoublonner le contenu DTO ;</li>
+	 * <li>reconstruire un {@link ResultatPage} DTO non {@code null}
+	 * avec le numéro de page, la taille de page
+	 * et le total d'éléments sécurisés.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>si {@code pRequetePage == null},
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PAGEABLE_NULL}
-	 * puis lève une {@link IllegalStateException} ;</li>
-	 * <li>si la recherche paginée du GATEWAY échoue,
-	 * positionne un message technique construit à partir de
-	 * {@link #MESSAGE_RECHERCHE_PAGINEE_KO}
-	 * puis propage une exception circonstanciée ;</li>
-	 * <li>si le GATEWAY retourne {@code null},
+	 * <li>Si {@code pRequetePage == null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_PAGEABLE_NULL},
+	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
+	 * <li>Si le GATEWAY jette une exception, positionne
+	 * {@link #getMessage()} à
+	 * {@link #MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + un message technique sûr,
+	 * puis propage l'exception d'origine.</li>
+	 * <li>Si le résultat paginé retourné par le GATEWAY
+	 * est {@code null}, positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_PAGINEE_KO},
+	 * émet un LOG de service et lève une {@link IllegalStateException}.</li>
+	 * <li>Si le filtrage, le tri, la conversion
+	 * ou la reconstruction de la page DTO jette une exception,
 	 * positionne {@link #getMessage()} à
-	 * {@link #MESSAGE_RECHERCHE_PAGINEE_KO}
-	 * puis lève une {@link IllegalStateException} ;</li>
-	 * <li>sinon, retourne un {@link ResultatPage}
-	 * de {@link ProduitDTO.OutputDTO} non {@code null} ;</li>
-	 * <li>le message de succès
-	 * {@link #MESSAGE_RECHERCHE_PAGINEE_OK}
-	 * n'est positionné qu'après préparation complète
-	 * de la réponse paginée.</li>
+	 * {@link #MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + un message technique sûr,
+	 * puis propage l'exception d'origine.</li>
+	 * <li>Après reconstruction complète de la page DTO, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_PAGINEE_OK}
+	 * et retourne le {@link ResultatPage} DTO.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
 	 * <ul>
-	 * <li>le message retourné par {@link #getMessage()}
-	 * reflète l'issue observable de l'opération ;</li>
-	 * <li>la réponse paginée retournée correspond
-	 * à l'état métier effectivement accessible
-	 * via le GATEWAY ;</li>
-	 * <li>aucune réponse paginée partielle incohérente
-	 * n'est exposée à l'appelant ;</li>
-	 * <li>le message de succès n'est positionné
-	 * qu'après conversion complète de la page résultat.</li>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète la branche réellement exécutée.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après reconstruction complète de la page DTO.</li>
+	 * <li>Le contenu DTO est non {@code null},
+	 * filtré, trié et dédoublonné.</li>
+	 * <li>Les DTO retournés correspondent aux identités métier
+	 * [SousTypeProduit, Produit] réellement accessibles dans le stockage.</li>
+	 * <li>Le numéro de page, la taille de page
+	 * et le total d'éléments proviennent de la page Gateway
+	 * après sécurisation par le SERVICE UC.</li>
+	 * <li>La lecture paginée ne modifie pas le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
-	 * @param pRequetePage : {@link RequetePage}
-	 * décrivant la pagination demandée.
-	 * @return ResultatPage<ProduitDTO.OutputDTO> :
-	 * la page de résultat correspondant à la requête ;
-	 * jamais {@code null} si le traitement aboutit.
+	 * @param pRequetePage : RequetePage :
+	 * requête de pagination demandée par la couche appelante.
+	 * @return ResultatPage&lt;ProduitDTO.OutputDTO&gt; :
+	 * page DTO non {@code null}.
+	 * @throws IllegalStateException
+	 * si {@code pRequetePage == null}
+	 * ou si le résultat paginé retourné par le GATEWAY
+	 * est {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche paginée
+	 * via le GATEWAY.
 	 * @throws Exception
-	 * si une erreur survient lors de la recherche paginée
-	 * ou lors de la préparation finale de la réponse.
+	 * toute autre exception levée lors du filtrage, du tri,
+	 * de la conversion ou de la reconstruction de la page DTO.
 	 */
 	ResultatPage<ProduitDTO.OutputDTO> rechercherTousParPage(
 			RequetePage pRequetePage) throws Exception;

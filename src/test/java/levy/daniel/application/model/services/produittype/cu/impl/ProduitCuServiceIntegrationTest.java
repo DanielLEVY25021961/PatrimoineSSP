@@ -351,6 +351,12 @@ public class ProduitCuServiceIntegrationTest {
 	public static final String TAG_RECHERCHER_TOUS_STRING
 		= "cu-it-RechercherTousString";
 
+	/**
+	 * "cu-it-RechercherTousParPage"
+	 */
+	public static final String TAG_RECHERCHER_TOUS_PAR_PAGE
+		= "cu-it-RechercherTousParPage";
+
 	// ============================ DN ==================================//
 
 	// ---------------------------- creer(...) ----------------------------
@@ -449,6 +455,31 @@ public class ProduitCuServiceIntegrationTest {
 	public static final String DN_RECHERCHER_TOUS_STRING_NOMINAL
 		= "rechercherTousString(ok) : ordre + multiplicité des homonymes "
 				+ "+ MESSAGE_RECHERCHE_OK + stockage inchangé";
+
+
+	/**
+	 * "rechercherTousParPage(null) : IllegalStateException
+	 * + MESSAGE_PAGEABLE_NULL + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL
+		= "rechercherTousParPage(null) : IllegalStateException "
+				+ "+ MESSAGE_PAGEABLE_NULL + stockage inchangé";
+
+	/**
+	 * "rechercherTousParPage(stockage vide) : page vide
+	 * + MESSAGE_RECHERCHE_PAGINEE_OK + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_VIDE
+		= "rechercherTousParPage(stockage vide) : page vide "
+				+ "+ MESSAGE_RECHERCHE_PAGINEE_OK + stockage inchangé";
+
+	/**
+	 * "rechercherTousParPage(ok) : page DTO cohérente
+	 * + message exact + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL
+		= "rechercherTousParPage(ok) : page DTO cohérente "
+				+ EXACT_INCHANGE;
 	
 	// ========================== SELECT ================================//
 	
@@ -471,15 +502,50 @@ public class ProduitCuServiceIntegrationTest {
 		= "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?";
 
 	/**
+	 * "FROM PRODUITS p "
+	 */
+	public static final String FROM_PRODUITS
+		= "FROM PRODUITS p ";
+
+	/**
+	 * "INNER JOIN SOUS_TYPES_PRODUIT stp "
+	 */
+	public static final String INNER_JOIN_STP
+		= "INNER JOIN SOUS_TYPES_PRODUIT stp ";
+
+	/**
+	 * "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
+	 */
+	public static final String ON_PRODUIT_STP
+		= "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT ";
+
+	/**
+	 * "INNER JOIN TYPES_PRODUIT tp "
+	 */
+	public static final String INNER_JOIN_TP
+		= "INNER JOIN TYPES_PRODUIT tp ";
+
+	/**
+	 * "ON stp.TYPE_PRODUIT = tp.ID_TYPE_PRODUIT "
+	 */
+	public static final String ON_STP_TYPE_PRODUIT
+		= "ON stp.TYPE_PRODUIT = tp.ID_TYPE_PRODUIT ";
+
+	/**
+	 * Séparateur technique interne utilisé pour comparer
+	 * les lignes lues dans le stockage aux DTO retournés.
+	 */
+	public static final String SEPARATEUR_IDENTITE = "|#|";
+
+	/**
 	 * Parent SousTypeProduit d'un Produit par son ID.
 	 */
 	public static final String SELECT_PARENT_SOUS_TYPE_BY_ID_PRODUIT
 		= "SELECT stp.SOUS_TYPE_PRODUIT "
-		+ "FROM SOUS_TYPES_PRODUIT stp "
-		+ "INNER JOIN PRODUITS p "
-		+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
+		+ FROM_PRODUITS
+		+ INNER_JOIN_STP
+		+ ON_PRODUIT_STP
 		+ "WHERE p.ID_PRODUIT = ?";
-
 
 	/**
 	 * Libellés Produit ordonnés selon l'ordre métier
@@ -487,11 +553,29 @@ public class ProduitCuServiceIntegrationTest {
 	 */
 	public static final String SELECT_LIBELLES_PRODUITS_ORDONNES
 		= "SELECT p.PRODUIT "
-		+ "FROM PRODUITS p "
-		+ "INNER JOIN SOUS_TYPES_PRODUIT stp "
-		+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
-		+ "INNER JOIN TYPES_PRODUIT tp "
-		+ "ON stp.TYPE_PRODUIT = tp.ID_TYPE_PRODUIT "
+		+ FROM_PRODUITS
+		+ INNER_JOIN_STP
+		+ ON_PRODUIT_STP
+		+ INNER_JOIN_TP
+		+ ON_STP_TYPE_PRODUIT
+		+ "ORDER BY UPPER(tp.TYPE_PRODUIT), "
+		+ "UPPER(stp.SOUS_TYPE_PRODUIT), "
+		+ "UPPER(p.PRODUIT), p.ID_PRODUIT";
+
+	/**
+	 * Sélectionne les Produits avec leur contexte de rattachement
+	 * et leur identifiant, dans l'ordre métier.
+	 * L'identité fonctionnelle reste [SousTypeProduit, Produit] ;
+	 * le TypeProduit sert uniquement à désambiguïser le parent direct.
+	 */
+	public static final String SELECT_IDENTITES_PRODUITS_ORDONNEES
+		= "SELECT tp.TYPE_PRODUIT, stp.SOUS_TYPE_PRODUIT, "
+		+ "p.PRODUIT, p.ID_PRODUIT "
+		+ FROM_PRODUITS
+		+ INNER_JOIN_STP
+		+ ON_PRODUIT_STP
+		+ INNER_JOIN_TP
+		+ ON_STP_TYPE_PRODUIT
 		+ "ORDER BY UPPER(tp.TYPE_PRODUIT), "
 		+ "UPPER(stp.SOUS_TYPE_PRODUIT), "
 		+ "UPPER(p.PRODUIT), p.ID_PRODUIT";
@@ -2088,22 +2172,48 @@ public class ProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage(null) : violation de contrat.</p>
+	 * <p>garantit que rechercherTousParPage(null) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PAGEABLE_NULL}</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PAGEABLE_NULL} ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NULL)
 	@Test
-	@DisplayName("rechercherTousParPage(null) : positionne message + lève IllegalStateException")
 	public void testRechercherTousParPageNull() {
 
+		/* ARRANGE :
+		 * mémorise le volume du stockage avant l'appel invalide.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT - ASSERT :
+		 * Garantit que rechercherTousParPage(null)
+		 * - jette une IllegalStateException
+		 * - avec le message MESSAGE_PAGEABLE_NULL.
+		 */
 		assertThatThrownBy(() -> this.service.rechercherTousParPage(null))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PAGEABLE_NULL);
 
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PAGEABLE_NULL);
+
+		/* Garantit que l'appel invalide n'a pas modifié le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 		
 	} // __________________________________________________________________
 	
@@ -2111,62 +2221,213 @@ public class ProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>rechercherTousParPage(ok) : test de stockage sur la cohérence du {@link ResultatPage}.</p>
+	 * <p>garantit que rechercherTousParPage(stockage vide) :</p>
 	 * <ul>
-	 * <li>le {@code totalElements} reflète l'état du stockage + créations ;</li>
-	 * <li>la page et la taille sont reprises ;</li>
-	 * <li>le contenu n'excède pas {@code pageSize} ;</li>
-	 * <li>le message observable est exactement
-	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK}.</li>
+	 * <li>retourne un {@link ResultatPage} non {@code null} ;</li>
+	 * <li>retourne un contenu DTO vide mais non {@code null} ;</li>
+	 * <li>retourne un total d'éléments égal à zéro ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK} ;</li>
+	 * <li>ne crée aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@Sql(
+			scripts = "classpath:/truncate-test.sql",
+			executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_VIDE)
 	@Test
-	@DisplayName("rechercherTousParPage(ok) : retourne ResultatPage cohérent (totalElements repris)")
-	public void testRechercherTousParPageOk() throws Exception {
+	public void testRechercherTousParPageVide() throws Exception {
 
-		/* ===================== ARRANGE ===================== */
+		/* ARRANGE :
+		 * contrôle que le stockage ne contient aucun Produit.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+		assertThat(countAvant).isEqualTo(0L);
+
+		final RequetePage requete = new RequetePage(0, 20);
+
+		/* ACT :
+		 * exécute la recherche paginée via le SERVICE UC.
+		 */
+		final ResultatPage<OutputDTO> resultat
+				= this.service.rechercherTousParPage(requete);
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * garantit que la page DTO vide reprend la pagination demandée.
+		 */
+		assertThat(resultat).isNotNull();
+		assertThat(resultat.getPageNumber()).isEqualTo(0);
+		assertThat(resultat.getPageSize()).isEqualTo(20);
+		assertThat(resultat.getTotalElements()).isEqualTo(0L);
+		assertThat(resultat.getContent()).isNotNull();
+		assertThat(resultat.getContent()).isEmpty();
+
+		assertThat(message)
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* Garantit que la lecture paginée n'a rien écrit dans le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(0L);
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>garantit que rechercherTousParPage(OK) :</p>
+	 * <ul>
+	 * <li>retourne un {@link ResultatPage} non {@code null} ;</li>
+	 * <li>reprend le numéro de page, la taille de page
+	 * et le total d'éléments du stockage ;</li>
+	 * <li>retourne exactement les identités fonctionnelles
+	 * [SousTypeProduit, Produit] présentes dans le stockage,
+	 * accompagnées du TypeProduit de rattachement pour désambiguïser
+	 * le parent direct, puis triées dans l'ordre métier ;</li>
+	 * <li>retourne les identifiants persistants
+	 * des cinq créations réalisées par le test ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_PAGINEE_OK} ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
+	 * </ul>
+	 * </div>
+	 *
+	 * @throws Exception
+	 */
+	@Tag(TAG_RECHERCHER_TOUS_PAR_PAGE)
+	@DisplayName(DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL)
+	@Test
+	public void testRechercherTousParPageNominalAvecPreuveStockage()
+			throws Exception {
+
+		/* ARRANGE :
+		 * crée la hiérarchie persistante puis cinq Produits non seedés.
+		 */
 		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
 
-		final long baseline = this.service.count();
+		final OutputDTO cree01 = this.service.creer(
+				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, RABOTEUSE));
+		final OutputDTO cree02 = this.service.creer(
+				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, COUTEAU));
+		final OutputDTO cree03 = this.service.creer(
+				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, CISEAU));
+		final OutputDTO cree04 = this.service.creer(
+				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, BURIN));
+		final OutputDTO cree05 = this.service.creer(
+				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, MAILLET));
 
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, RABOTEUSE));
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, COUTEAU));
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, CISEAU));
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, BURIN));
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, MAILLET));
+		assertThat(cree01).isNotNull();
+		assertThat(cree02).isNotNull();
+		assertThat(cree03).isNotNull();
+		assertThat(cree04).isNotNull();
+		assertThat(cree05).isNotNull();
 
-		final long attendu = baseline + 5L;
-		final RequetePage requete = new RequetePage(0, 2);
+		assertThat(cree01.getIdProduit()).isNotNull();
+		assertThat(cree02.getIdProduit()).isNotNull();
+		assertThat(cree03.getIdProduit()).isNotNull();
+		assertThat(cree04.getIdProduit()).isNotNull();
+		assertThat(cree05.getIdProduit()).isNotNull();
 
-		/* ======================= ACT ======================= */
-		final ResultatPage<OutputDTO> rp = this.service.rechercherTousParPage(requete);
+		/* Prouve directement les cinq identités fonctionnelles créées.
+		 * Le TypeProduit sert seulement à identifier sans ambiguïté
+		 * le SousTypeProduit parent direct.
+		 */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, RABOTEUSE)).isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, COUTEAU)).isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, CISEAU)).isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, BURIN)).isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL, OUTILLAGE, MAILLET)).isEqualTo(1L);
 
-		/* ===================== ASSERT ====================== */
-		assertThat(rp).isNotNull();
-		assertResultatPageCoherent(rp);
+		final Long countAvantRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		assertThat(rp.getPageNumber()).isEqualTo(0);
-		assertThat(rp.getPageSize()).isEqualTo(2);
-		assertThat(rp.getTotalElements()).isEqualTo(attendu);
+		assertThat(countAvantRecherche).isNotNull();
+		assertThat(countAvantRecherche).isPositive();
 
-		assertThat(rp.getContent()).isNotNull();
-		assertThat(rp.getContent().size()).isLessThanOrEqualTo(rp.getPageSize());
+		/* Construit l'oracle directement depuis le stockage.
+		 * La page demandée contient tout le stockage afin que le tri UC
+		 * puisse être comparé à l'ordre métier SQL complet.
+		 */
+		final List<String> identitesStockeesAvantRecherche
+				= this.lireIdentitesProduitsOrdonneesDansStockage();
 
-		assertThat(this.service.getMessage())
+		assertThat(identitesStockeesAvantRecherche).hasSize(countAvantRecherche.intValue());
+
+		final int pageSize = Math.toIntExact(countAvantRecherche);
+		final RequetePage requete = new RequetePage(0, pageSize);
+
+		/* ACT : exécute la recherche paginée via le SERVICE UC. */
+		final ResultatPage<OutputDTO> resultat
+				= this.service.rechercherTousParPage(requete);
+		final String message = this.service.getMessage();
+
+		/* ASSERT : contrôle la page, les identités et les IDs persistants. */
+		assertThat(resultat).isNotNull();
+		assertThat(resultat.getPageNumber()).isEqualTo(0);
+		assertThat(resultat.getPageSize()).isEqualTo(pageSize);
+		assertThat(resultat.getTotalElements()).isEqualTo(countAvantRecherche);
+		assertThat(resultat.getContent()).isNotNull();
+		assertThat(resultat.getContent()).hasSize(countAvantRecherche.intValue());
+
+		final List<String> identitesRetournees
+				= resultat.getContent().stream()
+						.map(ProduitCuServiceIntegrationTest::identiteProduit)
+						.toList();
+
+		assertThat(identitesRetournees)
+				.containsExactlyElementsOf(identitesStockeesAvantRecherche);
+
+		assertThat(resultat.getContent())
+				.extracting(OutputDTO::getIdProduit)
+				.contains(
+						cree01.getIdProduit(),
+						cree02.getIdProduit(),
+						cree03.getIdProduit(),
+						cree04.getIdProduit(),
+						cree05.getIdProduit());
+
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_PAGINEE_OK);
+
+		/* Prouve que la lecture paginée n'a modifié ni le volume,
+		 * ni les valeurs, ni les identités présentes dans le stockage.
+		 */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApresRecherche).isNotNull();
+		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
+
+		final List<String> identitesStockeesApresRecherche
+				= this.lireIdentitesProduitsOrdonneesDansStockage();
+
+		assertThat(identitesStockeesApresRecherche)
+				.containsExactlyElementsOf(identitesStockeesAvantRecherche);
 
 	} // __________________________________________________________________
 	
 	
-	
+
 	// ========================= findByLibelle ============================
 	
 	
@@ -3776,11 +4037,11 @@ public class ProduitCuServiceIntegrationTest {
 
 		return this.jdbcTemplate.queryForObject(
 				"SELECT COUNT(*) "
-				+ "FROM PRODUITS p "
-				+ "INNER JOIN SOUS_TYPES_PRODUIT stp "
-				+ "ON p.SOUS_TYPE_PRODUIT = stp.ID_SOUS_TYPE_PRODUIT "
-				+ "INNER JOIN TYPES_PRODUIT tp "
-				+ "ON stp.TYPE_PRODUIT = tp.ID_TYPE_PRODUIT "
+				+ FROM_PRODUITS
+				+ INNER_JOIN_STP
+				+ ON_PRODUIT_STP
+				+ INNER_JOIN_TP
+				+ ON_STP_TYPE_PRODUIT
 				+ "WHERE tp.TYPE_PRODUIT = ? "
 				+ "AND stp.SOUS_TYPE_PRODUIT = ? "
 				+ "AND p.PRODUIT = ?",
@@ -3792,6 +4053,79 @@ public class ProduitCuServiceIntegrationTest {
 	} // __________________________________________________________________
 	
 	
+
+	/**
+	 * <div>
+	 * <p>Lit directement dans le stockage les Produits ordonnés
+	 * selon l'ordre métier et construit un oracle textuel complet.</p>
+	 * </div>
+	 *
+	 * @return List&lt;String&gt; : identités techniques de comparaison,
+	 * jamais {@code null}.
+	 */
+	private List<String> lireIdentitesProduitsOrdonneesDansStockage() {
+
+		return this.jdbcTemplate.query(
+				SELECT_IDENTITES_PRODUITS_ORDONNEES,
+				(resultSet, rowNum) -> identiteProduit(
+						resultSet.getString("TYPE_PRODUIT"),
+						resultSet.getString("SOUS_TYPE_PRODUIT"),
+						resultSet.getString("PRODUIT"),
+						resultSet.getLong("ID_PRODUIT")));
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>Construit la représentation technique stable d'un OutputDTO Produit.</p>
+	 * </div>
+	 *
+	 * @param pDto : OutputDTO à représenter.
+	 * @return String : représentation stable de comparaison.
+	 */
+	private static String identiteProduit(final OutputDTO pDto) {
+
+		return identiteProduit(
+				pDto.getTypeProduit(),
+				pDto.getSousTypeProduit(),
+				pDto.getProduit(),
+				pDto.getIdProduit());
+
+	} // __________________________________________________________________
+
+
+
+	/**
+	 * <div>
+	 * <p>Construit une représentation technique stable utilisée uniquement
+	 * pour comparer une ligne du stockage à un OutputDTO.</p>
+	 * </div>
+	 *
+	 * @param pTypeProduit : contexte TypeProduit de rattachement.
+	 * @param pSousTypeProduit : parent direct du Produit.
+	 * @param pProduit : libellé du Produit.
+	 * @param pIdProduit : identifiant persistant du Produit.
+	 * @return String : représentation stable de comparaison.
+	 */
+	private static String identiteProduit(
+			final String pTypeProduit,
+			final String pSousTypeProduit,
+			final String pProduit,
+			final Long pIdProduit) {
+
+		return pTypeProduit
+				+ SEPARATEUR_IDENTITE
+				+ pSousTypeProduit
+				+ SEPARATEUR_IDENTITE
+				+ pProduit
+				+ SEPARATEUR_IDENTITE
+				+ String.valueOf(pIdProduit); // NOPMD by danyl on 25/07/2026 12:14
+
+	} // __________________________________________________________________
+
+
 
 	/**
 	 * <div>

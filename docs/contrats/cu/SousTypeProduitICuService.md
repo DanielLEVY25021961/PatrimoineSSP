@@ -606,15 +606,15 @@ Signature cible :
 Le scénario nominal de `rechercherTousParPage(...)` est :
 
 1. recevoir une `RequetePage` transmise par la couche appelante ;
-2. valider que la requête de pagination est exploitable ;
+2. refuser une requête de pagination `null` ;
 3. demander au `GATEWAY` la page d’objets métier correspondante ;
 4. sécuriser le résultat paginé technique retourné ;
 5. retirer les éventuels éléments `null` ;
-6. trier les objets métier ;
+6. trier les objets métier selon `[TypeProduit, SousTypeProduit]` ;
 7. convertir les objets métier en `OutputDTO` ;
-8. dédoublonner les `OutputDTO` si nécessaire ;
-9. reconstruire un `ResultatPage` cohérent pour la couche appelante ;
-10. positionner le message observable ;
+8. dédoublonner les `OutputDTO` en conservant l’ordre métier ;
+9. reconstruire un `ResultatPage` DTO cohérent ;
+10. positionner le message observable après reconstruction complète ;
 11. retourner la réponse paginée finale.
 
 ### 13.2 Cas observables attendus
@@ -622,42 +622,61 @@ Le scénario nominal de `rechercherTousParPage(...)` est :
 - si `pRequetePage == null` :
   - positionne `getMessage()` à `MESSAGE_PAGEABLE_NULL`,
   - émet un LOG,
-  - lève une `IllegalStateException` ;
+  - lève une `IllegalStateException`,
+  - ne sollicite aucun `GATEWAY` ;
 
-- si le `GATEWAY` lève une exception technique avec message :
+- si le `GATEWAY` lève une exception avec message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO + TIRET_ESPACE + message`,
   - émet un LOG,
-  - propage l’exception ;
+  - propage l’exception d’origine ;
 
-- si le `GATEWAY` lève une exception technique sans message :
+- si le `GATEWAY` lève une exception sans message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
   - émet un LOG,
-  - propage l’exception ;
+  - propage l’exception d’origine ;
 
 - si le résultat paginé retourné par le `GATEWAY` est `null` :
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_KO`,
   - émet un LOG,
   - lève une `IllegalStateException` ;
 
-- si la réponse paginée est correctement préparée :
-  - retourne un `ResultatPage` non `null`,
-  - reprend une pagination cohérente,
+- si le filtrage, le tri, la conversion
+  ou la reconstruction de la page DTO lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si cette préparation lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage l’exception d’origine ;
+
+- si la réponse paginée est correctement reconstruite :
+  - retourne un `ResultatPage` DTO non `null`,
+  - reprend `pageNumber`, `pageSize` et `totalElements` sécurisés,
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_PAGINEE_OK`.
 
 ### 13.3 Garanties spécifiques de `rechercherTousParPage(...)`
 
 - la méthode ne doit jamais retourner `null`
   quand le scénario se termine avec succès ;
-- le message observable doit être positionné
-  après préparation complète de la réponse paginée ;
+- le message observable doit refléter la branche réellement exécutée ;
+- une panne de préparation côté UC
+  ne doit jamais être attribuée au `GATEWAY` ;
+- le message de succès doit être positionné
+  après reconstruction complète de la page DTO ;
 - les `null` techniques issus du stockage
   ne doivent jamais fuiter jusqu’à l’appelant ;
-- les `OutputDTO` retournés doivent correspondre
-  à des objets métier réellement accessibles via le `GATEWAY` ;
-- la pagination reconstruite doit rester cohérente
-  avec `pageNumber`, `pageSize` et `totalElements` du résultat technique sécurisé ;
+- le contenu DTO doit être non `null`, filtré, trié et dédoublonné ;
+- la pagination reconstruite doit reprendre
+  `pageNumber`, `pageSize` et `totalElements` du résultat technique sécurisé ;
+- les DTO vérifiés doivent correspondre à des couples
+  `[TypeProduit, SousTypeProduit]` réellement présents dans le stockage ;
+- la lecture paginée ne doit pas modifier le stockage ;
 - aucun résultat paginé partiel incohérent ne doit être exposé.
 
 ## 14) Contrat spécifique de `findByLibelle(...)`
@@ -1400,11 +1419,20 @@ Pour `rechercherTousString()`, les tests Mock doivent verrouiller au minimum :
   suppression des blank, dédoublonnage String et message exact.
 
 Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum :
-- le cas `pRequetePage == null` ;
-- le cas exception technique avec message ;
-- le cas exception technique sans message ;
+- le cas `pRequetePage == null` avec absence d’interaction Gateway ;
+- le cas exception du `GATEWAY` avec message et
+  `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO + TIRET_ESPACE + message` ;
+- le cas exception du `GATEWAY` sans message et
+  `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
 - le cas `gateway.rechercherTousParPage(...) == null` ;
-- le cas nominal avec reprise de la pagination, filtrage des `null`, tri et dédoublonnage.
+- le cas exception de préparation avec message et
+  `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO + TIRET_ESPACE + message` ;
+- le cas exception de préparation sans message et
+  `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+- le cas page vide après filtrage des éléments `null` ;
+- le cas nominal avec reprise de la pagination,
+  filtrage des `null`, tri `[TypeProduit, SousTypeProduit]`,
+  conversion et dédoublonnage.
 
 Pour `findByLibelle(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas `pLibelle` blank ;
@@ -1531,12 +1559,19 @@ Pour `rechercherTousString()`, l’intégration doit prouver :
 - le message exact `MESSAGE_RECHERCHE_OK` ;
 - l’absence de modification du stockage par cette lecture.
 
-Pour `rechercherTousParPage(...)`, le test d’intégration cible doit, à terme, prouver :
-- la cohérence entre la pagination retournée et `count()` ;
+Pour `rechercherTousParPage(...)`, l’intégration doit prouver :
+- le cas `pRequetePage == null`, avec exception et message exacts
+  ainsi qu’un stockage inchangé ;
+- le cas stockage vide réel avant et après l’appel,
+  avec page DTO vide et `MESSAGE_RECHERCHE_PAGINEE_OK` ;
 - la cohérence de `pageNumber`, `pageSize` et `totalElements` ;
-- la présence réelle dans le stockage des lignes correspondant aux DTO paginés vérifiés ;
+- la correspondance exacte entre les couples
+  `[TypeProduit, SousTypeProduit]` retournés et ceux lus directement
+  dans le stockage selon l’ordre métier ;
+- la présence réelle dans le stockage des cinq couples créés et vérifiés ;
 - la cohérence du parent pour les sous-types vérifiés ;
-- le message exact `MESSAGE_RECHERCHE_PAGINEE_OK` en cas de succès.
+- le message exact `MESSAGE_RECHERCHE_PAGINEE_OK` en cas de succès ;
+- l’absence de modification du stockage par cette lecture.
 
 Pour `findByLibelle(...)`, le test d’intégration cible doit, à terme, prouver :
 - qu’un même libellé exact peut remonter plusieurs DTO ;
@@ -1646,6 +1681,8 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO` | `"KO - rechercherTousString() - le Gateway a jeté Exception"` |
 | `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO` | `"KO - rechercherTousString() " + "- la préparation de la réponse utilisateur a jeté Exception"` |
 | `MESSAGE_STOCKAGE_NULL` | `"Le stockage n'a pas retourné d'enregistrements (null)."` |
+| `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO` | `"KO - rechercherTousParPage(...) " + "- le Gateway a jeté Exception"` |
+| `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO` | `"KO - rechercherTousParPage(...) " + "- la préparation de la page DTO a jeté Exception"` |
 | `MESSAGE_PAGEABLE_NULL` | `"l'indication de page demandée ne doit pas être null."` |
 | `MESSAGE_PARAM_NULL` | `"Le paramètre ne doit pas être null."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
@@ -1772,6 +1809,13 @@ Pour `rechercherTousString()`, les zones techniques doivent également rester di
 
 - échec de `gateway.rechercherTous()` : `MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO` ;
 - échec de préparation de la réponse String côté UC : `MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO`.
+
+Pour `rechercherTousParPage(...)`, les zones techniques doivent également rester distinctes :
+
+- échec de `gateway.rechercherTousParPage(...)` :
+  `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO` ;
+- échec du filtrage, du tri, de la conversion ou de la reconstruction DTO côté UC :
+  `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO`.
 
 Un échec de préparation côté UC ne doit jamais être présenté comme une panne du `GATEWAY`.
 
