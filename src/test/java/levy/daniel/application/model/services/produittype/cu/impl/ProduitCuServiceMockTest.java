@@ -568,21 +568,37 @@ public class ProduitCuServiceMockTest {
 			= "findByLibelle(gateway retourne null) : "
 					+ "ExceptionStockageVide + MESSAGE_STOCKAGE_NULL";
 
-	/** "findByLibelle(gateway KO avec message) : exception propagée par l'ADAPTER réel". */
+	/**
+	 * "findByLibelle(gateway KO avec message) :
+	 * exception propagée + MESSAGE_FINDBYLIBELLE_GATEWAY_KO"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KOAVEC_MESSAGE
-			= "findByLibelle(gateway KO avec message) : exception propagée par l'ADAPTER réel";
+			= "findByLibelle(gateway KO avec message) : "
+					+ "exception propagée + MESSAGE_FINDBYLIBELLE_GATEWAY_KO";
 
-	/** "findByLibelle(gateway KO sans message) : exception propagée par l'ADAPTER réel". */
+	/**
+	 * "findByLibelle(gateway KO sans message) :
+	 * MESSAGE_FINDBYLIBELLE_GATEWAY_KO + fallback"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KOSANS_MESSAGE
-			= "findByLibelle(gateway KO sans message) : exception propagée par l'ADAPTER réel";
+			= "findByLibelle(gateway KO sans message) : "
+					+ "MESSAGE_FINDBYLIBELLE_GATEWAY_KO + fallback";
 
-	/** "findByLibelle(conversion OutputDTO KO avec message) : exception propagée par l'ADAPTER réel". */
+	/**
+	 * "findByLibelle(conversion OutputDTO KO avec message) :
+	 * exception propagée + MESSAGE_FINDBYLIBELLE_PREPARATION_KO"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
-			= "findByLibelle(conversion OutputDTO KO avec message) : exception propagée par l'ADAPTER réel";
+			= "findByLibelle(conversion OutputDTO KO avec message) : "
+					+ "exception propagée + MESSAGE_FINDBYLIBELLE_PREPARATION_KO";
 
-	/** "findByLibelle(conversion OutputDTO KO sans message) : exception propagée par l'ADAPTER réel". */
+	/**
+	 * "findByLibelle(conversion OutputDTO KO sans message) :
+	 * MESSAGE_FINDBYLIBELLE_PREPARATION_KO + fallback"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
-			= "findByLibelle(conversion OutputDTO KO sans message) : exception propagée par l'ADAPTER réel";
+			= "findByLibelle(conversion OutputDTO KO sans message) : "
+					+ "MESSAGE_FINDBYLIBELLE_PREPARATION_KO + fallback";
 
 	/**
 	 * "findByLibelle(introuvable) :
@@ -4475,7 +4491,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway objet métier ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -4521,11 +4537,11 @@ public class ProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 * MESSAGE_FINDBYLIBELLE_GATEWAY_KO + TIRET_ESPACE + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_FINDBYLIBELLE_GATEWAY_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -4547,7 +4563,7 @@ public class ProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par le Gateway
 	 * objet métier ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
 	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -4595,7 +4611,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_FINDBYLIBELLE_GATEWAY_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4620,7 +4636,7 @@ public class ProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -4671,7 +4687,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_FINDBYLIBELLE_PREPARATION_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -4696,7 +4712,7 @@ public class ProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOProduit.convertList(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link ProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link ProduitICuService#MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
 	 * + tiret + {@link ProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway parent.</li>
 	 * </ul>
@@ -4746,7 +4762,7 @@ public class ProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						ProduitICuService.KO_TECHNIQUE_RECHERCHE
+						ProduitICuService.MESSAGE_FINDBYLIBELLE_PREPARATION_KO
 						+ ProduitICuService.TIRET_ESPACE
 						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4841,7 +4857,7 @@ public class ProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>filtre les éléments {@code null} ;</li>
-	 * <li>trie les objets métier par libellé produit ;</li>
+	 * <li>trie les objets métier selon [SousTypeProduit, Produit] ;</li>
 	 * <li>convertit les objets métier en {@link OutputDTO} ;</li>
 	 * <li>dédoublonne la réponse DTO ;</li>
 	 * <li>retourne une liste cohérente portant les parents

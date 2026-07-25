@@ -690,63 +690,84 @@ Signature cible :
 Le scénario nominal de `findByLibelle(...)` est :
 
 1. recevoir un libellé exact transmis par la couche appelante ;
-2. valider que ce libellé est exploitable ;
-3. demander au `GATEWAY` tous les `SousTypeProduit`
-   correspondant exactement à ce libellé ;
-4. sécuriser le retour technique du stockage ;
-5. retirer les éventuels éléments `null` ;
-6. trier les objets métier ;
-7. convertir les objets métier en `OutputDTO` ;
-8. dédoublonner les `OutputDTO` si nécessaire ;
-9. positionner le message observable ;
-10. retourner la liste finale.
+2. refuser localement un paramètre `null` ou blank sans appeler le `GATEWAY` ;
+3. appeler une seule fois `gateway.findByLibelle(pLibelle)` lorsque le paramètre est non blank ;
+4. sécuriser le retour technique du `GATEWAY` ;
+5. retirer les éventuels objets métier `null` ;
+6. trier les objets métier selon leur ordre métier ;
+7. convertir les objets métier en `SousTypeProduitDTO.OutputDTO` ;
+8. dédoublonner les DTO en conservant l'ordre issu du tri ;
+9. positionner le message de succès uniquement après préparation complète de la liste ;
+10. retourner une liste non `null`, éventuellement vide.
 
 ### 14.2 Cas observables attendus
 
-- si `pLibelle` est blank :
-  - retourne une liste vide mais non `null`,
-  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK`,
-  - n’émet ni LOG ni exception ;
+- si `pLibelle` est `null` ou blank :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK` ;
+  - n'émet aucun LOG ;
+  - ne lève aucune exception ;
+  - n'appelle jamais le `GATEWAY` ;
 
-- si le `GATEWAY` retourne `null` :
-  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
-  - émet un LOG,
-  - lève une `ExceptionStockageVide` ;
-
-- si le `GATEWAY` lève une exception technique avec message :
+- si `gateway.findByLibelle(pLibelle)` lève une exception avec message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
-  - émet un LOG,
-  - propage l’exception ;
+    `MESSAGE_FINDBYLIBELLE_GATEWAY_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
 
-- si le `GATEWAY` lève une exception technique sans message :
+- si `gateway.findByLibelle(pLibelle)` lève une exception sans message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
-  - émet un LOG,
-  - propage l’exception ;
+    `MESSAGE_FINDBYLIBELLE_GATEWAY_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
 
-- si aucun résultat exploitable n’est trouvé :
-  - retourne une liste vide mais non `null`,
+- si `gateway.findByLibelle(pLibelle)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - émet un LOG ;
+  - lève une `ExceptionStockageVide`
+    portant exactement `MESSAGE_STOCKAGE_NULL` ;
+
+- si la préparation de la liste de `SousTypeProduitDTO.OutputDTO`
+  lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_PREPARATION_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si la préparation de la liste de `SousTypeProduitDTO.OutputDTO`
+  lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_PREPARATION_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si aucun résultat n'est trouvé après filtrage, conversion et dédoublonnage :
+  - retourne une liste vide mais non `null` ;
   - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + pLibelle` ;
 
-- si un ou plusieurs résultats exploitables sont trouvés :
-  - retourne une liste non vide de DTO,
-  - positionne `getMessage()` à `MESSAGE_SUCCES_RECHERCHE`.
+- si un ou plusieurs résultats sont trouvés :
+  - retourne une liste non vide de DTO triés et dédoublonnés ;
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE`.
 
 ### 14.3 Garanties spécifiques de `findByLibelle(...)`
 
-- le libellé exact d’un `SousTypeProduit` n’étant pas unique,
-  la méthode doit retourner une collection
-  et jamais un DTO unitaire ;
-- la méthode ne doit jamais retourner `null`
-  quand le stockage est exploitable ;
-- le message observable doit être positionné
-  après préparation complète de la réponse ;
-- les `null` techniques issus du stockage
-  ne doivent jamais fuiter jusqu’à l’appelant ;
-- les DTO retournés doivent correspondre
-  à des objets métier réellement accessibles via le `GATEWAY` ;
-- aucun résultat partiel incohérent ne doit être exposé.
+- le libellé exact d'un `SousTypeProduit` n'étant pas unique,
+  la méthode retourne une collection et jamais un DTO unitaire ;
+- la méthode ne retourne jamais `null` lorsque le scénario aboutit ;
+- elle ne retourne aucun élément `null` ;
+- le message de succès n'est positionné
+  qu'après préparation complète de la liste DTO ;
+- les DTO retournés correspondent aux objets métier
+  effectivement fournis par le `GATEWAY` ;
+- l'appel à `findByLibelle(...)` n'écrit rien dans le stockage ;
+- un échec de préparation de la réponse côté UC
+  ne doit jamais être attribué au `GATEWAY` ;
+- aucun résultat partiel incohérent n'est exposé à l'appelant.
 
 ## 15) Contrat spécifique de `findByLibelleRapide(...)`
 
@@ -1435,12 +1456,15 @@ Pour `rechercherTousParPage(...)`, les tests Mock doivent verrouiller au minimum
   conversion et dédoublonnage.
 
 Pour `findByLibelle(...)`, les tests Mock doivent verrouiller au minimum :
-- le cas `pLibelle` blank ;
-- le cas `gateway.findByLibelle(...) == null` ;
-- le cas exception technique avec message ;
-- le cas exception technique sans message ;
-- le cas introuvable ;
-- le cas nominal avec plusieurs résultats exacts possibles, tri et dédoublonnage.
+- les cas `pLibelle == null` et `pLibelle` blank, sans interaction Gateway ;
+- le cas `gateway.findByLibelle(...) == null` avec `MESSAGE_STOCKAGE_NULL` ;
+- les cas exception Gateway avec et sans message,
+  avec `MESSAGE_FINDBYLIBELLE_GATEWAY_KO` ;
+- les cas exception de préparation avec et sans message,
+  avec `MESSAGE_FINDBYLIBELLE_PREPARATION_KO` ;
+- le cas introuvable avec `MESSAGE_OBJ_INTROUVABLE + pLibelle` ;
+- le cas nominal avec plusieurs résultats exacts possibles,
+  tri, dédoublonnage et `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE`.
 
 Pour `findByLibelleRapide(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas `pContenu == null` ;
@@ -1577,7 +1601,7 @@ Pour `findByLibelle(...)`, le test d’intégration cible doit, à terme, prouve
 - qu’un même libellé exact peut remonter plusieurs DTO ;
 - que ces DTO peuvent appartenir à des parents distincts ;
 - que les couples parent / sous-type existent physiquement dans le stockage ;
-- que le message exact `MESSAGE_SUCCES_RECHERCHE` est positionné en cas de succès ;
+- que le message exact `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE` est positionné en cas de succès ;
 - qu’un libellé introuvable retourne une liste vide avec `MESSAGE_OBJ_INTROUVABLE + libellé`.
 
 Pour `findByLibelleRapide(...)`, le test d’intégration cible doit, à terme, prouver :
@@ -1689,6 +1713,8 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_OBJ_INTROUVABLE` | `"Impossible de trouver dans le stockage l'objet : "` |
 | `MESSAGE_OBJ_NON_PERSISTE` | `"Impossible de modifier - " + "l'objet n'est pas persistant (pas d'ID dans le stockage) : "` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
+| `MESSAGE_FINDBYLIBELLE_GATEWAY_KO` | `"KO - findByLibelle(...) " + "- le Gateway a jeté Exception"` |
+| `MESSAGE_FINDBYLIBELLE_PREPARATION_KO` | `"KO - findByLibelle(...) " + "- la préparation de la réponse utilisateur a jeté Exception"` |
 | `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE` | `"OK - findByLibelle(...) a retourné des enregistrements"` |
 | `MESSAGE_RECHERCHE_OBJ_NULL` | `"l'objet à rechercher ne doit pas être null."` |
 | `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |

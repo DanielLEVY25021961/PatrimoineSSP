@@ -322,10 +322,34 @@ public interface ProduitICuService {
 	 */
 	String MSG_ERREUR_NON_SPECIFIEE = "Erreur non spécifiée";
 
+	/* ------------------------ findByLibelle -------------------------- */
+
 	/**
-	 * "OK - findByLibelle(...) a retourné des enregistrements"
+	 * <div>
+	 * <p>"KO - findByLibelle(...)
+	 * - le Gateway a jeté Exception".</p>
+	 * </div>
 	 */
-	String MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE 
+	String MESSAGE_FINDBYLIBELLE_GATEWAY_KO
+		= "KO - findByLibelle(...) "
+				+ "- le Gateway a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - findByLibelle(...)
+	 * - la préparation de la réponse utilisateur a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLE_PREPARATION_KO
+		= "KO - findByLibelle(...) "
+				+ "- la préparation de la réponse utilisateur a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"OK - findByLibelle(...) a retourné des enregistrements".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE
 		= "OK - findByLibelle(...) a retourné des enregistrements";
 	
 	/**
@@ -351,7 +375,9 @@ public interface ProduitICuService {
 	 */
 	String MESSAGE_RECHERCHE_OK 
 		= "OK - La recherche a retourné des résultats.";
-
+	
+	/* ----------------------- RechercherTousParPage ------------------- */
+	
 	/**
 	 * <div>
 	 * <p>"KO - la recherche paginée a retourné null."</p>
@@ -368,6 +394,8 @@ public interface ProduitICuService {
 	String MESSAGE_RECHERCHE_PAGINEE_OK 
 		= "OK - la recherche paginée a retourné des résultats.";
 
+	/* --------------------------- update ------------------------------ */
+	
 	/**
 	 * <div>
 	 * <p>"KO - la modification a retourné null : "</p>
@@ -382,6 +410,8 @@ public interface ProduitICuService {
 	 */
 	String MESSAGE_MODIF_OK = "OK - modification réussie de : ";
 
+	/* --------------------------- delete ------------------------------ */
+	
 	/**
 	 * <div>
 	 * <p>"OK - destruction réussie de : "</p>
@@ -945,7 +975,7 @@ public interface ProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Retourne tous les {@link ProduitDTO.OutputDTO}
+	 * Recherche tous les {@link ProduitDTO.OutputDTO}
 	 * dont le libellé correspond exactement au libellé demandé.
 	 * </p>
 	 * <p style="font-weight:bold;">
@@ -953,19 +983,16 @@ public interface ProduitICuService {
 	 * </p>
 	 * <ul>
 	 * <li>recevoir un libellé exact depuis la couche appelante ;</li>
-	 * <li>valider le caractère exploitable (non null ou blank) 
-	 * de ce libellé ;</li>
-	 * <li>déléguer au composant GATEWAY
-	 * la recherche exacte de tous les objets métier 
-	 * {@link Produit}
-	 * correspondant à ce libellé ;</li>
-	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
-	 * <li>retirer les éventuels éléments {@code null},
-	 * trier les objets métier et dédoublonner la réponse
-	 * côté UC si nécessaire ;</li>
-	 * <li>convertir la liste métier en 
-	 * {@link ProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une liste non null à la couche appelante.</li>
+	 * <li>refuser localement un libellé blank ;</li>
+	 * <li>déléguer au composant GATEWAY la recherche des
+	 * {@link Produit} portant ce libellé ;</li>
+	 * <li>sécuriser la liste technique retournée par le GATEWAY ;</li>
+	 * <li>retirer les éventuels objets métier {@code null} ;</li>
+	 * <li>trier les objets métier selon l'ordre
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>convertir les objets métier en
+	 * {@link ProduitDTO.OutputDTO} et dédoublonner la liste ;</li>
+	 * <li>retourner une liste non {@code null}, éventuellement vide.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -974,63 +1001,77 @@ public interface ProduitICuService {
 	 * <ul>
 	 * <li>Si {@code pLibelle} est blank, retourne une {@link List}
 	 * vide mais non {@code null}, positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_PARAM_BLANK},
-	 * et n'émet ni LOG ni exception.</li>
-	 * <li>délègue ensuite la recherche exacte au composant GATEWAY ;</li>
+	 * à {@link #MESSAGE_PARAM_BLANK}, n'émet aucun LOG,
+	 * ne lève aucune exception et n'appelle pas le GATEWAY.</li>
+	 * <li>Si le GATEWAY lève une exception avec message,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si le GATEWAY lève une exception sans message,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
 	 * <li>Si le GATEWAY retourne {@code null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
-	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Si aucun résultat n'est trouvé,
-	 * retourne une {@link List} vide mais non {@code null},
+	 * émet un LOG et lève une {@link ExceptionStockageVide}.</li>
+	 * <li>Si le filtrage, le tri ou la conversion de la liste DTO
+	 * lève une exception avec message, positionne
+	 * {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si cette préparation lève une exception sans message,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si aucun résultat n'est trouvé après préparation de la liste,
+	 * retourne une {@link List} vide mais non {@code null}
 	 * et positionne {@link #getMessage()}
 	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Sinon, retourne une {@link List} non vide de
-	 * {@link SousTypeProduitDTO.OutputDTO}
-	 * correspondant exactement au libellé recherché,
-	 * et positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_SUCCES_RECHERCHE}.</li>
-	 * <li>En cas d'échec technique remonté par le GATEWAY
-	 * ou par la préparation de la réponse utilisateur,
-	 * positionne un message utilisateur technique cohérent
-	 * puis propage une exception circonstanciée
-	 * conforme à l'implémentation.</li>
+	 * <li>En cas de succès, retourne une {@link List} non vide de
+	 * {@link ProduitDTO.OutputDTO} triés et dédoublonnés,
+	 * puis positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
 	 * <ul>
-	 * <li>le message retourné par {@link #getMessage()}
-	 * reflète l'issue de l'opération ;</li>
-	 * <li>le message de succès n'est positionné
-	 * qu'après préparation complète de la réponse utilisateur ;</li>
-	 * <li>La liste retournée, si elle n'est pas vide,
-	 * correspond aux objets métier ayant pour libellé pLibelle
-	 * dans le stockage (liste de DTOs).</li>
-	 * <li>Le libellé n'étant pas unique pour un objet métier
-	 * {@link Produit},
-	 * la méthode doit retourner une collection
-	 * et non un DTO unitaire.</li>
+	 * <li>Le message retourné par {@link #getMessage()}
+	 * reflète l'issue observable de l'opération.</li>
+	 * <li>Le message de succès n'est positionné
+	 * qu'après préparation complète de la liste DTO.</li>
+	 * <li>La liste retournée correspond aux objets métier
+	 * effectivement fournis par le GATEWAY.</li>
+	 * <li>Le libellé n'étant pas unique pour un {@link Produit},
+	 * la méthode retourne une collection et non un DTO unitaire.</li>
+	 * <li>L'identité fonctionnelle reste
+	 * {@code [SousTypeProduit, Produit]}.</li>
+	 * <li>La méthode n'écrit rien dans le stockage.</li>
+	 * <li>Aucun résultat partiel incohérent n'est exposé à l'appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pLibelle : String :
-	 * libellé exact des Produit recherchés.
-	 * @return List<ProduitDTO.OutputDTO> :
-	 *  liste des DTO trouvés ; jamais {@code null},
-	 * éventuellement vide.
+	 * libellé exact des Produits recherchés.
+	 * @return List&lt;ProduitDTO.OutputDTO&gt; :
+	 * liste des DTO trouvés ; jamais {@code null}, éventuellement vide.
 	 * @throws ExceptionStockageVide
-	 * si le stockage retourne {@code null}.
+	 * si le GATEWAY retourne {@code null}.
 	 * @throws ExceptionTechniqueGateway
 	 * si une erreur technique survient lors de la recherche
 	 * via le GATEWAY.
 	 * @throws Exception
 	 * toute autre exception levée par l'implémentation,
-	 * notamment lors de la préparation
-	 * de la réponse utilisateur.
+	 * notamment lors du filtrage, du tri ou de la conversion de la liste.
 	 */
-	List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) 
+	List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle)
 			throws Exception;
 
 	

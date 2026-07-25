@@ -170,9 +170,11 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	public TypeProduitCuService(
 			@Qualifier("TypeProduitGatewayJPAService")
 			final TypeProduitGatewayIService pGateway) {
+		
 		super();
 		this.gateway = pGateway;
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -613,7 +615,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 * et éventuellement vide.
 		 */
 		return libelles;
-	}
+		
+	} // __________________________________________________________________
 	
 
 	
@@ -716,7 +719,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		this.message.set(MESSAGE_RECHERCHE_PAGINEE_OK);
 
 		return resultatUc;
-	}
+		
+	} // __________________________________________________________________
 	
 
 	
@@ -727,10 +731,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	public OutputDTO findByLibelle(final String pLibelle) throws Exception {
 
 		/*
-		 * Retourne null avec un message observable
-		 * si le libellé transmis n'est pas exploitable.
-		 * Si StringUtils.isBlank(pLibelle) : 
-		 * émet un message MESSAGE_PARAM_BLANK et retourne null.
+		 * Si pLibelle est blank : positionne MESSAGE_PARAM_BLANK,
+		 * retourne null et n'appelle pas le GATEWAY.
 		 */
 		if (StringUtils.isBlank(pLibelle)) {
 			this.message.set(MESSAGE_PARAM_BLANK);
@@ -738,34 +740,29 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		/*
-		 * Délègue au GATEWAY la recherche exacte dans le stockage.
-		 * Toute anomalie technique de recherche est transformée
-		 * en message utilisateur rationalisé côté UC.
+		 * Délègue au GATEWAY la recherche par libellé dans le stockage.
+		 * Une exception Gateway produit un message dédié
+		 * à findByLibelle(...), puis la même exception est propagée.
 		 */
 		final TypeProduit typeProduit;
 
 		try {
-			
-			/* Délègue au GATEWAY la recherche exacte dans le stockage.*/
 			typeProduit = this.gateway.findByLibelle(pLibelle);
-			
 		} catch (final Exception e) {
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
-			
+
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLE_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
 		/*
-		 * Retourne null avec un message observable
-		 * si aucun objet n'est trouvé en stockage.
-		 * Si typeProduit == null : 
-		 * émet un message MESSAGE_OBJ_INTROUVABLE + pLibelle 
-		 * et retourne null.
+		 * Si le GATEWAY retourne null : positionne
+		 * MESSAGE_OBJ_INTROUVABLE + pLibelle et retourne null.
 		 */
 		if (typeProduit == null) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + pLibelle);
@@ -773,53 +770,48 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		/*
-		 * Prépare la réponse utilisateur finale
-		 * à partir de l'objet métier trouvé.
+		 * Convertit l'objet métier trouvé en OutputDTO.
+		 * Une exception de conversion produit un message dédié
+		 * à la préparation de la réponse, puis elle est propagée.
 		 */
 		final TypeProduitDTO.OutputDTO dto;
 
 		try {
-			
-			/* Convertir l'objet métier retourné par le GATEWAY en OutputDTO. */
 			dto = ConvertisseurMetierToOutputDTOTypeProduit.convert(typeProduit);
-			
 		} catch (final Exception e) {
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
-			
+
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLE_PREPARATION_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
 		/*
-		 * Sécurise le contrat observable du UC :
-		 * un DTO null après conversion est une rupture technique.
-		 * Si dto == null : émet un meassage + LOG + IllegalStateException
+		 * Refuse un DTO null après conversion d'un objet métier trouvé.
 		 */
 		if (dto == null) {
-			final String messageTechnique = MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
-					+ TIRET_ESPACE
-					+ MSG_ERREUR_NON_SPECIFIEE;
-			
 			return this.traiterErreur(
-					messageTechnique,
+					MESSAGE_FINDBYLIBELLE_CONVERSION_NULL_KO,
 					METHODE_FIND_BY_LIBELLE,
-					new IllegalStateException(messageTechnique));
+					new IllegalStateException(
+							MESSAGE_FINDBYLIBELLE_CONVERSION_NULL_KO));
 		}
 
 		/*
-		 * Le message de succès MESSAGE_SUCCES_RECHERCHE n'est positionné
-		 * qu'après préparation complète de la réponse utilisateur.
+		 * Positionne le message de succès uniquement
+		 * après conversion complète du DTO.
 		 */
-		this.message.set(MESSAGE_SUCCES_RECHERCHE);
+		this.message.set(MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
-		/* Retourne l'OutputDTO résultat. */
+		/* retourne le DTO trouvé. */
 		return dto;
-	}
-
+		
+	} // __________________________________________________________________
+	
 
 	
 	/**
@@ -933,7 +925,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 * et éventuellement vide.
 		 */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 
 	
 	
@@ -963,7 +956,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 * restent ceux de findByLibelle(...).
 		 */
 		return this.findByLibelle(pInputDTO.getTypeProduit());
-	}
+		
+	} // __________________________________________________________________
 	
 
 	
@@ -1066,7 +1060,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 
 		/* Retourne l'OutputDTO résultat. */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 	
@@ -1260,7 +1255,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 
 		/* Retourne l'OutputDTO modifié. */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 	
 
 	
@@ -1395,7 +1391,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		 */
 		this.message.set(MESSAGE_DELETE_OK + libelle);
 
-	}
+	} // __________________________________________________________________
 	
 
 	
@@ -1466,7 +1462,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		/* Retourne le comptage final validé. */
 		return resultat;
 
-	}
+	} // __________________________________________________________________
 	
 
 	
@@ -1478,7 +1474,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		
 		return this.message.get();
 		
-	}
+	} // __________________________________________________________________
 
 
 	
@@ -1507,7 +1503,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 			= this.gateway.findByLibelle(pInputDTO.getTypeProduit());
 
 		return typeProduitExistant != null;
-	}
+		
+	} // __________________________________________________________________
 
 	
 
@@ -1528,7 +1525,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		return new TypeProduit(pInputDTO.getTypeProduit());
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -1559,7 +1557,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		Collections.sort(recordsNonNull);
 
 		return recordsNonNull;
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -1593,7 +1592,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		return new ArrayList<TypeProduitDTO.OutputDTO>(uniques);
-	}
+		
+	} // __________________________________________________________________
 
 	
 
@@ -1604,10 +1604,12 @@ public class TypeProduitCuService implements TypeProduitICuService {
 	 * </div>
 	 */
 	private void alimenterMessageDepuisGateway() {
+		
 		// Règle 1 : le message affichable est celui du CU.
 		// On conserve la méthode (sans effet sur le message CU)
 		// pour ne pas casser la structure.
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -1634,7 +1636,8 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		return totalElements;
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -1703,7 +1706,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 
 		throw new Exception(messageFinal);
 
-	}
+	} // __________________________________________________________________
 
 	
 	
@@ -1750,8 +1753,9 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		return false;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 
-}
+} // FIN DE LA CLASSE TypeProduitCuService --------------------------------

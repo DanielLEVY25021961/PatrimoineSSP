@@ -1641,20 +1641,29 @@ public class TypeProduitCuServiceIntegrationTest {
 	 * <li>positionne exactement
 	 * {@link TypeProduitICuService#MESSAGE_PARAM_BLANK}</li>
 	 * <li>ne lève aucune exception</li>
+	 * <li>n'écrit rien dans le stockage</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(blank) : retourne null + message exact MESSAGE_PARAM_BLANK")
+	@DisplayName("findByLibelle(blank) : retourne null + MESSAGE_PARAM_BLANK + stockage inchangé")
 	public void testFindByLibelleBlank() throws Exception {
+
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
 
 		final OutputDTO dto = this.service.findByLibelle(ESPACES);
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_PARAM_BLANK);
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class))
+				.isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
 
@@ -1662,28 +1671,47 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>findByLibelle(introuvable) : absence réelle dans le stockage.</p>
 	 * <ul>
+	 * <li>prouve l'absence du libellé demandé dans le stockage</li>
 	 * <li>retourne {@code null}</li>
 	 * <li>positionne exactement
 	 * {@link TypeProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé</li>
-	 * <li>ne lève aucune exception</li>
+	 * <li>n'écrit rien dans le stockage</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(introuvable) : retourne null + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
+	@DisplayName("findByLibelle(introuvable) : absence stockage + MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testFindByLibelleIntrouvable() throws Exception {
 
-		final String libelleAbsent = "IT_FIND_BY_LIBELLE_ABSENT_BD_01";
+		final String libelleAbsent = "IT_FIND_BY_LIBELLE_ABSENT_STOCKAGE_01";
+		final Long nombreAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				libelleAbsent))
+				.isEqualTo(0L);
 
 		final OutputDTO dto = this.service.findByLibelle(libelleAbsent);
 
 		assertThat(dto).isNull();
 		assertThat(this.service.getMessage())
 				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + libelleAbsent);
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				libelleAbsent))
+				.isEqualTo(0L);
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPES_PRODUIT,
+				Long.class))
+				.isEqualTo(nombreAvant);
 
 	} // __________________________________________________________________
 
@@ -1691,23 +1719,23 @@ public class TypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : test béton avec preuve BD.</p>
+	 * <p>findByLibelle(nominal) : résultat UC et preuve dans le stockage.</p>
 	 * <ul>
-	 * <li>crée d'abord un TypeProduit réel</li>
-	 * <li>retrouve ensuite exactement ce même objet par son libellé</li>
+	 * <li>crée un TypeProduit persistant</li>
+	 * <li>retrouve le même objet par son libellé</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
-	 * <li>prouve physiquement la présence en base</li>
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE}</li>
+	 * <li>prouve la présence de l'objet dans le stockage</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(ok) : OutputDTO cohérent + message exact + preuve BD")
-	public void testFindByLibelleOkAvecPreuveBd() throws Exception {
+	@DisplayName("findByLibelle(nominal) : OutputDTO + MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE + preuve stockage")
+	public void testFindByLibelleNominalAvecPreuveStockage() throws Exception {
 
-		final String libelle = "IT_FIND_BY_LIBELLE_OK_BD_01";
+		final String libelle = "IT_FIND_BY_LIBELLE_NOMINAL_STOCKAGE_01";
 
 		final OutputDTO cree = this.service.creer(new TypeProduitDTO.InputDTO(libelle));
 
@@ -1720,16 +1748,19 @@ public class TypeProduitCuServiceIntegrationTest {
 		assertThat(dto).isNotNull();
 		assertThat(dto.getIdTypeProduit()).isEqualTo(cree.getIdTypeProduit());
 		assertThat(dto.getTypeProduit()).isEqualTo(libelle);
-
 		assertThat(this.service.getMessage())
-				.isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
-		assertThat(this.compterTypeProduitEnBase(cree.getIdTypeProduit()))
+		assertThat(this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_TYPEPRODUIT,
+				Long.class,
+				libelle))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleTypeProduitEnBase(cree.getIdTypeProduit()))
-				.isEqualTo(libelle);
-		assertThat(this.compterTypeProduitParLibelleEnBase(libelle))
-				.isEqualTo(1L);
+		assertThat(this.jdbcTemplate.queryForList(
+				SELECT_TYPEPRODUIT,
+				String.class))
+				.contains(libelle);
 
 	} // __________________________________________________________________
 

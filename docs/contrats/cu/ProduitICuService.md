@@ -737,49 +737,97 @@ Le scénario nominal de `rechercherTousParPage(...)` est :
 ## 14) Contrat spécifique de `findByLibelle(...)`
 
 Signature cible :
+
 - `List<ProduitDTO.OutputDTO> findByLibelle(String pLibelle) throws Exception;`
 
 ### 14.1) Scénario nominal attendu
 
 Le scénario nominal de `findByLibelle(...)` est :
 
-1. recevoir un libellé exact ;
-2. valider le libellé demandé ;
-3. déléguer la recherche exacte au `GATEWAY` Produit ;
-4. retirer les éventuels objets métier `null` ;
-5. trier les objets métier ;
-6. convertir les résultats métier en `ProduitDTO.OutputDTO` ;
-7. positionner le message observable ;
-8. retourner la liste finale.
+1. recevoir un libellé exact transmis par la couche appelante ;
+2. refuser localement un paramètre `null` ou blank sans appeler le `GATEWAY` ;
+3. appeler une seule fois `gateway.findByLibelle(pLibelle)` lorsque le paramètre est non blank ;
+4. sécuriser la liste technique retournée par le `GATEWAY` ;
+5. retirer les éventuels objets métier `null` ;
+6. trier les objets métier selon l'ordre métier `[SousTypeProduit, Produit]` ;
+7. convertir les objets métier en `ProduitDTO.OutputDTO` ;
+8. dédoublonner les DTO en conservant l'ordre issu du tri ;
+9. positionner le message observable après préparation complète de la liste DTO ;
+10. retourner une liste non `null`, éventuellement vide.
 
 ### 14.2) Cas observables attendus
 
-- si `pLibelle` est blank :
-  - retourne `null` ;
-  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK` ;
-  - ne lève aucune exception ;
-
-- si le `GATEWAY` retourne `null` :
-  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE` ;
-  - propage une exception technique ;
-
-- si aucun objet n'est trouvé :
+- si `pLibelle` est `null` ou blank :
   - retourne une liste vide mais non `null` ;
-  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+  - positionne `getMessage()` à `MESSAGE_PARAM_BLANK` ;
+  - n'émet aucun LOG ;
+  - ne lève aucune exception ;
+  - n'appelle jamais le `GATEWAY` ;
 
-- si au moins un objet est trouvé :
-  - retourne une liste non `null` ;
-  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+- si `gateway.findByLibelle(pLibelle)` lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_GATEWAY_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si `gateway.findByLibelle(pLibelle)` lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_GATEWAY_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si `gateway.findByLibelle(pLibelle)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - émet un LOG ;
+  - lève une `ExceptionStockageVide`
+    portant exactement `MESSAGE_STOCKAGE_NULL` ;
+
+- si le filtrage, le tri ou la conversion de la liste DTO
+  lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_PREPARATION_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si cette préparation lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_PREPARATION_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si aucun résultat n'est trouvé après filtrage, tri, conversion et dédoublonnage :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_OBJ_INTROUVABLE + pLibelle` ;
+
+- si un ou plusieurs résultats sont trouvés :
+  - retourne une liste non vide de DTO triés et dédoublonnés ;
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE`.
 
 ### 14.3) Garanties spécifiques de `findByLibelle(...)`
 
-- la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
-- la liste retournée, si elle n'est pas vide,
-  doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
-- le message de succès ne doit être positionné
-  qu'après préparation complète de la réponse utilisateur ;
-- la recherche exacte peut retourner plusieurs `OutputDTO`
-  si plusieurs `Produit` distincts partagent le même libellé exact.
+- le libellé exact d'un `Produit` n'étant pas unique entre plusieurs
+  `SousTypeProduit` parents, la méthode retourne une collection
+  et non un DTO unitaire ;
+- l'identité fonctionnelle d'un `Produit` reste
+  `[SousTypeProduit, Produit]` ;
+- le `TypeProduit` n'est pas une troisième composante de cette identité :
+  il appartient à l'identité interne du `SousTypeProduit` parent ;
+- la méthode ne retourne jamais `null` lorsque le scénario aboutit ;
+- elle ne retourne aucun élément `null` ;
+- le tri respecte l'ordre naturel métier `[SousTypeProduit, Produit]` ;
+- le message de succès n'est positionné
+  qu'après préparation complète de la liste DTO ;
+- les DTO retournés correspondent aux objets métier
+  effectivement fournis par le `GATEWAY` ;
+- l'appel à `findByLibelle(...)` n'écrit rien dans le stockage ;
+- une erreur de préparation de la liste DTO côté UC
+  ne doit pas être attribuée au `GATEWAY` ;
+- aucun résultat partiel incohérent n'est exposé à l'appelant.
 
 ## 15) Contrat spécifique de `findByLibelleRapide(...)`
 
@@ -1300,6 +1348,9 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_PAGEABLE_NULL` | `"l'indication de page demandée ne doit pas être null."` |
 | `MESSAGE_PARAM_BLANK` | `"Vous avez passé une chaine " + "de caractères blank (null ou que des espaces) en paramètre."` |
 | `MSG_ERREUR_NON_SPECIFIEE` | `"Erreur non spécifiée"` |
+| `MESSAGE_FINDBYLIBELLE_GATEWAY_KO` | `"KO - findByLibelle(...) " + "- le Gateway a jeté Exception"` |
+| `MESSAGE_FINDBYLIBELLE_PREPARATION_KO` | `"KO - findByLibelle(...) " + "- la préparation de la réponse utilisateur a jeté Exception"` |
+| `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE` | `"OK - findByLibelle(...) a retourné des enregistrements"` |
 | `MESSAGE_CREER_KO` | `"Erreur lors de la création de l'objet"` |
 | `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |
 | `MESSAGE_RECHERCHE_OK` | `"OK - La recherche a retourné des résultats."` |

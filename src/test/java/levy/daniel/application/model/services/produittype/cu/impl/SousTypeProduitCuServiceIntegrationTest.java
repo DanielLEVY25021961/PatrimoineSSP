@@ -2042,9 +2042,13 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	@DisplayName("findByLibelle(blank) : liste vide + message exact MESSAGE_PARAM_BLANK")
 	public void testFindByLibelleBlank() throws Exception {
 
+		/* findByLibelle(ESPACES). */
 		final List<OutputDTO> dtos = this.service.findByLibelle(ESPACES);
 
+		/* Garantit que findByLibelle(ESPACES) retourne vide. */
 		assertThat(dtos).isNotNull().isEmpty();
+		/* Garantit que findByLibelle(ESPACES) positionne 
+		 * un message MESSAGE_PARAM_BLANK. */
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_PARAM_BLANK);
 
@@ -2069,11 +2073,16 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	@DisplayName("findByLibelle(introuvable) : liste vide + message exact MESSAGE_OBJ_INTROUVABLE + libellé")
 	public void testFindByLibelleIntrouvable() throws Exception {
 
+		/* findByLibelle(INTROUVABLE). */
 		final List<OutputDTO> dtos = this.service.findByLibelle(LIBELLE_INCONNU);
 
+		/* Garantit que findByLibelle(INTROUVABLE) retourne vide. */
 		assertThat(dtos).isNotNull().isEmpty();
+		/* Garantit que findByLibelle(INTROUVABLE) positionne un message 
+		 * MESSAGE_OBJ_INTROUVABLE + LIBELLE_INCONNU. */
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_OBJ_INTROUVABLE + LIBELLE_INCONNU);
+		/* Garantit que INTROUVABLE ne figure pas dans le stockage. */
 		assertThat(this.compterSousTypeProduitParLibelleDansStockage(LIBELLE_INCONNU))
 				.isEqualTo(0L);
 
@@ -2083,70 +2092,170 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : le même libellé peut exister sous plusieurs parents.</p>
+	 * <p>
+	 * Vérifie que {@code findByLibelle(...)} retourne tous les
+	 * {@link SousTypeProduitDTO.OutputDTO} portant le libellé demandé,
+	 * même lorsque ces objets sont rattachés à des parents différents.
+	 * </p>
 	 * <ul>
-	 * <li>crée deux parents persistants distincts</li>
-	 * <li>crée le même libellé de SousTypeProduit sous ces deux parents</li>
-	 * <li>retourne une liste DTO de taille 2</li>
-	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}</li>
-	 * <li>prouve physiquement l'existence des deux couples dans le stockage</li>
+	 * <li>crée les deux parents {@code Outil} et {@code Loisir} ;</li>
+	 * <li>crée un {@code SousTypeProduit} {@code Pince}
+	 * sous chacun de ces parents ;</li>
+	 * <li>recherche les deux objets par leur libellé commun {@code Pince} ;</li>
+	 * <li>vérifie que la réponse contient les deux couples métier
+	 * {@code [Loisir, Pince]} et {@code [Outil, Pince]} ;</li>
+	 * <li>vérifie l'ordre métier appliqué par le SERVICE UC :
+	 * parent puis libellé ;</li>
+	 * <li>vérifie le message utilisateur de succès ;</li>
+	 * <li>contrôle directement que les deux objets existent toujours
+	 * dans le stockage avec leur parent respectif.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
+	 * si la création des données du scénario
+	 * ou leur recherche ne peut pas être réalisée.
 	 */
 	@Test
 	@DisplayName("findByLibelle(ok) : retourne 2 DTO sur 2 parents distincts + message exact + preuve stockage")
 	public void testFindByLibelleOk() throws Exception {
 
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(OUTIL));
-		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(LOISIR));
+		/*
+		 * ARRANGE :
+		 * crée les deux TypeProduit qui serviront de parents.
+		 *
+		 * Les parents sont volontairement créés dans l'ordre
+		 * Outil puis Loisir. Cet ordre de création ne détermine pas
+		 * l'ordre de la réponse de findByLibelle(...).
+		 */
+		this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(OUTIL));
+		this.typeProduitService.creer(
+				new TypeProduitDTO.InputDTO(LOISIR));
 
+		/*
+		 * Crée le même libellé de SousTypeProduit sous les deux parents.
+		 *
+		 * Les deux objets sont distincts car l'identité métier
+		 * d'un SousTypeProduit repose sur le couple
+		 * [TypeProduit, SousTypeProduit].
+		 */
 		final OutputDTO creeA = this.service.creer(
-				new SousTypeProduitDTO.InputDTO(OUTIL, PINCE));
+				new SousTypeProduitDTO.InputDTO(
+						OUTIL,
+						PINCE));
+
 		final OutputDTO creeB = this.service.creer(
-				new SousTypeProduitDTO.InputDTO(LOISIR, PINCE));
+				new SousTypeProduitDTO.InputDTO(
+						LOISIR,
+						PINCE));
 
-		final List<OutputDTO> dtos = this.service.findByLibelle(PINCE);
+		/*
+		 * ACT :
+		 * recherche tous les SousTypeProduit dont le libellé
+		 * correspond à PINCE.
+		 */
+		final List<OutputDTO> dtos
+			= this.service.findByLibelle(PINCE);
 
+		/*
+		 * ASSERT :
+		 * la méthode retourne une liste non null contenant
+		 * les deux objets créés.
+		 */
 		assertThat(dtos).isNotNull();
 		assertThat(dtos).hasSize(2);
 
+		/*
+		 * Les deux DTO portent bien le libellé recherché.
+		 */
 		assertThat(dtos)
 				.extracting(OutputDTO::getSousTypeProduit)
-				.containsExactly(PINCE, PINCE);
+				.containsExactly(
+						PINCE,
+						PINCE);
 
+		/*
+		 * Le SERVICE UC trie les SousTypeProduit selon leur ordre métier :
+		 * d'abord le libellé du parent, puis le libellé de l'enfant.
+		 *
+		 * Comme les deux enfants portent ici le même libellé PINCE,
+		 * l'ordre dépend uniquement des parents :
+		 * Loisir précède Outil.
+		 */
 		assertThat(dtos)
 				.extracting(OutputDTO::getTypeProduit)
-				.containsExactly(OUTIL, LOISIR);
+				.containsExactly(
+						LOISIR,
+						OUTIL);
 
+		/*
+		 * Vérifie que les identifiants suivent le même ordre.
+		 *
+		 * creeB correspond au couple [Loisir, Pince].
+		 * creeA correspond au couple [Outil, Pince].
+		 */
 		assertThat(dtos)
 				.extracting(OutputDTO::getIdSousTypeProduit)
 				.containsExactly(
-						creeA.getIdSousTypeProduit(),
-						creeB.getIdSousTypeProduit());
+						creeB.getIdSousTypeProduit(),
+						creeA.getIdSousTypeProduit());
 
+		/*
+		 * Vérifie le message positionné après préparation complète
+		 * de la liste retournée.
+		 */
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
+				.isEqualTo(
+						SousTypeProduitICuService
+								.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
-		assertThat(this.compterSousTypeProduitDansStockage(creeA.getIdSousTypeProduit()))
+		/*
+		 * Contrôle directement dans le stockage le premier objet créé :
+		 * son identifiant existe, son libellé est PINCE
+		 * et son parent est Outil.
+		 */
+		assertThat(this.compterSousTypeProduitDansStockage(
+				creeA.getIdSousTypeProduit()))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleSousTypeProduitDansStockage(creeA.getIdSousTypeProduit()))
+
+		assertThat(this.lireLibelleSousTypeProduitDansStockage(
+				creeA.getIdSousTypeProduit()))
 				.isEqualTo(PINCE);
-		assertThat(this.lireParentSousTypeProduitDansStockage(creeA.getIdSousTypeProduit()))
+
+		assertThat(this.lireParentSousTypeProduitDansStockage(
+				creeA.getIdSousTypeProduit()))
 				.isEqualTo(OUTIL);
 
-		assertThat(this.compterSousTypeProduitDansStockage(creeB.getIdSousTypeProduit()))
+		/*
+		 * Contrôle directement dans le stockage le second objet créé :
+		 * son identifiant existe, son libellé est PINCE
+		 * et son parent est Loisir.
+		 */
+		assertThat(this.compterSousTypeProduitDansStockage(
+				creeB.getIdSousTypeProduit()))
 				.isEqualTo(1L);
-		assertThat(this.lireLibelleSousTypeProduitDansStockage(creeB.getIdSousTypeProduit()))
+
+		assertThat(this.lireLibelleSousTypeProduitDansStockage(
+				creeB.getIdSousTypeProduit()))
 				.isEqualTo(PINCE);
-		assertThat(this.lireParentSousTypeProduitDansStockage(creeB.getIdSousTypeProduit()))
+
+		assertThat(this.lireParentSousTypeProduitDansStockage(
+				creeB.getIdSousTypeProduit()))
 				.isEqualTo(LOISIR);
 
-		assertThat(this.compterSousTypeProduitParCoupleDansStockage(OUTIL, PINCE))
+		/*
+		 * Vérifie enfin que chacun des deux couples métier
+		 * est présent une seule fois dans le stockage.
+		 */
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				OUTIL,
+				PINCE))
 				.isEqualTo(1L);
-		assertThat(this.compterSousTypeProduitParCoupleDansStockage(LOISIR, PINCE))
+
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				LOISIR,
+				PINCE))
 				.isEqualTo(1L);
 
 	} // __________________________________________________________________

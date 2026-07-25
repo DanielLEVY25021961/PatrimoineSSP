@@ -567,11 +567,11 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findByLibelle(nominal) :
-	 * OutputDTO + MESSAGE_SUCCES_RECHERCHE"
+	 * OutputDTO + MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_NOMINAL
 			= "findByLibelle(nominal) : "
-					+ "OutputDTO + MESSAGE_SUCCES_RECHERCHE";
+					+ "OutputDTO + MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE";
 
 	// ---------------------- findByLibelleRapide(...) --------------------
 	
@@ -3615,7 +3615,7 @@ public class TypeProduitCuServiceMockTest {
 			= new TypeProduitCuService(gateway);
 
 		/* ACT :
-		 * exécute la recherche exacte avec un libellé null.
+		 * exécute la recherche par libellé avec un libellé null.
 		 */
 		final OutputDTO retour = service.findByLibelle(null);
 		final String message = service.getMessage();
@@ -3673,7 +3673,7 @@ public class TypeProduitCuServiceMockTest {
 			= new TypeProduitCuService(gateway);
 
 		/* ACT :
-		 * exécute la recherche exacte avec un libellé blank.
+		 * exécute la recherche par libellé avec un libellé blank.
 		 */
 		final OutputDTO retour = service.findByLibelle(libelle);
 		final String message = service.getMessage();
@@ -3736,7 +3736,7 @@ public class TypeProduitCuServiceMockTest {
 		when(gateway.findByLibelle(libelleAbsent)).thenReturn(null);
 
 		/* ACT :
-		 * exécute la recherche exacte via le SERVICE METIER UC.
+		 * exécute la recherche par libellé via le SERVICE METIER UC.
 		 */
 		final OutputDTO retour = service.findByLibelle(libelleAbsent);
 		final String message = service.getMessage();
@@ -3751,7 +3751,7 @@ public class TypeProduitCuServiceMockTest {
 				.isEqualTo(TypeProduitICuService.MESSAGE_OBJ_INTROUVABLE 
 						+ libelleAbsent);
 
-		/* Garantit que la recherche exacte a bien été déléguée. */
+		/* Garantit que la recherche par libellé a bien été déléguée. */
 		verify(gateway, times(1)).findByLibelle(libelleAbsent);
 		
 	} // __________________________________________________________________
@@ -3765,7 +3765,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -3813,7 +3813,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLE_GATEWAY_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -3831,7 +3831,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel {@code gateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -3878,7 +3878,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLE_GATEWAY_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -3899,7 +3899,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -3949,7 +3949,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLE_PREPARATION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -3972,7 +3972,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code ConvertisseurMetierToOutputDTOTypeProduit.convert(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -4021,7 +4021,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLE_PREPARATION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4044,7 +4044,7 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>retourne un {@link OutputDTO} portant l'identifiant
 	 * et le bon libellé ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_SUCCES_RECHERCHE}.</li>
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -4075,7 +4075,7 @@ public class TypeProduitCuServiceMockTest {
 		when(gateway.findByLibelle(libelle)).thenReturn(typeProduit);
 
 		/* ACT :
-		 * exécute la recherche exacte via le SERVICE METIER UC.
+		 * exécute la recherche par libellé via le SERVICE METIER UC.
 		 */
 		final OutputDTO retour = service.findByLibelle(libelle);
 		final String message = service.getMessage();
@@ -4091,9 +4091,9 @@ public class TypeProduitCuServiceMockTest {
 		assertThat(retour.getIdTypeProduit()).isEqualTo(7L);
 		assertThat(retour.getTypeProduit()).isEqualTo(libelle);
 		assertThat(message)
-				.isEqualTo(TypeProduitICuService.MESSAGE_SUCCES_RECHERCHE);
+				.isEqualTo(TypeProduitICuService.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
-		/* Garantit que la recherche exacte a bien été déléguée. */
+		/* Garantit que la recherche par libellé a bien été déléguée. */
 		verify(gateway, times(1)).findByLibelle(libelle);
 		
 	} // __________________________________________________________________	

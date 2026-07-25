@@ -816,7 +816,12 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		this.message.set(MESSAGE_RECHERCHE_PAGINEE_OK);
 
 		return resultatUc;
-	}	/**
+		
+	} // __________________________________________________________________
+	
+
+	
+	/**
 	* {@inheritDoc}
 	*/
 	@Override
@@ -824,10 +829,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 			final String pLibelle) throws Exception {
 
 		/*
-		 * Si StringUtils.isBlank(pLibelle) : 
-		 * émet un message MESSAGE_PARAM_BLANK et 
-		 * retourne une nouvelle ArrayList vide.
-		 * Pas d'Exception.
+		 * Si pLibelle est blank : positionne MESSAGE_PARAM_BLANK,
+		 * retourne une liste vide et n'appelle pas le GATEWAY.
 		 */
 		if (StringUtils.isBlank(pLibelle)) {
 			this.message.set(MESSAGE_PARAM_BLANK);
@@ -835,30 +838,29 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		/*
-		 * Délègue au GATEWAY la recherche exacte
-		 * de tous les objets métier portant ce libellé.
+		 * Délègue au GATEWAY la recherche exacte par libellé dans le stockage.
+		 * Une exception Gateway produit un message dédié
+		 * à findByLibelle(...), puis la même exception est propagée.
 		 */
 		final List<SousTypeProduit> records;
 
 		try {
-
 			records = this.gateway.findByLibelle(pLibelle);
-
 		} catch (final Exception e) {
-
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLE_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
 		/*
-		 * Si le stockage retourne null :
-		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 * Si le GATEWAY retourne null : positionne MESSAGE_STOCKAGE_NULL,
+		 * émet un LOG et lève une ExceptionStockageVide.
 		 */
 		if (records == null) {
 			return this.traiterErreur(
@@ -868,36 +870,33 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		/*
-		 * Prépare la réponse utilisateur :
-		 * retrait des null, tri métier,
-		 * conversion en OutputDTO,
-		 * puis dédoublonnage en conservant l'ordre.
+		 * Filtre les objets métier null, les trie,
+		 * les convertit en OutputDTO et dédoublonne la liste.
+		 * Une exception de préparation produit un message dédié
+		 * à findByLibelle(...), puis elle est propagée.
 		 */
 		final List<OutputDTO> dtos;
 
 		try {
-
 			final List<SousTypeProduit> recordsNonNullTries
 					= this.filtrerEtTrier(records);
 
 			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
-
 		} catch (final Exception e) {
-
 			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
 					? e.getMessage()
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLE_PREPARATION_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
 		/*
-		 * Si aucun résultat exploitable n'est trouvé :
-		 * retourne une liste vide et 
-		 * émet un MESSAGE_OBJ_INTROUVABLE + libellé.
+		 * Si aucun résultat n'est trouvé après préparation : positionne
+		 * MESSAGE_OBJ_INTROUVABLE + pLibelle et retourne la liste vide.
 		 */
 		if (dtos.isEmpty()) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + pLibelle);
@@ -905,20 +904,18 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		/*
-		 * Positionne le message observable de succès
-		 * MESSAGE_SUCCES_RECHERCHE 
-		 * après préparation complète de la réponse.
+		 * Positionne le message de succès uniquement
+		 * après préparation complète de la liste DTO.
 		 */
 		this.message.set(MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
-		/*
-		 * Retourne toujours une liste non null.
-		 */
+		/* retourne la liste de DTO trouvés. */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 	
 
-
+	
 	/**
 	* {@inheritDoc}
 	*/
@@ -1026,7 +1023,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * et éventuellement vide.
 		 */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 	
 
 
@@ -1182,7 +1180,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * et éventuellement vide.
 		 */
 		return dtos;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 
@@ -1397,7 +1396,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * au couple [parent, libellé].
 		 */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 
@@ -1512,7 +1512,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 		/* Retourne l'OutputDTO résultat. */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 	
 
 
@@ -1807,7 +1808,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 		/* Retourne l'OutputDTO modifié. */
 		return dto;
-	}
+		
+	} // __________________________________________________________________
 
 	
 
@@ -2026,7 +2028,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * de l'objet persistant.
 		 */
 		this.message.set(MESSAGE_DELETE_OK + libelleSousType);
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -2101,7 +2104,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 		/* Retourne le comptage final validé. */
 		return resultat;
-	}
+		
+	} // __________________________________________________________________
 
 
 	
@@ -2119,7 +2123,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * avant toute opération ayant positionné un message.
 		 */
 		return this.message.get();
-	}
+		
+	} // __________________________________________________________________
 	
 
 
@@ -2213,7 +2218,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		 * Aucun enregistrement ne matche le couple [parent, libellé].
 		 */
 		return false;
-	}
+		
+	} // __________________________________________________________________
 	
 
 	
@@ -2239,7 +2245,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		final TypeProduit tp = new TypeProduit(tpString);
 
 		return new SousTypeProduit(libelle, tp);
-	}
+		
+	} // __________________________________________________________________
 
 
 
@@ -2260,7 +2267,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		return new TypeProduit(pInputDTO.getTypeProduit());
-	}
+		
+	} // __________________________________________________________________
 
 
 
@@ -2292,7 +2300,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		Collections.sort(recordsNonNull);
 
 		return recordsNonNull;
-	}
+		
+	} // __________________________________________________________________
 
 
 
@@ -2326,7 +2335,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		return new ArrayList<SousTypeProduitDTO.OutputDTO>(uniques);
-	}
+		
+	} // __________________________________________________________________
 
 
 
@@ -2337,10 +2347,12 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 	 * </div>
 	 */
 	private void alimenterMessageDepuisGateway() {
+		
 		// Règle 1 : le message affichable est celui du CU.
 		// On conserve la méthode (sans effet sur le message CU) 
 		// pour ne pas casser la structure.
-	}
+		
+	} // __________________________________________________________________
 
 
 
@@ -2367,7 +2379,8 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		return totalElements;
-	}
+		
+	} // __________________________________________________________________
 
 
 
@@ -2433,7 +2446,7 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 
 		throw new Exception(messageFinal);
 
-	}
+	} // __________________________________________________________________
 	
 	
 	
@@ -2482,8 +2495,9 @@ public class SousTypeProduitCuService implements SousTypeProduitICuService {
 		}
 
 		return false;
-	}
+		
+	} // __________________________________________________________________
 	
 	
 
-}
+} // FIN DE LA CLASSE SousTypeProduitCuService ----------------------------

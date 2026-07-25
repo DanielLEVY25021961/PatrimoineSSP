@@ -178,7 +178,6 @@ public class SousTypeProduitCuServiceMockTest {
 	public static final String FALLBACK 
 		= "fallback MSG_ERREUR_NON_SPECIFIEE";
 
-
 	/**
 	 * "exception propagée "
 	 */
@@ -499,7 +498,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KO_AVEC_MESSAGE
 			= "rechercherTousString(gateway KO avec message) : "
-					+ "exception propagée "
+					+ EXCEPTION_PROPAGEE
 					+ "+ MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO";
 	
 	/**
@@ -518,7 +517,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 */
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KO_AVEC_MESSAGE
 			= "rechercherTousString(conversion String KO avec message) : "
-					+ "exception propagée "
+					+ EXCEPTION_PROPAGEE
 					+ "+ MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO";
 	
 	/**
@@ -655,34 +654,40 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findByLibelle(gateway KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDBYLIBELLE_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KO_AVEC_MESSAGE
 			= "findByLibelle(gateway KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_FINDBYLIBELLE_GATEWAY_KO";
 	
 	/**
 	 * "findByLibelle(gateway KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDBYLIBELLE_GATEWAY_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_GATEWAY_KO_SANS_MESSAGE
 			= "findByLibelle(gateway KO sans message) : "
+					+ "MESSAGE_FINDBYLIBELLE_GATEWAY_KO "
 					+ FALLBACK;
 	
 	/**
 	 * "findByLibelle(conversion OutputDTO KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDBYLIBELLE_PREPARATION_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
 			= "findByLibelle(conversion OutputDTO KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_FINDBYLIBELLE_PREPARATION_KO";
 	
 	/**
 	 * "findByLibelle(conversion OutputDTO KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDBYLIBELLE_PREPARATION_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
 			= "findByLibelle(conversion OutputDTO KO sans message) : "
+					+ "MESSAGE_FINDBYLIBELLE_PREPARATION_KO "
 					+ FALLBACK;
 	
 	/**
@@ -695,12 +700,13 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findByLibelle(nominal) :
-	 * OutputDTO triés dédoublonnés + MESSAGE_SUCCES_RECHERCHE"
+	 * OutputDTO triés dédoublonnés
+	 * + MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_NOMINAL
 			= "findByLibelle(nominal) : "
 					+ "OutputDTO triés dédoublonnés "
-					+ "+ MESSAGE_SUCCES_RECHERCHE";
+					+ "+ MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE";
 	
 	/**
 	 * "findByLibelleRapide(null) :
@@ -4849,7 +4855,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique levée par le Gateway
 	 * SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -4896,11 +4902,11 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* Garantit que le SERVICE METIER UC expose
 		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 * MESSAGE_FINDBYLIBELLE_GATEWAY_KO + TIRET_ESPACE + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLE_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -4922,7 +4928,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par le Gateway
 	 * SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -4971,7 +4977,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLE_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4996,7 +5002,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -5055,7 +5061,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLE_PREPARATION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -5080,7 +5086,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -5138,7 +5144,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLE_PREPARATION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -5240,7 +5246,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>retourne une liste cohérente portant les parents
 	 * et le libellé recherché ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_SUCCES_RECHERCHE} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
 	 * </ul>
 	 * </div>

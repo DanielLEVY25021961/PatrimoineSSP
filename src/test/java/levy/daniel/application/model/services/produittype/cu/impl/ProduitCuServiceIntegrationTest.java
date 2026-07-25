@@ -496,6 +496,12 @@ public class ProduitCuServiceIntegrationTest {
 		= "SELECT COUNT(*) FROM PRODUITS WHERE ID_PRODUIT = ?";
 
 	/**
+	 * "SELECT COUNT(*) FROM PRODUITS WHERE PRODUIT = ?"
+	 */
+	public static final String SELECT_COUNT_FROM_PRODUITS_BY_LIBELLE
+		= "SELECT COUNT(*) FROM PRODUITS WHERE PRODUIT = ?";
+
+	/**
 	 * "SELECT PRODUIT FROM PRODUITS WHERE ID_PRODUIT = ?"
 	 */
 	public static final String SELECT_PRODUIT_LIBELLE_BY_ID
@@ -2434,50 +2440,128 @@ public class ProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>findByLibelle(blank) : erreur utilisateur bénigne.</p>
+	 * <p>Vérifie le comportement de {@code findByLibelle(...)}
+	 * lorsque le libellé transmis est blank.</p>
 	 * <ul>
-	 * <li>retourne {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_BLANK}</li>
-	 * <li>ne lève aucune exception</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_BLANK} ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(blank) : erreur utilisateur bénigne -> retourne null, message utilisateur, aucune exception")
+	@DisplayName("findByLibelle(blank) : liste vide + MESSAGE_PARAM_BLANK + stockage inchangé")
 	public void testFindByLibelleBlank() throws Exception {
 
-		final List<OutputDTO> dtos = this.service.findByLibelle(ESPACES);
+		/* ARRANGE :
+		 * mémorise le nombre de Produits présents avant la recherche.
+		 */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		assertThat(dtos).isNull();
-		assertThat(this.service.getMessage())
+		assertThat(countAvant).isNotNull();
+
+		/* ACT :
+		 * appelle findByLibelle(...) avec une chaîne blank.
+		 */
+		final List<OutputDTO> dtos = this.service.findByLibelle(ESPACES);
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * la méthode retourne une liste non null et vide,
+		 * puis positionne le message prévu par le contrat.
+		 */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+		assertThat(message)
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_BLANK);
 
+		/* Vérifie que cette recherche invalide
+		 * n'a rien écrit dans le stockage.
+		 */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
+
 	} // __________________________________________________________________
 
 
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>Vérifie le comportement de {@code findByLibelle(...)}
+	 * lorsqu'aucun Produit ne porte le libellé demandé.</p>
 	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_OBJ_INTROUVABLE} + libellé ;</li>
+	 * <li>confirme directement l'absence de ce libellé dans le stockage ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
+	@DisplayName("findByLibelle(introuvable) : liste vide + MESSAGE_OBJ_INTROUVABLE + stockage inchangé")
 	public void testFindByLibelleIntrouvable() throws Exception {
 
-		final List<OutputDTO> dtos = this.service.findByLibelle(PRODUIT_INCONNU);
+		/* ARRANGE :
+		 * vérifie que le libellé du scénario est absent
+		 * et mémorise le volume du stockage.
+		 */
+		final Long nombreLibelleAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS_BY_LIBELLE,
+				Long.class,
+				PRODUIT_INCONNU);
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
 
-		assertThat(dtos).isNotNull().isEmpty();
-		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+		assertThat(nombreLibelleAvant).isNotNull();
+		assertThat(nombreLibelleAvant).isEqualTo(0L);
+		assertThat(countAvant).isNotNull();
+
+		/* ACT :
+		 * recherche le libellé absent via le SERVICE UC.
+		 */
+		final List<OutputDTO> dtos
+				= this.service.findByLibelle(PRODUIT_INCONNU);
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * la méthode retourne une liste vide
+		 * et indique précisément le libellé introuvable.
+		 */
+		assertThat(dtos).isNotNull();
+		assertThat(dtos).isEmpty();
+		assertThat(message)
+				.isEqualTo(
+						ProduitICuService.MESSAGE_OBJ_INTROUVABLE
+								+ PRODUIT_INCONNU);
+
+		/* Vérifie directement que le libellé reste absent
+		 * et que la lecture n'a pas modifié le stockage.
+		 */
+		final Long nombreLibelleApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS_BY_LIBELLE,
+				Long.class,
+				PRODUIT_INCONNU);
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(nombreLibelleApres).isNotNull();
+		assertThat(nombreLibelleApres).isEqualTo(0L);
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 
 	} // __________________________________________________________________
 
@@ -2485,57 +2569,140 @@ public class ProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findByLibelle(ok) : retourne tous les DTO correspondant exactement au libellé.</p>
+	 * <p>Vérifie que {@code findByLibelle(...)} retourne tous les Produits
+	 * portant le libellé demandé lorsque ce libellé existe
+	 * sous deux parents directs différents.</p>
 	 * <ul>
-	 * <li>crée deux parents persistants distincts ;</li>
-	 * <li>crée deux Produits de même libellé sous deux parents différents ;</li>
-	 * <li>retourne une liste non nulle de taille 2 ;</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>crée les parents {@code [Outil, Outillage]}
+	 * et {@code [Loisir, Atelier]} ;</li>
+	 * <li>crée un Produit {@code Pince} sous chacun de ces parents ;</li>
+	 * <li>vérifie l'ordre métier {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>vérifie les identifiants et les rattachements retournés ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE} ;</li>
+	 * <li>confirme la présence des deux couples dans le stockage ;</li>
+	 * <li>ne modifie aucune ligne pendant la recherche.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Test
-	@DisplayName("findByLibelle(ok) : retourne la liste des OutputDTO de même libellé exact")
+	@DisplayName("findByLibelle(ok) : 2 parents + ordre métier + message exact + preuve stockage")
 	public void testFindByLibelleOk() throws Exception {
 
+		/* ARRANGE :
+		 * crée les deux hiérarchies de parents nécessaires au scénario.
+		 */
 		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
 		this.creerParentsDansStockage(LOISIR, ATELIER);
 
-		this.service.creer(
+		/* Crée le même libellé Produit sous deux SousTypeProduit distincts.
+		 * Les deux Produits sont différents car l'identité fonctionnelle
+		 * repose sur [SousTypeProduit, Produit].
+		 */
+		final OutputDTO creeOutilOutillage = this.service.creer(
 				new ProduitDTO.InputDTO(
 						OUTIL,
 						OUTILLAGE,
 						PINCE));
 
-		this.service.creer(
+		final OutputDTO creeLoisirAtelier = this.service.creer(
 				new ProduitDTO.InputDTO(
 						LOISIR,
 						ATELIER,
 						PINCE));
 
-		final List<OutputDTO> dtos = this.service.findByLibelle(PINCE);
+		assertThat(creeOutilOutillage).isNotNull();
+		assertThat(creeOutilOutillage.getIdProduit()).isNotNull();
+		assertThat(creeLoisirAtelier).isNotNull();
+		assertThat(creeLoisirAtelier.getIdProduit()).isNotNull();
 
+		/* Synchronise les créations avant les contrôles SQL directs. */
+		this.entityManager.flush();
+
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PINCE))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR,
+				ATELIER,
+				PINCE))
+				.isEqualTo(1L);
+
+		final Long countAvantRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvantRecherche).isNotNull();
+
+		/* ACT :
+		 * recherche tous les Produits portant le libellé PINCE.
+		 */
+		final List<OutputDTO> dtos = this.service.findByLibelle(PINCE);
+		final String message = this.service.getMessage();
+
+		/* ASSERT :
+		 * la réponse contient les deux Produits créés.
+		 */
 		assertThat(dtos).isNotNull();
 		assertThat(dtos).hasSize(2);
-		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
 		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getProduit)
-				.containsExactlyInAnyOrder(PINCE, PINCE);
+				.extracting(OutputDTO::getProduit)
+				.containsExactly(
+						PINCE,
+						PINCE);
+
+		/* L'ordre naturel compare d'abord le SousTypeProduit parent.
+		 * Le parent [Loisir, Atelier] précède [Outil, Outillage].
+		 */
+		assertThat(dtos)
+				.extracting(OutputDTO::getTypeProduit)
+				.containsExactly(
+						LOISIR,
+						OUTIL);
 
 		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getSousTypeProduit)
-				.containsExactlyInAnyOrder(OUTILLAGE, ATELIER);
+				.extracting(OutputDTO::getSousTypeProduit)
+				.containsExactly(
+						ATELIER,
+						OUTILLAGE);
 
 		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getTypeProduit)
-				.containsExactlyInAnyOrder(OUTIL, LOISIR);
+				.extracting(OutputDTO::getIdProduit)
+				.containsExactly(
+						creeLoisirAtelier.getIdProduit(),
+						creeOutilOutillage.getIdProduit());
+
+		assertThat(message)
+				.isEqualTo(
+						ProduitICuService
+								.MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
+
+		/* Vérifie que la recherche n'a modifié ni le volume
+		 * ni les deux couples présents dans le stockage.
+		 */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApresRecherche).isNotNull();
+		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PINCE))
+				.isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR,
+				ATELIER,
+				PINCE))
+				.isEqualTo(1L);
 
 	} // __________________________________________________________________	
-
 	
 	
 	// ====================== findByLibelleRapide =========================

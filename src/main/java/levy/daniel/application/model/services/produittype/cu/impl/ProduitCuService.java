@@ -754,18 +754,13 @@ public class ProduitCuService implements ProduitICuService {
 	/**
 	 * {@inheritDoc}
 	 */
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public List<ProduitDTO.OutputDTO> findByLibelle(
 			final String pLibelle) throws Exception {
 
 		/*
-		 * Si StringUtils.isBlank(pLibelle) : 
-		 * émet un message MESSAGE_PARAM_BLANK et 
-		 * retourne une nouvelle ArrayList vide.
-		 * Pas d'Exception.
+		 * Si pLibelle est blank : positionne MESSAGE_PARAM_BLANK,
+		 * retourne une liste vide et n'appelle aucun GATEWAY.
 		 */
 		if (StringUtils.isBlank(pLibelle)) {
 			this.message.set(MESSAGE_PARAM_BLANK);
@@ -773,8 +768,9 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		/*
-		 * Délègue au GATEWAY la recherche exacte
-		 * de tous les objets métier portant ce libellé.
+		 * Délègue au GATEWAY la recherche par libellé exact.
+		 * Une exception du GATEWAY produit un message dédié
+		 * à findByLibelle(...), puis la même exception est propagée.
 		 */
 		final List<Produit> records;
 
@@ -789,14 +785,15 @@ public class ProduitCuService implements ProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLE_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
 		/*
-		 * Si le stockage retourne null :
-		 * émet MESSAGE_STOCKAGE_NULL + LOG + ExceptionStockageVide.
+		 * Si le GATEWAY retourne null : positionne MESSAGE_STOCKAGE_NULL,
+		 * émet un LOG et lève une ExceptionStockageVide.
 		 */
 		if (records == null) {
 
@@ -807,10 +804,11 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		/*
-		 * Prépare la réponse utilisateur :
-		 * retrait des null, tri métier,
-		 * conversion en OutputDTO,
-		 * puis dédoublonnage en conservant l'ordre.
+		 * Filtre les objets métier null, les trie selon
+		 * [SousTypeProduit, Produit], les convertit en OutputDTO
+		 * et dédoublonne la liste en conservant l'ordre.
+		 * Une exception de préparation produit un message dédié
+		 * à findByLibelle(...), puis elle est propagée.
 		 */
 		final List<ProduitDTO.OutputDTO> dtos;
 
@@ -829,15 +827,15 @@ public class ProduitCuService implements ProduitICuService {
 					: MSG_ERREUR_NON_SPECIFIEE;
 
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLE_PREPARATION_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE,
 					e);
 		}
 
 		/*
-		 * Si aucun résultat exploitable n'est trouvé :
-		 * retourne une liste vide et 
-		 * émet un MESSAGE_OBJ_INTROUVABLE + libellé.
+		 * Si aucun résultat n'est trouvé après préparation : positionne
+		 * MESSAGE_OBJ_INTROUVABLE + pLibelle et retourne la liste vide.
 		 */
 		if (dtos.isEmpty()) {
 			this.message.set(MESSAGE_OBJ_INTROUVABLE + pLibelle);
@@ -845,19 +843,16 @@ public class ProduitCuService implements ProduitICuService {
 		}
 
 		/*
-		 * Positionne le message observable de succès
-		 * MESSAGE_SUCCES_RECHERCHE 
-		 * après préparation complète de la réponse.
+		 * Positionne le message de succès uniquement
+		 * après préparation complète de la liste DTO.
 		 */
 		this.message.set(MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE);
 
-		/*
-		 * Retourne toujours une liste non null.
-		 */
+		/* retourne la liste de DTO trouvés. */
 		return dtos;
 		
 	} // __________________________________________________________________
-	
+
 	
 	
 	/**

@@ -254,6 +254,46 @@ public interface TypeProduitICuService {
 	 */
 	String MESSAGE_PAGEABLE_NULL 
 		= "l'indication de page demandée ne doit pas être null.";
+
+	/* ----------------------- findByLibelle ----------------------------- */
+
+	/**
+	 * <div>
+	 * <p>"KO - findByLibelle(...)
+	 * - le Gateway a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLE_GATEWAY_KO
+		= "KO - findByLibelle(...) "
+				+ "- le Gateway a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - findByLibelle(...)
+	 * - la préparation de la réponse utilisateur a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLE_PREPARATION_KO
+		= "KO - findByLibelle(...) "
+				+ "- la préparation de la réponse utilisateur a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - findByLibelle(...)
+	 * - la conversion en OutputDTO a retourné null".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLE_CONVERSION_NULL_KO
+		= "KO - findByLibelle(...) "
+				+ "- la conversion en OutputDTO a retourné null";
+
+	/**
+	 * <div>
+	 * <p>"OK - findByLibelle(...) a retourné un enregistrement".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE
+		= "OK - findByLibelle(...) a retourné un enregistrement";
 	
 	/**
 	 * <div>
@@ -844,19 +884,19 @@ public interface TypeProduitICuService {
 	 * <div>
 	 * <p style="font-weight:bold;">
 	 * Recherche un {@link TypeProduitDTO.OutputDTO}
-	 * à partir de son libellé exact.
+	 * à partir de son libellé.
 	 * </p>
 	 * <p style="font-weight:bold;">
 	 * INTENTION DE SERVICE UC (scénario nominal) :
 	 * </p>
 	 * <ul>
-	 * <li>recevoir un libellé exact provenant de la couche appelante ;</li>
-	 * <li>valider le caractère exploitable du libellé transmis ;</li>
-	 * <li>déléguer au composant GATEWAY la recherche exacte
-	 * du {@link TypeProduit} correspondant dans le stockage ;</li>
+	 * <li>recevoir un libellé provenant de la couche appelante ;</li>
+	 * <li>refuser localement un paramètre blank ;</li>
+	 * <li>déléguer au composant GATEWAY la recherche du
+	 * {@link TypeProduit} correspondant dans le stockage ;</li>
 	 * <li>convertir l'objet métier trouvé
 	 * en {@link TypeProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une réponse exploitable par la couche appelante.</li>
+	 * <li>retourner le DTO obtenu à la couche appelante.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -864,19 +904,41 @@ public interface TypeProduitICuService {
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
 	 * <li>Si {@code pLibelle} est blank, retourne {@code null},
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK}
-	 * et n'émet ni LOG ni Exception.</li>
-	 * <li>Sinon, délègue la recherche exacte au composant GATEWAY.</li>
-	 * <li>Si aucun objet n'est trouvé en stockage,
+	 * positionne {@link #getMessage()} à {@link #MESSAGE_PARAM_BLANK},
+	 * n'émet aucun LOG, ne lève aucune exception
+	 * et n'appelle pas le GATEWAY.</li>
+	 * <li>Si le GATEWAY lève une exception avec message,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si le GATEWAY lève une exception sans message,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si aucun objet n'est trouvé dans le stockage,
 	 * retourne {@code null} et positionne {@link #getMessage()}
 	 * à {@link #MESSAGE_OBJ_INTROUVABLE} + libellé.</li>
-	 * <li>Si un objet est trouvé, retourne l'{@link TypeProduitDTO.OutputDTO}
-	 * correspondant.</li>
-	 * <li>En cas d'échec technique remonté par le GATEWAY
-	 * ou par la préparation de la réponse utilisateur,
-	 * positionne un message utilisateur technique cohérent
-	 * puis propage une exception circonstanciée
-	 * conforme à l'implémentation.</li>
+	 * <li>Si la conversion lève une exception avec message,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si la conversion lève une exception sans message,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si la conversion retourne {@code null},
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_CONVERSION_NULL_KO},
+	 * émet un LOG et lève une {@link IllegalStateException}.</li>
+	 * <li>En cas de succès, retourne le
+	 * {@link TypeProduitDTO.OutputDTO} correspondant
+	 * et positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE}
+	 * uniquement après conversion complète.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -888,17 +950,15 @@ public interface TypeProduitICuService {
 	 * <li>Le message retourné par {@link #getMessage()}
 	 * reflète l'issue observable de l'opération.</li>
 	 * <li>Le message de succès n'est positionné
-	 * qu'après préparation complète de la réponse utilisateur.</li>
+	 * qu'après conversion complète du DTO.</li>
 	 * <li>Le DTO retourné, s'il n'est pas {@code null},
-	 * correspond à l'état métier effectivement accessible
-	 * dans le stockage via le GATEWAY.</li>
-	 * <li>Aucun résultat partiel incohérent
-	 * ne doit être exposé à l'appelant.</li>
+	 * correspond au {@link TypeProduit} fourni par le GATEWAY.</li>
+	 * <li>La méthode n'écrit rien dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pLibelle : String :
-	 * libellé exact du TypeProduit recherché.
+	 * libellé du TypeProduit recherché.
 	 * @return TypeProduitDTO.OutputDTO :
 	 * DTO correspondant à l'objet trouvé ;
 	 * retourne {@code null} si le libellé est blank
@@ -911,8 +971,7 @@ public interface TypeProduitICuService {
 	 * retourne {@code null}.
 	 * @throws Exception
 	 * toute autre exception levée par l'implémentation,
-	 * notamment lors de la préparation
-	 * de la réponse utilisateur.
+	 * notamment lors de la conversion de la réponse utilisateur.
 	 */
 	TypeProduitDTO.OutputDTO findByLibelle(String pLibelle) throws Exception;
 	
