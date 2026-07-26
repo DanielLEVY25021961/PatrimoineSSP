@@ -984,107 +984,183 @@ public class ProduitCuService implements ProduitICuService {
 	public List<OutputDTO> findAllByParent(
 			final SousTypeProduitDTO.InputDTO pSousTypeProduit)
 						throws Exception {
-	
+
 		/*
-		 * Le parent demandé est une précondition observable.
 		 * Si pSousTypeProduit == null :
-		 * émet RECHERCHE_PARENT_NULL + LOG + RuntimeException.
+		 * - alimente message avec
+		 *   MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException ;
+		 * - n'appelle aucun GATEWAY.
 		 */
 		if (pSousTypeProduit == null) {
-			
 			return this.traiterErreur(
-					RECHERCHE_PARENT_NULL,
+					MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO,
 					METHODE_FIND_ALL_BY_PARENT,
-					new RuntimeException(RECHERCHE_PARENT_NULL));
+					new IllegalStateException(
+							MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO));
 		}
-	
+
+		final String libelleTypeProduit
+				= pSousTypeProduit.getTypeProduit();
+
 		/*
-		 * Le libellé du parent ne doit pas être blank.
-		 * Si blank :
-		 * émet MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException.
+		 * Si le libellé du TypeProduit composant l'identité du parent est blank :
+		 * - alimente message avec
+		 *   MESSAGE_FINDALLBYPARENT_PARENT_TYPE_PRODUIT_LIBELLE_BLANK_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException ;
+		 * - n'appelle aucun GATEWAY.
 		 */
-		if (StringUtils.isBlank(pSousTypeProduit.getSousTypeProduit())) {
-			
+		if (StringUtils.isBlank(libelleTypeProduit)) {
 			return this.traiterErreur(
-					MESSAGE_PAS_PARENT,
+					MESSAGE_FINDALLBYPARENT_PARENT_TYPE_PRODUIT_LIBELLE_BLANK_KO,
 					METHODE_FIND_ALL_BY_PARENT,
-					new IllegalStateException(MESSAGE_PAS_PARENT));
+					new IllegalStateException(
+							MESSAGE_FINDALLBYPARENT_PARENT_TYPE_PRODUIT_LIBELLE_BLANK_KO));
 		}
-	
+
+		final String libelleSousTypeProduit
+				= pSousTypeProduit.getSousTypeProduit();
+
 		/*
-		 * Recherche le parent persistant.
+		 * Si le libellé du SousTypeProduit parent est blank :
+		 * - alimente message avec
+		 *   MESSAGE_FINDALLBYPARENT_PARENT_SOUS_TYPE_PRODUIT_LIBELLE_BLANK_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException ;
+		 * - n'appelle aucun GATEWAY.
 		 */
-		final List<SousTypeProduit> parents
-			= this.sousTypeProduitGateway
-				.findByLibelle(pSousTypeProduit.getSousTypeProduit());
-	
-		SousTypeProduit parentPersistant = null;
-	
-		if (parents != null) {
-			for (final SousTypeProduit parent : parents) {
-				if (parent != null
-						&& parent.getIdSousTypeProduit() != null) {
-					parentPersistant = parent;
-					break;
-				}
-			}
+		if (StringUtils.isBlank(libelleSousTypeProduit)) {
+			return this.traiterErreur(
+					MESSAGE_FINDALLBYPARENT_PARENT_SOUS_TYPE_PRODUIT_LIBELLE_BLANK_KO,
+					METHODE_FIND_ALL_BY_PARENT,
+					new IllegalStateException(
+							MESSAGE_FINDALLBYPARENT_PARENT_SOUS_TYPE_PRODUIT_LIBELLE_BLANK_KO));
 		}
-	
+
 		/*
-		 * Refuse un parent absent ou non persistant.
-		 * Si parent null ou non persistant : 
-		 * émet un message MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + LOG + IllegalStateException
+		 * Recherche le SousTypeProduit parent persistant exact
+		 * selon son identité [TypeProduit, SousTypeProduit].
+		 * Un parent homonyme rattaché à un autre TypeProduit
+		 * ne doit jamais être sélectionné.
+		 */
+		final SousTypeProduit parentPersistant;
+
+		try {
+			parentPersistant = this.rechercherParentPersistant(
+					new ProduitDTO.InputDTO(
+							libelleTypeProduit,
+							libelleSousTypeProduit,
+							null));
+		} catch (final Exception e) {
+			final String messageSecurise
+					= StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			/*
+			 * Distingue l'échec de recherche du parent
+			 * de l'échec de recherche des Produits.
+			 */
+			return this.traiterErreur(
+					MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_ALL_BY_PARENT,
+					e);
+		}
+
+		/*
+		 * Si le parent exact est absent du stockage,
+		 * non persistant ou ambigu :
+		 * - alimente message avec
+		 *   MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO ;
+		 * - LOG ;
+		 * - jette une IllegalStateException ;
+		 * - n'appelle pas le GATEWAY Produit.
 		 */
 		if (parentPersistant == null
 				|| parentPersistant.getIdSousTypeProduit() == null) {
-			
 			return this.traiterErreur(
-					MESSAGE_PAS_PARENT,
+					MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO,
 					METHODE_FIND_ALL_BY_PARENT,
-					new IllegalStateException(MESSAGE_PAS_PARENT));
+					new IllegalStateException(
+							MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO));
 		}
-	
+
 		/*
-		 * Délègue au GATEWAY Produit la recherche
-		 * de tous les Produits rattachés à ce parent.
+		 * Délègue au GATEWAY Produit la recherche de tous les Produits
+		 * rattachés au parent persistant exact.
 		 */
-		final List<Produit> reponses
-			= this.gateway.findAllByParent(parentPersistant);
-	
-		/*
-		 * Une réponse technique null du GATEWAY
-		 * est une anomalie de recherche.
-		 * Si reponses == null : 
-		 * émet un message KO_TECHNIQUE_RECHERCHE + LOG + RuntimeException
-		 */
-		if (reponses == null) {
-			
+		final List<Produit> records;
+
+		try {
+			records = this.gateway.findAllByParent(parentPersistant);
+		} catch (final Exception e) {
+			final String messageSecurise
+					= StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE,
+					MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_ALL_BY_PARENT,
-					new RuntimeException(KO_TECHNIQUE_RECHERCHE));
+					e);
 		}
-	
+
 		/*
-		 * Positionne le message observable
-		 * puis prépare la réponse utilisateur.
+		 * Une réponse technique null du GATEWAY Produit est une anomalie :
+		 * - alimente message avec MESSAGE_STOCKAGE_NULL ;
+		 * - LOG ;
+		 * - jette une ExceptionStockageVide.
 		 */
-		if (reponses.isEmpty()) {
+		if (records == null) {
+			return this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					METHODE_FIND_ALL_BY_PARENT,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+		}
+
+		final List<OutputDTO> dtos;
+
+		try {
+			/* Retire les éléments null puis trie les objets métier. */
+			final List<Produit> recordsNonNullTries
+					= this.filtrerEtTrier(records);
+
+			/* Convertit les objets métier en OutputDTO
+			 * et supprime les doublons en conservant l'ordre trié. */
+			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
+		} catch (final Exception e) {
+			final String messageSecurise
+					= StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			/*
+			 * Un échec de préparation côté UC
+			 * n'est jamais attribué au GATEWAY.
+			 */
+			return this.traiterErreur(
+					MESSAGE_FINDALLBYPARENT_PREPARATION_KO
+							+ TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_ALL_BY_PARENT,
+					e);
+		}
+
+		/*
+		 * Positionne le message observable uniquement après
+		 * filtrage, tri, conversion et dédoublonnage complets.
+		 */
+		if (dtos.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
 		} else {
 			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
-	
-		final List<OutputDTO> retours;
-		
-		final List<Produit> recordsNonNullTries
-			= this.filtrerEtTrier(reponses);
-		
-		retours = ConvertisseurMetierToOutputDTOProduit
-				.convertList(recordsNonNullTries);
-	
-		/* retourne la liste d'OutputDTO. */
-		return retours;
+
+		/* Retourne une liste d'OutputDTO non null, éventuellement vide. */
+		return dtos;
 		
 	} // __________________________________________________________________
 

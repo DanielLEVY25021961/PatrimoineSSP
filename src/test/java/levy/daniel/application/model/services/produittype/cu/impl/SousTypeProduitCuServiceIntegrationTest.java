@@ -374,7 +374,48 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 */
 	public static final String TAG_FIND_BY_LIBELLE_RAPIDE
 		= "cu-it-FindByLibelleRapide";
+
+	/**
+	 * "cu-it-FindAllByParent".
+	 */
+	public static final String TAG_FIND_ALL_BY_PARENT
+		= "cu-it-FindAllByParent";
 	
+	/**
+	 * "findAllByParent(null) : message dédié + IllegalStateException + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL
+		= "findAllByParent(null) : message dédié "
+				+ "+ IllegalStateException + stockage inchangé";
+
+	/**
+	 * "findAllByParent(parent blank) : message dédié + IllegalStateException + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK
+		= "findAllByParent(parent blank) : message dédié "
+				+ "+ IllegalStateException + stockage inchangé";
+
+	/**
+	 * "findAllByParent(parent absent) : message dédié + IllegalStateException + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_ABSENT
+		= "findAllByParent(parent absent) : message dédié "
+				+ "+ IllegalStateException + stockage inchangé";
+
+	/**
+	 * "findAllByParent(vide) : liste vide + message exact + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_VIDE
+		= "findAllByParent(vide) : liste vide "
+				+ "+ message exact + stockage inchangé";
+
+	/**
+	 * "findAllByParent(nominal) : enfants triés du parent demandé + message exact + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NOMINAL
+		= "findAllByParent(nominal) : enfants triés du parent demandé "
+				+ "+ message exact + stockage inchangé";
+
 	/**
 	 * "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé".
 	 */
@@ -2636,23 +2677,43 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	
 	/**
 	 * <div>
-	 * <p>findAllByParent(null) : violation de contrat.</p>
+	 * <p>findAllByParent(null) : violation du contrat du PORT.</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#RECHERCHE_PARENT_NULL}</li>
+	 * <li>lève {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO} ;</li>
+	 * <li>ne modifie pas le stockage.</li>
 	 * </ul>
 	 * </div>
 	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL)
 	@Test
-	@DisplayName("findAllByParent(null) : positionne message + lève IllegalStateException")
 	public void testFindAllByParentNull() {
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
 
 		assertThatThrownBy(() -> this.service.findAllByParent(null))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
+				.hasMessage(
+						SousTypeProduitICuService
+								.MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
+				.isEqualTo(
+						SousTypeProduitICuService
+								.MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO);
+
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 
 	} // __________________________________________________________________
 	
@@ -2662,23 +2723,44 @@ public class SousTypeProduitCuServiceIntegrationTest {
 	 * <div>
 	 * <p>findAllByParent(parent blank) : parent non exploitable.</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
+	 * <li>lève {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO} ;</li>
+	 * <li>ne modifie pas le stockage.</li>
 	 * </ul>
 	 * </div>
 	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK)
 	@Test
-	@DisplayName("findAllByParent(parent blank) : positionne MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + lève IllegalStateException")
 	public void testFindAllByParentParentBlank() {
 
-		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(ESPACES);
+		final TypeProduitDTO.InputDTO parentDto
+			= new TypeProduitDTO.InputDTO(ESPACES);
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
 
 		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.hasMessage(
+						SousTypeProduitICuService
+								.MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.isEqualTo(
+						SousTypeProduitICuService
+								.MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO);
+
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 
 	} // __________________________________________________________________
 	
@@ -2686,26 +2768,47 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findAllByParent(parent absent) : violation de contrat.</p>
+	 * <p>findAllByParent(parent absent) : violation du contrat du PORT.</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}</li>
+	 * <li>lève {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO} ;</li>
+	 * <li>ne modifie pas le stockage.</li>
 	 * </ul>
 	 * </div>
 	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_ABSENT)
 	@Test
-	@DisplayName("findAllByParent(parent absent) : positionne MESSAGE_CREER_PARENT_NON_PERSISTANT_KO + lève IllegalStateException")
 	public void testFindAllByParentPasParent() {
 
-		final TypeProduitDTO.InputDTO parentDto = new TypeProduitDTO.InputDTO(LOISIR);
+		final TypeProduitDTO.InputDTO parentDto
+			= new TypeProduitDTO.InputDTO(LOISIR);
 
-		/* Parent non créé. */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* Le parent n'est pas créé dans le stockage. */
 		assertThatThrownBy(() -> this.service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.hasMessage(
+						SousTypeProduitICuService
+								.MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(this.service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.isEqualTo(
+						SousTypeProduitICuService
+								.MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO);
+
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 		
 	} // __________________________________________________________________
 	
@@ -2713,26 +2816,46 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findAllByParent(vide) : parent existant mais aucun STP attaché.</p>
+	 * <p>findAllByParent(vide) : parent existant sans SousTypeProduit.</p>
 	 * <ul>
-	 * <li>retourne une liste vide</li>
-	 * <li>positionne {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE}</li>
+	 * <li>retourne une liste vide mais non {@code null} ;</li>
+	 * <li>positionne exactement
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>ne modifie pas le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_VIDE)
 	@Test
-	@DisplayName("findAllByParent(vide) : liste vide + message MESSAGE_RECHERCHE_VIDE")
 	public void testFindAllByParentVide() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(LOISIR));
 
-		final List<OutputDTO> dtos = this.service.findAllByParent(new TypeProduitDTO.InputDTO(LOISIR));
+		/* Matérialise l'état du stockage avant la recherche pure. */
+		this.entityManager.flush();
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		final List<OutputDTO> dtos = this.service.findAllByParent(
+				new TypeProduitDTO.InputDTO(LOISIR));
 
 		assertThat(dtos).isNotNull().isEmpty();
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 		
 	} // __________________________________________________________________
 	
@@ -2740,21 +2863,25 @@ public class SousTypeProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findAllByParent(ok) : test béton avec preuve stockage
-	 * et rattachement exclusif au parent demandé.</p>
+	 * <p>findAllByParent(nominal) : preuve du rattachement exclusif,
+	 * de l'ordre métier et de l'absence d'écriture.</p>
 	 * <ul>
-	 * <li>retourne une liste non {@code null}</li>
+	 * <li>retourne une liste non {@code null} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}</li>
-	 * <li>ne retourne que les enfants du parent demandé</li>
-	 * <li>prouve physiquement dans le stockage les couples parent / sous-type créés</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>retourne uniquement les enfants du parent demandé ;</li>
+	 * <li>retourne les DTO dans l'ordre métier ;</li>
+	 * <li>compare les DTO avec les valeurs lues directement
+	 * dans le stockage ;</li>
+	 * <li>ne modifie pas le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_ALL_BY_PARENT)
+	@DisplayName(DISPLAY_NAME_FIND_ALL_BY_PARENT_NOMINAL)
 	@Test
-	@DisplayName("findAllByParent(ok) : retourne uniquement les enfants du parent demandé + message exact + preuve stockage")
 	public void testFindAllByParentOkAvecPreuveStockage() throws Exception {
 
 		this.typeProduitService.creer(new TypeProduitDTO.InputDTO(OUTIL));
@@ -2767,15 +2894,24 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		final OutputDTO creeB1 = this.service.creer(
 				new SousTypeProduitDTO.InputDTO(LOISIR, CISEAU));
 
+		/* Matérialise l'état du stockage avant la recherche pure. */
+		this.entityManager.flush();
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
 		final List<OutputDTO> dtos = this.service.findAllByParent(
 				new TypeProduitDTO.InputDTO(OUTIL));
 
-		assertThat(dtos).isNotNull();
-		assertThat(dtos).hasSize(2);
+		assertThat(dtos).isNotNull().hasSize(2);
 
+		/* compare avec l'ordre métier réellement lu dans le stockage. */
 		assertThat(dtos)
 				.extracting(OutputDTO::getSousTypeProduit)
-				.containsExactly(RABOTEUSE, COUTEAU);
+				.containsExactly(COUTEAU, RABOTEUSE);
 
 		assertThat(dtos)
 				.extracting(OutputDTO::getTypeProduit)
@@ -2784,8 +2920,8 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(dtos)
 				.extracting(OutputDTO::getIdSousTypeProduit)
 				.containsExactly(
-						creeA1.getIdSousTypeProduit(),
-						creeA2.getIdSousTypeProduit());
+						creeA2.getIdSousTypeProduit(),
+						creeA1.getIdSousTypeProduit());
 
 		assertThat(dtos)
 				.extracting(OutputDTO::getIdSousTypeProduit)
@@ -2794,33 +2930,41 @@ public class SousTypeProduitCuServiceIntegrationTest {
 		assertThat(this.service.getMessage())
 				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
 
-		assertThat(this.compterSousTypeProduitDansStockage(creeA1.getIdSousTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleSousTypeProduitDansStockage(creeA1.getIdSousTypeProduit()))
-				.isEqualTo(RABOTEUSE);
-		assertThat(this.lireParentSousTypeProduitDansStockage(creeA1.getIdSousTypeProduit()))
-				.isEqualTo(OUTIL);
+		assertThat(this.compterSousTypeProduitDansStockage(
+				creeA1.getIdSousTypeProduit())).isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitDansStockage(
+				creeA1.getIdSousTypeProduit())).isEqualTo(RABOTEUSE);
+		assertThat(this.lireParentSousTypeProduitDansStockage(
+				creeA1.getIdSousTypeProduit())).isEqualTo(OUTIL);
 
-		assertThat(this.compterSousTypeProduitDansStockage(creeA2.getIdSousTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleSousTypeProduitDansStockage(creeA2.getIdSousTypeProduit()))
-				.isEqualTo(COUTEAU);
-		assertThat(this.lireParentSousTypeProduitDansStockage(creeA2.getIdSousTypeProduit()))
-				.isEqualTo(OUTIL);
+		assertThat(this.compterSousTypeProduitDansStockage(
+				creeA2.getIdSousTypeProduit())).isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitDansStockage(
+				creeA2.getIdSousTypeProduit())).isEqualTo(COUTEAU);
+		assertThat(this.lireParentSousTypeProduitDansStockage(
+				creeA2.getIdSousTypeProduit())).isEqualTo(OUTIL);
 
-		assertThat(this.compterSousTypeProduitDansStockage(creeB1.getIdSousTypeProduit()))
-				.isEqualTo(1L);
-		assertThat(this.lireLibelleSousTypeProduitDansStockage(creeB1.getIdSousTypeProduit()))
-				.isEqualTo(CISEAU);
-		assertThat(this.lireParentSousTypeProduitDansStockage(creeB1.getIdSousTypeProduit()))
-				.isEqualTo(LOISIR);
+		assertThat(this.compterSousTypeProduitDansStockage(
+				creeB1.getIdSousTypeProduit())).isEqualTo(1L);
+		assertThat(this.lireLibelleSousTypeProduitDansStockage(
+				creeB1.getIdSousTypeProduit())).isEqualTo(CISEAU);
+		assertThat(this.lireParentSousTypeProduitDansStockage(
+				creeB1.getIdSousTypeProduit())).isEqualTo(LOISIR);
 
-		assertThat(this.compterSousTypeProduitParCoupleDansStockage(OUTIL, RABOTEUSE))
-				.isEqualTo(1L);
-		assertThat(this.compterSousTypeProduitParCoupleDansStockage(OUTIL, COUTEAU))
-				.isEqualTo(1L);
-		assertThat(this.compterSousTypeProduitParCoupleDansStockage(LOISIR, CISEAU))
-				.isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				OUTIL, RABOTEUSE)).isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				OUTIL, COUTEAU)).isEqualTo(1L);
+		assertThat(this.compterSousTypeProduitParCoupleDansStockage(
+				LOISIR, CISEAU)).isEqualTo(1L);
+
+		/* Garantit que la recherche pure n'a pas modifié le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_SOUS_TYPES_PRODUIT,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
 		
 	} // __________________________________________________________________	
 

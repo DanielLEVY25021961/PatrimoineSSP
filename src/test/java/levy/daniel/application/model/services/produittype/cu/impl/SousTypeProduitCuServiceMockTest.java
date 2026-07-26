@@ -173,6 +173,12 @@ public class SousTypeProduitCuServiceMockTest {
 		= "exception propagée + message rationalisé";
 	
 	/**
+	 * "IllegalStateException + "
+	 */
+	public static final String ILLEGAL_STATE_EXCEPTION 
+		= "IllegalStateException + ";
+	
+	/**
 	 * "fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String FALLBACK 
@@ -509,7 +515,7 @@ public class SousTypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_GATEWAY_KO_SANS_MESSAGE
 			= "rechercherTousString(gateway KO sans message) : "
 					+ "MESSAGE_RECHERCHER_TOUS_STRING_GATEWAY_KO "
-					+ "+ fallback MSG_ERREUR_NON_SPECIFIEE";
+					+ FALLBACK_AVEC_PLUS;
 	
 	/**
 	 * "rechercherTousString(conversion String KO avec message) :
@@ -527,7 +533,7 @@ public class SousTypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_STRING_CONVERSION_STRING_KO_SANS_MESSAGE
 			= "rechercherTousString(conversion String KO sans message) : "
 					+ "MESSAGE_RECHERCHER_TOUS_STRING_PREPARATION_KO "
-					+ "+ fallback MSG_ERREUR_NON_SPECIFIEE";
+					+ FALLBACK_AVEC_PLUS;
 	
 	/**
 	 * "rechercherTousString(vide après filtrage) :
@@ -792,67 +798,74 @@ public class SousTypeProduitCuServiceMockTest {
 
 	/**
 	 * "findAllByParent(null) :
-	 * IllegalStateException + RECHERCHE_PARENT_NULL"
+	 * IllegalStateException + MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL
 			= "findAllByParent(null) : "
-					+ "IllegalStateException + RECHERCHE_PARENT_NULL";
+					+ ILLEGAL_STATE_EXCEPTION
+					+ "MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO";
 	
 	/**
 	 * "findAllByParent(libellé parent blank) :
-	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
+	 * IllegalStateException + MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_BLANK
 			= "findAllByParent(libellé parent blank) : "
-					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+					+ ILLEGAL_STATE_EXCEPTION
+					+ "MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO";
 	
 	/**
 	 * "findAllByParent(parent gateway KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KO_AVEC_MESSAGE
 			= "findAllByParent(parent gateway KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
+					+ "exception propagée + "
+					+ "MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO";
 	
 	/**
 	 * "findAllByParent(parent gateway KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO + fallback"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_GATEWAY_KO_SANS_MESSAGE
 			= "findAllByParent(parent gateway KO sans message) : "
-					+ FALLBACK;
+					+ "MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO "
+					+ FALLBACK_AVEC_PLUS;
 	
 	/**
 	 * "findAllByParent(parent absent) :
-	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
+	 * IllegalStateException + MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_ABSENT
 			= "findAllByParent(parent absent) : "
-					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+					+ ILLEGAL_STATE_EXCEPTION
+					+ "MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO";
 	
 	/**
 	 * "findAllByParent(parent non persistant) :
-	 * IllegalStateException + MESSAGE_CREER_PARENT_NON_PERSISTANT_KO"
+	 * IllegalStateException + MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_PARENT_NON_PERSISTANT
 			= "findAllByParent(parent non persistant) : "
-					+ ILLEGAL_STATE_EXCEPTION_MESSAGE;
+					+ ILLEGAL_STATE_EXCEPTION
+					+ "MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO";
 	
 	/**
 	 * "findAllByParent(enfants gateway KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_ENFANTS_GATEWAY_KO_AVEC_MESSAGE
 			= "findAllByParent(enfants gateway KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
+					+ "exception propagée + MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO";
 	
 	/**
 	 * "findAllByParent(enfants gateway KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO + fallback"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_ENFANTS_GATEWAY_KO_SANS_MESSAGE
 			= "findAllByParent(enfants gateway KO sans message) : "
-					+ FALLBACK;
+					+ "MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO "
+					+ FALLBACK_AVEC_PLUS;
 	
 	/**
 	 * "findAllByParent(gateway retourne null) :
@@ -864,19 +877,21 @@ public class SousTypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findAllByParent(conversion OutputDTO KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDALLBYPARENT_PREPARATION_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
 			= "findAllByParent(conversion OutputDTO KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
+					+ "exception propagée + "
+					+ "MESSAGE_FINDALLBYPARENT_PREPARATION_KO";
 	
 	/**
 	 * "findAllByParent(conversion OutputDTO KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDALLBYPARENT_PREPARATION_KO + fallback"
 	 */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
 			= "findAllByParent(conversion OutputDTO KO sans message) : "
-					+ FALLBACK;
+					+ "MESSAGE_FINDALLBYPARENT_PREPARATION_KO "
+					+ FALLBACK_AVEC_PLUS;
 	
 	/**
 	 * "findAllByParent(vide après filtrage) :
@@ -6109,7 +6124,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#RECHERCHE_PARENT_NULL} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -6136,16 +6151,16 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.findAllByParent(null) :
 		 * - lève IllegalStateException ;
-		 * - émet le message RECHERCHE_PARENT_NULL contractuel ;
+		 * - émet le message MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO contractuel ;
 		 * - ne sollicite aucun Gateway.
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(null))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO);
 
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.RECHERCHE_PARENT_NULL);
+						SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -6160,7 +6175,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <ul>
 	 * <li>lève une {@link IllegalStateException} ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO} ;</li>
 	 * <li>n'interagit ni avec le Gateway SousTypeProduit
 	 * ni avec le Gateway TypeProduit.</li>
 	 * </ul>
@@ -6196,15 +6211,15 @@ public class SousTypeProduitCuServiceMockTest {
 		/* ACT - ASSERT */
 		/* Garantit que service.findAllByParent(parentDto) :
 		 * - lève IllegalStateException ;
-		 * - émet le message MESSAGE_CREER_PARENT_NON_PERSISTANT_KO ;
+		 * - émet le message MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO ;
 		 * - ne sollicite aucun Gateway.
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO);
 
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(typeProduitGateway);
@@ -6220,8 +6235,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>atteint la recherche du parent persistant via
 	 * {@code typeProduitGateway.findByLibelle(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway TypeProduit ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * <li>positionne un message observable dédié avec
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
@@ -6270,11 +6285,11 @@ public class SousTypeProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé.
+		 * un message observable dédié.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -6297,7 +6312,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par
 	 * le Gateway TypeProduit ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
@@ -6349,7 +6364,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -6371,7 +6386,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>lève une {@link IllegalStateException} si le parent
 	 * est absent du stockage ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -6409,14 +6424,14 @@ public class SousTypeProduitCuServiceMockTest {
 
 		/* ACT - ASSERT */
 		/* Garantit que l'absence de parent est refusée
-		 * avec le message utilisateur MESSAGE_CREER_PARENT_NON_PERSISTANT_KO.
+		 * avec le message utilisateur MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO.
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO);
 
 		/* Garantit que la recherche des objets métier enfants
 		 * n'est jamais tentée lorsque le parent est absent.
@@ -6436,7 +6451,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>lève une {@link IllegalStateException} si le parent retrouvé
 	 * ne porte pas d'identifiant persistant ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_CREER_PARENT_NON_PERSISTANT_KO} ;</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO} ;</li>
 	 * <li>ne sollicite jamais le Gateway SousTypeProduit.</li>
 	 * </ul>
 	 * </div>
@@ -6482,10 +6497,10 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThatThrownBy(() -> service.findAllByParent(parentDto))
 				.isInstanceOf(IllegalStateException.class)
-				.hasMessage(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.hasMessage(SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO);
 
 		assertThat(service.getMessage())
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_CREER_PARENT_NON_PERSISTANT_KO);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO);
 
 		/* Garantit que la recherche des objets métier enfants
 		 * n'est jamais tentée lorsque le parent n'est pas persistant.
@@ -6506,8 +6521,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * {@code gateway.findAllByParent(parentPersistant)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway
 	 * SousTypeProduit ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * <li>positionne un message observable dédié avec
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>transmet bien le parent persistant au Gateway SousTypeProduit.</li>
 	 * </ul>
@@ -6561,11 +6576,11 @@ public class SousTypeProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé.
+		 * un message observable dédié.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -6589,7 +6604,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par
 	 * le Gateway SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>transmet bien le parent persistant au Gateway SousTypeProduit.</li>
 	 * </ul>
@@ -6646,7 +6661,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -6746,8 +6761,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>atteint la conversion finale en {@link OutputDTO}
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * <li>positionne un message observable dédié avec
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PREPARATION_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -6806,11 +6821,11 @@ public class SousTypeProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé pour l'échec de conversion.
+		 * un message observable dédié pour l'échec de conversion.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PREPARATION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -6837,7 +6852,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDALLBYPARENT_PREPARATION_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -6899,7 +6914,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDALLBYPARENT_PREPARATION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 

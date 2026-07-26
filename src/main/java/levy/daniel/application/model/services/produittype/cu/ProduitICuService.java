@@ -417,6 +417,89 @@ public interface ProduitICuService {
 				+ "- le filtrage, le tri ou la conversion en OutputDTO "
 				+ "a jeté Exception";
 
+	/* ---------------------- findAllByParent -------------------------- */
+
+	/**
+	 * "KO - findAllByParent(...) "
+	 */
+	String KO_FINDALLBYPARENT = "KO - findAllByParent(...) ";
+
+	/**
+	 * <div>
+	 * <p>"KO - findAllByParent(...)
+	 * - le SousTypeProduit parent ne doit pas être null."</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO
+		= KO_FINDALLBYPARENT
+				+ "- le SousTypeProduit parent ne doit pas être null.";
+
+	/**
+	 * <div>
+	 * <p>"KO - findAllByParent(...)
+	 * - le SousTypeProduit parent doit posséder un TypeProduit
+	 * avec un libellé non blank."</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDALLBYPARENT_PARENT_TYPE_PRODUIT_LIBELLE_BLANK_KO
+		= KO_FINDALLBYPARENT
+				+ "- le SousTypeProduit parent doit posséder un TypeProduit "
+				+ "avec un libellé non blank.";
+
+	/**
+	 * <div>
+	 * <p>"KO - findAllByParent(...)
+	 * - le SousTypeProduit parent doit posséder un libellé non blank."</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDALLBYPARENT_PARENT_SOUS_TYPE_PRODUIT_LIBELLE_BLANK_KO
+		= KO_FINDALLBYPARENT
+				+ "- le SousTypeProduit parent doit posséder "
+				+ "un libellé non blank.";
+
+	/**
+	 * <div>
+	 * <p>"KO - findAllByParent(...)
+	 * - la recherche du parent via le Gateway a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO
+		= KO_FINDALLBYPARENT
+				+ "- la recherche du parent via le Gateway a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - findAllByParent(...)
+	 * - le SousTypeProduit parent doit être persistant dans le stockage."</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO
+		= KO_FINDALLBYPARENT
+				+ "- le SousTypeProduit parent doit être persistant "
+				+ "dans le stockage.";
+
+	/**
+	 * <div>
+	 * <p>"KO - findAllByParent(...)
+	 * - la recherche des enfants via le Gateway a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO
+		= KO_FINDALLBYPARENT
+				+ "- la recherche des enfants via le Gateway a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - findAllByParent(...)
+	 * - le filtrage, le tri ou la conversion en OutputDTO
+	 * a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDALLBYPARENT_PREPARATION_KO
+		= KO_FINDALLBYPARENT
+				+ "- le filtrage, le tri ou la conversion en OutputDTO "
+				+ "a jeté Exception";
+
 	/* --------------------------- update ------------------------------ */
 	
 	/**
@@ -1204,74 +1287,128 @@ public interface ProduitICuService {
 	/**
 	 * <div>
 	 * <p>Retourne tous les {@link ProduitDTO.OutputDTO}
-	 * rattachés au parent {@link SousTypeProduitDTO.InputDTO} demandé.</p>
-	 * <p style="font-weight:bold;">INTENTION DE SERVICE UC (scénario nominal) :</p>
+	 * rattachés au parent {@link SousTypeProduitDTO.InputDTO} exact demandé.</p>
+	 * <p style="font-weight:bold;">
+	 * INTENTION DE SERVICE UC (scénario nominal) :
+	 * </p>
 	 * <ul>
-	 * <li>valider le parent demandé ;</li>
-	 * <li>retrouver le parent persistant correspondant ;</li>
+	 * <li>recevoir un parent {@link SousTypeProduitDTO.InputDTO}
+	 * depuis la couche appelante ;</li>
+	 * <li>valider séparément les deux composantes de l'identité du parent
+	 * {@code [TypeProduit, SousTypeProduit]} ;</li>
+	 * <li>retrouver le {@link SousTypeProduit} parent persistant exact
+	 * sans sélectionner un parent homonyme rattaché à un autre TypeProduit ;</li>
 	 * <li>déléguer au GATEWAY Produit la recherche de tous les
 	 * {@link Produit} rattachés à ce parent ;</li>
-	 * <li>retirer les éventuels objets métier {@code null} ;</li>
-	 * <li>trier les objets métier ;</li>
-	 * <li>convertir les résultats métier en {@link ProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une liste exploitable par la couche appelante.</li>
+	 * <li>refuser une liste {@code null} retournée par le GATEWAY ;</li>
+	 * <li>retirer les éléments {@code null}, trier les objets métier
+	 * selon l'ordre {@code [SousTypeProduit, Produit]}, les convertir
+	 * en {@link ProduitDTO.OutputDTO} et supprimer les doublons ;</li>
+	 * <li>positionner le message observable uniquement
+	 * après obtention de la liste DTO finale ;</li>
+	 * <li>retourner une liste non {@code null}, éventuellement vide.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
 	 * <p style="font-weight:bold;">CONTRAT DE SERVICE UC :</p>
 	 * <ul>
-	 * <li>si {@code pSousTypeProduit == null},
+	 * <li>Si {@code pSousTypeProduit == null}, positionne
+	 * {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO},
+	 * émet un LOG, lève une {@link IllegalStateException}
+	 * portant exactement ce message et n'appelle aucun GATEWAY.</li>
+	 * <li>Si {@code pSousTypeProduit.getTypeProduit()} est blank,
 	 * positionne {@link #getMessage()} à
-	 * {@link #RECHERCHE_PARENT_NULL}
-	 * puis lève une exception ;</li>
-	 * <li>si le libellé du parent est blank,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}
-	 * puis lève une exception ;</li>
-	 * <li>si le parent n'est pas trouvé ou n'est pas persistant,
-	 * positionne {@link #getMessage()} à {@link #MESSAGE_CREER_PARENT_NON_PERSISTANT_KO}
-	 * puis lève une exception ;</li>
-	 * <li>si le GATEWAY retourne {@code null},
+	 * {@link #MESSAGE_FINDALLBYPARENT_PARENT_TYPE_PRODUIT_LIBELLE_BLANK_KO},
+	 * émet un LOG, lève une {@link IllegalStateException}
+	 * portant exactement ce message et n'appelle aucun GATEWAY.</li>
+	 * <li>Si {@code pSousTypeProduit.getSousTypeProduit()} est blank,
 	 * positionne {@link #getMessage()} à
-	 * {@link #KO_TECHNIQUE_RECHERCHE}
-	 * puis propage une exception technique ;</li>
-	 * <li>si aucun objet n'est trouvé,
-	 * retourne une liste vide mais non {@code null}
-	 * et positionne {@link #getMessage()}
-	 * à {@link #MESSAGE_RECHERCHE_VIDE} ;</li>
-	 * <li>si au moins un objet est trouvé,
-	 * retourne une liste de {@link ProduitDTO.OutputDTO}
-	 * non {@code null}
-	 * et positionne {@link #getMessage()}
+	 * {@link #MESSAGE_FINDALLBYPARENT_PARENT_SOUS_TYPE_PRODUIT_LIBELLE_BLANK_KO},
+	 * émet un LOG, lève une {@link IllegalStateException}
+	 * portant exactement ce message et n'appelle aucun GATEWAY.</li>
+	 * <li>Si la recherche du parent via le GATEWAY lève une exception,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + message sécurisé,
+	 * émet un LOG, propage la même exception
+	 * et n'appelle pas le GATEWAY Produit.</li>
+	 * <li>Si aucun parent persistant ne correspond exactement au couple
+	 * {@code [TypeProduit, SousTypeProduit]} demandé, positionne
+	 * {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO},
+	 * émet un LOG, lève une {@link IllegalStateException}
+	 * portant exactement ce message
+	 * et n'appelle pas le GATEWAY Produit.</li>
+	 * <li>Si la recherche des Produits via le GATEWAY lève une exception,
+	 * positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + message sécurisé,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si le GATEWAY Produit retourne {@code null}, positionne
+	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
+	 * émet un LOG et lève une {@link ExceptionStockageVide}
+	 * portant exactement ce message.</li>
+	 * <li>Si le filtrage, le tri ou la conversion en DTO
+	 * lève une exception, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDALLBYPARENT_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + message sécurisé,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si la liste DTO finale est vide, retourne une liste vide
+	 * mais non {@code null} et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste DTO finale n'est pas vide, retourne les DTO
+	 * triés et sans doublon, puis positionne {@link #getMessage()}
 	 * à {@link #MESSAGE_RECHERCHE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * <div>
-	 * <p style="font-weight:bold;">GARANTIES METIER, UTILISATEUR et TRAÇABILITE :</p>
+	 * <p style="font-weight:bold;">
+	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
+	 * </p>
 	 * <ul>
-	 * <li>le message retourné par {@link #getMessage()}
-	 * reflète l'issue observable de l'opération ;</li>
-	 * <li>le message de succès n'est positionné
-	 * qu'après préparation complète de la réponse utilisateur ;</li>
-	 * <li>la liste retournée, si elle n'est pas vide,
-	 * correspond à l'état métier effectivement accessible
-	 * dans le stockage via le GATEWAY,
-	 * exprimé sous forme de DTO ;</li>
-	 * <li>aucun résultat partiel incohérent
-	 * ne doit être exposé à l'appelant.</li>
+	 * <li>L'identité du parent demandé est
+	 * {@code [TypeProduit, SousTypeProduit]}.</li>
+	 * <li>Le TypeProduit sert uniquement à identifier le parent exact ;
+	 * il ne constitue jamais une troisième composante de l'identité du Produit.</li>
+	 * <li>Un SousTypeProduit homonyme rattaché à un autre TypeProduit
+	 * n'est jamais sélectionné.</li>
+	 * <li>La méthode ne retourne jamais {@code null} lorsqu'elle aboutit.</li>
+	 * <li>La liste retournée ne contient aucun élément {@code null}
+	 * et aucun doublon.</li>
+	 * <li>Les DTO retournés correspondent exclusivement aux Produits
+	 * effectivement rattachés au parent persistant exact demandé.</li>
+	 * <li>Le message de succès ou d'absence de résultat
+	 * n'est positionné qu'après filtrage, tri, conversion
+	 * et dédoublonnage complets.</li>
+	 * <li>Un échec de préparation côté UC
+	 * n'est jamais attribué au GATEWAY.</li>
+	 * <li>La méthode n'écrit rien dans le stockage.</li>
+	 * <li>Aucun résultat partiel incohérent
+	 * n'est exposé à l'appelant.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pSousTypeProduit : SousTypeProduitDTO.InputDTO :
-	 * parent demandé.
-	 * @return List<ProduitDTO.OutputDTO> :
-	 * liste des Produits rattachés au parent ;
-	 * jamais {@code null} si le traitement aboutit.
+	 * parent exact demandé par la couche appelante,
+	 * identifié par le couple [TypeProduit, SousTypeProduit].
+	 * @return List&lt;ProduitDTO.OutputDTO&gt; :
+	 * liste non {@code null}, éventuellement vide,
+	 * des Produits rattachés au parent exact demandé.
+	 * @throws IllegalStateException
+	 * si {@code pSousTypeProduit == null},
+	 * si l'une des deux composantes de l'identité du parent est blank,
+	 * ou si le parent exact est absent, non persistant ou ambigu.
+	 * @throws ExceptionStockageVide
+	 * si le GATEWAY Produit retourne {@code null}.
+	 * @throws ExceptionTechniqueGateway
+	 * si une erreur technique survient lors de la recherche
+	 * du parent ou des Produits via un GATEWAY.
 	 * @throws Exception
-	 * si une erreur survient lors de la recherche du parent,
-	 * de la recherche des Produits
-	 * ou de la préparation de la réponse utilisateur.
+	 * toute autre exception levée lors du filtrage,
+	 * du tri ou de la conversion en DTO.
 	 */
 	List<ProduitDTO.OutputDTO> findAllByParent(
 			SousTypeProduitDTO.InputDTO pSousTypeProduit) throws Exception;

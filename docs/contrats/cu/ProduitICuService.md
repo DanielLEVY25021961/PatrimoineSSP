@@ -935,51 +935,129 @@ Signature cible :
 Le scénario nominal de `findAllByParent(...)` est :
 
 1. recevoir un parent `SousTypeProduitDTO.InputDTO` ;
-2. valider que le parent demandé n'est pas `null` ;
-3. valider que le libellé du parent n'est pas blank ;
-4. retrouver le parent persistant correspondant ;
-5. déléguer au `GATEWAY` Produit la recherche de tous les Produits rattachés à ce parent ;
-6. retirer les éventuels objets métier `null` ;
-7. trier les objets métier ;
-8. convertir les résultats métier en `ProduitDTO.OutputDTO` ;
-9. positionner le message observable ;
-10. retourner la liste finale.
+2. refuser un DTO parent `null` ;
+3. valider séparément les deux composantes de l'identité propre du parent
+   `[TypeProduit, SousTypeProduit]` ;
+4. rechercher les `SousTypeProduit` persistants portant le libellé demandé ;
+5. sélectionner exclusivement le parent persistant dont le `TypeProduit`
+   et le `SousTypeProduit` correspondent au couple demandé ;
+6. refuser tout parent absent, non persistant ou ambigu ;
+7. déléguer au `GATEWAY` Produit la recherche de tous les Produits
+   rattachés à ce parent exact ;
+8. refuser une réponse technique `null` du `GATEWAY` Produit ;
+9. retirer les éventuels objets métier `null` ;
+10. trier les objets métier selon l'ordre naturel `[SousTypeProduit, Produit]`,
+    l'identité du parent restant `[TypeProduit, SousTypeProduit]` ;
+11. convertir les objets métier en `ProduitDTO.OutputDTO`
+    et supprimer les doublons en conservant l'ordre trié ;
+12. positionner le message observable uniquement après préparation complète
+    de la liste DTO finale ;
+13. retourner une liste non `null`, éventuellement vide.
 
 ### 16.2) Cas observables attendus
 
 - si `pSousTypeProduit == null` :
-  - positionne `getMessage()` à `RECHERCHE_SOUSTYPEPRODUIT_NULL` ;
-  - lève une exception ;
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement ce message ;
+  - ne sollicite aucun `GATEWAY` ;
 
-- si le libellé du parent est blank :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT` ;
-  - lève une exception ;
+- si `pSousTypeProduit.getTypeProduit()` est blank :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_PARENT_TYPE_PRODUIT_LIBELLE_BLANK_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement ce message ;
+  - ne sollicite aucun `GATEWAY` ;
 
-- si le parent n'est pas trouvé ou n'est pas persistant :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT` ;
-  - lève une exception ;
+- si `pSousTypeProduit.getSousTypeProduit()` est blank :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_PARENT_SOUS_TYPE_PRODUIT_LIBELLE_BLANK_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement ce message ;
+  - ne sollicite aucun `GATEWAY` ;
 
-- si le `GATEWAY` retourne `null` :
-  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE` ;
-  - propage une exception technique ;
+- si la recherche du parent via
+  `sousTypeProduitGateway.findByLibelle(...)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE`
+    lorsque nécessaire ;
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO`
+    `+ TIRET_ESPACE + message sécurisé` ;
+  - émet un LOG ;
+  - propage la même exception ;
+  - ne sollicite pas le `GATEWAY` Produit ;
 
-- si aucun objet n'est trouvé :
+- si aucun parent persistant ne correspond exactement au couple
+  `[TypeProduit, SousTypeProduit]` demandé :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement ce message ;
+  - ne sollicite pas le `GATEWAY` Produit ;
+
+- si plusieurs parents persistants distincts correspondent encore
+  aux critères fournis :
+  - ne sélectionne jamais arbitrairement le premier parent ;
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` ;
+  - ne sollicite pas le `GATEWAY` Produit ;
+
+- si `gateway.findAllByParent(parentPersistant)` lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE`
+    lorsque nécessaire ;
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO`
+    `+ TIRET_ESPACE + message sécurisé` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si le `GATEWAY` Produit retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - émet un LOG ;
+  - lève une `ExceptionStockageVide` portant exactement ce message ;
+
+- si le filtrage, le tri ou la conversion en DTO lève une exception :
+  - sécurise le message technique avec `MSG_ERREUR_NON_SPECIFIEE`
+    lorsque nécessaire ;
+  - positionne `getMessage()` à
+    `MESSAGE_FINDALLBYPARENT_PREPARATION_KO`
+    `+ TIRET_ESPACE + message sécurisé` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si la liste DTO finale est vide après filtrage, tri, conversion
+  et dédoublonnage :
   - retourne une liste vide mais non `null` ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
 
-- si au moins un objet est trouvé :
-  - retourne une liste non `null` ;
+- si la liste DTO finale contient des résultats :
+  - retourne les DTO triés et sans doublon ;
+  - restitue le `TypeProduit` et le `SousTypeProduit` du parent exact ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
 ### 16.3) Garanties spécifiques de `findAllByParent(...)`
 
-- la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
-- la liste retournée, si elle n'est pas vide,
-  doit correspondre aux Produits effectivement accessibles
-  pour le parent persistant demandé ;
-- le message de succès ne doit être positionné
-  qu'après préparation complète de la réponse utilisateur ;
-- aucun résultat partiel incohérent ne doit être exposé à l'appelant.
+- l'identité du parent demandé est exclusivement
+  `[TypeProduit, SousTypeProduit]` ;
+- le `TypeProduit` n'est pas une troisième composante de l'identité du Produit :
+  il sert uniquement à identifier sans ambiguïté le `SousTypeProduit` parent ;
+- un `SousTypeProduit` homonyme rattaché à un autre `TypeProduit`
+  ne doit jamais être sélectionné ;
+- la méthode ne retourne jamais `null` lorsqu'elle aboutit ;
+- la liste retournée ne contient aucun élément `null` et aucun doublon ;
+- les DTO sont ordonnés selon l'ordre métier `[SousTypeProduit, Produit]` ;
+- les DTO retournés correspondent exclusivement aux Produits réellement
+  rattachés au parent persistant exact demandé ;
+- le message de succès ou d'absence de résultat n'est positionné
+  qu'après filtrage, tri, conversion et dédoublonnage complets ;
+- un échec de préparation côté UC n'est jamais attribué au `GATEWAY` ;
+- la méthode n'écrit rien dans le stockage ;
+- les tests d'intégration doivent prouver l'identification exacte du parent
+  en présence de `SousTypeProduit` homonymes et l'absence d'écriture ;
+- aucun résultat partiel incohérent n'est exposé à l'appelant.
 
 ## 17) Contrat spécifique de `findByDTO(...)`
 
@@ -1405,6 +1483,14 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_OBJ_NON_PERSISTE` | `"Objet non persisté en base : "` |
 | `MESSAGE_RECHERCHE_PAGINEE_OK` | `"OK - la recherche paginée a retourné des résultats."` |
 | `MESSAGE_RECHERCHE_PAGINEE_KO` | `"KO - la recherche paginée a retourné null."` |
+| `KO_FINDALLBYPARENT` | `"KO - findAllByParent(...) "` |
+| `MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO` | `KO_FINDALLBYPARENT + "- le SousTypeProduit parent ne doit pas être null."` |
+| `MESSAGE_FINDALLBYPARENT_PARENT_TYPE_PRODUIT_LIBELLE_BLANK_KO` | `KO_FINDALLBYPARENT + "- le SousTypeProduit parent doit posséder un TypeProduit avec un libellé non blank."` |
+| `MESSAGE_FINDALLBYPARENT_PARENT_SOUS_TYPE_PRODUIT_LIBELLE_BLANK_KO` | `KO_FINDALLBYPARENT + "- le SousTypeProduit parent doit posséder un libellé non blank."` |
+| `MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO` | `KO_FINDALLBYPARENT + "- la recherche du parent via le Gateway a jeté Exception"` |
+| `MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO` | `KO_FINDALLBYPARENT + "- le SousTypeProduit parent doit être persistant dans le stockage."` |
+| `MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO` | `KO_FINDALLBYPARENT + "- la recherche des enfants via le Gateway a jeté Exception"` |
+| `MESSAGE_FINDALLBYPARENT_PREPARATION_KO` | `KO_FINDALLBYPARENT + "- le filtrage, le tri ou la conversion en OutputDTO a jeté Exception"` |
 | `MESSAGE_MODIF_OK` | `"La modification a été effectuée"` |
 | `MESSAGE_MODIF_KO` | `"La modification a échouée"` |
 | `MESSAGE_DELETE_OK` | `"La suppression a été effectuée"` |

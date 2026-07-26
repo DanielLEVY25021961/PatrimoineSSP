@@ -873,86 +873,94 @@ Signature cible :
 Le scénario nominal de `findAllByParent(...)` est :
 
 1. recevoir un `TypeProduitDTO.InputDTO` transmis par la couche appelante ;
-2. valider que ce parent est exploitable ;
+2. vérifier que le DTO parent n'est pas `null` et que son libellé n'est pas blank ;
 3. retrouver le `TypeProduit` parent persistant dans le stockage ;
-4. demander au `GATEWAY` tous les `SousTypeProduit`
-   rattachés à ce parent ;
-5. sécuriser le retour technique du stockage ;
+4. demander au `GATEWAY` tous les `SousTypeProduit` rattachés à ce parent ;
+5. refuser une liste `null` retournée par le `GATEWAY` ;
 6. retirer les éventuels éléments `null` ;
-7. trier les objets métier ;
+7. trier les objets métier selon l'ordre `[TypeProduit, SousTypeProduit]` ;
 8. convertir les objets métier en `OutputDTO` ;
-9. dédoublonner les `OutputDTO` si nécessaire ;
-10. positionner le message observable ;
-11. retourner la liste finale.
+9. dédoublonner les `OutputDTO` en conservant l'ordre trié ;
+10. positionner le message observable uniquement après obtention de la liste DTO finale ;
+11. retourner une liste non `null`, éventuellement vide.
 
 ### 16.2 Cas observables attendus
 
 - si `pTypeProduit == null` :
-  - positionne `getMessage()` à `RECHERCHE_TYPEPRODUIT_NULL`,
-  - émet un LOG,
-  - lève une `IllegalStateException` ;
+  - positionne `getMessage()` à `MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement ce message ;
+  - n'appelle aucun `GATEWAY` ;
 
 - si `pTypeProduit.getTypeProduit()` est blank :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
-  - émet un LOG,
-  - lève une `IllegalStateException` ;
+  - positionne `getMessage()` à `MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement ce message ;
+  - n'appelle aucun `GATEWAY` ;
 
-- si la recherche technique du parent lève une exception avec message :
+- si la recherche du parent via le `GATEWAY` lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO + TIRET_ESPACE + message` ;
+  - émet un LOG ;
+  - propage la même exception ;
+  - n'appelle pas le `GATEWAY` des enfants ;
+
+- si la recherche du parent via le `GATEWAY` lève une exception sans message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
-  - émet un LOG,
-  - propage l’exception ;
+    `MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+  - n'appelle pas le `GATEWAY` des enfants ;
 
-- si la recherche technique du parent lève une exception sans message :
+- si le parent est absent du stockage ou ne possède pas d'identifiant persistant :
+  - positionne `getMessage()` à `MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement ce message ;
+  - n'appelle pas le `GATEWAY` des enfants ;
+
+- si la recherche des enfants via le `GATEWAY` lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO + TIRET_ESPACE + message` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si la recherche des enfants via le `GATEWAY` lève une exception sans message :
   - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
-  - émet un LOG,
-  - propage l’exception ;
+    `MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
 
-- si le parent est absent du stockage ou non persistant :
-  - positionne `getMessage()` à `MESSAGE_PAS_PARENT`,
-  - émet un LOG,
-  - lève une `IllegalStateException` ;
+- si le `GATEWAY` des enfants retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - émet un LOG ;
+  - lève une `ExceptionStockageVide` portant exactement ce message ;
 
-- si la recherche technique des enfants lève une exception avec message :
-  - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
-  - émet un LOG,
-  - propage l’exception ;
+- si le filtrage, le tri ou la conversion en DTO lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_FINDALLBYPARENT_PREPARATION_KO + TIRET_ESPACE + message` ;
+  - émet un LOG ;
+  - propage la même exception ;
 
-- si la recherche technique des enfants lève une exception sans message :
-  - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
-  - émet un LOG,
-  - propage l’exception ;
+- si le filtrage, le tri ou la conversion en DTO lève une exception sans message :
+  - positionne `getMessage()` à `MESSAGE_FINDALLBYPARENT_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
 
-- si le `GATEWAY` retourne `null` :
-  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
-  - émet un LOG,
-  - lève une `ExceptionStockageVide` ;
-
-- si aucun résultat exploitable n’est trouvé :
-  - retourne une liste vide mais non `null`,
+- si la liste DTO finale est vide :
+  - retourne une liste vide mais non `null` ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
 
-- si un ou plusieurs résultats exploitables sont trouvés :
-  - retourne une liste non vide de DTO,
+- si la liste DTO finale n'est pas vide :
+  - retourne les DTO triés et sans doublon ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
 ### 16.3 Garanties spécifiques de `findAllByParent(...)`
 
-- la méthode ne doit jamais retourner `null`
-  quand le stockage est exploitable ;
-- le message observable doit être positionné
-  après préparation complète de la réponse ;
-- les `null` techniques issus du stockage
-  ne doivent jamais fuiter jusqu’à l’appelant ;
-- les DTO retournés doivent correspondre
-  à des objets métier réellement rattachés
-  au parent demandé ;
-- le dédoublonnage éventuel doit rester cohérent
-  avec `equals/hashCode` des `OutputDTO` ;
-- aucun résultat partiel incohérent ne doit être exposé.
+- la méthode ne retourne jamais `null` lorsqu'elle aboutit ;
+- la liste retournée ne contient aucun élément `null` ni aucun doublon ;
+- les DTO sont ordonnés selon l'ordre métier `[TypeProduit, SousTypeProduit]` ;
+- les DTO retournés correspondent aux objets métier effectivement rattachés au parent persistant demandé ;
+- le message de succès ou d'absence de résultat n'est positionné qu'après filtrage, tri et conversion complets ;
+- un échec de filtrage, de tri ou de conversion côté UC n'est jamais attribué au `GATEWAY` ;
+- la méthode n'écrit rien dans le stockage ;
+- aucun résultat partiel incohérent n'est exposé à l'appelant.
 
 ## 17) Contrat spécifique de `findByDTO(...)`
 Signature cible :
@@ -1500,11 +1508,14 @@ Pour `findAllByParent(...)`, les tests Mock doivent verrouiller au minimum :
 - le cas parent blank ;
 - le cas exception technique de recherche du parent avec message ;
 - le cas exception technique de recherche du parent sans message ;
-- le cas parent absent ou non persistant ;
+- le cas parent absent ;
+- le cas parent non persistant ;
 - le cas exception technique de recherche des enfants avec message ;
 - le cas exception technique de recherche des enfants sans message ;
 - le cas `gateway.findAllByParent(...) == null` ;
-- le cas vide ;
+- le cas exception de préparation avec message ;
+- le cas exception de préparation sans message ;
+- le cas vide après filtrage ;
 - le cas nominal avec filtrage, tri et dédoublonnage.
 
 Pour `findByDTO(...)`, les tests Mock doivent verrouiller au minimum :
@@ -1631,13 +1642,16 @@ Pour `findByLibelleRapide(...)`, le test d’intégration cible doit, à terme, 
 - que les objets hors cible ne sont pas attendus dans le résultat ;
 - que le message exact `MESSAGE_RECHERCHE_OK` est positionné en cas de succès.
 
-Pour `findAllByParent(...)`, le test d’intégration cible doit, à terme, prouver :
-- qu’un parent blank est refusé ;
-- qu’un parent absent est refusé ;
+Pour `findAllByParent(...)`, le test d’intégration cible doit prouver :
+- qu’un parent `null` est refusé avec le message dédié ;
+- qu’un parent blank est refusé avec le message dédié ;
+- qu’un parent absent est refusé avec le message dédié ;
 - qu’un parent existant sans enfant retourne une liste vide avec `MESSAGE_RECHERCHE_VIDE` ;
 - que seuls les enfants du parent demandé sont retournés ;
+- que les DTO sont ordonnés selon l’ordre métier `[TypeProduit, SousTypeProduit]` ;
 - que les couples parent / sous-type retournés existent physiquement dans le stockage ;
-- que le message exact `MESSAGE_RECHERCHE_OK` est positionné en cas de succès.
+- que le message exact `MESSAGE_RECHERCHE_OK` est positionné en cas de succès ;
+- que chaque scénario laisse inchangé le nombre de `SousTypeProduit` présents dans le stockage.
 
 Pour `findByDTO(...)`, le test d’intégration cible doit, à terme, prouver :
 - qu’un parent blank est refusé ;
@@ -1738,6 +1752,12 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE` | `"OK - findByLibelle(...) a retourné des enregistrements"` |
 | `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO` | `"KO - findByLibelleRapide(...) " + "- le Gateway a jeté Exception"` |
 | `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO` | `"KO - findByLibelleRapide(...) " + "- le filtrage, le tri ou la conversion en OutputDTO " + "a jeté Exception"` |
+| `MESSAGE_FINDALLBYPARENT_PARENT_NULL_KO` | `"KO - findAllByParent(...) " + "- le TypeProduit parent ne doit pas être null."` |
+| `MESSAGE_FINDALLBYPARENT_PARENT_LIBELLE_BLANK_KO` | `"KO - findAllByParent(...) " + "- le TypeProduit parent doit posséder un libellé non blank."` |
+| `MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO` | `"KO - findAllByParent(...) " + "- la recherche du parent via le Gateway a jeté Exception"` |
+| `MESSAGE_FINDALLBYPARENT_PARENT_NON_PERSISTANT_KO` | `"KO - findAllByParent(...) " + "- le TypeProduit parent doit être persistant dans le stockage."` |
+| `MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO` | `"KO - findAllByParent(...) " + "- la recherche des enfants via le Gateway a jeté Exception"` |
+| `MESSAGE_FINDALLBYPARENT_PREPARATION_KO` | `"KO - findAllByParent(...) " + "- le filtrage, le tri ou la conversion en OutputDTO " + "a jeté Exception"` |
 | `MESSAGE_RECHERCHE_OBJ_NULL` | `"l'objet à rechercher ne doit pas être null."` |
 | `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |
 | `MESSAGE_RECHERCHE_OK` | `"OK - La recherche a retourné des résultats."` |
@@ -1864,6 +1884,15 @@ Pour `rechercherTousParPage(...)`, les zones techniques doivent également reste
   `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_GATEWAY_KO` ;
 - échec du filtrage, du tri, de la conversion ou de la reconstruction DTO côté UC :
   `MESSAGE_RECHERCHER_TOUS_PAR_PAGE_PREPARATION_KO`.
+
+Pour `findAllByParent(...)`, les zones techniques doivent également rester distinctes :
+
+- échec de recherche du parent via le Gateway `TypeProduit` :
+  `MESSAGE_FINDALLBYPARENT_RECHERCHE_PARENT_GATEWAY_KO` ;
+- échec de recherche des enfants via le Gateway `SousTypeProduit` :
+  `MESSAGE_FINDALLBYPARENT_RECHERCHE_ENFANTS_GATEWAY_KO` ;
+- échec du filtrage, du tri ou de la conversion en DTO côté UC :
+  `MESSAGE_FINDALLBYPARENT_PREPARATION_KO`.
 
 Un échec de préparation côté UC ne doit jamais être présenté comme une panne du `GATEWAY`.
 
