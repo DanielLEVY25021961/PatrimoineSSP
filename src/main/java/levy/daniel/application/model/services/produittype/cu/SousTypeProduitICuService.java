@@ -406,6 +406,30 @@ public interface SousTypeProduitICuService {
 	String MESSAGE_RECHERCHE_PAGINEE_OK 
 		= "OK - la recherche paginée a retourné des résultats.";
 	
+	/* -------------------- findByLibelleRapide ------------------------ */
+
+	/**
+	 * <div>
+	 * <p>"KO - findByLibelleRapide(...)
+	 * - le Gateway a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+		= "KO - findByLibelleRapide(...) "
+				+ "- le Gateway a jeté Exception";
+
+	/**
+	 * <div>
+	 * <p>"KO - findByLibelleRapide(...)
+	 * - le filtrage, le tri ou la conversion en OutputDTO
+	 * a jeté Exception".</p>
+	 * </div>
+	 */
+	String MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+		= "KO - findByLibelleRapide(...) "
+				+ "- le filtrage, le tri ou la conversion en OutputDTO "
+				+ "a jeté Exception";
+
 	/* -------------------------- findByDTO ---------------------------- */
 		
 	/**
@@ -1088,7 +1112,7 @@ public interface SousTypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche rapidement tous les {@link SousTypeProduitDTO.OutputDTO}
+	 * Recherche tous les {@link SousTypeProduitDTO.OutputDTO}
 	 * dont le libellé contient un contenu donné.
 	 * </p>
 	 * <p style="font-weight:bold;">
@@ -1097,18 +1121,19 @@ public interface SousTypeProduitICuService {
 	 * <ul>
 	 * <li>recevoir un contenu partiel de recherche
 	 * provenant de la couche appelante ;</li>
-	 * <li>valider le caractère exploitable du contenu transmis ;</li>
-	 * <li>déléguer au composant GATEWAY
-	 * la recherche rapide des {@link SousTypeProduit}
-	 * dans le stockage ;</li>
-	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
-	 * <li>retirer les éventuels éléments {@code null},
-	 * trier les objets métier et dédoublonner la réponse
-	 * côté UC si nécessaire ;</li>
-	 * <li>convertir la liste métier en
-	 * {@link SousTypeProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une liste exploitable
-	 * par la couche appelante.</li>
+	 * <li>refuser localement un contenu {@code null} ;</li>
+	 * <li>déléguer un contenu blank au scénario
+	 * {@link #rechercherTous()} ;</li>
+	 * <li>pour un contenu non blank, appeler le GATEWAY
+	 * une seule fois afin de rechercher les {@link SousTypeProduit}
+	 * dont le libellé contient ce contenu ;</li>
+	 * <li>refuser une liste {@code null} retournée par le GATEWAY ;</li>
+	 * <li>retirer les éléments {@code null}, trier les objets métier
+	 * selon l'ordre [TypeProduit, SousTypeProduit],
+	 * les convertir en {@link SousTypeProduitDTO.OutputDTO}
+	 * et supprimer les doublons ;</li>
+	 * <li>positionner le message observable
+	 * uniquement après obtention de la liste DTO finale.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1117,26 +1142,41 @@ public interface SousTypeProduitICuService {
 	 * <ul>
 	 * <li>Si {@code pContenu == null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL},
-	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Si {@code pContenu} est blank, délègue à
-	 * {@link #rechercherTous()} et retourne tous les enregistrements
-	 * selon le contrat observable de cette méthode.</li>
-	 * <li>Sinon, délègue la recherche rapide au composant GATEWAY.</li>
+	 * émet un LOG, lève une {@link IllegalStateException}
+	 * portant exactement ce message et n'appelle jamais le GATEWAY.</li>
+	 * <li>Si {@code pContenu} est blank, retourne directement
+	 * le résultat de {@link #rechercherTous()} avec le message,
+	 * les exceptions et les garanties de cette méthode.</li>
+	 * <li>Si {@code gateway.findByLibelleRapide(pContenu)}
+	 * lève une exception avec message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si {@code gateway.findByLibelleRapide(pContenu)}
+	 * lève une exception sans message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
 	 * <li>Si le GATEWAY retourne {@code null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
-	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Sinon, retourne une {@link List} de
-	 * {@link SousTypeProduitDTO.OutputDTO} jamais {@code null},
-	 * éventuellement vide.</li>
-	 * <li>Si la liste résultat est vide, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
-	 * <li>Si la liste résultat n'est pas vide, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
-	 * <li>En cas d'échec technique remonté par le GATEWAY
-	 * ou par la préparation de la réponse utilisateur,
-	 * positionne un message utilisateur technique cohérent
-	 * puis propage une exception circonstanciée
-	 * conforme à l'implémentation.</li>
+	 * émet un LOG et lève une {@link ExceptionStockageVide}
+	 * portant exactement ce message.</li>
+	 * <li>Si le filtrage, le tri ou la conversion en DTO
+	 * lève une exception avec message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si le filtrage, le tri ou la conversion en DTO
+	 * lève une exception sans message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si la liste DTO finale est vide, retourne une liste vide
+	 * mais non {@code null} et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste DTO finale n'est pas vide, retourne les DTO
+	 * triés et sans doublon, puis positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1145,35 +1185,36 @@ public interface SousTypeProduitICuService {
 	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
 	 * </p>
 	 * <ul>
-	 * <li>Le message retourné par {@link #getMessage()}
-	 * reflète l'issue observable de l'opération.</li>
-	 * <li>Le message de succès n'est positionné
-	 * qu'après préparation complète de la réponse utilisateur.</li>
-	 * <li>La liste retournée, si elle n'est pas vide,
-	 * correspond à l'état métier effectivement accessible
-	 * dans le stockage via le GATEWAY,
-	 * exprimé sous forme de DTO.</li>
-	 * <li>Aucun résultat partiel incohérent
-	 * ne doit être exposé à l'appelant.</li>
+	 * <li>La méthode ne retourne jamais {@code null}
+	 * lorsqu'elle aboutit.</li>
+	 * <li>La liste retournée ne contient aucun élément {@code null}
+	 * et aucun doublon.</li>
+	 * <li>Les DTO sont ordonnés selon l'ordre métier
+	 * [TypeProduit, SousTypeProduit].</li>
+	 * <li>Le message de succès ou d'absence de résultat
+	 * n'est positionné qu'après filtrage, tri et conversion complets.</li>
+	 * <li>Un échec de filtrage, de tri ou de conversion côté UC
+	 * n'est jamais attribué au GATEWAY.</li>
+	 * <li>La méthode n'écrit rien dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pContenu : String :
 	 * contenu partiel du libellé recherché.
 	 * @return List&lt;SousTypeProduitDTO.OutputDTO&gt; :
-	 * liste des DTO dont le libellé contient {@code pContenu} ;
-	 * jamais {@code null}, éventuellement vide.
+	 * liste non {@code null}, éventuellement vide,
+	 * des DTO dont le libellé contient {@code pContenu} ;
+	 * pour un contenu blank, résultat de {@link #rechercherTous()}.
 	 * @throws IllegalStateException
 	 * si {@code pContenu == null}.
 	 * @throws ExceptionStockageVide
-	 * si le stockage retourne {@code null}.
+	 * si le GATEWAY retourne {@code null}.
 	 * @throws ExceptionTechniqueGateway
 	 * si une erreur technique survient lors de la recherche
 	 * via le GATEWAY.
 	 * @throws Exception
-	 * toute autre exception levée par l'implémentation,
-	 * notamment lors de la préparation
-	 * de la réponse utilisateur.
+	 * toute autre exception levée lors du filtrage,
+	 * du tri ou de la conversion en DTO.
 	 */
 	List<SousTypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu)
 			throws Exception;

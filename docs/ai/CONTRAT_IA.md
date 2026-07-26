@@ -5459,3 +5459,48 @@ Divergences restantes justifiées par le contrat ou le code cible : oui/non.
 
 Si une réponse est `non`, l'IA ne doit pas livrer le code.
 
+## 41) RT-PORT-CONSTANTES-PAR-METHODE-01 — Loi de structuration des constantes dans les PORTS UC
+
+### 41.1 Principe appris des corrections utilisateur
+
+Lorsqu'un PORT UC contient des constantes de messages propres à plusieurs méthodes, ces constantes ne doivent jamais être ajoutées comme une liste plate ou placées à proximité approximative d'un usage. L'IA doit rechercher la loi de présentation déjà appliquée dans le PORT validé et la reproduire.
+
+La loi actuellement validée pour les PORTS UC `produittype` est la suivante :
+
+1. les constantes communes et transverses restent dans la zone commune prévue par le PORT ;
+2. les constantes propres à une méthode sont regroupées dans un bloc dédié à cette méthode ;
+3. les blocs suivent l'ordre des méthodes du PORT ;
+4. chaque bloc est précédé d'un séparateur canonique de largeur fixe de 76 caractères selon la convention de présentation du projet ;
+5. le nom de la méthode est centré entre les tirets par adaptation du nombre de tirets à gauche et à droite ;
+6. le séparateur doit être recopié depuis une référence validée, jamais reconstruit approximativement ;
+7. une constante dédiée à une méthode ne doit pas être déplacée dans le bloc d'une autre méthode, même si sa valeur textuelle pourrait être réutilisée ailleurs.
+
+Exemple canonique validé :
+
+```java
+	/* -------------------- findByLibelleRapide ------------------------ */
+```
+
+### 41.2 Procédure obligatoire avant ajout ou déplacement d'une constante
+
+Avant de coder une constante dans un PORT UC, l'IA doit :
+
+1. relire toute la zone des constantes du PORT cible ;
+2. relire au moins un PORT homologue validé ;
+3. identifier les blocs de méthodes et leur ordre ;
+4. mesurer ou recopier le séparateur canonique ;
+5. déterminer si la constante est commune ou strictement propre à une méthode ;
+6. placer la constante dans le seul bloc conforme à cette qualification ;
+7. contrôler après écriture que tous les séparateurs conservent la largeur normative et que l'ordre des blocs reste celui des méthodes.
+
+### 41.3 Interdictions absolues
+
+Il est interdit :
+
+- d'ajouter une constante dédiée hors du bloc de sa méthode ;
+- d'empiler des constantes nouvelles à la fin de la zone sans rechercher la structure ;
+- d'utiliser un séparateur d'une largeur différente ;
+- de modifier arbitrairement la casse du nom de méthode dans le séparateur ;
+- de laisser deux groupes de méthodes sans séparateur ;
+- de considérer une correction utilisateur de présentation comme cosmétique lorsqu'elle révèle une loi stable du fichier.
+

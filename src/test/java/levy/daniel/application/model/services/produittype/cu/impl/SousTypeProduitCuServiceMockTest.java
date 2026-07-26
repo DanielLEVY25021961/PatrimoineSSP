@@ -246,13 +246,13 @@ public class SousTypeProduitCuServiceMockTest {
 	 * "findByLibelle"
 	 */
 	public static final String TAG_FIND_BY_LIBELLE = "findByLibelle";
-	
+
 	/**
 	 * "findByLibelleRapide"
 	 */
 	public static final String TAG_FIND_BY_LIBELLE_RAPIDE 
 		= "findByLibelleRapide";
-	
+
 	/**
 	 * "findAllByParent"
 	 */
@@ -707,7 +707,9 @@ public class SousTypeProduitCuServiceMockTest {
 			= "findByLibelle(nominal) : "
 					+ "OutputDTO triés dédoublonnés "
 					+ "+ MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE";
-	
+
+	// ---------------------- findByLibelleRapide(...) --------------------
+
 	/**
 	 * "findByLibelleRapide(null) :
 	 * IllegalStateException + MESSAGE_PARAM_NULL"
@@ -715,63 +717,70 @@ public class SousTypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL
 			= "findByLibelleRapide(null) : "
 					+ "IllegalStateException + MESSAGE_PARAM_NULL";
-	
+
 	/**
 	 * "findByLibelleRapide(blank) :
-	 * délègue à rechercherTous() + MESSAGE_RECHERCHE_OK"
+	 * délègue à rechercherTous() + MESSAGE_RECHERCHER_TOUS_OK"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK
 			= "findByLibelleRapide(blank) : "
-					+ "délègue à rechercherTous() + MESSAGE_RECHERCHE_OK";
-	
+					+ "délègue à rechercherTous() "
+					+ "+ MESSAGE_RECHERCHER_TOUS_OK";
+
 	/**
 	 * "findByLibelleRapide(gateway KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_AVEC_MESSAGE
 			= "findByLibelleRapide(gateway KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
-	
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO";
+
 	/**
 	 * "findByLibelleRapide(gateway KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_SANS_MESSAGE
 			= "findByLibelleRapide(gateway KO sans message) : "
+					+ "MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO "
 					+ FALLBACK;
-	
+
 	/**
 	 * "findByLibelleRapide(gateway retourne null) :
 	 * ExceptionStockageVide + MESSAGE_STOCKAGE_NULL"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_RETOUR_NULL
 			= "findByLibelleRapide(gateway retourne null) : "
-					+ EXCEPTION_STOCKAGE_VIDE_MESSAGE;
-	
+					+ "ExceptionStockageVide + MESSAGE_STOCKAGE_NULL";
+
 	/**
 	 * "findByLibelleRapide(conversion OutputDTO KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
 			= "findByLibelleRapide(conversion OutputDTO KO avec message) : "
-					+ EXCEPTION_PROPAGEE_MESSAGE;
-	
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO"; // NOPMD by danyl on 09/05/2026 20:34
+
 	/**
 	 * "findByLibelleRapide(conversion OutputDTO KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
 			= "findByLibelleRapide(conversion OutputDTO KO sans message) : "
-					+ FALLBACK;
-	
+					+ "MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO "
+					+ FALLBACK; // NOPMD by danyl on 09/05/2026 20:34
+
 	/**
 	 * "findByLibelleRapide(vide après filtrage) :
 	 * liste vide + MESSAGE_RECHERCHE_VIDE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_VIDE_APRES_FILTRAGE
 			= "findByLibelleRapide(vide après filtrage) : "
-					+ LISTE_VIDE_MESSAGE;
-	
+					+ "liste vide + MESSAGE_RECHERCHE_VIDE";
+
 	/**
 	 * "findByLibelleRapide(nominal) :
 	 * OutputDTO triés dédoublonnés + MESSAGE_RECHERCHE_OK"
@@ -779,7 +788,8 @@ public class SousTypeProduitCuServiceMockTest {
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL
 			= "findByLibelleRapide(nominal) : "
 					+ "OutputDTO triés dédoublonnés + MESSAGE_RECHERCHE_OK";
-	
+
+
 	/**
 	 * "findAllByParent(null) :
 	 * IllegalStateException + RECHERCHE_PARENT_NULL"
@@ -5345,12 +5355,12 @@ public class SousTypeProduitCuServiceMockTest {
 
 	} // __________________________________________________________________		
 
-	
-	
+
+
 	// ====================== findByLibelleRapide =========================
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(null) :</p>
@@ -5399,8 +5409,8 @@ public class SousTypeProduitCuServiceMockTest {
 		
 	} // __________________________________________________________________
 	
-	
-	
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(blank) :</p>
@@ -5411,7 +5421,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>retourne la liste DTO issue de la recherche exhaustive ;</li>
 	 * <li>positionne exactement
-	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * {@link SousTypeProduitICuService#MESSAGE_RECHERCHER_TOUS_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -5494,7 +5504,7 @@ public class SousTypeProduitCuServiceMockTest {
 				.containsExactly(1L, 2L);
 
 		assertThat(message)
-				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHE_OK);
+				.isEqualTo(SousTypeProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
 
 		/* Garantit que le contenu blank délègue à rechercherTous()
 		 * et n'appelle jamais la recherche rapide Gateway.
@@ -5504,9 +5514,9 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(gateway KO avec message) :</p>
@@ -5515,8 +5525,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway
 	 * SousTypeProduit ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * <li>positionne un message utilisateur dédié avec
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne délègue jamais à {@code rechercherTous()} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
@@ -5562,12 +5572,12 @@ public class SousTypeProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé
-		 * KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MESSAGE_GATEWAY.
+		 * un message utilisateur dédié
+		 * MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO + TIRET_ESPACE + MESSAGE_GATEWAY.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY);
 
@@ -5579,9 +5589,9 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(gateway KO sans message) :</p>
@@ -5591,7 +5601,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>propage l'exception technique sans message levée par le Gateway
 	 * SousTypeProduit ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne délègue jamais à {@code rechercherTous()} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
@@ -5640,7 +5650,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -5652,9 +5662,9 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(gateway retourne null) :</p>
@@ -5721,9 +5731,9 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 		
 	} // __________________________________________________________________
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(conversion OutputDTO KO avec message) :</p>
@@ -5735,8 +5745,8 @@ public class SousTypeProduitCuServiceMockTest {
 	 * <li>atteint la conversion finale en {@link OutputDTO}
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * <li>positionne un message utilisateur dédié avec
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne délègue jamais à {@code rechercherTous()} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
@@ -5793,11 +5803,11 @@ public class SousTypeProduitCuServiceMockTest {
 				.isSameAs(panneTechnique);
 
 		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé pour l'échec de conversion.
+		 * un message utilisateur dédié pour l'échec de conversion.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -5809,9 +5819,9 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 		
 	} // __________________________________________________________________
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(conversion OutputDTO KO sans message) :</p>
@@ -5824,7 +5834,7 @@ public class SousTypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link SousTypeProduitICuService#KO_TECHNIQUE_RECHERCHE}
+	 * {@link SousTypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
 	 * + tiret + {@link SousTypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne délègue jamais à {@code rechercherTous()} ;</li>
 	 * <li>n'interagit jamais avec le Gateway TypeProduit.</li>
@@ -5884,7 +5894,7 @@ public class SousTypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						SousTypeProduitICuService.KO_TECHNIQUE_RECHERCHE
+						SousTypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
 						+ SousTypeProduitICuService.TIRET_ESPACE
 						+ SousTypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -5896,9 +5906,9 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 		
 	} // __________________________________________________________________
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(vide après filtrage) :</p>
@@ -5974,9 +5984,9 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-	
-	
-	
+
+
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(OK) :</p>
@@ -6086,7 +6096,7 @@ public class SousTypeProduitCuServiceMockTest {
 		verifyNoInteractions(typeProduitGateway);
 
 	} // __________________________________________________________________
-	
+
 	
 	
 	// ======================= findAllByParent(...) =======================

@@ -331,9 +331,9 @@ public class ProduitCuServiceIntegrationTest {
 	 */
 	public static final String EXACT_INCHANGE 
 		= "+ message exact + stockage inchangé";
-	
+
 	// =========================== TAG ==================================//
-		
+
 	/**
 	 * "cu-it-Creer"
 	 */
@@ -357,10 +357,17 @@ public class ProduitCuServiceIntegrationTest {
 	public static final String TAG_RECHERCHER_TOUS_PAR_PAGE
 		= "cu-it-RechercherTousParPage";
 
+
+	/**
+	 * "cu-it-FindByLibelleRapide".
+	 */
+	public static final String TAG_FIND_BY_LIBELLE_RAPIDE
+		= "cu-it-FindByLibelleRapide";
+
 	// ============================ DN ==================================//
 
 	// ---------------------------- creer(...) ----------------------------
-	
+
 	/**
 	 * "creer(null) : retourne null, message utilisateur, aucune exception, stockage inchangé".
 	 */
@@ -480,9 +487,57 @@ public class ProduitCuServiceIntegrationTest {
 	public static final String DISPLAY_NAME_RECHERCHER_TOUS_PAR_PAGE_NOMINAL
 		= "rechercherTousParPage(ok) : page DTO cohérente "
 				+ EXACT_INCHANGE;
-	
+
+
+	// ---------------------- findByLibelleRapide(...) --------------------
+
+	/**
+	 * "findByLibelleRapide(null) : IllegalStateException
+	 * + MESSAGE_PARAM_NULL + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL
+		= "findByLibelleRapide(null) : IllegalStateException "
+				+ "+ MESSAGE_PARAM_NULL + stockage inchangé";
+
+	/**
+	 * "findByLibelleRapide(blank) : résultat rechercherTous()
+	 * + MESSAGE_RECHERCHER_TOUS_OK + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK
+		= "findByLibelleRapide(blank) : résultat rechercherTous() "
+				+ "+ MESSAGE_RECHERCHER_TOUS_OK + stockage inchangé";
+
+	/**
+	 * "findByLibelleRapide(introuvable) : liste vide
+	 * + MESSAGE_RECHERCHE_VIDE + stockage inchangé".
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_INTROUVABLE
+		= "findByLibelleRapide(introuvable) : liste vide "
+				+ "+ MESSAGE_RECHERCHE_VIDE + stockage inchangé";
+
+	/**
+	 * "findByLibelleRapide(nominal) : DTO exacts triés sans doublon
+	 * + MESSAGE_RECHERCHE_OK + preuve stockage".
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL
+		= "findByLibelleRapide(nominal) : DTO exacts triés sans doublon "
+				+ "+ MESSAGE_RECHERCHE_OK + preuve stockage";
+
 	// ========================== SELECT ================================//
-	
+
+
+	/** "TYPE_PRODUIT". */
+	public static final String TP = "TYPE_PRODUIT";
+
+	/** "SOUS_TYPE_PRODUIT". */
+	public static final String STP = "SOUS_TYPE_PRODUIT";
+
+	/** "PRODUIT". */
+	public static final String PRD = "PRODUIT";
+
+	/** "ID_PRODUIT". */
+	public static final String ID_PRD = "ID_PRODUIT";
+
 	/**
 	 * "SELECT COUNT(*) FROM PRODUITS"
 	 */
@@ -588,7 +643,7 @@ public class ProduitCuServiceIntegrationTest {
 
 
 	// *************************** ATTRIBUTS *******************************/
-	
+
 	/**
 	 * SERVICE JDBC direct pour preuve de stockage.
 	 */
@@ -635,9 +690,9 @@ public class ProduitCuServiceIntegrationTest {
 	private EntityManager entityManager;
 
 
-	
+
 	// ************************* CONSTRUCTEURS *****************************/
-	
+
 	/**
 	 * <div>
 	 * <p>CONSTRUCTEUR D'ARITE NULLE.</p>
@@ -2072,7 +2127,7 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(countAvantRecherche).isNotNull();
 		assertThat(countAvantRecherche).isEqualTo(countAvant + 4L);
 
-		/* Construit l'oracle directement depuis le stockage.
+		/* Construit le contenu directement depuis le stockage.
 		 * Aucun distinct() n'est appliqué : la multiplicité des Produits
 		 * homonymes doit être conservée.
 		 */
@@ -2089,7 +2144,7 @@ public class ProduitCuServiceIntegrationTest {
 		final List<String> retour = this.service.rechercherTousString();
 		final String message = this.service.getMessage();
 
-		/* ASSERT : compare exactement la réponse avec l'oracle stockage. */
+		/* ASSERT : compare exactement la réponse avec le contenu du stockage. */
 		assertThat(retour).isNotNull();
 		assertThat(retour).containsExactlyElementsOf(libellesAttendus);
 		assertThat(retour.stream()
@@ -2369,14 +2424,14 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(countAvantRecherche).isNotNull();
 		assertThat(countAvantRecherche).isPositive();
 
-		/* Construit l'oracle directement depuis le stockage.
+		/* Construit le résultat directement depuis le stockage.
 		 * La page demandée contient tout le stockage afin que le tri UC
 		 * puisse être comparé à l'ordre métier SQL complet.
 		 */
-		final List<String> identitesStockeesAvantRecherche
+		final List<String> representationsStockeesAvantRecherche
 				= this.lireIdentitesProduitsOrdonneesDansStockage();
 
-		assertThat(identitesStockeesAvantRecherche).hasSize(countAvantRecherche.intValue());
+		assertThat(representationsStockeesAvantRecherche).hasSize(countAvantRecherche.intValue());
 
 		final int pageSize = Math.toIntExact(countAvantRecherche);
 		final RequetePage requete = new RequetePage(0, pageSize);
@@ -2400,7 +2455,8 @@ public class ProduitCuServiceIntegrationTest {
 						.toList();
 
 		assertThat(identitesRetournees)
-				.containsExactlyElementsOf(identitesStockeesAvantRecherche);
+				.containsExactlyElementsOf(
+				representationsStockeesAvantRecherche);
 
 		assertThat(resultat.getContent())
 				.extracting(OutputDTO::getIdProduit)
@@ -2424,11 +2480,12 @@ public class ProduitCuServiceIntegrationTest {
 		assertThat(countApresRecherche).isNotNull();
 		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
 
-		final List<String> identitesStockeesApresRecherche
+		final List<String> representationsStockeesApresRecherche
 				= this.lireIdentitesProduitsOrdonneesDansStockage();
 
-		assertThat(identitesStockeesApresRecherche)
-				.containsExactlyElementsOf(identitesStockeesAvantRecherche);
+		assertThat(representationsStockeesApresRecherche)
+				.containsExactlyElementsOf(
+				representationsStockeesAvantRecherche);
 
 	} // __________________________________________________________________
 	
@@ -2706,64 +2763,143 @@ public class ProduitCuServiceIntegrationTest {
 	
 	
 	// ====================== findByLibelleRapide =========================
-	
-	
-	
+
+
+
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(null) : violation de contrat.</p>
+	 * <p>garantit que findByLibelleRapide(null) :</p>
 	 * <ul>
-	 * <li>lève {@link IllegalStateException}</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_PARAM_NULL}</li>
+	 * <li>lève une {@link IllegalStateException}
+	 * portant exactement {@link ProduitICuService#MESSAGE_PARAM_NULL} ;</li>
+	 * <li>positionne exactement ce même message ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL)
 	@Test
-	@DisplayName("findByLibelleRapide(null) : positionne message + lève IllegalStateException")
 	public void testFindByLibelleRapideNull() {
 
+		/* ARRANGE : mémorise le volume du stockage avant l'appel. */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvant).isNotNull();
+
+		/* ACT - ASSERT */
 		assertThatThrownBy(() -> this.service.findByLibelleRapide(null))
-				.isInstanceOf(IllegalStateException.class);
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessage(ProduitICuService.MESSAGE_PARAM_NULL);
 
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
 
+		/* Garantit que l'appel invalide n'a pas modifié le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countApres).isNotNull();
+		assertThat(countApres).isEqualTo(countAvant);
+
 	} // __________________________________________________________________
 
 
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(blank) : délègue au comportement rechercherTous().</p>
+	 * <p>garantit que findByLibelleRapide(blank) :</p>
 	 * <ul>
-	 * <li>retourne une liste non nulle ;</li>
-	 * <li>retourne les créations du test ;</li>
-	 * <li>positionne le message observable de rechercherTous().</li>
+	 * <li>retourne exactement le résultat du scénario
+	 * {@code rechercherTous()} ;</li>
+	 * <li>restitue toutes les représentations techniques présentes
+	 * dans le stockage, y compris les données seedées ;</li>
+	 * <li>contient les deux créations du test avec leurs identifiants ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_OK} ;</li>
+	 * <li>ne modifie ni le nombre de lignes
+	 * ni les représentations stockées.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK)
 	@Test
-	@DisplayName("findByLibelleRapide(blank) : délègue à rechercherTous et retourne une liste non nulle")
 	public void testFindByLibelleRapideBlank() throws Exception {
 
+		/* ARRANGE : crée le parent direct et deux Produits persistants. */
 		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
 
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, PERCEUSE));
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, PINCE));
+		final OutputDTO creePerceuse = this.service.creer(
+				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, PERCEUSE));
+		final OutputDTO creePince = this.service.creer(
+				new ProduitDTO.InputDTO(OUTIL, OUTILLAGE, PINCE));
 
-		final List<OutputDTO> dtos = this.service.findByLibelleRapide(ESPACES);
+		this.entityManager.flush();
 
+		assertThat(creePerceuse).isNotNull();
+		assertThat(creePince).isNotNull();
+		assertThat(creePerceuse.getIdProduit()).isNotNull();
+		assertThat(creePince.getIdProduit()).isNotNull();
+
+		final Long countAvantRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+
+		assertThat(countAvantRecherche).isNotNull();
+
+		/* Lit directement la réponse exhaustive attendue dans le stockage. */
+		final List<String> representationsStockeesAvantRecherche
+				= this.lireIdentitesProduitsOrdonneesDansStockage();
+
+		/* ACT : un contenu blank délègue à rechercherTous(). */
+		final List<OutputDTO> dtos
+				= this.service.findByLibelleRapide(ESPACES);
+		final String message = this.service.getMessage();
+
+		/* ASSERT : compare exactement les DTO au contenu du stockage. */
 		assertThat(dtos).isNotNull();
-		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getProduit)
-				.contains(PERCEUSE, PINCE);
+		assertThat(dtos.stream()
+				.map(ProduitCuServiceIntegrationTest::identiteProduit)
+				.toList())
+				.containsExactlyElementsOf(
+						representationsStockeesAvantRecherche);
 
-		assertThat(this.service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdProduit)
+				.contains(
+						creePerceuse.getIdProduit(),
+						creePince.getIdProduit());
+		assertThat(dtos).doesNotHaveDuplicates();
+		assertThat(message)
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
+
+		/* Prouve les deux créations dans le stockage. */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PERCEUSE)).isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				PINCE)).isEqualTo(1L);
+
+		/* Garantit l'absence d'effet de bord. */
+		final Long countApresRecherche = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countApresRecherche).isEqualTo(countAvantRecherche);
+
+		final List<String> representationsStockeesApresRecherche
+				= this.lireIdentitesProduitsOrdonneesDansStockage();
+		assertThat(representationsStockeesApresRecherche)
+				.containsExactlyElementsOf(
+						representationsStockeesAvantRecherche);
 
 	} // __________________________________________________________________
 
@@ -2771,67 +2907,145 @@ public class ProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(introuvable) : cas nominal de non-trouvabilité.</p>
+	 * <p>garantit que findByLibelleRapide(introuvable) :</p>
 	 * <ul>
-	 * <li>retourne une liste vide mais non {@code null} ;</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>retourne une liste non {@code null} et vide ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE} ;</li>
+	 * <li>ne modifie aucune ligne dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_INTROUVABLE)
 	@Test
-	@DisplayName("findByLibelleRapide(introuvable) : retourne liste vide + message MESSAGE_RECHERCHE_VIDE")
 	public void testFindByLibelleRapideIntrouvable() throws Exception {
 
-		final List<OutputDTO> dtos = this.service.findByLibelleRapide(RECHERCHE_ZZ);
+		/* ARRANGE */
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countAvant).isNotNull();
 
+		/* ACT */
+		final List<OutputDTO> dtos
+				= this.service.findByLibelleRapide(RECHERCHE_ZZ);
+
+		/* ASSERT */
 		assertThat(dtos).isNotNull().isEmpty();
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
 
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countApres).isEqualTo(countAvant);
+
 	} // __________________________________________________________________
 
 
 
 	/**
 	 * <div>
-	 * <p>findByLibelleRapide(ok) : retourne tous les DTO correspondant au préfixe demandé.</p>
+	 * <p>garantit que findByLibelleRapide(nominal) :</p>
 	 * <ul>
-	 * <li>crée le parent persistant requis ;</li>
-	 * <li>crée deux Produits correspondant au préfixe ;</li>
-	 * <li>retourne une liste non nulle ;</li>
-	 * <li>positionne {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * <li>retourne uniquement les DTO dont le libellé contient le fragment ;</li>
+	 * <li>respecte l'ordre naturel
+	 * {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>conserve dans chaque DTO le TypeProduit déduit du parent direct ;</li>
+	 * <li>ne retourne aucun doublon ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK} ;</li>
+	 * <li>prouve dans le stockage les deux objets ciblés
+	 * et l'objet hors cible ;</li>
+	 * <li>ne modifie pas le stockage pendant la recherche.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
+	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL)
 	@Test
-	@DisplayName("findByLibelleRapide(ok) : retourne la liste des OutputDTO correspondant au préfixe")
-	public void testFindByLibelleRapideOk() throws Exception {
+	public void testFindByLibelleRapideNominalAvecPreuveStockage()
+			throws Exception {
 
+		/* ARRANGE : crée deux parents directs et trois Produits persistants. */
+		this.creerParentsDansStockage(LOISIR, ATELIER);
 		this.creerParentsDansStockage(OUTIL, OUTILLAGE);
 
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, RECHERCHE_ALPHA));
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, RECHERCHE_ALPIN));
-		this.service.creer(new ProduitDTO.InputDTO(
-				OUTIL, OUTILLAGE, LIME));
+		final OutputDTO creeLoisir = this.service.creer(
+				new ProduitDTO.InputDTO(
+						LOISIR,
+						ATELIER,
+						RECHERCHE_ALPIN));
+		final OutputDTO creeOutil = this.service.creer(
+				new ProduitDTO.InputDTO(
+						OUTIL,
+						OUTILLAGE,
+						RECHERCHE_ALPHA));
+		final OutputDTO creeHorsCible = this.service.creer(
+				new ProduitDTO.InputDTO(
+						OUTIL,
+						OUTILLAGE,
+						LIME));
 
-		final List<OutputDTO> dtos = this.service.findByLibelleRapide(RECHERCHE_AL);
+		this.entityManager.flush();
 
-		assertThat(dtos).isNotNull();
-		assertThat(dtos).hasSize(2);
+		assertThat(creeLoisir).isNotNull();
+		assertThat(creeOutil).isNotNull();
+		assertThat(creeHorsCible).isNotNull();
+
+		final Long countAvant = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countAvant).isNotNull();
+
+		/* ACT */
+		final List<OutputDTO> dtos
+				= this.service.findByLibelleRapide(RECHERCHE_AL);
+
+		/* ASSERT : contrôle contenu, ordre et dédoublonnage. */
+		assertThat(dtos).isNotNull().hasSize(2);
+		assertThat(dtos).doesNotHaveDuplicates();
+
+		assertThat(dtos.stream()
+				.map(ProduitCuServiceIntegrationTest::identiteProduit)
+				.toList())
+				.containsExactly(
+						identiteProduit(creeLoisir),
+						identiteProduit(creeOutil));
+
+		assertThat(dtos)
+				.extracting(OutputDTO::getIdProduit)
+				.doesNotContain(creeHorsCible.getIdProduit());
+
 		assertThat(this.service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
 
-		assertThat(dtos)
-				.extracting(ProduitDTO.OutputDTO::getProduit)
-				.containsExactlyInAnyOrder(RECHERCHE_ALPHA, RECHERCHE_ALPIN);
+		/* Preuves directes dans le stockage. */
+		assertThat(this.compterProduitParCoupleDansStockage(
+				LOISIR,
+				ATELIER,
+				RECHERCHE_ALPIN)).isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				RECHERCHE_ALPHA)).isEqualTo(1L);
+		assertThat(this.compterProduitParCoupleDansStockage(
+				OUTIL,
+				OUTILLAGE,
+				LIME)).isEqualTo(1L);
 
-	} // __________________________________________________________________	
+		/* Garantit que la recherche pure n'a pas modifié le stockage. */
+		final Long countApres = this.jdbcTemplate.queryForObject(
+				SELECT_COUNT_FROM_PRODUITS,
+				Long.class);
+		assertThat(countApres).isEqualTo(countAvant);
+
+	} // __________________________________________________________________
 	
 	
 
@@ -4223,8 +4437,9 @@ public class ProduitCuServiceIntegrationTest {
 
 	/**
 	 * <div>
-	 * <p>Lit directement dans le stockage les Produits ordonnés
-	 * selon l'ordre métier et construit un oracle textuel complet.</p>
+	 * <p>Construit une liste textuelle des objets métier 
+	 * ordonnée selon l'ordre métier 
+	 * après lecture directe dans le stockage.</p>
 	 * </div>
 	 *
 	 * @return List&lt;String&gt; : identités techniques de comparaison,
@@ -4235,10 +4450,10 @@ public class ProduitCuServiceIntegrationTest {
 		return this.jdbcTemplate.query(
 				SELECT_IDENTITES_PRODUITS_ORDONNEES,
 				(resultSet, rowNum) -> identiteProduit(
-						resultSet.getString("TYPE_PRODUIT"),
-						resultSet.getString("SOUS_TYPE_PRODUIT"),
-						resultSet.getString("PRODUIT"),
-						resultSet.getLong("ID_PRODUIT")));
+						resultSet.getString(TP),
+						resultSet.getString(STP),
+						resultSet.getString(PRD),
+						resultSet.getLong(ID_PRD)));
 
 	} // __________________________________________________________________
 

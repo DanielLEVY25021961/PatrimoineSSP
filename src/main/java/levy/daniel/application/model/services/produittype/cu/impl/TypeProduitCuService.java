@@ -822,10 +822,11 @@ public class TypeProduitCuService implements TypeProduitICuService {
 			final String pContenu) throws Exception {
 
 		/*
-		 * Le contrat UC refuse un contenu de recherche null.
-		 * si pContenu == null : 
-		 * émet un message observable MESSAGE_PARAM_NULL 
-		 * + LOG + exception IllegalStateException.
+		 * Si pContenu == null :
+		 * - alimente message avec MESSAGE_PARAM_NULL ;
+		 * - LOG ;
+		 * - jette une IllegalStateException ;
+		 * - n'appelle jamais le GATEWAY.
 		 */
 		if (pContenu == null) {
 			return this.traiterErreur(
@@ -835,84 +836,91 @@ public class TypeProduitCuService implements TypeProduitICuService {
 		}
 
 		/*
-		 * Le contrat UC délègue le cas blank
-		 * au scénario complet de recherche exhaustive.
-		 * Si StringUtils.isBlank(pContenu) : 
-		 * retourne tous les enregistrements du stockage.
+		 * Si pContenu est blank :
+		 * délègue entièrement à rechercherTous()
+		 * et retourne son résultat avec son message observable.
 		 */
 		if (StringUtils.isBlank(pContenu)) {
 			return this.rechercherTous();
 		}
 
 		/*
-		 * Délègue au GATEWAY la recherche rapide dans le stockage.
-		 * Toute anomalie technique de recherche est transformée
-		 * en message utilisateur rationalisé côté UC.
+		 * Délègue au GATEWAY la recherche des TypeProduit
+		 * dont le libellé contient pContenu.
 		 */
 		final List<TypeProduit> records;
 
 		try {
-			
-			/* Délègue au GATEWAY la recherche rapide dans le stockage. */
 			records = this.gateway.findByLibelleRapide(pContenu);
-			
 		} catch (final Exception e) {
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
-					? e.getMessage()
-					: MSG_ERREUR_NON_SPECIFIEE;
-			
+			final String messageSecurise
+					= StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			/*
+			 * Si gateway.findByLibelleRapide(pContenu) jette Exception :
+			 * - alimente message avec
+			 *   MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+			 *   + TIRET_ESPACE + message sécurisé ;
+			 * - LOG ;
+			 * - propage la même Exception.
+			 */
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					e);
 		}
 
 		/*
-		 * Sécurise le contrat observable du UC :
-		 * le stockage ne doit pas retourner null.
-		 * Si records == null : 
-		 * émet un message observable MESSAGE_STOCKAGE_NULL 
-		 * + LOG + exception applicative ExceptionStockageVide.
+		 * Si gateway.findByLibelleRapide(pContenu) retourne null :
+		 * - alimente message avec MESSAGE_STOCKAGE_NULL ;
+		 * - LOG ;
+		 * - jette une ExceptionStockageVide.
 		 */
 		if (records == null) {
-			
 			return this.traiterErreur(
 					MESSAGE_STOCKAGE_NULL,
 					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
 		}
 
-		/*
-		 * Prépare la réponse utilisateur complète :
-		 * retrait des nulls, tri métier,
-		 * puis conversion en OutputDTO avec dédoublonnage.
-		 */
 		final List<OutputDTO> dtos;
 
 		try {
-			
-			/* filtre les null et trie la réponse du stockage. */
+			/* Retire les éléments null puis trie les objets métier. */
 			final List<TypeProduit> recordsNonNullTries
 					= this.filtrerEtTrier(records);
 
-			/* dédoublonne, conserve l'ordre et 
-			 * convertit la réponse du stockage filtrée en OutputDTOs. */
+			/* Convertit les objets métier en OutputDTO
+			 * et supprime les doublons en conservant l'ordre trié. */
 			dtos = this.convertirEtDedoublonner(recordsNonNullTries);
-			
 		} catch (final Exception e) {
-			final String messageSecurise = StringUtils.isNotBlank(e.getMessage())
-					? e.getMessage()
-					: MSG_ERREUR_NON_SPECIFIEE;
-			
+			final String messageSecurise
+					= StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			/*
+			 * Si le filtrage, le tri ou la conversion en OutputDTO
+			 * jette Exception :
+			 * - alimente message avec
+			 *   MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+			 *   + TIRET_ESPACE + message sécurisé ;
+			 * - LOG ;
+			 * - propage la même Exception.
+			 */
 			return this.traiterErreur(
-					MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO + TIRET_ESPACE + messageSecurise,
+					MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE_RAPIDE,
 					e);
 		}
 
 		/*
-		 * Le message observable n'est positionné
-		 * qu'après préparation complète de la réponse utilisateur.
+		 * Positionne le message observable uniquement après
+		 * filtrage, tri, conversion et dédoublonnage complets.
 		 */
 		if (dtos.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
@@ -920,10 +928,7 @@ public class TypeProduitCuService implements TypeProduitICuService {
 			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
-		/*
-		 * Retourne toujours une liste d'OutputDTO non null
-		 * et éventuellement vide.
-		 */
+		/* Retourne une liste d'OutputDTO non null, éventuellement vide. */
 		return dtos;
 		
 	} // __________________________________________________________________

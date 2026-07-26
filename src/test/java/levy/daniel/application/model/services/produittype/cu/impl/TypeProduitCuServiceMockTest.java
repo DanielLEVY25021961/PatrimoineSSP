@@ -585,27 +585,31 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findByLibelleRapide(blank) :
-	 * délègue à rechercherTous() + MESSAGE_RECHERCHE_OK"
+	 * délègue à rechercherTous() + MESSAGE_RECHERCHER_TOUS_OK"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK
 			= "findByLibelleRapide(blank) : "
-					+ "délègue à rechercherTous() + MESSAGE_RECHERCHE_OK";
+					+ "délègue à rechercherTous() "
+					+ "+ MESSAGE_RECHERCHER_TOUS_OK";
 	
 	/**
 	 * "findByLibelleRapide(gateway KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_AVEC_MESSAGE
 			= "findByLibelleRapide(gateway KO avec message) : "
-					+ "exception propagée + message rationalisé";
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO";
 	
 	/**
 	 * "findByLibelleRapide(gateway KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_SANS_MESSAGE
 			= "findByLibelleRapide(gateway KO sans message) : "
-					+ "fallback MSG_ERREUR_NON_SPECIFIEE";
+					+ "MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO "
+					+ FALLBACK;
 	
 	/**
 	 * "findByLibelleRapide(gateway retourne null) :
@@ -617,19 +621,22 @@ public class TypeProduitCuServiceMockTest {
 	
 	/**
 	 * "findByLibelleRapide(conversion OutputDTO KO avec message) :
-	 * exception propagée + message rationalisé"
+	 * exception propagée + MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
 			= "findByLibelleRapide(conversion OutputDTO KO avec message) : "
-					+ "exception propagée + message rationalisé"; // NOPMD by danyl on 09/05/2026 20:34
+					+ EXCEPTION_PROPAGEE
+					+ "+ MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO"; // NOPMD by danyl on 09/05/2026 20:34
 	
 	/**
 	 * "findByLibelleRapide(conversion OutputDTO KO sans message) :
-	 * fallback MSG_ERREUR_NON_SPECIFIEE"
+	 * MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+	 * + fallback MSG_ERREUR_NON_SPECIFIEE"
 	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
 			= "findByLibelleRapide(conversion OutputDTO KO sans message) : "
-					+ "fallback MSG_ERREUR_NON_SPECIFIEE"; // NOPMD by danyl on 09/05/2026 20:34
+					+ "MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO "
+					+ FALLBACK; // NOPMD by danyl on 09/05/2026 20:34
 	
 	/**
 	 * "findByLibelleRapide(vide après filtrage) :
@@ -4163,7 +4170,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>retourne la liste DTO issue de la recherche exhaustive ;</li>
 	 * <li>positionne exactement
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
+	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -4231,7 +4238,7 @@ public class TypeProduitCuServiceMockTest {
 				.containsExactly(1L, 2L);
 
 		assertThat(message)
-				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHE_OK);
+				.isEqualTo(TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
 
 		/* Garantit que le blank délègue à rechercherTous()
 		 * et n'appelle jamais la recherche rapide Gateway.
@@ -4250,8 +4257,8 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint l'appel
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>propage l'exception technique levée par le Gateway ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
 	 * + tiret + message technique ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -4294,12 +4301,12 @@ public class TypeProduitCuServiceMockTest {
 		assertThatThrownBy(() -> service.findByLibelleRapide(contenu))
 				.isSameAs(panneTechnique);
 
-		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé.
+		/* Garantit que le SERVICE METIER UC positionne exactement
+		 * la constante dédiée suivie du détail technique.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ LECTURE_TECHNIQUE_KO);
 
@@ -4319,7 +4326,7 @@ public class TypeProduitCuServiceMockTest {
 	 * {@code gateway.findByLibelleRapide(...)} ;</li>
 	 * <li>propage l'exception technique sans message levée par le Gateway ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE} ;</li>
 	 * <li>ne tente pas de conversion finale en {@link OutputDTO}.</li>
 	 * </ul>
@@ -4366,7 +4373,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4417,7 +4424,7 @@ public class TypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * simule un Gateway qui retourne null au lieu d'une liste
-		 * exploitable par le SERVICE METIER UC.
+		 * non null attendue par le SERVICE METIER UC.
 		 */
 		when(gateway.findByLibelleRapide(contenu)).thenReturn(null);
 
@@ -4452,8 +4459,8 @@ public class TypeProduitCuServiceMockTest {
 	 * <li>atteint la conversion finale en {@link OutputDTO}
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception levée pendant cette conversion ;</li>
-	 * <li>positionne un message utilisateur rationalisé avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * <li>positionne exactement
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
 	 * + tiret + message technique.</li>
 	 * </ul>
 	 * </div>
@@ -4487,7 +4494,7 @@ public class TypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.findByLibelleRapide(...) retourne une liste non null
-		 * contenant un objet métier exploitable par filtrerEtTrier(...).
+		 * contenant un objet métier non null traité par filtrerEtTrier(...).
 		 */
 		when(gateway.findByLibelleRapide(contenu))
 				.thenReturn(Arrays.asList(typeProduit));
@@ -4504,12 +4511,12 @@ public class TypeProduitCuServiceMockTest {
 		assertThatThrownBy(() -> service.findByLibelleRapide(contenu))
 				.isSameAs(panneTechnique);
 
-		/* Garantit que le SERVICE METIER UC expose
-		 * un message utilisateur rationalisé pour l'échec de conversion.
+		/* Garantit que le SERVICE METIER UC positionne exactement
+		 * la constante dédiée suivie du détail technique.
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ MESSAGE_GATEWAY_BIS);
 
@@ -4535,7 +4542,7 @@ public class TypeProduitCuServiceMockTest {
 	 * via {@code convertirEtDedoublonner(...)} ;</li>
 	 * <li>propage l'exception sans message levée pendant cette conversion ;</li>
 	 * <li>positionne un message utilisateur sûr avec
-	 * {@link TypeProduitICuService#MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO}
+	 * {@link TypeProduitICuService#MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
 	 * + tiret + {@link TypeProduitICuService#MSG_ERREUR_NON_SPECIFIEE}.</li>
 	 * </ul>
 	 * </div>
@@ -4568,7 +4575,7 @@ public class TypeProduitCuServiceMockTest {
 		/*
 		 * Configuration du Mock :
 		 * gateway.findByLibelleRapide(...) retourne une liste non null
-		 * contenant un objet métier exploitable par filtrerEtTrier(...).
+		 * contenant un objet métier non null traité par filtrerEtTrier(...).
 		 */
 		when(gateway.findByLibelleRapide(contenu))
 				.thenReturn(Arrays.asList(typeProduit));
@@ -4590,7 +4597,7 @@ public class TypeProduitCuServiceMockTest {
 		 */
 		assertThat(service.getMessage())
 				.isEqualTo(
-						TypeProduitICuService.MESSAGE_RECHERCHER_TOUS_TECHNIQUE_KO
+						TypeProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
 						+ TypeProduitICuService.TIRET_ESPACE
 						+ TypeProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
 
@@ -4627,7 +4634,7 @@ public class TypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway non null mais ne contenant
-		 * aucun objet métier exploitable après filtrage.
+		 * aucun objet métier non null après filtrage.
 		 */
 		final String contenu = "QA_FIND_RAPIDE_VIDE";
 		final List<TypeProduit> records = new ArrayList<TypeProduit>();
@@ -4696,7 +4703,7 @@ public class TypeProduitCuServiceMockTest {
 
 		/* ARRANGE :
 		 * prépare une réponse Gateway contenant :
-		 * - deux objets métier exploitables ;
+		 * - deux objets métier non null ;
 		 * - un élément null à filtrer ;
 		 * - un doublon à dédoublonner côté DTO.
 		 */
@@ -4729,7 +4736,7 @@ public class TypeProduitCuServiceMockTest {
 		/* ASSERT */
 		/* Garantit que la réponse retournée au controller appelant :
 		 * - n'est pas null ;
-		 * - contient uniquement les objets métier exploitables ;
+		 * - contient uniquement les objets métier non null ;
 		 * - est triée par libellé métier ;
 		 * - est dédoublonnée ;
 		 * - expose le message utilisateur de succès.

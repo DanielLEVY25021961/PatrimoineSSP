@@ -200,6 +200,20 @@ Avant toute livraison de code Produit, l’IA doit vérifier explicitement que :
 - aucun test d’intégration important n’est livré
   avec un niveau de preuve dans le stockage inférieur à celui des classes de référence.
 
+## 7 quater) Loi de structuration des constantes du PORT UC
+
+Dans `ProduitICuService`, les constantes de messages propres à une méthode doivent être regroupées dans un bloc dédié à cette méthode. Les blocs suivent l'ordre des méthodes du PORT.
+
+Chaque groupe est précédé d'un séparateur canonique de largeur fixe de 76 caractères selon la convention de présentation du projet. Le séparateur doit être recopié depuis une référence validée et seul le nombre de tirets nécessaire au centrage du nom de la méthode peut être adapté.
+
+Exemple canonique pour la méthode cible :
+
+```java
+	/* -------------------- findByLibelleRapide ------------------------ */
+```
+
+Avant d'ajouter ou de déplacer une constante, l'IA doit relire toute la zone des constantes, distinguer les constantes communes des constantes dédiées, puis vérifier l'ordre et la largeur de tous les séparateurs. Il est interdit d'ajouter une constante dédiée en fin de zone ou dans le bloc d'une autre méthode.
+
 ## 8) Formalisme javadoc obligatoire dans le PORT UC
 
 ### 8.1 Structure obligatoire
@@ -652,7 +666,7 @@ Les tests d'intégration du bloc sont exactement :
 - `testRechercherTousStringOk` ;
 - `testRechercherTousStringVide`.
 
-Le test nominal d'intégration doit comparer la liste UC à un oracle lu
+Le test nominal d'intégration doit comparer la liste UC à un résultat lu
 directement dans le stockage, conserver les occurrences homonymes issues
 de parents distincts et prouver que la lecture ne modifie aucune ligne.
 
@@ -838,48 +852,79 @@ Signature cible :
 
 Le scénario nominal de `findByLibelleRapide(...)` est :
 
-1. recevoir un contenu de recherche rapide ;
-2. valider le contenu demandé ;
-3. si le contenu est blank, déléguer à `rechercherTous()` ;
-4. sinon, déléguer la recherche rapide au `GATEWAY` Produit ;
-5. retirer les éventuels objets métier `null` ;
-6. trier les objets métier ;
-7. convertir les résultats métier en `ProduitDTO.OutputDTO` ;
-8. positionner le message observable ;
-9. retourner la liste finale.
+1. recevoir un contenu de recherche rapide sur le libellé `Produit` ;
+2. refuser un contenu `null` ;
+3. si le contenu est blank, déléguer entièrement à `rechercherTous()` ;
+4. sinon, déléguer au `GATEWAY` Produit la recherche des objets métier dont le libellé contient le contenu demandé ;
+5. sécuriser la réponse technique du `GATEWAY` ;
+6. retirer les éventuels objets métier `null` ;
+7. trier les objets métier selon l'ordre naturel `[SousTypeProduit, Produit]`, le parent direct `SousTypeProduit` conservant sa propre identité `[TypeProduit, SousTypeProduit]` ;
+8. convertir les résultats métier en `ProduitDTO.OutputDTO` ;
+9. dédoublonner les DTO en conservant l'ordre métier ;
+10. positionner le message observable après préparation complète de la réponse ;
+11. retourner une liste non `null`, éventuellement vide.
 
 ### 15.2) Cas observables attendus
 
 - si `pContenu == null` :
-  - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
-  - lève une exception ;
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL`,
+  - émet un LOG,
+  - lève une `IllegalStateException` portant ce même message,
+  - ne sollicite aucun `GATEWAY` ;
 
 - si `pContenu` est blank :
-  - délègue à `rechercherTous()` ;
-  - conserve les mêmes messages et les mêmes erreurs que `rechercherTous()` ;
+  - délègue entièrement à `rechercherTous()`,
+  - retourne exactement sa réponse exhaustive,
+  - conserve ses messages et ses exceptions,
+  - n'appelle jamais `gateway.findByLibelleRapide(...)` ;
+
+- si `gateway.findByLibelleRapide(...)` lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage la même exception ;
+
+- si `gateway.findByLibelleRapide(...)` lève une exception dont le message est `null` ou blank :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage la même exception ;
 
 - si le `GATEWAY` retourne `null` :
-  - positionne `getMessage()` à `KO_TECHNIQUE_RECHERCHE` ;
-  - propage une exception technique ;
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
+  - émet un LOG,
+  - lève une `ExceptionStockageVide` portant ce même message ;
 
-- si aucun objet n'est trouvé :
-  - retourne une liste vide mais non `null` ;
+- si le filtrage, le tri ou la conversion en `ProduitDTO.OutputDTO` lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO + TIRET_ESPACE + message`,
+  - émet un LOG,
+  - propage la même exception ;
+
+- si cette préparation lève une exception dont le message est `null` ou blank :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
+  - émet un LOG,
+  - propage la même exception ;
+
+- si aucun objet n'est trouvé après filtrage, tri, conversion et dédoublonnage :
+  - retourne une liste vide mais non `null`,
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
 
 - si au moins un objet est trouvé :
-  - retourne une liste non `null` ;
+  - retourne une liste non `null` de `ProduitDTO.OutputDTO` triés et dédoublonnés,
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
 ### 15.3) Garanties spécifiques de `findByLibelleRapide(...)`
 
-- la méthode ne doit jamais exposer d'objet métier `null` à l'appelant ;
-- la liste retournée, si elle n'est pas vide,
-  doit correspondre à l'état métier effectivement accessible via le `GATEWAY` ;
-- le message de succès ne doit être positionné
-  qu'après préparation complète de la réponse utilisateur ;
-- un contenu blank ne doit pas être traité comme une recherche technique,
-  mais comme une délégation explicite à `rechercherTous()`.
-  
+- la méthode ne retourne jamais `null` lorsque le traitement aboutit ;
+- aucun objet métier `null` ne fuit jusqu'au controller appelant ;
+- le tri respecte l'ordre naturel `[SousTypeProduit, Produit]` ;
+- le `TypeProduit` restitué dans le DTO est déduit du `SousTypeProduit` parent direct et ne devient jamais une troisième composante de l'identité du `Produit` ;
+- l'identité fonctionnelle reste exclusivement `[SousTypeProduit, Produit]` ;
+- la réponse est dédoublonnée sans perdre l'ordre métier ;
+- le message de succès n'est positionné qu'après filtrage, tri, conversion et dédoublonnage complets ;
+- un contenu blank restitue réellement la réponse exhaustive de `rechercherTous()` ;
+- la méthode n'écrit rien dans le stockage ;
+- les tests Mock doivent distinguer la panne GATEWAY de la panne de préparation ;
+- les tests d'intégration doivent comparer la réponse aux identités réellement présentes dans le stockage et prouver l'absence d'effet de bord.
+
 ## 16) Contrat spécifique de `findAllByParent(...)`
 
 Signature cible :

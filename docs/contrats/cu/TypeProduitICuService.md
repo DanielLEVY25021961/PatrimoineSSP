@@ -614,7 +614,104 @@ Le scénario nominal de `findByLibelle(...)` est :
 - l'appel à `findByLibelle(...)` n'écrit rien dans le stockage ;
 - un échec de conversion côté UC ne doit jamais être attribué au `GATEWAY`.
 
-## 14) Règle spécifique à `getMessage()`
+## 14) Contrat spécifique de `findByLibelleRapide(...)`
+
+Signature cible :
+
+- `List<TypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu) throws Exception;`
+
+### 14.1) Scénario nominal attendu
+
+Le scénario nominal de `findByLibelleRapide(...)` est :
+
+1. recevoir un contenu partiel de libellé ;
+2. refuser localement un contenu `null` sans appeler le `GATEWAY` ;
+3. déléguer un contenu blank à `rechercherTous()` ;
+4. pour un contenu non blank, appeler une seule fois
+   `gateway.findByLibelleRapide(pContenu)` ;
+5. refuser une liste `null` retournée par le `GATEWAY` ;
+6. retirer les éléments métier `null` ;
+7. trier les `TypeProduit` selon leur ordre métier ;
+8. convertir les objets métier en `TypeProduitDTO.OutputDTO` ;
+9. supprimer les doublons en conservant l'ordre trié ;
+10. positionner le message observable uniquement après obtention
+    de la liste DTO finale ;
+11. retourner une liste non `null`, éventuellement vide.
+
+### 14.2) Cas observables attendus
+
+- si `pContenu == null` :
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException`
+    portant exactement `MESSAGE_PARAM_NULL` ;
+  - n'appelle jamais le `GATEWAY` ;
+
+- si `pContenu` est blank :
+  - retourne directement le résultat de `rechercherTous()` ;
+  - conserve le message, les exceptions et les garanties
+    observables de `rechercherTous()` ;
+  - n'appelle jamais `gateway.findByLibelleRapide(...)` ;
+
+- si `gateway.findByLibelleRapide(pContenu)`
+  lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si `gateway.findByLibelleRapide(pContenu)`
+  lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si `gateway.findByLibelleRapide(pContenu)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - émet un LOG ;
+  - lève une `ExceptionStockageVide`
+    portant exactement `MESSAGE_STOCKAGE_NULL` ;
+
+- si le filtrage, le tri ou la conversion en DTO
+  lève une exception avec message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO`
+    `+ TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si le filtrage, le tri ou la conversion en DTO
+  lève une exception sans message :
+  - positionne `getMessage()` à
+    `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO`
+    `+ TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si la liste DTO finale est vide :
+  - retourne une liste vide mais non `null` ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
+
+- si la liste DTO finale n'est pas vide :
+  - retourne les DTO triés et sans doublon ;
+  - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
+
+### 14.3) Garanties spécifiques de `findByLibelleRapide(...)`
+
+- la méthode ne retourne jamais `null` lorsqu'elle aboutit ;
+- la liste retournée ne contient aucun élément `null` ;
+- la liste retournée ne contient aucun doublon ;
+- les DTO sont ordonnés selon l'ordre métier des `TypeProduit` ;
+- le message de succès ou d'absence de résultat
+  n'est positionné qu'après filtrage, tri et conversion complets ;
+- un échec de filtrage, de tri ou de conversion côté UC
+  ne doit jamais être attribué au `GATEWAY` ;
+- l'appel à `findByLibelleRapide(...)` n'écrit rien dans le stockage.
+
+## 15) Règle spécifique à `getMessage()`
 
 La méthode `getMessage()` est un **getter du message courant local**
 du SERVICE METIER UC.
@@ -646,7 +743,7 @@ Les tests Mock et Intégration doivent verrouiller :
 - la restitution d’un message de succès ;
 - la règle **« le dernier message gagne »**.
 
-## 15) Ordre de traitement contractuel d’une méthode UC
+## 16) Ordre de traitement contractuel d’une méthode UC
 
 Pour toute méthode UC,
 l’ordre de travail obligatoire est :
@@ -660,7 +757,7 @@ l’ordre de travail obligatoire est :
 Aucune étape ultérieure ne doit être engagée
 si l’étape précédente n’est pas stabilisée.
 
-## 16) Règle de non-régression documentaire
+## 17) Règle de non-régression documentaire
 
 Dès qu’une méthode UC a été remise au carré :
 
@@ -672,7 +769,7 @@ Dès qu’une méthode UC a été remise au carré :
 - aucune signature documentée ne doit être redégradée
   en type brut ou en forme abrégée.
 
-## 17) Objectif de cette sacralisation
+## 18) Objectif de cette sacralisation
 
 L’objectif n’est pas seulement de documenter les méthodes,
 mais de rendre impossible :
@@ -720,6 +817,8 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_FINDBYLIBELLE_PREPARATION_KO` | `"KO - findByLibelle(...) " + "- la préparation de la réponse utilisateur a jeté Exception"` |
 | `MESSAGE_FINDBYLIBELLE_CONVERSION_NULL_KO` | `"KO - findByLibelle(...) - la conversion en OutputDTO a retourné null"` |
 | `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE` | `"OK - findByLibelle(...) a retourné un enregistrement"` |
+| `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO` | `"KO - findByLibelleRapide(...) " + "- le Gateway a jeté Exception"` |
+| `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO` | `"KO - findByLibelleRapide(...) " + "- le filtrage, le tri ou la conversion en OutputDTO " + "a jeté Exception"` |
 | `MESSAGE_PAGEABLE_NULL` | `"l'indication de page demandée ne doit pas être null."` |
 | `MESSAGE_RECHERCHE_PAGINEE_KO` | `"KO - la recherche paginée a retourné null."` |
 | `MESSAGE_RECHERCHE_PAGINEE_OK` | `"OK - la recherche paginée a retourné des résultats."` |
@@ -826,7 +925,7 @@ Ces helpers sont contractuels pour l'autonomie IA : ils ne doivent pas être sup
 | `rechercherTousString` | 2 | `testRechercherTousStringVide`<br>`testRechercherTousStringNominalAvecPreuveStockage` |
 | `rechercherTousParPage` | 3 | `testRechercherTousParPageNull`<br>`testRechercherTousParPageVide`<br>`testRechercherTousParPageNominalAvecPreuveStockage` |
 | `findByLibelle` | 3 | `testFindByLibelleBlank`<br>`testFindByLibelleIntrouvable`<br>`testFindByLibelleNominalAvecPreuveStockage` |
-| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideOkAvecPreuveBd` |
+| `findByLibelleRapide` | 4 | `testFindByLibelleRapideNull`<br>`testFindByLibelleRapideBlank`<br>`testFindByLibelleRapideIntrouvable`<br>`testFindByLibelleRapideNominalAvecPreuveStockage` |
 | `findByDTO` | 4 | `testFindByDTONull`<br>`testFindByDTOBlank`<br>`testFindByDTOIntrouvable`<br>`testFindByDTOOkAvecPreuveBd` |
 | `findById` | 3 | `testFindByIdNull`<br>`testFindByIdIntrouvable`<br>`testFindByIdOkAvecPreuveBd` |
 | `update` | 4 | `testUpdateNull`<br>`testUpdateBlank`<br>`testUpdateIntrouvable`<br>`testUpdateOkAvecPreuveBdEtIdConserve` |

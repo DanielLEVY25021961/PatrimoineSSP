@@ -863,8 +863,11 @@ public class ProduitCuService implements ProduitICuService {
 			final String pContenu) throws Exception {
 
 		/*
-		 * Si pContenu == null : 
-		 * émet un message MESSAGE_PARAM_NULL + LOG + IllegalStateException;
+		 * Si pContenu == null :
+		 * - alimente message avec MESSAGE_PARAM_NULL ;
+		 * - LOG ;
+		 * - jette une IllegalStateException ;
+		 * - n'appelle jamais le GATEWAY.
 		 */
 		if (pContenu == null) {
 			return this.traiterErreur(
@@ -873,46 +876,93 @@ public class ProduitCuService implements ProduitICuService {
 					new IllegalStateException(MESSAGE_PARAM_NULL));
 		}
 
-		/* Si pContenu blank : retourne tous les éléments 
-		 * en délègant à rechercherTous().*/
+		/*
+		 * Si pContenu est blank :
+		 * délègue entièrement à rechercherTous()
+		 * et retourne son résultat avec son message observable.
+		 */
 		if (StringUtils.isBlank(pContenu)) {
 			return this.rechercherTous();
 		}
 
 		/*
-		 * Délègue au GATEWAY la recherche rapide.
+		 * Délègue au GATEWAY la recherche des Produit
+		 * dont le libellé contient pContenu.
 		 */
-		final List<Produit> reponses
-			= this.gateway.findByLibelleRapide(pContenu);
+		final List<Produit> records;
 
-		/*
-		 * Une réponse technique null du GATEWAY
-		 * est une anomalie de recherche.
-		 * Si reponses == null : 
-		 * émet un message KO_TECHNIQUE_RECHERCHE + LOG + RuntimeException
-		 */
-		if (reponses == null) {
-			
+		try {
+			records = this.gateway.findByLibelleRapide(pContenu);
+		} catch (final Exception e) {
+			final String messageSecurise
+					= StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			/*
+			 * Si gateway.findByLibelleRapide(pContenu) jette Exception :
+			 * - alimente message avec
+			 *   MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+			 *   + TIRET_ESPACE + message sécurisé ;
+			 * - LOG ;
+			 * - propage la même Exception.
+			 */
 			return this.traiterErreur(
-					KO_TECHNIQUE_RECHERCHE,
+					MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+							+ TIRET_ESPACE + messageSecurise,
 					METHODE_FIND_BY_LIBELLE_RAPIDE,
-					new RuntimeException(KO_TECHNIQUE_RECHERCHE));
+					e);
 		}
 
 		/*
-		 * Retire les null, trie les objets métier,
-		 * puis convertit la réponse en OutputDTO.
+		 * Si gateway.findByLibelleRapide(pContenu) retourne null :
+		 * - alimente message avec MESSAGE_STOCKAGE_NULL ;
+		 * - LOG ;
+		 * - jette une ExceptionStockageVide.
 		 */
-		final List<Produit> recordsNonNullTries
-			= this.filtrerEtTrier(reponses);
+		if (records == null) {
+			return this.traiterErreur(
+					MESSAGE_STOCKAGE_NULL,
+					METHODE_FIND_BY_LIBELLE_RAPIDE,
+					new ExceptionStockageVide(MESSAGE_STOCKAGE_NULL));
+		}
 
-		final List<OutputDTO> dtos
-			= ConvertisseurMetierToOutputDTOProduit
-				.convertList(recordsNonNullTries);
+		final List<OutputDTO> dtos;
+
+		try {
+			/* Retire les éléments null puis trie les objets métier. */
+			final List<Produit> recordsNonNullTries
+					= this.filtrerEtTrier(records);
+
+			/* Convertit les objets métier en OutputDTO
+			 * et supprime les doublons en conservant l'ordre trié. */
+			dtos = ConvertisseurMetierToOutputDTOProduit
+					.convertList(recordsNonNullTries);
+		} catch (final Exception e) {
+			final String messageSecurise
+					= StringUtils.isNotBlank(e.getMessage())
+							? e.getMessage()
+							: MSG_ERREUR_NON_SPECIFIEE;
+
+			/*
+			 * Si le filtrage, le tri ou la conversion en OutputDTO
+			 * jette Exception :
+			 * - alimente message avec
+			 *   MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+			 *   + TIRET_ESPACE + message sécurisé ;
+			 * - LOG ;
+			 * - propage la même Exception.
+			 */
+			return this.traiterErreur(
+					MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+							+ TIRET_ESPACE + messageSecurise,
+					METHODE_FIND_BY_LIBELLE_RAPIDE,
+					e);
+		}
 
 		/*
-		 * Positionne le message observable
-		 * après préparation complète de la réponse.
+		 * Positionne le message observable uniquement après
+		 * filtrage, tri, conversion et dédoublonnage complets.
 		 */
 		if (dtos.isEmpty()) {
 			this.message.set(MESSAGE_RECHERCHE_VIDE);
@@ -920,12 +970,13 @@ public class ProduitCuService implements ProduitICuService {
 			this.message.set(MESSAGE_RECHERCHE_OK);
 		}
 
+		/* Retourne une liste d'OutputDTO non null, éventuellement vide. */
 		return dtos;
 		
 	} // __________________________________________________________________
-	
 
 	
+
 	/**
 	 * {@inheritDoc}
 	 */

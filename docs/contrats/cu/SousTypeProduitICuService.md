@@ -190,6 +190,20 @@ sur les 5 points suivants :
    conserver le niveau de preuve SQL directe via `JdbcTemplate`
    lorsque ce niveau de preuve est déjà validé dans le projet.
 
+## 7 quater) Loi de structuration des constantes du PORT UC
+
+Dans `SousTypeProduitICuService`, les constantes de messages propres à une méthode doivent être regroupées dans un bloc dédié à cette méthode. Les blocs suivent l'ordre des méthodes du PORT.
+
+Chaque groupe est précédé d'un séparateur canonique de largeur fixe de 76 caractères selon la convention de présentation du projet. Le séparateur doit être recopié depuis une référence validée et seul le nombre de tirets nécessaire au centrage du nom de la méthode peut être adapté.
+
+Exemple canonique pour la méthode cible :
+
+```java
+	/* -------------------- findByLibelleRapide ------------------------ */
+```
+
+Avant d'ajouter ou de déplacer une constante, l'IA doit relire toute la zone des constantes, distinguer les constantes communes des constantes dédiées, puis vérifier l'ordre et la largeur de tous les séparateurs. Il est interdit d'ajouter une constante dédiée en fin de zone ou dans le bloc d'une autre méthode.
+
 ## 8) Formalisme javadoc obligatoire dans le PORT UC
 
 ### 8.1 Structure obligatoire
@@ -779,68 +793,74 @@ Signature cible :
 
 Le scénario nominal de `findByLibelleRapide(...)` est :
 
-1. recevoir un contenu partiel transmis par la couche appelante ;
-2. valider que ce contenu est exploitable ;
-3. si le contenu est blank, déléguer au scénario complet de `rechercherTous()` ;
-4. sinon, demander au `GATEWAY` tous les `SousTypeProduit`
-   dont le libellé contient ce contenu ;
-5. sécuriser le retour technique du stockage ;
-6. retirer les éventuels éléments `null` ;
-7. trier les objets métier ;
-8. convertir les objets métier en `OutputDTO` ;
-9. dédoublonner les `OutputDTO` si nécessaire ;
-10. positionner le message observable ;
-11. retourner la liste finale.
+1. recevoir un contenu partiel de libellé ;
+2. refuser localement un contenu `null` sans appeler le `GATEWAY` ;
+3. déléguer un contenu blank à `rechercherTous()` ;
+4. pour un contenu non blank, appeler une seule fois `gateway.findByLibelleRapide(pContenu)` ;
+5. refuser une liste `null` retournée par le `GATEWAY` ;
+6. retirer les éléments métier `null` ;
+7. trier les `SousTypeProduit` selon leur ordre métier `[TypeProduit, SousTypeProduit]` ;
+8. convertir les objets métier en `SousTypeProduitDTO.OutputDTO` ;
+9. supprimer les doublons en conservant l'ordre trié ;
+10. positionner le message observable uniquement après obtention de la liste DTO finale ;
+11. retourner une liste non `null`, éventuellement vide.
 
 ### 15.2 Cas observables attendus
 
 - si `pContenu == null` :
-  - positionne `getMessage()` à `MESSAGE_PARAM_NULL`,
-  - émet un LOG,
-  - lève une `IllegalStateException` ;
+  - positionne `getMessage()` à `MESSAGE_PARAM_NULL` ;
+  - émet un LOG ;
+  - lève une `IllegalStateException` portant exactement `MESSAGE_PARAM_NULL` ;
+  - n'appelle jamais le `GATEWAY` ;
 
 - si `pContenu` est blank :
-  - délègue à `rechercherTous()`,
-  - retourne alors le comportement observable de `rechercherTous()` ;
+  - retourne directement le résultat de `rechercherTous()` ;
+  - conserve le message, les exceptions et les garanties observables de `rechercherTous()` ;
+  - n'appelle jamais `gateway.findByLibelleRapide(...)` ;
 
-- si le `GATEWAY` retourne `null` :
-  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL`,
-  - émet un LOG,
-  - lève une `ExceptionStockageVide` ;
+- si `gateway.findByLibelleRapide(pContenu)` lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO + TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
 
-- si le `GATEWAY` lève une exception technique avec message :
-  - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + message`,
-  - émet un LOG,
-  - propage l’exception ;
+- si `gateway.findByLibelleRapide(pContenu)` lève une exception sans message :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
 
-- si le `GATEWAY` lève une exception technique sans message :
-  - positionne `getMessage()` à
-    `KO_TECHNIQUE_RECHERCHE + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE`,
-  - émet un LOG,
-  - propage l’exception ;
+- si `gateway.findByLibelleRapide(pContenu)` retourne `null` :
+  - positionne `getMessage()` à `MESSAGE_STOCKAGE_NULL` ;
+  - émet un LOG ;
+  - lève une `ExceptionStockageVide` portant exactement `MESSAGE_STOCKAGE_NULL` ;
 
-- si aucun résultat exploitable n’est trouvé :
-  - retourne une liste vide mais non `null`,
+- si le filtrage, le tri ou la conversion en DTO lève une exception avec message :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO + TIRET_ESPACE + <message technique>` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si le filtrage, le tri ou la conversion en DTO lève une exception sans message :
+  - positionne `getMessage()` à `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO + TIRET_ESPACE + MSG_ERREUR_NON_SPECIFIEE` ;
+  - émet un LOG ;
+  - propage la même exception ;
+
+- si la liste DTO finale est vide :
+  - retourne une liste vide mais non `null` ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_VIDE` ;
 
-- si un ou plusieurs résultats exploitables sont trouvés :
-  - retourne une liste non vide de DTO,
+- si la liste DTO finale n'est pas vide :
+  - retourne les DTO triés et sans doublon ;
   - positionne `getMessage()` à `MESSAGE_RECHERCHE_OK`.
 
 ### 15.3 Garanties spécifiques de `findByLibelleRapide(...)`
 
-- la méthode ne doit jamais retourner `null`
-  quand le stockage est exploitable ;
-- le message observable doit être positionné
-  après préparation complète de la réponse ;
-- les `null` techniques issus du stockage
-  ne doivent jamais fuiter jusqu’à l’appelant ;
-- les DTO retournés doivent correspondre
-  à des objets métier réellement accessibles via le `GATEWAY` ;
-- le dédoublonnage éventuel doit rester cohérent
-  avec `equals/hashCode` des `OutputDTO` ;
-- aucun résultat partiel incohérent ne doit être exposé.
+- la méthode ne retourne jamais `null` lorsqu'elle aboutit ;
+- la liste retournée ne contient aucun élément `null` ni aucun doublon ;
+- les DTO sont ordonnés selon l'ordre métier `[TypeProduit, SousTypeProduit]` ;
+- le message de succès ou d'absence de résultat n'est positionné qu'après filtrage, tri et conversion complets ;
+- un échec de filtrage, de tri ou de conversion côté UC n'est jamais attribué au `GATEWAY` ;
+- les DTO retournés correspondent aux objets métier effectivement fournis par le `GATEWAY` ;
+- la méthode n'écrit rien dans le stockage ;
+- aucun résultat partiel incohérent n'est exposé à l'appelant.
 
 ## 16) Contrat spécifique de `findAllByParent(...)`
 
@@ -1716,6 +1736,8 @@ Cette annexe complète le contrat local pendant la phase de correction de la cou
 | `MESSAGE_FINDBYLIBELLE_GATEWAY_KO` | `"KO - findByLibelle(...) " + "- le Gateway a jeté Exception"` |
 | `MESSAGE_FINDBYLIBELLE_PREPARATION_KO` | `"KO - findByLibelle(...) " + "- la préparation de la réponse utilisateur a jeté Exception"` |
 | `MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE` | `"OK - findByLibelle(...) a retourné des enregistrements"` |
+| `MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO` | `"KO - findByLibelleRapide(...) " + "- le Gateway a jeté Exception"` |
+| `MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO` | `"KO - findByLibelleRapide(...) " + "- le filtrage, le tri ou la conversion en OutputDTO " + "a jeté Exception"` |
 | `MESSAGE_RECHERCHE_OBJ_NULL` | `"l'objet à rechercher ne doit pas être null."` |
 | `MESSAGE_RECHERCHE_VIDE` | `"La recherche n'a retourné aucun résutat."` |
 | `MESSAGE_RECHERCHE_OK` | `"OK - La recherche a retourné des résultats."` |

@@ -617,42 +617,84 @@ public class ProduitCuServiceMockTest {
 					+ "+ MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE";
 	
 	// ---------------------- findByLibelleRapide(...) --------------------
-	
-	/** "findByLibelleRapide(null) : MESSAGE_PARAM_NULL". */
+
+	/**
+	 * "findByLibelleRapide(null) :
+	 * IllegalStateException + MESSAGE_PARAM_NULL"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NULL
-			= "findByLibelleRapide(null) : MESSAGE_PARAM_NULL";
+			= "findByLibelleRapide(null) : "
+					+ "IllegalStateException + MESSAGE_PARAM_NULL";
 
-	/** "findByLibelleRapide(blank) : délègue à rechercherTous()". */
+	/**
+	 * "findByLibelleRapide(blank) :
+	 * délègue à rechercherTous() + MESSAGE_RECHERCHER_TOUS_OK"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_BLANK
-			= "findByLibelleRapide(blank) : délègue à rechercherTous()";
+			= "findByLibelleRapide(blank) : "
+					+ "délègue à rechercherTous() "
+					+ "+ MESSAGE_RECHERCHER_TOUS_OK";
 
-	/** "findByLibelleRapide(gateway KO avec message) : exception propagée par l'ADAPTER réel". */
-	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOAVEC_MESSAGE
-			= "findByLibelleRapide(gateway KO avec message) : exception propagée par l'ADAPTER réel";
+	/**
+	 * "findByLibelleRapide(gateway KO avec message) :
+	 * exception propagée + MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_AVEC_MESSAGE
+			= "findByLibelleRapide(gateway KO avec message) : "
+					+ "exception propagée "
+					+ "+ MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO";
 
-	/** "findByLibelleRapide(gateway KO sans message) : exception propagée par l'ADAPTER réel". */
-	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOSANS_MESSAGE
-			= "findByLibelleRapide(gateway KO sans message) : exception propagée par l'ADAPTER réel";
+	/**
+	 * "findByLibelleRapide(gateway KO sans message) :
+	 * MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO + fallback"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_SANS_MESSAGE
+			= "findByLibelleRapide(gateway KO sans message) : "
+					+ "MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO "
+					+ "+ fallback MSG_ERREUR_NON_SPECIFIEE";
 
-	/** "findByLibelleRapide(gateway retourne null) : KO_TECHNIQUE_RECHERCHE". */
+	/**
+	 * "findByLibelleRapide(gateway retourne null) :
+	 * ExceptionStockageVide + MESSAGE_STOCKAGE_NULL"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_RETOUR_NULL
-			= "findByLibelleRapide(gateway retourne null) : KO_TECHNIQUE_RECHERCHE";
+			= "findByLibelleRapide(gateway retourne null) : "
+					+ "ExceptionStockageVide + MESSAGE_STOCKAGE_NULL";
 
-	/** "findByLibelleRapide(conversion OutputDTO KO avec message) : exception propagée". */
-	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE
-			= "findByLibelleRapide(conversion OutputDTO KO avec message) : exception propagée";
+	/**
+	 * "findByLibelleRapide(conversion OutputDTO KO avec message) :
+	 * exception propagée + MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE
+			= "findByLibelleRapide(conversion OutputDTO KO avec message) : "
+					+ "exception propagée "
+					+ "+ MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO";
 
-	/** "findByLibelleRapide(conversion OutputDTO KO sans message) : exception propagée". */
-	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE
-			= "findByLibelleRapide(conversion OutputDTO KO sans message) : exception propagée";
+	/**
+	 * "findByLibelleRapide(conversion OutputDTO KO sans message) :
+	 * MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO + fallback"
+	 */
+	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE
+			= "findByLibelleRapide(conversion OutputDTO KO sans message) : "
+					+ "MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO "
+					+ "+ fallback MSG_ERREUR_NON_SPECIFIEE";
 
-	/** "findByLibelleRapide(vide après filtrage) : liste vide". */
+	/**
+	 * "findByLibelleRapide(vide après filtrage) :
+	 * liste vide + MESSAGE_RECHERCHE_VIDE"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_VIDE_APRES_FILTRAGE
-			= "findByLibelleRapide(vide après filtrage) : liste vide";
+			= "findByLibelleRapide(vide après filtrage) : "
+					+ "liste vide + MESSAGE_RECHERCHE_VIDE";
 
-	/** "findByLibelleRapide(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK". */
+	/**
+	 * "findByLibelleRapide(nominal) :
+	 * OutputDTO triés dédoublonnés + MESSAGE_RECHERCHE_OK"
+	 */
 	public static final String DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_NOMINAL
-			= "findByLibelleRapide(nominal) : liste cohérente + MESSAGE_RECHERCHE_OK";
+			= "findByLibelleRapide(nominal) : "
+					+ "OutputDTO triés dédoublonnés "
+					+ "+ MESSAGE_RECHERCHE_OK";
 
 	/** "findAllByParent(null) : RECHERCHE_PARENT_NULL". */
 	public static final String DISPLAY_NAME_FIND_ALL_BY_PARENT_NULL
@@ -4964,18 +5006,15 @@ public class ProduitCuServiceMockTest {
 	// ==================== findByLibelleRapide ===========================
 
 
-	
+
 	/**
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « MESSAGE_PARAM_NULL » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>lève une {@link IllegalStateException} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_PARAM_NULL} ;</li>
+	 * <li>n'interagit avec aucun Gateway.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -4990,21 +5029,21 @@ public class ProduitCuServiceMockTest {
 		 * Mocke les services Gateway et les passe
 		 * à un service UC instancié dans le test.
 		 */
-		final ProduitGatewayIService gateway 
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
 		assertThatThrownBy(() -> service.findByLibelleRapide(null))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessage(ProduitICuService.MESSAGE_PARAM_NULL);
+
 		assertThat(service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_PARAM_NULL);
+
 		verifyNoInteractions(gateway);
 		verifyNoInteractions(sousTypeProduitGateway);
 
@@ -5016,13 +5055,11 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(blank) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « délègue à rechercherTous() » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>délègue au scénario complet {@code rechercherTous()} ;</li>
+	 * <li>n'appelle jamais {@code gateway.findByLibelleRapide(...)} ;</li>
+	 * <li>retourne les DTO triés et dédoublonnés ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHER_TOUS_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -5033,40 +5070,44 @@ public class ProduitCuServiceMockTest {
 	@Test
 	public void testFindByLibelleRapideBlank() throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE : prépare deux Produits sous deux parents persistants. */
+		final SousTypeProduit parentBazar
+			= parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+		final SousTypeProduit parentQuincaillerie
+			= parentPersistant(QUINCAILLERIE, OUTILLAGE, 2L, 20L);
+		final Produit produitScie = produit(SCIE, parentQuincaillerie, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parentBazar, 1L);
+
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final SousTypeProduit parent = parentPersistant();
-		final Produit produit = produit(MARTEAU, parent, 1L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
-		when(gateway.rechercherTous()).thenReturn(Arrays.asList(produit));
+		/* Configuration du Mock : la branche blank délègue à rechercherTous(). */
+		when(gateway.rechercherTous())
+				.thenReturn(Arrays.asList(
+						produitScie,
+						null,
+						produitMarteau,
+						produitScie));
 
+		/* ACT */
+		final List<OutputDTO> retour
+				= service.findByLibelleRapide(ESPACES);
 
-		/* ACT :
-		 * exécute l'appel testé.
-		 */
-		final List<OutputDTO> retour = service.findByLibelleRapide(ESPACES);
-
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
-		 */
-		assertThat(retour).isNotNull().hasSize(1);
-		assertThat(retour.get(0).getProduit()).isEqualTo(MARTEAU);
+		/* ASSERT */
+		assertThat(retour).isNotNull().hasSize(2);
+		assertProduitDTO(retour.get(0), 1L, BAZAR, OUTILLAGE, MARTEAU);
+		assertProduitDTO(retour.get(1), 2L, QUINCAILLERIE, OUTILLAGE, SCIE);
+		assertThat(retour).doesNotHaveDuplicates();
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHER_TOUS_OK);
+
+		verify(gateway, times(1)).rechercherTous();
+		verify(gateway, never()).findByLibelleRapide(any());
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -5076,50 +5117,45 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(gateway KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée par l'ADAPTER réel » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>propage la même exception ;</li>
+	 * <li>positionne la constante dédiée suivie du message technique ;</li>
+	 * <li>ne sollicite jamais le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
-	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOAVEC_MESSAGE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_AVEC_MESSAGE)
 	@Test
 	public void testFindByLibelleRapideGatewayKOAvecMessage() throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE */
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
+		/* Configuration du Mock */
 		when(gateway.findByLibelleRapide(CONTENU_RAPIDE))
 				.thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
 		assertThatThrownBy(() -> service.findByLibelleRapide(CONTENU_RAPIDE))
 				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage()).isNull();
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY);
+
+		verify(gateway, times(1)).findByLibelleRapide(CONTENU_RAPIDE);
+		verify(gateway, never()).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
@@ -5130,50 +5166,44 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(gateway KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée par l'ADAPTER réel » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>propage la même exception ;</li>
+	 * <li>utilise le fallback {@code MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>ne sollicite jamais le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
-	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KOSANS_MESSAGE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_GATEWAY_KO_SANS_MESSAGE)
 	@Test
 	public void testFindByLibelleRapideGatewayKOSansMessage() throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE */
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 		final IllegalStateException panneTechnique = new IllegalStateException();
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
+		/* Configuration du Mock */
 		when(gateway.findByLibelleRapide(CONTENU_RAPIDE))
 				.thenThrow(panneTechnique);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
 		assertThatThrownBy(() -> service.findByLibelleRapide(CONTENU_RAPIDE))
 				.isSameAs(panneTechnique);
 
-		assertThat(service.getMessage()).isNull();
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findByLibelleRapide(CONTENU_RAPIDE);
+		verify(gateway, never()).rechercherTous();
 		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
@@ -5184,13 +5214,10 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(gateway retourne null) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « KO_TECHNIQUE_RECHERCHE » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>lève une {@link ExceptionStockageVide} ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_STOCKAGE_NULL} ;</li>
+	 * <li>ne sollicite jamais le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -5201,32 +5228,28 @@ public class ProduitCuServiceMockTest {
 	@Test
 	public void testFindByLibelleRapideGatewayRetourNull() throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE */
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
+		/* Configuration du Mock */
 		when(gateway.findByLibelleRapide(CONTENU_RAPIDE)).thenReturn(null);
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
 		assertThatThrownBy(() -> service.findByLibelleRapide(CONTENU_RAPIDE))
-				.isInstanceOf(RuntimeException.class)
-				.hasMessage(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+				.isInstanceOf(ExceptionStockageVide.class)
+				.hasMessage(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
 		assertThat(service.getMessage())
-				.isEqualTo(ProduitICuService.KO_TECHNIQUE_RECHERCHE);
+				.isEqualTo(ProduitICuService.MESSAGE_STOCKAGE_NULL);
+
+		verify(gateway, times(1)).findByLibelleRapide(CONTENU_RAPIDE);
+		verify(gateway, never()).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -5236,50 +5259,48 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(conversion OutputDTO KO avec message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>propage la même exception de préparation ;</li>
+	 * <li>positionne la constante dédiée suivie du message technique ;</li>
+	 * <li>ne sollicite jamais le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
-	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOAVEC_MESSAGE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_AVEC_MESSAGE)
 	@Test
-	public void testFindByLibelleRapideConversionOutputDTOKOAvecMessage() throws Exception {
+	public void testFindByLibelleRapideConversionOutputDTOKOAvecMessage()
+			throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE */
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final IllegalStateException panneTechnique = new IllegalStateException(MESSAGE_GATEWAY);
+		final IllegalStateException panneTechnique
+				= new IllegalStateException(MESSAGE_GATEWAY_BIS);
 		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
+		/* Configuration du Mock */
 		when(gateway.findByLibelleRapide(CONTENU_RAPIDE))
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
 		assertThatThrownBy(() -> service.findByLibelleRapide(CONTENU_RAPIDE))
 				.isSameAs(panneTechnique);
-		assertThat(service.getMessage()).isNull();
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+						+ ProduitICuService.TIRET_ESPACE
+						+ MESSAGE_GATEWAY_BIS);
+
+		verify(gateway, times(1)).findByLibelleRapide(CONTENU_RAPIDE);
+		verify(gateway, never()).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -5289,50 +5310,47 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(conversion OutputDTO KO sans message) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « exception propagée » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>propage la même exception de préparation ;</li>
+	 * <li>utilise le fallback {@code MSG_ERREUR_NON_SPECIFIEE} ;</li>
+	 * <li>ne sollicite jamais le Gateway parent.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @throws Exception
 	 */
 	@Tag(TAG_FIND_BY_LIBELLE_RAPIDE)
-	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTOKOSANS_MESSAGE)
+	@DisplayName(DISPLAY_NAME_FIND_BY_LIBELLE_RAPIDE_CONVERSION_OUTPUT_DTO_KO_SANS_MESSAGE)
 	@Test
-	public void testFindByLibelleRapideConversionOutputDTOKOSansMessage() throws Exception {
+	public void testFindByLibelleRapideConversionOutputDTOKOSansMessage()
+			throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE */
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 		final IllegalStateException panneTechnique = new IllegalStateException();
 		final Produit produitKo = produitConversionKo(panneTechnique);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
+		/* Configuration du Mock */
 		when(gateway.findByLibelleRapide(CONTENU_RAPIDE))
 				.thenReturn(Arrays.asList(produitKo));
 
-
-		/* ACT - ASSERT :
-		 * exécute l'appel testé et vérifie l'exception attendue.
-		 */
+		/* ACT - ASSERT */
 		assertThatThrownBy(() -> service.findByLibelleRapide(CONTENU_RAPIDE))
 				.isSameAs(panneTechnique);
-		assertThat(service.getMessage()).isNull();
+
+		assertThat(service.getMessage())
+				.isEqualTo(
+						ProduitICuService.MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+						+ ProduitICuService.TIRET_ESPACE
+						+ ProduitICuService.MSG_ERREUR_NON_SPECIFIEE);
+
+		verify(gateway, times(1)).findByLibelleRapide(CONTENU_RAPIDE);
+		verify(gateway, never()).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -5342,13 +5360,10 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(vide après filtrage) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « liste vide » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>filtre les objets métier {@code null} ;</li>
+	 * <li>retourne une liste non {@code null} et vide ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_VIDE}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -5359,38 +5374,30 @@ public class ProduitCuServiceMockTest {
 	@Test
 	public void testFindByLibelleRapideVideApresFiltrage() throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE */
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
+		/* Configuration du Mock */
 		when(gateway.findByLibelleRapide(CONTENU_RAPIDE))
 				.thenReturn(Arrays.asList(null, null));
 
+		/* ACT */
+		final List<OutputDTO> retour
+				= service.findByLibelleRapide(CONTENU_RAPIDE);
 
-		/* ACT :
-		 * exécute l'appel testé.
-		 */
-		final List<OutputDTO> retour = service.findByLibelleRapide(CONTENU_RAPIDE);
-
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
-		 */
+		/* ASSERT */
 		assertThat(retour).isNotNull().isEmpty();
 		assertThat(service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_VIDE);
+
+		verify(gateway, times(1)).findByLibelleRapide(CONTENU_RAPIDE);
+		verify(gateway, never()).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 
@@ -5400,13 +5407,11 @@ public class ProduitCuServiceMockTest {
 	 * <div>
 	 * <p>garantit que findByLibelleRapide(nominal) :</p>
 	 * <ul>
-	 * <li>exécute le scénario « liste cohérente + MESSAGE_RECHERCHE_OK » ;</li>
-	 * <li>contrôle le retour, l'exception ou l'état observable attendu par le PORT
-	 * UC ;</li>
-	 * <li>contrôle le message utilisateur exposé par {@link
-	 * ProduitCuService#getMessage()} lorsque le scénario en produit un ;</li>
-	 * <li>vérifie les interactions attendues ou interdites avec le Gateway Produit
-	 * et le Gateway parent SousTypeProduit.</li>
+	 * <li>filtre les éléments {@code null} ;</li>
+	 * <li>trie selon {@code [SousTypeProduit, Produit]} ;</li>
+	 * <li>convertit et dédoublonne les DTO ;</li>
+	 * <li>positionne exactement
+	 * {@link ProduitICuService#MESSAGE_RECHERCHE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -5417,43 +5422,44 @@ public class ProduitCuServiceMockTest {
 	@Test
 	public void testFindByLibelleRapideNominal() throws Exception {
 
-		/* ARRANGE :
-		 * Mocke les services Gateway et les passe
-		 * à un service UC instancié dans le test.
-		 */
-		final ProduitGatewayIService gateway 
+		/* ARRANGE */
+		final SousTypeProduit parentBazar
+			= parentPersistant(BAZAR, OUTILLAGE, 1L, 10L);
+		final SousTypeProduit parentQuincaillerie
+			= parentPersistant(QUINCAILLERIE, OUTILLAGE, 2L, 20L);
+		final Produit produitScie = produit(SCIE, parentQuincaillerie, 2L);
+		final Produit produitMarteau = produit(MARTEAU, parentBazar, 1L);
+
+		final ProduitGatewayIService gateway
 			= mock(ProduitGatewayIService.class);
-		final SousTypeProduitGatewayIService sousTypeProduitGateway 
+		final SousTypeProduitGatewayIService sousTypeProduitGateway
 			= mock(SousTypeProduitGatewayIService.class);
-		final ProduitCuService service 
+		final ProduitCuService service
 			= new ProduitCuService(gateway, sousTypeProduitGateway);
-		final SousTypeProduit parent = parentPersistant();
-		final Produit produitScie = produit(SCIE, parent, 2L);
-		final Produit produitMarteau = produit(MARTEAU, parent, 1L);
 
-		/* Configuration du Mock :
-		 * prépare les réponses ou exceptions Gateway nécessaires
-		 * au scénario testé.
-		 */
+		/* Configuration du Mock */
 		when(gateway.findByLibelleRapide(CONTENU_RAPIDE))
-				.thenReturn(Arrays.asList(produitScie, null, produitMarteau));
+				.thenReturn(Arrays.asList(
+						produitScie,
+						null,
+						produitMarteau,
+						produitScie));
 
+		/* ACT */
+		final List<OutputDTO> retour
+				= service.findByLibelleRapide(CONTENU_RAPIDE);
 
-		/* ACT :
-		 * exécute l'appel testé.
-		 */
-		final List<OutputDTO> retour = service.findByLibelleRapide(CONTENU_RAPIDE);
-
-
-		/* ASSERT :
-		 * vérifie le résultat, le message utilisateur observable
-		 * et les interactions Gateway attendues ou interdites.
-		 */
+		/* ASSERT */
 		assertThat(retour).isNotNull().hasSize(2);
-		assertThat(retour).extracting(OutputDTO::getProduit)
-				.containsExactly(MARTEAU, SCIE);
+		assertProduitDTO(retour.get(0), 1L, BAZAR, OUTILLAGE, MARTEAU);
+		assertProduitDTO(retour.get(1), 2L, QUINCAILLERIE, OUTILLAGE, SCIE);
+		assertThat(retour).doesNotHaveDuplicates();
 		assertThat(service.getMessage())
 				.isEqualTo(ProduitICuService.MESSAGE_RECHERCHE_OK);
+
+		verify(gateway, times(1)).findByLibelleRapide(CONTENU_RAPIDE);
+		verify(gateway, never()).rechercherTous();
+		verifyNoInteractions(sousTypeProduitGateway);
 
 	} // __________________________________________________________________
 

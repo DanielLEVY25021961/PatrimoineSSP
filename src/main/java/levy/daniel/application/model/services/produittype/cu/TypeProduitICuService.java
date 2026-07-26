@@ -65,92 +65,197 @@ public interface TypeProduitICuService {
 
 	//* ----------------- CONSTANTES DE MESSAGES ---------------------- *//
 
+	/**
+	 * <div>
+	 * <p>"Vous avez passé null en paramètre."</p>
+	 * </div>
+	 */
+	String MESSAGE_PARAM_NULL 
+		= "Vous avez passé null en paramètre.";
+
+	/**
+	 * <div>
+	 * <p>"Vous avez passé une chaine de caractères blank
+	 * (null ou que des espaces) en paramètre."</p>
+	 * </div>
+	 */
+	String MESSAGE_PARAM_BLANK = "Vous avez passé une chaine "
+			+ "de caractères blank (null ou que des espaces) en paramètre.";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de trouver dans le stockage l'objet : "</p>
+	 * </div>
+	 */
+	String MESSAGE_OBJ_INTROUVABLE 
+		= "Impossible de trouver dans le stockage l'objet : ";
+
+	/**
+	 * <div>
+	 * <p>"Impossible de modifier - 
+	 * l'objet n'est pas persistant (pas d'ID dans le stockage) : "</p>
+	 * </div>
+	 */
+	String MESSAGE_OBJ_NON_PERSISTE 
+		= "Impossible de modifier - "
+			+ "l'objet n'est pas persistant (pas d'ID dans le stockage) : ";
+
+	/**
+	 * <div>
+	 * <p>"Erreur non spécifiée"</p>
+	 * </div>
+	 */
+	String MSG_ERREUR_NON_SPECIFIEE = "Erreur non spécifiée";
+
+	/**
+	 * <div>
+	 * <p>"l'objet à rechercher ne doit pas être null."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_OBJ_NULL 
+		= "l'objet à rechercher ne doit pas être null.";
+
+	/**
+	 * <div>
+	 * <p>"La recherche a bien retourné un objet."</p>
+	 * </div>
+	 */
+	String MESSAGE_SUCCES_RECHERCHE 
+		= "La recherche a bien retourné un objet.";
+
+	/**
+	 * <div>
+	 * <p>"La recherche n'a retourné aucun résutat."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_VIDE 
+		= "La recherche n'a retourné aucun résutat.";
+
+	/**
+	 * <div>
+	 * <p>"OK - La recherche a retourné des résultats."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_OK 
+		= "OK - La recherche a retourné des résultats.";
+	
+	/**
+	 * <div>
+	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>
+	 * </div>
+	 */
+	String MESSAGE_STOCKAGE_NULL 
+		= "Le stockage n'a pas retourné d'enregistrements (null).";
+	
+	/**
+	 * <div>
+	 * <p>"l'indication de page demandée ne doit pas être null."</p>
+	 * </div>
+	 */
+	String MESSAGE_PAGEABLE_NULL 
+		= "l'indication de page demandée ne doit pas être null.";
+	
+	/**
+	 * <div>
+	 * <p>"KO - la recherche paginée a retourné null."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_PAGINEE_KO 
+		= "KO - la recherche paginée a retourné null.";
+	
+	/**
+	 * <div>
+	 * <p>"OK - la recherche paginée a retourné des résultats."</p>
+	 * </div>
+	 */
+	String MESSAGE_RECHERCHE_PAGINEE_OK 
+		= "OK - la recherche paginée a retourné des résultats.";
+
 	/* --------------------------- Creer ------------------------------- */
 	
 	/**
 	 * <div>
-	 * <p>"KO - vous ne pouvez pas sauvegarder un Type de Produit null."</p>
+	 * <p>"KO - creer() - vous ne pouvez pas sauvegarder un Type de Produit null."</p>
 	 * </div>
 	 */
 	String MESSAGE_CREER_NULL_KO 
-		= "KO - vous ne pouvez pas sauvegarder un Type de Produit null.";
+		= "KO - creer() - vous ne pouvez pas sauvegarder un Type de Produit null.";
 
 	/**
 	 * <div>
-	 * <p>"KO - vous ne pouvez pas sauvegarder un Type de Produit 
+	 * <p>"KO - creer() - vous ne pouvez pas sauvegarder un Type de Produit 
 	 * dont le libellé est blank (null ou que des espaces)."</p>
 	 * </div>
 	 */
 	String MESSAGE_CREER_LIBELLE_BLANK_KO 
-		= "KO - vous ne pouvez pas sauvegarder un Type de Produit "
+		= "KO - creer() - vous ne pouvez pas sauvegarder un Type de Produit "
 			+ "dont le libellé est blank (null ou que des espaces).";
 	
 	/**
 	 * <div>
-	 * <p>"KO - Impossible de vérifier l'unicité 
+	 * <p>"KO - creer() - Impossible de vérifier l'unicité 
 	 * du Type de Produit dans le stockage : "</p>
 	 * </div>
 	 */
 	String PREFIX_MESSAGE_CREER_DOUBLON_KO =
-			"KO - Impossible de vérifier l'unicité "
+			"KO - creer() - Impossible de vérifier l'unicité "
 			+ "du Type de Produit dans le stockage : ";
 	
 	/**
 	 * <div>
-	 * <p>"KO - Vous ne pouvez pas sauvegarder un Type de Produit 
+	 * <p>"KO - creer() - Vous ne pouvez pas sauvegarder un Type de Produit 
 	 * déjà existant dans le stockage : "</p>
 	 * </div>
 	 */
 	String MESSAGE_CREER_DOUBLON_KO 
-		= "KO - Vous ne pouvez pas sauvegarder un Type de Produit "
+		= "KO - creer() - Vous ne pouvez pas sauvegarder un Type de Produit "
 			+ "déjà existant dans le stockage : ";
-
 
 	/**
 	 * <div>
-	 * <p>"KO - Impossible de créer le Type de Produit dans le stockage : "</p>
+	 * <p>"KO - creer() - Impossible de créer le Type de Produit dans le stockage : "</p>
 	 * </div>
 	 */
 	String PREFIX_MESSAGE_CREER_GATEWAY_KO =
-			"KO - Impossible de créer le Type de Produit dans le stockage : ";
+			"KO - creer() - Impossible de créer le Type de Produit dans le stockage : ";
 	
 	/**
 	 * <div>
-	 * <p>"KO - Impossible de créer le Type de Produit - 
+	 * <p>"KO - creer() - Impossible de créer le Type de Produit - 
 	 * le stockage n'a retourné aucun objet créé."</p>
 	 * </div>
 	 */
 	String MESSAGE_CREER_GATEWAY_KO =
-			"KO - Impossible de créer le Type de Produit - "
+			"KO - creer() - Impossible de créer le Type de Produit - "
 					+ "le stockage n'a retourné aucun objet créé.";
 	
 	/**
 	 * <div>
-	 * <p>"KO - Impossible de créer l'OutputDTO 
+	 * <p>"KO - creer() - Impossible de créer l'OutputDTO 
 	 * après la création du Type de Produit : "</p>
 	 * </div>
 	 */
 	String PREFIX_MESSAGE_CREER_CONVERSION_KO =
-			"KO - Impossible de créer l'OutputDTO "
+			"KO - creer() - Impossible de créer l'OutputDTO "
 					+ "après la création du Type de Produit : ";
 	
 	/**
 	 * <div>
-	 * <p>"KO - OutputDTO null via la conversion  
+	 * <p>"KO - creer() - OutputDTO null via la conversion  
 	 * après la création du Type de Produit."</p>
 	 * </div>
 	 */
 	String MESSAGE_CREER_CONVERSION_KO =
-			"KO - OutputDTO null via la conversion "
+			"KO - creer() - OutputDTO null via la conversion "
 					+ "après la création du Type de Produit.";
 
 	/**
 	 * <div>
-	 * <p>"OK - La création de l'objet s'est bien déroulée."</p>
+	 * <p>"OK - creer() - La création de l'objet s'est bien déroulée."</p>
 	 * </div>
 	 */
 	String MESSAGE_CREER_OK 
-		= "OK - La création de l'objet s'est bien déroulée.";
+		= "OK - creer() - La création de l'objet s'est bien déroulée.";
 
 	/* ----------------------- rechercherTous -------------------------- */
 
@@ -185,16 +290,16 @@ public interface TypeProduitICuService {
 		= "KO - rechercherTous() - convertirEtDedoublonner(...) a retourné null";
 	
 	/**
-	 * "OK - La recherche n'a retourné aucun résutat."
+	 * "OK - rechercherTous() - La recherche n'a retourné aucun résutat."
 	 */
 	String MESSAGE_RECHERCHER_TOUS_VIDE 
-		= "OK - La recherche n'a retourné aucun résutat.";
+		= "OK - rechercherTous() - La recherche n'a retourné aucun résutat.";
 	
 	/**
-	 * "OK - La recherche a retourné des résultats."
+	 * "OK - rechercherTous() - La recherche a retourné des résultats."
 	 */
 	String MESSAGE_RECHERCHER_TOUS_OK 
-		= "OK - La recherche a retourné des résultats.";
+		= "OK - rechercherTous() - La recherche a retourné des résultats.";
 
 	/* ------------------ rechercherTousString ------------------------- */
 	
@@ -217,13 +322,6 @@ public interface TypeProduitICuService {
 		= "KO - rechercherTousString() "
 				+ "- la préparation de la réponse utilisateur a jeté Exception";
 
-	/**
-	 * <div>
-	 * <p>"Le stockage n'a pas retourné d'enregistrements (null)."</p>
-	 * </div>
-	 */
-	String MESSAGE_STOCKAGE_NULL 
-		= "Le stockage n'a pas retourné d'enregistrements (null).";
 
 	/* ---------------- rechercherTousParPage -------------------------- */
 
@@ -247,15 +345,7 @@ public interface TypeProduitICuService {
 		= "KO - rechercherTousParPage(...) "
 				+ "- la préparation de la page DTO a jeté Exception";
 
-	/**
-	 * <div>
-	 * <p>"l'indication de page demandée ne doit pas être null."</p>
-	 * </div>
-	 */
-	String MESSAGE_PAGEABLE_NULL 
-		= "l'indication de page demandée ne doit pas être null.";
-
-	/* ----------------------- findByLibelle ----------------------------- */
+	/* ----------------------- findByLibelle --------------------------- */
 
 	/**
 	 * <div>
@@ -294,125 +384,74 @@ public interface TypeProduitICuService {
 	 */
 	String MESSAGE_FINDBYLIBELLE_SUCCES_RECHERCHE
 		= "OK - findByLibelle(...) a retourné un enregistrement";
-	
-	/**
-	 * <div>
-	 * <p>"Vous avez passé null en paramètre."</p>
-	 * </div>
-	 */
-	String MESSAGE_PARAM_NULL 
-		= "Vous avez passé null en paramètre.";
-	
-	/**
-	 * <div>
-	 * <p>"Vous avez passé une chaine de caractères blank
-	 * (null ou que des espaces) en paramètre."</p>
-	 * </div>
-	 */
-	String MESSAGE_PARAM_BLANK = "Vous avez passé une chaine "
-			+ "de caractères blank (null ou que des espaces) en paramètre.";
-	
-	/**
-	 * <div>
-	 * <p>"Impossible de trouver dans le stockage l'objet : "</p>
-	 * </div>
-	 */
-	String MESSAGE_OBJ_INTROUVABLE 
-		= "Impossible de trouver dans le stockage l'objet : ";
-	
-	/**
-	 * <div>
-	 * <p>"Impossible de modifier - 
-	 * l'objet n'est pas persistant (pas d'ID dans le stockage) : "</p>
-	 * </div>
-	 */
-	String MESSAGE_OBJ_NON_PERSISTE 
-		= "Impossible de modifier - "
-			+ "l'objet n'est pas persistant (pas d'ID dans le stockage) : ";
-	
-	/**
-	 * <div>
-	 * <p>"Erreur non spécifiée"</p>
-	 * </div>
-	 */
-	String MSG_ERREUR_NON_SPECIFIEE = "Erreur non spécifiée";
+
+	/* -------------------- findByLibelleRapide ------------------------ */
 
 	/**
 	 * <div>
-	 * <p>"l'objet à rechercher ne doit pas être null."</p>
+	 * <p>"KO - findByLibelleRapide(...)
+	 * - le Gateway a jeté Exception".</p>
 	 * </div>
 	 */
-	String MESSAGE_RECHERCHE_OBJ_NULL 
-		= "l'objet à rechercher ne doit pas être null.";
+	String MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO
+		= "KO - findByLibelleRapide(...) "
+				+ "- le Gateway a jeté Exception";
 
 	/**
 	 * <div>
-	 * <p>"La recherche a bien retourné un objet."</p>
+	 * <p>"KO - findByLibelleRapide(...)
+	 * - le filtrage, le tri ou la conversion en OutputDTO
+	 * a jeté Exception".</p>
 	 * </div>
 	 */
-	String MESSAGE_SUCCES_RECHERCHE 
-		= "La recherche a bien retourné un objet.";
+	String MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO
+		= "KO - findByLibelleRapide(...) "
+				+ "- le filtrage, le tri ou la conversion en OutputDTO "
+				+ "a jeté Exception";
+
+	/* -------------------------- findByDTO ---------------------------- */
+	
+	
+	/* --------------------------- findById ---------------------------- */
+	
+
+	/* ---------------------------- update ----------------------------- */
 	
 	/**
 	 * <div>
-	 * <p>"La recherche n'a retourné aucun résutat."</p>
+	 * <p>"KO - update() - la modification a retourné null : "</p>
 	 * </div>
 	 */
-	String MESSAGE_RECHERCHE_VIDE 
-		= "La recherche n'a retourné aucun résutat.";
+	String MESSAGE_MODIF_KO = "KO - update() - la modification a retourné null : ";
 	
 	/**
 	 * <div>
-	 * <p>"OK - La recherche a retourné des résultats."</p>
+	 * <p>"OK - update() - modification réussie de : "</p>
 	 * </div>
 	 */
-	String MESSAGE_RECHERCHE_OK 
-		= "OK - La recherche a retourné des résultats.";
+	String MESSAGE_MODIF_OK = "OK - update() - modification réussie de : ";
+
+	/* ---------------------------- delete ----------------------------- */
 	
 	/**
 	 * <div>
-	 * <p>"KO - la recherche paginée a retourné null."</p>
-	 * </div>
-	 */
-	String MESSAGE_RECHERCHE_PAGINEE_KO 
-		= "KO - la recherche paginée a retourné null.";
-	
-	/**
-	 * <div>
-	 * <p>"OK - la recherche paginée a retourné des résultats."</p>
-	 * </div>
-	 */
-	String MESSAGE_RECHERCHE_PAGINEE_OK 
-		= "OK - la recherche paginée a retourné des résultats.";
-	
-	/**
-	 * <div>
-	 * <p>"KO - la modification a retourné null : "</p>
-	 * </div>
-	 */
-	String MESSAGE_MODIF_KO = "KO - la modification a retourné null : ";
-	
-	/**
-	 * <div>
-	 * <p>"OK - modification réussie de : "</p>
-	 * </div>
-	 */
-	String MESSAGE_MODIF_OK = "OK - modification réussie de : ";
-	
-	/**
-	 * <div>
-	 * <p>"OK - destruction réussie de : "</p>
+	 * <p>"OK - delete() - destruction réussie de : "</p>
 	 * </div> 
 	 */
-	String MESSAGE_DELETE_OK = "OK - destruction réussie de : ";
+	String MESSAGE_DELETE_OK = "OK - delete() - destruction réussie de : ";
 		
 	/**
 	 * <div>
-	 * <p>"KO - échec de la destruction de : "</p>
+	 * <p>"KO - delete() - échec de la destruction de : "</p>
 	 * </div> 
 	 */
-	String MESSAGE_DELETE_KO = "KO - échec de la destruction de : ";
+	String MESSAGE_DELETE_KO = "KO - delete() - échec de la destruction de : ";
+	
+	/* ----------------------------- count ----------------------------- */
+	
+	/* --------------------------- getMessage -------------------------- */
 
+	
 	// -------------------Constantes Méthodes ---------------------------//
 	
 	/**
@@ -980,7 +1019,7 @@ public interface TypeProduitICuService {
 	/**
 	 * <div>
 	 * <p style="font-weight:bold;">
-	 * Recherche rapidement tous les {@link TypeProduitDTO.OutputDTO}
+	 * Recherche tous les {@link TypeProduitDTO.OutputDTO}
 	 * dont le libellé contient un contenu donné.
 	 * </p>
 	 * <p style="font-weight:bold;">
@@ -989,18 +1028,18 @@ public interface TypeProduitICuService {
 	 * <ul>
 	 * <li>recevoir un contenu partiel de recherche
 	 * provenant de la couche appelante ;</li>
-	 * <li>valider le caractère exploitable du contenu transmis ;</li>
-	 * <li>déléguer au composant GATEWAY
-	 * la recherche rapide des {@link TypeProduit}
-	 * dans le stockage ;</li>
-	 * <li>sécuriser la réponse technique retournée par le GATEWAY ;</li>
-	 * <li>filtrer les éventuels éléments {@code null},
-	 * trier les objets métier et dédoublonner la réponse
-	 * côté UC si nécessaire ;</li>
-	 * <li>convertir la liste métier en
-	 * {@link TypeProduitDTO.OutputDTO} ;</li>
-	 * <li>retourner une liste exploitable
-	 * par la couche appelante.</li>
+	 * <li>refuser localement un contenu {@code null} ;</li>
+	 * <li>déléguer un contenu blank au scénario
+	 * {@link #rechercherTous()} ;</li>
+	 * <li>pour un contenu non blank, appeler le GATEWAY
+	 * une seule fois afin de rechercher les {@link TypeProduit}
+	 * dont le libellé contient ce contenu ;</li>
+	 * <li>refuser une liste {@code null} retournée par le GATEWAY ;</li>
+	 * <li>retirer les éléments {@code null}, trier les objets métier,
+	 * les convertir en {@link TypeProduitDTO.OutputDTO}
+	 * et supprimer les doublons ;</li>
+	 * <li>positionner le message observable
+	 * uniquement après obtention de la liste DTO finale.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1009,26 +1048,41 @@ public interface TypeProduitICuService {
 	 * <ul>
 	 * <li>Si {@code pContenu == null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_PARAM_NULL},
-	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Si {@code pContenu} est blank, délègue à
-	 * {@link #rechercherTous()} et retourne tous les enregistrements
-	 * selon le contrat observable de cette méthode.</li>
-	 * <li>Sinon, délègue la recherche rapide au composant GATEWAY.</li>
+	 * émet un LOG, lève une {@link IllegalStateException}
+	 * portant exactement ce message et n'appelle jamais le GATEWAY.</li>
+	 * <li>Si {@code pContenu} est blank, retourne directement
+	 * le résultat de {@link #rechercherTous()} avec le message,
+	 * les exceptions et les garanties de cette méthode.</li>
+	 * <li>Si {@code gateway.findByLibelleRapide(pContenu)}
+	 * lève une exception avec message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si {@code gateway.findByLibelleRapide(pContenu)}
+	 * lève une exception sans message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_GATEWAY_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
 	 * <li>Si le GATEWAY retourne {@code null}, positionne
 	 * {@link #getMessage()} à {@link #MESSAGE_STOCKAGE_NULL},
-	 * émet un LOG de service et lève une exception.</li>
-	 * <li>Sinon, retourne une {@link List} de
-	 * {@link TypeProduitDTO.OutputDTO} jamais {@code null},
-	 * éventuellement vide.</li>
-	 * <li>Si la liste résultat est vide, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
-	 * <li>Si la liste résultat n'est pas vide, positionne
-	 * {@link #getMessage()} à {@link #MESSAGE_RECHERCHE_OK}.</li>
-	 * <li>En cas d'échec technique remonté par le GATEWAY
-	 * ou par la préparation de la réponse utilisateur,
-	 * positionne un message utilisateur technique cohérent
-	 * puis propage une exception circonstanciée
-	 * conforme à l'implémentation.</li>
+	 * émet un LOG et lève une {@link ExceptionStockageVide}
+	 * portant exactement ce message.</li>
+	 * <li>Si le filtrage, le tri ou la conversion en DTO
+	 * lève une exception avec message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + message technique,
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si le filtrage, le tri ou la conversion en DTO
+	 * lève une exception sans message, positionne {@link #getMessage()} à
+	 * {@link #MESSAGE_FINDBYLIBELLERAPIDE_PREPARATION_KO}
+	 * + {@link #TIRET_ESPACE} + {@link #MSG_ERREUR_NON_SPECIFIEE},
+	 * émet un LOG et propage la même exception.</li>
+	 * <li>Si la liste DTO finale est vide, retourne une liste vide
+	 * mais non {@code null} et positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_VIDE}.</li>
+	 * <li>Si la liste DTO finale n'est pas vide, retourne les DTO
+	 * triés et sans doublon, puis positionne {@link #getMessage()}
+	 * à {@link #MESSAGE_RECHERCHE_OK}.</li>
 	 * </ul>
 	 * </div>
 	 *
@@ -1037,35 +1091,36 @@ public interface TypeProduitICuService {
 	 * GARANTIES METIER, UTILISATEUR et TRAÇABILITE :
 	 * </p>
 	 * <ul>
-	 * <li>Le message retourné par {@link #getMessage()}
-	 * reflète l'issue observable de l'opération.</li>
-	 * <li>Le message de succès n'est positionné
-	 * qu'après préparation complète de la réponse utilisateur.</li>
-	 * <li>La liste retournée, si elle n'est pas vide,
-	 * correspond à l'état métier effectivement accessible
-	 * dans le stockage via le GATEWAY,
-	 * exprimé sous forme de DTO.</li>
-	 * <li>Aucun résultat partiel incohérent
-	 * ne doit être exposé à l'appelant.</li>
+	 * <li>La méthode ne retourne jamais {@code null}
+	 * lorsqu'elle aboutit.</li>
+	 * <li>La liste retournée ne contient aucun élément {@code null}
+	 * et aucun doublon.</li>
+	 * <li>Les DTO sont ordonnés selon l'ordre métier
+	 * des {@link TypeProduit}.</li>
+	 * <li>Le message de succès ou d'absence de résultat
+	 * n'est positionné qu'après filtrage, tri et conversion complets.</li>
+	 * <li>Un échec de filtrage, de tri ou de conversion côté UC
+	 * n'est jamais attribué au GATEWAY.</li>
+	 * <li>La méthode n'écrit rien dans le stockage.</li>
 	 * </ul>
 	 * </div>
 	 *
 	 * @param pContenu : String :
 	 * contenu partiel du libellé recherché.
-	 * @return List<TypeProduitDTO.OutputDTO> :
-	 * liste des DTO dont le libellé contient {@code pContenu} ;
-	 * jamais {@code null}, éventuellement vide.
+	 * @return List&lt;TypeProduitDTO.OutputDTO&gt; :
+	 * liste non {@code null}, éventuellement vide,
+	 * des DTO dont le libellé contient {@code pContenu} ;
+	 * pour un contenu blank, résultat de {@link #rechercherTous()}.
 	 * @throws IllegalStateException
 	 * si {@code pContenu == null}.
 	 * @throws ExceptionStockageVide
-	 * si le stockage retourne {@code null}.
+	 * si le GATEWAY retourne {@code null}.
 	 * @throws ExceptionTechniqueGateway
 	 * si une erreur technique survient lors de la recherche
 	 * via le GATEWAY.
 	 * @throws Exception
-	 * toute autre exception levée par l'implémentation,
-	 * notamment lors de la préparation
-	 * de la réponse utilisateur.
+	 * toute autre exception levée lors du filtrage,
+	 * du tri ou de la conversion en DTO.
 	 */
 	List<TypeProduitDTO.OutputDTO> findByLibelleRapide(String pContenu)
 			throws Exception;

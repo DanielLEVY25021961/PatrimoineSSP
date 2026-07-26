@@ -1129,3 +1129,25 @@ Annotations et constantes homogènes : oui/non.
 ```
 
 Si `Commentaires recréés inutilement` vaut `oui`, l'IA ne doit pas livrer le code.
+
+## 27) RT-PORT-CONSTANTES-PAR-METHODE-UC-01 — Présentation canonique des constantes des PORTS UC
+
+Dans les PORTS UC de la couche `produittype`, les constantes de messages propres à une méthode sont regroupées par méthode et suivent l'ordre des signatures du PORT.
+
+Chaque groupe est précédé d'un séparateur canonique de largeur fixe de 76 caractères selon la convention de présentation du projet. L'IA doit recopier ce séparateur depuis un bloc validé et ajuster uniquement les tirets nécessaires au centrage du nom de la méthode.
+
+Exemple validé :
+
+```java
+	/* -------------------- findByLibelleRapide ------------------------ */
+```
+
+Avant toute génération ou réorganisation de constantes, l'IA doit relire la zone complète des constantes du PORT cible et une référence homologue validée. Elle doit distinguer les constantes communes des constantes dédiées. Une constante dédiée ne doit jamais être placée dans le groupe d'une autre méthode ni ajoutée en fin de zone par commodité.
+
+Le contrôle de livraison doit vérifier :
+
+- regroupement par méthode ;
+- ordre identique à celui du PORT ;
+- séparateur présent entre chaque groupe ;
+- largeur normative de chaque séparateur ;
+- absence de constante dédiée hors de son groupe.
